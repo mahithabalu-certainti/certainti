@@ -10,6 +10,7 @@ import settingController from '../controllers/settingsController'
 import financialController from '../controllers/financialHighlightsController'
 import notesController from "./notesController";
 import templateController from './templateController'
+import taskController from "./taskController";
 
 const controller = {
     resoucesController,
@@ -23,7 +24,8 @@ const controller = {
     settingController,
     financialController,
     notesController,
-    templateController
+    templateController,
+    taskController
 };
 
 export default controller;

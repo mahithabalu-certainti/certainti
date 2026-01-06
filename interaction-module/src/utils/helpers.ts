@@ -186,7 +186,8 @@ export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
   project_id: string,
-  interaction_id: string
+  interaction_id: string,
+  account_number: string
 ): Promise<{
   url: string;
   name: string;
@@ -196,7 +197,7 @@ export async function uploadToAzureBlob(
   const connectionString = await getSecret(
     process.env.AZURE_STORAGE_CONNECTION_STRING as string
   );
-  const containerName = "account";
+  const containerName = account_number.toLowerCase();
 
   const connString = connectionString;
   if (!connString)
@@ -205,7 +206,7 @@ export async function uploadToAzureBlob(
     BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
   await containerClient.createIfNotExists();
-  const blobName = `${account_id}/${project_id}/${interaction_id}/attachements/${file.originalname}`;
+  const blobName = `${account_id}/${project_id}/${interaction_id}/attachments/${file.originalname}`;
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.uploadData(file.buffer, {
     blobHTTPHeaders: { blobContentType: file.mimetype },
@@ -321,4 +322,24 @@ export async function decryptClientSecret(encryptedText: string): Promise<string
   decrypted = Buffer.concat([decrypted, decipher.final()]);
 
   return decrypted.toString();
+}
+
+// Utility to parse mm/dd and year to YYYY-MM-DD
+export function parseFiscalDate(mmdd: string, year: number): string {
+  const [mm, dd] = mmdd.split('/');
+  if (!mm || !dd) return '';
+  // Pad month and day to 2 digits
+  const paddedMonth = mm.padStart(2, '0');
+  const paddedDay = dd.padStart(2, '0');
+  return `${year}-${paddedMonth}-${paddedDay}`;
+}
+
+// Utility to calculate the fiscal end year based on start and end mm/dd and fiscal year
+export function getFiscalEndYear(fiscalStart: string, fiscalEnd: string, fiscalYear: number): number {
+  const [startMonthStr] = fiscalStart.split('/');
+  const [endMonthStr] = fiscalEnd.split('/');
+  const startMonth = parseInt(startMonthStr || '0', 10);
+  const endMonth = parseInt(endMonthStr || '0', 10);
+  if (isNaN(startMonth) || isNaN(endMonth)) return fiscalYear;
+  return endMonth < startMonth ? fiscalYear + 1 : fiscalYear;
 }

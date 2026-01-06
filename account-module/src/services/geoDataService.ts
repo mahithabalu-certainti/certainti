@@ -24,14 +24,19 @@ class GeoDataService {
    * - errorMessage (optional): The error message in case of a failure.
    * - data (optional): An object containing the list of countries if the request is successful.
    */
-  async countries(): Promise<{
+  async countries(statusScope: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { country: any; count: number };
   }> {
     try {
+      let whereClause = {};
+      if (statusScope && statusScope.toLowerCase() !== 'all') {
+        whereClause = { status: 'active' };
+      }
       const country = await Country.findAll({
+        where: whereClause,
         order: [["country_name", "ASC"]],
       });
       return {

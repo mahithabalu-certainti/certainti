@@ -56,7 +56,7 @@ routes.get(
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesAccount
 );
-routes.get(
+routes.post(
   "/export/caseSummary",
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesSummary
@@ -112,27 +112,27 @@ routes.get(
 routes.post(
   "/checklist/create",
   checkUserStatusMiddleware("checklist_create"),
-  controller.caseController.createCheckList
+  controller.caseChecklistController.createCheckList
 );
 routes.post(
   "/checklist/update",
   checkUserStatusMiddleware("checklists_view_edit"),
-  controller.caseController.updateCheckList
+  controller.caseChecklistController.updateCheckList
 );
 routes.get(
   "/checklist/detail/:checkListRid",
   checkUserStatusMiddleware("checklists_view_edit"),
-  controller.caseController.getCheckListDetailsById
+  controller.caseChecklistController.getCheckListDetailsById
 );
 routes.get(
   "/checklist/list",
   checkUserStatusMiddleware("checklists_view_edit"),
-  controller.caseController.getAllChecklists
+  controller.caseChecklistController.getAllChecklists
 );
 routes.get(
   "/checklist/export",
   checkUserStatusMiddleware("checklists_view_edit"),
-  controller.caseController.exportAllChecklists
+  controller.caseChecklistController.exportAllChecklists
 );
 routes.get(
   "/workBreakdown/:accountRid/:caseRid",
@@ -142,105 +142,105 @@ routes.get(
 routes.post(
   "/task/create",
   checkUserStatusMiddleware("cases_workbreakdown_create"),
-  controller.caseController.createTask
+  controller.caseTaskController.createTask
 );
 routes.put(
   '/task/update',
   checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
-  controller.caseController.updateTask
+  controller.caseTaskController.updateTask
 );
 routes.post(
   "/task/list",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.fetchCaseTaskList
+  controller.caseTaskController.fetchCaseTaskList
 )
 routes.post(
   "/tag/add",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.createOrMapTags
+  controller.caseTaskController.createOrMapTags
 )
 routes.post(
   "/tag/list",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.fetchAllTags
+  controller.caseTaskController.fetchAllTags
 )
 routes.post(
   "/tag/delete",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.deleteTagsTaskLevel
+  controller.caseTaskController.deleteTagsTaskLevel
 )
 routes.post(
   "/task/comments/add",
   checkUserStatusMiddleware("NA"),
   upload.array('files'),
-  controller.caseController.addCommentsToSpecificTask
+  controller.caseTaskController.addCommentsToSpecificTask
 )
 routes.post(
   "/task/export",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.exportCaseTask
+  controller.caseTaskController.exportCaseTask
 )
 routes.put(
   "/task/comments/update",
   checkUserStatusMiddleware("NA"),
   upload.array('files'),
-  controller.caseController.updateTaskComments
+  controller.caseTaskController.updateTaskComments
 )
 routes.post(
   "/task/comments/delete",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.deleteTaskComments
+  controller.caseTaskController.deleteTaskComments
 )
 routes.post(
   "/task/comments/list",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.fetchTaskCommentsList
+  controller.caseTaskController.fetchTaskCommentsList
 )
 routes.post(
   "/task/attachments/add",
   checkUserStatusMiddleware("NA"),
   upload.array('files'),
-  controller.caseController.addTaskAttachments
+  controller.caseTaskController.addTaskAttachments
 )
 routes.post(
   "/task/attachments/delete",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.deleteTaskAttachments
+  controller.caseTaskController.deleteTaskAttachments
 )
 routes.post(
   "/task/attachments/list",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.listTaskAttachments
+  controller.caseTaskController.listTaskAttachments
 )
 routes.post(
   "/task/activity/list",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.fetchTaskActivity
+  controller.caseTaskController.fetchTaskActivity
 )
 routes.post(
   "/task/details",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.fetchTaskDetails
+  controller.caseTaskController.fetchTaskDetails
 )
 routes.get(
   "/task/priority",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.fetchCasePriority
+  controller.caseTaskController.fetchCasePriority
 )
 routes.get(
   "/task/status",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.fetchCaseTaskStatus
+  controller.caseTaskController.fetchCaseTaskStatus
 )
 routes.post(
   "/task/collaborator/add",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.addCollaborators
+  controller.caseTaskController.addCollaborators
 )
 routes.post(
   "/task/collaborator/list",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.listCollaborators
+  controller.caseTaskController.listCollaborators
 )
 
 routes.get(
@@ -269,26 +269,43 @@ routes.get(
 routes.post(
   "/task/workflowConnector/add",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.linkTask
+  controller.caseTaskController.linkTask
 )
 routes.post(
   "/task/workflowConnector/delete",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.linkDeleteTask
+  controller.caseTaskController.linkDeleteTask
 )
 routes.post(
   "/task/collaborator/delete",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.deleteCollaboratorsTaskLevel
+  controller.caseTaskController.deleteCollaboratorsTaskLevel
 )
 routes.put(
   "/task/checklist/status",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.updateChecklistItemStatus
+  controller.caseTaskController.updateChecklistItemStatus
 )
 routes.post(
   "/task/dropDownList",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.caseLevelTaskDropdown
+  controller.caseTaskController.caseLevelTaskDropdown
 )
+routes.get(
+  "/getCaseSubmissionDate",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseSubmissionDate
+)
+routes.put(
+  "/project/signoff",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.caseController.signoffTechnicalDocumentation
+)
+routes.post(
+  "/financialWorking/signOff",
+  checkUserStatusMiddleware("NA"),
+  controller.childCaseController.signOffFinancialWorking
+)
+
+routes.get('/regions/:accountId/:caseId', controller.childCaseController.RegionListForFinancialHighlights)
 export default routes;

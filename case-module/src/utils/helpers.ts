@@ -1,7 +1,7 @@
 import Joi from "joi";
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus } from "./constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, STATUS_MESSAGE } from "./constants";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
@@ -19,6 +19,7 @@ import {
   SASProtocol
 } from "@azure/storage-blob";
 import { parse } from "url";
+import { CaseProjectTask } from "../models/caseProjectTaskModel";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -209,7 +210,7 @@ export async function generateExcelBase64WithEmptyCheck(data: Array<Record<strin
 
   // Generate buffer and encode to base64
   const buffer = await workbook.xlsx.writeBuffer();
- //  await workbook.xlsx.writeFile('cases1.xlsx');
+  //  await workbook.xlsx.writeFile('cases1.xlsx');
   return Buffer.from(buffer).toString('base64');
 }
 
@@ -229,7 +230,7 @@ export async function generateExcelBase64(data: any, sheetName: string) {
 
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
- // await workbook.xlsx.writeFile('cases.xlsx');
+  // await workbook.xlsx.writeFile('cases.xlsx');
   return Buffer.from(buffer).toString("base64");
 }
 
@@ -311,9 +312,10 @@ export const buildStringFilterCondition = (
     const columnMap: Record<string, string> = {
       created_user_name: "(uc.first_name || ' ' || uc.last_name)",
       modified_user_name: "(um.first_name || ' ' || um.last_name)",
-      case_name: " CONCAT(a.account_name, '-', c.country_code, '-', cs.fiscal_year, '-', cs.case_name)"
+      case_name: " CONCAT(a.account_name, '-', c.country_code, '-', cs.fiscal_year, '-', cs.case_name)",
+      config_name: "CONCAT('C','-',c.country_code, '-', (CASE WHEN g.is_federal = false AND st.state_name IS NOT NULL AND st.state_name != '' THEN st.state_name || '-' ELSE '' END), jc.config_name)"
     };
-    
+
     return columnMap[column] || (ref ? `${ref}.${column}` : column);
 
   };
@@ -329,10 +331,9 @@ export const buildStringFilterCondition = (
     [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL OR ${col} = '')`,
     [ALPHANUMERIC_CONDITIONS.contains]: (col, val) => `${col} ILIKE '%${val}%'`,
     [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
-      `${col} IN (${
-        Array.isArray(val)
-          ? val.map((d: any) => `'${d}'`).join(",")
-          : `'${val}'`
+      `${col} IN (${Array.isArray(val)
+        ? val.map((d: any) => `'${d}'`).join(",")
+        : `'${val}'`
       })`,
   };
 
@@ -354,10 +355,9 @@ export const buildDatetimeFilterCondition = (
     [ALPHANUMERIC_CONDITIONS.before]: (col, val) => `${col} < '${val}'`,
     [ALPHANUMERIC_CONDITIONS.after]: (col, val) => `${col} > '${val}'`,
     [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
-      `${col} BETWEEN ${
-        Array.isArray(val)
-          ? val.map((d: any) => `'${d}'`).join(" AND ")
-          : `'${val}'`
+      `${col} BETWEEN ${Array.isArray(val)
+        ? val.map((d: any) => `'${d}'`).join(" AND ")
+        : `'${val}'`
       }`,
     [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
   };
@@ -372,7 +372,7 @@ export const buildDatetimeFilterConditionTemplates = (
   tableAlias: string = 'i'
 ): string => {
   const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
-  
+
   switch (condition) {
     case ALPHANUMERIC_CONDITIONS.equals:
       return `${columnRef} = '${values}'`;
@@ -383,7 +383,7 @@ export const buildDatetimeFilterConditionTemplates = (
     case ALPHANUMERIC_CONDITIONS.between:
       // values should be an object: { from: string, to: string }
       if (values && typeof values === 'object' && values.from && values.to) {
-      return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
+        return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
       }
       return '';
     case ALPHANUMERIC_CONDITIONS.isEmpty:
@@ -393,17 +393,42 @@ export const buildDatetimeFilterConditionTemplates = (
   }
 };
 
-export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId : string) => {
-  let validUpdateQuery : string[] = []
-  let validUpdateConditions : string = ``
-  if(reqData.task_name) {
-    if(reqData.task_name !== dbData.task_name) {
+// Optimized utility function for handling boolean filter conditions
+export const buildBooleanFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = "cs"
+): string => {
+  const columnRef = `${tableAlias}.${filteredColumns}`;
+
+  // Use object mapping for boolean conditions
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = ${val === true || val === 'true' ? 'true' : 'false'}`,
+    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `${col} != ${val === true || val === 'true' ? 'true' : 'false'}`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL)`,
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) => {
+      if (Array.isArray(val)) {
+        const boolVals = val.map(v => (v === true || v === 'true') ? 'true' : 'false').join(",");
+        return `${col} IN (${boolVals})`;
+      }
+      return `${col} = ${(val === true || val === 'true') ? 'true' : 'false'}`;
+    }
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};
+export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: string) => {
+  let validUpdateQuery: string[] = []
+  let validUpdateConditions: string = ``
+  if (reqData.task_name) {
+    if (reqData.task_name !== dbData.task_name) {
       validUpdateConditions = `task_name = '${reqData.task_name.replace(/'/g, "''")}'`
       validUpdateQuery.push(validUpdateConditions)
-    } 
+    }
   }
-  if(reqData.effort_in_days) {
-    if(reqData.effort_in_days !== dbData.effort_in_days) {
+  if (reqData.effort_in_days) {
+    if (reqData.effort_in_days !== dbData.effort_in_days) {
       validUpdateConditions = `effort_in_days = ${reqData.effort_in_days}`
       validUpdateQuery.push(validUpdateConditions)
     }
@@ -414,20 +439,20 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.checklist_template_rid) {
-    if(reqData.checklist_template_rid !== dbData.checklist_template_rid) {
+  if (reqData.checklist_template_rid) {
+    if (reqData.checklist_template_rid !== dbData.checklist_template_rid) {
       validUpdateConditions = `checklist_template_rid = '${reqData.checklist_template_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.priority_rid) {
-    if(reqData.priority_rid !== dbData.priority_rid) {
+  if (reqData.priority_rid) {
+    if (reqData.priority_rid !== dbData.priority_rid) {
       validUpdateConditions = `priority_rid = '${reqData.priority_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.milestone_template_rid) {
-    if(reqData.milestone_template_rid !== dbData.milestone_template_rid) {
+  if (reqData.milestone_template_rid) {
+    if (reqData.milestone_template_rid !== dbData.milestone_template_rid) {
       validUpdateConditions = `milestone_template_rid = '${reqData.milestone_template_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
@@ -518,8 +543,9 @@ export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData :
 export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
-  task_number : string,
-  flag? : string
+  task_number: string,
+  account_number: string,
+  flag?: string
 ): Promise<{
   url: string;
   name: string;
@@ -536,10 +562,8 @@ export async function uploadToAzureBlob(
     }
 
     // Get connection string from secrets manager
-    const connectionString = await getSecret( process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-    // const connectionString = "storage-account-connection-string";
-    // const connectionString = await getSecret("storage-account-connection-string");
-    const containerName = "account";
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    const containerName = account_number.toLowerCase();
 
     if (!connectionString) {
       throw new Error("Azure storage connection string is required");
@@ -564,12 +588,12 @@ export async function uploadToAzureBlob(
     // Create unique blob name with timestamp
     let timestamp = Date.now();
     let blobName;
-    if(flag === "cases"){
+    if (flag === "cases") {
       blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     } else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
-    
+
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     // Upload file with content type
@@ -596,8 +620,7 @@ export async function uploadToAzureBlob(
   } catch (error) {
     console.error("Azure Blob upload failed:", error);
     throw new Error(
-      `File upload failed: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `File upload failed: ${error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -605,9 +628,9 @@ export async function uploadToAzureBlob(
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 
-    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-    // const connectionString = "storage-account-connection-string";
-    // const connectionString = await getSecret("storage-account-connection-string");
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  // const connectionString = "storage-account-connection-string";
+  // const connectionString = await getSecret("storage-account-connection-string");
   const containerName = "account";
 
   const url = new URL(blobUrl);
@@ -632,9 +655,9 @@ export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void>
   }
 }
 
-export const getColumnsNamesForTaskCommentsUpdate = (data : UpdateCommentsType, dbData : TaskComments) => {
-  let columns : string[] = [];
-  if(data.comments !== dbData.comments) 
+export const getColumnsNamesForTaskCommentsUpdate = (data: UpdateCommentsType, dbData: TaskComments) => {
+  let columns: string[] = [];
+  if (data.comments !== dbData.comments)
     columns.push(`comments`)
   return columns;
 }
@@ -659,7 +682,7 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       throw new Error("Invalid blob URL format");
     }
 
-    const containerName : any = pathParts[0];
+    const containerName: any = pathParts[0];
     const blobName = pathParts.slice(1).join("/");
 
     const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
@@ -689,4 +712,35 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
     logMessage(`Error generating SAS URL: ${error}`);
     throw new Error(`SAS URL generation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
+}
+
+export const validateProjectResourceRequest = (data: any) => {
+  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
+  // if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
+  if (!data.project_resource_rid) return STATUS_MESSAGE.fiscalIdMissing;
+};
+
+export const validateProjectTaskRequest = (data: any) => {
+  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
+  if (!data.rid) return STATUS_MESSAGE.projectIdMissing;
+};
+
+// Utility to parse mm/dd and year to YYYY-MM-DD
+export function parseFiscalDate(mmdd: string, year: number): string {
+  const [mm, dd] = mmdd.split('/');
+  if (!mm || !dd) return '';
+  // Pad month and day to 2 digits
+  const paddedMonth = mm.padStart(2, '0');
+  const paddedDay = dd.padStart(2, '0');
+  return `${year}-${paddedMonth}-${paddedDay}`;
+}
+
+// Utility to calculate the fiscal end year based on start and end mm/dd and fiscal year
+export function getFiscalEndYear(fiscalStart: string, fiscalEnd: string, fiscalYear: number): number {
+  const [startMonthStr] = fiscalStart.split('/');
+  const [endMonthStr] = fiscalEnd.split('/');
+  const startMonth = parseInt(startMonthStr || '0', 10);
+  const endMonth = parseInt(endMonthStr || '0', 10);
+  if (isNaN(startMonth) || isNaN(endMonth)) return fiscalYear;
+  return endMonth < startMonth ? fiscalYear + 1 : fiscalYear;
 }

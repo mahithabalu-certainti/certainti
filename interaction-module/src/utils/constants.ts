@@ -168,7 +168,9 @@ export const mainTableFilters : Record<any, any> = {
   response_source_name : "response_source_name",
   interaction_level_name:"interaction_level_name",
   modified_by: "modified_by",
-  modified_user_name:"modified_user_name"
+  modified_user_name:"modified_user_name",
+  project_name : "project_name",
+  project_code : "project_code"
 }
 
 export const STATUS_MESSAGE = {
@@ -343,6 +345,10 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
+  fetchProjectTypeNames(ids: string[]) {
+    console.log(ids);
+      return `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${ids})`;
+    },
   fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
   return `
     SELECT 
@@ -362,10 +368,55 @@ export const rawQueries = {
     c.include_in_communication = TRUE
   `;
   },
-  fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
-    return `
-    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
-  },
+ fetchProjectsByAccount(
+  accountRid: string,
+  schemaName: string,
+  status_rid: string,
+  fiscalStart: string,
+  fiscalEnd: string,
+  groupedProjectTypes?: Record<string, string[]>
+) {
+  let query = `
+    SELECT DISTINCT
+      pf.rid,
+      pf.project_rid,
+      pf.project_type_rid,
+      pf.fiscal_year
+    FROM ${schemaName}.project_fiscal pf
+  `;
+  // Parse MM/DD for fiscalStart and fiscalEnd
+  const [startMM, startDD] = fiscalStart.split('/').map(Number);
+  const [endMM, endDD] = fiscalEnd.split('/').map(Number);
+
+  if (groupedProjectTypes && Object.keys(groupedProjectTypes).length > 0) {
+    const values = Object.entries(groupedProjectTypes)
+      .flatMap(([key, typeRids]) => {
+        const [start, end] = key.split('_');
+        return typeRids.map(pt => 
+          `(DATE '${start}', DATE '${end}', '${pt}')`
+        );
+      })
+      .join(',\n');
+
+    query += `
+      JOIN (
+        VALUES
+          ${values}
+      ) AS ir(range_start, range_end, project_type_rid)
+        ON pf.project_type_rid = ir.project_type_rid
+       AND ir.range_start <= make_date(pf.fiscal_year, ${endMM}, ${endDD})
+       AND ir.range_end   >= make_date(pf.fiscal_year - 1, ${startMM}, ${startDD})
+    `;
+  }
+
+  query += `
+    WHERE pf.account_rid = '${accountRid}'
+      AND pf.status_rid  = '${status_rid}'
+  `;
+
+  return query;
+}
+,
   fetchProjectsByCase(caseRid: string, schemaName: string) {
     return `
     SELECT a.project_fiscal_rid FROM ${schemaName}.case_projects as a WHERE a.case_rid = '${caseRid}'
@@ -431,7 +482,43 @@ export const rawQueries = {
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+    SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+  fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
+    return `
+    SELECT config_json,,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+    where rg.country_rid = '${rid}'
+    AND credit_program_name = 'Platform Configuration'
+    AND rg.is_federal = true 
+    AND rv.effective_start_date <= '${formattedEndDate}'
+    AND rv.effective_end_date   >= '${formattedStartDate}'
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
+  },
+   fetchAllPlatformConfig(rid: string) {
+    return `
+    SELECT config_json,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+    where rg.country_rid = '${rid}'
+    AND credit_program_name = 'Platform Configuration'
+    AND rg.is_federal = true 
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
+  },
+  fetchProjectTypeRid(projectType: string | string[]) {
+    // Accepts either a string or array of strings
+    let condition = "";
+    if (Array.isArray(projectType)) {
+      const types = projectType.map(pt => `'${pt.replace(/'/g, "''")}'`).join(",");
+      condition = `lower(project_type_name) IN (${types.toLowerCase()})`;
+    } else {
+      condition = `lower(project_type_name) = lower('${projectType.replace(/'/g, "''")}')`;
+    }
+    return `
+      select rid from trd365.project_type where ${condition}`;
   },
    fetchAccountDetailsInfo(rid: string,schemaName: string) {
     return `
@@ -628,6 +715,10 @@ export const rawQueries = {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
   },
   fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
     return `
@@ -951,7 +1042,13 @@ export const rawQueries = {
          OR project_code = :projectCode
       LIMIT 1;
     `;
-  }  
+  },
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  },
+  fetchEmailTemplateByCategory (categoryName : string) {
+    return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
+  },
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -1105,6 +1202,15 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+  }
+
+   export const interactionTemplateName = {
+    interactionProject : "interaction project",
+    interactionProjectRemainder : "interaction project remainder",
+    interactionAccount : "interaction account",
+    interactionAccountRemainder : "interaction account remainder",
+    interactionProjectUpdate : "interaction project update",
+    interactionAccountUpdate : "interaction account update"
   }
 
   export const keyContactRoleName = {

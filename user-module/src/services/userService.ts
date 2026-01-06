@@ -13,7 +13,8 @@ import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
 import { updateAzureUser } from "./manageUser";
-import { errorLog, logMessage } from "../utils/helpers";
+import { errorLog, getWebPubSubClient, logMessage } from "../utils/helpers";
+import { uploadToAzure, generateSasUrl } from "./azureBlobService";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -867,6 +868,8 @@ class UserService {
       permissions: any[];
       organisation_name: string;
       logo_url: string;
+      profile_url: string;
+      web_socket_url: string;
     } | null;
   }> {
     try {
@@ -878,6 +881,7 @@ class UserService {
           "profile_rid",
           "is_consultant_firm",
           "org_id",
+          "profile_url",
         ],
         where: { azure_id: azureId },
         include: [
@@ -937,7 +941,10 @@ class UserService {
         roles.rid,
         roles.profile_rid || ""
       );
-
+      let token = { token: "" };
+      const webPubSubClient = await getWebPubSubClient();
+      await webPubSubClient.closeUserConnections(roles.rid);
+      token = await webPubSubClient.getClientAccessToken({ userId: roles.rid, expirationTimeInMinutes: 1400 });
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -949,6 +956,8 @@ class UserService {
           permissions,
           organisation_name,
           logo_url,
+          profile_url: roles.profile_url ? await generateSasUrl(roles.profile_url) : "",
+          web_socket_url: token.token || "",
         },
       };
     } catch (err) { 
@@ -2906,6 +2915,39 @@ async getAllUserPermission(userId: string, profileId: string) {
       };
     } catch (err) {
       errorLog("Error exporting user profiles:", (err as Error).message);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Uploads a profile image for a user to Azure Blob Storage and updates the user's profile URL in the database.
+   * @param file 
+   * @param userId 
+   * @returns 
+   */
+  async uploadProfileImage(file: Express.Multer.File, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { profile_url: string };
+  }> {
+    try {
+      if (!file) {
+        throw new Error("No file provided");
+      }
+
+      const imageUrl = await uploadToAzure(file, userId);
+      
+      await User.update( { profile_url: imageUrl }, { where: { rid: userId } });
+      const profile_sas_url = await generateSasUrl(imageUrl);
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: "Profile image uploaded successfully",
+        data: { profile_url: profile_sas_url },
+      };
+    } catch (err) {
+      errorLog("Error uploading profile image:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }

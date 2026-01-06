@@ -17,6 +17,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
+import { generateSasUrl } from "../../utils/blob";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1200,12 +1201,21 @@ class InteractionSchemaService {
     filters: Record<string, string>,
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    type: string = "list"
+    type: string = "list",
+    caseRid? : string,
+    accountRid? : string
   ) {
     try {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize();
+      }
       const offset = (page - 1) * limit;
         let modifiedByFilter;
       let modifiedByConditions;
+      let projectNameFilter;
+      let projectNameConditions;
+      let projectCodeFilter;
+      let projectCodeConditions;
       let totalResults: number = 0;
       let disablePagination = false;
       if(type === "download")
@@ -1223,7 +1233,27 @@ class InteractionSchemaService {
         modifiedByFilter = filters.modified_by;
         modifiedByConditions = detectConditions(modifiedByFilter);
       }
+      if (filters?.project_name) {
+        projectNameFilter = filters.project_name;
+        projectNameConditions = detectConditions(projectNameFilter);
+      }
+      if (filters?.project_code) {
+        projectCodeFilter = filters.project_code;
+        projectCodeConditions = detectConditions(projectCodeFilter);
+      }
        ["modified_by"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      ["project_name"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      ["project_code"].forEach(key => {
         if (filters[key]) {
           disablePagination = true;
           delete filters[key];
@@ -1238,13 +1268,38 @@ class InteractionSchemaService {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
-
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
       // Fetch technical summaries and count
-      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
-        where: {
+      let whereCondition;
+      if(caseRid !== undefined && caseRid !== '') {
+        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        whereCondition = {
+          account_rid : accountRid,
+          project_fiscal_rid: {
+            [Op.in] : projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d : any) => d.project_fiscal_rid) : []
+          },
+          [Op.and]: Sequelize.where(
+        Sequelize.col('"AiTechnicalSummary".version'),
+        '=',
+        Sequelize.literal(`
+          (
+            SELECT MAX(t2.version)
+            FROM ${schemaName}.ai_technical_summary AS t2
+            WHERE 
+              t2.account_rid = "AiTechnicalSummary".account_rid
+              AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
+          )
+        `)),
+          ...whereClause
+        }
+      } else {
+        whereCondition = {
           project_fiscal_rid: projectFiscalRid,
           ...whereClause
-        },
+        }
+      }
+      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+        where: whereCondition,
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination
           ? {}
@@ -1257,18 +1312,28 @@ class InteractionSchemaService {
           count: 0
         };
       }
+      let fetchProjectDetails : any[] = [...new Set(technicalSummary.map((project : any) => project.project_fiscal_rid))];
       let createdByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.created_by))];
       let modifiedByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.modified_by))];
       let statusIds: any[] = [...new Set(technicalSummary.map((user: any) => user.status_rid))];
       let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
       let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
       let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
+      let projectFiscalDetails = await this.orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
       let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
         return {
           rid: d.rid,
+          account_rid : d.account_rid,
+          project_rid : d.project_rid,
+          project_fiscal_rid : d.project_fiscal_rid,
+          project_code : projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
+          project_name : projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
+          signoff : projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
           version: d.version,
@@ -1300,6 +1365,10 @@ class InteractionSchemaService {
       };
       if (modifiedByConditions != null && modifiedByConditions != undefined)
         finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
+      if(projectCodeConditions != null && projectCodeConditions != undefined)
+        finalData = applyFilters(finalData, projectCodeConditions, projectCodeFilter, "project_code")
+      if(projectNameConditions != null && projectNameConditions != undefined)
+        finalData = applyFilters(finalData, projectNameConditions, projectNameFilter, "project_name")
       if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;
@@ -1570,6 +1639,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     accountNumber: string,
     techSummaryId: string
   ) {
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize()
+    }
     const { AiTechnicalSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
@@ -1587,6 +1659,12 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const statusInfo = await this.insertStatusInfo(
         techSummaryDetails.dataValues.status_rid
       );
+      const fetchProjectDetails : string[] = []
+      fetchProjectDetails.push(techSummaryDetails.project_fiscal_rid!)
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      let projectFiscalDetails = await this.orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+
       return {
         rid: techSummaryDetails.dataValues.rid,
         r_number: techSummaryDetails.dataValues.r_number,
@@ -1600,11 +1678,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         modified_by: techSummaryDetails.dataValues.modified_by,
         created_datetime: techSummaryDetails.dataValues.created_datetime,
         modified_datetime: techSummaryDetails.dataValues.modified_datetime,
-        technical_summary_refinement_prompt: techSummaryDetails.dataValues.technical_summary_refinement_prompt
+        technical_summary_refinement_prompt: techSummaryDetails.dataValues.technical_summary_refinement_prompt,
+        project_fiscal_rid : techSummaryDetails.project_fiscal_rid,
+        project_code : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_code || null,
+        project_name : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_name || null,
+        signoff : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.signoff || null
       }
     }
-
-
     return techSummaryDetails;
   }
 
@@ -2688,12 +2768,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         ],
       });
 
-      return attachments.map((att) => ({
-        fileUrl: att.attachment_url,
-        fileName: att.attachment_name,
-        fileSize: att.attachment_size,
-        fileType: att.attachment_type,
-      }));
+      return Promise.resolve(
+        await Promise.all(
+          attachments.map(async (att) => ({
+            fileUrl: await generateSasUrl(att.attachment_url),
+            fileName: att.attachment_name,
+            fileSize: att.attachment_size,
+            fileType: att.attachment_type,
+          }))
+        )
+      );
     } catch (err) {
       logMessage(`Error fetching global attachments: ${err}`);
       throw new Error(
@@ -2749,13 +2833,15 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         const attachmentsList = attachments.map((item) =>
           item.get({ plain: true })
         );
-        (item as any).attachments = Array.isArray(attachmentsList)
-          ? attachmentsList.map((att: any) => ({
-              fileUrl: att?.attachment_url ?? "",
-              fileName: att?.attachment_name ?? "",
-              fileSize: att?.attachment_size ?? "",
-              fileType: att?.attachment_type ?? "",
-            }))
+        (item as any).attachments = Array.isArray(attachmentsList) && attachmentsList.length > 0
+          ? await Promise.all(
+              attachmentsList.map(async (att: any) => ({
+                fileUrl: await generateSasUrl(att.attachment_url),
+                fileName: att?.attachment_name ?? "",
+                fileSize: att?.attachment_size ?? "",
+                fileType: att?.attachment_type ?? "",
+              }))
+            )
           : [];
 
         // Fetch latest response history for each question
@@ -2843,6 +2929,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "notes",
           "is_mandatory",
         ],
+        order : [['created_datetime', 'DESC']],
         where: { interaction_rid: interactionRid },
       });
 
@@ -4050,6 +4137,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     const { SchedulerExecution } = await this.interactionModelService.getModels("");
     const findSchedulerExists = await SchedulerExecution.findOne({
       where : {
+        scheduler_name : 'AITrigger',
         status : schedulerStatus.Running
       }
     })
@@ -4057,7 +4145,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const createSchedulerExecution = await SchedulerExecution.create({
         created_datetime : new Date(),
         started_at : new Date(),
-        status : schedulerStatus.Running
+        status : schedulerStatus.Running,
+        scheduler_name : 'AITrigger'
       })
       return createSchedulerExecution
     }
@@ -4562,6 +4651,20 @@ const existingTemplate = await InteractionTemplate.findOne({
       );
     }
   }
+
+  async getTemplateDetailsByCategory(categoryName: string) {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
+      }
+      const [templateDetails]:any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchEmailTemplateByCategory(categoryName),
+        {
+          type: "SELECT",
+        }
+      );
+  
+  
+      return templateDetails;  }
 
 }
 

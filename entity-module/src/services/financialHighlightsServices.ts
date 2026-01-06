@@ -1,4 +1,4 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import {
@@ -14,7 +14,9 @@ import {
   fetchIsRdQualifiedProjectQueryRegion,
   fetchProjectQueryByPrjId,
   summaryHighlightsQuery,
+  summaryHighlightsQueryForCase,
   summaryHighlightsQueryRegion,
+  summaryHighlightsQueryRegionForCase,
 } from "../utils/rawQueries";
 import SchemaService from "./schemaService";
 import { Logger } from "winston";
@@ -24,6 +26,7 @@ import { ProjectSummary } from "../models/projectSummary";
 import Decimal from "decimal.js";
 import currency from "currency.js";
 import { logMessage } from "../utils/helpers";
+import { ProjectFiscalIds } from "../utils/types";
 
 export default class FinancialHighlightsService {
   private mainDbSequelize: Sequelize | null = null;
@@ -60,7 +63,10 @@ export default class FinancialHighlightsService {
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
 
     if (data.summaryType == SUMMARY_HIGHLIGHTS_TYPE_FLAG.summary) {
-      if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
+      if (data.case_rid != undefined && data.case_rid !== "") {
+        result = await orgDb.query(summaryHighlightsQueryForCase(data.account_rid, data.fiscal_year, schemaName, data.case_rid));
+      }
+      else if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
         result = await orgDb.query(
           summaryHighlightsQuery(data.account_rid, data.fiscal_year, schemaName)
         );
@@ -74,7 +80,18 @@ export default class FinancialHighlightsService {
         );
       }
     } else {
-      if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
+      if (data.case_rid != undefined && data.case_rid !== "") {
+        result = await orgDb.query(
+          summaryHighlightsQueryRegionForCase(
+            data.account_rid,
+            data.fiscal_year,
+            schemaName,
+            data.region_rid,
+            data.case_rid
+          )
+        )
+      }
+      else if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
         result = await orgDb.query(
           summaryHighlightsQueryRegion(
             data.account_rid,
@@ -117,7 +134,6 @@ export default class FinancialHighlightsService {
       await rawQueries.fetchParentAccount(data.account_rid, mainDb)
     );
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-
     let result = await orgDb.query(
       fetchProjectQueryByPrjId(
         data.account_rid,
@@ -179,7 +195,8 @@ export default class FinancialHighlightsService {
     page: number = 1,
     limit: number = 10,
     sortBy: string = "created_datetime",
-    sortOrder: string = "DESC"
+    sortOrder: string = "DESC",
+    caseRid?: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -224,6 +241,15 @@ export default class FinancialHighlightsService {
       if (fiscalYear && fiscalYear !== 0) {
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
       }
+      if (caseRid !== undefined && caseRid !== '') {
+        const orgDbSequelize = await this.getOrgDbSequelize();
+        const parentAccount: any = await mainSequelize.query(await rawQueries.fetchParentAccount(accountRid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
+        const projectIds = await orgDbSequelize.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, accountRid, schemaName), { type: QueryTypes.SELECT });
+        let ids = [];
+        ids.push(...projectIds.map((d: any) => d.project_fiscal_rid));
+        whereClause[Op.and].push({ project_fiscal_rid: { [Op.in]: ids } });
+      }
       // ✅ Get all project fiscal summary without pagination first to properly handle sorting of related data
       const allSummary = await ProjectFiscalSummaryModel.findAll({
         where: whereClause,
@@ -237,9 +263,9 @@ export default class FinancialHighlightsService {
       const [currencies] = await Promise.all([
         currencyRids.length
           ? mainSequelize.query(rawQueries.GET_CURRENCIES, {
-              replacements: { currencyRid: currencyRids },
-              type: "SELECT",
-            })
+            replacements: { currencyRid: currencyRids },
+            type: "SELECT",
+          })
           : [],
       ]);
 
@@ -386,14 +412,15 @@ export default class FinancialHighlightsService {
   * }>} A response object containing the export-ready summaries and total count.
   *
   * @throws Returns a 500 status code and an error message if the export process fails.
-  */ 
+  */
   async exportListAccountLevelProjectCostFinancialHighlights(
     accountRid: string,
     filters: Record<string, any> = {},
     search?: string,
     fiscalYear: number = 0,
     sortBy: string = "created_datetime",
-    sortOrder: string = "DESC"
+    sortOrder: string = "DESC",
+    caseRid?: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -438,6 +465,16 @@ export default class FinancialHighlightsService {
       if (fiscalYear && fiscalYear !== 0) {
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
       }
+
+      if (caseRid !== undefined && caseRid !== '') {
+        const orgDbSequelize = await this.getOrgDbSequelize();
+        const parentAccount: any = await mainSequelize.query(await rawQueries.fetchParentAccount(accountRid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
+        const projectIds = await orgDbSequelize.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, accountRid, schemaName), { type: QueryTypes.SELECT });
+        let ids = [];
+        ids.push(...projectIds.map((d: any) => d.project_fiscal_rid));
+        whereClause[Op.and].push({ project_fiscal_rid: { [Op.in]: ids } });
+      }
       // ✅ Get all project fiscal summary without pagination first to properly handle sorting of related data
       const allSummary = await ProjectFiscalSummaryModel.findAll({
         where: whereClause,
@@ -452,9 +489,9 @@ export default class FinancialHighlightsService {
       const [currencies] = await Promise.all([
         currencyRids.length
           ? mainSequelize.query(rawQueries.GET_CURRENCIES, {
-              replacements: { currencyRid: currencyRids },
-              type: "SELECT",
-            })
+            replacements: { currencyRid: currencyRids },
+            type: "SELECT",
+          })
           : [],
       ]);
 
@@ -771,7 +808,7 @@ export default class FinancialHighlightsService {
           break;
 
         default:
-         logMessage(`Unhandled filter field: ${field}`);
+          logMessage(`Unhandled filter field: ${field}`);
       }
 
       if (Object.keys(condition).length > 0) {
@@ -806,33 +843,33 @@ export default class FinancialHighlightsService {
  *
  * @throws Will throw if database queries fail or return invalid data formats.
  */
-  async fetchRegions(data : any) {
+  async fetchRegions(data: any) {
     const mainDb = await this.getMainDbSequelize()
     const orgDb = await this.getOrgDbSequelize()
-    let finalData : any
+    let finalData: any
 
-    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+    let fetchParent: any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
     let fetchDataBasedRegions = await orgDb.query(rawQueries.fetchStatesIds(schemaName, data.account_rid, data.fiscal_year))
-    let validStateIds : string[] = []
-    fetchDataBasedRegions[0].filter((d : any) => d.region_rid != '' || null).map((states : any) => {
+    let validStateIds: string[] = []
+    fetchDataBasedRegions[0].filter((d: any) => d.region_rid != '' || null).map((states: any) => {
       validStateIds.push(states.region_rid)
       return validStateIds
     })
-    if(validStateIds.length > 0) {
-      let fetchStates = await mainDb.query(rawQueries.fetchStates(validStateIds, data.country_rid))
-    finalData = fetchStates[0].map((d : any) => {
-      return {
-        rid : d.rid,
-        state_name : d.state_name
-      }
-    })
-    return finalData
-    } 
+    if (validStateIds.length > 0) {
+      let fetchStates = await mainDb.query(rawQueries.fetchStatesName(validStateIds))
+      finalData = fetchStates[0].map((d: any) => {
+        return {
+          rid: d.rid,
+          state_name: d.state_name
+        }
+      })
+      return finalData
+    }
     else {
       finalData = []
       return finalData
     }
-    
+
   }
 }

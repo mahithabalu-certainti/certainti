@@ -451,7 +451,7 @@ export class ProjectMapper {
     };
   }
 
-static mapToProjectFiscalUpdateModel(
+  static mapToProjectFiscalUpdateModel(
   data: IUpdateProject,
   startDate: moment.Moment | null,
   endDate: moment.Moment | null
@@ -476,7 +476,7 @@ static mapToProjectFiscalUpdateModel(
     project_description: data.project_description || null,
     country_rid: data.country_rid || null,
     comments: data.comments || "",
-
+ 
     total_fte_prj: data.total_fte || 0,
     total_subcon_prj: data.total_subcon || 0,
     total_nonlabor_prj: data.total_nonlabor || 0,

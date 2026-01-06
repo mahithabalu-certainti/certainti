@@ -8,6 +8,7 @@ import {
   AccountType,
   ActivityType,
   AddCommentsType,
+  assignProjectType,
   CaseOwnerType,
   CaseStatusType,
   CaseTaskDropdownType,
@@ -26,6 +27,7 @@ import {
   ICreateCaseTeam,
   ICreateChecklist,
   priorityTypes,
+  ProjectFiscalType,
   TagsTypes,
   TaskCardDetailsType,
   TaskCardResponse,
@@ -42,18 +44,21 @@ import {
   STATUS_MESSAGE,
   rawQueries,
   MAIN_SCHEMA_NAME,
-  reviewProjectsFieldMappings,
   SCHEMANAME_PREFIX,
   emailCategorties,
-  caseTaskMapping,
+  mainTableFiltersForCase,
+  ruleNames,
+  ruleTemplateNames,
+  entityNames,
 } from "../../utils/constants";
-import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
+import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, signoffProjectTechSummary, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
 import { sendEmailWithAttachment } from "../emailService";
 import ActivitySchemaService from "../activities/schemaService";
+import { caseTaskMapping, reviewProjectsFieldMappings } from "../../utils/excelExportMapping";
+import { HelperMethods } from "./helperMethods";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
@@ -62,6 +67,7 @@ export class CaseService {
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
+  private helperMethod : HelperMethods
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -69,16 +75,20 @@ export class CaseService {
     this.activitySchemaService = new ActivitySchemaService();
     this.caseModelService = new CaseModelService(); // Initialize your model service here
     this.caseManagementService = new CaseManagementSchemaService()
+    this.helperMethod = new HelperMethods(
+      this.caseModelService
+      // no ChecklistSchemaService needed here
+    );
   }
 
-  private async getMainDb() {
+  protected async getMainDb() {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize();
     }
     return this.mainDbSequelize;
   }
 
-  private async getOrgDb() {
+  protected async getOrgDb() {
     if (!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize();
     }
@@ -111,7 +121,8 @@ export class CaseService {
 
   async createCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -119,6 +130,7 @@ export class CaseService {
     data?: { cases: any };
   }> {
     const dbInit = await this.caseModelService.getSequelize();
+    const mainDb = await this.getMainDb();
     const transaction = await dbInit.transaction();
     try {
       caseRequest.created_by = userId;
@@ -181,6 +193,32 @@ export class CaseService {
       }
 
       await transaction.commit();
+      const [caseOwnerData]: any[] = await mainDb.query(  
+        rawQueries.fetchUserDetails(caseRequest.case_owner_rid),
+        { type: QueryTypes.SELECT }
+      );
+      const [caseInfo]: any[] = await mainDb.query(
+        rawQueries.fetchCasesInfo(response.rid),
+        {
+          replacements: { case_rid: response.rid },
+          type: "SELECT"
+        });
+      let ruleEnginePayload = {
+        entityName: caseRequest.case_name,
+        entity:entityNames.case,
+        eventName: ruleNames.caseCreated,
+        userId: userId,
+        accountRid: caseRequest.account_rid,
+        targetUserID: caseRequest.case_owner_rid,
+        targetEmail: caseOwnerData.email || "",
+        entityRid: response.rid,
+        ruleScope:ruleNames.caseCreated,
+        caseName:caseInfo.case_name || "",
+        case : "Assigned",
+        triggerType:"validation",
+        status:caseInfo.status_name || ""
+      };
+     await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -224,7 +262,8 @@ export class CaseService {
    */
   async updateCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -258,7 +297,8 @@ export class CaseService {
         accountNumber,
         userId,
         caseRequest,
-        transaction
+        transaction,
+        accessToken
       );
 
       if(response.statusCode === HttpStatus.BAD_REQUEST) {
@@ -363,15 +403,18 @@ export class CaseService {
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number
       );
+      const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
       const queryResult =
         await this.caseSchemaService.getCasesHeadersSectionList(
           caseRid,
           schemaName,
-          orgDb
+          orgDb,
+          accountRid,
+          getActiveStatusId[0][0].rid
         );
       if (queryResult) {
         let isSubscriptionCreated = false;
-        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        const accountData = await this.helperMethod.fetchAccountById(accountRid);
         let accountRNumber = accountData.r_number;
 
       let childRNumber = await this.caseSchemaService.fetchParentAccount(
@@ -831,7 +874,7 @@ export class CaseService {
       let accessibleIds: string[] = [];
 
       if (!isCustomGlobal) {
-        accessibleIds = await this.getAccessibleProjectIds(
+        accessibleIds = await this.helperMethod.getAccessibleProjectIds(
           userId,
           isDefaultParent,
           isPOCProfile,
@@ -852,7 +895,7 @@ export class CaseService {
       }
 
       if (isCustomGlobal && isPOCProfile) {
-        accessibleIds = await this.getAccessibleProjectIds(
+        accessibleIds = await this.helperMethod.getAccessibleProjectIds(
           userId,
           isDefaultParent,
           isPOCProfile,
@@ -960,16 +1003,9 @@ export class CaseService {
             }
           });
         }
-        const fetchAccountDetails: any =
-          await this.caseSchemaService.getAccountDetails(data.account_rid);
-        let fetchCurrencyDetails: any;
-        if (fetchAccountDetails.currency_rid !== null) {
-          fetchCurrencyDetails =
-            await this.caseSchemaService.getCurrencyDetails(
-              fetchAccountDetails.currency_rid
-            );
-        }
-
+        let uniqueCurrencyIds : any = [...new Set(queryResult.map((c : any) => c.currency_rid))];
+        let fetchCurrencies : any = await mainDb.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
+        let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
         const finalData = geoDataAddedResult.map((d: any) => {
           return {
             rid: d.rid,
@@ -998,9 +1034,9 @@ export class CaseService {
             project_point_of_contact: d.project_point_of_contact,
             project_technical_point_of_contact:
               d.project_technical_point_of_contact,
-            currency_rid: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.rid,
-            currency_code: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_code,
-            currency_symbol: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_symbol,
+            currency_rid: d.currency_rid || null,
+            currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
+            currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
           };
         });
         return {
@@ -1053,13 +1089,19 @@ export class CaseService {
           };
         }
       }
+      
       data.fiscal_year = checkCaseExists.fiscal_year
-      const result = await this.caseSchemaService.assignProjectToCase(
+      let caseSchemaServiceResult = await this.caseSchemaService.assignProjectToCase(
         data,
         fetchParentRnumber[0][0].r_number,
         schemaName
       );
-      if (result.statusCode == HttpStatus.SUCCESS) {
+      if (caseSchemaServiceResult.statusCode == HttpStatus.SUCCESS) {
+        const result = await this.caseSchemaService.insertCaseTabels(
+          caseSchemaServiceResult.data as assignProjectType,
+          fetchParentRnumber[0][0].r_number,
+          schemaName
+        );
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: result.statusMessage,
@@ -1067,7 +1109,7 @@ export class CaseService {
       } else {
         return {
           statusCode: HttpStatus.FAILED,
-          statusMessage: result.statusMessage,
+          statusMessage: caseSchemaServiceResult.statusMessage,
         };
       }
     } else {
@@ -1130,59 +1172,6 @@ export class CaseService {
       };
     }
   }
-
-  async getAccessibleProjectIds(
-    userId: string,
-    isdefaultparent: boolean,
-    isPOC: boolean = false,
-    userEmail?: string,
-    isCustomGlobal: boolean = false
-  ): Promise<string[]> {
-    const mainDbSequelize = await initMainDbSequelize();
-    const MAIN_SCHEMA_NAME = "trd365";
-
-    const replacements: any[] = [];
-
-    let accessControlWhere = "WHERE 1=1";
-    logMessage(
-      `isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`
-    );
-
-    if (isCustomGlobal) {
-      // If isPOC is also true, restrict to POC email
-      if (isPOC && userEmail) {
-        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
-        replacements.push(userEmail, userEmail);
-      }
-      // Else allow all projects (no extra access checks)
-    } else {
-      // Non-global user – apply account/project access checks
-      const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
-      replacements.push(userId, userId, userId, userId);
-      accessControlWhere += ` AND ${accountAccessSubquery}`;
-
-      if (!isdefaultparent) {
-        // Add project-level access checks if not a parent group
-        accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
-        replacements.push(userId, userId, userId, userId);
-      }
-
-      // Only non-global users can be further filtered by POC
-      if (isPOC && userEmail) {
-        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
-        replacements.push(userEmail, userEmail);
-      }
-    }
-
-    const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
-
-    const results = await mainDbSequelize.query(query, {
-      replacements,
-      type: "SELECT",
-    });
-
-    return results.map((row: any) => row.project_fiscal_rid);
-  }
   /**
    * Creates a new case along with its associated data within a database transaction.
    *
@@ -1233,7 +1222,8 @@ export class CaseService {
    */
   async createCaseTeam(
     caseRequest: ICreateCaseTeam,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1260,7 +1250,8 @@ export class CaseService {
       await this.caseSchemaService.assignCaseTeamToTasks(
         accountNumber,
          caseRequest,
-        userId
+        userId,
+        accessToken
       );
 
       return {
@@ -1623,1101 +1614,6 @@ export class CaseService {
       throw this.throwServiceError(err as Error);
     }
   }
-
-  /**
-     * Creates a new admin checklist with associated checklist items within a database transaction.
-     *
-     * @param {ICreateChecklist} caseRequest - The checklist data including template information and checklist items to create
-     * @param {string} userId - The ID of the user creating the checklist (will be set as created_by)
-     *
-     * @returns {Promise<{
-     *   statusCode: number;
-     *   message: string;
-     *   errorMessage?: string;
-     *   data?: { checklist: any };
-     * }>} - Result of the creation process with status code, message, and checklist data if successful
-     *
-     * @description
-     * This method performs the following operations within a database transaction:
-     * - Initializes a database transaction for atomic operations
-     * - Sets the created_by field to the provided userId
-     * - Creates the admin checklist record using the schema service
-     * - Creates associated checklist items linked to the new checklist
-     * - Commits the transaction on success or rolls back on any error
-     * - Returns success response with checklist data or error response with details
-     * - Logs errors and ensures proper transaction cleanup
-     */
-  
-    async createCheckList(
-      caseRequest: ICreateChecklist,
-      userId: string
-    ): Promise<{
-      statusCode: number;
-      message: string;
-      errorMessage?: string;
-      data?: { checklist: any };
-    }> {
-      // Initialize database connection and start transaction for atomic operations
-      const dbInit = await this.caseModelService.getSequelize();
-      const transaction = await dbInit.transaction();
-      try {
-        // Set the user who is creating this checklist
-        const { accountNumber } =
-        await this.caseSchemaService.fetchValidAccountNumberById(
-          caseRequest.account_rid
-        );
-
-      if (!accountNumber) {
-        logMessage(`Invalid account ID ${caseRequest.account_rid}`);
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid account ID",
-        };
-      }
-        caseRequest.created_by = userId;
-
-      const isUnique = await this.caseSchemaService.checkIsChecklistNameUnique(caseRequest,accountNumber);
-      if (!isUnique) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `A checklist with the name "${caseRequest.checklist_name}" already exists for the fiscal year "${caseRequest.fiscal_year}". Please choose a different name.`,
-        };
-      }
-        // Create the main admin checklist record
-        const response =
-          await this.caseSchemaService.createCheckList(
-            accountNumber,
-            caseRequest,
-            transaction
-          );
-  
-        // If checklist creation was successful, manage associated checklist items (add/edit/delete)
-        if (response) {
-          await this.caseSchemaService.manageCheckListItems(
-            accountNumber,
-            caseRequest,
-            response.rid,
-            transaction
-          );
-        }
-  
-        // Commit the transaction after all operations succeed
-        await transaction.commit();
-  
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: STATUS_MESSAGE.adminChecklistCreated,
-          data: {
-            checklist: response,
-          },
-        };
-      } catch (err) {
-        logMessage(`Error creating checklist: ${err}`);
-        await transaction.rollback();
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.adminChecklistFailed,
-        };
-      }
-    }
-
-    async updateCheckList(
-        caseRequest: ICreateChecklist,
-        userId: string
-      ): Promise<{
-        statusCode: number;
-        message: string;
-        errorMessage?: string;
-        data?: { checklist: any };
-      }> {
-        // Initialize database connection and start transaction for atomic operations
-        const dbInit = await this.caseModelService.getSequelize();
-        const transaction = await dbInit.transaction();
-        try {
-          // Set the user who is creating this checklist
-          caseRequest.modified_by = userId;
-          caseRequest.created_by = userId;
-           const { accountNumber } =
-        await this.caseSchemaService.fetchValidAccountNumberById(
-          caseRequest.account_rid
-        );
-
-        if (!accountNumber) {
-          logMessage(`Invalid account ID ${caseRequest.account_rid}`);
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: "Invalid account ID",
-          };
-        }
-
-         if( caseRequest.checklist_name ){
-          const isUnique = await this.caseSchemaService.checkisExistingCheckilistUnique(caseRequest,accountNumber);
-          if (!isUnique) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: HttpStatus.BAD_REQUEST_MESSAGE,
-              errorMessage: `A checklist with the name "${caseRequest.checklist_name}" for fiscal year "${caseRequest.fiscal_year}" already exists. Please choose a different name or fiscal year.`,
-            };
-          }
-        }
-          // Create the main admin checklist record
-          const response =
-            await this.caseSchemaService.updateCheckList(
-              accountNumber,caseRequest,transaction
-            );
-
-    
-          // If checklist creation was successful, manage associated checklist items (add/edit/delete)
-          if (response) {
-            await this.caseSchemaService.manageCheckListItems(
-              accountNumber,
-              caseRequest,
-              caseRequest.checklist_rid!,
-              transaction
-            );
-          }
-    
-          // Commit the transaction after all operations succeed
-          await transaction.commit();
-    
-          return {
-            statusCode: HttpStatus.SUCCESS,
-            message: STATUS_MESSAGE.adminChecklistCreated,
-            data: {
-              checklist: response,
-            },
-          };
-        } catch (err) {
-          logMessage(`Error updating checklist: ${err}`);
-          await transaction.rollback();
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: STATUS_MESSAGE.adminChecklistFailed,
-          };
-        }
-      }
-    async getCheckListDetailsById(checkListRid: string,caseRequest:any): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { checklistDetails: any };
-  }> {
-    try {
-      const { accountNumber } =
-        await this.caseSchemaService.fetchValidAccountNumberById(
-          caseRequest.account_rid
-        );
-
-        if (!accountNumber) {
-          logMessage(`Invalid account ID ${caseRequest.account_rid}`);
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: "Invalid account ID",
-          };
-        }
-      const checklistDetails =
-        await this.caseSchemaService.fetchChecklistDetailsById(
-          checkListRid,accountNumber,caseRequest.account_rid
-        );
-  
-      if (!checklistDetails) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid CheckList ID",
-        };
-      }
-  
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          checklistDetails,
-        },
-      };
-    } catch (err) {
-      logMessage(`Error fetching checklist details, ${err}`);
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.checkListError,
-        };
-    }
-  }
-
-    async getAllChecklists(
-      userId: string,
-      attachmentLevel?: string,
-      entityId?: string,
-      accountRid?: string,
-      page: number = 1,
-      limit: number = 10,
-      search?: string,
-      filters: Record<string, any> = {},
-      sortBy: string = 'created_datetime',
-      sortOrder: string = 'DESC',
-      fiscalYear: number = 0,
-      apiType: string = 'list',
-      graphqlData? : any
-    ): Promise<{
-      statusCode: number;
-      message: string;
-      errorMessage?: string;
-      data?: { checklists: any[]; totalCount: number };
-    }> {
-      try {
-        const { accountNumber } =
-        await this.caseSchemaService.fetchValidAccountNumberById(
-          accountRid!
-        );
-
-        if (!accountNumber) {
-          logMessage(`Invalid account ID ${accountRid!}`);
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: "Invalid account ID",
-          };
-        }
-        const userGroupType = await this.caseSchemaService.getUserGroupType(
-        userId
-      );
-      const userProfileType = await this.caseSchemaService.getUserProfileType(
-        userId
-      );
-      const isCustomGlobal = userGroupType === "DEFAULT";
-      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
-      const isPOCProfile =
-        userProfileType?.profileName === "Project Point of Contact";
-      let accessibleIds: string[] = [];
-
-      if (!isCustomGlobal) {
-        accessibleIds = await this.getAccessibleProjectIds(
-          userId,
-          isDefaultParent,
-          isPOCProfile,
-          userProfileType?.email,
-          isCustomGlobal
-        );
-        if (accessibleIds.length === 0) {
-          return {
-            message: 'No accessible checklist found for the user.',
-            statusCode: HttpStatus.NOT_FOUND,
-            data: {
-                totalCount: 0,
-              checklists: [],
-            },
-          };
-        }
-      }
-
-      if (isCustomGlobal && isPOCProfile) {
-        accessibleIds = await this.getAccessibleProjectIds(
-          userId,
-          isDefaultParent,
-          isPOCProfile,
-          userProfileType?.email,
-          isCustomGlobal
-        );
-        if (accessibleIds.length === 0) {
-          return {
-            message: 'No accessible checklist found for the user.',
-            statusCode: HttpStatus.NOT_FOUND,
-            data: {
-            
-              totalCount: 0,
-              checklists: [],
-            },
-          };
-        }
-      }
-         const checklistResponse:any =
-        await this.caseSchemaService.fetchChecklists(
-          accountNumber,
-          fiscalYear,
-          attachmentLevel,
-          entityId,
-          accountRid,
-          page,
-          limit,
-          search,
-          filters,
-          sortBy,
-          sortOrder,
-          apiType,
-          accessibleIds,
-          graphqlData
-        );
-  
-         return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: { checklists: checklistResponse.checklists || [], totalCount: checklistResponse.totalCount || 0 }
-        };
-    
-      } catch (error) {
-        logMessage(`Error fetching checklists, ${error}`);
-        return {
-          statusCode: 500,
-          message: 'Failed to fetch checklists',
-          errorMessage: error instanceof Error ? error.message : 'An unknown error occurred',
-          data: { checklists: [], totalCount: 0 }
-        };
-      }
-    }
-
-  async createUserLevelTask (data : CreateCaseTaskType) {
-    const mainDb = await this.getMainDb();
-    const dbInit = await this.caseModelService.getSequelize()
-    const transaction = await dbInit.transaction()
-    try {
-      const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      if(fetchParentNumber[0].length > 0) {
-      const getTaskType : any = await mainDb.query(rawQueries.getTaskTypeMilestone());  
-      data.task_type_rid = getTaskType[0][0].rid 
-      const isTaskNameExists = await this.caseSchemaService.checkTaskExistsForUserLevelTask(data, data.task_type_rid, fetchParentNumber[0][0].r_number);
-      if(isTaskNameExists) {
-        return {
-          statusCode : HttpStatus.BAD_REQUEST,
-          statusMessage : STATUS_MESSAGE.taskNameExistsAlready,
-          data : null
-        }
-      } else {
-        const isCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number);
-        if(isCaseExists) {
-        const [getTaskStatus] = await mainDb.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT})
-        data.task_status_rid = getTaskStatus?.rid! || ''
-        const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());  
-        const findUserRoleId = await this.caseSchemaService.fetchAssignedToRole(data.assigned_to, data.case_rid, data.account_rid,fetchParentNumber[0][0].r_number);
-        data.case_team_member_role_rid = findUserRoleId?.role_rid!
-        const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid, isCaseExists.fiscal_year)
-        if(result.statusCode === HttpStatus.SUCCESS) {
-          await transaction.commit()
-          return {
-            statusCode : HttpStatus.SUCCESS,
-            statusMessage : STATUS_MESSAGE.userLevelTaskCreatedSuccess,
-            data : result.data
-          }
-        } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
-          await transaction.rollback();
-          return {
-            statusCode : HttpStatus.BAD_REQUEST,
-            statusMessage : result.statusMessage,
-            data : null
-          }
-        } else {
-          await transaction.rollback();
-          return {
-            statusCode : HttpStatus.FAILED,
-            statusMessage : STATUS_MESSAGE.taskCreateFailed,
-            data : null
-          }
-        }
-        } 
-        else {
-          return {
-            statusCode : HttpStatus.NOT_FOUND,
-            statusMessage : STATUS_MESSAGE.dataNotAvailable,
-            data : null
-          }
-        }
-      }
-    } else {
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          statusMessage : STATUS_MESSAGE.accountNotFound,
-          data : null
-        }   
-    } 
-  } 
-  catch (error) {
-    await transaction.rollback()
-    return {
-      statusCode : HttpStatus.FAILED,
-      statusMessage : STATUS_MESSAGE.taskCreateFailed,
-      data : null
-    }  
-  }
-}
-async updateUserLevelTask (data : UpdateCaseTaskType) {
-    const mainDb = await this.getMainDb();
-    const dbInit = await this.caseModelService.getSequelize()
-    const transaction = await dbInit.transaction()
-    try {
-      const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      if(fetchParentNumber[0].length > 0) {
-        const findTask : any = await this.caseSchemaService.findTaskById(data.rid, data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number, "milestone");
-        let eid;
-        if(findTask) eid = findTask.eid
-        else eid = null
-        
-        const isTaskNameExists = await this.caseSchemaService.checkTaskNameExistsForUpdate(data, fetchParentNumber[0][0].r_number, eid);
-        if(isTaskNameExists) {
-          return {
-            statusCode : HttpStatus.BAD_REQUEST,
-            statusMessage : STATUS_MESSAGE.taskNameExistsAlready
-          }         
-        }
-        else {
-          const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
-          const result = await this.caseSchemaService.updateUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
-          if(result.statusCode === HttpStatus.SUCCESS) {
-            await transaction.commit()
-          } else {
-            await transaction.rollback()
-          }
-          return {
-            statusCode : result.statusCode,
-            statusMessage : result.statusMessage
-          }
-        }
-      } else {
-        return {
-          statusCode : HttpStatus.FAILED,
-          statusMessage : STATUS_MESSAGE.accountNotFound
-        }
-      }
-    } catch (error) {
-      await transaction.rollback()
-      return {
-        statusCode : HttpStatus.FAILED,
-        statusMessage : STATUS_MESSAGE.taskUpdatedFailed
-      }
-    }  
-}
-    async getCheckListForTask(
-      accountNumber: string,
-      caseRid: string
-    )
-    {
-      try { 
-        const checklistDetails =
-        await this.caseSchemaService.fetchCheckListForTask(
-          accountNumber,
-          caseRid
-        );    
-        return {
-          checklist_name: checklistDetails.checklistData?.checklist_name,
-          checklist_items: checklistDetails.checklistItems
-        };
-      } catch (err) {
-        logMessage(`Error fetching checklist for task, ${err}`);
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.checkListError,
-        };
-      }
-    }
-
-    async taskListForCases (data : any, isExport : boolean) {
-      const mainDb = await this.getMainDb();
-
-      let fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number);
-      let doSorting : boolean;
-      if(data.sort === 'assigned_to' || data.sort === 'task_status_name') doSorting = false 
-      else doSorting = true
-      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName, isExport);
-      if(result.length > 0) {
-        let allFilteredUsers
-        let allCaseTaskStatus;
-        const userIds = [...new Set(result.map((d : any) => d.assigned_to))];
-        const taskStatusIds = [...new Set(result.map((d : any) => d.task_status_rid))];
-        let fetchStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds)
-        let fetchUserQuery = rawQueries.getAllUsers(userIds)
-        if(fetchStatusQuery) 
-          allCaseTaskStatus = await mainDb.query(fetchStatusQuery)
-        if(fetchUserQuery)
-          allFilteredUsers = await mainDb.query(fetchUserQuery)
-
-        const userMap : Map<string, string> = new Map(allFilteredUsers?.[0].map((d : any) => [d.rid, d.name]));
-        const taskStatusMap : Map<string, string> = new Map(allCaseTaskStatus?.[0].map((d : any) => [d.rid, d.task_status_name]));
-
-        let mapResult = result.map((d : any) => {
-          return {
-            ...d,
-            task_status_name : taskStatusMap.get(d.task_status_rid) || null,
-            assigned_to_name : userMap.get(d.assigned_to) || null
-          }
-        });
-        
-        if(data.sort === 'task_status_name' && data.sort_by === 'DESC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.task_status_name || ""
-            const taskNameB = b.task_status_name || ""
-            return taskNameB.localeCompare(taskNameA)
-          })
-        } 
-        else if(data.sort === 'task_status_name' && data.sort_by === 'ASC') {
-          mapResult = mapResult.sort((a, b) => {
-            const taskNameA = a.task_status_name || ""
-            const taskNameB = b.task_status_name || ""
-            return taskNameA.localeCompare(taskNameB)
-          })
-        }
-        else if(data.sort === 'assigned_to_name' && data.sort_by === 'DESC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.assigned_to_name || ""
-            const taskNameB = b.assigned_to_name || ""           
-            return taskNameB.localeCompare(taskNameA)
-          })
-        }
-        else if(data.sort === 'assigned_to_name' && data.sort_by === 'ASC') {
-          mapResult = mapResult.sort((a, b) => {
-            const taskNameA = a.assigned_to_name || ""
-            const taskNameB = b.assigned_to_name || ""             
-            return taskNameA.localeCompare(taskNameB)
-          })
-        }
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : mapResult
-        }
-      } else {
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : []
-        }
-      }
-    }
-
-    async createOrMapTags (data : any) {
-      const mainDb = await this.getMainDb();
-      const dbInit = await this.caseModelService.getSequelize();
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
-      let iterationCount = 0
-      let totalIteration = 0
-      data.tags.length = totalIteration
-      for(let d of data.tags) {
-        iterationCount += 1
-        await this.caseSchemaService.createOrUpdateTags(data.task_rid, data.account_rid,
-        data?.case_rid, data.tag_rid, data.is_new_tag, fetchParent[0][0].r_number, data.userId, getActiveStatusId[0][0].rid),data.task_type
-      }
-      if(totalIteration === iterationCount) {
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          statusMessage : STATUS_MESSAGE.tagsCreatedSuccesfully
-        }
-      } else {
-        return {
-          statusCode : HttpStatus.FAILED,
-          statusMessage : STATUS_MESSAGE.tagsCreationFailed
-        }
-      }
-    }
-
-    async fetchTagsForDropdown (data : any) {
-      const mainDb = await this.getMainDb();
-      let mappedTagsResult : any[] = []
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      if(data.action === "create") {
-        mappedTagsResult = []
-        const result = await this.caseSchemaService.fetchAllTags(mappedTagsResult);
-        if(result.length > 0) {
-          return {
-            statusCode : HttpStatus.SUCCESS,
-            data : result
-          }
-        } else {
-          return {
-            statusCode : HttpStatus.NOT_FOUND,
-            data : []
-          }
-        }
-      }
-      else {
-        mappedTagsResult = await this.caseSchemaService.fetchMappedTags(fetchParent[0][0].r_number, data.case_rid, data.account_rid, data.task_rid)
-        const result = await this.caseSchemaService.fetchAllTags(mappedTagsResult);
-        if(result.length > 0) {
-          return {
-            statusCode : HttpStatus.SUCCESS,
-            data : result
-          }
-        } else {
-          return {
-            statusCode : HttpStatus.NOT_FOUND,
-            data : []
-          }
-        }
-      }
-    }
-    async addCommentsToTask (data : AddCommentsType, userId : string, files : Express.Multer.File[]) {
-      const mainDb = await this.getMainDb();
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      data.created_by = userId
-      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, data.account_rid, data.case_rid, fetchParent[0][0].r_number,data.task_type);
-      const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
-      if(result.statusCode == HttpStatus.SUCCESS) {
-        return result
-      } else {
-        return result
-      }
-    }
-    async exportTask (data : any, userId : string) {
-      const result = await this.taskListForCases(data, true);
-      if(result.statusCode === HttpStatus.SUCCESS) {
-        const fields = await this.getAllowedExportFields(userId,"cases_workbreakdown_view_edit");
-        const allowedFieldSet = new Set<string>();
-        for (const field of fields) {
-          if (field.read) {
-            allowedFieldSet.add(field.field_name);
-          }
-        }
-        const finalData = result.data.map((d : any) => {
-          let resultMap : { [key: string]: any } = {
-            "Task Name" : d.task_name,
-            "Assigned To" : d.assigned_to_name || "-",
-            "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
-            "Due Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
-            "Status": d.task_status_name || "-",
-          }
-          const exportRecord: Record<string, any> = {};
-          caseTaskMapping.forEach((mapping) => {
-            if (allowedFieldSet.has(mapping.permissionField)) {
-              exportRecord[mapping.exportField] = resultMap[mapping.exportField];
-            }
-          });
-          return exportRecord;
-        })
-        const generateBase64Response = await generateExcelBase64(
-              finalData,
-              "Case Task"
-            );
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : generateBase64Response
-        };
-      } 
-      else {
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : null
-        };;
-      }
-    }
-    async updateComments (data : UpdateCommentsType, userId : string, files : Express.Multer.File[]) {
-      const mainDb = await this.getMainDb();
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      data.modified_by = userId
-      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number,data.task_type);
-      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
-      if(result?.statusCode === HttpStatus.SUCCESS) {
-        return {
-          statusCode : result.statusCode,
-          statusMessage : result.statusMessage
-        }
-      } else {
-        return {
-          statusCode : HttpStatus.FAILED,
-          statusMessage : STATUS_MESSAGE.commentsFailedUpdate
-        }
-      }
-    }
-    async deleteComments (data : DeleteCommentsType, userId : string) {
-      const mainDb = await this.getMainDb();
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      data.modified_by = userId
-      const result = await this.caseSchemaService.deleteComments(data, fetchParent[0][0].r_number);
-      if(result?.statusCode === HttpStatus.SUCCESS) {     
-        const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
-        await CaseHistory.create({
-          created_by : data.modified_by,
-          created_datetime : new Date(),
-          case_rid : data.case_rid,
-          task_rid : data.task_rid,
-          attribute_name : "Comments",
-          old_value : "CREATE",
-          new_value : 'deleted a comment'
-        })   
-        return {
-          statusCode : result.statusCode,
-          statusMessage : result.statusMessage
-        }
-      } else {
-        return {
-          statusCode : HttpStatus.FAILED,
-          statusMessage : STATUS_MESSAGE.commentsFailedUpdate
-        }
-      }
-    }
-    async fetchTaskComment (data : CommentsListType) : Promise<any> {
-      const mainDb = await this.getMainDb()
-      const orgDb = await this.getOrgDb();
-
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-      
-      const result : any = await orgDb.query(fetchTaskComments(data.page, data.limit, data.task_rid, data.account_rid, data.case_rid, schemaName,data?.task_type || 'milestone'));
-      if(result[0][0].comments !== null) {
-        const total = result[0][0].comments[0].total_result
-        const userIds = [...new Set(result[0][0].comments.map((d : any) => d.created_by))];
-        const findUsers = await mainDb.query(rawQueries.getOwnerDetails(userIds));
-        const userMap = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
-        const structuredData = await Promise.all(
-        (result[0][0].comments || []).map(async (d: any) => {
-          delete d.total_result
-            const updatedAttachments = await Promise.all(
-              (d.comments_attachments || []).map(async (da: any) => ({
-                ...da,
-                browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
-              }))
-            );
-            return {
-              ...d,
-              created_by_name : userMap.get(d.created_by) || null,
-              comments_attachments: updatedAttachments,
-            };
-          })
-        );
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : total,
-          data : structuredData
-        }
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : finalData
-        }
-      } else {
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : 0,
-          data : []
-        }
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : finalData
-        }
-      }
-    }
-
-    async addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) {
-      const mainDb = await this.getMainDb();
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId);
-      return result;
-    }
-
-    async deleteTaskLevelAttachment (data : any, userId : string) {
-      const mainDb = await this.getMainDb();
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const result = await this.caseSchemaService.deleteAttachment(fetchParent[0][0].r_number,data, userId);
-      return result;
-    }
-
-    async listTaskLevelAttachment (data : any) {
-      const mainDb = await this.getMainDb();
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const result = await this.caseSchemaService.listTaskLevelAttachments(fetchParent[0][0].r_number, data);
-      return result;
-    }
-
-    async fetchAllTaskActivities (data : any) {
-      const mainDb = await this.getMainDb();
-      const orgDb = await this.getOrgDb();
-
-      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-
-      const result = await orgDb.query<ActivityType>(fetchTaskActivities(data.page, data.limit, schemaName, data.case_rid, data.task_rid,data.task_type), {type : QueryTypes.SELECT});
-      if(result.length > 0) {
-        const userIds = [...new Set(result.map((d : any) => d.created_by))];
-        const findUsers : any = await mainDb.query(rawQueries.getOwnerDetails(userIds));
-        const mapUser : Map<string, string> = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
-        const total = parseInt(result[0]!.total_result)
-        const structuredResult = result.map((d : any) => {
-          delete d.total_result
-          return {
-            ...d,
-            old_value : d.old_value === null ? "-" : d.old_value,
-            new_value : d.new_value === null ? "-" : d.new_value,
-            created_by_name : mapUser.get(d.created_by) || null
-          }
-        })
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : total,
-          data : structuredResult
-        }
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : finalData
-        }
-      } else {
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : 0,
-          data : []
-        }
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : finalData
-        }
-      }
-
-    }
-    async fetchTaskCardDetailsList (data : any) {
-      const mainDb = await this.getMainDb();
-      const orgDb = await this.getOrgDb();
-
-      const parentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      let schemaName = rawQueries.fetchSchemaName(parentNumber[0][0].r_number);
-      const fetchChecklistStatusRid : any = await mainDb.query(rawQueries.fetchChecklistStatus());
-      let result = [];
-      if(data.task_type === 'activity') {
-        result = await orgDb.query<TaskCardResponse>(taskCardDetailsActivityTask(schemaName, data.task_rid, data.account_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
-      } else {
-        const getActiveId : any = await mainDb.query(rawQueries.getActiveStatusId());
-        result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, data.task_rid, data.account_rid, data.case_rid, fetchChecklistStatusRid[0][0].rid, getActiveId[0][0].rid),{type : QueryTypes.SELECT});
-      }
-      if(result.length > 0) {
-        const findRole : any = await mainDb.query(rawQueries.getCaseTeamRoleName(result[0]?.task_details.case_team_member_role_rid!));
-        let userIds : Record<string, string> = {
-          created_by : result[0]?.task_details.created_by!,
-          assigned_to : result[0]?.task_details.assigned_to!,
-          modified_by : result[0]?.task_details.modified_by!,
-        }
-        let priorityId = {
-          priority_id : result[0]?.task_details.priority_rid!
-        }
-        let taskStatusID = {
-          task_status_rid : result[0]?.task_details.task_status_rid
-        }
-        let weightageValue;
-        if(result[0]?.task_details?.weightage_rid !== null && data.task_type !== 'activity') {
-          const weightageRes : any = await mainDb.query(rawQueries.getWeightageValue(result[0]?.task_details.weightage_rid!));
-          weightageValue = weightageRes[0][0].weightage_value;
-        } else {
-          weightageValue = null;
-        }
-        let taskCategoryValue;
-        if(result[0]?.task_details?.task_category_rid !== null  && data.task_type !== 'activity') {
-          const taskCategoryQuery : any = await mainDb.query(rawQueries.getTaskCategoryByRid(result[0]?.task_details.task_category_rid!));
-          taskCategoryValue = taskCategoryQuery[0][0].category_name
-        } else {
-          taskCategoryValue = null;
-        }
-
-          
-        let priority;
-        let taskStatusType;
-        const priorityIds : string[] = [];
-        const taskStatusIds : string[] = [];
-        let tagMap : Map<string, string> = new Map();
-        let checklistItemsStatusIds : string[];
-        let checkListData : any
-        let taskNameMap : Map<string, string> = new Map()
-        let relationshipConnectorMap : Map<string, string>;
-        let sourceIds;
-        let targetIds;
-        let taskIds = []
-        let relationshipConnectorIds;
-        let taskNameResult;
-        let workflowResult;
-        if(result[0]?.task_details.workflow_connector !== null && data.task_type !== 'activity') {
-          sourceIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.source_rid))]
-          targetIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.target_rid))]
-          relationshipConnectorIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.relationship_connector_rid))]
-          taskIds.push(...sourceIds, ...targetIds)
-          let query = rawQueries.getTaskNames(taskIds, schemaName);
-          let relationshipQuery = rawQueries.getWorkflowConnectors(relationshipConnectorIds);
-          if(query) {
-            taskNameResult = await orgDb.query(query);
-            taskNameMap = new Map(taskNameResult[0].map((d : any) => [d.rid, d.task_name]))
-          }
-          if(relationshipQuery) {
-            workflowResult = await mainDb.query(relationshipQuery);
-            relationshipConnectorMap = new Map(workflowResult[0].map((d : any) => [d.rid, d.relationship_type]));
-          }
-        }
-        if( result[0]?.task_details.checklists && result[0]?.task_details?.checklists?.checklist_items !== null) {
-          checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
-        } else {
-          checklistItemsStatusIds = []
-        }
-        
-        const uniqueUserIds = [...new Set(Object.values(userIds))];
-        if(result[0]?.task_details.tags !== null) {
-          let tagIds = [...new Set(result[0]?.task_details.tags.map((d : taskTags) => d.tag_rid))]
-          if(tagIds.length > 0) {
-            let query = rawQueries.getAllTagsName(tagIds)
-            if(query) {
-              const findTagNames = await mainDb.query<TagsTypes>(query, {type : QueryTypes.SELECT});
-              if(findTagNames.length > 0) {
-                tagMap = new Map(findTagNames.map((d : TagsTypes) => [d.rid, d.tag_name]));
-              }
-            }
-          }
-        }
-        
-        priorityIds.push(priorityId.priority_id)
-        taskStatusIds.push(taskStatusID.task_status_rid!)
-        const getUsers = await mainDb.query(rawQueries.getOwnerDetails(uniqueUserIds))
-        const fetchPriorityQuery = rawQueries.getAllPriorityTypes(priorityIds)
-        const checkListStatusName : any = await mainDb.query(rawQueries.fetchCheckListStatusNamesByRids(MAIN_SCHEMA_NAME, checklistItemsStatusIds))
-        if(fetchPriorityQuery) {
-          priority = await mainDb.query(fetchPriorityQuery)
-        }
-          let taskStatusQuery;
-          // let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
-          if(data.task_type === 'activity') {
-            taskStatusIds.push(taskStatusID.task_status_rid!);
-            taskStatusQuery = rawQueries.fetchActivityStatus(taskStatusIds);
-          } else {
-            taskStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds);
-          }
-          if(taskStatusQuery) {
-            taskStatusType = await mainDb.query(taskStatusQuery);
-          }
-          let taskStatusMap: Map<string, string>;
-          if(data.task_type === 'activity') {
-            taskStatusMap = new Map(taskStatusType?.[0]?.map((d: any) => [d.rid, d.name]));
-          } else {
-            taskStatusMap = new Map(taskStatusType?.[0]?.map((d: any) => [d.rid, d.task_status_name]));
-          }
-      
-        let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
-        let assignedToMap : Map<string, string> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, d.name]));
-        let checkListItemsMap : Map<string, string> = new Map(checkListStatusName?.[0]?.map((d : any) => [d.rid, d.status_name]));
-
-        const resData = result[0];
-        if(result[0]?.task_details.checklists ===null) checkListData = null
-        else checkListData = {
-            rid : resData?.task_details.checklists.rid,
-            task_rid: resData?.task_details.checklists.task_rid,
-            checklist_name : resData?.task_details.checklists.checklist_name,
-            checklist_description : resData?.task_details.checklists.checklist_description,
-            checklist_items_count : resData?.task_details.checklists.checklist_items_count,
-            completed_items_count : resData?.task_details.checklists.completed_items_count,
-            checklist_items : resData?.task_details.checklists.checklist_items !== null ? resData?.task_details.checklists.checklist_items.map((d : ChecklistItems) => {
-              return {
-                rid : d.rid,
-                status_rid : d.status_rid,
-                checklist_item_status_name : checkListItemsMap.get(d.status_rid) || null,
-                checklist_item_name : d.checklist_item_name,
-                checklist_item_description : d.checklist_item_description
-              }
-
-            }) : [],
-          }
-        let finalWorkflowData
-        if(data.task_type !== 'activity'){
-        if(result[0]?.task_details.workflow_connector === null) {
-          finalWorkflowData = []
-        } else {
-          finalWorkflowData = result[0]?.task_details?.workflow_connector?.filter((f : any) => f.rid !== null).map((d : any) => {
-            return {
-              ...d,
-              source_task_name : taskNameMap.get(d.source_rid),
-              target_task_name : taskNameMap.get(d.target_rid),
-              relationship_name : relationshipConnectorMap.get(d.relationship_connector_rid)
-            }
-          }) || []
-        }
-      }
-        let finalStruture = {
-          rid : resData?.task_details.rid,
-          r_number : resData?.task_details.r_number,
-          task_name : resData?.task_details.task_name,
-          created_by : resData?.task_details.created_by,
-          fiscal_year : resData?.task_details.fiscal_year || null,
-          created_by_name : assignedToMap.get(resData?.task_details.created_by!) || null,
-          assigned_to : resData?.task_details.assigned_to,
-          assigned_to_name :  assignedToMap.get(resData?.task_details.assigned_to!) || null,
-          modified_by : resData?.task_details.modified_by,
-          modified_by_name : assignedToMap.get(resData?.task_details.modified_by!) || null,
-          priority_rid : resData?.task_details.priority_rid,
-          priority_name : priorityMap.get(resData?.task_details.priority_rid!) || null,
-          task_status_rid : resData?.task_details.task_status_rid,
-          task_status_name : taskStatusMap.get(resData?.task_details.task_status_rid!) || null,
-          created_datetime : new Date(resData?.task_details.created_datetime!).toISOString(),
-          task_description : data.task_type !== 'activity' ? resData?.task_details.task_description : resData?.task_details.description,
-          effective_start_datetime : resData?.task_details.effective_start_datetime,
-          effective_end_datetime : resData?.task_details.effective_end_datetime,
-          checklist_rid : data.task_type === 'activity' ? resData?.task_details?.checklist_rid : resData?.task_details?.checklists?.rid,
-          checklist_name : resData?.task_details?.checklists?.checklist_name,
-          case_team_member_role_rid : resData?.task_details.case_team_member_role_rid,
-          case_team_member_role_name : findRole[0][0] !== undefined ? findRole[0][0].role_name : null,
-          weightage_rid : resData?.task_details?.weightage_rid,
-          weightage_value : weightageValue,
-          task_category_rid : resData?.task_details?.task_category_rid,
-          task_category_name : taskCategoryValue,
-          checklists : checkListData,
-          tags : resData?.task_details.tags.filter((f : taskTags) => f.tag_rid !== null).map((d : taskTags) => {
-              return {
-                tag_rid : d.tag_rid,
-                tag_name : tagMap.get(d.tag_rid) || null
-              }
-            }) || [],
-          workflow_connector : finalWorkflowData
-        }
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : finalStruture
-        }
-      } else {
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : null
-        }
-      }
-    }
-    async getCasePriortyList () {
-      const mainDb = await this.getMainDb();
-      const result = await mainDb.query<priorityTypes>(rawQueries.getPriorityTypes(), {type : QueryTypes.SELECT});
-      return result;
-    }
-
-    async getCaseTaskStatusList () {
-      const mainDb = await this.getMainDb();
-      const result = await mainDb.query<caseTaskStatusTypes>(listAllTaskStatus(), {type : QueryTypes.SELECT});
-      return result;
-    }
-
-    async addCollaboratorToTask (data : any) {
-      const mainDb = await this.getMainDb();
-      const parentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const result = await this.caseSchemaService.addCollaborators(data, parentNumber[0][0].r_number);
-      return result;
-    }
-    async getCollaboratorsList (data : any) {
-      const mainDb = await this.getMainDb();
-      const orgDb = await this.getOrgDb();
-      const parentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb)); 
-      let result = await this.caseSchemaService.fetchCollaboratorsList(parentNumber[0][0].r_number, data);
-      if(result.length > 0) {
-        let userLists;
-        let userMap : Map<string, string>
-        const uniqueIds = [...new Set(result.map((d : any) => d.assigned_to))];
-        if(uniqueIds.length > 0) {
-          userLists = await mainDb.query(rawQueries.getOwnerDetails(uniqueIds));
-          userMap = new Map(userLists[0].map((d : any) => [d.rid, d.name]));
-          result = result.map((d : any) => {
-            return {
-              ...d,
-              assigned_to_name : userMap.get(d.assigned_to)
-            }
-          });
-          return result;
-        } else {
-          return []
-        }
-      }
-      else return []
-    }
-
     async getReviewProjects(
     data: any,
     filters: Record<string, any>,
@@ -2852,6 +1748,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
                       total_effort_prj: d.total_effort_prj,
                       total_subcon_prj: d.total_subcon_prj,
                       total_cost_fte_prj: d.total_cost_fte_prj,
+                      total_cost_subcon_prj: d.total_cost_subcon_prj,
                       total_nonlabor_prj: d.total_nonlabor_prj,
                       total_resources_prj: d.total_resources_prj,
                       total_effort_fte_prj  : d.total_effort_fte_prj,
@@ -3144,71 +2041,82 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         };
       }
     }
-  
-  async linkTask (data : CaseTaskWorkFlowCreate) {
-    const mainDb = await this.getMainDb();
-    const dbInit = await this.caseModelService.getSequelize();
-    const transaction = await dbInit.transaction();
-    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.taskWorkflowConnector(accountNumber[0][0].r_number, data, transaction);
-    return result;
-  }
-  async deleteLinkTask (data : CaseTaskWorkFlowCreate) {
-    const mainDb = await this.getMainDb();
-    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.deleteTaskWorkConnector(accountNumber[0][0].r_number, data);
-    return result;
-  }
-  async deleteTagsAccountLevel (data : any) {
-    const mainDb = await this.getMainDb();
-    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId,data?.task_type || "case_task");
-    return result;
-  }
-  async deleteCollaborators (data : any) {
-    const mainDb = await this.getMainDb();
-    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.deleteCollaborators(accountNumber[0][0].r_number, data);
-    return result;
-  }
-  async updateChecklistItemsStatus (data : any) {
-    const mainDb = await this.getMainDb();
-    const dbInit = await this.caseModelService.getSequelize();
-    const transaction = await dbInit.transaction();
-    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.updateChecklistItems(data, accountNumber[0][0].r_number, transaction);
-    if(result === 1) {
-      return {
-        statusCode : HttpStatus.SUCCESS,
-        statusMessage : STATUS_MESSAGE.checklistItemsStatusSuccess
+
+  async getCaseSubmissionDate(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseSubmissionDate: any };
+  }> {
+    try {
+      const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
       }
-    } else {
+      const caseSubmissionDate = await this.caseSchemaService.getCaseSubmissionDate(data,accountNumber);
       return {
-        statusCode : HttpStatus.FAILED,
-        statusMessage : STATUS_MESSAGE.failedToUpdate
-      }
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseSubmissionDate,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case submission date, ${err}`);
+      throw this.throwServiceError(err as Error);
     }
   }
-  async getTaskDropDownForDependencyMapping (data : any) {
+  async signOffTechnicalDocumentation (data : any) {
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
     const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-    const {Case} = await this.caseModelService.getModels(fetchParent[0][0].r_number);
-    const checkCaseStatus = await Case.findOne({where : {rid : data.case_rid}, raw : true});
-    let finalResult;
-    if(checkCaseStatus) {
-      const [fetchCaseStatus] = await mainDb.query<CaseStatusType>(rawQueries.getCaseStatusById(checkCaseStatus.status_rid), {type : QueryTypes.SELECT});
-      const [fetchMilestoneReview] = await mainDb.query<TaskTypeResponse>(rawQueries.getMilestoneReview(), {type : QueryTypes.SELECT});
-      if(fetchCaseStatus?.status_name === "Audit Review") {
-        if(fetchMilestoneReview !== undefined) {
-          finalResult = await orgDb.query<CaseTaskDropdownType>(rawQueries.getTaskDropdownForCaseLevel(schemaName, data.case_rid, data.account_rid, true, ''), {type : QueryTypes.SELECT});
-          return finalResult
-        } else return []
+    if(fetchParent[0].length > 0) {
+      const schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+      const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
+      const [isProjectExists] = await orgDb.query<ProjectFiscalType>(rawQueries.fetchProjectFiscalById(data.project_fiscal_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
+      if(isProjectExists) {
+        if (isProjectExists.signoff && !data.signoff) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.signoffNotAllowed
+          }
+        } else if (isProjectExists.signoff === data.signoff) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.technicalDocsAlreadySignedOff
+          }
+        }
+        else {
+          await orgDb.query(signoffProjectTechSummary(schemaName, data.project_fiscal_rid, data.account_rid, data.signoff, data.userId));
+          if(data.case_rid && (data.signoff !== isProjectExists.signoff)) {
+            await CaseHistory.create({
+              case_rid : data.case_rid,
+              old_value : "CREATE",
+              attribute_name : "Technical Documentation",
+              created_by : data.userId,
+              new_value : `signed off technical documentation for ${isProjectExists.project_code}`
+            });
+          }
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.technicalDocumentationSignedOff
+          }
+        }
       } else {
-        finalResult = await orgDb.query<CaseTaskDropdownType>(rawQueries.getTaskDropdownForCaseLevel(schemaName, data.case_rid, data.account_rid, false, fetchMilestoneReview!.rid), {type : QueryTypes.SELECT})
-        return finalResult
-      } 
-    } else return []
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNoFound
+      }
+    }
   }
 }

@@ -5,10 +5,11 @@ import {
   where,
   fn,
   col,
+  QueryTypes,
 } from "sequelize";
 import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
-import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
-import { errorLog, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
+import { IAccount, IUpdateAccount, AccountAttributes, CaseExistsType } from "../utils/types";
+import { errorLog, generateSasUrl, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
 import { Account } from "../models/accountModel";
 import { Country } from "../models/countryModel";
@@ -20,10 +21,12 @@ import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
+import { initOrgSequelize } from "../config/orgdbDataSource";
 
 class AccountService {
   private accountRepository: typeof Account | null;
   private schemaService: SchemaService;
+  private orgDbSequelize : Sequelize | null = null;
 
   constructor() {
     this.accountRepository = null;
@@ -142,7 +145,7 @@ async accountList(
         globalFilters,
         {
           parentWhereClause: { ...parentWhereClauseBase },
-          childWhereClause: { ...whereClause, ...childWhereClauseBase },
+          childWhereClause: { ...whereClause, ...childWhereClauseBase},
         }
       );
 
@@ -239,7 +242,7 @@ async accountList(
             },
             ...childWhereClause,
           },
-          include: this.buildChildIncludes(),
+          include: this.buildChildIncludes(fiscalYear),
           order: [
             ...order,
             [
@@ -432,7 +435,15 @@ async accountList(
     ];
   }
 
-  private buildChildIncludes(): any[] {
+  private buildChildIncludes(fiscalYear : any): any[] {
+    let whereCondition;
+    if(fiscalYear !== 'FY-All') {
+      whereCondition = {
+          fiscal_year : fiscalYear
+        }
+    } else {
+      whereCondition = {}
+    }
     return [
       {
         model: Country,
@@ -464,6 +475,7 @@ async accountList(
       {
         model: AccountFiscalSummary,
         as: "projects_by_fiscal_year",
+        where : whereCondition,
         attributes: [
           "rid",
           [Sequelize.literal("'FY-' || fiscal_year"), "fiscal_year"],
@@ -713,7 +725,7 @@ async accountList(
             },
             ...childWhereClause,
           },
-          include: this.buildChildIncludes(),
+          include: this.buildChildIncludes(fiscalYear),
           order: [
             ...order,
             [
@@ -1207,7 +1219,7 @@ async accountList(
       });
       if (account.rid && file) {
         if (file) {
-          const file_url = await uploadToAzureBlob(file, account.rid);
+          const file_url = await uploadToAzureBlob(file, account.rid,account.r_number!);
           await repository.update(
             { logo_url: file_url },
             { where: { rid: account.rid }, returning: true }
@@ -1337,7 +1349,8 @@ async accountList(
  */
   async updateAccount(
     accountData: IUpdateAccount,
-    userId: string
+    userId: string,
+    file?: Express.Multer.File
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1361,10 +1374,9 @@ async accountList(
         industry_name_other,
         key_contacts,
         parent_account_rid,
-        logo_url,
         organisation_name,
       } = accountData;
-
+      let logo_url = accountData.logo_url;
       // Check if account name already exists before update
       const existingAccount = await repository.findOne({
         where: {
@@ -1409,7 +1421,11 @@ async accountList(
       }
 
       let parent_account: any = null;
-
+      if(file)
+      {
+        const file_url = await uploadToAzureBlob(file, accountData.account_rid, existingAcc?.r_number!);
+        logo_url = file_url;
+      }
       if (data_storage === "store_in_parent" && parent_account_rid !== null) {
         parent_account = await repository.findOne({
           where: {
@@ -1699,6 +1715,11 @@ async accountList(
         });
         accountNumber = parentAccount?.r_number || "";
       }
+      if(accountById?.logo_url)
+      {
+        console.log("Generating SAS URL for logo:", accountById.logo_url);
+        accountById.logo_url =  await generateSasUrl(accountById.logo_url);
+      }
 
       // Fetch related data in parallel
       const [accountDetails, keyContacts, attachments, userNames] =
@@ -1733,6 +1754,7 @@ async accountList(
 
       // Process attachments
       const sequelize = await initSequelize();
+      const orgSequelize = await initOrgSequelize();
       const documentTypeIds = attachments.map((a) => a.document_type_rid);
       const documentCategoryIds = attachments.map(
         (a) => a.document_category_rid
@@ -1784,6 +1806,17 @@ async accountList(
           ? `${attachment.size_in_mb} mb`
           : "0 mb",
       }));
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      let isCaseExists : boolean = false;
+      const checkTableCaseTableExists : any = await orgSequelize.query(rawQueries.checkCaseTableExists(schemaName));
+      if(checkTableCaseTableExists[0][0].exists === true) {
+        const checkCaseExistsForAccount = await orgSequelize.query<CaseExistsType>(rawQueries.checkCaseExistsForAccount(schemaName, account_id), {type : QueryTypes.SELECT})
+        if(checkCaseExistsForAccount.length > 0) {
+          isCaseExists = true
+        }
+      } else {
+        isCaseExists = false;
+      }
 
       // Construct final account data
       const accountData = {
@@ -1794,6 +1827,7 @@ async accountList(
           accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
         modified_by:
           accountDetails.length > 0 ? userNames?.modified_by_name || "" : "",
+        is_case_exists : isCaseExists
       };
 
       return {
@@ -2047,22 +2081,59 @@ async accountList(
         }
       );
 
-      const globalAccount = await repository.findAll({
+      const globalAccountRaw = await repository.findAll({
         where: parentWhereClause,
-        attributes: ['rid', 'account_name','currency_rid'],
+        attributes: ['rid', 'account_name','currency_rid', 'country_rid',"r_number"],
         include: [
           {
             model: Account,
             as: 'child_accounts',
-            attributes: ['rid', 'account_name','currency_rid'],
+            attributes: ['rid', 'account_name', 'currency_rid', 'country_rid',"r_number"],
             required: false,
             where: childWhereClause,
             separate: true,
             order: [[sortBy, sortOrder]],
-          }
+            include: [
+              {
+                model: Country,
+                as: 'country',
+                attributes: ['country_code'],
+                required: false,
+              },
+            ],
+          },
+          {
+            model: Country,
+            as: 'country',
+            attributes: ['country_code'],
+            required: false,
+          },
         ],
         order: [[sortBy, sortOrder]],
-        ...paginationOptions
+        ...paginationOptions,
+      });
+
+      // Map to flatten country_code to top-level for parent and child accounts
+      const globalAccount = globalAccountRaw.map((acc: any) => {
+        const country_code = acc.country ? acc.country.country_code : null;
+        const children = Array.isArray(acc.child_accounts)
+          ? acc.child_accounts.map((child: any) => {
+              const childPlain = child.get({ plain: true });
+              return {
+                ...childPlain,
+                country_code: childPlain.country ? childPlain.country.country_code : null,
+              };
+            })
+          : [];
+        const accPlain = acc.get({ plain: true });
+        // Remove 'country' from parent and child
+        delete accPlain.country;
+        children.forEach((child: { country: any; }) => { delete child.country; });
+        return {
+          ...accPlain,
+          country_code,
+          child_accounts: children,
+        };
       });
 
         return {
@@ -2080,22 +2151,59 @@ async accountList(
       );
 
     // DEFAULT: Return all top-level (parent) accounts with their children
-    const globalAccount = await repository.findAll({
+    const globalAccountRaw = await repository.findAll({
       where: parentWhereClause,
-      attributes: ['rid', 'account_name','currency_rid'],
+      attributes: ['rid', 'account_name', 'currency_rid', 'country_rid',"r_number"],
       include: [
         {
           model: Account,
           as: 'child_accounts',
-            where: childWhereClause,
-          attributes: ['rid', 'account_name','currency_rid'],
+          where: childWhereClause,
+          attributes: ['rid', 'account_name', 'currency_rid', 'country_rid',"r_number"],
           required: false,
           separate: true,
           order: [[sortBy, sortOrder]],
-        }
+          include: [
+            {
+              model: Country,
+              as: 'country',
+              attributes: ['country_code'],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: Country,
+          as: 'country',
+          attributes: ['country_code'],
+          required: false,
+        },
       ],
       order: [[sortBy, sortOrder]],
       ...paginationOptions
+    });
+
+    // Flatten country_code to top-level for parent and child accounts
+    const globalAccount = globalAccountRaw.map((acc: any) => {
+      const country_code = acc.country ? acc.country.country_code : null;
+      const children = Array.isArray(acc.child_accounts)
+        ? acc.child_accounts.map((child: any) => {
+            const childPlain = child.get({ plain: true });
+            return {
+              ...childPlain,
+              country_code: childPlain.country ? childPlain.country.country_code : null,
+            };
+          })
+        : [];
+      const accPlain = acc.get({ plain: true });
+      // Remove 'country' from parent and child
+      delete accPlain.country;
+      children.forEach((child: { country: any; }) => { delete child.country; });
+      return {
+        ...accPlain,
+        country_code,
+        child_accounts: children,
+      };
     });
 
       return {

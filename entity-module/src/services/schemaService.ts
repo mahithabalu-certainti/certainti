@@ -3228,7 +3228,7 @@ class SchemaService {
     }
   }
 
-  async insertProjectTypeAndStatus(project: any, mainDdSequilze: Sequelize) {
+  async insertProjectTypeAndStatus(project: any, mainDdSequilze: Sequelize,projectTypesFromConfig:string[]) {
     try {
       if (project.status_rid) {
         const statusResult: any = await mainDdSequilze.query(
@@ -3252,6 +3252,14 @@ class SchemaService {
         );
         const projectType = projectTypeResult[0];
         project.project_type_name = projectType?.project_type_name;
+        project.is_rd_trigger_qualified = false;
+        if(projectTypesFromConfig && projectTypesFromConfig.length >0){
+          if (project.project_type_rid) {
+            const normalizedProjectTypeName = project.project_type_rid.trim().toLowerCase();
+            const normalizedProjectTypes = projectTypesFromConfig.map((pt: string) => pt.trim().toLowerCase());
+            project.is_rd_trigger_qualified = normalizedProjectTypes.includes(normalizedProjectTypeName);
+          }
+        }
       }
 
       return project;

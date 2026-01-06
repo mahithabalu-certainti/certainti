@@ -488,6 +488,11 @@ const listUserGroupUserSchema = Joi.object({
   search: Joi.string().max(255).optional().allow(""),
 });
 
+const listNotificationSchema = Joi.object({
+  nextOffset: Joi.string().optional().allow('', null),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+});
+
 
 export { createUserSchema, updateUserSchema, enterpriseUserSchema,
    userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema, 
@@ -497,4 +502,4 @@ export { createUserSchema, updateUserSchema, enterpriseUserSchema,
   createUserGroupSchema,updateUserGroupSchema,listUserGroupSchema,
 listActiveUserGroupSchema,assignUserToAccountSchema,assignUserToProjectSchema,
 listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema ,
-listProjectOfAccountSchema,listUserGroupTypeSchema, listUserGroupUserSchema};
+listProjectOfAccountSchema,listUserGroupTypeSchema, listUserGroupUserSchema,listNotificationSchema};

@@ -94,7 +94,8 @@ export interface IResourceCostService {
     fiscalYear: any,
     project_id: string,
     account_id:string,
-    userId:string
+    userId:string,
+    caseRid? : string
   ): Promise<{
       statusCode: number;
       message: string;
@@ -111,7 +112,8 @@ export interface IResourceCostService {
     accountNumber: string,
     fiscalYear: number,
     project_id: string,
-    account_id:string
+    account_id:string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -675,6 +677,21 @@ export interface IImportListGraphqlServices {
       }
   >;
 
+  listAllWarnings(
+    account_rid: string,
+    rid: string,
+    entity_type: string
+  ): Promise<
+    | {
+        statusCode: number;
+        data: {};
+      }
+    | {
+        statusCode: number;
+        data: null;
+      }
+  >;
+
   fetchAccountLevelImportedProjects(
     accountId: string,
     fiscal_year: number,
@@ -906,7 +923,8 @@ export interface IFinancialHighlights {
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  caseRid? : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -920,7 +938,8 @@ exportListAccountLevelProjectCostFinancialHighlights(
   search: string,
   fiscalYear:number,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  caseRid : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -1038,6 +1057,14 @@ export interface ITemplates {
     data?: any;
   }>;
 }
+export interface ITaskSummaryGraphqlServices {
+  updateInlineTaskSummary(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+}
 export interface INotesGraphqlServices {
   updateInlineNotes(data: any): Promise<{
     statusCode: number;
@@ -1045,4 +1072,32 @@ export interface INotesGraphqlServices {
     errorMessage?: string;
     data?: { notes: any };
   }>;
+}
+
+export interface EnrichedTask extends Record<string, any>  {
+  rid: string;
+  r_number: string;
+  created_by: string;
+  modified_by?: string | null;
+  created_datetime: Date;
+  modified_datetime?: Date | null;
+  account_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description?: string | null;
+  fiscal_year: number;
+  assigned_to: string;
+  status_rid: string;
+  priority_rid: string;
+  effective_start_datetime: Date;
+  effective_end_datetime: Date;
+  task_rid: string;
+  created_by_name: string;
+  modified_by_name?: string;
+  status_name: string;
+  priority_name: string;
+  assigned_to_name: string;
+  account_status_rid?: string;
+  account_status_name?: string;
 }
