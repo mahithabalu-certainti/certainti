@@ -160,7 +160,7 @@ export const ExportNotesList = async (
 
     if (isGlobalNotes) {
       // Use POST API for global export
-      const url = `/api/notes/list/summary/export`;
+      const url = `/api/notes/list/summaryExport`;
       const body = {
         ...restParams,
         timezone: systemTimezone,
