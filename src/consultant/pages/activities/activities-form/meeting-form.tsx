@@ -881,7 +881,11 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
     const currentDate = now.format('YYYY-MM-DD');
     const currentTime = now.format('HH:mm');
 
-    if (!formData.attendees || formData.attendees.length === 0) {
+    // Check for pending input in Attendees field
+    if (attendeesInput.trim()) {
+      newErrors.attendees =
+        'Please confirm the entry by pressing Enter or clear the field to continue.';
+    } else if (!formData.attendees || formData.attendees.length === 0) {
       newErrors.attendees =
         'Field is required. Please include at least one attendee.';
     }

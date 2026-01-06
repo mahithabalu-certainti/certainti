@@ -122,7 +122,7 @@ export const exportAttachmentsData = async (
       filename = `${params.attachmentLevel}_attachments_records.xlsx`;
       break;
     case 'all_attachments':
-      url = `/api/attachment/list/summary/export`;
+      url = `/api/attachment/list/summaryExport`;
       filename = `all_attachments_records.xlsx`;
       break;
     default:

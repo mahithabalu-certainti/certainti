@@ -20,9 +20,9 @@ export const GEO_BASED_RULE = gql`
         platformConfig
         created_by
         created_user_name
-        created_at
+        created_datetime
         modified_by
-        modified_at
+        modified_datetime
         modified_user_name
         status_name
         credit_config_group_rid

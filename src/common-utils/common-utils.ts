@@ -1195,3 +1195,24 @@ export const getCapitalizeWords = (value: string): string => {
       .join(' ')
   );
 };
+
+/**
+ * Sanitizes a URL to prevent javascript: or data: URI injection attacks
+ * @param url - The URL to sanitize
+ * @returns The sanitized URL if valid, or null if invalid
+ */
+export const sanitizeUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+
+  const trimmedUrl = url.trim();
+
+  // Check if URL starts with safe protocols (http or https)
+  const isSafeUrl = /^https?:\/\//i.test(trimmedUrl);
+
+  if (!isSafeUrl) {
+    console.warn('Potentially unsafe URL detected and blocked:', trimmedUrl);
+    return null;
+  }
+
+  return trimmedUrl;
+};
