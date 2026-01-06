@@ -27,6 +27,8 @@ import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../common-service';
 import { shouldDisableField, shouldHideField } from './helper';
+import { ActivitySourceDetails } from '../../../types';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 // Types
 interface SuggestionState {
@@ -83,7 +85,17 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
 ];
 
-const CallForm: React.FC = () => {
+interface CallFormProps {
+  isFrom?: string;
+  onCloseModal?: () => void;
+  sourceDetails?: ActivitySourceDetails;
+}
+
+const CallForm: React.FC<CallFormProps> = ({
+  isFrom,
+  onCloseModal,
+  sourceDetails,
+}) => {
   const { activityId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
@@ -115,10 +127,18 @@ const CallForm: React.FC = () => {
   const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]);
 
   const isEditView = location.pathname.split('/').includes('edit');
-  const sourcePath = searchParams.get('source') || '';
-  const accountId = searchParams.get('accountId') || '';
-  const entityLevel = searchParams.get('entityLevel') || '';
-  const entityId = searchParams.get('entityId') || '';
+  const sourcePath = sourceDetails?.source
+    ? sourceDetails?.source
+    : searchParams.get('source') || '';
+  const accountId = sourceDetails?.accountId
+    ? sourceDetails?.accountId
+    : searchParams.get('accountId') || '';
+  const entityLevel = sourceDetails?.entityLevel
+    ? sourceDetails?.entityLevel
+    : searchParams.get('entityLevel') || '';
+  const entityId = sourceDetails?.entityId
+    ? sourceDetails?.entityId
+    : searchParams.get('entityId') || '';
 
   const [participantsSuggestions, setParticipantsSuggestions] =
     useState<SuggestionState>({
@@ -143,8 +163,6 @@ const CallForm: React.FC = () => {
     [permission]
   );
 
-  console.log(permissionMap);
-
   const userListOptions = useGetUserOptions(accountId, true);
   const createCall = useCreateActivityCall();
   const updateCall = useUpdateActivityCall();
@@ -161,6 +179,7 @@ const CallForm: React.FC = () => {
         rid: item.rid,
         name: item?.name || '',
         email: item?.email || '',
+        phone: item?.phone_number || undefined,
       })) || []
     );
   }, [userListOptions]);
@@ -217,6 +236,34 @@ const CallForm: React.FC = () => {
   const isValidEmail = useCallback((email: string): boolean => {
     const emailRegex = REGEX_PATTERNS.EMAIL;
     return emailRegex.test(email.trim());
+  }, []);
+
+  const isValidPhoneNumber = useCallback((phone: string): boolean => {
+    const cleanPhone = phone.trim();
+
+    if (!cleanPhone) return false;
+
+    // Add + prefix if not present and starts with digits (for international format)
+    const phoneWithPlus = cleanPhone.startsWith('+')
+      ? cleanPhone
+      : `+${cleanPhone}`;
+
+    try {
+      // Try to parse the phone number with country code
+      const phoneNumber = parsePhoneNumberFromString(phoneWithPlus);
+
+      // If parsing fails, it means no valid country code was provided
+      if (!phoneNumber) {
+        return false;
+      }
+
+      // Check if the phone number is valid and possible
+      return phoneNumber.isValid() && phoneNumber.isPossible();
+    } catch (error) {
+      console.log(error, 'error');
+      // If parsing throws an error, the number is invalid
+      return false;
+    }
   }, []);
 
   // // File validation function
@@ -299,28 +346,41 @@ const CallForm: React.FC = () => {
   const addParticipant = useCallback(
     (
       _field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer',
-      email: string
+      value: string
     ) => {
-      if (!email.trim() || !isValidEmail(email)) {
+      if (!value.trim()) {
         return;
       }
 
-      const cleanEmail = email.trim();
+      // Check if it's a valid email or phone number
+      const isEmail = isValidEmail(value);
+      const isPhone = isValidPhoneNumber(value);
 
-      if (formData.call_participants?.includes(cleanEmail)) {
+      if (!isEmail && !isPhone) {
+        return;
+      }
+
+      let cleanValue = value.trim();
+
+      // If it's a phone number, ensure it has + prefix for UI consistency
+      if (isPhone && !cleanValue.startsWith('+')) {
+        cleanValue = `+${cleanValue}`;
+      }
+
+      if (formData.call_participants?.includes(cleanValue)) {
         return;
       }
 
       setFormData((prev) => ({
         ...prev,
-        call_participants: [...(prev.call_participants || []), cleanEmail],
+        call_participants: [...(prev.call_participants || []), cleanValue],
       }));
 
       setParticipantsInput('');
       setParticipantsSuggestions((prev) => ({ ...prev, anchorEl: null }));
       setErrors((prev) => ({ ...prev, call_participants: '' }));
     },
-    [isValidEmail, formData.call_participants]
+    [isValidEmail, isValidPhoneNumber, formData.call_participants]
   );
 
   const removeParticipant = useCallback(
@@ -341,23 +401,37 @@ const CallForm: React.FC = () => {
   const addCaller = useCallback(
     (
       _field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer',
-      email: string
+      value: string
     ) => {
-      if (!email.trim() || !isValidEmail(email)) {
+      if (!value.trim()) {
         return;
       }
 
-      const cleanEmail = email.trim();
+      // Check if it's a valid email or phone number
+      const isEmail = isValidEmail(value);
+      const isPhone = isValidPhoneNumber(value);
+
+      if (!isEmail && !isPhone) {
+        return;
+      }
+
+      let cleanValue = value.trim();
+
+      // If it's a phone number, ensure it has + prefix for UI consistency
+      if (isPhone && !cleanValue.startsWith('+')) {
+        cleanValue = `+${cleanValue}`;
+      }
+
       setFormData((prev) => ({
         ...prev,
-        caller_id: cleanEmail,
+        caller_id: cleanValue,
       }));
 
       setCallerInput('');
       setCallerSuggestions((prev) => ({ ...prev, anchorEl: null }));
       setErrors((prev) => ({ ...prev, caller_id: '' }));
     },
-    [isValidEmail]
+    [isValidEmail, isValidPhoneNumber]
   );
 
   const removeCaller = useCallback(() => {
@@ -397,8 +471,11 @@ const CallForm: React.FC = () => {
           participantsInput.trim()
         ) {
           e.preventDefault();
+          const isEmail = isValidEmail(participantsInput);
+          const isPhone = isValidPhoneNumber(participantsInput);
+
           if (
-            isValidEmail(participantsInput) &&
+            (isEmail || isPhone) &&
             !formData.call_participants.includes(participantsInput.trim())
           ) {
             addParticipant('call_participants', participantsInput.trim());
@@ -453,6 +530,7 @@ const CallForm: React.FC = () => {
       formData.call_participants,
       removeParticipant,
       isValidEmail,
+      isValidPhoneNumber,
       addParticipant,
       participantsInput,
       participantsSuggestions,
@@ -464,7 +542,10 @@ const CallForm: React.FC = () => {
       if (!callerSuggestions.anchorEl) {
         if ((e.key === 'Enter' || e.key === 'Tab') && callerInput.trim()) {
           e.preventDefault();
-          if (isValidEmail(callerInput)) {
+          const isEmail = isValidEmail(callerInput);
+          const isPhone = isValidPhoneNumber(callerInput);
+
+          if (isEmail || isPhone) {
             addCaller('caller_id', callerInput.trim());
           }
         }
@@ -509,7 +590,13 @@ const CallForm: React.FC = () => {
           break;
       }
     },
-    [isValidEmail, addCaller, callerInput, callerSuggestions]
+    [
+      isValidEmail,
+      isValidPhoneNumber,
+      addCaller,
+      callerInput,
+      callerSuggestions,
+    ]
   );
 
   // Handle input changes
@@ -555,7 +642,11 @@ const CallForm: React.FC = () => {
     const now = new Date();
     const maxCallDurationHours = 24;
 
-    if (
+    // Check for pending input in Call Participants field
+    if (participantsInput.trim()) {
+      newErrors.call_participants =
+        'Please confirm the entry by pressing Enter or clear the field to continue.';
+    } else if (
       !formData.call_participants ||
       formData.call_participants.length === 0
     ) {
@@ -563,8 +654,21 @@ const CallForm: React.FC = () => {
         'Field is required. Please include at least one participant.';
     }
 
-    if (!formData.caller_id.trim()) {
+    // Check for pending input in Caller ID field
+    if (callerInput.trim()) {
+      newErrors.caller_id =
+        'Please confirm the entry by pressing Enter or clear the field to continue.';
+    } else if (!formData.caller_id.trim()) {
       newErrors.caller_id = 'Field is required';
+    }
+
+    if (!formData.minutes_of_meeting.trim()) {
+      newErrors.minutes_of_meeting = 'Field is required';
+    }
+
+    if (!REGEX_PATTERNS.MAX_2000.test(formData.minutes_of_meeting)) {
+      newErrors.minutes_of_meeting =
+        'Minutes of Meeting must be within 2000 characters';
     }
 
     if (!formData.subject.trim()) {
@@ -635,7 +739,11 @@ const CallForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (isFrom === 'modal') {
+      onCloseModal?.();
+    } else {
+      window.history.back();
+    }
   };
 
   const handleSubmit = () => {
@@ -730,7 +838,9 @@ const CallForm: React.FC = () => {
 
   return (
     <div>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
+      <div
+        className={`h-[50px] flex items-center justify-between ${isFrom === 'modal' ? 'px-6 rounded-t-2xl' : 'px-10'} sticky top-0 z-10 bg-white border-b border-[#CBD6E2]`}
+      >
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <CallLogIcon
             alt='call-icon'
@@ -745,11 +855,11 @@ const CallForm: React.FC = () => {
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
                 {sourcePath
                   ? `${sourcePath}${isEditView ? ` > ${callData?.r_number}` : ''}`
-                  : `Call ${isEditView ? `> ${callData?.r_number}` : ''}`}
+                  : `Call Log ${isEditView ? `> ${callData?.r_number}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Call' : 'Create Call'}
+              {isEditView ? 'Edit Call Log' : 'Create Call Log'}
             </h5>
           </div>
         </div>
@@ -778,16 +888,20 @@ const CallForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className={`${isEditView ? 'pb-6' : 'pb-4'}`}>
+      <div
+        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
+      >
         {formLoading ? (
           <SkeletonForm />
         ) : (
           <form>
-            <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+            <div
+              className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
+            >
               Call Information
             </div>
 
-            <div className='px-10'>
+            <div className={`${isFrom === 'modal' ? 'px-6' : 'px-10'}`}>
               <MeetingAttendees
                 label='Call Participants'
                 field='call_participants'
@@ -807,6 +921,8 @@ const CallForm: React.FC = () => {
                 }}
                 required={true}
                 isValidEmail={isValidEmail}
+                allowPhoneNumber={true}
+                isValidPhoneNumber={isValidPhoneNumber}
                 disabled={shouldDisableField(
                   'call_participants',
                   isEditView,
@@ -821,7 +937,9 @@ const CallForm: React.FC = () => {
             </div>
 
             {/* Subject Field */}
-            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
+            <div
+              className={`grid md:grid-cols-3 gap-x-4 gap-y-3 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
+            >
               <MeetingAttendees
                 label='Caller ID'
                 field='caller_id'
@@ -841,6 +959,8 @@ const CallForm: React.FC = () => {
                 }}
                 required={true}
                 isValidEmail={isValidEmail}
+                allowPhoneNumber={true}
+                isValidPhoneNumber={isValidPhoneNumber}
                 singleSelect={true}
                 className='!pt-0'
                 disabled={shouldDisableField(
@@ -994,7 +1114,7 @@ const CallForm: React.FC = () => {
 
             {/* Minutes of Meeting Field */}
             <div
-              className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-3'
+              className={`grid md:grid-cols-1 gap-x-4 gap-y-[2px] ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
               style={{
                 display: shouldHideField(
                   'minutes_of_meeting',
@@ -1009,7 +1129,7 @@ const CallForm: React.FC = () => {
                 htmlFor='minutes_of_meeting'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
               >
-                Minutes of Meeting
+                Minutes of Meeting<span className='text-red-500'> *</span>
               </label>
               <textarea
                 name='minutes_of_meeting'
@@ -1042,10 +1162,12 @@ const CallForm: React.FC = () => {
                 pointerEvents: disableAttachments ? 'none' : 'all',
               }}
             >
-              <div className='mt-6 border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+              <div
+                className={`mt-6 border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
+              >
                 Attachments
               </div>
-              <div className='px-10 mt-3'>
+              <div className={`${isFrom === 'modal' ? 'px-6' : 'px-10'} mt-3`}>
                 <div className='flex flex-col items-center justify-center gap-4 px-4 py-5'>
                   <div
                     onDrop={handleDrop}
@@ -1055,10 +1177,12 @@ const CallForm: React.FC = () => {
                     ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'} ${disableAttachments ? 'opacity-50' : 'opacity-100'}
                   `}
                   >
-                    <UploadIcon
-                      alt='Upload Icon'
-                      className='w-[36px] h-[24px]'
-                    />
+                    <React.Suspense fallback={null}>
+                      <UploadIcon
+                        alt='Upload Icon'
+                        className='w-[36px] h-[24px]'
+                      />
+                    </React.Suspense>
                     <div
                       className='text-[14px] text-[#0B0B0B]'
                       style={{ whiteSpace: 'nowrap' }}
@@ -1117,7 +1241,7 @@ const CallForm: React.FC = () => {
             {/* Audit Information for Edit View */}
             <div className={`${isEditView ? 'block pt-5' : 'hidden'}`}>
               <div
-                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
+                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
               >
                 Audit Information
               </div>

@@ -41,7 +41,6 @@ export const useManageUserGroupList = (
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
     retry: 0,
-    enabled: !!refreshUserGroupTrigger,
   });
 };
 

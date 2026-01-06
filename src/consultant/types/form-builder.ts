@@ -1,6 +1,7 @@
 export interface FormType {
   gridMode?: string;
   sectionName: string;
+  subSection?: boolean; // Means this is a secondary level block → no header + half width
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
   from?: string;
@@ -34,6 +35,10 @@ export interface FormTypeFields {
   prefixValue?: string;
   disableFutureDates?: boolean;
   allowFutureDates?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -62,6 +67,10 @@ export interface FormTypeFields {
   formatCostValue?: boolean;
   clearDate?: string;
   customDateOpen?: Date;
+  disableDatesBefore?: Date;
+  dateFormat?: string;
+  views?: ('day' | 'month' | 'year')[];
+  maxLength?: number;
 }
 
 export type InputType =
@@ -88,6 +97,7 @@ export interface SelectOption {
   value: string;
   desc?: string;
   isCreate?: boolean;
+  code?: string;
 }
 export interface SelectNumberOption {
   label: string;
@@ -142,6 +152,10 @@ export interface FieldType {
   startDateLabel?: string;
   endDateLabel?: string;
   hide?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -162,6 +176,10 @@ export interface FieldType {
   formatCostValue?: boolean;
   clearDate?: string;
   customDateOpen?: Date;
+  disableDatesBefore?: Date;
+  dateFormat?: string;
+  views?: ('day' | 'month' | 'year')[];
+  maxLength?: number;
 }
 
 export type AllowedCountry =
@@ -185,6 +203,9 @@ export interface ChildList {
   child_value: string;
   child_label: string;
   currency_rid?: string;
+  country_rid?: string;
+  country_code?: string;
+  r_number?: string;
 }
 export interface ParentChildSelectOption {
   parent_value: string;

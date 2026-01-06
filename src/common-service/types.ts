@@ -77,6 +77,8 @@ export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
     organisation_name: string;
     logo_url: string;
     profile_id: string;
+    profile_url: string;
+    web_socket_url: string;
   };
 }
 
@@ -180,6 +182,8 @@ export enum AllMenus {
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
   WORKBREAKDOWN = 'workbreakdown',
   FALLBACK = 'fallback',
+  PROJECT_RESOURCES = 'project_resources',
+  PROJECT_TASK = 'project_task',
 }
 
 export enum AllModules {
@@ -216,6 +220,8 @@ export enum AllModules {
   ACTIVITIES_TASK = 'activity_task',
   ACTIVITIES_MEETING = 'activity_meeting',
   ACTIVITIES_CALL = 'activity_call',
+  WORKFLOW_BUILDER = 'workflow_builder',
+  MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule',
 }
 
 export enum AllPermissions {
@@ -265,6 +271,8 @@ export enum AllPermissions {
   ACCOUNT_RESOURCE_COST_EDIT_VIEW = 'account_resource_cost_edit_view',
   PROJECTS_RESOURCES_VIEW_EDIT = 'projects_resources_view_edit',
   ACCOUNTS_VIEW_EDIT = 'accounts_view_edit',
+  ACCOUNTS_OVERVIEW = 'accounts_overview',
+  ACCOUNTS_TIMELINE = 'accounts_timeline',
   PROJECTS_TASK_VIEW_EDIT = 'projects_task_view_edit',
   ACCOUNT_RESOURCE_SKILL_VIEW_EDIT = 'account_resource_skill_view_edit',
   ACCOUNT_PROJECTS_TIMELINE = 'account_projects_timeline',
@@ -363,11 +371,19 @@ export enum AllPermissions {
   ACTIVITY_MEETING_DELETE = 'activity_meeting_delete',
   ACTIVITY_MEETING_EXPORT = 'activity_meeting_export',
   ACTIVITY_MEETING_VIEW_EDIT = 'activity_meeting_view_edit',
+  CONFIGURE_SETTINGS_VIEW_EDIT = 'manage_jurisdiction_rule_view_edit',
+  CONFIGURE_SETTINGS_EXPORT = 'manage_jurisdiction_rule_export',
+  CONFIGURE_SETTINGS_CREATE = 'manage_jurisdiction_rule_create',
+  WORKFLOW_BUILDER_VIEW_EDIT = 'workflow_rule_view_edit',
+  WORKFLOW_BUILDER_CREATE = 'workflow_rule_create',
+  WORKFLOW_BUILDER_EXPORT = 'workflow_rule_export',
+  WORKFLOW_BUILDER_DELETE = 'workflow_rule_delete',
 }
 
 export interface Country {
   rid: string;
   country_name: string;
+  country_code?: string;
 }
 
 export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
@@ -399,6 +415,7 @@ export enum MenuOption {
   SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
+  TASKS = 'tasks',
   INTERACTIONS = 'interactions',
   HELP = 'help',
   SETTINGS = 'settings',
@@ -416,6 +433,7 @@ export enum MenuOption {
   TASK_TEMPLATE = 'task_template',
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
+  WORKFLOW_BUILDER = 'workflow_builder',
 }
 
 export interface OverviewTabs {

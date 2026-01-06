@@ -1,5 +1,6 @@
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   getFiscalYears,
   REGEX_PATTERNS,
 } from '../../../common-utils';
@@ -220,6 +221,7 @@ export const getChecklistTableColumns = (
     hide:
       !permissionMap?.['attachment_level']?.read &&
       !permissionMap?.['attachment_level']?.edit,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attach_to',

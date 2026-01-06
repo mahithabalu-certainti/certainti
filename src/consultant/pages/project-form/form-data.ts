@@ -204,7 +204,8 @@ export const FormData = (
   disableTotalEffort?: boolean,
   disableTotalCost?: boolean,
   globalType?: boolean,
-  isProjectExists?: boolean
+  isProjectExists?: boolean,
+  isCaseExists?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -543,9 +544,10 @@ export const FormData = (
             required: false,
             onChange: true,
             disabled:
-              isEditView &&
-              permissionMap?.['country']?.read &&
-              !permissionMap?.['country']?.edit,
+              (isEditView && isCaseExists) ||
+              (isEditView &&
+                permissionMap?.['country']?.read &&
+                !permissionMap?.['country']?.edit),
             hide:
               isEditView &&
               !permissionMap?.['country']?.read &&
@@ -570,13 +572,15 @@ export const FormData = (
             options: currency,
             required: false,
             onChange: true,
-            defaultValue: currencyValue,
+            defaultValue: globalType && !isEditView ? currencyValue : undefined,
+            assignDefaultValue: globalType && !isEditView,
             placeholder: 'Choose Currency',
             dependantLabel: 'account_rid',
             disabled:
-              isEditView &&
-              permissionMap?.['currency']?.read &&
-              !permissionMap?.['currency']?.edit,
+              (isEditView && isCaseExists) ||
+              (isEditView &&
+                permissionMap?.['currency']?.read &&
+                !permissionMap?.['currency']?.edit),
             hide:
               isEditView &&
               !permissionMap?.['currency']?.read &&
@@ -878,6 +882,7 @@ export const FormData = (
       globalType,
       isEditView,
       permissionMap,
+      isProjectExists,
       projectTypeOptions,
       classification,
       showClassifyOthersField,

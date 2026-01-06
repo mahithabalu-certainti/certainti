@@ -19,7 +19,11 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { SectionTabPanel } from '../../../../../components';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  SelectOption,
+} from '../../../../types';
 import Uploads from '../../../../../components/Attachments/upload';
 import {
   getAttachmentsFilterFields,
@@ -65,6 +69,7 @@ interface AttachmentsProps {
   accountOrProjectInActive: boolean;
   refetchProjectDetails: () => void;
   projectFiscalYear?: number | string;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
@@ -73,6 +78,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   accountOrProjectInActive,
   refetchProjectDetails,
   projectFiscalYear,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -459,6 +465,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
         onFilterChange={handleCategory}
         showSearch={showUploads ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={showUploads ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads

@@ -144,6 +144,7 @@ export interface CaseDetails {
   account_status_name?: string;
   account_status_rid?: string;
   is_send_interaction?: boolean;
+  is_case_team_created?: boolean;
 }
 
 export interface CaseDetailsResponse {
@@ -156,6 +157,7 @@ export interface CaseDetailsResponse {
 //Form
 export interface CaseFormFields {
   account_id?: string;
+  account_rid?: string;
   account_name?: string;
   case_owner?: string;
   case_name?: string;
@@ -169,6 +171,7 @@ export interface CaseFormFields {
   heat_light_power?: string;
   total_nonlabor_cost?: string;
   tax_liability?: string;
+  status_rid?: string;
 }
 
 export interface CaseFormPayload {
@@ -186,6 +189,7 @@ export interface CaseFormPayload {
   heat_light_power?: string | null;
   total_nonlabor_cost?: string | null;
   tax_liability?: string | null;
+  status_rid?: string;
 }
 
 export interface updateCaseJurisdictionPayload {
@@ -303,4 +307,15 @@ export interface CaseOwnersResponse {
   data: {
     caseOwners: CaseOwner[];
   };
+}
+
+export interface CaseSubmissionDate {
+  caseSubmissionDate: string;
+}
+
+export interface CaseSubmissionDateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: CaseSubmissionDate;
 }

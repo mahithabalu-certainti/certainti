@@ -7,6 +7,7 @@ interface DetailsSectionSkeletonProps {
   rows?: number;
   className?: string;
   sectionCount?: number;
+  noHeader?: boolean;
 }
 
 const DetailsSectionSkeleton: React.FC<DetailsSectionSkeletonProps> = ({
@@ -15,6 +16,7 @@ const DetailsSectionSkeleton: React.FC<DetailsSectionSkeletonProps> = ({
   rows = 9,
   className = '',
   sectionCount = 3,
+  noHeader = false,
 }) => {
   const getGridCols = () => {
     if (fullColumn) return 'grid-cols-1';
@@ -35,9 +37,11 @@ const DetailsSectionSkeleton: React.FC<DetailsSectionSkeletonProps> = ({
   // Reusable section renderer
   const renderSection = (index: number) => (
     <div key={index}>
-      <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-        <SingleSkeleton width={120} height={18} variant='text' />
-      </div>
+      {!noHeader && (
+        <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+          <SingleSkeleton width={120} height={18} variant='text' />
+        </div>
+      )}
       <div className='text-sm my-[6px] px-3 grid gap-y-3'>
         {skeletonRows.map((_, rowIndex) => (
           <div key={rowIndex} className={`grid gap-6 ${getGridCols()}`}>

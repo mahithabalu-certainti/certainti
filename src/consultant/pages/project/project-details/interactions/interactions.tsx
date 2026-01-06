@@ -20,7 +20,11 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { InteractionList, StatusTypeEnum } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  InteractionList,
+  StatusTypeEnum,
+} from '../../../../types';
 import {
   useInteractionList,
   useInteractionListModel,
@@ -86,7 +90,9 @@ interface InteractionsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   isSendInteraction: boolean;
+  rdQualified: boolean;
   loading: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -94,7 +100,9 @@ const Interactions: React.FC<InteractionsProps> = ({
   projectDetails,
   setInteractionsParams,
   isSendInteraction,
+  rdQualified,
   loading,
+  activityMenuItems,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -443,9 +451,11 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || rdQualified,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
+      tooltipValue: 'Project type not allowed due to Configuration setting',
+      toolTipEnabled: rdQualified,
       hide: !createInteractionsEnable || viewResponseHistory,
     },
     {
@@ -743,6 +753,12 @@ const Interactions: React.FC<InteractionsProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory
+          }
+          activityMenuItems={activityMenuItems}
         />
         {viewDetails && !viewResponseHistory ? (
           <InteractionDetails

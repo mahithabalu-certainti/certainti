@@ -14,6 +14,8 @@ interface SectionHeaderButton {
   hide?: boolean;
   disabled?: boolean;
   loading?: boolean;
+  toolTipEnabled?: boolean;
+  tooltipValue?: string;
 }
 
 interface SectionHeaderProps {
@@ -137,6 +139,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
                   }
                   loading={button.loading}
                   aria-label={button.label}
+                  toolTipEnabled={button.toolTipEnabled}
+                  tooltipValue={button.tooltipValue}
                   sx={button.sx}
                   disabled={button.disabled}
                 />

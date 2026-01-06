@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   Select,
+  SelectChangeEvent,
   MenuItem,
   Tooltip,
   Table,
@@ -58,7 +59,8 @@ import {
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityMenuItem } from '../../../../types';
+import { ActivityDropdownItem } from '../../../../types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -69,13 +71,15 @@ const ConfigTabs: ResourceTabs[] = [
 ];
 
 interface CaseTeamProps {
-  activityMenuItems: ActivityMenuItem[];
+  activityMenuItems: ActivityDropdownItem[];
   fiscalYear: number;
+  refetchCaseDetails: () => void;
 }
 
 const CaseTeam: React.FC<CaseTeamProps> = ({
   activityMenuItems,
   fiscalYear,
+  refetchCaseDetails,
 }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
@@ -176,6 +180,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   }, [formData.team_members, originalTeamMembers]);
 
   const accountId = searchParams.get('accountID') || '';
+  const queryClient = useQueryClient();
 
   const caseTeamQuery = useGetCaseTeam(caseId, accountId);
   const updateCaseTeamMutation = useUpdateCaseTeam();
@@ -246,6 +251,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
             is_primary: user.is_primary || false,
             status: statusOption?.status_name || '',
             status_rid: user.status_rid || '',
+            assigned_task_count: Number(user.assigned_task_count) || 0,
           };
         }
       );
@@ -351,6 +357,15 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   }
 
   function handleRemoveTeamMember(index: number) {
+    const memberToRemove = formData.team_members[index];
+
+    if ((memberToRemove.assigned_task_count || 0) >= 1) {
+      errorToast(
+        `Cannot remove user. Please unassign the ${memberToRemove.assigned_task_count} assigned tasks before proceeding.`
+      );
+      return;
+    }
+
     setFormData((prev) => {
       const updatedMembers = prev.team_members.filter((_, i) => i !== index);
       return {
@@ -432,6 +447,70 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
       };
     });
   }
+
+  const handleConfirmStatusChange = (
+    index: number,
+    statusRid: string,
+    statusName: string
+  ) => {
+    setFormData((prev) => {
+      const updatedMembers = [...prev.team_members];
+      updatedMembers[index] = {
+        ...updatedMembers[index],
+        status: statusName,
+        status_rid: statusRid,
+      };
+      return {
+        ...prev,
+        team_members: updatedMembers,
+      };
+    });
+
+    setErrors((prev) => {
+      const newMemberErrors = [...(prev.team_members || [])];
+      if (!newMemberErrors[index]) {
+        newMemberErrors[index] = {};
+      }
+      newMemberErrors[index] = {
+        ...newMemberErrors[index],
+        status: undefined,
+      };
+      return {
+        ...prev,
+        team_members: newMemberErrors,
+      };
+    });
+  };
+
+  const handleStatusChange = (
+    e: SelectChangeEvent<unknown>,
+    member: CaseTeamMember,
+    index: number
+  ) => {
+    const selectedStatusName = e.target.value as string;
+    const selectedStatus = statusOptionsQuery.data?.data?.status?.find(
+      (s: { rid: string; status_name: string }) =>
+        s.status_name === selectedStatusName
+    );
+
+    if (
+      (selectedStatusName?.toLowerCase().trim() === 'inactive' ||
+        selectedStatusName?.toLowerCase().trim() === 'in-active') &&
+      (member.assigned_task_count || 0) >= 1
+    ) {
+      errorToast(
+        `Cannot deactivate user. Please unassign the ${member.assigned_task_count} assigned tasks before proceeding.`
+      );
+      return;
+    } else {
+      // Proceed with status change without confirmation
+      handleConfirmStatusChange(
+        index,
+        selectedStatus?.rid || '',
+        selectedStatusName
+      );
+    }
+  };
 
   function validateForm(): boolean {
     const newErrors: CaseTeamFormErrors = {};
@@ -615,8 +694,14 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     };
 
     updateCaseTeamMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: async () => {
         setIsLoading(false);
+        // Invalidate case details query to update is_case_team_created flag
+        await queryClient.invalidateQueries({
+          queryKey: ['caseDetails', caseId, accountId],
+        });
+        // Refetch case details to ensure UI updates immediately
+        await refetchCaseDetails();
       },
       onError: () => {
         setIsLoading(false);
@@ -836,7 +921,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                       }
                                       disabled={
                                         isDisabled ||
-                                        !permissionMap.role_rid?.edit
+                                        !permissionMap.role_rid?.edit ||
+                                        !!member.rid
                                       }
                                       size='small'
                                       fullWidth
@@ -955,7 +1041,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                       }
                                       disabled={
                                         isDisabled ||
-                                        !permissionMap.user_rid?.edit
+                                        !permissionMap.user_rid?.edit ||
+                                        !!member.rid
                                       }
                                       size='small'
                                       fullWidth
@@ -1142,54 +1229,9 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                   <div className='p-1'>
                                     <Select
                                       value={member.status || ''}
-                                      onChange={(e) => {
-                                        const selectedStatusName =
-                                          e.target.value;
-                                        const selectedStatus =
-                                          statusOptionsQuery.data?.data?.status?.find(
-                                            (s: {
-                                              rid: string;
-                                              status_name: string;
-                                            }) =>
-                                              s.status_name ===
-                                              selectedStatusName
-                                          );
-
-                                        // Update both status and status_rid
-                                        setFormData((prev) => {
-                                          const updatedMembers = [
-                                            ...prev.team_members,
-                                          ];
-                                          updatedMembers[index] = {
-                                            ...updatedMembers[index],
-                                            status: selectedStatusName,
-                                            status_rid:
-                                              selectedStatus?.rid || '',
-                                          };
-                                          return {
-                                            ...prev,
-                                            team_members: updatedMembers,
-                                          };
-                                        });
-
-                                        // Clear status error when a status is selected
-                                        setErrors((prev) => {
-                                          const newMemberErrors = [
-                                            ...(prev.team_members || []),
-                                          ];
-                                          if (!newMemberErrors[index]) {
-                                            newMemberErrors[index] = {};
-                                          }
-                                          newMemberErrors[index] = {
-                                            ...newMemberErrors[index],
-                                            status: undefined,
-                                          };
-                                          return {
-                                            ...prev,
-                                            team_members: newMemberErrors,
-                                          };
-                                        });
-                                      }}
+                                      onChange={(e) =>
+                                        handleStatusChange(e, member, index)
+                                      }
                                       disabled={
                                         isDisabled || !isCaseTeamEditable
                                       }
