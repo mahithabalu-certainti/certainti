@@ -1887,14 +1887,6 @@ export class ProjectResourceSchemaService {
         },
         transaction,
       });
-      await CaseProjectFiscalRegion.destroy({
-        where: {
-          account_rid: projectResourceData.account_rid,
-          fiscal_year: fiscalYear,
-          project_fiscal_rid: projectResourceData.project_fiscal_rid,
-        },
-        transaction,
-      });
       return;
     }
 
@@ -2126,13 +2118,6 @@ export class ProjectResourceSchemaService {
 
     if (orphanedRids.length > 0) {
       await ProjectFiscalRegion.destroy({
-        where: {
-          rid: { [Op.in]: orphanedRids },
-          default_metric_type: "project_resource",
-        },
-        transaction,
-      });
-      await CaseProjectFiscalRegion.destroy({
         where: {
           rid: { [Op.in]: orphanedRids },
           default_metric_type: "project_resource",
