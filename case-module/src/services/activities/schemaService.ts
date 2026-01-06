@@ -334,7 +334,6 @@ class ActivitySchemaService {
                 const response  = await this.helperMethod.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
                 response.checklist_items = response.checklist_items.map((item:any) => item.get ? item.get({ plain: true }) : item);
                 response.checklist_items.map((item:any) => item.action_type  = 'add');
-                console.log('response', response);
                 let caseRequest : any = {
                   account_rid: taskRequest.account_rid!,
                   checklist_name: response.checklist_name,
