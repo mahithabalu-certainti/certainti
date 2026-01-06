@@ -57,6 +57,7 @@ import {
 import UserAvatar from './user-avatar';
 import { getSvgIcon } from '../navbar/helper';
 
+const UNASSIGNED_VALUE = 'Unassigned';
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
   tagData?: Array<{ id: string; name: string; color: string }>;
@@ -724,7 +725,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       // Check Assignee
       if (isFieldVisible('assignee')) {
         const assigneeName = editedTask.assignee?.name;
-        if (!assigneeName || assigneeName === 'Unassigned') return true;
+        if (!assigneeName || assigneeName === UNASSIGNED_VALUE) return true;
       }
 
       // Check Priority
