@@ -87,6 +87,8 @@ export const getGeoBasedRuleColumns = (
         disableFutureDates: false,
         startFieldId: 'effective_start_date',
         endFieldId: 'effective_end_date',
+        startFieldLabel: 'Effective Start Date',
+        endFieldLabel: 'Effective End Date',
       },
       //   getFieldData: (rowData: DependencyRowData) => {
       //     handleGetFiscalYear?.(String(rowData.fiscal_year));
@@ -129,6 +131,8 @@ export const getGeoBasedRuleColumns = (
         disableFutureDates: false,
         startFieldId: 'effective_start_date',
         endFieldId: 'effective_end_date',
+        startFieldLabel: 'Effective Start Date',
+        endFieldLabel: 'Effective End Date',
       },
     },
   },
