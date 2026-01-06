@@ -1155,7 +1155,10 @@ jobs:
           echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
           
           KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
-          
+          MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
+          MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
+          MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
+                    
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5011
