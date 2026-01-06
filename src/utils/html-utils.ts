@@ -1,14 +1,32 @@
 import DOMPurify from 'dompurify';
 
 /**
+ * Cleans up HTML by removing trailing br tags and extra whitespace
+ * @param html - String containing HTML
+ * @returns Cleaned HTML string
+ */
+const cleanupHtml = (html: string): string => {
+  if (!html) return '';
+  
+  // Remove trailing <br/>, <br>, </br> tags and whitespace
+  let cleaned = html.trim();
+  cleaned = cleaned.replace(/(<br\s*\/?>|<\/br>|\s)+$/gi, '');
+  
+  return cleaned;
+};
+
+/**
  * Sanitizes HTML content to prevent XSS attacks while preserving safe formatting tags
  * @param html - String containing HTML
  * @returns Sanitized HTML string
  */
 export const sanitizeHtml = (html: string): string => {
   if (!html) return '';
+  
+  // Clean up trailing br tags and whitespace first
+  const cleaned = cleanupHtml(html);
 
-  return DOMPurify.sanitize(html, {
+  return DOMPurify.sanitize(cleaned, {
     ALLOWED_TAGS: [
       'b',
       'i',
