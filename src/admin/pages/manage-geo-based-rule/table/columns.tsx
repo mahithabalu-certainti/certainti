@@ -85,8 +85,10 @@ export const getGeoBasedRuleColumns = (
       placeholder: 'YYYY-MM-DD',
       dateConfig: {
         disableFutureDates: false,
-        // minDate: fiscalDate?.startMin,
-        // maxDate: fiscalDate?.startMax,
+        startFieldId: 'effective_start_date',
+        endFieldId: 'effective_end_date',
+        startFieldLabel: 'Effective Start Date',
+        endFieldLabel: 'Effective End Date',
       },
       //   getFieldData: (rowData: DependencyRowData) => {
       //     handleGetFiscalYear?.(String(rowData.fiscal_year));
@@ -125,6 +127,13 @@ export const getGeoBasedRuleColumns = (
       type: 'date',
       required: false,
       placeholder: 'YYYY-MM-DD',
+      dateConfig: {
+        disableFutureDates: false,
+        startFieldId: 'effective_start_date',
+        endFieldId: 'effective_end_date',
+        startFieldLabel: 'Effective Start Date',
+        endFieldLabel: 'Effective End Date',
+      },
     },
   },
   {
