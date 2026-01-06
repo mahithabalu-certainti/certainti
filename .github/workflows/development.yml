@@ -1179,6 +1179,10 @@ jobs:
           SCHEDULER_EXPRESSION=scheduler-expression 
           SCHEDULER_EXPRESSION_RULE_ENGINE=scheduler-expression-rule-engine
           AZURE_WEB_PUBSUB_CONNECTION_STRING=pubsub-connection-string
+          MAIL_TENANT_ID=$MAIL_TENANT_ID
+          MAIL_CLIENT_ID=$MAIL_CLIENT_ID
+          MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
+          SUPPORT_EMAIL=support@certainti.ai
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
