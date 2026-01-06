@@ -7,6 +7,14 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { stateCalculators } from "../rdStateProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 import { kafkaProducerService } from "../../kafka/producer.service";
+import FederalComputationService from "./federal.computation.service";
+
+enum ConfigType {
+    NONE = "NONE",
+    FEDERAL_ONLY = "FEDERAL_ONLY",
+    STATE_ONLY = "STATE_ONLY",
+    BOTH = "BOTH"
+}
 
 /**
  * State Computation Service
@@ -16,6 +24,7 @@ export class StateComputationService {
     private rdCreditSchemaService: RDCreditSchemaService;
     private orgDbSequelize: Sequelize | null = null;
     private mainDbSequelize: Sequelize | null = null;
+    private federalComputationService;
 
     readonly programName = "State R&D Credit";
     readonly jurisdictionColumn = "state_rid";
@@ -23,6 +32,7 @@ export class StateComputationService {
 
     constructor() {
         this.rdCreditSchemaService = new RDCreditSchemaService();
+        this.federalComputationService = new FederalComputationService()
     }
 
     /**
@@ -62,16 +72,9 @@ export class StateComputationService {
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
-
-            let schemaName = rawQueries.fetchSchemaName(
-                fetchParentAccountRnumber[0][0].r_number
-            );
-
-            const accountNumber = 'ACC-00001';
-            schemaName = 'trd365_00001';
-            const processRid = await this.rdCreditSchemaService.markAsInitiated(accountNumber, caseRid);
+            const processRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentAccountRnumber[0][0].r_number, caseRid);
             // Publish to Kafka
-            await kafkaProducerService.publish(accountRid, accountNumber, processRid, caseRid, effectiveStart, effectiveEnd);
+            await kafkaProducerService.publish(accountRid, fetchParentAccountRnumber[0][0].r_number, processRid, caseRid, effectiveStart, effectiveEnd);
 
             return {
                 statusCode: HttpStatus.SUCCESS,
@@ -98,47 +101,44 @@ export class StateComputationService {
      */
     async runComputation(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
         try {
-
             const mainDb = await this.getMainDb();
-            const orgDb = await this.getOrgDb();
+            const fetchAccountCountryId : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(accountRid))
+            const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
+            const hasFederal = findAvailableConfigLevels.includes(true);
+            const hasState = findAvailableConfigLevels.includes(false);
+            const configLevelKey =
+                hasFederal && hasState ? ConfigType.BOTH :
+                    hasFederal ? ConfigType.FEDERAL_ONLY :
+                        hasState ? ConfigType.STATE_ONLY :
+                            ConfigType.NONE;
 
-            const fetchParentAccountRnumber: any = await mainDb.query(
-                await rawQueries.fetchParentAccount(accountRid, mainDb)
-            );
-
-            let schemaName = rawQueries.fetchSchemaName(
-                fetchParentAccountRnumber[0][0].r_number
-            );
-
-            const accountNumber = 'ACC-00001';
-            schemaName = 'trd365_00001';
-
-            const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel("USA", mainDb, effectiveStart, effectiveEnd, "", this.programName);
-
-            for (const config of configStateLevel) {
-                try {
-                    const stateComputation = stateCalculators[config.state_code];
-                    const extractConfig = this.extractConfigJson(config.config_json);
-                    logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
-                    if (stateComputation) {
-                        const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName);
-                        logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
-                        const result = await stateComputation.compute(extractConfig, stateRDData);
-                        await this.rdCreditSchemaService.insertRDStateCreditCalculation(
-                            accountNumber, caseRid, config.country_rid, config.state_rid,
-                            result.inputFields, result.computedFields
-                        );
-                    }
-                } catch (err) {
-                    logMessage(`Error processing state ${config.state_code}: ${err}`);
-                }
-            }
-
-            return {
-                statusCode: HttpStatus.SUCCESS,
-                message: STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation initiated successfully",
-                data: {},
+            const executionConfigMap: Record<string, () => Promise<any>> = {
+                [ConfigType.BOTH]: async () => {
+                    logMessage("Both Federal and State computations to be executed.");
+                    await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                    await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
+                },
+                [ConfigType.FEDERAL_ONLY]: async () => {
+                    logMessage("Only Federal computation to be executed.");
+                    return await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                },
+                [ConfigType.STATE_ONLY]: async () => {
+                    logMessage("Only State computation to be executed.");
+                    await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
+                },
+                [ConfigType.NONE]: async () => ({
+                    statusCode: HttpStatus.FAILED,
+                    message: HttpStatus.FAILED_MESSAGE,
+                    errorMessage: "No configuration found"
+                })
             };
+            const executeComputation = executionConfigMap[configLevelKey];
+            if (executeComputation) {
+                await executeComputation();
+            } else {
+                throw new Error(`Invalid ConfigType: ${configLevelKey}`);
+            }
+            console.log("Computation Completed.......!")
 
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);
@@ -174,6 +174,40 @@ export class StateComputationService {
 
         const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
         return stateRDData;
+    }
+
+    async runComputationState (accountRid : string, caseRid : string, effectiveStart : string, effectiveEnd : string) {
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+
+        const fetchParentAccountRnumber: any = await mainDb.query(
+            await rawQueries.fetchParentAccount(accountRid, mainDb)
+        );
+
+        let schemaName = rawQueries.fetchSchemaName(
+            fetchParentAccountRnumber[0][0].r_number
+        );
+        const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
+        const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
+
+        for (const config of configStateLevel) {
+            try {
+                const stateComputation = stateCalculators[config.state_code];
+                const extractConfig = this.extractConfigJson(config.config_json);
+                logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
+                if (stateComputation) {
+                    const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName);
+                    logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
+                    const result = await stateComputation.compute(extractConfig, stateRDData);
+                    await this.rdCreditSchemaService.insertRDStateCreditCalculation(
+                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
+                        result.inputFields, result.computedFields
+                    );
+                }
+            } catch (err) {
+                logMessage(`Error processing state ${config.state_code}: ${err}`);
+            }
+        }
     }
 
     /**

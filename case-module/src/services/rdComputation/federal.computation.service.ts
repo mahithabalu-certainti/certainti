@@ -6,7 +6,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { federalCalculators } from "../rdFederalProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
-import { fetchProjectCostDetailsBasedOnCases } from "../../utils/rdFinancialWorking.rawQueries";
+import { fetchCountryData } from "../../utils/rdFinancialWorking.rawQueries";
 
 export class FederalComputationService {
     private rdCreditSchemaService: RDCreditSchemaService;
@@ -250,6 +250,21 @@ export class FederalComputationService {
                         };                       
                     }
                 }                
+            } else if (countryInfo.countryCode === "AUS") {
+                const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+                const config = await this.rdCreditSchemaService.getRDCreditConfig(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
+                const extractConfig = this.extractConfigJson(config.config_json);
+                const federalComputation = federalCalculators[countryInfo.countryCode];
+                if(federalComputation) {
+                    const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails);
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields); 
+                    return {
+                        statusCode : HttpStatus.SUCCESS,
+                        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+                        statusMessage : STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
+                        data : result
+                    };
+                }
             }
             return {
                 statusCode: HttpStatus.FAILED,
@@ -315,6 +330,18 @@ export class FederalComputationService {
             console.error('Failed to parse config_json:', error);
             return {}; // fallback
         }
+    }
+    async fetchFederalCalculatedData (data : any) {
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+        const fetchParentAccountRnumber: any = await mainDb.query(
+            await rawQueries.fetchParentAccount(data.account_rid, mainDb)
+        );
+        let schemaName = rawQueries.fetchSchemaName(
+            fetchParentAccountRnumber[0][0].r_number
+        ); 
+        const result = await orgDb.query(fetchCountryData(schemaName, data.case_rid, data.country_rid));
+        return result[0][0]
     }
 
 }

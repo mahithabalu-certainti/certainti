@@ -70,12 +70,13 @@ export class ComputationService {
             const executionConfigMap: Record<string, () => Promise<any>> = {
                 [ConfigType.BOTH]: async () => {
                     logMessage("Both Federal and State computations to be executed.");
-                    await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                    // await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
                     return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
                 },
                 [ConfigType.FEDERAL_ONLY]: async () => {
                     logMessage("Only Federal computation to be executed.");
-                    return await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                    return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
+                    // return await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
                 },
                 [ConfigType.STATE_ONLY]: async () => {
                     logMessage("Only State computation to be executed.");

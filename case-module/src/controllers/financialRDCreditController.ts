@@ -52,7 +52,7 @@ async function financialRDCreditFederal(
     logMessage(JSON.stringify(value));
 
     // Step 4: Call service to create/update record
-    const resultFederal = await federalComputationService.runFederalComputation(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
+    const resultFederal = await federalComputationService.fetchFederalCalculatedData(value);
     return res.status(200).send({
       statusCode : HttpStatus.SUCCESS,
       statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
