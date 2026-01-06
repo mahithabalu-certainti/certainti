@@ -480,7 +480,7 @@ const CaseNotes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-              className={`[&>path]:stroke-[${colorCode.caseBgColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }
