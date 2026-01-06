@@ -312,7 +312,6 @@ class ActivitySchemaService {
                   where : {
                     attach_to : taskRequest.task_rid,
                     attachment_level : 'task'
-                //    checklist_template_rid : existingTask?.checklist_rid
                   }, raw : true
                 })
 
