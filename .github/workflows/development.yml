@@ -1041,6 +1041,9 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           RULEBUILDER_BASE_URL='https://development-thinkrd365-api-management.azure-api.net/rulebuilderService/api'
+          KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
+          KAFKA_CLIENT_ID=rd-credit-service
+          KAFKA_TOPIC=rd_credit_processing
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
