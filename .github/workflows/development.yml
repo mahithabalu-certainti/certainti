@@ -1044,6 +1044,7 @@ jobs:
           KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
           KAFKA_CLIENT_ID=rd-credit-service
           KAFKA_TOPIC=rd_credit_processing
+          KAFKA_GROUP_ID=rd-credit-consumers
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
