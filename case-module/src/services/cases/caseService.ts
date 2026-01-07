@@ -2046,7 +2046,7 @@ export class CaseService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { caseSubmissionDate: string };
+    data?: { caseSubmissionDate: any };
   }> {
     try {
       const { accountNumber, parentAccountId } =

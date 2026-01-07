@@ -1188,6 +1188,23 @@ const createDataMapperSchema = Joi.object({
   .messages({
     'any.custom': 'Effective to date should be greater than effective from date'
   });
+const rdCreditGenerationSchema = Joi.object({
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
+  effective_start: Joi.string().max(255).required(),
+  effective_end: Joi.string().max(255).required()
+});
+
+const rdCreditProcessSchema = Joi.object({
+  accountRid: Joi.string().max(255).required(),
+  caseRid: Joi.string().max(255).required(),
+});
+
+const rdCreditDataSchema = Joi.object({
+  accountRid: Joi.string().max(255).required(),
+  caseRid: Joi.string().max(255).required(),
+  stateCode: Joi.string().max(255).required(),
+});
 
 
 export {
@@ -1246,5 +1263,8 @@ export {
   jurisdictionRDConfigSchemaForNew,
   caseSubmissionDateSchema,
   listResourceCostSchemaForFinancialHighlights,
-  createDataMapperSchema
+  createDataMapperSchema,
+  rdCreditGenerationSchema,
+  rdCreditProcessSchema,
+  rdCreditDataSchema,
 };

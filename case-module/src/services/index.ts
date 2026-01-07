@@ -4,12 +4,14 @@ import { ICaseManagementService, ICaseService, IActivityService, IChildCaseServi
 import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
+import { ActivityService } from "./activities/activityService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
-import { ActivityService } from "./activities/activityService";
 import { ProjectService } from "./project/projectService";
+import { StateComputationService } from "../services/rdComputation/state.computation.service";
+import { FederalComputationService } from "../services/rdComputation/federal.computation.service";
+import { ComputationService } from "./rdComputation/computation.service";
 import { ChildCaseService } from "./cases/childCaseService";
-import { CaseTaskSchemaService } from "./cases/caseTask/caseTaskSchemaService";
 import { CaseTaskService } from "./cases/caseTask/caseTaskService";
 import { ChecklistService } from "./cases/caseChecklist/checklistService";
 import { DataMapperService } from "./dataMapper/dataMapperService";
@@ -27,6 +29,9 @@ class Services {
   caseTaskService: CaseTaskService
   checklistService: ChecklistService
   dataMapperService: DataMapperService
+  stateComputationService: StateComputationService;
+  federalComputationService: FederalComputationService;
+  computationService: ComputationService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -38,6 +43,9 @@ class Services {
     this.projectTaskInjestionServices = new ProjectInjestionTaskService();
     this.activityService = new ActivityService(logger);
     this.projectService = new ProjectService(logger)
+    this.stateComputationService = new StateComputationService();
+    this.federalComputationService = new FederalComputationService();
+    this.computationService = new ComputationService();
     this.caseTaskService = new CaseTaskService()
     this.checklistService = new ChecklistService()
     this.dataMapperService = new DataMapperService()

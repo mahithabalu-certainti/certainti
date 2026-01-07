@@ -935,3 +935,17 @@ export type RegionDetails = {
   rid : string
   state_name : string
 }
+export type ProjectComputeValue = {
+  project_name: string;
+  project_fiscal_rid: string;
+  employees: number;
+  epw: number;
+  reductions: number;
+  net_epw: number;
+  total_project_value_labor: number;
+}
+export type CalculateQreCostType = {
+  fte_qre_amount : number;
+  subcon_qre_amount : number;
+  nonlabor_qre_amount : number;
+}
