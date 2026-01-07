@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import FinancialWorking from './finacial-working';
 import { useSelector } from 'react-redux';
 import { FormControl, FormControlLabel, MenuItem, Radio, RadioGroup, Select } from '@mui/material';
+import StyledDateTimePicker from '../../../../../../../components/form-builder/styled-date-time-picker';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+// import { useQueryClient } from '@tanstack/react-query';
 import { RootState } from '../../../../../../../store/store';
 import { useToast } from '../../../../../../../hooks';
 import { useFetchState } from '../../../../../../services/account';
@@ -35,13 +36,13 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const { successToast, errorToast } = useToast();
-    const queryClient = useQueryClient();
+    // const queryClient = useQueryClient();
 
     const { mutate: initiateProcess, isPending: isInitiating } = useInitiateRDCreditProcess();
     const { mutate: financialHighlights, isPending: isFinancialHighlights } = useFinancialHighlights();
 
     // Fetch Status
-    useRDCreditStatus(accountid, caseId ?? '');
+    const { refetch: refetchRDCreditStatus } = useRDCreditStatus(accountid, caseId ?? '', false);
 
     const caseCountryDetails = {
         country_name: caseDetails?.country_name || '',
@@ -123,7 +124,7 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
             onSuccess: (data) => {
                 console.log('Initiated successfully', data);
                 successToast('Initiated successfully');
-                queryClient.invalidateQueries({ queryKey: ['rdCreditStatus', accountid, caseId] });
+                refetchRDCreditStatus();
             },
             onError: (error) => {
                 console.error('Error initiating', error);
@@ -144,7 +145,7 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
             onSuccess: (data) => {
                 console.log('Initiated successfully', data);
                 successToast('Initiated successfully');
-                queryClient.invalidateQueries({ queryKey: ['rdCreditStatus', accountid, caseId] });
+                refetchRDCreditStatus();
             },
             onError: (error) => {
                 console.error('Error initiating', error);
@@ -367,12 +368,13 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                         >
                             Start Date <span className='text-red-500'> *</span>
                         </label>
-                        <input
-                            type='date'
-                            name='start_date'
-                            className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs`}
+                        <StyledDateTimePicker
+                            mode='date'
                             value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
+                            onChange={(newValue) => setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                            placeholder='YYYY-MM-DD'
+                            maxDate={endDate || undefined}
+                            disableFuture={false}
                         />
                     </div>
 
@@ -384,12 +386,12 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                         >
                             End Date <span className='text-red-500'> *</span>
                         </label>
-                        <input
-                            type='date'
-                            name='end_date'
-                            className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs`}
+                        <StyledDateTimePicker
+                            mode='date'
                             value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
+                            onChange={(newValue) => setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                            placeholder='YYYY-MM-DD'
+                            minDate={startDate || undefined}
                         />
                     </div>
                 </div>
