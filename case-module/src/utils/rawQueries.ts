@@ -2372,8 +2372,8 @@ export const fetchAvailableConfigLevelQuery = () => {
       WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
       
       -- Effective date filter
-      AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
-      AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
+      AND (:effectiveStart IS NULL OR rdval.effective_start_date >= :effectiveStart)
+      AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= :effectiveEnd)
   `
   return query;
 }

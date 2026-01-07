@@ -265,6 +265,21 @@ export class FederalComputationService {
                         data : result
                     };
                 }
+            } else if (countryInfo.countryCode === "CAN") {
+                const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+                const config = await this.rdCreditSchemaService.getRDCreditConfig(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
+                const extractConfig = this.extractConfigJson(config.config_json);
+                const federalComputation = federalCalculators[countryInfo.countryCode];
+                if(federalComputation) {
+                    const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails);
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields); 
+                    return {
+                        statusCode : HttpStatus.SUCCESS,
+                        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+                        statusMessage : STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
+                        data : result
+                    };
+                }
             }
             return {
                 statusCode: HttpStatus.FAILED,

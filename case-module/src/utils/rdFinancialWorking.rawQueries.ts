@@ -57,3 +57,23 @@ export const calculateRDExpenditureQuery = (schemaName : string, caseRid : strin
 export const fetchCountryData = (schemaName : string, caseRid : string) => {
     return `SELECT rid, created_datetime, modified_datetime, case_rid, country_rid, input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = '${caseRid}'`
 }
+export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : string, accountRid : string) => {
+    let query = 
+    `SELECT
+        cp.project_code,
+        cp.project_name,
+        COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
+        COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
+        COALESCE(cp.total_cost_fte_prj, 0.00) AS total_cost_fte_prj,
+        COALESCE(cp.total_cost_subcon_prj, 0.00) AS total_cost_subcon_prj,
+        COALESCE(cp.total_cost_nonlabor_prj, 0.00) AS total_cost_nonlabor_prj,
+        COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
+    FROM
+        ${schemaName}.case_projects cp
+    WHERE
+        cp.case_rid = '${caseRid}'
+        AND
+        cp.account_rid = '${accountRid}'
+    `
+    return query;
+}
