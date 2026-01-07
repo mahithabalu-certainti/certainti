@@ -72,7 +72,8 @@ export class DataMapperService {
                 form_name: data.form_name,
                 browse_file: fileUrl,
                 document_name: fileName,
-                fiscal_year: data.fiscal_year,
+                effective_from_date: data.effective_from_date,
+                effective_to_date: data.effective_to_date || null,
                 country_rid: data.country_rid,
                 state_rid: data.state_rid,
                 format: fileFormat,
@@ -89,7 +90,9 @@ export class DataMapperService {
                 file_url: fileUrl,
                 form_name: data.form_name,
                 country_rid: data.country_rid,
-                fiscal_year: data.fiscal_year,
+                state_rid: data.state_rid,
+                effective_from_date: data.effective_from_date,
+                effective_to_date: data.effective_to_date,
                 userId: userId
             };
 
@@ -98,7 +101,6 @@ export class DataMapperService {
             return {
                 statusCode: 200,
                 message: "Process Initiated",
-                data: newRecord
             };
 
         } catch (error) {

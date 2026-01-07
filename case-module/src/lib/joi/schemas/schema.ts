@@ -1152,26 +1152,42 @@ const createDataMapperSchema = Joi.object({
       'string.empty': 'Name cannot be empty',
       'string.max': 'Name must be less than or equal to 120 characters'
     }),
-  fiscal_year: Joi.number().integer().min(1900).max(2100).required()
+  effective_from_date: Joi.date().required()
     .messages({
-      'any.required': 'Fiscal year is required',
-      'number.base': 'Fiscal year must be a number',
-      'number.min': 'Fiscal year must be greater than or equal to 1900',
-      'number.max': 'Fiscal year must be less than or equal to 2100'
+      'any.required': 'Effective from date is required',
+      'date.base': 'Effective from date must be a valid date'
+    }),
+  effective_to_date: Joi.date().optional().allow(null, '')
+    .messages({
+      'date.base': 'Effective to date must be a valid date'
     }),
   country_rid: Joi.string().pattern(uuidRegex).required()
     .messages({
       'any.required': 'Country is required',
-      'string.empty': 'Country cannot be empty',
-      'string.max': 'Country must be less than or equal to 120 characters'
+      'string.empty': 'Country cannot be empty'
     }),
   state_rid: Joi.string().pattern(uuidRegex).required()
     .messages({
       'any.required': 'State is required',
-      'string.empty': 'State cannot be empty',
-      'string.max': 'State must be less than or equal to 120 characters'
-    }),
-});
+      'string.empty': 'State cannot be empty'
+    })
+})
+  .custom((value, helpers) => {
+    const { effective_from_date, effective_to_date } = value;
+    if (
+      effective_from_date &&
+      effective_to_date &&
+      new Date(effective_to_date) < new Date(effective_from_date)
+    ) {
+      return helpers.error('any.custom', {
+        message: 'Effective to date should be greater than effective from date'
+      });
+    }
+    return value;
+  })
+  .messages({
+    'any.custom': 'Effective to date should be greater than effective from date'
+  });
 
 
 export {

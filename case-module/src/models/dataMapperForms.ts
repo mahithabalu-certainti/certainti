@@ -2,6 +2,9 @@ import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { logMessage } from "../utils/helpers";
 
+/**
+ * Table: trd365.data_mapper_forms
+ */
 interface DataMapperFormsAttributes {
     rid: string;
     r_number?: string;
@@ -9,41 +12,63 @@ interface DataMapperFormsAttributes {
     created_by: string;
     modified_datetime?: Date | null;
     modified_by?: string | null;
+
     form_name: string;
     browse_file: string;
     document_name: string;
-    fiscal_year: number;
+
+    effective_from_date: Date;
+    effective_to_date?: Date | null;
+
     country_rid: string;
     state_rid: string;
+
     format: string;
     size_in_mb: number;
+
     status_rid: string;
-    status_description?: string | null;
+
     is_active: boolean;
 }
 
 export interface DataMapperFormsCreationAttributes
-    extends Optional<DataMapperFormsAttributes, "rid" | "r_number" | "created_datetime" | "is_active"> { }
+    extends Optional<
+        DataMapperFormsAttributes,
+        | "rid"
+        | "r_number"
+        | "created_datetime"
+        | "modified_datetime"
+        | "modified_by"
+        | "effective_to_date"
+        | "is_active"
+    > { }
 
 export class DataMapperForms
     extends Model<DataMapperFormsAttributes, DataMapperFormsCreationAttributes>
     implements DataMapperFormsAttributes {
     public rid!: string;
     public r_number?: string;
+
     public created_datetime!: Date;
     public created_by!: string;
     public modified_datetime?: Date | null;
     public modified_by?: string | null;
+
     public form_name!: string;
     public browse_file!: string;
     public document_name!: string;
-    public fiscal_year!: number;
+
+    public effective_from_date!: Date;
+    public effective_to_date?: Date | null;
+
     public country_rid!: string;
     public state_rid!: string;
+
     public format!: string;
     public size_in_mb!: number;
+
     public status_rid!: string;
-    public status_description?: string | null;
+
     public is_active!: boolean;
 
     static initialize(
@@ -54,13 +79,12 @@ export class DataMapperForms
             {
                 rid: {
                     type: DataTypes.STRING(50),
-                    allowNull: false,
                     primaryKey: true,
+                    allowNull: false,
                     defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
                 },
                 r_number: {
                     type: DataTypes.STRING(20),
-                    allowNull: true,
                     unique: true,
                 },
                 created_datetime: {
@@ -92,9 +116,13 @@ export class DataMapperForms
                     type: DataTypes.STRING(120),
                     allowNull: false,
                 },
-                fiscal_year: {
-                    type: DataTypes.INTEGER,
+                effective_from_date: {
+                    type: DataTypes.DATEONLY,
                     allowNull: false,
+                },
+                effective_to_date: {
+                    type: DataTypes.DATEONLY,
+                    allowNull: true,
                 },
                 country_rid: {
                     type: DataTypes.STRING(120),
@@ -102,7 +130,7 @@ export class DataMapperForms
                 },
                 state_rid: {
                     type: DataTypes.STRING(120),
-                    allowNull: false,
+                    allowNull: true,
                 },
                 format: {
                     type: DataTypes.STRING(10),
@@ -115,10 +143,6 @@ export class DataMapperForms
                 status_rid: {
                     type: DataTypes.STRING(120),
                     allowNull: false,
-                },
-                status_description: {
-                    type: DataTypes.STRING(225),
-                    allowNull: true,
                 },
                 is_active: {
                     type: DataTypes.BOOLEAN,

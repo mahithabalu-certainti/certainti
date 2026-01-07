@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+landingai-ade
+python-multipart
+pypdf
+confluent-kafka
+requests
