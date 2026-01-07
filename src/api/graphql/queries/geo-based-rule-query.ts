@@ -24,8 +24,6 @@ export const GEO_BASED_RULE = gql`
         modified_by
         modified_datetime
         modified_user_name
-        created_datetime
-        modified_datetime
         status_name
         credit_config_group_rid
         country_name

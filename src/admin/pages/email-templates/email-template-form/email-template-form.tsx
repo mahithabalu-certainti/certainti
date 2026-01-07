@@ -43,7 +43,7 @@ import { useToast } from '../../../../hooks';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { colorCode } from '../../../../consultant/types';
+import { ColorCode } from '../../../../consultant/types';
 
 // Types for placeholder suggestions
 interface PlaceholderSuggestion {
@@ -875,7 +875,7 @@ const EmailTemplateForm: React.FC = () => {
         <div className='flex items-center w-[80%] max-w-[80%]'>
         <EmailTemplateIcon
               alt='email-template-icon'
-             className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageTemplateBgcolor}]`}
+             className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
             />
           <div className='w-[90%]'>
             {isLoading ? (

@@ -59,7 +59,7 @@ import {
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityDropdownItem, colorCode } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { useQueryClient } from '@tanstack/react-query';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -721,7 +721,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   ];
 
   const getTitleIcon = () => {
-    return <CaseTeamIcon alt='action-items-icon'    className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}/>;
+    return <CaseTeamIcon alt='action-items-icon'    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}/>;
   };
 
   const isAddButtonEnabled = caseTeamCreatePermission
@@ -800,7 +800,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
         }
         showItemCount={true}
         hideSection={false}
-        iconBg={colorCode.caseBgColor}
+        iconBg={ColorCode.caseBgColor}
         bgType='circle'
       />
 

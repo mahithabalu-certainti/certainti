@@ -18,7 +18,7 @@ import {
   getCapitalizeWords,
   getFiscalYears,
 } from '../../../../common-utils';
-import { colorCode, NotesFormDataPayload } from '../../../types';
+import { ColorCode, NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -355,12 +355,12 @@ const NotesForm: React.FC = () => {
                     {isEditView ? (
             <EditIcon
               alt='projrct-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.notesBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.notesBgColor}]`}
             />
           ) : (
             <NotesSideIcon
             alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.notesBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.notesBgColor}]`}
           />
           )}
           <div className='w-[90%]'>

@@ -14,7 +14,7 @@ import { FormBuilder } from '../../../../components';
 import {
   CaseFormFields,
   CaseFormPayload,
-  colorCode,
+  ColorCode,
   ParentChildSelectOption,
 } from '../../../types';
 import {
@@ -452,12 +452,12 @@ export const CreateCases: React.FC = () => {
         {isEditView ? (
             <EditIcon
               alt='projrct-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.caseTextColor}] bg-[${colorCode.caseBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
             />
           ) : (
             <CaseIcon
             alt='case-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.caseTextColor}] bg-[${colorCode.caseBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
           />
           )}
           <div className='w-[90%]'>

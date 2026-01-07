@@ -3,7 +3,7 @@ import TextButton from '../../../../components/button/text-button';
 import { useManageUserProfile } from '../../../service';
 import { ProfileHeaderData } from '../../../types';
 import { ManageProfileIcon } from '../../../../assets';
-import { colorCode } from '../../../../consultant/types';
+import { ColorCode } from '../../../../consultant/types';
 
 interface ProfileHeaderProps {
   extendedPermission?: boolean;
@@ -52,7 +52,7 @@ export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
         <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
         <ManageProfileIcon
            alt='manage-profile' 
-          className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageAccountBgcolor}]`}
+          className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
           />
           <div className='w-[90%]'>
             <div className='font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal'>

@@ -18,7 +18,7 @@ import {
   ActivityDropdownItem,
   ExportType,
   SelectOption,
-  colorCode,
+  ColorCode,
 } from '../../../../types';
 import {
   AttachmentList,
@@ -481,11 +481,11 @@ export const Attachments: React.FC<AttachmentsProps> = ({
             titleIcon={
               <AttachmentsSideIcon
                 alt='attachment-header-icon'
-                className={`[&>path]:stroke-[${colorCode.attachmentBgColor}] w-[14px] h-[14px]`}
+                className={`[&>path]:stroke-[${ColorCode.attachmentBgColor}] w-[14px] h-[14px]`}
               />
             }
             headerButtons={headerButtons}
-             iconBg={colorCode.caseBgColor}
+             iconBg={ColorCode.caseBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

@@ -50,7 +50,7 @@ import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   FormFiscalDateType,
   SelectOption,
@@ -846,7 +846,7 @@ export const ProjectResources = ({
               titleIcon={
                   <ResourcesIcon
                       alt='project-header-icon'
-                      className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                      className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                   />
               }
               count={totalItems}
@@ -854,7 +854,7 @@ export const ProjectResources = ({
               headerButtons={headerButtons}
               projectResourceNumber={resourceData?.r_number}
               onBackClick={handleBackClick}
-              iconBg={colorCode.projectBgColor}
+              iconBg={ColorCode.projectBgColor}
               bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>

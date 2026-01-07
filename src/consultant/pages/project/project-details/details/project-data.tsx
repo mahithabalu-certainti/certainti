@@ -9,7 +9,7 @@ import {
   Permissions,
 } from '../../../../../common-service';
 import { Box } from '@mui/material';
-import { ActivityDropdownItem, colorCode } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { SectionTabPanel } from '../../../../../components';
 
 const BUTTON_STYLES = {
@@ -165,7 +165,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           titleIcon={
             <ProjectsSideIcon
               alt='project-header-icon'
-              c   className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+               className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           headerButtons={headerButtons}
@@ -174,7 +174,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           detailsError={detailsError}
           isKeyContactAvailable={isKeyContactAvailable}
           permission={permission}
-           iconBg={colorCode.projectBgColor}
+           iconBg={ColorCode.projectBgColor}
             bgType='circle'
         />
       </Box>

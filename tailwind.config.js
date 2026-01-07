@@ -8,7 +8,6 @@ module.exports = {
       'bg-[#9747FF]',  // manageTemplateBgcolor
       'bg-[#BE3EB5]',  // manageAccountBgcolor
       'bg-[#3992ec]',  // accountBgColor
-      'bg-[#EAF4FF]',  // AccountBgColorShadow
       'bg-[#ba60eb]',  // projectBgColor
       'bg-[#3EBEB5]',  // caseBgColor
       'bg-[#7F81F4]',  // notesBgColor

@@ -42,7 +42,7 @@ import {
 import {
   ActivityDropdownItem,
   CaseAssignedExportParams,
-  colorCode,
+  ColorCode,
   ExportType,
 } from '../../../../types';
 import ProjectTab from './projects-tab';
@@ -672,7 +672,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         titleIcon={
           <ProjectsSideIcon
             alt='financial-header-icon'
-            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         count={count}
@@ -687,7 +687,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           ...btn,
           hide: Boolean(btn.hide),
         }))}
-       iconBg={colorCode.caseBgColor}
+       iconBg={ColorCode.caseBgColor}
       bgType='circle'
       />
       {!isAssignProject && !projectDetailTab && (

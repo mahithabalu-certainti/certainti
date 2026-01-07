@@ -18,7 +18,7 @@ import {
 } from 'react-router-dom';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   InteractionList,
   StatusTypeEnum,
@@ -755,7 +755,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               titleIcon={
                 <InteractionsIcon
                   alt='interaction-icon'
-                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               count={viewResponseHistory ? count : totalItems}
@@ -763,7 +763,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               showBackArrow={viewResponseHistory}
               onBackClick={handleBackFromResponse}
               buttons={headerButtons}
-              iconBg={colorCode.accountBgColor}
+              iconBg={ColorCode.accountBgColor}
               bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>

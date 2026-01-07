@@ -39,7 +39,7 @@ import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from './project-task-details';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   FilterType,
   FormFiscalDateType,
@@ -794,14 +794,14 @@ export const ProjectTask = ({
             titleIcon={
                 <ProjectTaskIcon
                   alt='resource header icon'
-                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
             }
             count={totalItems}
             showItemCount={!viewDetails}
             buttons={headerButtons}
             subValue={resourceData?.r_number}
-            iconBg={colorCode.projectBgColor}
+            iconBg={ColorCode.projectBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

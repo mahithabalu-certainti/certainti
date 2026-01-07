@@ -4,7 +4,7 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { AllPermissions } from '../../../../../common-service';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   ProjectResourcesListParams,
 } from '../../../../types';
@@ -305,7 +305,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
             <ProjectTaskIcon
               alt='attachment-header-icon'
               // className='[&>path]:stroke-[#4B9BFF]'
-              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           count={totalItems}
@@ -314,7 +314,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
             ...btn,
             hide: Boolean(btn.hide),
           }))}
-          iconBg={colorCode.caseBgColor}
+          iconBg={ColorCode.caseBgColor}
           bgType='circle'
         />
         <div className='border border-[#CBD6E2]'>

@@ -13,7 +13,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTechnicalSummaryList } from '../../../../services/technical-summary/technical-summary-service';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   TechnicalSummaryExportListParams,
   TechnicalSummaryList,
@@ -279,13 +279,13 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
             titleIcon={
               <TechSummaryIcon
                 alt='financial-header-icon'
-                className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
             count={totalItems}
             showItemCount={true}
             buttons={headerButtons}
-            iconBg={colorCode.projectBgColor}
+            iconBg={ColorCode.projectBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

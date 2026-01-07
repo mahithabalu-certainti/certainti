@@ -11,7 +11,7 @@ import {
 } from '../../../../../components/table';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
-  colorCode,
+  ColorCode,
   ExportType,
   TechnicalSummaryExportListParams,
   TechnicalSummaryList,
@@ -278,13 +278,13 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
             titleIcon={
               <TechSummaryIcon
                 alt='financial-header-icon'
-                className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
             count={totalItems}
             showItemCount={true}
             buttons={headerButtons}
-            iconBg={colorCode.caseBgColor}
+            iconBg={ColorCode.caseBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

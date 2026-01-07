@@ -16,7 +16,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  colorCode,
+  ColorCode,
   InteractionFormData,
   InteractionFormErrors,
   InteractionFormQuestion,
@@ -650,7 +650,7 @@ const AccountInteractionForm = () => {
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <InteractionsIcon
             alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.accountBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.accountBgColor}]`}
           />
 
           <div className='w-[90%]'>

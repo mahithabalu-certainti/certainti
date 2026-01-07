@@ -59,7 +59,7 @@ import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { colorCode } from '../../../types';
+import { ColorCode } from '../../../types';
 
 const ChecklistForm: React.FC = () => {
   const { successToast } = useToast();
@@ -439,12 +439,12 @@ const ChecklistForm: React.FC = () => {
             {isEditView ? (
             <EditIcon
               alt='projrct-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.accountBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.accountBgColor}]`}
             />
           ) : (
             <ChecklistIcon
             alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.accountBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.accountBgColor}]`}
           />
           )}
             <div className='w-[90%]'>

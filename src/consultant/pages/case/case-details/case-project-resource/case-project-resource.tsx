@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
-import { ActivityDropdownItem, colorCode, ExportType } from '../../../../types';
+import { ActivityDropdownItem, ColorCode, ExportType } from '../../../../types';
 import { FilterType } from '../../../../../admin/types';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -325,7 +325,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
           titleIcon={
             <ResourcesIcon
               alt='attachment-header-icon'
-              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           count={totalItems}
@@ -334,7 +334,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
             ...btn,
             hide: Boolean(btn.hide),
           }))}
-          iconBg={colorCode.caseBgColor}
+          iconBg={ColorCode.caseBgColor}
             bgType='circle'
         />
         {resourceId ? (

@@ -33,7 +33,7 @@ import { useSearchParams } from 'react-router-dom';
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityMenuItem, CaseDetails, colorCode } from '../../../../types';
+import { ActivityMenuItem, CaseDetails, ColorCode } from '../../../../types';
 import {
   useGetHistoricalSubmission,
   useUpdateHistorySubmission,
@@ -880,7 +880,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
 
   const getTitleIcon = () => {
     return <HistorySubmissionIcon
-    alt='action-items-icon'  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}/>;
+    alt='action-items-icon'  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}/>;
   };
 
   // Add this function to check if a field should be visible
@@ -946,7 +946,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
         count={formData.historicalSubmissions.length}
         showItemCount={true}
         hideSection={false}
-        iconBg={colorCode.caseBgColor}
+        iconBg={ColorCode.caseBgColor}
         bgType='circle'
       />
 

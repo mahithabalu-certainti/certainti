@@ -77,7 +77,7 @@ import {
   NotesListExportParams,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
-  colorCode,
+  ColorCode,
 } from '../../types';
 import { exportProjectData, ProjectTriggerAI } from '../../services/project';
 import {
@@ -1134,7 +1134,7 @@ export const AccountDetails = () => {
           icon={
             <AccountsIcon
               alt='account-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.accountTextColor}] bg-[${colorCode.accountBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
             />
           }
           title={data?.data?.accountById?.account_name ?? ''}

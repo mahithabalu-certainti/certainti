@@ -62,7 +62,7 @@ import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   SelectOption,
 } from '../../../../types';
@@ -1113,13 +1113,13 @@ const Resource: React.FC<ResourceProps> = ({
               titleIcon={
                 <ResourcesIcon
                   alt='resource header icon'
-                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               headerButtons={headerButtons}
               showBackArrow={showBackArrow}
               onBackClick={handleBackClick}
-              iconBg={colorCode.accountBgColor}
+              iconBg={ColorCode.accountBgColor}
               bgType='circle'
               showCount={noteViewDetails || checklistDetails ? false : true}
             />

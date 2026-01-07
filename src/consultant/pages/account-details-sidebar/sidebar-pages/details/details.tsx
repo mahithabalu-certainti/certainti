@@ -8,7 +8,7 @@ import { ACCOUNT } from '../../../../../routes';
 import { useNavigate } from 'react-router-dom';
 import { AllPermissions, OverviewTabs } from '../../../../../common-service';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
-import { ActivityDropdownItem, colorCode } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { SectionTabPanel } from '../../../../../components';
 
 const BUTTON_STYLES = {
@@ -106,10 +106,10 @@ const Details: React.FC<DetailsProps> = ({
         <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
           <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
             <Box className='flex items-center gap-2'>
-              <div className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${colorCode.accountBgColor}]`}>
+              <div className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${ColorCode.accountBgColor}]`}>
                 <AccountsIcon
                   alt='details'
-                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               </div>
               <Box className='text-[13px] text-[#2D3E4F] font-semibold'>

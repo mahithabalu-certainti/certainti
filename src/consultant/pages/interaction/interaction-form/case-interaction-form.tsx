@@ -15,7 +15,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  colorCode,
+  ColorCode,
   InteractionFormData,
   InteractionFormErrors,
   InteractionFormQuestion,
@@ -656,12 +656,12 @@ const CaseInteractionForm = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.caseBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.caseBgColor}]`}
             />
           ) : (
             <InteractionsIcon
             alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.caseBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.caseBgColor}]`}
           />
           )}
           <div className='w-[90%]'>

@@ -9,7 +9,7 @@ import { FilterType } from '../../../types';
 import { exportUserGroupList, useGetUserGroupTypes } from '../../../service';
 import { getManageUserGroupFilterFields } from './helpers';
 import { UserGroupTable } from '../table';
-import { colorCode, SelectOption } from '../../../../consultant/types';
+import { ColorCode, SelectOption } from '../../../../consultant/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
@@ -156,7 +156,7 @@ export const UserGroupList: React.FC = () => {
           <div className='flex items-center justify-center'>
             <ManageGroupIcon
               alt='manage user group'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageAccountBgcolor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

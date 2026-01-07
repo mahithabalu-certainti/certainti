@@ -20,7 +20,7 @@ import {
   useKeyContactRoles,
 } from '../../services/account';
 import {
-  colorCode,
+  ColorCode,
   enumValue,
   FieldType,
   KeyContactHeader,
@@ -693,12 +693,12 @@ const ProjectForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
             />
           ) : (
             <ProjectsSideIcon
             alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
           />
           )}
           <div className='w-[90%]'>

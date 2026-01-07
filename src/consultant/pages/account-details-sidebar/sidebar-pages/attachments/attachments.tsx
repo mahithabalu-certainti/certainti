@@ -18,7 +18,7 @@ import Uploads from '../../../../../components/Attachments/upload';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   SelectOption,
 } from '../../../../types';
@@ -480,11 +480,11 @@ const Attachments: React.FC<AttachmentsProps> = ({
             titleIcon={
               <AttachmentsSideIcon
                 alt='attachment-header-icon'
-                className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
             headerButtons={headerButtons}
-             iconBg={colorCode.accountBgColor}
+             iconBg={ColorCode.accountBgColor}
               bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

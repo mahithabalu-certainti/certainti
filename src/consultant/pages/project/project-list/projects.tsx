@@ -31,7 +31,7 @@ import TextButton from '../../../../components/button/text-button';
 import { PROJECT_CREATE } from '../../../../routes';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from '../../../../components/search/search-bar';
-import { colorCode } from '../../../types';
+import { ColorCode } from '../../../types';
 
 export const Projects: React.FC = () => {
   // const [toggleEnabled, setToggleEnabled] = useState(false);
@@ -245,7 +245,7 @@ export const Projects: React.FC = () => {
           <div className='flex items-center justify-center'>
             <ProjectsSideIcon
               alt='menu-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>

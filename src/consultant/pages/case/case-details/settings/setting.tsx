@@ -5,7 +5,7 @@ import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import JurisdictionConfig from './Jurisdiction-Config/Jurisdiction-Config';
-import { ActivityDropdownItem, colorCode } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 
 const SettingsTabs: ResourceTabs[] = [
   {
@@ -73,11 +73,11 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
         titleIcon={
           <ConfigRuleIcon
             alt='settings-header-icon'
-            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}
-        iconBg={colorCode.caseBgColor}
+        iconBg={ColorCode.caseBgColor}
         bgType='circle'
       />
       <JurisdictionConfig

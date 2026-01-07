@@ -1,5 +1,5 @@
 import { ImportTemplateIcon } from '../../../assets';
-import { colorCode } from '../../../consultant/types';
+import { ColorCode } from '../../../consultant/types';
 import ImportTemplateTable from './table/import-template-table';
 
 const ImportTemplatesList: React.FC = () => {
@@ -10,7 +10,7 @@ const ImportTemplatesList: React.FC = () => {
           <div className='flex items-center justify-center'>
             <ImportTemplateIcon
               alt='interaction-template-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageTemplateBgcolor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

@@ -30,7 +30,7 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
   TechnicalSummaryExportListParams,
-  colorCode,
+  ColorCode,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -1087,7 +1087,7 @@ export const CaseDetails = () => {
           icon={
             <CaseIcon
             alt='case-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.caseTextColor}] bg-[${colorCode.caseBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
           />
           }
           title={caseData?.r_number || ''}

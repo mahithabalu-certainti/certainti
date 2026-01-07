@@ -13,7 +13,7 @@ import { RootState } from '../../../store/store';
 import { checkPermission } from '../../../common-utils';
 import { AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
-import { colorCode } from '../../../consultant/types';
+import { ColorCode } from '../../../consultant/types';
 
 export const ManageUserDetails: React.FC = () => {
   // Get userId from URL params
@@ -114,7 +114,7 @@ export const ManageUserDetails: React.FC = () => {
       <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center justify-center'>
           <ManageUserIcon alt='manage user'
-           className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageAccountBgcolor}]`}
+           className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
           />
           <div className='flex flex-col mx-2.5 pb-1'>
             <div className={HEADER_STYLES.adminPermission}>

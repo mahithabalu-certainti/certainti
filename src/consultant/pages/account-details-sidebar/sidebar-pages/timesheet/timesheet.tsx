@@ -8,7 +8,7 @@ import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   ExportType,
   TimeSheetList,
   TimeSheetListURLParams,
@@ -420,11 +420,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
             buttons={headerButtons}
             titleIcon={
               <TimeSheetIcon
-              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Timesheet-header-icon'
               />
             }
-               iconBg={colorCode.accountBgColor}
+               iconBg={ColorCode.accountBgColor}
               bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

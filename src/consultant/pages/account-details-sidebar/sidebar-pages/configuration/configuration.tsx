@@ -16,7 +16,7 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../../common-utils';
 import JurisdictionSetting from './jurisdiction/setting';
-import { ActivityDropdownItem, colorCode } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 interface ConfigurationProps {
   countryId: string | null;
   activityMenuItems: ActivityDropdownItem[];
@@ -138,14 +138,14 @@ const Configuration: React.FC<ConfigurationProps> = ({
         return (
           <ManageGroupIcon
             alt='resource header icon'
-            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       case 'settings':
         return (
           <SettingIcon
             alt='settings-header-icon'
-            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       default:
@@ -228,7 +228,7 @@ const Configuration: React.FC<ConfigurationProps> = ({
             count={count}
             showItemCount={list !== 'settings'}
             hideSection={hideSection}
-             iconBg={colorCode.accountBgColor}
+             iconBg={ColorCode.accountBgColor}
               bgType='circle'
           />
         </div>

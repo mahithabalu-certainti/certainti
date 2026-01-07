@@ -22,7 +22,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { ActivityDropdownItem, colorCode } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -245,11 +245,11 @@ const QrePercentHistory = ({
         titleIcon={
           <HistorySubmissionIcon
             alt='financial-header-icon'
-            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         headerButtons={headerButtons}
-        iconBg={colorCode.projectBgColor}
+        iconBg={ColorCode.projectBgColor}
         bgType='circle'
       />
       <div className='border border-[#CBD6E2]'>

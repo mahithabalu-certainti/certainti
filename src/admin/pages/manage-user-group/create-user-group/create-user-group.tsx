@@ -32,7 +32,7 @@ import {
   UserGroupDetailsCommon,
 } from '../../../types';
 import { getAvailableUserColumns, getProjectColumns } from '../table';
-import { AccountList, colorCode, SelectOption, YesNo } from '../../../../consultant/types';
+import { AccountList, ColorCode, SelectOption, YesNo } from '../../../../consultant/types';
 import {
   useCreateUserGroup,
   useGetUserGroupDetails,
@@ -661,7 +661,7 @@ export const CreateUserGroup: React.FC = () => {
         <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
         <ManageGroupIcon
               alt='manage user group'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageAccountBgcolor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
             />
           <div className='w-[90%]'>
             <div className={HEADER_STYLES.adminPermission}>

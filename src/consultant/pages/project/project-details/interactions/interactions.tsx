@@ -22,7 +22,7 @@ import {
 } from '../../../../../components/table';
 import {
   ActivityDropdownItem,
-  colorCode,
+  ColorCode,
   InteractionList,
   StatusTypeEnum,
 } from '../../../../types';
@@ -793,13 +793,13 @@ const Interactions: React.FC<InteractionsProps> = ({
               titleIcon={
                 <InteractionsIcon
                   alt='financial-header-icon'
-                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               count={viewResponseHistory ? count : totalItems}
               showItemCount={interactionResponseId ? false : true}
               buttons={headerButtons}
-              iconBg={colorCode.projectBgColor}
+              iconBg={ColorCode.projectBgColor}
               bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>

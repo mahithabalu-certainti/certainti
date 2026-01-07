@@ -15,7 +15,7 @@ import { clearFilters } from '../../../account-details-sidebar/components/filter
 import { checkPermission } from '../../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
-import { ActivityDropdownItem, colorCode } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -134,14 +134,14 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
         return (
           <ManageGroupIcon
             alt='resource header icon'
-            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       case 'settings':
         return (
           <SettingIcon
             alt='settings-header-icon'
-            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       default:
@@ -218,7 +218,7 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
         count={count}
         showItemCount={list !== 'settings'}
         hideSection={hideSection}
-        iconBg={colorCode.projectBgColor}
+        iconBg={ColorCode.projectBgColor}
        bgType='circle'
       />
       {renderContent()}

@@ -18,7 +18,7 @@ import {
   ActivityModuleType,
   ActivityType,
   CaseDetails,
-  colorCode,
+  ColorCode,
   ExportType,
 } from '../../../../types';
 import {
@@ -512,12 +512,12 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
           titleIcon={
             <ActivitiesIcon
               alt='activity-header-icon'
-              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           count={count}
           showItemCount={!viewDetails}
-          iconBg={colorCode.caseBgColor}
+          iconBg={ColorCode.caseBgColor}
           bgType='circle'
           buttons={headerButtons}
         />

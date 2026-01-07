@@ -5,7 +5,7 @@ import {
   FilterTypes,
   useGetAllCountries,
 } from '../../../../common-service';
-import { CaseListParams, colorCode, FilterState } from '../../../types';
+import { CaseListParams, ColorCode, FilterState } from '../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import {
@@ -243,7 +243,7 @@ const Cases: React.FC = () => {
           <div className='flex items-center justify-center'>
             <CaseIcon
               alt='case-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.caseTextColor}] bg-[${colorCode.caseBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>Cases</div>

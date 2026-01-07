@@ -13,7 +13,7 @@ import {
 import {
   ActivityDropdownItem,
   CaseDetails,
-  colorCode,
+  ColorCode,
   ExportType,
   NotesList,
   NotesListExportParams,
@@ -480,12 +480,12 @@ const CaseNotes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }
             buttons={headerButtons}
-           iconBg={colorCode.caseBgColor}
+           iconBg={ColorCode.caseBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

@@ -39,7 +39,7 @@ import {
 } from './helper';
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
-import { ActivityDropdownItem, colorCode, ExportType } from '../../../../types';
+import { ActivityDropdownItem, ColorCode, ExportType } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
@@ -682,7 +682,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     return (
       <WorkBreakdownIcon
         alt='case-icon'
-        className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
+        className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
       />
     );
   };
@@ -835,7 +835,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             count={count}
             showItemCount={tabParam === 'case_task'}
             hideSection={false}
-            iconBg={colorCode.caseBgColor}
+            iconBg={ColorCode.caseBgColor}
             bgType='circle'
           />
         </>

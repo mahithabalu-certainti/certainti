@@ -14,7 +14,7 @@ import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import { useToast } from '../../../hooks';
 import TextButton from '../../../components/button/text-button';
 import { BUTTON_STYLES } from '../manage-user-detail/styles';
-import { colorCode } from '../../../consultant/types';
+import { ColorCode } from '../../../consultant/types';
 
 type FormValueType = string | number | boolean | object | string[] | null;
 interface UpdateSettingsSuccess {
@@ -124,7 +124,7 @@ const ConfigureSetting = () => {
             <div className='flex items-center justify-center'>
               <ManageSettingsIcon
                 alt='manage user group'
-                className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageTemplateBgcolor}]`}
+                className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
               />
               <div className='flex flex-col mx-2.5 pb-1'>
                 <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

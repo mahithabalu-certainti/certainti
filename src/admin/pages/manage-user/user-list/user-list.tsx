@@ -29,7 +29,7 @@ import {
 import { useToast } from '../../../../hooks';
 import { FilterState } from '../../../../consultant/types/account-filter';
 import SearchBar from '../../../../components/search/search-bar';
-import { colorCode } from '../../../../consultant/types';
+import { ColorCode } from '../../../../consultant/types';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -277,7 +277,7 @@ const UserList: React.FC = () => {
           <div className='flex items-center justify-center'>
             <ManagerUserIcon 
             alt='manage user' 
-             className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageAccountBgcolor}]`}
+             className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

@@ -49,7 +49,7 @@ import {
   ActivityListExportURLParams,
   ActivityType,
   ChecklistListExportParams,
-  colorCode,
+  ColorCode,
   ExportType,
   FiscalDates,
   FormFiscalDateType,
@@ -998,7 +998,7 @@ export const ProjectDetails = () => {
           icon={
             <ProjectsSideIcon
             alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
           />
           }
           title={data?.data?.project?.project_code}

@@ -25,7 +25,7 @@ import {
   getFiscalYears,
   reshapeGlobalFilter,
 } from '../../../../common-utils';
-import { colorCode, FilterState, SelectOption } from '../../../types';
+import { ColorCode, FilterState, SelectOption } from '../../../types';
 import { exportTasksData } from '../../../services/tasks/tasks-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
@@ -354,7 +354,7 @@ export const Tasks: React.FC = () => {
           <div className='flex items-center justify-center'>
             <TaskTemplateIcon
               alt='menu-icon'
-              className={`h-7 w-7 p-[5px] rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.taskBgColor}]`}
+              className={`h-7 w-7 p-[5px] rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.taskBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>Tasks</div>

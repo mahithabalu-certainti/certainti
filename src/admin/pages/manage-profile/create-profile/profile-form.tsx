@@ -1,5 +1,5 @@
 import React from 'react';
-import { colorCode, SelectOption } from '../../../../consultant/types';
+import { ColorCode, SelectOption } from '../../../../consultant/types';
 import { ManageProfileIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -129,7 +129,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
           <ManageProfileIcon
            alt='manage-profile' 
-          className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageAccountBgcolor}]`}
+          className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
           />
           <div className='w-[90%]'>
             <div className='font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal'>

@@ -18,7 +18,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { ExportConfigRuleList } from '../../../service/manage-geo-based-access/geo-based-group-service';
 import { getGeoBasedRuleFilterFields } from './helpers';
-import { colorCode, SelectOption } from '../../../../consultant/types';
+import { ColorCode, SelectOption } from '../../../../consultant/types';
 import { FilterCondition, Filters } from '../../../types/manage-user';
 import { FilterValue } from '../../../../consultant/types/account-filter';
 import { useFetchState } from '../../../../consultant/services/account';
@@ -198,7 +198,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
           <div className='flex items-center justify-center'>
             <ManageRule
               alt='Manage Jurisdiction Rules '
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageTemplateBgcolor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

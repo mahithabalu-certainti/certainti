@@ -10,7 +10,7 @@ import {
   useGetStatus,
 } from '../../../../common-service';
 import { useFetchState } from '../../../../consultant/services/account';
-import { colorCode, SelectOption, YesNo } from '../../../../consultant/types';
+import { ColorCode, SelectOption, YesNo } from '../../../../consultant/types';
 import TextButton from '../../../../components/button/text-button';
 import { GeoBasedRuleFormData } from '../types';
 import { GeoBasedRuleFormFieldsData } from './form-data';
@@ -311,7 +311,7 @@ const GeoBasedRuleForm: React.FC = () => {
           {/* Add Icon if needed */}
           <ManageRule
               alt='Manage Jurisdiction Rules '
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageTemplateBgcolor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
             />
           <div className='w-[90%]'>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>

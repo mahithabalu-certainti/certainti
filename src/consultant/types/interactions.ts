@@ -27,13 +27,12 @@ export enum StatusTypeEnum {
   inqueue = 'in-queue',
 }
 
-export enum colorCode{
+export enum ColorCode{
   manageTemplateBgcolor = '#9747FF',
   manageAccountBgcolor = '#BE3EB5',
   manageAccountTextColor = '#FFFFFF',
   accountBgColor = '#3992ec',
   accountTextColor = '#fff',
-  AccountBgColorShadow = '#EAF4FF',
   projectBgColor ='#ba60eb',
   projectTextColor= accountTextColor,
   caseBgColor= '#3EBEB5',
