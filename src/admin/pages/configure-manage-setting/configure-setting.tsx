@@ -5,7 +5,7 @@ import { ConfigureSettingsFormFields } from './helper';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { AllPermissions, Layout, OnChange } from '../../../common-service';
+import { AllPermissions, OnChange } from '../../../common-service';
 import {
   useManageSettingDetails,
   useUpdateManageSettings,
@@ -188,7 +188,6 @@ const ConfigureSetting = () => {
               outData={handleFormSubmit}
               values={formValues}
               onChange={onChangeField}
-              layout={Layout.TYPE_1}
             />
           </Box>
         </div>
