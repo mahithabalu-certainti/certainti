@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import FinancialWorking from './finacial-working';
 import { useSelector } from 'react-redux';
 import { FormControl, FormControlLabel, MenuItem, Radio, RadioGroup, Select } from '@mui/material';
@@ -12,7 +12,7 @@ import { AllPermissions } from '../../../../../../../common-service';
 import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import { CaseDetails } from '../../../../../../types';
 import TextButton from '../../../../../../../components/button/text-button';
-import { useFinancialHighlights, useInitiateRDCreditProcess, useRDCreditStatus } from '../../../../../../services/case-dossier/cases-finacial-services';
+import { useFinancialHighlights, useInitiateRDCreditProcess, useRDCreditStatus } from '../../../../../../services/case-dossier/cases-financial-services';
 
 
 interface RDFormProps {
@@ -24,7 +24,7 @@ interface FormErrors {
     region?: string;
 }
 
-const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
+const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     const [isFederal, setIsFederal] = useState<string>('yes');
     const [selectedRegion, setSelectedRegion] = useState<string>('');
     const [errors, setErrors] = useState<FormErrors>({});
@@ -38,11 +38,19 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     const { successToast, errorToast } = useToast();
     // const queryClient = useQueryClient();
 
+    const [showViewBtn, setShowViewBtn] = useState<boolean>(false);
+
     const { mutate: initiateProcess, isPending: isInitiating } = useInitiateRDCreditProcess();
     const { mutate: financialHighlights, isPending: isFinancialHighlights } = useFinancialHighlights();
 
     // Fetch Status
-    const { refetch: refetchRDCreditStatus } = useRDCreditStatus(accountid, caseId ?? '', false);
+    const { data: statusData, isSuccess: isStatusSuccess, refetch: refetchRDCreditStatus } = useRDCreditStatus(accountid, caseId ?? '', false);
+
+    useEffect(() => {
+        if (isStatusSuccess && statusData) {
+            setShowViewBtn(true);
+        }
+    }, [isStatusSuccess, statusData]);
 
     const caseCountryDetails = {
         country_name: caseDetails?.country_name || '',
@@ -154,6 +162,7 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         });
     };
     const isViewButtonEnabled = () => {
+        if(!showViewBtn) return false;
         if (isFederal === 'yes') {
             return true;
         } else if (isFederal === 'no') {
@@ -163,7 +172,7 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     };
 
     const isInitiateButtonEnabled = () => {
-        return isViewButtonEnabled() && startDate !== '' && endDate !== '';
+        return startDate !== '' && endDate !== '';
     };
 
     return (
@@ -413,4 +422,4 @@ const FinacialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     );
 };
 
-export default FinacialWorkingForm;
+export default FinancialWorkingForm;

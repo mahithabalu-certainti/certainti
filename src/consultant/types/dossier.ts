@@ -158,7 +158,7 @@ export interface RDFormPayload {
 }
 
 
-// finacial highlights 
+// financial highlights 
 
 export interface RDCreditPreviewResponse {
   statusCode: number;

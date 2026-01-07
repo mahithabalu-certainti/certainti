@@ -10,8 +10,8 @@ import {
   getProjectSummaryFilterFields,
   getResourceSummaryFilterFields,
 } from './helper';
-import FinacialWorkingForm from './tab/finacial-working/finacial-form';
 import { ProjectDocuments } from './tab';
+import FinancialWorkingForm from './tab/financial-working/financial-form';
 
 const DossierTabs = [
   {
@@ -188,7 +188,7 @@ const Dossier: React.FC<DossierProps> = ({
 
       <div className='border border-t-0 border-[#CBD6E2]'>
 
-        {tabParam === 'financial_workings' && <FinacialWorkingForm  caseDetails={caseDetails} />}
+        {tabParam === 'financial_workings' && <FinancialWorkingForm  caseDetails={caseDetails} />}
 
         {tabParam === 'project-assigned-documents' && (
           <ProjectDocuments

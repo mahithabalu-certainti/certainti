@@ -1,16 +1,11 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
-import {
-
-} from '../../types/rd-financial';
-import { getRDCreditPreviewURL,
-     getRDCreditStatusURL,
-  getRDCreditInitiateURL,
-  getFinancialHighlightsURL,
- } from '../urls/dossier-finacial-urls';
 import { RDCreditPreviewResponse,  RDCreditStatusResponse,
   RDCreditInitiatePayload,
   RDCreditInitiateResponse, } from '../../types';
+import { getFinancialHighlightsURL,getRDCreditPreviewURL,
+     getRDCreditStatusURL,
+  getRDCreditInitiateURL, } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
 export const fetchRDCreditPreview = async (
