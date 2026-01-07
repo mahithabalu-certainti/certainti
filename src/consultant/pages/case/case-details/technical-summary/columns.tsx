@@ -40,7 +40,8 @@ export const getTechnicalSummaryListColumns = (
     sortable: true,
     sx: { textAlign: 'right' },
     // hide:
-    //   !permissionMap?.['project_code']?.edit && !permissionMap?.['project_code']?.read,
+    //   !permissionMap?.['project_code']?.edit &&
+    //   !permissionMap?.['project_code']?.read,
   },
   {
     id: 'project_name',
@@ -50,17 +51,8 @@ export const getTechnicalSummaryListColumns = (
     sortable: true,
     sx: { textAlign: 'right' },
     // hide:
-    //   !permissionMap?.['project_name']?.edit && !permissionMap?.['project_name']?.read,
-  },
-  {
-    id: 'version',
-    sortId: 'version',
-    label: 'Summary Version',
-    width: 160,
-    sortable: true,
-    sx: { textAlign: 'right' },
-    hide:
-      !permissionMap?.['version']?.edit && !permissionMap?.['version']?.read,
+    //   !permissionMap?.['project_name']?.edit &&
+    //   !permissionMap?.['project_name']?.read,
   },
   {
     id: 'version',

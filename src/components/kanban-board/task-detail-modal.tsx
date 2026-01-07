@@ -57,6 +57,7 @@ import {
 import UserAvatar from './user-avatar';
 import { getSvgIcon } from '../navbar/helper';
 
+const UNASSIGNED_VALUE = 'Unassigned';
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
   tagData?: Array<{ id: string; name: string; color: string }>;
@@ -715,8 +716,33 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Fields that should be editable only by the creator
     const creatorOnlyFieldsDisabled = !isCreator;
 
+    // Check if any visible field is unassigned or empty
+    const isAnyFieldEmpty = () => {
+      if (!editedTask) return true;
+
+      const isFieldVisible = (key: string) => !fieldVisibility[key];
+
+      // Check Assignee
+      if (isFieldVisible('assignee')) {
+        const assigneeName = editedTask.assignee?.name;
+        if (!assigneeName || assigneeName === UNASSIGNED_VALUE) return true;
+      }
+
+      // Check Priority
+      if (isFieldVisible('priority') && !editedTask.priority) return true;
+
+      // Check Start Date
+      if (isFieldVisible('startDate') && !editedTask.startDate) return true;
+
+      // Check End Date
+      if (isFieldVisible('endDate') && !editedTask.endDate) return true;
+
+      return false;
+    };
+
     const shouldDisableStatus =
-      typeof isCaseTeamCreated === 'boolean' ? !isCaseTeamCreated : false;
+      (typeof isCaseTeamCreated === 'boolean' ? !isCaseTeamCreated : false) ||
+      isAnyFieldEmpty();
 
     return {
       ...fieldDisabled,
@@ -733,11 +759,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       checklist: fieldDisabled.checklist || creatorOnlyFieldsDisabled,
     };
   }, [
-    editedTask?.checklist,
+    editedTask,
     task?.created_by_rid,
     userId,
     fieldDisabled,
     isCaseTeamCreated,
+    fieldVisibility,
   ]);
 
   if (!isAnimating || !taskId) return null;

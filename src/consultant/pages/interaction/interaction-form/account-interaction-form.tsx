@@ -286,18 +286,44 @@ const AccountInteractionForm = () => {
       setInteractionLevel(interactionOptions[0].rid);
     }
   }, [getInteractionLevel.data?.data]);
+  const getProjectDisableReason = (shouldDisableProject: boolean): string => {
+    if (shouldDisableProject) {
+      return 'Project type not allowed due to Configuration setting';
+    }
+    return '';
+  };
+
   useEffect(() => {
     if (projectData.data?.projects) {
       const updatedProjectList =
         projectData.data.projects.map((project) => {
           const updatedFiscal =
-            project.ProjectFiscal?.map((item) => {
-              return item;
+            project.ProjectFiscal?.map((fiscal) => {
+              const checkBoxMessage = getProjectDisableReason(
+                fiscal?.is_rd_trigger_qualified === false
+              );
+
+              return {
+                ...fiscal,
+                disableCheckBox: !!checkBoxMessage,
+                checkBoxMessage,
+              };
             }) || [];
+
+          const hasDisabledChild = updatedFiscal.some(
+            (fiscal) => fiscal.disableCheckBox
+          );
+
+          const parentDisableMessage = hasDisabledChild
+            ? getProjectDisableReason(true)
+            : null;
 
           return {
             ...project,
             ProjectFiscal: updatedFiscal,
+            disableCheckBox: hasDisabledChild,
+            checkBoxMessage: parentDisableMessage,
+            hasDisabledFiscal: hasDisabledChild,
           };
         }) || [];
 

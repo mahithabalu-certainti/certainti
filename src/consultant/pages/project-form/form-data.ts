@@ -560,10 +560,9 @@ export const FormData = (
             required: false,
             isLoading: stateLoading,
             disabled:
-              (isEditView && isCaseExists) ||
-              (isEditView &&
-                permissionMap?.['region']?.read &&
-                !permissionMap?.['region']?.edit),
+              isEditView &&
+              permissionMap?.['region']?.read &&
+              !permissionMap?.['region']?.edit,
             hide:
               isEditView &&
               !permissionMap?.['region']?.read &&
