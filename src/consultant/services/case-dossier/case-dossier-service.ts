@@ -6,11 +6,13 @@ import {
   ResourceSummaryListURLParams,
   ProjectSummaryItem,
   ProjectSummaryListURLParams,
+  RDFormResponse,
 } from '../../types';
 import {
   ProjectDocumentListMockData,
   ResourceSummaryMockData,
   ProjectSummaryMockData,
+  mockRDFormResponse,
 } from '../../mockdata/dossier';
 
 export const fetchProjectDocumentList = async (
@@ -121,4 +123,71 @@ export const useProjectSummaryList = (
     gcTime: 0,
     enabled: !!params.accountRid && !!params.caseRid,
   });
+};
+
+// RD Form
+const fetchRDFormData = async (
+  accountId: string,
+  countryId: string,
+  regionId?: string
+): Promise<RDFormResponse> => {
+  // let url = `/api/rd-form?account_rid=${accountId}&country_rid=${countryId}`;
+
+  // // Add region parameter if provided
+  // if (regionId) {
+  //   url += `&state_rid=${regionId}`;
+  // }
+
+  // const response = await caseServiceApi.get<RDFormResponse>(url);
+  // return response.data;
+  console.log(accountId, countryId, regionId);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  return mockRDFormResponse;
+};
+
+export const useGetRDFormData = (
+  accountId: string,
+  countryId: string,
+  regionId?: string,
+  enabled?: boolean
+): UseQueryResult<RDFormResponse | undefined, Error> => {
+  return useQuery<RDFormResponse | undefined, Error>({
+    queryKey: ['rd-credit-forms', accountId, countryId, regionId],
+    queryFn: () => fetchRDFormData(accountId, countryId, regionId),
+    retry: 0,
+    gcTime: 0,
+    enabled: enabled && !!accountId && !!countryId,
+  });
+};
+
+export const downloadPdfFromBase64 = (
+  base64Data: string,
+  filename: string = 'rd-form.pdf'
+): void => {
+  try {
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
 };

@@ -878,7 +878,12 @@ export const CaseDetails = () => {
           />
         );
       case 'dossier':
-        return <Dossier activityMenuItems={activityMenuItems} />;
+        return (
+          <Dossier
+            activityMenuItems={activityMenuItems}
+            caseDetails={caseData}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -990,13 +995,6 @@ export const CaseDetails = () => {
         id: AllModules.PROJECT_TECHNICAL_SUMMARY,
         disabled: false,
         icon: TechSummaryIcon,
-      },
-      {
-        name: 'RD Credit Forms',
-        key: 'rd_credit_forms',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: DetailsIcon,
       },
       {
         name: 'Dossier',

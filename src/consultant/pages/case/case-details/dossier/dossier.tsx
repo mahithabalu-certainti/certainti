@@ -5,7 +5,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { DetailsIcon } from '../../../../../assets';
-import { ProjectDocuments, ProjectSummary, ResourceSummary } from './tab';
+import {
+  ProjectDocuments,
+  ProjectSummary,
+  RDForm,
+  ResourceSummary,
+} from './tab';
 import {
   getProjectDocumentsFilterFields,
   getProjectSummaryFilterFields,
@@ -33,7 +38,7 @@ interface DossierProps {
 
 const Dossier: React.FC<DossierProps> = ({
   activityMenuItems,
-  // caseDetails,
+  caseDetails,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -55,7 +60,7 @@ const Dossier: React.FC<DossierProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const initialTab = 'project_documents';
+  const initialTab = 'summary';
 
   useEffect(() => {
     if (searchParams.get('list') === 'dossier' && !searchParams.get('tab')) {
@@ -97,6 +102,26 @@ const Dossier: React.FC<DossierProps> = ({
   }, [tabParam]);
 
   const tabs = [
+    {
+      label: 'Summary',
+      value: 'summary',
+      hide: false,
+    },
+    {
+      label: 'Qualified Projects',
+      value: 'qualified_projects',
+      hide: false,
+    },
+    {
+      label: 'Financial Workings',
+      value: 'financial_workings',
+      hide: false,
+    },
+    {
+      label: 'RD Forms',
+      value: 'rd_form',
+      hide: false,
+    },
     {
       label: 'Project Documents',
       value: 'project_documents',
@@ -166,6 +191,29 @@ const Dossier: React.FC<DossierProps> = ({
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
+        {tabParam === 'summary' && (
+          <div className='p-4'>
+            <h3 className='font-semibold'>Summary</h3>
+            <p>Summary content will be added here.</p>
+          </div>
+        )}
+
+        {tabParam === 'qualified_projects' && (
+          <div className='p-4'>
+            <h3 className='font-semibold'>Qualified Projects</h3>
+            <p>Qualified projects content will be added here.</p>
+          </div>
+        )}
+
+        {tabParam === 'financial_workings' && (
+          <div className='p-4'>
+            <h3 className='font-semibold'>Financial Workings</h3>
+            <p>Financial workings content will be added here.</p>
+          </div>
+        )}
+
+        {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
+
         {tabParam === 'project_documents' && (
           <ProjectDocuments
             refreshTrigger={refreshTrigger}

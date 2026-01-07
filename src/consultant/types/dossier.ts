@@ -144,3 +144,15 @@ export interface ProjectSummaryListResponse {
     projectSummary: ProjectSummaryItem[];
   };
 }
+
+// RD form
+export interface RDFormResponse {
+  status: number;
+  message: string;
+  data: string; // Base64 encoded PDF data
+}
+
+export interface RDFormPayload {
+  country_rid: string;
+  region_rid?: string;
+}
