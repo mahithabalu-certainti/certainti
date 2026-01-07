@@ -7,13 +7,11 @@ import TextButton from '../button/text-button';
 import { useSendInteraction } from '../../consultant/services/interactions/interactions-service';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../hooks';
-
 interface SendInteractionModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedRows: InteractionList[];
   onSuccessRefetch: () => void;
-  interaction_level: 'Account' | 'Project';
 }
 
 const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
@@ -21,7 +19,6 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   onClose,
   selectedRows,
   onSuccessRefetch,
-  interaction_level,
 }) => {
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
@@ -107,7 +104,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
       const interactions = selectedRows.map((row) => {
         return {
           interaction_rid: row.rid,
-          interaction_level: interaction_level,
+          interaction_level: row.interaction_level_name || '',
           project_fiscal_rid: row.project_fiscal_rid || '',
         };
       });

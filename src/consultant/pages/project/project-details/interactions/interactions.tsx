@@ -856,7 +856,6 @@ const Interactions: React.FC<InteractionsProps> = ({
                 onClose={() => setSendModalOpen(false)}
                 selectedRows={selectedRows}
                 onSuccessRefetch={handleRefresh}
-                interaction_level='Project'
               />
               <TableModal
                 title='Reminder Interaction'
