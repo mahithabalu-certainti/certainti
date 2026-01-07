@@ -806,6 +806,12 @@ class ActivitySchemaService {
           [entityId]
         );
         allActivities.push(...accountAttachments);
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+                  /\D/g,
+                  ""
+                )}`;
+         const tableExists = await this.helperMethod.checkTableExists(schemaName, "cases");
+      if (tableExists) {
          const cases = await this.helperMethod.getCasesByAccountId(
           accountNumber,
           entityId
@@ -813,7 +819,7 @@ class ActivitySchemaService {
          const caseIds = cases.map((r:any) => (r as { rid: string }).rid);
         const caseAttachments = await fetchAttachments(Activities, "case", caseIds);
         allActivities.push(...caseAttachments);
-
+      }
         const projects = await this.helperMethod.getProjectsByAccountId(
           accountNumber,
           entityId,accessibleIds

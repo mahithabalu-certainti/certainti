@@ -600,6 +600,32 @@ export class HelperMethods {
     );
     return results;
   }
+
+   async checkTableExists(
+      schemaName: string,
+      tableName: string
+    ): Promise<boolean> {
+      try {
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.caseModelService.getSequelize();
+        }
+  
+  
+        const checkTableQuery = rawQueries.checkCaseTableExists(schemaName);
+  
+        const [tableExists] = await this.orgDbSequelize.query(checkTableQuery, {
+          type: "SELECT",
+        });
+  
+        if ((tableExists as any).exists === false) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        logMessage(`Error checking table existence: ${error}`);
+        return false;
+      }
+    }
   buildRawWhereClause(
     filters: Record<string, any>,
     search?: string
