@@ -9,5 +9,5 @@ const routes: Router = Router();
 routes.post("/federal/calculate", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.financialRDCreditFederal);
 routes.get("/:accountRid/case/:caseRid/state/:stateCode/preview", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.findRdCreditComputedResults);
 routes.post("/process/initiate", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.initiateRDCreditProcess);
-routes.get("/:accountRid/case/:caseRid/status", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.findProcessStatusByCaseRid);
+routes.get("/status/:accountRid/:caseRid", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.findProcessStatusByCaseRid);
 export default routes;
