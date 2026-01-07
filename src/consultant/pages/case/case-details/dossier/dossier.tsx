@@ -4,18 +4,14 @@ import { ActivityDropdownItem, CaseDetails } from '../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { DetailsIcon } from '../../../../../assets';
-import {
-  ProjectDocuments,
-  ProjectSummary,
-  RDForm,
-  ResourceSummary,
-} from './tab';
+import { ComingSoon, DetailsIcon } from '../../../../../assets';
 import {
   getProjectDocumentsFilterFields,
   getProjectSummaryFilterFields,
   getResourceSummaryFilterFields,
 } from './helper';
+import FinacialWorkingForm from './tab/finacial-working/finacial-form';
+import { ProjectDocuments } from './tab';
 
 const DossierTabs = [
   {
@@ -191,30 +187,10 @@ const Dossier: React.FC<DossierProps> = ({
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
-        {tabParam === 'summary' && (
-          <div className='p-4'>
-            <h3 className='font-semibold'>Summary</h3>
-            <p>Summary content will be added here.</p>
-          </div>
-        )}
 
-        {tabParam === 'qualified_projects' && (
-          <div className='p-4'>
-            <h3 className='font-semibold'>Qualified Projects</h3>
-            <p>Qualified projects content will be added here.</p>
-          </div>
-        )}
+        {tabParam === 'financial_workings' && <FinacialWorkingForm  caseDetails={caseDetails} />}
 
-        {tabParam === 'financial_workings' && (
-          <div className='p-4'>
-            <h3 className='font-semibold'>Financial Workings</h3>
-            <p>Financial workings content will be added here.</p>
-          </div>
-        )}
-
-        {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
-
-        {tabParam === 'project_documents' && (
+        {tabParam === 'project-assigned-documents' && (
           <ProjectDocuments
             refreshTrigger={refreshTrigger}
             currentPage={currentPage}
@@ -227,34 +203,12 @@ const Dossier: React.FC<DossierProps> = ({
             searchValue={searchText}
           />
         )}
-
-        {tabParam === 'project_summary' && (
-          <ProjectSummary
-            refreshTrigger={refreshTrigger}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
-            columnAnchorEl={columnAnchorEl}
-            setColumnAnchorEl={setColumnAnchorEl}
-            searchValue={searchText}
-          />
+        {tabParam !==  'financial_workings' && (
+           <div className='flex items-center justify-center w-full h-full'>
+             <ComingSoon alt='comingSoon' />
+          </div>
         )}
 
-        {tabParam === 'resource_summary' && (
-          <ResourceSummary
-            refreshTrigger={refreshTrigger}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
-            columnAnchorEl={columnAnchorEl}
-            setColumnAnchorEl={setColumnAnchorEl}
-            searchValue={searchText}
-          />
-        )}
       </div>
     </div>
   );

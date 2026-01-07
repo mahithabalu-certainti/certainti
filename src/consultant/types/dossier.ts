@@ -156,3 +156,62 @@ export interface RDFormPayload {
   country_rid: string;
   region_rid?: string;
 }
+
+
+// finacial highlights 
+
+export interface RDCreditPreviewResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    rid: string;
+    case_rid: string;
+    country_rid: string;
+    state_rid: string;
+    input_params: {
+      metadata: {
+        country: string;
+        currency: string;
+        credit_type: string;
+      };
+      qreSummary: {
+        totalQREs: number;
+        prior_year_qre_1: number;
+        prior_year_qre_2: number;
+      };
+    };
+    computed_fields: {
+      computed_fields: {
+        excess_qre: number;
+        allowable_credit: number;
+        sum_prior_two_years: number;
+        fifty_percent_of_prior_two_years: number;
+      };
+    };
+    final_credit: number | null;
+    created_datetime: string;
+    modified_datetime: string;
+  };
+}
+
+export interface RDCreditStatusResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: string; // "COMPLETED", "PENDING", etc.
+}
+
+export interface RDCreditInitiatePayload {
+  account_rid: string;
+  case_rid: string;
+  effective_start: string;
+  effective_end: string;
+}
+
+export interface RDCreditInitiateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: number;
+}
