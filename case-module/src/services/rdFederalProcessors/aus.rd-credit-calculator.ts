@@ -47,6 +47,7 @@ export class RdCreditCalculatorForAus {
         })
         totalAllocatedNotionalDections = totalFteQreCost + totalSubconQreCost + totalNonlaborQreCost;
         totalAccountExpenditure = totalAllocatedNotionalDections;
+        let preliminaryCalculation = totalAccountExpenditure;
         taxRate = extractConfig.tax_rate;
         rdTotalExpenses = Number(caseDetails.total_expenses)|| 0.00
         totalNotionalObj = {
@@ -105,6 +106,7 @@ export class RdCreditCalculatorForAus {
         ]
         let nonRefundableRdTaxOffset = parseFloat(Number(calculateCredit[0]?.["offset Amount"]! + calculateCredit[1]?.["offset Amount"]!).toFixed(2))
         const finalData = {
+          "Preliminary Calculation" : preliminaryCalculation,
           "R&D Expenditure" : {
             "R&D expenditure - Research service provider (RSP)" : totalNonlaborQreCost,
             "R&D expenditure - Contract expenditure (not RSP)": totalSubconQreCost,

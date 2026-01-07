@@ -54,6 +54,6 @@ export const calculateRDExpenditureQuery = (schemaName : string, caseRid : strin
     `
     return query;
 }
-export const fetchCountryData = (schemaName : string, caseRid : string, countryRid : string) => {
+export const fetchCountryData = (schemaName : string, caseRid : string) => {
     return `SELECT rid, created_datetime, modified_datetime, case_rid, country_rid, input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = '${caseRid}'`
 }
