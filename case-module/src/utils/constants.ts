@@ -1574,7 +1574,10 @@ export const rawQueries = {
   },
   fetchMilestoneDetails (rid : string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
-  }
+  },
+  fetchAccountStartEndDate (accountRid : string, schemaName : string) {
+    return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  } 
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

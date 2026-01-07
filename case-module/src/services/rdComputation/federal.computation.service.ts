@@ -340,7 +340,7 @@ export class FederalComputationService {
         let schemaName = rawQueries.fetchSchemaName(
             fetchParentAccountRnumber[0][0].r_number
         ); 
-        const result = await orgDb.query(fetchCountryData(schemaName, data.case_rid, data.country_rid));
+        const result = await orgDb.query(fetchCountryData(schemaName, data.case_rid));
         return result[0][0]
     }
 

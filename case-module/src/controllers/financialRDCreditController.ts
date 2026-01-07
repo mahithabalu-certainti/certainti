@@ -30,11 +30,7 @@ async function financialRDCreditFederal(
     );
 
     // Step 2: Validate request body
-    const value = await validateRequest(req, rdCreditGenerationSchema, res);
-    if (!value) {
-      errorLog(methodName, "Invalid request body");
-      return;
-    }
+    const value = req.body;
 
     // Step 3: Validate userId
     const userId = req.headers["x-user-id"] as string;
@@ -105,7 +101,7 @@ async function initiateRDCreditProcess(
     }
 
     logMessage(JSON.stringify(value));
-    const resultState = await computationService.initiateRDCreditProcess(value.account_rid, value.case_rid, value.effective_start, value.effective_end)
+    const resultState = await computationService.initiateRDCreditProcess(value.account_rid, value.case_rid, value.fiscal_year)
     // Step 5: Handle service response
     handleCustomResponse(
       res,
