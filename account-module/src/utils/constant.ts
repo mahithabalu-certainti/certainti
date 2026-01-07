@@ -2548,7 +2548,7 @@ export const rawQueries = {
          CONSTRAINT checklist_items_checklist_rid_fkey FOREIGN KEY (checklist_rid)
         REFERENCES ${schemaName}.checklists (rid) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE NO ACTION
+        ON DELETE CASCADE
       );
     `;
   },
