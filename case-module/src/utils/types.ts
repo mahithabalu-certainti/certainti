@@ -949,3 +949,13 @@ export type CalculateQreCostType = {
   subcon_qre_amount : number;
   nonlabor_qre_amount : number;
 }
+export type ProjectCalculatedDataCanada = {
+  project_code : string
+  project_name : string
+  total_effort_prj : number
+  total_cost_prj : number
+  total_cost_fte_prj : number
+  total_cost_subcon_prj : number
+  total_cost_nonlabor_prj : number
+  rd_percent_final : number
+}

@@ -62,8 +62,8 @@ export class ComputationService {
             const fetchAccountFiscalStartEndDate : any= await orgDb.query(rawQueries.fetchAccountStartEndDate(accountRid, schemaName));
             let restructuredStart = fetchAccountFiscalStartEndDate[0][0].fiscal_start_date.replace("/", "-")
             let restructuredEnd = fetchAccountFiscalStartEndDate[0][0].fiscal_end_date.replace("/", "-")
-            let effectiveStart = `${fiscalYear - 1}-${restructuredStart} 00:00:00.000 +0530`
-            let effectiveEnd = `${fiscalYear}-${restructuredEnd} 00:00:00.000 +0530`
+            let effectiveStart = `${fiscalYear - 1}-${restructuredStart}`
+            let effectiveEnd = `${fiscalYear}-${restructuredEnd}`
             const fetchAccountCountryId : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(accountRid))
             const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
             const hasFederal = findAvailableConfigLevels.includes(true);
