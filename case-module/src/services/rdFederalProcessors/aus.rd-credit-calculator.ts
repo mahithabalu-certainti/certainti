@@ -120,7 +120,7 @@ export class RdCreditCalculatorForAus {
             "Total notional R&D deductions" : totalNotionalObj,
             "R&D intensity" : `${rdIntensity}%`
           },
-          calculateCredit,
+          "Tier of intensity" : calculateCredit,
           "Non-refundable R&D tax offset": nonRefundableRdTaxOffset
         }
         return {
