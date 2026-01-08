@@ -205,8 +205,7 @@ export interface RDCreditStatusResponse {
 export interface RDCreditInitiatePayload {
   account_rid: string;
   case_rid: string;
-  effective_start: string;
-  effective_end: string;
+  fiscal_year?: number;
 }
 
 export interface RDCreditInitiateResponse {

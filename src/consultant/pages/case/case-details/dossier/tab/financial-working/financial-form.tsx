@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo, useEffect } from 'react';
 import FinancialWorking from './finacial-working';
 import { useSelector } from 'react-redux';
 import { FormControl, FormControlLabel, MenuItem, Radio, RadioGroup, Select } from '@mui/material';
-import StyledDateTimePicker from '../../../../../../../components/form-builder/styled-date-time-picker';
 import { useParams, useSearchParams } from 'react-router-dom';
 // import { useQueryClient } from '@tanstack/react-query';
 import { RootState } from '../../../../../../../store/store';
@@ -33,8 +33,6 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     const [searchParams] = useSearchParams();
     const accountid = searchParams.get('accountID')?? '';
     const { permission } = useSelector((state: RootState) => state.permission);
-    const [startDate, setStartDate] = useState<string>('');
-    const [endDate, setEndDate] = useState<string>('');
     const { successToast, errorToast } = useToast();
     // const queryClient = useQueryClient();
 
@@ -105,6 +103,8 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         }
     };
     
+    const [financialData, setFinancialData] = useState<any>(null);
+
     const handleViewFinancialHighlights = async () => {
 
         // const { data, isLoading, isError } = await fetchRDCreditPreview(
@@ -123,16 +123,14 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                 const payload = {
             account_rid: accountid,
             case_rid: caseId ?? '',
-            effective_end: endDate ? new Date(endDate).toISOString() : '',
-            effective_start: startDate ? new Date(startDate).toISOString() : ''
 
         };
 
         financialHighlights(payload, {
             onSuccess: (data) => {
                 console.log('Initiated successfully', data);
-                successToast('Initiated successfully');
-                refetchRDCreditStatus();
+                setFinancialData(data);
+                setShowPdfViewer(true);
             },
             onError: (error) => {
                 console.error('Error initiating', error);
@@ -144,9 +142,7 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         const payload = {
             account_rid: accountid,
             case_rid: caseId ?? '',
-            effective_end: endDate ? new Date(endDate).toISOString() : '',
-            effective_start: startDate ? new Date(startDate).toISOString() : ''
-
+             fiscal_year: Number(caseDetails?.fiscal_year || 0),
         };
 
         initiateProcess(payload, {
@@ -171,10 +167,6 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         return false;
     };
 
-    const isInitiateButtonEnabled = () => {
-        return startDate !== '' && endDate !== '';
-    };
-
     return (
         <div className='w-full'>
             {/* Federal Level Radio Buttons */}
@@ -186,7 +178,7 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                         label={'View'}
                         loading={isFinancialHighlights}
                         onClick={handleViewFinancialHighlights}
-                        disabled={!isViewButtonEnabled() || isFinancialHighlights}
+                        // disabled={!isViewButtonEnabled() || isFinancialHighlights}
                         sx={{
                             width: '55px',
                             minWidth: '55px',
@@ -199,7 +191,7 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                         label={'Initiate'}
                         loading={isInitiating}
                         onClick={handleInistateFinancialHighlights}
-                        disabled={!isInitiateButtonEnabled() || isInitiating}
+                        disabled={isInitiating}
                         sx={{
                             width: '55px',
                             minWidth: '55px',
@@ -367,43 +359,8 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                     )}
                 </div>
 
-                {/* Date Fields - New Line */}
-                <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 pb-3'>
-                    {/* Start Date */}
-                    <div>
-                        <label
-                            className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1'
-                            htmlFor='start_date'
-                        >
-                            Start Date <span className='text-red-500'> *</span>
-                        </label>
-                        <StyledDateTimePicker
-                            mode='date'
-                            value={startDate}
-                            onChange={(newValue) => setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                            placeholder='YYYY-MM-DD'
-                            maxDate={endDate || undefined}
-                            disableFuture={false}
-                        />
-                    </div>
-
-                    {/* End Date */}
-                    <div>
-                        <label
-                            className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1'
-                            htmlFor='end_date'
-                        >
-                            End Date <span className='text-red-500'> *</span>
-                        </label>
-                        <StyledDateTimePicker
-                            mode='date'
-                            value={endDate}
-                            onChange={(newValue) => setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                            placeholder='YYYY-MM-DD'
-                            minDate={startDate || undefined}
-                        />
-                    </div>
-                </div>
+     
+              
             </div>
 
 
@@ -414,7 +371,7 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                         Federal R&D Credit
                     </div>
                     <div className='max-h-[600px] overflow-auto p-3'>
-                        <FinancialWorking />
+                        <FinancialWorking data={financialData} />
                     </div>
                 </div>
             )}

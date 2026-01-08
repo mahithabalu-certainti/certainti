@@ -50,7 +50,7 @@ export const getRDCreditStatusURL = (
   accountRid: string,
   caseRid: string
 ): string => {
-  return `/api/rd-credit/${accountRid}/case/${caseRid}/status`;
+  return `/api/rd-credit/status/${accountRid}/${caseRid}`;
 };
 
 export const getRDCreditInitiateURL = (): string => {
