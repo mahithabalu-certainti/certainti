@@ -1005,9 +1005,9 @@ export class WorkFlowService {
             case "In App":
                 await this.triggerNotification(entity, notificationTypes.InApp, ruleRid);
                 break;
-            // case "Email":
-            //     await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
-            //     break;
+            case "Email":
+                await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
+                break;
             default:
                 console.warn("Unknown action:", action.action_name);
         }
