@@ -17,9 +17,9 @@ export const jurisdictionTypeDefs = gql`
     platformConfig: JSON
     created_by: String
     created_user_name:String
-    created_at: String
+    created_datetime: String
     modified_by: String
-    modified_at: String
+    modified_datetime: String
     modified_user_name: String
     status_name: String
     credit_config_group_rid: String

@@ -839,30 +839,40 @@ export class WorkFlowService {
             // Dynamic template generation
             let templateParts: string[] = [];
             if (ruleConditions.length > 0) {
+                 let part = ``;
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
                     // Build a human-readable part for this condition
-                    let part = ``;
+                     
                     if(conditionResult.pass)
                     {
                     if(condition.action_phrase != null && condition.action_phrase != '' ){
-                        part = `${condition.action_phrase}`;
+                         if(templateParts.length > 0){
+                            part = ` and `;
+                        }
+                        part = part + `${condition.action_phrase}`;
                     }
                     else
                     {
                        const operatorText =
                         condition.operator_phrase?.trim() ||
                         condition.operator?.toLowerCase();
-                        part = `${condition.field_description} ${operatorText} ${condition.value}`;
+                         if(templateParts.length > 0){
+                            part = ` and `;
+                        }
+                        part = part +`${condition.field_description} ${operatorText} ${condition.value}`;
                     }
                 }
 
                    // const part = `${condition.field_description} ${condition.operator.toLowerCase()} ${condition.value}`;
-                    console.log("part " + part);
+                   
                     if (i === 0) {
                         ruleResult = conditionResult.pass;
+                        if(ruleResult){
+
                         templateParts.push(part);
+                        }
                     } else {
                         const logicalOp = condition.logical_operator;
                         if (logicalOp === "AND") {
@@ -870,8 +880,8 @@ export class WorkFlowService {
                         } else if (logicalOp === "OR") {
                             ruleResult = ruleResult || conditionResult.pass;
                         }
-                        if (part && part.trim() !== '') {
-                            templateParts.push(`and ${part}`);
+                        if (part !== null && part !== undefined && part.trim() !== '' && conditionResult.pass) {
+                            templateParts.push(`${part}`);
                         }
                     }
                 }
@@ -882,15 +892,10 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (ruleConditions.length === 0 || ruleResult) {
+            if (ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
-                    if(ruleConditions.length === 0){
-                        if(entity?.ruleScope === request.eventName){
-                            await this.executeAction(action, entity, userId, rule_rid, templateStr);
-                        }
-                    }
-                    else {
+                    if(ruleConditions.length > 0){
                         await this.executeAction(action, entity, userId, rule_rid, templateStr);
                     }
                 }
@@ -1121,17 +1126,17 @@ export class WorkFlowService {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
                     }
                 }
-                  if (messageTemplate.includes('{{entity}}')) {
-                    const entityValue   = taskContext.entity ? taskContext.entity : '';
-                    messageTemplate = messageTemplate.replace('{{entity}}', entityValue);
-                    if (templateDetails[0].subject != null) {
-                        templateDetails[0].subject = templateDetails[0].subject.replace('{{entity}}', entityValue);
-                    }
-                }
                 if(messageTemplate.includes('{{conditions}}')) {
                     const templateValue = taskContext.templateValue ? taskContext.templateValue : '';
                     messageTemplate = messageTemplate.replace('{{conditions}}', templateValue);
                 }
+                if (messageTemplate.includes('{{entity}}')) {
+                    const entityValue   = taskContext.entity ? taskContext.entity : '';
+                    messageTemplate = messageTemplate.replaceAll('{{entity}}', entityValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{entity}}', entityValue);
+                    }
+                }             
                 templateDetails[0].message_template = messageTemplate;
                 return {
                     templateDetails: templateDetails
@@ -1343,29 +1348,29 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
         emailRequest: any,
         userId: string
     ) {
-        const mainDb = await this.getMainDb();
+        //const mainDb = await this.getMainDb();
 
-        const [accountInfo]: any[] = await mainDb.query(
-            rawQueries.fetchAccountInfo(accountRid),
-            { type: "SELECT" }
-        );
+        // const [accountInfo]: any[] = await mainDb.query(
+        //     rawQueries.fetchAccountInfo(accountRid),
+        //     { type: "SELECT" }
+        // );
         
-        let parentAccountNumber = accountNumber;
-        if (accountInfo.storage_type === 'separate_db') {
-            const [parentAccountInfo]: any[] =
-                await mainDb.query(
-                    rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
-                    { type: "SELECT" }
-                );
-            parentAccountNumber = parentAccountInfo.r_number;
-        }
-        let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-            parentAccountNumber,
-            accountInfo.parent_account_rid
-        );
-         if (!senderEmailInfo) {
-            return;
-        }
+        // let parentAccountNumber = accountNumber;
+        // if (accountInfo.storage_type === 'separate_db') {
+        //     const [parentAccountInfo]: any[] =
+        //         await mainDb.query(
+        //             rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+        //             { type: "SELECT" }
+        //         );
+        //     parentAccountNumber = parentAccountInfo.r_number;
+        // }
+        // let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+        //     parentAccountNumber,
+        //     accountInfo.parent_account_rid
+        // );
+        //  if (!senderEmailInfo) {
+        //     return;
+        // }
         const emailContent = {
             message: {
                 subject: emailRequest.subject,
@@ -1385,8 +1390,7 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
 
 
         let emailResponse = await sendEmailWithAttachment({
-            message: emailContent.message,
-            senderEmailInfo: senderEmailInfo!,
+            message: emailContent.message
         });
     }
 

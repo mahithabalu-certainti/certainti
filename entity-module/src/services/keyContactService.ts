@@ -191,6 +191,7 @@ export class KeyContactService {
         await CaseKeyContactDetails.destroy({
           where: {
             key_contact_rid: key_contact_id,
+            case_rid: caseMapping.case_rid,
           },
         });
       }
@@ -318,6 +319,7 @@ export class KeyContactService {
             {
               where: {
                 key_contact_rid: keyContactDetails.rid,
+                case_rid: caseMapping.case_rid,
               },
             }
           );

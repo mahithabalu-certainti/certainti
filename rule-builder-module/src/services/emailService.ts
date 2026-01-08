@@ -31,17 +31,11 @@ import { logMessage } from "../utils/helpers";
  */
 export async function sendEmailWithAttachment(emailMessage: {
   message: IEmailMessage;
-  senderEmailInfo: {
-    email: string;
-    clientId: string;
-    tenantId: string;
-    clientSecret: string  
-  };
 }): Promise<any> {
   const credential = new ClientSecretCredential(
-    emailMessage.senderEmailInfo.tenantId,
-    emailMessage.senderEmailInfo.clientId,
-    emailMessage.senderEmailInfo.clientSecret
+    process.env.MAIL_TENANT_ID!,
+    process.env.MAIL_CLIENT_ID!,
+    process.env.MAIL_CLIENT_SECRET!
   );
 
   const graphClient = Client.initWithMiddleware({
@@ -63,7 +57,7 @@ export async function sendEmailWithAttachment(emailMessage: {
 
   try {
     const response = await graphClient
-      .api(`/users/${emailMessage.senderEmailInfo.email}/sendMail`)
+      .api(`/users/${process.env.SUPPORT_EMAIL}/sendMail`)
       .post(mail);
 
     return true;

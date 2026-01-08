@@ -823,6 +823,7 @@ export class CaseTaskSchemaService {
               );
               await ActivityHistory.create({
                 activity_rid: taskRid,
+                account_rid: accountRid,
                 created_by: userId,
                 created_datetime: new Date(),
                 attribute_name: "Tags",
@@ -1083,6 +1084,7 @@ export class CaseTaskSchemaService {
             await TaskAttachments.create(taskAttachmentPayload);
 
             const caseHistoryPayload: any = {
+              account_rid: data.account_rid,
               created_by: data.created_by,
               created_datetime: new Date(),
               attribute_name: "comments_attachments",
@@ -1257,6 +1259,7 @@ export class CaseTaskSchemaService {
                 old_value: "CREATE",
                 new_value: "added an attachment",
                 task_rid: data.task_rid,
+                account_rid: data.account_rid,
               };
               if (data.task_type !== "activity") {
                 commentsAttachmentPayload.case_rid = data.case_rid;
@@ -1366,6 +1369,7 @@ export class CaseTaskSchemaService {
               await CaseHistory.create(historyPayload);
             } else {
               historyPayload.activity_rid = data.task_rid;
+              historyPayload.account_rid = data.account_rid;
               await ActivityHistory.create(historyPayload);
             }
 
@@ -1783,10 +1787,11 @@ export class CaseTaskSchemaService {
               await ActivityHistory.create({
                 created_by: userId,
                 created_datetime: new Date(),
-                attribute_name: "Task Attachments",
-                new_value: uploadFile.url,
+                attribute_name: "task_attachments",
+                old_value: "CREATE",
+                new_value: "added an attachment",
                 activity_rid: data.task_rid,
-                account_rid: data.account_rid,
+                account_rid: data.account_rid
               });
             }
           }
@@ -1804,7 +1809,7 @@ export class CaseTaskSchemaService {
   }
 
   async deleteAttachment(accountNumber: string, data: any, userId: string) {
-    const { TaskAttachments } = await this.caseModelService.getModels(
+    const { TaskAttachments,ActivityHistory } = await this.caseModelService.getModels(
       accountNumber
     );
     const findTaskDetails = await this.findTaskById(
@@ -1853,6 +1858,15 @@ export class CaseTaskSchemaService {
             task_rid: data.task_rid,
           });
         } else {
+          await ActivityHistory.create({
+            created_by: userId,
+            created_datetime: new Date(),
+            attribute_name: "task_attachments",
+            old_value: "CREATE",
+            new_value: "deleted an attachment",
+            activity_rid: data.task_rid,
+            account_rid: data.account_rid
+          });
           await this.addTaskTimeline(
             accountNumber,
             checkIsFileExists.rid,

@@ -479,13 +479,17 @@ export class ProjectResourceSchemaService {
       }
 
       // Step 3: Fetch resource_type_rid → resource_type_name mapping
-      const typeResult: any[] = await this.mainDbSequelize.query(
+      let typeResult:any[] = [];
+      if(uniqueTypeIds.size > 0 )
+      {
+       typeResult = await this.mainDbSequelize.query(
         rawQueries.GET_RESOURCE_TYPES,
         {
           replacements: { resourceTypeRid: Array.from(uniqueTypeIds) },
           type: "SELECT",
         }
       );
+    }
 
       const typeMap = new Map<string, string>();
       for (const type of typeResult) {
