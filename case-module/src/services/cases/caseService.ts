@@ -227,14 +227,15 @@ export class CaseService {
           cases: response,
         },
       };
-    } catch (err) {
-      logMessage(`Error creating case, ${err}`);
-      await transaction.rollback();
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.caseCreationFailed,
-      };
+    } catch (error) {
+      console.log(error)
+      if (error instanceof Error) {
+        logMessage(`Error creating case: ${error.message}\nStack: ${error.stack}`);
+        throw new Error("Error creating case: " + error.message + "\nStack: " + error.stack);
+      } else {
+        logMessage(`Error creating case: ${error}`);
+        throw new Error("Error creating case: " + error);
+      }
     }
   }
 
