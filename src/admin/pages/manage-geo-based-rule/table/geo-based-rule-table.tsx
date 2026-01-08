@@ -5,6 +5,7 @@ import { getGeoBasedRuleColumns } from './columns';
 import {
   ActionItem,
   CellEditData,
+  FieldChangeEvent,
   FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../components/table/types';
@@ -23,6 +24,7 @@ import { AllPermissions } from '../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { FilterCondition } from '../../../types/manage-user';
+import dayjs from 'dayjs';
 
 interface IGeoBasedRuleTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -56,6 +58,11 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
   const [updateGeoBasedRule] = useMutation(GEO_BASED_RULE, {
     client: caseClient,
   });
+
+  const [dateRange, setDateRange] = useState<{
+    endMin?: string;
+    endMax?: string;
+  }>({});
 
   const { data, isLoading, isError } = useGeoBasedList(
     { ...tableParams, filters: appliedFilters, search: searchValue },
@@ -127,18 +134,25 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     });
     return map;
   }, [configEditFields]);
-  // const [visibleColumns, setVisibleColumns] = useState<
-  //     ListTableColumn<GeoBasedRule>[]
-  // >(getGeoBasedRuleColumns(permissionMap).filter((col) => !col.hide));
 
-  // const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-  //     setVisibleColumns(
-  //         updatedColumns.filter(
-  //             (col) => !col.hide
-  //         ) as ListTableColumn<GeoBasedRule>[]
-  //     );
-  // };
-  const configColumns = getGeoBasedRuleColumns(permissionMap);
+  const handleDateRange = (date: string) => {
+    // Set minimum end date to the day after the start date
+    const nextDay = date ? dayjs(date).add(1, 'day').format('YYYY-MM-DD') : '';
+    setDateRange({ endMin: nextDay, endMax: '' });
+  };
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'effective_start_date' && event.value) {
+      handleDateRange(String(event.value) || '');
+    }
+  };
+
+  const configColumns = getGeoBasedRuleColumns(
+    permissionMap,
+    dateRange,
+    handleDateRange
+  );
+
   const [columnOrder, setColumnOrder] = useState(
     configColumns.map((col) => col.id)
   );
@@ -269,6 +283,7 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
         onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
       />
     </>
   );

@@ -40,7 +40,6 @@ export const useAuthHook = () => {
   const logout = () => {
     localStorage.removeItem('auth');
     localStorage.removeItem('FILTER_STATE');
-    localStorage.removeItem('global_filters');
     localStorage.removeItem('showAdminSidebar');
     localStorage.removeItem('resetPassword');
     dispatch(clearAuthDetail());

@@ -18,6 +18,7 @@ import {
 } from './helpers';
 import { useGetResourceType } from '../../../../services/resource-list';
 import {
+  ColorCode,
   ExportType,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
@@ -279,7 +280,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
         titleIcon={
           <FinancialIcon
             alt='financial-header-icon'
-            className='[&>path]:stroke-[#f16840]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}
@@ -287,8 +288,8 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
         showItemCount={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
-        iconBg='#ffeae5'
-        bgType='circle'
+        iconBg={ColorCode.caseBgColor}
+            bgType='circle'
       />
       <SectionHeaderTab
         tabs={tabs}

@@ -6,12 +6,10 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
   CasesIcon,
   ChecklistIcon,
-  DetailsIcon,
   FinancialIcon,
   ImportsIcon,
   NotesSideIcon,
@@ -25,6 +23,10 @@ import {
   DraftEmailIcon,
   MeetingIcon,
   CallLogIcon,
+  ConfigRuleIcon,
+  AccountDeatilsIcon,
+  AccountsIcon,
+  ManageGroupAccount,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -75,6 +77,7 @@ import {
   NotesListExportParams,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
+  ColorCode,
 } from '../../types';
 import { exportProjectData, ProjectTriggerAI } from '../../services/project';
 import {
@@ -987,7 +990,7 @@ export const AccountDetails = () => {
         key: 'details',
         id: AllModules.ACCOUNTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: AccountDeatilsIcon,
       },
       {
         name: 'Resources',
@@ -1083,7 +1086,7 @@ export const AccountDetails = () => {
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: disable,
             hide: disable,
-            icon: ResourcesIcon,
+            icon: ManageGroupAccount,
           },
           {
             name: 'Settings',
@@ -1099,7 +1102,7 @@ export const AccountDetails = () => {
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: false,
             hide: false,
-            icon: ResourcesIcon,
+            icon: ConfigRuleIcon,
           },
         ],
       },
@@ -1129,9 +1132,9 @@ export const AccountDetails = () => {
           variant='sub'
           placeholder='Account Name'
           icon={
-            <AccountDetailsIcon
-              className='h-6 w-6 rounded'
-              style={{ backgroundColor: '#4B9BFF' }}
+            <AccountsIcon
+              alt='account-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
             />
           }
           title={data?.data?.accountById?.account_name ?? ''}
@@ -1150,9 +1153,9 @@ export const AccountDetails = () => {
           primaryButton={
             isAccountFieldsEditable && !detailPageView
               ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                }
+                label: 'Edit',
+                onClick: handleEditAccount,
+              }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -1172,11 +1175,10 @@ export const AccountDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
