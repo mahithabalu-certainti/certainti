@@ -15,7 +15,7 @@ import {
 } from '../../../../services/case-project-task/case-project-task-service';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
-import {  ProjectTaskIcon } from '../../../../../assets';
+import { ProjectTaskIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,

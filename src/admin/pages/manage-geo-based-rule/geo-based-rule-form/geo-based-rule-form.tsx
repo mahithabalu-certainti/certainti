@@ -310,9 +310,9 @@ const GeoBasedRuleForm: React.FC = () => {
         <div className='flex items-center w-[80%] max-w-[80%]'>
           {/* Add Icon if needed */}
           <ManageRule
-              alt='Manage Jurisdiction Rules '
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
-            />
+            alt='Manage Jurisdiction Rules '
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
+          />
           <div className='w-[90%]'>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
               {isEditView && ruleId

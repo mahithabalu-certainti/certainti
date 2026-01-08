@@ -513,8 +513,8 @@ const Activities: React.FC<ActivitiesProps> = ({
           }
           count={count}
           showItemCount={!viewDetails}
-       iconBg={ColorCode.accountBgColor}
-        bgType='circle'
+          iconBg={ColorCode.accountBgColor}
+          bgType='circle'
           buttons={headerButtons}
         />
 

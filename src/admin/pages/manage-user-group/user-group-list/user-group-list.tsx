@@ -1,5 +1,9 @@
 import React, { Suspense, useMemo, useState } from 'react';
-import { NewFilterIcon, RefreshIcon, ManageGroupIcon } from '../../../../assets';
+import {
+  NewFilterIcon,
+  RefreshIcon,
+  ManageGroupIcon,
+} from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_USER_GROUP_CREATE } from '../../../../routes';

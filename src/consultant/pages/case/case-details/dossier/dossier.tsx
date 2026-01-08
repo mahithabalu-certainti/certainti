@@ -38,11 +38,15 @@ const DossierTabs = [
 interface DossierProps {
   activityMenuItems: ActivityDropdownItem[];
   caseDetails?: CaseDetails;
+  setDossierFinancialStatus: (status: string) => void;
+  dossierFinancialStatus: string;
 }
 
 const Dossier: React.FC<DossierProps> = ({
   activityMenuItems,
   caseDetails,
+  setDossierFinancialStatus,
+  dossierFinancialStatus,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -219,7 +223,11 @@ const Dossier: React.FC<DossierProps> = ({
         )}
 
         {tabParam === 'financial_workings' && (
-          <FinancialWorkingForm caseDetails={caseDetails} />
+          <FinancialWorkingForm
+            caseDetails={caseDetails}
+            setDossierFinancialStatus={setDossierFinancialStatus}
+            dossierFinancialStatus={dossierFinancialStatus}
+          />
         )}
 
         {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}

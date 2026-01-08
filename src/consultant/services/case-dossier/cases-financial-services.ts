@@ -1,11 +1,17 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
-import { RDCreditPreviewResponse,  RDCreditStatusResponse,
+import {
+  RDCreditPreviewResponse,
+  RDCreditStatusResponse,
   RDCreditInitiatePayload,
-  RDCreditInitiateResponse, } from '../../types';
-import { getFinancialHighlightsURL,getRDCreditPreviewURL,
-     getRDCreditStatusURL,
-  getRDCreditInitiateURL, } from '../urls/dossier-url';
+  RDCreditInitiateResponse,
+} from '../../types';
+import {
+  getFinancialHighlightsURL,
+  getRDCreditPreviewURL,
+  getRDCreditStatusURL,
+  getRDCreditInitiateURL,
+} from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
 export const fetchRDCreditPreview = async (
@@ -67,11 +73,7 @@ export const initiateRDCreditProcess = async (
 };
 
 export const useInitiateRDCreditProcess = () => {
-  return useMutation<
-    RDCreditInitiateResponse,
-    Error,
-    RDCreditInitiatePayload
-  >({
+  return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
     mutationFn: (payload: RDCreditInitiatePayload) =>
       initiateRDCreditProcess(payload),
   });
@@ -86,11 +88,7 @@ export const financialHighlights = async (
 };
 
 export const useFinancialHighlights = () => {
-  return useMutation<
-    RDCreditInitiateResponse,
-    Error,
-    RDCreditInitiatePayload
-  >({
+  return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
     mutationFn: (payload: RDCreditInitiatePayload) =>
       financialHighlights(payload),
   });

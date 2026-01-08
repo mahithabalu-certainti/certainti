@@ -783,9 +783,9 @@ const InteractionForm = () => {
             />
           ) : (
             <InteractionsIcon
-            alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
-          />
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
+            />
           )}
           <div className='w-[90%]'>
             {isEditView && (

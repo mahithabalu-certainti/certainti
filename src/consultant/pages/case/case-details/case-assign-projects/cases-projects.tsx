@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
-import {  ProjectsSideIcon } from '../../../../../assets';
+import { ProjectsSideIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
   AllPermissions,
@@ -687,8 +687,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           ...btn,
           hide: Boolean(btn.hide),
         }))}
-       iconBg={ColorCode.caseBgColor}
-      bgType='circle'
+        iconBg={ColorCode.caseBgColor}
+        bgType='circle'
       />
       {!isAssignProject && !projectDetailTab && (
         <SectionHeaderTab

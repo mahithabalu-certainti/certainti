@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import {  AccountsIcon, EditIcon } from '../../../assets';
+import { AccountsIcon, EditIcon } from '../../../assets';
 import {
   AllModules,
   AllPermissions,
@@ -471,12 +471,14 @@ export const AccountForm: React.FC = () => {
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           {isEditView ? (
-            <EditIcon  className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`} />
+            <EditIcon
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
+            />
           ) : (
             <AccountsIcon
-            alt='account-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
-          />
+              alt='account-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
+            />
           )}
           <div className='w-[90%]'>
             {isEditView && (

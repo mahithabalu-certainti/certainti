@@ -721,7 +721,12 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   ];
 
   const getTitleIcon = () => {
-    return <CaseTeamIcon alt='action-items-icon'    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}/>;
+    return (
+      <CaseTeamIcon
+        alt='action-items-icon'
+        className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      />
+    );
   };
 
   const isAddButtonEnabled = caseTeamCreatePermission

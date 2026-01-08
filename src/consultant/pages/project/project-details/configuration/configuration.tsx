@@ -1,5 +1,9 @@
 import { useSearchParams } from 'react-router-dom';
-import {  ComingSoon, ManageGroupIcon, SettingIcon } from '../../../../../assets';
+import {
+  ComingSoon,
+  ManageGroupIcon,
+  SettingIcon,
+} from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
@@ -219,7 +223,7 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
         showItemCount={list !== 'settings'}
         hideSection={hideSection}
         iconBg={ColorCode.projectBgColor}
-       bgType='circle'
+        bgType='circle'
       />
       {renderContent()}
     </div>

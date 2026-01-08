@@ -289,7 +289,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
         iconBg={ColorCode.caseBgColor}
-            bgType='circle'
+        bgType='circle'
       />
       <SectionHeaderTab
         tabs={tabs}

@@ -411,7 +411,7 @@ const Checklist: React.FC<ChecklistProps> = ({
             showItemCount={true}
             titleIcon={
               <ChecklistIcon
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Checklist-header-icon'
               />
             }
