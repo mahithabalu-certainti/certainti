@@ -56,6 +56,7 @@ export type CaseHeadersColumns = {
   account_status_rid : string,
   account_status_name : string
   is_send_interaction : boolean
+  is_state_available : boolean
 }
 
 export type FilingType = {
