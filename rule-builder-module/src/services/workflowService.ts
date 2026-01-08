@@ -895,9 +895,7 @@ export class WorkFlowService {
             if (ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
-                    if(ruleConditions.length === 0){
-                    }
-                    else {
+                    if(ruleConditions.length > 0){
                         await this.executeAction(action, entity, userId, rule_rid, templateStr);
                     }
                 }
