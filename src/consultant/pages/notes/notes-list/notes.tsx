@@ -186,7 +186,7 @@ export const Notes: React.FC = () => {
               className={`h-7 w-7 p-[5px] rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.notesBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
-              <div className='font-bold text-[16px] text-[#2D3E4F]'>sss</div>
+              <div className='font-bold text-[16px] text-[#2D3E4F]'>Notes</div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
                 {`${totalCount} items`}
               </div>

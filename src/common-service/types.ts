@@ -378,6 +378,8 @@ export enum AllPermissions {
   WORKFLOW_BUILDER_CREATE = 'workflow_rule_create',
   WORKFLOW_BUILDER_EXPORT = 'workflow_rule_export',
   WORKFLOW_BUILDER_DELETE = 'workflow_rule_delete',
+  DOSSIER_OVERVIEW = 'dossier_overview',
+  DOSSIER_TIMELINE = 'dossier_timeline',
 }
 
 export interface Country {

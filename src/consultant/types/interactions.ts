@@ -27,20 +27,19 @@ export enum StatusTypeEnum {
   inqueue = 'in-queue',
 }
 
-export enum ColorCode{
+export enum ColorCode {
   manageTemplateBgcolor = '#9747FF',
   manageAccountBgcolor = '#BE3EB5',
   manageAccountTextColor = '#FFFFFF',
   accountBgColor = '#3992ec',
   accountTextColor = '#fff',
-  projectBgColor ='#ba60eb',
-  projectTextColor= accountTextColor,
-  caseBgColor= '#3EBEB5',
-  caseTextColor= accountTextColor,
+  projectBgColor = '#ba60eb',
+  projectTextColor = accountTextColor,
+  caseBgColor = '#3EBEB5',
+  caseTextColor = accountTextColor,
   notesBgColor = '#7F81F4',
-  attachmentBgColor='#d16dd3',
+  attachmentBgColor = '#d16dd3',
   taskBgColor = '#e64c94',
-
 }
 
 export interface globalFiltersType {
@@ -532,4 +531,3 @@ export interface InteractionKeyContacts {
   key_contact_email: string;
   key_contact_name: string;
 }
-

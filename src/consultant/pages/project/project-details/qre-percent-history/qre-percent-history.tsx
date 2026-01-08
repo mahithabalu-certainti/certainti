@@ -12,8 +12,7 @@ import {
 import { getQrePercentHistoryFilterFields } from './helpers';
 import { SectionTabPanel } from '../../../../../components';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
-import {
-   HistorySubmissionIcon } from '../../../../../assets';
+import { HistorySubmissionIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,

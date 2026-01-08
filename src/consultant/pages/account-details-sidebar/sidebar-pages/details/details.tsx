@@ -1,6 +1,9 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { AccountsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
+import {
+  AccountsIcon,
+  DetailsKeyContactErrorIcon,
+} from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import DetailsInfo from './details-info';
 import { accountDetailsProps } from '../../../account-details/utils';
@@ -106,7 +109,9 @@ const Details: React.FC<DetailsProps> = ({
         <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
           <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
             <Box className='flex items-center gap-2'>
-              <div className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${ColorCode.accountBgColor}]`}>
+              <div
+                className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${ColorCode.accountBgColor}]`}
+              >
                 <AccountsIcon
                   alt='details'
                   className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}

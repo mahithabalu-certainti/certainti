@@ -81,7 +81,7 @@ const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
         }
         buttons={headerButtons}
         iconBg={ColorCode.accountBgColor}
-              bgType='circle'
+        bgType='circle'
       />
       <JurisdictionConfig
         formRef={formRef}

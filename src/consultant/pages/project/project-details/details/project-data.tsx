@@ -1,5 +1,8 @@
 import React from 'react';
-import {  DetailsKeyContactErrorIcon, ProjectsSideIcon } from '../../../../../assets';
+import {
+  DetailsKeyContactErrorIcon,
+  ProjectsSideIcon,
+} from '../../../../../assets';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import { NewProjectData } from '../../../../types/project';
@@ -165,7 +168,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           titleIcon={
             <ProjectsSideIcon
               alt='project-header-icon'
-               className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           headerButtons={headerButtons}
@@ -174,8 +177,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           detailsError={detailsError}
           isKeyContactAvailable={isKeyContactAvailable}
           permission={permission}
-           iconBg={ColorCode.projectBgColor}
-            bgType='circle'
+          iconBg={ColorCode.projectBgColor}
+          bgType='circle'
         />
       </Box>
     </div>

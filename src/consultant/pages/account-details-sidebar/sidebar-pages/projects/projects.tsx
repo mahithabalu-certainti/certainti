@@ -713,8 +713,8 @@ const Projects: React.FC<ProjectsProps> = ({
               />
             }
             headerButtons={headerButtons}
-             iconBg={ColorCode.accountBgColor}
-              bgType='circle'
+            iconBg={ColorCode.accountBgColor}
+            bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             <ManageColumnsPopover

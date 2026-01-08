@@ -409,15 +409,10 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     [showRuleNameError]
   );
 
-
-
   // Navigation
-  const goToStep = useCallback(
-    (step: 'trigger' | 'conditions' | 'actions') => {
-      setCurrentStep(step);
-    },
-    []
-  );
+  const goToStep = useCallback((step: 'trigger' | 'conditions' | 'actions') => {
+    setCurrentStep(step);
+  }, []);
 
   // Validation
   const canProceedToConditions = rule.trigger !== null;
@@ -444,8 +439,6 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     areAllConditionsComplete ||
     (rule.conditionType && rule.conditions.length === 0)
   );
-
-
 
   // Validate and save function
   const validateAndSave = useCallback(() => {

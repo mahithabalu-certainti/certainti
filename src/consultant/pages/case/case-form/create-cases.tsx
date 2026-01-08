@@ -449,16 +449,16 @@ export const CreateCases: React.FC = () => {
     <>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-        {isEditView ? (
+          {isEditView ? (
             <EditIcon
               alt='projrct-icon'
               className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
             />
           ) : (
             <CaseIcon
-            alt='case-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
-          />
+              alt='case-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
+            />
           )}
           <div className='w-[90%]'>
             {isLoading ? (
@@ -513,16 +513,16 @@ export const CreateCases: React.FC = () => {
             values={
               isEditView && caseFormData
                 ? {
-                  ...caseFormData,
-                }
+                    ...caseFormData,
+                  }
                 : {
-                  account_name: accountName || '',
-                  account_id: accountNumber || '',
-                  case_owner: userId || '',
-                  fiscal_year: currentYear.toString(),
-                  country: countryRid || '',
-                  statutory_submission_date: calculatedStatutoryDate,
-                }
+                    account_name: accountName || '',
+                    account_id: accountNumber || '',
+                    case_owner: userId || '',
+                    fiscal_year: currentYear.toString(),
+                    country: countryRid || '',
+                    statutory_submission_date: calculatedStatutoryDate,
+                  }
             }
             outData={submitData}
             formRef={formRef}

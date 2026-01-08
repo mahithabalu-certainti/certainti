@@ -290,8 +290,8 @@ const Cases: React.FC<CaseProps> = ({
         showItemCount={true}
         showBackArrow={false}
         buttons={headerButtons}
-          iconBg={ColorCode.accountBgColor}
-              bgType='circle'
+        iconBg={ColorCode.accountBgColor}
+        bgType='circle'
       />
       <div className='border border-[#CBD6E2]'>
         <CaseListTable

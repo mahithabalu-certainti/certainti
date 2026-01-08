@@ -1,0 +1,95 @@
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
+import { caseServiceApi } from '../../../api/api';
+import {
+  RDCreditPreviewResponse,
+  RDCreditStatusResponse,
+  RDCreditInitiatePayload,
+  RDCreditInitiateResponse,
+} from '../../types';
+import {
+  getFinancialHighlightsURL,
+  getRDCreditPreviewURL,
+  getRDCreditStatusURL,
+  getRDCreditInitiateURL,
+} from '../urls/dossier-url';
+
+// 1. GET Preview - Fetch RD credit calculation results
+export const fetchRDCreditPreview = async (
+  accountRid: string,
+  caseRid: string,
+  stateRid?: string
+): Promise<RDCreditPreviewResponse> => {
+  const url = getRDCreditPreviewURL(accountRid, caseRid, stateRid ?? '');
+  const response = await caseServiceApi.get(url);
+  return response.data;
+};
+
+export const useRDCreditPreview = (
+  accountRid: string,
+  caseRid: string,
+  stateRid: string,
+  enabled: boolean = true
+): UseQueryResult<RDCreditPreviewResponse, Error> => {
+  return useQuery<RDCreditPreviewResponse, Error>({
+    queryKey: ['rdCreditPreview', accountRid, caseRid, stateRid],
+    queryFn: () => fetchRDCreditPreview(accountRid, caseRid, stateRid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid && !!stateRid && enabled,
+  });
+};
+
+// 2. GET Status - Fetch RD credit status
+export const fetchRDCreditStatus = async (
+  accountRid: string,
+  caseRid: string
+): Promise<RDCreditStatusResponse> => {
+  const url = getRDCreditStatusURL(accountRid, caseRid);
+  const response = await caseServiceApi.get(url);
+  return response.data;
+};
+
+export const useRDCreditStatus = (
+  accountRid: string,
+  caseRid: string,
+  enabled: boolean = true
+): UseQueryResult<RDCreditStatusResponse, Error> => {
+  return useQuery<RDCreditStatusResponse, Error>({
+    queryKey: ['rdCreditStatus', accountRid, caseRid],
+    queryFn: () => fetchRDCreditStatus(accountRid, caseRid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid && enabled,
+  });
+};
+
+// 3. POST Initiate - Initiate RD credit calculation process
+export const initiateRDCreditProcess = async (
+  payload: RDCreditInitiatePayload
+): Promise<RDCreditInitiateResponse> => {
+  const url = getRDCreditInitiateURL();
+  const response = await caseServiceApi.post(url, payload);
+  return response.data;
+};
+
+export const useInitiateRDCreditProcess = () => {
+  return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
+    mutationFn: (payload: RDCreditInitiatePayload) =>
+      initiateRDCreditProcess(payload),
+  });
+};
+
+export const financialHighlights = async (
+  payload: RDCreditInitiatePayload
+): Promise<RDCreditInitiateResponse> => {
+  const url = getFinancialHighlightsURL();
+  const response = await caseServiceApi.post(url, payload);
+  return response.data;
+};
+
+export const useFinancialHighlights = () => {
+  return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
+    mutationFn: (payload: RDCreditInitiatePayload) =>
+      financialHighlights(payload),
+  });
+};

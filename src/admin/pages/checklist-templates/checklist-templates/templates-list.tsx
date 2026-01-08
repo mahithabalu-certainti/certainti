@@ -5,7 +5,11 @@ import {
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
 import { FilterState } from '../../../../consultant/types/account-filter';
-import {  ChecklistTemplateIcon, NewFilterIcon, RefreshIcon } from '../../../../assets';
+import {
+  ChecklistTemplateIcon,
+  NewFilterIcon,
+  RefreshIcon,
+} from '../../../../assets';
 import { ActionsDropdown, FilterModal } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import { TemplateTable } from './table/templates-table';

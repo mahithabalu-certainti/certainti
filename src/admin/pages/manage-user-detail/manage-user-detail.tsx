@@ -113,8 +113,9 @@ export const ManageUserDetails: React.FC = () => {
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center justify-center'>
-          <ManageUserIcon alt='manage user'
-           className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
+          <ManageUserIcon
+            alt='manage user'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
           />
           <div className='flex flex-col mx-2.5 pb-1'>
             <div className={HEADER_STYLES.adminPermission}>

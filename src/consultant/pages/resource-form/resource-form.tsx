@@ -7,7 +7,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import {  EditIcon, ResourcesIcon } from '../../../assets';
+import { EditIcon, ResourcesIcon } from '../../../assets';
 import {
   AllPermissions,
   Layout,
@@ -39,7 +39,12 @@ import {
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
-import { ColorCode, FormFiscalDateType, OthersEnum, SelectOption } from '../../types';
+import {
+  ColorCode,
+  FormFiscalDateType,
+  OthersEnum,
+  SelectOption,
+} from '../../types';
 import { ResourceFormData } from './form-data';
 import {
   ResourceTypeEnum,

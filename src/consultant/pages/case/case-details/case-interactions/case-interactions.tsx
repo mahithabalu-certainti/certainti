@@ -792,7 +792,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
               showItemCount={interactionResponseId ? false : true}
               buttons={headerButtons}
               iconBg={ColorCode.caseBgColor}
-            bgType='circle'
+              bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {!viewResponseHistory ? (

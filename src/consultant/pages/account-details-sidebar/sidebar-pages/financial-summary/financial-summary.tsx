@@ -270,7 +270,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         showItemCount={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
-         iconBg={ColorCode.accountBgColor}
+        iconBg={ColorCode.accountBgColor}
         bgType='circle'
       />
       <SectionHeaderTab
