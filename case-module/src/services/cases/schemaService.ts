@@ -76,6 +76,10 @@ import { CaseProjectTask } from "../../models/caseProjectTaskModel";
 import { CaseKeyContactDetails } from "../../models/caseKeyContactModel";
 import { setupCaseKeyContactSequence } from "../../models/caseKeyContactModel";
 import { HelperMethods } from "./helperMethods";
+import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } from "../../models/rdCreditCountryCalcModel";
+import { RdCreditProcess } from "../../models/rdCreditProcessModel";
+import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
+import { formValidDate } from "../../utils/dateFunction.utils";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -749,6 +753,18 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const RdCreditCountryCalculationsModel = RdCreditCountryCalculations.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const RdCreditProcessModel = RdCreditProcess.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const RdCreditStateCalculationsModel = RdCreditStateCalculations.initialize(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -787,6 +803,11 @@ class CaseSchemaService {
       await CaseProjectTaskModel.sync({ force: false });
       await CaseKeyContactDetailsModel.sync({ force: false });
       await setupCaseKeyContactSequence(orgDbSequlize, schemaName)
+      await RdCreditCountryCalculationsModel.sync({force : false})
+      await setupRdCreditCountryCalculationSequence(orgDbSequlize, schemaName);
+      await RdCreditProcessModel.sync({force : false});
+      await RdCreditStateCalculationsModel.sync({force : false});
+      await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName)
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
@@ -4498,21 +4519,28 @@ class CaseSchemaService {
     const fiscalYear = data.fiscal_year;
     if (!fiscalStart || !fiscalEnd) return "";
     // Start date
-    const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
-    const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
-    const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
+    // const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
+    // const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
+    // const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
+    let splitMonthStart = fiscalStart.split("/")[0];
+    let splitMonthEnd = fiscalEnd.split("/")[0];
+    let splitDateStart = fiscalStart.split("/")[1];
+    let splitDateEnd = fiscalEnd.split("/")[1];
+    const fetchStartEnDate = formValidDate(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
+    let effectiveStart = fetchStartEnDate.startDate
+    let effectiveEnd = fetchStartEnDate.endDate
 
     // Now send both to fetchPlatformConfig
     let [platFormConfig]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchPlatformConfig(
-        data.country_rid, formattedStartDate, formattedEndDate
+        data.country_rid, effectiveStart, effectiveEnd
       ), { type: 'SELECT' }
     );
     if(!platFormConfig) return "";
     const submissionMonth = platFormConfig?.config_json?.submission_date;
     if (!submissionMonth) return "";
 
-  const submissionDate = new Date(formattedEndDate);
+  const submissionDate = new Date(effectiveEnd);
   submissionDate.setMonth((submissionDate.getMonth()) + parseInt(submissionMonth));
 
   
