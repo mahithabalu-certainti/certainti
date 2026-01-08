@@ -231,10 +231,18 @@ export class CaseService {
       console.log(error)
       if (error instanceof Error) {
         logMessage(`Error creating case: ${error.message}\nStack: ${error.stack}`);
-        throw new Error("Error creating case: " + error.message + "\nStack: " + error.stack);
+        return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+      };
       } else {
         logMessage(`Error creating case: ${error}`);
-        throw new Error("Error creating case: " + error);
+         return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+      };
       }
     }
   }
