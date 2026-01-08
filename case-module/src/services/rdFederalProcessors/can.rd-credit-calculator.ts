@@ -107,7 +107,6 @@ export class RdCreditCalculatorForCAN {
         totalCreditWithORDTC = parseFloat(Number(totalProvincialOitcAmount + totalOrdtcClaimed + federalItcCreditsAfterORDTC).toFixed(1)) || 0.00;
         totalCreditWithNoORDTC = parseFloat(Number(totalProvincialOitcAmount + federalItcCreditsNoORDTC).toFixed(1)) || 0.00;
         totalNetQrePercent = parseFloat(Number((totalQre/totalCost) * 100).toFixed(2)) || 0.00;
-        let totalFiscalYear = `TOTAL ${caseDetails.fiscal_year}`
 
         const finalData = {
             Title : {
@@ -115,8 +114,8 @@ export class RdCreditCalculatorForCAN {
                 "Descriptions" : "R&D Assessment Workbook"
             },
             Columns : [
+                "Project Credit Summary",
                 "Project Code",
-                "Project Name",
                 "Total Hours",
                 "Project Total Cost",
                 "FTE Cost",
@@ -145,7 +144,7 @@ export class RdCreditCalculatorForCAN {
                 "TOTAL Credit with ORDTC",
                 "TOTAL Credit with No ORDTC"
             ],
-            [totalFiscalYear] : {
+            "Total" : {
                "Project Code" : "-",
                 "Project Name" : "-",
                 "Total Hours" : Math.round(totalHours),

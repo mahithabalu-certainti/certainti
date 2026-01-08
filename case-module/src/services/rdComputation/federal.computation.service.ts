@@ -120,7 +120,7 @@ export class FederalComputationService {
                                 "Fiscal Year" : `04/01/${caseDetails?.fiscal_year - 1} - 03/31/${caseDetails?.fiscal_year}`
                             },
                             Columns : [
-                                "LABOUR","Employees", "EPW", reductionValue, 
+                                "Project Credit Summary","Employees", "EPW", reductionValue, 
                                 "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
                                 "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
                                 "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit"
@@ -210,7 +210,7 @@ export class FederalComputationService {
                                     "Expleo" : `FY-${caseDetails?.fiscal_year}`
                                 },
                             Columns : [
-                                "LABOUR", "Employees", "EPW", `Reductions (${extractConfig.reduction}%)`, "Net EPW", "Unpaid amounts (+)", "Unpaid amounts (-)", 
+                                "Project Credit Summary", "Employees", "EPW", `Reductions (${extractConfig.reduction}%)`, "Net EPW", "Unpaid amounts (+)", "Unpaid amounts (-)", 
                                 "Total Labour", "Cloud Software", "Subcontracts", "Heat Light Power", "Other", "Total QRE", `Research and Development (R&D) Corporation Tax credit @${extractConfig.research_development_tax_credit}%`
                             ],
                             Total : {
