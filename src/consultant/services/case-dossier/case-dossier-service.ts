@@ -6,12 +6,17 @@ import {
   ResourceSummaryListURLParams,
   ProjectSummaryItem,
   ProjectSummaryListURLParams,
+  QualifiedProjectItem,
+  QualifiedProjectsListURLParams,
+  DossierSummary,
   RDFormResponse,
 } from '../../types';
 import {
   ProjectDocumentListMockData,
   ResourceSummaryMockData,
   ProjectSummaryMockData,
+  QualifiedProjectsMockData,
+  DossierSummaryMockData,
   mockRDFormResponse,
 } from '../../mockdata/dossier';
 
@@ -124,6 +129,74 @@ export const useProjectSummaryList = (
     enabled: !!params.accountRid && !!params.caseRid,
   });
 };
+
+// Qualified Projects
+export const fetchQualifiedProjectsList = async (
+  params?: QualifiedProjectsListURLParams
+): Promise<{ qualifiedProjects: QualifiedProjectItem[]; count: number }> => {
+  // const response = await caseServiceApi.get<QualifiedProjectListResponse>(
+  //   QualifiedProjectsListURL(params)
+  // );
+
+  // Mock usage
+  console.log('qualified-projects-list-params', params);
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  return {
+    qualifiedProjects: QualifiedProjectsMockData.data.qualifiedProjects,
+    count: QualifiedProjectsMockData.data.count,
+  };
+};
+
+export const useQualifiedProjectsList = (
+  params: QualifiedProjectsListURLParams,
+  refreshList?: number
+): UseQueryResult<
+  { qualifiedProjects: QualifiedProjectItem[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { qualifiedProjects: QualifiedProjectItem[]; count: number },
+    Error
+  >({
+    queryKey: ['qualified-projects-list', params, refreshList],
+    queryFn: () => fetchQualifiedProjectsList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.accountRid && !!params.caseRid,
+  });
+};
+
+
+// Dossier Summary
+export const fetchDossierSummary = async (
+  accountRid: string,
+  caseRid: string
+): Promise<DossierSummary> => {
+  // const response = await caseServiceApi.get<DossierSummaryResponse>(
+  //   `/api/dossier/summary?account_rid=${accountRid}&case_rid=${caseRid}`
+  // );
+
+  // Mock usage
+  console.log('dossier-summary-params', { accountRid, caseRid });
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  return DossierSummaryMockData.data.dossierSummary;
+};
+
+export const useDossierSummary = (
+  accountRid: string,
+  caseRid: string
+): UseQueryResult<DossierSummary, Error> => {
+  return useQuery<DossierSummary, Error>({
+    queryKey: ['dossier-summary', accountRid, caseRid],
+    queryFn: () => fetchDossierSummary(accountRid, caseRid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid,
+  });
+};
+
 
 // RD Form
 const fetchRDFormData = async (

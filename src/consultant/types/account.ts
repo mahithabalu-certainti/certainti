@@ -535,7 +535,8 @@ export type ExportType =
   | 'activities'
   | 'dossier-project-summary'
   | 'dossier-resource-summary'
-  | 'dossier-project-documents';
+  | 'dossier-project-documents'
+  | 'dossier-qualified-projects';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

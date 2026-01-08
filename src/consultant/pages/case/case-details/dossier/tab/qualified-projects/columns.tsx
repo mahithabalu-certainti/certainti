@@ -4,11 +4,11 @@ import {
   valueDisplay,
 } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
-import { ProjectSummaryItem } from '../../../../../../types';
+import { QualifiedProjectItem } from '../../../../../../types';
 
-export const getProjectSummaryColumns =
+export const getQualifiedProjectsColumns =
   () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
-  : ListTableColumn<ProjectSummaryItem>[] => [
+  : ListTableColumn<QualifiedProjectItem>[] => [
     {
       id: 'project_code',
       label: 'Project Code',
@@ -69,7 +69,7 @@ export const getProjectSummaryColumns =
       sx: {
         textAlign: 'right',
       },
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
     },
     {
@@ -81,7 +81,7 @@ export const getProjectSummaryColumns =
       sx: {
         textAlign: 'right',
       },
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.total_cost_prj
           ? costDisplay(row.total_cost_prj, row.currency_symbol)
           : '-',
@@ -95,7 +95,7 @@ export const getProjectSummaryColumns =
       sx: {
         textAlign: 'right',
       },
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.total_cost_fte_prj
           ? costDisplay(row.total_cost_fte_prj, row.currency_symbol)
           : '-',
@@ -109,7 +109,7 @@ export const getProjectSummaryColumns =
       sx: {
         textAlign: 'right',
       },
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.total_cost_subcon_prj
           ? costDisplay(row.total_cost_subcon_prj, row.currency_symbol)
           : '-',
@@ -123,7 +123,7 @@ export const getProjectSummaryColumns =
       sx: {
         textAlign: 'right',
       },
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.total_cost_nonlabor_prj
           ? costDisplay(row.total_cost_nonlabor_prj, row.currency_symbol)
           : '-',
@@ -144,7 +144,7 @@ export const getProjectSummaryColumns =
       sx: {
         textAlign: 'right',
       },
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.rd_percent_final ? row.rd_percent_final : '-',
     },
     {
@@ -156,7 +156,7 @@ export const getProjectSummaryColumns =
       sx: {
         textAlign: 'right',
       },
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
     },
     {
@@ -186,7 +186,7 @@ export const getProjectSummaryColumns =
       sortable: true,
       sortId: 'modified_datetime',
       width: 190,
-      render: (row: ProjectSummaryItem) =>
+      render: (row: QualifiedProjectItem) =>
         row.modified_datetime
           ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
           : '-',
@@ -199,4 +199,3 @@ export const getProjectSummaryColumns =
       width: 140,
     },
   ];
-

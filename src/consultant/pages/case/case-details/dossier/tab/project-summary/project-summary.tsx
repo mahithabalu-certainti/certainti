@@ -48,7 +48,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   const [tableParams, setTableParams] = useState<ProjectSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'r_number',
+    sortBy: 'project_code',
     sortOrder: 'ASC',
   });
 
@@ -119,7 +119,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
     : undefined;
 
   const RestrictedColumns = [
-    { id: 'r_number', canHide: false, canDrag: false },
+    { id: 'project_code', canHide: false, canDrag: false },
   ];
 
   const projectSummaryColumns = getProjectSummaryColumns();

@@ -4,14 +4,22 @@ import { ActivityDropdownItem, CaseDetails } from '../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ComingSoon, DetailsIcon } from '../../../../../assets';
+import { DetailsIcon } from '../../../../../assets';
+import {
+  DossierSummary,
+  FinancialWorkingForm,
+  ProjectDocuments,
+  ProjectSummary,
+  QualifiedProjects,
+  RDForm,
+  ResourceSummary,
+} from './tab';
 import {
   getProjectDocumentsFilterFields,
   getProjectSummaryFilterFields,
+  getQualifiedProjectsFilterFields,
   getResourceSummaryFilterFields,
 } from './helper';
-import { ProjectDocuments } from './tab';
-import FinancialWorkingForm from './tab/financial-working/financial-form';
 
 const DossierTabs = [
   {
@@ -86,6 +94,8 @@ const Dossier: React.FC<DossierProps> = ({
 
   const filterFields = useMemo(() => {
     switch (tabParam) {
+      case 'qualified_projects':
+        return getQualifiedProjectsFilterFields();
       case 'project_documents':
         return getProjectDocumentsFilterFields();
       case 'project_summary':
@@ -114,7 +124,7 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'RD Forms',
+      label: 'RD Form',
       value: 'rd_form',
       hide: false,
     },
@@ -135,6 +145,11 @@ const Dossier: React.FC<DossierProps> = ({
     },
   ];
 
+  const showTableControls =
+    tabParam !== 'summary' &&
+    tabParam !== 'rd_form' &&
+    tabParam !== 'financial_workings';
+
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
@@ -142,7 +157,7 @@ const Dossier: React.FC<DossierProps> = ({
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
-      hide: false,
+      hide: !showTableControls,
     },
   ];
 
@@ -151,7 +166,7 @@ const Dossier: React.FC<DossierProps> = ({
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={true}
+        filterVisibility={showTableControls}
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -160,9 +175,9 @@ const Dossier: React.FC<DossierProps> = ({
         handleFilter={handleFilter}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={true}
+        showRefresh={showTableControls}
         onRefreshClick={handleRefresh}
-        showSearch={true}
+        showSearch={showTableControls}
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
@@ -187,10 +202,29 @@ const Dossier: React.FC<DossierProps> = ({
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
+        {tabParam === 'summary' && <DossierSummary />}
 
-        {tabParam === 'financial_workings' && <FinancialWorkingForm  caseDetails={caseDetails} />}
+        {tabParam === 'qualified_projects' && (
+          <QualifiedProjects
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => {}}
+            setExportType={() => {}}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
+        )}
 
-        {tabParam === 'project-assigned-documents' && (
+        {tabParam === 'financial_workings' && (
+          <FinancialWorkingForm caseDetails={caseDetails} />
+        )}
+
+        {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
+
+        {tabParam === 'project_documents' && (
           <ProjectDocuments
             refreshTrigger={refreshTrigger}
             currentPage={currentPage}
@@ -203,12 +237,34 @@ const Dossier: React.FC<DossierProps> = ({
             searchValue={searchText}
           />
         )}
-        {tabParam !==  'financial_workings' && (
-           <div className='flex items-center justify-center w-full h-full'>
-             <ComingSoon alt='comingSoon' />
-          </div>
+
+        {tabParam === 'project_summary' && (
+          <ProjectSummary
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => {}}
+            setExportType={() => {}}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
         )}
 
+        {tabParam === 'resource_summary' && (
+          <ResourceSummary
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => {}}
+            setExportType={() => {}}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { costDisplay } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { ResourceSummaryItem } from '../../../../../../types';
 
@@ -5,10 +6,10 @@ export const getResourceSummaryColumns =
   () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
   : ListTableColumn<ResourceSummaryItem>[] => [
     {
-      id: 'r_number',
-      label: 'Project Number',
+      id: 'resource_code',
+      label: 'Resource Code',
       sortable: true,
-      sortId: 'r_number',
+      sortId: 'resource_code',
       width: 160,
       sticky: true,
       sx: {
@@ -21,10 +22,17 @@ export const getResourceSummaryColumns =
       },
     },
     {
-      id: 'project_ref_id',
-      label: 'Project Ref Id',
+      id: 'resource_name',
+      label: 'Resource Name',
       sortable: true,
-      sortId: 'project_ref_id',
+      sortId: 'resource_name',
+      width: 180,
+    },
+    {
+      id: 'project_code',
+      label: 'Project Code',
+      sortable: true,
+      sortId: 'project_code',
       width: 180,
     },
     {
@@ -35,71 +43,97 @@ export const getResourceSummaryColumns =
       width: 200,
     },
     {
-      id: 'resource_ref_id',
-      label: 'Resource Ref Id',
+      id: 'country_name',
+      label: 'Resource Country',
       sortable: true,
-      sortId: 'resource_ref_id',
-      width: 180,
-    },
-    {
-      id: 'resource_name',
-      label: 'Resource Name',
-      sortable: true,
-      sortId: 'resource_name',
-      width: 180,
-    },
-    {
-      id: 'resource_type',
-      label: 'Resource - Type',
-      sortable: true,
-      sortId: 'resource_type',
+      sortId: 'country_name',
       width: 160,
     },
     {
-      id: 'country_region',
-      label: 'Country - Region',
+      id: 'region_name',
+      label: 'Resource Region',
       sortable: true,
-      sortId: 'country_region',
+      sortId: 'region_name',
+      width: 160,
+    },
+    {
+      id: 'project_resource_role',
+      label: 'Project Resource Role',
+      sortable: true,
+      sortId: 'project_resource_role',
+      width: 200,
+    },
+    {
+      id: 'resource_type_name',
+      label: 'Resource Type',
+      sortable: true,
+      sortId: 'resource_type_name',
+      width: 160,
+    },
+    {
+      id: 'total_hours_pro_res',
+      label: 'Effort (Hours)',
+      sortable: true,
+      sortId: 'total_hours_pro_res',
+      width: 160,
+    },
+    {
+      id: 'net_total_cost_pro_res',
+      label: 'Net Resource Cost',
+      sortable: true,
+      sortId: 'net_total_cost_pro_res',
       width: 180,
+      render: (row) =>
+        costDisplay(
+          row.net_total_cost_pro_res as unknown as
+            | string
+            | number
+            | null
+            | undefined,
+          row.currency_symbol
+        ),
     },
     {
-      id: 'cost',
-      label: 'Cost',
+      id: 'qre_final',
+      label: 'QRE Final',
       sortable: true,
-      sortId: 'cost',
+      sortId: 'qre_final',
       width: 140,
-      sx: {
-        textAlign: 'right',
-      },
+      render: (row) => `${costDisplay(row.qre_final, row.currency_symbol)}`,
     },
     {
-      id: 'rd_percentage',
-      label: 'RD%',
+      id: 'status_name',
+      label: 'Status',
       sortable: true,
-      sortId: 'rd_percentage',
-      width: 120,
-      sx: {
-        textAlign: 'right',
-      },
+      sortId: 'status_name',
+      width: 130,
+      render: (row: ResourceSummaryItem) => (
+        <span
+          className={`${
+            row.status_name === 'Active'
+              ? 'text-[#199806]'
+              : row.status_name === 'In-Active'
+                ? 'text-[#f44336] '
+                : ''
+          }`}
+        >
+          {row.status_name || '-'}
+        </span>
+      ),
     },
     {
-      id: 'qre',
-      label: 'QRE',
+      id: 'description',
+      label: 'Comments',
       sortable: true,
-      sortId: 'qre',
-      width: 140,
-      sx: {
-        textAlign: 'right',
-      },
+      sortId: 'description',
+      width: 200,
     },
     {
-      id: 'rd_credit',
-      label: 'RD Credit',
+      id: 'r_number',
+      label: 'Project Resource ID',
       sortable: true,
-      sortId: 'rd_credit',
-      width: 140,
-      sx: {
-        textAlign: 'right',
-      },
+      sortId: 'r_number',
+      width: 200,
     },
   ];
+

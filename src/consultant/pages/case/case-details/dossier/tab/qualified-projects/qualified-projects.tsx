@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import {
   ExportType,
-  ResourceSummaryItem,
-  ResourceSummaryListExportParams,
-  ResourceSummaryListURLParams,
+  QualifiedProjectItem,
+  QualifiedProjectsListExportParams,
+  QualifiedProjectsListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useResourceSummaryList } from '../../../../../../services/case-dossier/case-dossier-service';
+import { useQualifiedProjectsList } from '../../../../../../services/case-dossier/case-dossier-service';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
-import { getResourceSummaryColumns } from './columns';
+import { getQualifiedProjectsColumns } from './columns';
 
-interface ResourceSummaryProps {
+interface QualifiedProjectsProps {
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ResourceSummaryListExportParams) => void;
+  setExportParams?: (params: QualifiedProjectsListExportParams) => void;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -28,7 +28,7 @@ interface ResourceSummaryProps {
   searchValue: string;
 }
 
-const ResourceSummary: React.FC<ResourceSummaryProps> = ({
+const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   refreshTrigger,
   currentPage,
   appliedFilters,
@@ -42,17 +42,19 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [resourceSummary, setResourceSummary] = useState<ResourceSummaryItem[]>(
-    []
+  const [qualifiedProjects, setQualifiedProjects] = useState<
+    QualifiedProjectItem[]
+  >([]);
+  const [tableParams, setTableParams] = useState<QualifiedProjectsListURLParams>(
+    {
+      page: currentPage + 1,
+      limit: 100,
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+    }
   );
-  const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
-    page: currentPage + 1,
-    limit: 100,
-    sortBy: 'resource_code',
-    sortOrder: 'ASC',
-  });
 
-  const { data, isLoading, isError } = useResourceSummaryList(
+  const { data, isLoading, isError } = useQualifiedProjectsList(
     {
       ...tableParams,
       search: searchValue,
@@ -67,7 +69,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
 
   useEffect(() => {
     if (data) {
-      setResourceSummary(data.resourceSummary || []);
+      setQualifiedProjects(data.qualifiedProjects || []);
       setCount(data.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,7 +86,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
 
   useEffect(() => {
     if (setExportType) {
-      setExportType('dossier-resource-summary');
+      setExportType('dossier-qualified-projects');
     }
     setExportParams?.({
       sortBy: tableParams.sortBy,
@@ -108,30 +110,30 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
     setTableParams((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
-  const getRowId = (row: ResourceSummaryItem) => row.rid;
+  const getRowId = (row: QualifiedProjectItem) => row.rid;
 
   // Column visibility states
   const isModalOpen = Boolean(columnAnchorEl);
   const handlePopoverClose = () => setColumnAnchorEl(null);
 
   const modalId = isModalOpen
-    ? `resource-summary-list-column-visibility-popover`
+    ? `qualified-projects-list-column-visibility-popover`
     : undefined;
 
   const RestrictedColumns = [
-    { id: 'resource_code', canHide: false, canDrag: false },
+    { id: 'project_code', canHide: false, canDrag: false },
   ];
 
-  const resourceSummaryColumns = getResourceSummaryColumns();
+  const qualifiedProjectsColumns = getQualifiedProjectsColumns();
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(
-    Object.fromEntries(resourceSummaryColumns.map((col) => [col.id, !col.hide]))
+    Object.fromEntries(qualifiedProjectsColumns.map((col) => [col.id, !col.hide]))
   );
 
   const [columnOrder, setColumnOrder] = useState(
-    resourceSummaryColumns.map((col) => col.id)
+    qualifiedProjectsColumns.map((col) => col.id)
   );
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
@@ -143,7 +145,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   };
 
   const visibleColumns = columnOrder
-    .map((id) => resourceSummaryColumns.find((col) => col.id === id)!)
+    .map((id) => qualifiedProjectsColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
   return (
@@ -153,13 +155,13 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
         open={isModalOpen}
         popoverId={modalId}
         onClose={handlePopoverClose}
-        columns={resourceSummaryColumns}
+        columns={qualifiedProjectsColumns}
         onColumnsChange={handleColumnsChange}
         columnRestrictions={RestrictedColumns}
       />
 
       <ListTable
-        data={resourceSummary}
+        data={qualifiedProjects}
         columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}
@@ -175,7 +177,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
         actionDisplayMode='dropdown'
         actionMenuItems={[]}
         loading={isLoading}
-        error={isError ? 'Failed to load resource summary data' : undefined}
+        error={isError ? 'Failed to load qualified projects data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
@@ -190,4 +192,4 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   );
 };
 
-export default ResourceSummary;
+export default QualifiedProjects;
