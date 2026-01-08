@@ -79,7 +79,7 @@ import { HelperMethods } from "./helperMethods";
 import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } from "../../models/rdCreditCountryCalcModel";
 import { RdCreditProcess } from "../../models/rdCreditProcessModel";
 import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
-import { formValidDate } from "../../utils/dateFunction.utils";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -803,10 +803,10 @@ class CaseSchemaService {
       await CaseProjectTaskModel.sync({ force: false });
       await CaseKeyContactDetailsModel.sync({ force: false });
       await setupCaseKeyContactSequence(orgDbSequlize, schemaName)
-      await RdCreditCountryCalculationsModel.sync({force : false})
+      await RdCreditCountryCalculationsModel.sync({ force: false })
       await setupRdCreditCountryCalculationSequence(orgDbSequlize, schemaName);
-      await RdCreditProcessModel.sync({force : false});
-      await RdCreditStateCalculationsModel.sync({force : false});
+      await RdCreditProcessModel.sync({ force: false });
+      await RdCreditStateCalculationsModel.sync({ force: false });
       await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName)
     } catch (err) {
       console.log(err)
@@ -4518,17 +4518,11 @@ class CaseSchemaService {
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
     const fiscalYear = data.fiscal_year;
     if (!fiscalStart || !fiscalEnd) return "";
-    // Start date
-    // const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
-    // const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
-    // const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
-    let splitMonthStart = fiscalStart.split("/")[0];
-    let splitMonthEnd = fiscalEnd.split("/")[0];
-    let splitDateStart = fiscalStart.split("/")[1];
-    let splitDateEnd = fiscalEnd.split("/")[1];
-    const fetchStartEnDate = formValidDate(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
-    let effectiveStart = fetchStartEnDate.startDate
-    let effectiveEnd = fetchStartEnDate.endDate
+    const [splitMonthStart, splitDateStart] = fiscalStart[0][0].fiscal_start_date.split("/");
+    const [splitMonthEnd, splitDateEnd] = fiscalEnd[0][0].fiscal_end_date.split("/");
+    const fiscalDateRange = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
+    let effectiveStart = fiscalDateRange.startDate
+    let effectiveEnd = fiscalDateRange.endDate
 
     // Now send both to fetchPlatformConfig
     let [platFormConfig]: any[] = await this.mainDbSequelize.query(

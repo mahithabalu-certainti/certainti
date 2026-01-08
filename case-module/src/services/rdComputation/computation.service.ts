@@ -6,7 +6,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import StateComputationService from "./state.computation.service";
 import FederalComputationService from "./federal.computation.service";
-import { formValidDate } from "../../utils/dateFunction.utils";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 
 enum ConfigType {
     NONE = "NONE",
@@ -61,13 +61,11 @@ export class ComputationService {
             const fetchParentAccountRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(accountRid, mainDb));
             let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number);
             const fetchAccountFiscalStartEndDate : any= await orgDb.query(rawQueries.fetchAccountStartEndDate(accountRid, schemaName));
-            let splitMonthStart = fetchAccountFiscalStartEndDate[0][0].fiscal_start_date.split("/")[0];
-            let splitMonthEnd = fetchAccountFiscalStartEndDate[0][0].fiscal_end_date.split("/")[0];
-            let splitDateStart = fetchAccountFiscalStartEndDate[0][0].fiscal_start_date.split("/")[1];
-            let splitDateEnd = fetchAccountFiscalStartEndDate[0][0].fiscal_end_date.split("/")[1];
-            const fetchStartEnDate = formValidDate(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
-            let effectiveStart = fetchStartEnDate.startDate
-            let effectiveEnd = fetchStartEnDate.endDate
+            const [splitMonthStart, splitDateStart] = fetchAccountFiscalStartEndDate[0][0].fiscal_start_date.split("/");
+            const [splitMonthEnd, splitDateEnd] = fetchAccountFiscalStartEndDate[0][0].fiscal_end_date.split("/");
+            const fetchedStartEndDate = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
+            let effectiveStart = fetchedStartEndDate.startDate
+            let effectiveEnd = fetchedStartEndDate.endDate
             const fetchAccountCountryId : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(accountRid))
             const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
             const hasFederal = findAvailableConfigLevels.includes(true);
