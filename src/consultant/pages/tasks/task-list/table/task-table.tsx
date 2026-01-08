@@ -982,6 +982,14 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
             );
           })()}
           taskType={taskType}
+          entityLevel={
+            selectedTask.attachment_level?.toLowerCase() as
+              | 'account'
+              | 'case'
+              | 'project'
+              | undefined
+          }
+          attachTo={selectedTask.attach_to}
           fieldVisibility={fieldHiddenMap}
           fieldDisabled={fieldDisabledMap}
         />
