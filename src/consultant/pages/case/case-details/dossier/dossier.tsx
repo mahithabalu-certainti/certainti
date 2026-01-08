@@ -191,7 +191,6 @@ const Dossier: React.FC<DossierProps> = ({
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
-
         {tabParam === 'financial_workings' && (
           <FinancialWorkingForm
             caseDetails={caseDetails}
@@ -213,12 +212,11 @@ const Dossier: React.FC<DossierProps> = ({
             searchValue={searchText}
           />
         )}
-        {tabParam !==  'financial_workings' && (
-           <div className='flex items-center justify-center w-full h-full'>
-             <ComingSoon alt='comingSoon' />
+        {tabParam !== 'financial_workings' && (
+          <div className='flex items-center justify-center w-full h-full'>
+            <ComingSoon alt='comingSoon' />
           </div>
         )}
-
       </div>
     </div>
   );

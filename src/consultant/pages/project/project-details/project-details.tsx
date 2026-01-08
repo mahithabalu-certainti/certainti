@@ -997,9 +997,9 @@ export const ProjectDetails = () => {
           placeholder='Project Code'
           icon={
             <ProjectsSideIcon
-            alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
-          />
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
+            />
           }
           title={data?.data?.project?.project_code}
           totalRecords={5}
@@ -1020,10 +1020,10 @@ export const ProjectDetails = () => {
           primaryButton={
             isProjectFieldsEditable && !detailPageView
               ? {
-                label: 'Edit',
-                onClick: handleEditAccount,
-                disabled: accountInActive,
-              }
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                  disabled: accountInActive,
+                }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -1042,10 +1042,11 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px]'
-            : 'w-[220px] min-w-[220px] max-w-[220px]'
-            }`}
+          className={`flex transition-all duration-300 ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px]'
+              : 'w-[220px] min-w-[220px] max-w-[220px]'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

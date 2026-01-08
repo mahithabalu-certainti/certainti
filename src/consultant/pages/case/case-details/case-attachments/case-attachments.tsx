@@ -485,7 +485,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
               />
             }
             headerButtons={headerButtons}
-             iconBg={ColorCode.caseBgColor}
+            iconBg={ColorCode.caseBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

@@ -478,7 +478,7 @@ const Notes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }

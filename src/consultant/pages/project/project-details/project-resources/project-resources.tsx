@@ -1,11 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import {
-  AcceptIcon,
-  RejectIcon,
-  ResourcesIcon,
-} from '../../../../../assets';
+import { AcceptIcon, RejectIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import {
@@ -844,10 +840,10 @@ export const ProjectResources = ({
               }
               title={viewDetails ? 'Project Resource' : 'Project Resources'}
               titleIcon={
-                  <ResourcesIcon
-                      alt='project-header-icon'
-                      className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-                  />
+                <ResourcesIcon
+                  alt='project-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
               }
               count={totalItems}
               showBackArrow={viewDetails}

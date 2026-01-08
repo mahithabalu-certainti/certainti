@@ -37,7 +37,6 @@ export const ProjectDocumentListURL = ({
   return `${baseUrl}?${searchParams.toString()}`;
 };
 
-
 export const getRDCreditPreviewURL = (
   accountRid: string,
   caseRid: string,

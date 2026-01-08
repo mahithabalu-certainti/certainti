@@ -157,8 +157,7 @@ export interface RDFormPayload {
   region_rid?: string;
 }
 
-
-// financial highlights 
+// financial highlights
 
 export interface RDCreditPreviewResponse {
   statusCode: number;
@@ -214,15 +213,15 @@ export interface InputParams {
 }
 export interface TitleFields {
   Expleo: string;
-  "Account ID": string;
+  'Account ID': string;
   Description: string;
-  "Account Name": string;
+  'Account Name': string;
 }
 export type DynamicNumberMap = Record<string, number>;
 export interface FinancialHighlightsProject {
-  "Project ID": string;
-  "Project Name": string;
-  "Currency Symbol"?: string;
+  'Project ID': string;
+  'Project Name': string;
+  'Currency Symbol'?: string;
   [key: string]: string | number | undefined;
 }
 
@@ -239,7 +238,7 @@ export interface FinancialHighlightsData {
   modified_datetime: string;
   case_rid: string;
   country_rid: string;
-  input_params: Record<string, string|number|unknown|null>;
+  input_params: Record<string, string | number | unknown | null>;
   computed_fields: FinancialHighlightsComputedFields;
 }
 
@@ -249,7 +248,7 @@ export interface CaseSummaryData {
   modified_datetime: string;
   case_rid: string;
   country_rid: string;
-  input_params: Record<string, string|number|unknown|null>;
+  input_params: Record<string, string | number | unknown | null>;
   computed_fields: FinancialHighlightsComputedFields;
 }
 

@@ -503,9 +503,9 @@ const ProjectResourceForm: React.FC = () => {
             />
           ) : (
             <ResourcesIcon
-            alt='menu-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
-          />
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
+            />
           )}
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
