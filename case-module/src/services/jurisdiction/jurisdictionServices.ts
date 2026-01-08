@@ -308,16 +308,16 @@ export class JurisdictionService {
         });
       }
       // Duplicate check for platform config
-      if (!duplicate && configRequest.is_federal && configRequest.platformConfig) {
-        duplicate = await this.hasOverlapConfig({
-          JurisdictionConfig,
-          groupId: configRequest.platform_config_group_rid,
-          statusRid: activeStatusRid.rid,
-          startDate: configRequest.effective_start_date,
-          endDate: configRequest.effective_end_date,
-          isUpdate: false
-        });
-      }
+      // if (!duplicate && configRequest.is_federal && configRequest.platformConfig) {
+      //   duplicate = await this.hasOverlapConfig({
+      //     JurisdictionConfig,
+      //     groupId: configRequest.platform_config_group_rid,
+      //     statusRid: activeStatusRid.rid,
+      //     startDate: configRequest.effective_start_date,
+      //     endDate: configRequest.effective_end_date,
+      //     isUpdate: false
+      //   });
+      // }
       if (duplicate) {
         return {
           statusCode: HttpStatus.FAILED,
