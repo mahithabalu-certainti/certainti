@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import FinancialWorking from './finacial-working';
 import { useSelector } from 'react-redux';
 import { FormControl, FormControlLabel, MenuItem, Radio, RadioGroup, Select } from '@mui/material';
@@ -10,13 +10,15 @@ import { useToast } from '../../../../../../../hooks';
 import { useFetchState } from '../../../../../../services/account';
 import { AllPermissions } from '../../../../../../../common-service';
 import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
-import { CaseDetails } from '../../../../../../types';
+import { CaseDetails, FinancialHighlightsResponse, RDCreditStatusResponse } from '../../../../../../types';
 import TextButton from '../../../../../../../components/button/text-button';
 import { useFinancialHighlights, useInitiateRDCreditProcess, useRDCreditStatus } from '../../../../../../services/case-dossier/cases-financial-services';
 
 
-interface RDFormProps {
+interface FinancialWorkingFormProps {
     caseDetails?: CaseDetails;
+    setDossierFinancialStatus: (status: string) => void;
+    dossierFinancialStatus: string;
 }
 
 interface FormErrors {
@@ -24,11 +26,11 @@ interface FormErrors {
     region?: string;
 }
 
-const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
+const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({ caseDetails, setDossierFinancialStatus, dossierFinancialStatus }) => {
     const [isFederal, setIsFederal] = useState<string>('yes');
     const [selectedRegion, setSelectedRegion] = useState<string>('');
     const [errors, setErrors] = useState<FormErrors>({});
-    const [showPdfViewer, setShowPdfViewer] = useState<boolean>(false);
+    const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
     const {caseId}= useParams();
     const [searchParams] = useSearchParams();
     const accountid = searchParams.get('accountID')?? '';
@@ -36,19 +38,11 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     const { successToast, errorToast } = useToast();
     // const queryClient = useQueryClient();
 
-    const [showViewBtn, setShowViewBtn] = useState<boolean>(false);
-
     const { mutate: initiateProcess, isPending: isInitiating } = useInitiateRDCreditProcess();
     const { mutate: financialHighlights, isPending: isFinancialHighlights } = useFinancialHighlights();
 
     // Fetch Status
-    const { data: statusData, isSuccess: isStatusSuccess, refetch: refetchRDCreditStatus } = useRDCreditStatus(accountid, caseId ?? '', false);
-
-    useEffect(() => {
-        if (isStatusSuccess && statusData) {
-            setShowViewBtn(true);
-        }
-    }, [isStatusSuccess, statusData]);
+    const { data: statusData, refetch: refetchRDCreditStatus, isRefetching } = useRDCreditStatus(accountid, caseId ?? '', false);
 
     const caseCountryDetails = {
         country_name: caseDetails?.country_name || '',
@@ -88,7 +82,7 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     const handleFederalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setIsFederal(value);
-        setShowPdfViewer(false);
+        setShowFinancialValues(false);
         setSelectedRegion('');
         setErrors((prev) => ({ ...prev, region: '' }));
     };
@@ -98,12 +92,12 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         setErrors((prev) => ({ ...prev, region: '' }));
 
         // Reset PDF when region changes (but not shown yet)
-        if (showPdfViewer) {
-            setShowPdfViewer(false);
+        if (showFinancialValue) {
+            setShowFinancialValues(false);
         }
     };
     
-    const [financialData, setFinancialData] = useState<any>(null);
+    const [financialData, setFinancialData] = useState<FinancialHighlightsResponse | null>(null);
 
     const handleViewFinancialHighlights = async () => {
 
@@ -129,8 +123,13 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         financialHighlights(payload, {
             onSuccess: (data) => {
                 console.log('Initiated successfully', data);
-                setFinancialData(data);
-                setShowPdfViewer(true);
+                // Type guard: ensure the data is FinancialHighlightsResponse before setting state
+                if (data && typeof data === 'object' && 'data' in data && typeof data.data === 'object' && data.data !== null && !Array.isArray(data.data)) {
+                    setFinancialData(data as FinancialHighlightsResponse);
+                } else {
+                    setFinancialData(null);
+                }
+                setShowFinancialValues(true);
             },
             onError: (error) => {
                 console.error('Error initiating', error);
@@ -138,18 +137,40 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
             }
         });
     };
+    
+    const handleStatusUpdate = (statusData: RDCreditStatusResponse) => {
+        const message = statusData?.data ?? statusData?.statusMessage ?? '';
+        setDossierFinancialStatus(message);
+
+        if (statusData?.data === 'COMPLETED') {
+            successToast(message || 'Process Completed');
+        } else if (message) {
+            // If there is a message but not completed, it might be an info or error 
+            // depending on business logic. User used errorToast in useEffect.
+            errorToast(message);
+        }
+    };
+
     const handleInistateFinancialHighlights = async () => {
+         setDossierFinancialStatus('');
         const payload = {
             account_rid: accountid,
             case_rid: caseId ?? '',
              fiscal_year: Number(caseDetails?.fiscal_year || 0),
         };
-
+        if(dossierFinancialStatus === 'COMPLETED'){
+            setShowFinancialValues(false);
+            setFinancialData(null);
+        }
         initiateProcess(payload, {
-            onSuccess: (data) => {
+            onSuccess: async (data) => {
                 console.log('Initiated successfully', data);
-                successToast('Initiated successfully');
-                refetchRDCreditStatus();
+                // successToast('Initiated successfully'); 
+                // Refetch and handle status
+                const result = await refetchRDCreditStatus();
+                if (result.data) {
+                    handleStatusUpdate(result.data);
+                }
             },
             onError: (error) => {
                 console.error('Error initiating', error);
@@ -158,13 +179,22 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         });
     };
     const isViewButtonEnabled = () => {
-        if(!showViewBtn) return false;
+        const isStatusCompleted = statusData?.data === 'COMPLETED';
+        if (!isStatusCompleted) return false;
+
         if (isFederal === 'yes') {
             return true;
         } else if (isFederal === 'no') {
             return selectedRegion !== '';
         }
         return false;
+    };
+
+    const handleRefreshStatus = async () => {
+        const result = await refetchRDCreditStatus();
+        if (result.data) {
+            handleStatusUpdate(result.data);
+        }
     };
 
     return (
@@ -174,11 +204,24 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                 <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
                     <div>Jurisdiction Information</div>
                     <div>
+                    <TextButton  // icon={<RefreshIcon />}
+                        label={'Refresh'}
+                        // loading={isRefetching}
+                        onClick={handleRefreshStatus}
+                        disabled={!dossierFinancialStatus || dossierFinancialStatus === 'COMPLETED' || isRefetching}
+                        sx={{
+                        width: 'auto',
+                        minWidth: '55px',
+                        fontSize: '13px',
+                        fontWeight: 400,
+                        marginRight: '10px',
+                        }}
+                    />
                     <TextButton
                         label={'View'}
                         loading={isFinancialHighlights}
                         onClick={handleViewFinancialHighlights}
-                        // disabled={!isViewButtonEnabled() || isFinancialHighlights}
+                        disabled={!isViewButtonEnabled() || isFinancialHighlights}
                         sx={{
                             width: '55px',
                             minWidth: '55px',
@@ -188,13 +231,13 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                         }}
                     />
                     <TextButton
-                        label={'Initiate'}
+                        label={statusData?.data === 'COMPLETED' ? 'Re-Generate' : 'Initiate'}
                         loading={isInitiating}
                         onClick={handleInistateFinancialHighlights}
                         disabled={isInitiating}
                         sx={{
-                            width: '55px',
-                            minWidth: '55px',
+                            width:statusData?.data === 'COMPLETED' ?'95px': '55px',
+                            minWidth: statusData?.data === 'COMPLETED' ?'95px': '55px',
                             fontSize: '13px',
                             fontWeight: 400,
                         }}
@@ -365,12 +408,12 @@ const FinancialWorkingForm: React.FC<RDFormProps> = ({ caseDetails }) => {
 
 
             {/* Financial Working Section - Only shown after clicking View button */}
-            {showPdfViewer && (
+            {showFinancialValue && (
                 <div>
                     <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
                         Federal R&D Credit
                     </div>
-                    <div className='max-h-[600px] overflow-auto p-3'>
+                    <div>
                         <FinancialWorking data={financialData} />
                     </div>
                 </div>

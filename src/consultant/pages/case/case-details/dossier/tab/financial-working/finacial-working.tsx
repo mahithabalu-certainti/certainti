@@ -1,16 +1,25 @@
 import React, { useMemo } from 'react';
 import ListTable from '../../../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../../../components/table/types';
+import { Tooltip } from '@mui/material';
+import { FinancialHighlightsResponse } from '../../../../../../types/dossier';
 
 interface FinancialWorkingProps {
-    data: any;
+    data: FinancialHighlightsResponse | null;
+}
+
+interface FinancialWorkingRow {
+    id: string;
+    row_label: string;
+    Total: number | string | undefined;
+    [key: string]: string | number | undefined; 
 }
 
 const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
     const computedFields = data?.data?.computed_fields;
 
     // Format value helper function
-    const formatValue = (value: any) => {
+    const formatValue = (value: string | number | null | undefined) => {
         if (value === 0 || value === '0') {
             return '-';
         }
@@ -26,7 +35,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
         return value;
     };
 
-    const columns: ListTableColumn<any>[] = useMemo(() => {
+    const columns: ListTableColumn<FinancialWorkingRow>[] = useMemo(() => {
         if (!computedFields) return [];
 
         const columnsList = computedFields.Columns || [];
@@ -36,24 +45,37 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
         // User: "LABOUR has frist column heading"
         const firstColumnHeader = columnsList.length > 0 ? columnsList[0] : '';
         
-        const generatedColumns: ListTableColumn<any>[] = [
+        const generatedColumns: ListTableColumn<FinancialWorkingRow>[] = [
            {
                id: 'row_label',
-               label: firstColumnHeader,
-               minWidth: 200,
-               fixed: true, // often good for the label column
-               render: (row: any) => <span className="font-semibold text-[#2D3E4F]">{row.row_label}</span>
+               label: (
+                   <Tooltip title={firstColumnHeader} placement="top">
+                       <span>{firstColumnHeader}</span>
+                   </Tooltip>
+               ) as React.ReactNode as string,
+               width: 200,
+               sortId: 'row_label',
+               render: (row: FinancialWorkingRow) => <span className="font-semibold text-[#2D3E4F]">{row.row_label}</span>
            } 
         ];
 
         // 2. Project Columns: From projects array
         // User: "project name ... use that values are are column heading"
-        projects.forEach((project: any, index: number) => {
+        projects.forEach((project, index: number) => {
+            const label = project['Project Name'] || `Project ${index + 1}`;
             generatedColumns.push({
                 id: project['Project ID'] || `project_${index}`,
-                label: project['Project Name'] || `Project ${index + 1}`,
-                minWidth: 150,
-                render: (row: any) => {
+                label: (
+                    <Tooltip title={label} placement="top">
+                        <span className='truncate block max-w-[200px]'>{label}</span>
+                    </Tooltip>
+                ) as React.ReactNode as string,
+                width: 180,
+                 sx: {
+               textAlign: 'right',
+            },
+                sortId: project['Project ID'] || `project_${index}`,
+                render: (row: FinancialWorkingRow) => {
                     const projectId = project['Project ID'] || `project_${index}`;
                     return <span className="text-[#425A76]">{formatValue(row[projectId])}</span>;
                 }
@@ -65,8 +87,12 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
         generatedColumns.push({
             id: 'Total',
             label: 'Total',
-            minWidth: 150,
-            render: (row: any) => <span className="font-bold text-[#2D3E4F]">{formatValue(row.Total)}</span>
+            width: 150,
+            sortId: 'Total',
+            sx: {
+               textAlign: 'right',
+            },
+            render: (row: FinancialWorkingRow) => <span className="font-bold text-[#2D3E4F]">{formatValue(row.Total)}</span>
         });
 
         return generatedColumns;
@@ -84,19 +110,19 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
         // We take columns list starting from index 1
         const rowKeys = columnsList.slice(1);
 
-        const data = rowKeys.map((key: string, index: number) => {
-            const rowData: any = {
+        const data: FinancialWorkingRow[] = rowKeys.map((key: string) => {
+            const rowData: FinancialWorkingRow = {
                 id: key, // Use the key name as row ID (assuming unique)
                 row_label: key,
                 Total: total[key]
             };
 
             // Map each project's value for this key
-            projects.forEach((project: any, pIndex: number) => {
+            projects.forEach((project, pIndex: number) => {
                 const projectId = project['Project ID'] || `project_${pIndex}`;
                 // "some values are missing in column row add that values are null"
                 // Accessing property by key. If missing, it's undefined.
-                rowData[projectId] = project[key];
+                rowData[projectId] = project[key as keyof typeof project];
             });
 
             return rowData;
@@ -106,7 +132,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
 
     }, [computedFields]);
 
-    const getRowId = (row: any) => {
+    const getRowId = (row: FinancialWorkingRow) => {
         return row.id;
     };
 
@@ -115,31 +141,22 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
     }
 
     return (
-        <div className="w-full">
+        <div className="w-full h-full overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto">
             <ListTable
                 data={tableData}
                 columns={columns}
                 getRowId={getRowId}
                 showEmptyRow={true}
-                tableStyle={{
-                    '& .MuiTableCell-head': {
-                        backgroundColor: '#F5F7FA',
-                        color: '#425A76',
-                        fontWeight: 600,
-                        fontSize: '13px',
-                        whiteSpace: 'nowrap',
-                        height: '40px',
-                        padding: '8px 16px'
-                    },
-                    '& .MuiTableCell-body': {
-                        fontSize: '13px',
-                        color: '#2D3E4F',
-                        borderBottom: '1px solid #E5E7EB',
-                        height: '40px',
-                        padding: '8px 16px'
-                    }
-                }}
+                actionMenuItems={[]}
+                actionWidth={80}
+              tableStyle={{
+          height: '100%',
+          maxHeight: '300px',
+          overflow: 'auto',
+        }}
             />
+            </div>
         </div>
     );
 };

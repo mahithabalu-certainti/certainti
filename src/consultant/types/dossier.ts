@@ -207,10 +207,61 @@ export interface RDCreditInitiatePayload {
   case_rid: string;
   fiscal_year?: number;
 }
+export interface InputParams {
+  country: string;
+  currency: string;
+  credit_type: string;
+}
+export interface TitleFields {
+  Expleo: string;
+  "Account ID": string;
+  Description: string;
+  "Account Name": string;
+}
+export type DynamicNumberMap = Record<string, number>;
+export interface FinancialHighlightsProject {
+  "Project ID": string;
+  "Project Name": string;
+  "Currency Symbol"?: string;
+  [key: string]: string | number | undefined;
+}
+
+export interface FinancialHighlightsComputedFields {
+  Title: Record<string, string>;
+  Total: Record<string, number>;
+  Columns: string[];
+  Projects: FinancialHighlightsProject[];
+}
+
+export interface FinancialHighlightsData {
+  rid: string;
+  created_datetime: string;
+  modified_datetime: string;
+  case_rid: string;
+  country_rid: string;
+  input_params: Record<string, string|number|unknown|null>;
+  computed_fields: FinancialHighlightsComputedFields;
+}
+
+export interface CaseSummaryData {
+  rid: string;
+  created_datetime: string;
+  modified_datetime: string;
+  case_rid: string;
+  country_rid: string;
+  input_params: Record<string, string|number|unknown|null>;
+  computed_fields: FinancialHighlightsComputedFields;
+}
+
+export interface FinancialHighlightsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  data: FinancialHighlightsData;
+}
 
 export interface RDCreditInitiateResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: number;
+  data: CaseSummaryData | string; // Adjusted to allow string (from previous usage or just flexible)
 }

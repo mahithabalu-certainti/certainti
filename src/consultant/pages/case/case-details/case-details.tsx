@@ -143,7 +143,7 @@ export const CaseDetails = () => {
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
   const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
-
+  const [dossierFinancialStatus, setDossierFinancialStatus] = useState<string>('');
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
@@ -882,6 +882,8 @@ export const CaseDetails = () => {
           <Dossier
             activityMenuItems={activityMenuItems}
             caseDetails={caseData}
+            setDossierFinancialStatus={setDossierFinancialStatus}
+            dossierFinancialStatus={dossierFinancialStatus}
           />
         );
       default:
@@ -1168,6 +1170,21 @@ export const CaseDetails = () => {
               </div>
             </div>
           )}
+                      {dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED' && (
+                          <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box mb-2'>
+                          <div>
+                              <React.Suspense fallback={null}>
+                              <DetailsKeyContactErrorIcon alt='key-contact' />
+                              </React.Suspense>
+                          </div>
+                          <div>
+                              <span className='font-bold mr-1 capitalize'>Status:</span>
+                              <span className='ml-1 font-medium'>
+                              {dossierFinancialStatus || '-'}
+                              </span>
+                          </div>
+                          </div>
+                      )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
