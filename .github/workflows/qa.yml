@@ -1185,7 +1185,7 @@ jobs:
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
-          SUPPORT_EMAIL=support@certainti.ai
+          SUPPORT_EMAIL=interactions@certainti.ai
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
