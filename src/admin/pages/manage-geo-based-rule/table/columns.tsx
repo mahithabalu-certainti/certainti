@@ -135,6 +135,10 @@ export const getGeoBasedRuleColumns = (
         endFieldLabel: 'Effective End Date',
         minDate: dateRange.endMin || '',
       },
+       getFieldData: (rowData: DependencyRowData) => {
+        handleDateRage?.(String(rowData.effective_start_date) || '');
+        return String(rowData.effective_end_date) || '';
+      },
       dependencies: [
         {
           dependsOn: ['effective_start_date'],
