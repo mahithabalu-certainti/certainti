@@ -11,7 +11,7 @@ import { GeoBasedRule } from '../../../types/geo-based-rule';
 export const getGeoBasedRuleColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   dateRange: { endMin?: string; endMax?: string },
-  handleDateRage: (date: string) => void
+  handleDateRange: (date: string) => void
 ): ListTableColumn<GeoBasedRule>[] => [
   {
     id: 'r_number',
@@ -97,7 +97,7 @@ export const getGeoBasedRuleColumns = (
         endFieldLabel: 'Effective End Date',
       },
       getFieldData: (rowData: DependencyRowData) => {
-        handleDateRage?.(String(rowData.effective_start_date) || '');
+        handleDateRange?.(String(rowData.effective_start_date) || '');
         return String(rowData.effective_start_date) || '';
       },
       resetDependentFields: ['effective_end_date'],
@@ -136,7 +136,7 @@ export const getGeoBasedRuleColumns = (
         minDate: dateRange.endMin || '',
       },
        getFieldData: (rowData: DependencyRowData) => {
-        handleDateRage?.(String(rowData.effective_start_date) || '');
+        handleDateRange?.(String(rowData.effective_start_date) || '');
         return String(rowData.effective_end_date) || '';
       },
       dependencies: [

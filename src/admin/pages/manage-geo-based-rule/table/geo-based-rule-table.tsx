@@ -135,7 +135,7 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     return map;
   }, [configEditFields]);
 
-  const handleDateRage = (date: string) => {
+  const handleDateRange = (date: string) => {
     // Set minimum end date to the day after the start date
     const nextDay = date ? dayjs(date).add(1, 'day').format('YYYY-MM-DD') : '';
     setDateRange({ endMin: nextDay, endMax: '' });
@@ -143,14 +143,14 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'effective_start_date' && event.value) {
-      handleDateRage(String(event.value) || '');
+      handleDateRange(String(event.value) || '');
     }
   };
 
   const configColumns = getGeoBasedRuleColumns(
     permissionMap,
     dateRange,
-    handleDateRage
+    handleDateRange
   );
 
   const [columnOrder, setColumnOrder] = useState(
