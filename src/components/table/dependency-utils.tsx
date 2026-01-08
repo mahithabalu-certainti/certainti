@@ -226,11 +226,13 @@ export const validateDependentFields = <T extends RowData>(
         (!startDateValue && endDateValue)
       ) {
         if (column.id === relatedStartField && endDateValue && !cellValue) {
-          errors[cellKey] = `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
+          errors[cellKey] =
+            `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
           continue;
         }
         if (column.id === relatedEndField && startDateValue && !cellValue) {
-          errors[cellKey] = `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
+          errors[cellKey] =
+            `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
           continue;
         }
       }
