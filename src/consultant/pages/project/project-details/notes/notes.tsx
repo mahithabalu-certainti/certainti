@@ -12,6 +12,7 @@ import {
 } from '../../../../../common-service';
 import {
   ActivityDropdownItem,
+  ColorCode,
   ExportType,
   NotesList,
   NotesListURLParams,
@@ -477,12 +478,12 @@ const Notes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-                className='[&>path]:stroke-white'
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }
             buttons={headerButtons}
-            iconBg='#7F81F4'
+            iconBg={ColorCode.projectBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

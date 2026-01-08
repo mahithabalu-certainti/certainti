@@ -5,8 +5,8 @@ import { ResourceTabs } from '../../resources/resources';
 import { AllPermissions } from '../../../../../../common-service';
 import { SectionTabPanel } from '../../../../../../components';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import { DetailsIcon } from '../../../../../../assets';
-import { ActivityDropdownItem } from '../../../../../types';
+import { ConfigRuleIcon } from '../../../../../../assets';
+import { ActivityDropdownItem, ColorCode } from '../../../../../types';
 interface JurisdictionSettingProps {
   countryId: string | null;
   activityMenuItems: ActivityDropdownItem[];
@@ -74,14 +74,14 @@ const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
       <SectionHeader
         title={'Jurisdiction Configuration'}
         titleIcon={
-          <DetailsIcon
+          <ConfigRuleIcon
             alt='settings-header-icon'
-            className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}
-        iconBg={'#D7E5FF'}
-        bgType='circle'
+        iconBg={ColorCode.accountBgColor}
+              bgType='circle'
       />
       <JurisdictionConfig
         formRef={formRef}

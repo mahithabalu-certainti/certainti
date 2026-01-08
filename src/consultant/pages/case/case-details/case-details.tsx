@@ -30,6 +30,7 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
   TechnicalSummaryExportListParams,
+  ColorCode,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -45,25 +46,31 @@ import {
   SideMenuPanel,
 } from '../../../../components';
 import {
-  AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
   CallLogIcon,
-  CasesIcon,
+  CaseIcon,
+  CaseTeamIcon,
   ChecklistIcon,
   ComingSoon,
+  ConfigRuleIcon,
   DetailsIcon,
   DetailsKeyContactErrorIcon,
+  DossierIcon,
   DraftEmailIcon,
   FinancialIcon,
+  HistorySubmissionIcon,
   InteractionsIcon,
   MeetingIcon,
   NotesSideIcon,
   ProjectsSideIcon,
+  ProjectTaskIcon,
   ResourcesIcon,
+  ReviewProjectIcon,
   SettingIcon,
   TaskCreateIcon,
   TechSummaryIcon,
+  WorkBreakdownIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -930,7 +937,7 @@ export const CaseDetails = () => {
         key: 'workBreakdown',
         id: AllModules.WORKBREAKDOWN,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: WorkBreakdownIcon,
       },
       {
         name: 'Financial Highlights',
@@ -944,14 +951,14 @@ export const CaseDetails = () => {
         key: 'caseReview',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: CasesIcon,
+        icon: ReviewProjectIcon,
       },
       {
         name: 'Case Team',
         key: 'caseTeam',
         id: AllModules.CASES_TEAM,
         disabled: false,
-        icon: CasesIcon,
+        icon: CaseTeamIcon,
       },
       {
         name: 'Case Projects',
@@ -959,7 +966,7 @@ export const CaseDetails = () => {
         id: AllMenus.FALLBACK,
         hide: !isReviewProjectEnable && !isProjectEnable,
         disabled: false,
-        icon: CasesIcon,
+        icon: ProjectsSideIcon,
       },
       {
         name: 'Case Project Resource',
@@ -973,14 +980,14 @@ export const CaseDetails = () => {
         key: 'projectTask',
         id: AllMenus.PROJECT_TASK,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: ProjectTaskIcon,
       },
       {
         name: 'Historical Submission',
         key: 'historical_submission',
         id: AllModules.HISTORICAL_SUBMISSION,
         disabled: false,
-        icon: InteractionsIcon,
+        icon: HistorySubmissionIcon,
       },
       {
         name: 'Interactions',
@@ -1001,7 +1008,7 @@ export const CaseDetails = () => {
         key: 'dossier',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: DossierIcon,
       },
       {
         name: 'Activities',
@@ -1045,7 +1052,7 @@ export const CaseDetails = () => {
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: false,
             hide: false,
-            icon: ResourcesIcon,
+            icon: ConfigRuleIcon,
           },
         ],
       },
@@ -1079,10 +1086,10 @@ export const CaseDetails = () => {
           variant='sub'
           placeholder={'Case ID'}
           icon={
-            <AccountDetailsIcon
-              className='h-6 w-6 rounded'
-              style={{ backgroundColor: '#4B9BFF' }}
-            />
+            <CaseIcon
+            alt='case-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
+          />
           }
           title={caseData?.r_number || ''}
           isLoading={isLoading}
@@ -1107,13 +1114,12 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${
-          isActionItemsExpanded
-            ? 'max-h-0 opacity-0'
-            : isError
-              ? 'max-h-[60px] opacity-100'
-              : 'max-h-[140px] opacity-100'
-        }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
+          ? 'max-h-0 opacity-0'
+          : isError
+            ? 'max-h-[60px] opacity-100'
+            : 'max-h-[140px] opacity-100'
+          }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1125,11 +1131,10 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

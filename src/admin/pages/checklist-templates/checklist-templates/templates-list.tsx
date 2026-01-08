@@ -5,7 +5,7 @@ import {
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
 import { FilterState } from '../../../../consultant/types/account-filter';
-import { ChecklistIcon, NewFilterIcon, RefreshIcon } from '../../../../assets';
+import {  ChecklistTemplateIcon, NewFilterIcon, RefreshIcon } from '../../../../assets';
 import { ActionsDropdown, FilterModal } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import { TemplateTable } from './table/templates-table';
@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../common-utils';
 import { RootState } from '../../../../store/store';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import { ColorCode } from '../../../../consultant/types';
 
 const ChecklistTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -172,9 +173,9 @@ const ChecklistTemplates: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <ChecklistIcon
+            <ChecklistTemplateIcon
               alt='checklist-template-icon'
-              className='h-[24px] w-[24px] p-1 rounded [&>path]:stroke-[#fff] bg-[#3EBEB5]'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

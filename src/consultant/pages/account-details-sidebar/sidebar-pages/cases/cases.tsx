@@ -12,6 +12,7 @@ import {
   ActivityDropdownItem,
   CaseListExportParams,
   CaseListParams,
+  ColorCode,
   ExportType,
 } from '../../../../types';
 import { CASE_CREATE } from '../../../../../routes';
@@ -282,15 +283,15 @@ const Cases: React.FC<CaseProps> = ({
         titleIcon={
           <CasesIcon
             alt='cases-header-icon'
-            className='[&>path]:stroke-[#4ce547] w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         count={totalCount}
         showItemCount={true}
         showBackArrow={false}
         buttons={headerButtons}
-        bgType='circle'
-        iconBg='#D2FFE3'
+          iconBg={ColorCode.accountBgColor}
+              bgType='circle'
       />
       <div className='border border-[#CBD6E2]'>
         <CaseListTable

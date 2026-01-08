@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ManageUserIcon,
+  ManagerUserIcon,
   NewFilterIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
@@ -29,6 +29,7 @@ import {
 import { useToast } from '../../../../hooks';
 import { FilterState } from '../../../../consultant/types/account-filter';
 import SearchBar from '../../../../components/search/search-bar';
+import { ColorCode } from '../../../../consultant/types';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -274,7 +275,10 @@ const UserList: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <ManageUserIcon alt='manage user' className='h-7 w-7 rounded' />
+            <ManagerUserIcon 
+            alt='manage user' 
+             className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
+            />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
                 Admin Permission
