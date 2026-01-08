@@ -997,7 +997,6 @@ export class WorkFlowService {
     ) {
         entity.templateValue = templateStr;
         // templateStr is now available for use in actions if needed
-        console.log("Executing action 66112:", action.action_name);
         switch (action.action_name) {
             case "Flag":
                 await this.markUsHighPriority(entity);
