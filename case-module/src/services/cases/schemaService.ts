@@ -4520,8 +4520,8 @@ class CaseSchemaService {
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
     const fiscalYear = data.fiscal_year;
     if (!fiscalStart || !fiscalEnd) return "";
-    const [splitMonthStart, splitDateStart] = fiscalStart[0][0].fiscal_start_date.split("/");
-    const [splitMonthEnd, splitDateEnd] = fiscalEnd[0][0].fiscal_end_date.split("/");
+    const [splitMonthStart, splitDateStart] = fiscalStart.split("/");
+    const [splitMonthEnd, splitDateEnd] = fiscalEnd.split("/");
     const fiscalDateRange = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
     let effectiveStart = fiscalDateRange.startDate
     let effectiveEnd = fiscalDateRange.endDate
