@@ -3883,9 +3883,6 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
     } catch (err) {
       logMessage(`Error updating AI processed flag: ${err}`);
-      throw new Error(
-        "Error updating AI processed flag: " + (err as Error).message
-      );
     }
   }
 
