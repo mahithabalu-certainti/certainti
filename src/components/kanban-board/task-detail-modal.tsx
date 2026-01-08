@@ -77,6 +77,7 @@ interface TaskDetailModalPropsExtended
   taskType?: string;
   isCaseTeamCreated?: boolean;
   entityLevel?: 'account' | 'case' | 'project';
+  attachTo?: string;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -107,6 +108,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   taskType,
   isCaseTeamCreated,
   entityLevel,
+  attachTo,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -1278,11 +1280,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           const activityPayload = {
             task_rid: taskId,
             attach_to:
-              entityLevel === 'project'
+              attachTo ||
+              (entityLevel === 'project'
                 ? projectId || accountId
                 : entityLevel === 'case'
                   ? editedTask.case_rid || caseId || accountId
-                  : accountId,
+                  : accountId),
             attachment_level:
               entityLevel ||
               (editedTask.case_rid || caseId ? 'case' : 'account'),
