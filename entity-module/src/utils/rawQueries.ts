@@ -2610,7 +2610,6 @@ export const fetchResCodesForPrjRes = (schemaName: string, search: string, accou
         GROUP BY r.rid, r.resource_code, r.resource_type_rid, r.resource_name
         ORDER BY r.resource_code ASC
         `
-
 }
 
 export const fetchProjectById = (schemaName: string, id: string) => {

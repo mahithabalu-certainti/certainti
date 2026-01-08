@@ -54,7 +54,7 @@ import {
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, signoffProjectTechSummary, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
+import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, signoffProjectTechSummary, taskCardDetails, taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
 import { sendEmailWithAttachment } from "../emailService";
 import ActivitySchemaService from "../activities/schemaService";
 import { caseTaskMapping, reviewProjectsFieldMappings } from "../../utils/excelExportMapping";
@@ -63,11 +63,11 @@ export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
-  private caseManagementService : CaseManagementSchemaService
+  private caseManagementService: CaseManagementSchemaService
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
-  private helperMethod : HelperMethods
+  private helperMethod: HelperMethods
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -142,16 +142,16 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-      
-       const validation = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
-       if (!validation.isCaseUnique) {
+
+      const validation = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest, accountNumber);
+      if (!validation.isCaseUnique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `A case is  already in progress for FY-${caseRequest.fiscal_year }. Please choose a different year.`,
+          errorMessage: `A case is  already in progress for FY-${caseRequest.fiscal_year}. Please choose a different year.`,
         };
       }
-       if (!validation.isunique) {
+      if (!validation.isunique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -193,7 +193,7 @@ export class CaseService {
       }
 
       await transaction.commit();
-      const [caseOwnerData]: any[] = await mainDb.query(  
+      const [caseOwnerData]: any[] = await mainDb.query(
         rawQueries.fetchUserDetails(caseRequest.case_owner_rid),
         { type: QueryTypes.SELECT }
       );
@@ -205,20 +205,20 @@ export class CaseService {
         });
       let ruleEnginePayload = {
         entityName: caseRequest.case_name,
-        entity:entityNames.case,
+        entity: entityNames.case,
         eventName: ruleNames.caseCreated,
         userId: userId,
         accountRid: caseRequest.account_rid,
         targetUserID: caseRequest.case_owner_rid,
         targetEmail: caseOwnerData.email || "",
         entityRid: response.rid,
-        ruleScope:ruleNames.caseCreated,
-        caseName:caseInfo.case_name || "",
-        case : "Assigned",
-        triggerType:"validation",
-        status:caseInfo.status_name || ""
+        ruleScope: ruleNames.caseCreated,
+        caseName: caseInfo.case_name || "",
+        case: "Assigned",
+        triggerType: "validation",
+        status: caseInfo.status_name || ""
       };
-     await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
+      await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -227,14 +227,23 @@ export class CaseService {
           cases: response,
         },
       };
-    } catch (err) {
-      logMessage(`Error creating case, ${err}`);
-      await transaction.rollback();
-      return {
+    } catch (error) {
+      console.log(error)
+      if (error instanceof Error) {
+        logMessage(`Error creating case: ${error.message}\nStack: ${error.stack}`);
+        return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
         errorMessage: STATUS_MESSAGE.caseCreationFailed,
       };
+      } else {
+        logMessage(`Error creating case: ${error}`);
+         return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+      };
+      }
     }
   }
 
@@ -282,16 +291,16 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-    if( caseRequest.case_name ){
-    const isUnique = await this.caseSchemaService.checkisExistingCaseUnique(caseRequest,accountNumber);
-    if (!isUnique) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.BAD_REQUEST_MESSAGE,
-        errorMessage: `A case with the name "${caseRequest.case_name}" and category already exists. Please choose a different name or category.`,
-      };
-    }
-  }
+      if (caseRequest.case_name) {
+        const isUnique = await this.caseSchemaService.checkisExistingCaseUnique(caseRequest, accountNumber);
+        if (!isUnique) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: HttpStatus.BAD_REQUEST_MESSAGE,
+            errorMessage: `A case with the name "${caseRequest.case_name}" and category already exists. Please choose a different name or category.`,
+          };
+        }
+      }
 
       const response = await this.caseSchemaService.updateCases(
         accountNumber,
@@ -301,11 +310,11 @@ export class CaseService {
         accessToken
       );
 
-      if(response.statusCode === HttpStatus.BAD_REQUEST) {
+      if (response.statusCode === HttpStatus.BAD_REQUEST) {
         return {
-          statusCode : HttpStatus.BAD_REQUEST,
-          message : HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage : response.statusMessage
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: response.statusMessage
         }
       } else {
         await transaction.commit();
@@ -403,7 +412,7 @@ export class CaseService {
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number
       );
-      const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
+      const getActiveStatusId: any = await mainDb.query(rawQueries.getActiveStatusId());
       const queryResult =
         await this.caseSchemaService.getCasesHeadersSectionList(
           caseRid,
@@ -417,13 +426,13 @@ export class CaseService {
         const accountData = await this.helperMethod.fetchAccountById(accountRid);
         let accountRNumber = accountData.r_number;
 
-      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+        let childRNumber = await this.caseSchemaService.fetchParentAccount(
           accountData.parent_account_rid
         );
         if (accountData.storage_type === "store_in_parent") {
           accountRNumber = childRNumber;
         }
-        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber, accountRid)) ?? false;
         queryResult.is_send_interaction = isSubscriptionCreated
         const ids = [
           queryResult.created_by,
@@ -465,7 +474,7 @@ export class CaseService {
           rawQueries.getCaseStatusDetails(queryResult.status_rid),
           { type: QueryTypes.SELECT }
         );
-        const [statusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getStatusDetails(getAccountDetails!.status_rid), {type : QueryTypes.SELECT})
+        const [statusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getStatusDetails(getAccountDetails!.status_rid), { type: QueryTypes.SELECT })
         if (getAccountDetails) {
           queryResult.account_rnumber = getAccountDetails.r_number;
           queryResult.account_status_rid = getAccountDetails.status_rid
@@ -553,25 +562,25 @@ export class CaseService {
   }
 
   async getChecklistStatus(): Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { checklistStatus: any };
-}> {
-  try {
-    const checklistStatus = await this.caseSchemaService.getChecklistStatus();
-    return {
-      statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
-      data: {
-        checklistStatus,
-      },
-    };
-  } catch (err) {
-    logMessage(`Error fetching case status, ${err}`);
-    throw this.throwServiceError(err as Error);
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklistStatus: any };
+  }> {
+    try {
+      const checklistStatus = await this.caseSchemaService.getChecklistStatus();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          checklistStatus,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case status, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
   }
-}
 
   /**
    * Retrieves the default status RID for newly created cases.
@@ -801,7 +810,7 @@ export class CaseService {
       data.limit,
       data.parsedFilters,
       data.globalFilters,
-      data.fiscal_year,
+      data.fiscalYear,
       data.sortBy,
       data.sortOrder,
       accessibleIds,
@@ -835,7 +844,7 @@ export class CaseService {
     data: any,
     assignedProject: boolean,
     userId: string,
-    isExport : boolean
+    isExport: boolean
   ) {
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
@@ -929,14 +938,14 @@ export class CaseService {
         );
 
       if (queryResult.length > 0) {
-        const aggregatedResult : any = await orgDb.query(fetchCaseProjects(data.case_rid, data.account_rid, schemaName));
-        const totals = aggregatedResult[0].reduce((acc : any, curr : any) => {
+        const aggregatedResult: any = await orgDb.query(fetchCaseProjects(data.case_rid, data.account_rid, schemaName));
+        const totals = aggregatedResult[0].reduce((acc: any, curr: any) => {
           acc.total_cost_prj = acc.total_cost_prj + Number(curr.total_cost_prj || 0.00)
           acc.qre_final = acc.qre_final + Number(curr.qre_final || 0.00)
           return acc
         }, {
-          total_cost_prj : 0.00,
-          qre_final : 0.00
+          total_cost_prj: 0.00,
+          qre_final: 0.00
         })
         await orgDb.query(updateCaseAggregatedValue(totals.total_cost_prj, totals.qre_final, schemaName, data.case_rid, data.account_rid));
         const classificationIds: any = [
@@ -1003,9 +1012,9 @@ export class CaseService {
             }
           });
         }
-        let uniqueCurrencyIds : any = [...new Set(queryResult.map((c : any) => c.currency_rid))];
-        let fetchCurrencies : any = await mainDb.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
-        let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
+        let uniqueCurrencyIds: any = [...new Set(queryResult.map((c: any) => c.currency_rid))];
+        let fetchCurrencies: any = await mainDb.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
+        let mapCurrency: Map<string, { currency_name: string, currency_code: string, currency_symbol: string }> = new Map(fetchCurrencies[0].map((c: any) => [c.rid, { currency_name: c.currency_name, currency_code: c.currency_code, currency_symbol: c.currency_symbol }]))
         const finalData = geoDataAddedResult.map((d: any) => {
           return {
             rid: d.rid,
@@ -1089,7 +1098,7 @@ export class CaseService {
           };
         }
       }
-      
+
       data.fiscal_year = checkCaseExists.fiscal_year
       let caseSchemaServiceResult = await this.caseSchemaService.assignProjectToCase(
         data,
@@ -1246,10 +1255,10 @@ export class CaseService {
         caseRequest,
         userId
       );
-     
+
       await this.caseSchemaService.assignCaseTeamToTasks(
         accountNumber,
-         caseRequest,
+        caseRequest,
         userId,
         accessToken
       );
@@ -1356,7 +1365,7 @@ export class CaseService {
     filters: Record<string, any>,
     userId: string,
     apiType: string,
-    isDropdownList? : boolean
+    isDropdownList?: boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1378,7 +1387,7 @@ export class CaseService {
           errorMessage: "Invalid account ID",
         };
       }
-      const activeStatusRid : any = await mainDb.query(rawQueries.getActiveStatusId());
+      const activeStatusRid: any = await mainDb.query(rawQueries.getActiveStatusId());
       const caseTeamMembers = await this.caseSchemaService.listCaseTeamMembers(
         accountNumber,
         data,
@@ -1433,62 +1442,62 @@ export class CaseService {
     }
   }
 
-  async exportAssignedProjects (data : any) {
+  async exportAssignedProjects(data: any) {
     const result = await this.fetchProjectsForAssign(data, true, data.userId, true);
-    if(result?.statusCode === HttpStatus.SUCCESS) {
-    const formatNumberForExport = (
-      value: any,
-      currency_symbol: string
-    ): string => {
-      if (value == null || value === "") return "-";
-      const num = Number(value);
-      if (isNaN(num)) return "-";
-      return currency(num, {
-        symbol: currency_symbol ? currency_symbol : "$",
-        precision: 2,
-        pattern: "! #",
-        separator: ",",
-        decimal: ".",
-      }).format();
-    };
+    if (result?.statusCode === HttpStatus.SUCCESS) {
+      const formatNumberForExport = (
+        value: any,
+        currency_symbol: string
+      ): string => {
+        if (value == null || value === "") return "-";
+        const num = Number(value);
+        if (isNaN(num)) return "-";
+        return currency(num, {
+          symbol: currency_symbol ? currency_symbol : "$",
+          precision: 2,
+          pattern: "! #",
+          separator: ",",
+          decimal: ".",
+        }).format();
+      };
 
-    const allowedFieldsForExport = await this.getAllowedExportFields(
-      data.userId,
-      "projects_view_edit"
-    );
-    const allowedFieldSet = new Set<string>();
-    for (const field of allowedFieldsForExport) {
-      if (field.read) {
-        allowedFieldSet.add(field.field_desc);
+      const allowedFieldsForExport = await this.getAllowedExportFields(
+        data.userId,
+        "projects_view_edit"
+      );
+      const allowedFieldSet = new Set<string>();
+      for (const field of allowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_desc);
+        }
       }
-    }
-    const labelMap: Record<string, string> = {
-      "Project Code": "Project Code",
-      "Project Name": "Name",
-      "Project Type": "Project Type",
-      "Account Name": "Name",
-      "Fiscal Year": "Fiscal Year",
-      "Project Classification": "Classification",
-      "Customer Group": "Client Group",
-      "Project Group": "Project Group",
-      "Project Effort (Hours)": "Total Effort In Hrs",
-      "Project Cost": "Total Cost",
-      "FTE Cost": "Total FTE Cost",
-      "SubCon Cost": "Total Sub Con Cost",
-      "Non-Labor Cost": "Total Non Labor Cost",
-      "Assessment Status": "Assessment Status",
-      "QRE Percent Final": "QRE Percent Final",
-      "QRE Final": "QRE Final",
-      "Project Point of Contact": "Key Contacts List",
-      "Technical Point of Contact": "Key Contacts List",
-      "Comments": "Comments",
-      "Last Modified": "Updated On",
-      "Project ID": "Project ID",
-    };
+      const labelMap: Record<string, string> = {
+        "Project Code": "Project Code",
+        "Project Name": "Name",
+        "Project Type": "Project Type",
+        "Account Name": "Name",
+        "Fiscal Year": "Fiscal Year",
+        "Project Classification": "Classification",
+        "Customer Group": "Client Group",
+        "Project Group": "Project Group",
+        "Project Effort (Hours)": "Total Effort In Hrs",
+        "Project Cost": "Total Cost",
+        "FTE Cost": "Total FTE Cost",
+        "SubCon Cost": "Total Sub Con Cost",
+        "Non-Labor Cost": "Total Non Labor Cost",
+        "Assessment Status": "Assessment Status",
+        "QRE Percent Final": "QRE Percent Final",
+        "QRE Final": "QRE Final",
+        "Project Point of Contact": "Key Contacts List",
+        "Technical Point of Contact": "Key Contacts List",
+        "Comments": "Comments",
+        "Last Modified": "Updated On",
+        "Project ID": "Project ID",
+      };
 
-    const fiscalData = result.data.projects || []
+      const fiscalData = result.data.projects || []
 
-    let exportData = fiscalData.map((fiscal: any) => {
+      let exportData = fiscalData.map((fiscal: any) => {
         let modifiedDateTime = fiscal.modified_datetime;
         const rawFiscalRow = {
           "Project Code": fiscal.project_code
@@ -1522,7 +1531,7 @@ export class CaseService {
           "Assessment Status": fiscal.assessment_status || "-",
           "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
           "QRE Final":
-          fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
+            fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
             "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Technical Point of Contact":
@@ -1531,12 +1540,12 @@ export class CaseService {
           "Last Modified": modifiedDateTime
             ? data.timezone && isValidTimezone(data.timezone)
               ? moment
-                  .tz(modifiedDateTime.toISOString(), data.timezone)
-                  .add(5, 'hours').add(30, 'minutes')
-                  .format("YYYY-MMM-DD, hh:mm:ss A")
+                .tz(modifiedDateTime.toISOString(), data.timezone)
+                .add(5, 'hours').add(30, 'minutes')
+                .format("YYYY-MMM-DD, hh:mm:ss A")
               : moment(modifiedDateTime.toISOString()).add(5, 'hours').add(30, 'minutes').format(
-                  "YYYY-MMM-DD, hh:mm:ss A"
-                )
+                "YYYY-MMM-DD, hh:mm:ss A"
+              )
             : "-",
           "Project ID": fiscal.r_number || "-",
         };
@@ -1552,13 +1561,13 @@ export class CaseService {
         return filteredFiscalRow;
       });
       return {
-        statusCode : HttpStatus.SUCCESS,
-        data : exportData
+        statusCode: HttpStatus.SUCCESS,
+        data: exportData
       };
     } else {
       return {
-        statusCode : HttpStatus.NOT_FOUND,
-        data : []
+        statusCode: HttpStatus.NOT_FOUND,
+        data: []
       };
     }
   }
@@ -1590,17 +1599,17 @@ export class CaseService {
    * - Ensures users have appropriate access levels for case team participation
    * 
    */
-  async listUsersForCaseTeam(accountRid: string,scope:string) {
+  async listUsersForCaseTeam(accountRid: string, scope: string) {
     try {
       // Delegate to schema service to fetch account-specific eligible users
       const users = await this.caseSchemaService.listUsersForCaseTeam(
-        accountRid,scope
+        accountRid, scope
       );
-      
+
       // Return successful response with user data
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,  
+        message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           users,
         },
@@ -1609,12 +1618,12 @@ export class CaseService {
     catch (err) {
       // Log error for debugging and monitoring
       logMessage(`Error fetching users for case team, ${err}`);
-      
+
       // Convert to standardized service error and re-throw
       throw this.throwServiceError(err as Error);
     }
   }
-    async getReviewProjects(
+  async getReviewProjects(
     data: any,
     filters: Record<string, any>,
     userId: string,
@@ -1625,7 +1634,7 @@ export class CaseService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { reviewProjects: any ,count: number };
+    data?: { reviewProjects: any, count: number };
   }> {
     try {
       const { accountNumber } =
@@ -1641,7 +1650,7 @@ export class CaseService {
           errorMessage: "Invalid account ID",
         };
       }
-      const response :any= await this.caseSchemaService.listReviewProjectsInfo(
+      const response: any = await this.caseSchemaService.listReviewProjectsInfo(
         accountNumber,
         caseRid,
         filters,
@@ -1658,7 +1667,7 @@ export class CaseService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          reviewProjects:response.data,
+          reviewProjects: response.data,
           count: response.count,
         },
       };
@@ -1668,7 +1677,7 @@ export class CaseService {
     }
   }
 
-    async sentReviewProjects(
+  async sentReviewProjects(
     data: any,
     filters: Record<string, any>,
     userId: string,
@@ -1677,7 +1686,7 @@ export class CaseService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?:any;
+    data?: any;
   }> {
     try {
       const { accountNumber } =
@@ -1693,18 +1702,18 @@ export class CaseService {
           errorMessage: "Invalid account ID",
         };
       }
-        let projectArray: string[] = [];
-    if (Array.isArray(data.project_id)) {
-    projectArray = data.project_id;
-  } else if (typeof data.project_id === 'string') {
-    try {
-      projectArray = JSON.parse(data.project_id);
-    } catch {
-      projectArray = [];
-    }
-  }
+      let projectArray: string[] = [];
+      if (Array.isArray(data.project_id)) {
+        projectArray = data.project_id;
+      } else if (typeof data.project_id === 'string') {
+        try {
+          projectArray = JSON.parse(data.project_id);
+        } catch {
+          projectArray = [];
+        }
+      }
       data.project_id = projectArray;
-      const response :any= await this.caseSchemaService.listReviewProjectsInfo(
+      const response: any = await this.caseSchemaService.listReviewProjectsInfo(
         accountNumber,
         data.case_rid,
         filters,
@@ -1719,174 +1728,174 @@ export class CaseService {
       );
 
       const fields = await this.getAllowedExportFields(
-            userId,
-            "case_review_projects_view_edit"
-          );
-      const allowedFieldSet = new Set<string>();
-          for (const field of fields) {
-            if (field.read) {
-              allowedFieldSet.add(field.field_name);
-            }
-          }
-          if (response.data) {
-              const finalStructuredData =
-              !response?.data || response.data.length < 1
-                ? []
-                : response.data.map((d: any) => {
-                    let resultMap: { [key: string]: any } = {
-                      r_number: d.r_number,
-                      fiscal_year: `FY-${d.fiscal_year}`,
-                      project_name: d.project_name,
-                      project_code: d.project_code,
-                      industry_rid: d.industry_name,
-                      project_classification_rid: d.project_classification_name,
-                      project_type_rid: d.project_type_name,
-                      project_group: d.project_group,
-                      total_tasks: d.total_tasks,
-                      total_fte_prj: d.total_fte_prj,
-                      total_cost_prj: d.total_cost_prj,
-                      total_effort_prj: d.total_effort_prj,
-                      total_subcon_prj: d.total_subcon_prj,
-                      total_cost_fte_prj: d.total_cost_fte_prj,
-                      total_cost_subcon_prj: d.total_cost_subcon_prj,
-                      total_nonlabor_prj: d.total_nonlabor_prj,
-                      total_resources_prj: d.total_resources_prj,
-                      total_effort_fte_prj  : d.total_effort_fte_prj,
-                      total_cost_nonlabor_prj : d.total_cost_nonlabor_prj,
-                      total_effort_subcon_prj : d.total_effort_subcon_prj,
-                      primary_point_of_contact: d.project_point_of_contact,
-                      primary_point_of_contact_email: d.project_point_of_contact_email,
-                      total_technical_summaries: d.total_technical_summaries,
-      
-        
-                    };
-      
-                    // Build exportRecord using allowed fields and resultMap
-                    const exportRecord: Record<string, any> = {};
-                    reviewProjectsFieldMappings.forEach((mapping) => {
-                      if (allowedFieldSet.has(mapping.permissionField)) {
-                        exportRecord[mapping.exportField] =
-                          resultMap[mapping.dataField];
-                      }
-                    });
-      
-                    return exportRecord;
-                  });
-            const generateBase64Response = await generateExcelBase64WithEmptyCheck(
-              finalStructuredData,
-              "Review Projects"
-            );
-          const excelAttachment = {
-        filename: `review_projects_${data.case_rid}.xlsx`,
-        content: generateBase64Response,
-        contentType:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      };
-      const mainDb = await this.getMainDb();
-      const orgDb = await this.getOrgDb();
-      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
-              /\D/g,
-              ""
-            )}`;
-      const [accountInfo]: any[] = await mainDb.query(
-            rawQueries.fetchAccountInfo(data.account_rid!),
-            { type: "SELECT" }
-          );
-      const [caseInfo]: any[] = await orgDb.query(
-            rawQueries.fetchCaseInfo(schemaName,data.case_rid!),
-            { type: "SELECT" }
-          );
-        let parentAccountNumber = accountNumber;
-      if(accountInfo.storage_type === 'separate_db') {
-        const [parentAccountInfo]: any[] =
-            await mainDb.query(
-            rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
-            { type: "SELECT" }
-          );
-        parentAccountNumber = parentAccountInfo.r_number;
-      }
-      const senderEmailInfo = await this.caseSchemaService.fetchSenderEmailInfoByAccountId(
-            parentAccountNumber,
-            accountInfo.parent_account_rid
-          );
-      if (!senderEmailInfo) {
-        logMessage(
-          `Sender email information not found for account ID ${data.account_rid}`
-        );
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: "Sender email information not found",
-        };
-      } 
-       let toEmailsArray: string[] = [];
-    let ccEmailsArray: string[] = [];
-    if (Array.isArray(data.to_email)) {
-    toEmailsArray = data.to_email;
-  } else if (typeof data.to_email === 'string') {
-    try {
-      toEmailsArray = JSON.parse(data.to_email);
-    } catch {
-      toEmailsArray = [];
-    }
-  }
-   if (Array.isArray(data.cc_email)) {
-    ccEmailsArray = data.cc_email;
-  } else if (typeof data.cc_email === 'string') {
-    try {
-      ccEmailsArray = JSON.parse(data.cc_email);
-    } catch {
-      ccEmailsArray = [];
-    }
-  }
-    data.cc_email = ccEmailsArray;
-    data.to_email = toEmailsArray;
-      await this.sendEmailWithAttachment(
-        data,
-        excelAttachment,
-        senderEmailInfo,
-        caseInfo,
-        files // Pass files to sendEmailWithAttachment
+        userId,
+        "case_review_projects_view_edit"
       );
-       const [emailStatus]: any[] = await mainDb.query(
-             rawQueries.fetchActivityStatusByName("Sent", "Email"),
-             { type: "SELECT" }
-           );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      if (response.data) {
+        const finalStructuredData =
+          !response?.data || response.data.length < 1
+            ? []
+            : response.data.map((d: any) => {
+              let resultMap: { [key: string]: any } = {
+                r_number: d.r_number,
+                fiscal_year: `FY-${d.fiscal_year}`,
+                project_name: d.project_name,
+                project_code: d.project_code,
+                industry_rid: d.industry_name,
+                project_classification_rid: d.project_classification_name,
+                project_type_rid: d.project_type_name,
+                project_group: d.project_group,
+                total_tasks: d.total_tasks,
+                total_fte_prj: d.total_fte_prj,
+                total_cost_prj: d.total_cost_prj,
+                total_effort_prj: d.total_effort_prj,
+                total_subcon_prj: d.total_subcon_prj,
+                total_cost_fte_prj: d.total_cost_fte_prj,
+                total_cost_subcon_prj: d.total_cost_subcon_prj,
+                total_nonlabor_prj: d.total_nonlabor_prj,
+                total_resources_prj: d.total_resources_prj,
+                total_effort_fte_prj: d.total_effort_fte_prj,
+                total_cost_nonlabor_prj: d.total_cost_nonlabor_prj,
+                total_effort_subcon_prj: d.total_effort_subcon_prj,
+                primary_point_of_contact: d.project_point_of_contact,
+                primary_point_of_contact_email: d.project_point_of_contact_email,
+                total_technical_summaries: d.total_technical_summaries,
+
+
+              };
+
+              // Build exportRecord using allowed fields and resultMap
+              const exportRecord: Record<string, any> = {};
+              reviewProjectsFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+
+              return exportRecord;
+            });
+        const generateBase64Response = await generateExcelBase64WithEmptyCheck(
+          finalStructuredData,
+          "Review Projects"
+        );
+        const excelAttachment = {
+          filename: `review_projects_${data.case_rid}.xlsx`,
+          content: generateBase64Response,
+          contentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        };
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+        const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+        const [accountInfo]: any[] = await mainDb.query(
+          rawQueries.fetchAccountInfo(data.account_rid!),
+          { type: "SELECT" }
+        );
+        const [caseInfo]: any[] = await orgDb.query(
+          rawQueries.fetchCaseInfo(schemaName, data.case_rid!),
+          { type: "SELECT" }
+        );
+        let parentAccountNumber = accountNumber;
+        if (accountInfo.storage_type === 'separate_db') {
+          const [parentAccountInfo]: any[] =
+            await mainDb.query(
+              rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+              { type: "SELECT" }
+            );
+          parentAccountNumber = parentAccountInfo.r_number;
+        }
+        const senderEmailInfo = await this.caseSchemaService.fetchSenderEmailInfoByAccountId(
+          parentAccountNumber,
+          accountInfo.parent_account_rid
+        );
+        if (!senderEmailInfo) {
+          logMessage(
+            `Sender email information not found for account ID ${data.account_rid}`
+          );
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: "Sender email information not found",
+          };
+        }
+        let toEmailsArray: string[] = [];
+        let ccEmailsArray: string[] = [];
+        if (Array.isArray(data.to_email)) {
+          toEmailsArray = data.to_email;
+        } else if (typeof data.to_email === 'string') {
+          try {
+            toEmailsArray = JSON.parse(data.to_email);
+          } catch {
+            toEmailsArray = [];
+          }
+        }
+        if (Array.isArray(data.cc_email)) {
+          ccEmailsArray = data.cc_email;
+        } else if (typeof data.cc_email === 'string') {
+          try {
+            ccEmailsArray = JSON.parse(data.cc_email);
+          } catch {
+            ccEmailsArray = [];
+          }
+        }
+        data.cc_email = ccEmailsArray;
+        data.to_email = toEmailsArray;
+        await this.sendEmailWithAttachment(
+          data,
+          excelAttachment,
+          senderEmailInfo,
+          caseInfo,
+          files // Pass files to sendEmailWithAttachment
+        );
+        const [emailStatus]: any[] = await mainDb.query(
+          rawQueries.fetchActivityStatusByName("Sent", "Email"),
+          { type: "SELECT" }
+        );
         const { Activities } = await this.caseModelService.getModels(accountNumber);
         const activityData = {
-            activity_type: "Review Projects Sent",
-            status_rid: emailStatus.rid,
-            created_by: userId,
-            modified_by: userId,
-            case_rid: data.case_rid,
-            to_email: data.to_email,
-            cc_email: data.cc_email,
-            subject: data.subject,
-            body_html: data.body_html,
-            attach_to:data.case_rid,
-            attachment_level: "case",
-            account_rid: data.account_rid,
-            activity_rid: "",
-          };
-     const activityresponse = await Activities.create(activityData);
-    activityData.activity_rid = activityresponse.rid;
-    await this.activitySchemaService.uploadActivityFiles(files, activityData, accountNumber);
-      await this.caseSchemaService.addCaseTimeline(
-        accountNumber,
-        data.case_rid,
-        data.account_rid,
-        "Sent Review Projects",
-        userId,
-        "success",
-        "Review Projects sent via email from UI",
-        "ui handler"
-      );
-      
-           
-          }
+          activity_type: "Review Projects Sent",
+          status_rid: emailStatus.rid,
+          created_by: userId,
+          modified_by: userId,
+          case_rid: data.case_rid,
+          to_email: data.to_email,
+          cc_email: data.cc_email,
+          subject: data.subject,
+          body_html: data.body_html,
+          attach_to: data.case_rid,
+          attachment_level: "case",
+          account_rid: data.account_rid,
+          activity_rid: "",
+        };
+        const activityresponse = await Activities.create(activityData);
+        activityData.activity_rid = activityresponse.rid;
+        await this.activitySchemaService.uploadActivityFiles(files, activityData, accountNumber);
+        await this.caseSchemaService.addCaseTimeline(
+          accountNumber,
+          data.case_rid,
+          data.account_rid,
+          "Sent Review Projects",
+          userId,
+          "success",
+          "Review Projects sent via email from UI",
+          "ui handler"
+        );
+
+
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.emailSentSuccessfully,
-        data:null,
+        data: null,
       };
     } catch (err) {
       logMessage(`Error fetching review project info, ${err}`);
@@ -1898,106 +1907,104 @@ export class CaseService {
     }
   }
   async sendEmailWithAttachment(
-     data: any,
-     excelAttachment: { filename: string; content: string; contentType: string },
-     senderEmailInfo: {
-       email: string;
-       clientId: string;
-       tenantId: string;
-       clientSecret: string;
-     },
-     caseInfo: any,
-     files: Express.Multer.File[]
-   ) {
-     let emailResponse = false;
-     try {
-      const emailPreview = await this.generateEmailPreviewForReviewProjects(data,caseInfo);
-       //fetch sender email info
-       emailResponse = await sendEmailWithAttachment({
-         message: emailPreview,
-         attachments: [
-           {
-             "@odata.type": "#microsoft.graph.fileAttachment",
-             name: excelAttachment.filename,
-             contentBytes: excelAttachment.content,
-             contentType: excelAttachment.contentType,
-           },
-           // Add additional files as attachments
-           ...(files && files.length > 0
-             ? files.map((file) => ({
-                 "@odata.type": "#microsoft.graph.fileAttachment",
-                 name: file.originalname || file.filename,
-                 contentBytes: file.buffer ? file.buffer.toString("base64") : "",
-                 contentType: file.mimetype || "application/octet-stream",
-               }))
-             : []),
-         ],
-         senderEmailInfo: senderEmailInfo,
-       });
-       return emailResponse;
-     } catch (error) {
-       logMessage(`Error sending email: ${error}`);
-       return emailResponse;
-     }
-   }
+    data: any,
+    excelAttachment: { filename: string; content: string; contentType: string },
+    senderEmailInfo: {
+      email: string;
+      clientId: string;
+      tenantId: string;
+      clientSecret: string;
+    },
+    caseInfo: any,
+    files: Express.Multer.File[]
+  ) {
+    let emailResponse = false;
+    try {
+      const emailPreview = await this.generateEmailPreviewForReviewProjects(data, caseInfo);
+      //fetch sender email info
+      emailResponse = await sendEmailWithAttachment({
+        message: emailPreview,
+        attachments: [
+          {
+            "@odata.type": "#microsoft.graph.fileAttachment",
+            name: excelAttachment.filename,
+            contentBytes: excelAttachment.content,
+            contentType: excelAttachment.contentType,
+          },
+          // Add additional files as attachments
+          ...(files && files.length > 0
+            ? files.map((file) => ({
+              "@odata.type": "#microsoft.graph.fileAttachment",
+              name: file.originalname || file.filename,
+              contentBytes: file.buffer ? file.buffer.toString("base64") : "",
+              contentType: file.mimetype || "application/octet-stream",
+            }))
+            : []),
+        ],
+        senderEmailInfo: senderEmailInfo,
+      });
+      return emailResponse;
+    } catch (error) {
+      logMessage(`Error sending email: ${error}`);
+      return emailResponse;
+    }
+  }
   replacePlaceholders(
-        template: string,
-        dataObj: Record<string, any>,
-        caseObj: Record<string, any>
-      ): string {
-        return template.replace(/{{(.*?)}}/g, (_: string, key: string) => {
-          const raw = key.trim();
-          // Normalize: lowercase, replace spaces with underscores
-          const normalized = raw.toLowerCase().replace(/\s+/g, "_");
-          // Also check underscore-removed
-          const noUnderscore = normalized.replace(/_/g, "");
-          // Check in dataObj
-          if (dataObj) {
-            if (raw in dataObj && dataObj[raw] != null) return dataObj[raw];
-            if (normalized in dataObj && dataObj[normalized] != null) return dataObj[normalized];
-            if (noUnderscore in dataObj && dataObj[noUnderscore] != null) return dataObj[noUnderscore];
-          }
-          // Check in caseObj
-          if (caseObj) {
-            if (raw in caseObj && caseObj[raw] != null) return caseObj[raw];
-            if (normalized in caseObj && caseObj[normalized] != null) return caseObj[normalized];
-            if (noUnderscore in caseObj && caseObj[noUnderscore] != null) return caseObj[noUnderscore];
-          }
-          return "";
-        });
+    template: string,
+    dataObj: Record<string, any>,
+    caseObj: Record<string, any>
+  ): string {
+    return template.replace(/{{(.*?)}}/g, (_: string, key: string) => {
+      const raw = key.trim();
+      // Normalize: lowercase, replace spaces with underscores
+      const normalized = raw.toLowerCase().replace(/\s+/g, "_");
+      // Also check underscore-removed
+      const noUnderscore = normalized.replace(/_/g, "");
+      // Check in dataObj
+      if (dataObj) {
+        if (raw in dataObj && dataObj[raw] != null) return dataObj[raw];
+        if (normalized in dataObj && dataObj[normalized] != null) return dataObj[normalized];
+        if (noUnderscore in dataObj && dataObj[noUnderscore] != null) return dataObj[noUnderscore];
       }
+      // Check in caseObj
+      if (caseObj) {
+        if (raw in caseObj && caseObj[raw] != null) return caseObj[raw];
+        if (normalized in caseObj && caseObj[normalized] != null) return caseObj[normalized];
+        if (noUnderscore in caseObj && caseObj[noUnderscore] != null) return caseObj[noUnderscore];
+      }
+      return "";
+    });
+  }
   async generateEmailPreviewForReviewProjects(
     data: any,
     caseInfo: any
-    )
-    {
-        data.recipient_name = data.recipient_name || "User";
-     
-      const emailMessage = {
-        subject:  this.replacePlaceholders(data.subject, data, caseInfo),
-        body: {
-          contentType: "HTML",
-          content: this.replacePlaceholders(data.body_html, data, caseInfo),
-        },
-        toRecipients: data.to_email && data.to_email.length > 0
-          ? data.to_email.map((email: string) => ({ emailAddress: { address: email } }))
-          : [],
-        ccRecipients: data.cc_email && data.cc_email.length > 0
-          ? data.cc_email.map((email: string) => ({ emailAddress: { address: email } }))
-          : [],
-      };
-      return emailMessage;
-    }
+  ) {
+    data.recipient_name = data.recipient_name || "User";
+
+    const emailMessage = {
+      subject: this.replacePlaceholders(data.subject, data, caseInfo),
+      body: {
+        contentType: "HTML",
+        content: this.replacePlaceholders(data.body_html, data, caseInfo),
+      },
+      toRecipients: data.to_email && data.to_email.length > 0
+        ? data.to_email.map((email: string) => ({ emailAddress: { address: email } }))
+        : [],
+      ccRecipients: data.cc_email && data.cc_email.length > 0
+        ? data.cc_email.map((email: string) => ({ emailAddress: { address: email } }))
+        : [],
+    };
+    return emailMessage;
+  }
   async getEmailTemplatePreview(data: any, caseInfo: any):
-  Promise<{
-    statusCode: number;
-    statusMessage: string;
-    errorMessage?: string;
-    data:{templatePreview: any};
-  }> {
-     try
-      {
-        const { accountNumber, parentAccountId } =
+    Promise<{
+      statusCode: number;
+      statusMessage: string;
+      errorMessage?: string;
+      data: { templatePreview: any };
+    }> {
+    try {
+      const { accountNumber, parentAccountId } =
         await this.caseSchemaService.fetchValidAccountNumberById(
           data.account_rid
         );
@@ -2005,42 +2012,42 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-       let to_email =  [];
-       let keyInfo ={};
-        if(data.category_name == emailCategorties.review_projects) {
-          const categoryInfo:any = await this.caseSchemaService.fetchEmailRecipientsForReviewProjects(data.case_rid,accountNumber);
-          to_email = categoryInfo.emails || [];
-          keyInfo = categoryInfo.caseInfo || {};
-        }
-        const emailPreview = await this.caseSchemaService.getTemplateDetailsByCategory(data.category_name);
-        let emailInfo = {
-          to_email,
-          cc_email :[],
-          subject:this.replacePlaceholders(emailPreview.subject, data, keyInfo),
-          body_html : this.replacePlaceholders(emailPreview.body_html, data, keyInfo)
-        }
-        if(!emailPreview) {
-           return {
-          statusCode: HttpStatus.SUCCESS,
-          statusMessage: STATUS_MESSAGE.dataNotAvailable,
-          data: {templatePreview: null}
-        };
-        }
+      let to_email = [];
+      let keyInfo = {};
+      if (data.category_name == emailCategorties.review_projects) {
+        const categoryInfo: any = await this.caseSchemaService.fetchEmailRecipientsForReviewProjects(data.case_rid, accountNumber);
+        to_email = categoryInfo.emails || [];
+        keyInfo = categoryInfo.caseInfo || {};
+      }
+      const emailPreview = await this.caseSchemaService.getTemplateDetailsByCategory(data.category_name);
+      let emailInfo = {
+        to_email,
+        cc_email: [],
+        subject: this.replacePlaceholders(emailPreview.subject, data, keyInfo),
+        body_html: this.replacePlaceholders(emailPreview.body_html, data, keyInfo)
+      }
+      if (!emailPreview) {
         return {
           statusCode: HttpStatus.SUCCESS,
-          statusMessage: STATUS_MESSAGE.emailTemplatePreviewSuccess,
-          data: {templatePreview: emailInfo}
+          statusMessage: STATUS_MESSAGE.dataNotAvailable,
+          data: { templatePreview: null }
         };
       }
-      catch (error) {
-        logMessage(`Error generating email preview: ${error}`);
-         return {
-          statusCode: HttpStatus.SUCCESS,
-          statusMessage: STATUS_MESSAGE.emailTemplatePreviewFailed,
-          data: {templatePreview: null}
-        };
-      }
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: STATUS_MESSAGE.emailTemplatePreviewSuccess,
+        data: { templatePreview: emailInfo }
+      };
     }
+    catch (error) {
+      logMessage(`Error generating email preview: ${error}`);
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: STATUS_MESSAGE.emailTemplatePreviewFailed,
+        data: { templatePreview: null }
+      };
+    }
+  }
 
   async getCaseSubmissionDate(data: any): Promise<{
     statusCode: number;
@@ -2057,7 +2064,7 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-      const caseSubmissionDate = await this.caseSchemaService.getCaseSubmissionDate(data,accountNumber);
+      const caseSubmissionDate = await this.caseSchemaService.getCaseSubmissionDate(data, accountNumber);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -2070,52 +2077,52 @@ export class CaseService {
       throw this.throwServiceError(err as Error);
     }
   }
-  async signOffTechnicalDocumentation (data : any) {
+  async signOffTechnicalDocumentation(data: any) {
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
-    const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    if(fetchParent[0].length > 0) {
+    const fetchParent: any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    if (fetchParent[0].length > 0) {
       const schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-      const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
-      const [isProjectExists] = await orgDb.query<ProjectFiscalType>(rawQueries.fetchProjectFiscalById(data.project_fiscal_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
-      if(isProjectExists) {
+      const { CaseHistory } = await this.caseModelService.getModels(fetchParent[0][0].r_number)
+      const [isProjectExists] = await orgDb.query<ProjectFiscalType>(rawQueries.fetchProjectFiscalById(data.project_fiscal_rid, data.account_rid, schemaName), { type: QueryTypes.SELECT });
+      if (isProjectExists) {
         if (isProjectExists.signoff && !data.signoff) {
           return {
-            statusCode : HttpStatus.SUCCESS,
-            statusMessage : STATUS_MESSAGE.signoffNotAllowed
+            statusCode: HttpStatus.SUCCESS,
+            statusMessage: STATUS_MESSAGE.signoffNotAllowed
           }
         } else if (isProjectExists.signoff === data.signoff) {
           return {
-            statusCode : HttpStatus.SUCCESS,
-            statusMessage : STATUS_MESSAGE.technicalDocsAlreadySignedOff
+            statusCode: HttpStatus.SUCCESS,
+            statusMessage: STATUS_MESSAGE.technicalDocsAlreadySignedOff
           }
         }
         else {
           await orgDb.query(signoffProjectTechSummary(schemaName, data.project_fiscal_rid, data.account_rid, data.signoff, data.userId));
-          if(data.case_rid && (data.signoff !== isProjectExists.signoff)) {
+          if (data.case_rid && (data.signoff !== isProjectExists.signoff)) {
             await CaseHistory.create({
-              case_rid : data.case_rid,
-              old_value : "CREATE",
-              attribute_name : "Technical Documentation",
-              created_by : data.userId,
-              new_value : `signed off technical documentation for ${isProjectExists.project_code}`
+              case_rid: data.case_rid,
+              old_value: "CREATE",
+              attribute_name: "Technical Documentation",
+              created_by: data.userId,
+              new_value: `signed off technical documentation for ${isProjectExists.project_code}`
             });
           }
           return {
-            statusCode : HttpStatus.SUCCESS,
-            statusMessage : STATUS_MESSAGE.technicalDocumentationSignedOff
+            statusCode: HttpStatus.SUCCESS,
+            statusMessage: STATUS_MESSAGE.technicalDocumentationSignedOff
           }
         }
       } else {
         return {
-          statusCode : HttpStatus.NOT_FOUND,
-          statusMessage : STATUS_MESSAGE.dataNotAvailable
+          statusCode: HttpStatus.NOT_FOUND,
+          statusMessage: STATUS_MESSAGE.dataNotAvailable
         }
       }
     } else {
       return {
-        statusCode : HttpStatus.NOT_FOUND,
-        statusMessage : STATUS_MESSAGE.accountNoFound
+        statusCode: HttpStatus.NOT_FOUND,
+        statusMessage: STATUS_MESSAGE.accountNoFound
       }
     }
   }

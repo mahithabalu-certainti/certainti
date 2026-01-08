@@ -432,7 +432,7 @@ res_cnt AS (
     fetch_all_cases AS 
     (select pf.rid,pf.project_rid,pf.account_rid,pf.r_number,pf.created_by,pf.modified_by,pf.created_datetime,pf.modified_datetime,
 pf.project_code,pf.fiscal_year,pf.project_name,pf.project_type_rid,pf.project_classification_rid,pf.project_classification_other,
-pf.project_group,pf.industry_rid,pf.industry_name,pf.status_rid,pf.total_fte_prj,pf.total_subcon_prj,pf.total_nonlabor_prj,
+pf.project_group,pf.industry_rid,pf.industry_name,pf.status_rid,pf.total_fte_prj,pf.total_subcon_prj,pf.total_nonlabor_prj,pf.currency_rid,
 pf.total_effort_fte_prj,pf.total_effort_subcon_prj,
 pf.total_effort_prj,pf.currency_rid,
 pf.total_cost_fte_prj,pf.total_cost_subcon_prj,pf.total_cost_nonlabor_prj,pf.total_cost_prj,
@@ -525,7 +525,7 @@ AND (
             'total_technical_summaries', c.total_technical_summaries,
             'project_point_of_contact', c.project_point_of_contact,
             'project_point_of_contact_email', c.project_point_of_contact_email,
-            'currency_rid', c.currency_rid
+            'currency_rid' , c.currency_rid
         )) AS cases_summary
 
         FROM

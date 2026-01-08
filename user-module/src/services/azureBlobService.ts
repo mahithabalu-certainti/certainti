@@ -40,7 +40,7 @@ export const uploadToAzure = async (file: Express.Multer.File, user_id: string):
  * @param expiryTimeInMinutes 
  * @returns 
  */
-export const generateSasUrl = async (blobUrl: string, expiryTimeInMinutes = 15): Promise<string> => {
+export const generateSasUrl = async (blobUrl: string, expiryTimeInMinutes = 1440): Promise<string> => {
     try {
         const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
 

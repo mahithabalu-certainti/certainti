@@ -1117,7 +1117,6 @@ async fetchChecklistTemplateDetailsById(
     const [categoryInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCategoryDetails(emailReq.category_rid), { type: QueryTypes.SELECT });
      category_name = categoryInfo?.category_name;
     if (categoryInfo?.category_name !== emailCategorties.general) {
-      if(categoryInfo?.category_name === emailCategorties.review_projects) {
         const existingTemplate = await EmailTemplate.findOne({
           where: {
             rid: emailReq.email_template_rid  
@@ -1137,7 +1136,7 @@ async fetchChecklistTemplateDetailsById(
             isActiveCategoryExists
           };
         }
-      }
+      
       const categoryResponse = await EmailTemplate.findOne({
         where: {
           [Op.and]: [

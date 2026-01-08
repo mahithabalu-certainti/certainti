@@ -11,7 +11,6 @@ routes.get("/list", checkUserStatusMiddleware("attachments_view_edit"), controll
 routes.get("/list/export", checkUserStatusMiddleware("attachments_view_edit"), controller.attachmentController.exportAllAttachments);
 routes.get("/document-type-category", checkUserStatusMiddleware("NA"), controller.attachmentController.getDocumentTypeAndCategory);
 routes.post("/list/summary", checkUserStatusMiddleware("attachments_view_edit"), controller.attachmentController.getAllAttachmentSummary);
-routes.post("/list/summary/export", checkUserStatusMiddleware("attachments_view_edit"), controller.attachmentController.exportAllAttachmentSummary);
+routes.post("/list/summaryExport", checkUserStatusMiddleware("attachments_view_edit"), controller.attachmentController.exportAllAttachmentSummary);
 
 export default routes;
-
