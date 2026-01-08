@@ -1876,9 +1876,6 @@ class CaseSchemaService {
     let projectTypeIds: any[] = [
       ...new Set(result.map((projectInfo: any) => projectInfo?.project_type_rid)),
     ];
-    let uniqueCurrencyIds : any = [...new Set(result.map((c : any) => c.currency_rid))];
-    let fetchCurrencies : any = await this.mainDbSequelize.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
-    let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
     let fetchCreatedByUsers = await this.mainDbSequelize.query(
       rawQueries.fetchUser(createdByIds)
     );
