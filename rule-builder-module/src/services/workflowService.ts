@@ -892,13 +892,10 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (ruleConditions.length === 0 || ruleResult) {
+            if (ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     if(ruleConditions.length === 0){
-                        if(entity?.ruleScope === request.eventName){
-                            await this.executeAction(action, entity, userId, rule_rid, templateStr);
-                        }
                     }
                     else {
                         await this.executeAction(action, entity, userId, rule_rid, templateStr);
@@ -1002,6 +999,7 @@ export class WorkFlowService {
     ) {
         entity.templateValue = templateStr;
         // templateStr is now available for use in actions if needed
+        console.log("Executing action 66112:", action.action_name);
         switch (action.action_name) {
             case "Flag":
                 await this.markUsHighPriority(entity);
@@ -1009,9 +1007,9 @@ export class WorkFlowService {
             case "In App":
                 await this.triggerNotification(entity, notificationTypes.InApp, ruleRid);
                 break;
-            case "Email":
-                await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
-                break;
+            // case "Email":
+            //     await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
+            //     break;
             default:
                 console.warn("Unknown action:", action.action_name);
         }
