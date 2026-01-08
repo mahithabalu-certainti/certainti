@@ -6,6 +6,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import StateComputationService from "./state.computation.service";
 import FederalComputationService from "./federal.computation.service";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 
 enum ConfigType {
     NONE = "NONE",
@@ -60,10 +61,11 @@ export class ComputationService {
             const fetchParentAccountRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(accountRid, mainDb));
             let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number);
             const fetchAccountFiscalStartEndDate : any= await orgDb.query(rawQueries.fetchAccountStartEndDate(accountRid, schemaName));
-            let restructuredStart = fetchAccountFiscalStartEndDate[0][0].fiscal_start_date.replace("/", "-")
-            let restructuredEnd = fetchAccountFiscalStartEndDate[0][0].fiscal_end_date.replace("/", "-")
-            let effectiveStart = `${fiscalYear - 1}-${restructuredStart}`
-            let effectiveEnd = `${fiscalYear}-${restructuredEnd}`
+            const [splitMonthStart, splitDateStart] = fetchAccountFiscalStartEndDate[0][0].fiscal_start_date.split("/");
+            const [splitMonthEnd, splitDateEnd] = fetchAccountFiscalStartEndDate[0][0].fiscal_end_date.split("/");
+            const fetchedStartEndDate = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
+            let effectiveStart = fetchedStartEndDate.startDate
+            let effectiveEnd = fetchedStartEndDate.endDate
             const fetchAccountCountryId : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(accountRid))
             const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
             const hasFederal = findAvailableConfigLevels.includes(true);
@@ -73,7 +75,6 @@ export class ComputationService {
                     hasFederal ? ConfigType.FEDERAL_ONLY :
                         hasState ? ConfigType.STATE_ONLY :
                             ConfigType.NONE;
-
 
             const executionConfigMap: Record<string, () => Promise<any>> = {
                 [ConfigType.BOTH]: async () => {
