@@ -60,7 +60,7 @@ const Dossier: React.FC<DossierProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const initialTab = 'summary';
+  const initialTab = 'financial_workings';
 
   useEffect(() => {
     if (searchParams.get('list') === 'dossier' && !searchParams.get('tab')) {
@@ -102,6 +102,11 @@ const Dossier: React.FC<DossierProps> = ({
   }, [tabParam]);
 
   const tabs = [
+      {
+      label: 'Financial Workings',
+      value: 'financial_workings',
+      hide: false,
+    },
     {
       label: 'Summary',
       value: 'summary',
@@ -110,11 +115,6 @@ const Dossier: React.FC<DossierProps> = ({
     {
       label: 'Qualified Projects',
       value: 'qualified_projects',
-      hide: false,
-    },
-    {
-      label: 'Financial Workings',
-      value: 'financial_workings',
       hide: false,
     },
     {
