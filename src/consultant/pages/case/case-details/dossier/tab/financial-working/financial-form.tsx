@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo } from 'react';
-import FinancialWorking from './finacial-working';
+import FinancialWorking from './financial-working';
 import { useSelector } from 'react-redux';
 import { FormControl, FormControlLabel, MenuItem, Radio, RadioGroup, Select } from '@mui/material';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -48,7 +48,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({ caseDetails
         country_name: caseDetails?.country_name || '',
         country_code: caseDetails?.country_code || '',
         country_id: caseDetails?.country_rid || '',
-        // is_federal: caseDetails?.is_federal || '',   after api added need uncommand this 
         isFederal:true
     };
 
@@ -151,7 +150,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({ caseDetails
         }
     };
 
-    const handleInistateFinancialHighlights = async () => {
+    const handleInitiateFinancialHighlights = async () => {
          setDossierFinancialStatus('');
         const payload = {
             account_rid: accountid,
@@ -233,7 +232,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({ caseDetails
                     <TextButton
                         label={statusData?.data === 'COMPLETED' ? 'Re-Generate' : 'Initiate'}
                         loading={isInitiating}
-                        onClick={handleInistateFinancialHighlights}
+                        onClick={handleInitiateFinancialHighlights}
                         disabled={isInitiating}
                         sx={{
                             width:statusData?.data === 'COMPLETED' ?'95px': '55px',

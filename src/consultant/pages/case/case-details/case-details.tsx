@@ -54,7 +54,6 @@ import {
   ChecklistIcon,
   ComingSoon,
   ConfigRuleIcon,
-  DetailsIcon,
   DetailsKeyContactErrorIcon,
   DossierIcon,
   DraftEmailIcon,
