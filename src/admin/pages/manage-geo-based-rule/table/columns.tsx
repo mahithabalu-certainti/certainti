@@ -2,11 +2,16 @@ import {
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
 } from '../../../../common-utils';
-import { ListTableColumn } from '../../../../components/table/types';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../components/table/types';
 import { GeoBasedRule } from '../../../types/geo-based-rule';
 
 export const getGeoBasedRuleColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  dateRange: { endMin?: string; endMax?: string },
+  handleDateRage: (date: string) => void
 ): ListTableColumn<GeoBasedRule>[] => [
   {
     id: 'r_number',
@@ -83,6 +88,7 @@ export const getGeoBasedRuleColumns = (
       type: 'date',
       required: true,
       placeholder: 'YYYY-MM-DD',
+      onChange: true,
       dateConfig: {
         disableFutureDates: false,
         startFieldId: 'effective_start_date',
@@ -90,25 +96,19 @@ export const getGeoBasedRuleColumns = (
         startFieldLabel: 'Effective Start Date',
         endFieldLabel: 'Effective End Date',
       },
-      //   getFieldData: (rowData: DependencyRowData) => {
-      //     handleGetFiscalYear?.(String(rowData.fiscal_year));
-      //     return String(rowData.effective_from);
-      //   },
-      //   resetDependentFields: ['end_date'],
-      //   dependencies: [
-      //     {
-      //       dependsOn: ['fiscal_year'],
-      //       condition: (value) => !value,
-      //       action: 'disabled',
-      //       message: 'Please select a fiscal year first',
-      //     },
-      //     {
-      //       dependsOn: ['end_date'],
-      //       action: 'enable',
-      //       condition: (value) => !value,
-      //       message: '',
-      //     },
-      //   ],
+      getFieldData: (rowData: DependencyRowData) => {
+        handleDateRage?.(String(rowData.effective_start_date) || '');
+        return String(rowData.effective_start_date) || '';
+      },
+      resetDependentFields: ['effective_end_date'],
+      dependencies: [
+        {
+          dependsOn: ['effective_end_date'],
+          action: 'enable',
+          condition: (value) => !value,
+          message: '',
+        },
+      ],
     },
   },
   {
@@ -133,7 +133,19 @@ export const getGeoBasedRuleColumns = (
         endFieldId: 'effective_end_date',
         startFieldLabel: 'Effective Start Date',
         endFieldLabel: 'Effective End Date',
+        minDate: dateRange.endMin || '',
       },
+      dependencies: [
+        {
+          dependsOn: ['effective_start_date'],
+          action: 'enable',
+          condition: (_, rowData) => {
+            const startDate = rowData.effective_start_date;
+            return !startDate;
+          },
+          message: '',
+        },
+      ],
     },
   },
   {
