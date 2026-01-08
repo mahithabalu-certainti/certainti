@@ -3822,6 +3822,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     response: any
   ) {
     try {
+      logMessage(`Updating AI processed flag for projectFiscalRid: ${projectFiscalRid}, accountNumber: ${accountNumber}`);
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }

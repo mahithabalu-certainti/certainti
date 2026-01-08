@@ -3283,6 +3283,7 @@ export class InteractionService {
         }
         if(type === 'data_ingestion')
         {
+          logMessage(`Processing data_ingestion type for account: ${company_id}  ${accountNumber}`);
           await this.interactionSchemaService.updateAIProcessed(accountNumber, project_id,parsedMessage);
         }
       }
