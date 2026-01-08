@@ -317,7 +317,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
               <span className='flex items-center justify-center w-[22px] h-[22px] flex-shrink-0'>
                 {item.icon ? (
                   <span className='flex items-center justify-center w-4 h-4'>
-                    <item.icon className='w-4 h-4 text-black' />
+                    <item.icon   className='h-4 w-4 [&>path]:stroke-[#2d3e4f] ' />
                   </span>
                 ) : (
                   <span className='uppercase text-[12px]'>

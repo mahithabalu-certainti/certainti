@@ -1,5 +1,5 @@
 import React, { Suspense, useMemo, useState } from 'react';
-import { NewFilterIcon, RefreshIcon, ManageUserIcon } from '../../../../assets';
+import { NewFilterIcon, RefreshIcon, ManageGroupIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_USER_GROUP_CREATE } from '../../../../routes';
@@ -9,7 +9,7 @@ import { FilterType } from '../../../types';
 import { exportUserGroupList, useGetUserGroupTypes } from '../../../service';
 import { getManageUserGroupFilterFields } from './helpers';
 import { UserGroupTable } from '../table';
-import { SelectOption } from '../../../../consultant/types';
+import { ColorCode, SelectOption } from '../../../../consultant/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
@@ -154,9 +154,9 @@ export const UserGroupList: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <ManageUserIcon
+            <ManageGroupIcon
               alt='manage user group'
-              className='h-7 w-7 rounded [&>path:first-child]:fill-[#BE3EB5]'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

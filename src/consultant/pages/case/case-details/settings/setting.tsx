@@ -1,11 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { DetailsIcon } from '../../../../../assets';
+import { ConfigRuleIcon } from '../../../../../assets';
 import { AllPermissions } from '../../../../../common-service';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import JurisdictionConfig from './Jurisdiction-Config/Jurisdiction-Config';
-import { ActivityDropdownItem } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 
 const SettingsTabs: ResourceTabs[] = [
   {
@@ -71,13 +71,13 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
       <SectionHeader
         title={'Jurisdiction Configuration'}
         titleIcon={
-          <DetailsIcon
+          <ConfigRuleIcon
             alt='settings-header-icon'
-            className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}
-        iconBg={'#D7E5FF'}
+        iconBg={ColorCode.caseBgColor}
         bgType='circle'
       />
       <JurisdictionConfig

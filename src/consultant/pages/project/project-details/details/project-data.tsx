@@ -1,5 +1,5 @@
 import React from 'react';
-import { DetailsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
+import {  DetailsKeyContactErrorIcon, ProjectsSideIcon } from '../../../../../assets';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import { NewProjectData } from '../../../../types/project';
@@ -9,7 +9,7 @@ import {
   Permissions,
 } from '../../../../../common-service';
 import { Box } from '@mui/material';
-import { ActivityDropdownItem } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { SectionTabPanel } from '../../../../../components';
 
 const BUTTON_STYLES = {
@@ -163,9 +163,9 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
         <ProjectOverview
           title='Projects'
           titleIcon={
-            <DetailsIcon
+            <ProjectsSideIcon
               alt='project-header-icon'
-              className='[&>path]:stroke-white'
+               className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           headerButtons={headerButtons}
@@ -174,8 +174,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           detailsError={detailsError}
           isKeyContactAvailable={isKeyContactAvailable}
           permission={permission}
-          iconBg='#AF78FF'
-          bgType='circle'
+           iconBg={ColorCode.projectBgColor}
+            bgType='circle'
         />
       </Box>
     </div>

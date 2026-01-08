@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import {
   AcceptIcon,
-  CreateResourceIcon,
   RejectIcon,
   ResourcesIcon,
 } from '../../../../../assets';
@@ -51,6 +50,7 @@ import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import {
   ActivityDropdownItem,
+  ColorCode,
   ExportType,
   FormFiscalDateType,
   SelectOption,
@@ -844,21 +844,18 @@ export const ProjectResources = ({
               }
               title={viewDetails ? 'Project Resource' : 'Project Resources'}
               titleIcon={
-                viewDetails ? (
                   <ResourcesIcon
-                    alt='resource header icon'
-                    className='[&>path]:stroke-white w-[14px] h-[14px]'
+                      alt='project-header-icon'
+                      className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                   />
-                ) : (
-                  <CreateResourceIcon />
-                )
               }
               count={totalItems}
               showBackArrow={viewDetails}
               headerButtons={headerButtons}
               projectResourceNumber={resourceData?.r_number}
               onBackClick={handleBackClick}
-              iconBg={viewDetails ? '#7785ff' : ''}
+              iconBg={ColorCode.projectBgColor}
+              bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {showProjectResourceDetails ? (
