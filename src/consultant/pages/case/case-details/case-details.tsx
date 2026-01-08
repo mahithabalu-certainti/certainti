@@ -149,7 +149,8 @@ export const CaseDetails = () => {
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
   const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
-  const [dossierFinancialStatus, setDossierFinancialStatus] = useState<string>('');
+  const [dossierFinancialStatus, setDossierFinancialStatus] =
+    useState<string>('');
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
@@ -1088,9 +1089,9 @@ export const CaseDetails = () => {
           placeholder={'Case ID'}
           icon={
             <CaseIcon
-            alt='case-icon'
-            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
-          />
+              alt='case-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
+            />
           }
           title={caseData?.r_number || ''}
           isLoading={isLoading}
@@ -1115,12 +1116,13 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
-          ? 'max-h-0 opacity-0'
-          : isError
-            ? 'max-h-[60px] opacity-100'
-            : 'max-h-[140px] opacity-100'
-          }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1132,10 +1134,11 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -1174,21 +1177,21 @@ export const CaseDetails = () => {
               </div>
             </div>
           )}
-                      {dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED' && (
-                          <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box mb-2'>
-                          <div>
-                              <React.Suspense fallback={null}>
-                              <DetailsKeyContactErrorIcon alt='key-contact' />
-                              </React.Suspense>
-                          </div>
-                          <div>
-                              <span className='font-bold mr-1 capitalize'>Status:</span>
-                              <span className='ml-1 font-medium'>
-                              {dossierFinancialStatus || '-'}
-                              </span>
-                          </div>
-                          </div>
-                      )}
+          {dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED' && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box mb-2'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Status:</span>
+                <span className='ml-1 font-medium'>
+                  {dossierFinancialStatus || '-'}
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>

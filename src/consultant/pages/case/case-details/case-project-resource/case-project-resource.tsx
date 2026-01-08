@@ -12,7 +12,7 @@ import {
 } from '../../../../services/case-project-resource/case-project-resource-service';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
-import {  ResourcesIcon } from '../../../../../assets';
+import { ResourcesIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -335,7 +335,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
             hide: Boolean(btn.hide),
           }))}
           iconBg={ColorCode.caseBgColor}
-            bgType='circle'
+          bgType='circle'
         />
         {resourceId ? (
           <CaseProjectResourceDetails

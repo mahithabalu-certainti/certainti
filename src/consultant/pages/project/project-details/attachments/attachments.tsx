@@ -491,7 +491,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
                 className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
-           iconBg={ColorCode.projectBgColor}
+            iconBg={ColorCode.projectBgColor}
             bgType='circle'
             headerButtons={headerButtons}
           />

@@ -212,7 +212,12 @@ const Financial: React.FC<ProjectFinancialProps> = ({
       />
       <SectionHeader
         title='Financial Summary'
-        titleIcon={<FinancialIcon alt='financial-header-icon'    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`} />}
+        titleIcon={
+          <FinancialIcon
+            alt='financial-header-icon'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        }
         count={resourceCostCount}
         showItemCount={tabParam === 'resource_cost'}
         iconBg={ColorCode.projectBgColor}
