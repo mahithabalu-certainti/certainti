@@ -892,15 +892,10 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (ruleConditions.length === 0 || ruleResult) {
+            if (ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
-                    if(ruleConditions.length === 0){
-                        if(entity?.ruleScope === request.eventName){
-                            await this.executeAction(action, entity, userId, rule_rid, templateStr);
-                        }
-                    }
-                    else {
+                    if(ruleConditions.length > 0){
                         await this.executeAction(action, entity, userId, rule_rid, templateStr);
                     }
                 }
