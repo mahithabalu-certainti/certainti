@@ -126,16 +126,20 @@ const DataMapperForm: React.FC = () => {
   useEffect(() => {
     if (isEditView && mapperData) {
       if (
-        mapperData.file_url &&
-        mapperData.file_name &&
-        mapperData.file_size &&
-        mapperData.file_format
+        mapperData.browse_file &&
+        mapperData.document_name &&
+        mapperData.size_in_mb &&
+        mapperData.format
       ) {
         setExistingFile({
-          name: mapperData.file_name,
-          url: mapperData.file_url,
-          size: mapperData.file_size,
-          format: mapperData.file_format,
+          name: mapperData.document_name,
+          url: mapperData.browse_file,
+          size: mapperData.size_in_mb,
+          format: mapperData.format
+            ? mapperData.format.startsWith('.')
+              ? mapperData.format
+              : `.${mapperData.format}`
+            : mapperData.format,
         });
       }
       setAuditInfo({
@@ -501,7 +505,7 @@ const DataMapperForm: React.FC = () => {
                     </label>
                     <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-default select-none text-nowrap overflow-hidden'>
                       <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
-                        {field.value || '-'}
+                        {field.value.trim() || '-'}
                       </span>
                     </div>
                   </div>

@@ -51,9 +51,9 @@ export const FileList: React.FC<FileListProps> = ({
             </React.Suspense>
             <span
               className='text-sm text-[#2D3E4F] truncate'
-              title={`${file.name}${file.format ? ` ${file.format}` : ''}`}
+              title={`${file.name}${file.format ? `${file.format}` : ''}`}
             >
-              {`${file.name}${file.format ? ` ${file.format}` : ''}`}
+              {`${file.name}${file.format ? `${file.format}` : ''}`}
             </span>
             <span className='text-xs text-[#6B7280] flex-shrink-0'>
               {`(${file.size})`}

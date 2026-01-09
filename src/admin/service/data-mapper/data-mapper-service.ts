@@ -1,5 +1,5 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
-import { caseServiceApi, resourceServiceApi } from '../../../api/api';
+import { caseServiceApi } from '../../../api/api';
 import {
   DataMapperCreateResponse,
   DataMapperDetails,
@@ -55,7 +55,7 @@ export const fetchDataMapperDetails = async (
   formId: string
 ): Promise<DataMapperDetails> => {
   // const response = await caseServiceApi.get<DataMapperDetailsResponse>(
-  //   `/api/dataMapper/details?form_id=${formId}`
+  //   `/api/dataMapper/detail/${formId}`
   // );
 
   // return response.data.data;
@@ -121,12 +121,12 @@ export const ExportDataMapperList = async (
 ) => {
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   try {
-    const url = `/api/dataMapper/list/export`;
+    const url = `/api/dataMapper/export`;
     const body = {
       ...params,
       timezone: systemTimezone,
     };
-    const response = await resourceServiceApi.post(url, body);
+    const response = await caseServiceApi.post(url, body);
 
     const base64Data = response.data?.data;
 

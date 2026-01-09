@@ -11,19 +11,25 @@ export interface DataMapperFormPayload {
 export interface DataMapperDetails {
   rid: string;
   r_number: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string | null;
+  modified_by: string | null;
   form_name: string;
+  browse_file: string;
+  document_name: string;
   effective_from_date: string;
-  effective_to_date: string;
+  effective_to_date: string | null;
   country_rid: string;
   state_rid: string;
-  country_name?: string;
-  state_name?: string;
-  file_url?: string;
-  file_name?: string;
-  file_size?: string;
-  file_format?: string;
-  created_datetime: string;
-  modified_datetime: string;
+  format: string;
+  size_in_mb: string;
+  status_rid: string;
+  is_active: boolean;
+  error_message: string | null;
+  country_name: string;
+  state_name: string;
+  status_name: string;
   created_by_name: string;
   modified_by_name: string;
 }
