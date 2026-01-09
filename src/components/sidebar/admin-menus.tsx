@@ -14,6 +14,7 @@ import {
   ManageUserAccessIcon,
   TaskTemplateIcon,
   WorkflowIcon,
+  SettingsIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { AdminNavItem } from '../../consultant/types';
@@ -28,6 +29,7 @@ import {
   MANAGE_PROFILE,
   MANAGE_SETTINGS,
   MANAGE_USER_GROUP,
+  DATA_MAPPER,
   TASK_TEMPLATES,
   WORKFLOW_BUILDER,
 } from '../../routes';
@@ -93,6 +95,13 @@ export const sideNavAdminItems: AdminNavItem[] = [
         icon: WorkflowIcon,
         link: WORKFLOW_BUILDER,
         matchLink: WORKFLOW_BUILDER,
+      },
+      {
+        id: MenuOption.DATA_MAPPER,
+        name: 'RD Form data mapper',
+        icon: SettingsIcon,
+        link: DATA_MAPPER,
+        matchLink: DATA_MAPPER,
       },
     ],
   },
