@@ -166,12 +166,21 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     });
   };
 
-  const handleStatusUpdate = (statusData: RDCreditStatusResponse) => {
+  const handleStatusUpdate = (
+    statusData: RDCreditStatusResponse,
+    actionType?: 'initiate' | 'regenerate' | 'refresh'
+  ) => {
     const message = statusData?.data ?? statusData?.statusMessage ?? '';
     setDossierFinancialStatus(message);
 
     if (statusData?.data === 'COMPLETED') {
-      successToast(message || 'Process Completed');
+      if (actionType === 'initiate') {
+        successToast('Initiated successfully');
+      } else if (actionType === 'regenerate') {
+        successToast('Re-Generated successfully');
+      } else {
+        successToast(message || 'Process Completed');
+      }
     } else if (message) {
       // If there is a message but not completed, it might be an info or error
       // depending on business logic. User used errorToast in useEffect.
@@ -181,6 +190,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const handleInitiateFinancialHighlights = async () => {
     setDossierFinancialStatus('');
+    const actionType =
+      statusData?.data === 'COMPLETED' ? 'regenerate' : 'initiate';
     const payload = {
       account_rid: accountid,
       case_rid: caseId ?? '',
@@ -197,7 +208,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         // Refetch and handle status
         const result = await refetchRDCreditStatus();
         if (result.data) {
-          handleStatusUpdate(result.data);
+          handleStatusUpdate(result.data, actionType);
         }
       },
       onError: (error) => {
@@ -221,7 +232,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleRefreshStatus = async () => {
     const result = await refetchRDCreditStatus();
     if (result.data) {
-      handleStatusUpdate(result.data);
+      handleStatusUpdate(result.data, 'refresh');
     }
   };
 
@@ -268,7 +279,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               }
               loading={isInitiating}
               onClick={handleInitiateFinancialHighlights}
-              disabled={isInitiating}
+              disabled={
+                isInitiating ||
+                (!!dossierFinancialStatus &&
+                  dossierFinancialStatus !== 'COMPLETED')
+              }
               sx={{
                 width: statusData?.data === 'COMPLETED' ? '95px' : '55px',
                 minWidth: statusData?.data === 'COMPLETED' ? '95px' : '55px',
@@ -279,7 +294,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           </div>
         </div>
         <div className='px-4 pt-3'>
-          <FormControl component='fieldset'>
+          <FormControl component='fieldset' disabled={!caseDetails?.is_state_available}>
             <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-2 block'>
               Federal Level
             </label>
