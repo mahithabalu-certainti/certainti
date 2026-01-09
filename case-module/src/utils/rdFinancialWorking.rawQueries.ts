@@ -33,7 +33,7 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     'reductions', CAST(epw * ${reduction}/100 AS DECIMAL(18,2)),
     'net_epw', CAST(epw - (epw * ${reduction}/100) AS DECIMAL(18,2)),
     'total_project_value_labor', CAST(epw - (epw * ${reduction}/100) + employees AS DECIMAL(18,2))
-    )) AS projects
+    )ORDER BY CAST(epw - (epw * ${reduction}/100) + employees AS DECIMAL(18,2)) DESC) AS projects
     FROM
     calculate_cost
     `
@@ -43,8 +43,7 @@ export const calculateRDExpenditureQuery = (schemaName : string, caseRid : strin
     let query = `
     SELECT 
     CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS fte_qre_amount,
-    CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount,
-    CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS nonlabor_qre_amount
+    CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount
     FROM
     ${schemaName}.case_projects cp
     WHERE

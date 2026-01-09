@@ -16,7 +16,19 @@ export interface ICreateCases {
   status_rid?: string;
   heat_light_power?: number;
   total_nonlabor_cost?: number;
-  tax_liability?: number
+  tax_liability?: number;
+  employers_pension_contribution? : number
+  other? : number
+  material_software_cost? : number;
+  sub_contracts? : number;
+  cloud_software?: number;
+  unpaid_amounts_paid? : number;
+  unpaid_amounts? : number;
+  aggregated_turnover? : number;
+  total_expenses ? : number;
+  taxable_income ? : number;
+  export_sales_revenue? : number;
+
 }
 
 export type CaseHeadersColumns = {
