@@ -92,7 +92,9 @@ export const useFetchFinancialStates = (params: FinancialStateProps) => {
     queryKey: ['financialStates', params],
     queryFn: () => fetchFinancialState(params),
     retry: 0,
-    enabled: !!params.accountId && !!params.countryId && !!params.fiscalYear,
+    enabled:
+      !!params.accountId &&
+      (!!params.caseId || (!!params.countryId && !!params.fiscalYear)),
   });
 };
 

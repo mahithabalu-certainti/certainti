@@ -1,3 +1,5 @@
+import { REGEX_PATTERNS } from '../../../../common-utils';
+
 export type EmailFields = 'to' | 'cc' | 'bcc';
 export type MeetingFields =
   | 'attendees'
@@ -54,22 +56,43 @@ export const normalizeQuillValue = (value: string): string => {
 // Add these to your existing helper file
 
 export const validateActivityEmailForm = (
-  formData: ActivityEmailFormData
+  formData: ActivityEmailFormData,
+  toInput?: string,
+  ccInput?: string
 ): { isValid: boolean; errors: ActivityEmailFormErrors } => {
   let isValid = true;
   const newErrors: ActivityEmailFormErrors = {};
 
-  if (!formData.to || formData.to.length === 0) {
+  // First check for pending inputs
+  if (toInput && toInput.trim()) {
+    newErrors.to =
+      'Please confirm the entry by pressing Enter or clear the field to continue.';
+    isValid = false;
+  } else if (!formData.to || formData.to.length === 0) {
     newErrors.to = 'Field is required';
     isValid = false;
   }
 
-  if (!formData.subject?.trim()) {
-    newErrors.subject = 'Field is required';
+  if (ccInput && ccInput.trim()) {
+    newErrors.cc =
+      'Please confirm the entry by pressing Enter or clear the field to continue.';
     isValid = false;
   }
 
-  if (!formData.emailBody?.trim()) {
+  const subject = formData.subject.trim();
+
+  if (!subject) {
+    newErrors.subject = 'Field is required';
+    isValid = false;
+  } else if (!REGEX_PATTERNS.MIN_3.test(subject)) {
+    newErrors.subject = 'Subject must be at least 3 characters long';
+    isValid = false;
+  } else if (!REGEX_PATTERNS.MAX_125.test(subject)) {
+    newErrors.subject = 'Subject must not exceed 125 characters';
+    isValid = false;
+  }
+
+  if (!normalizeQuillValue(formData.emailBody)) {
     newErrors.emailBody = 'Field is required';
     isValid = false;
   }

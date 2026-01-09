@@ -14,6 +14,7 @@ export const ProjectFinancialResourceCostURL = ({
   projectRid,
   accountRid,
   search,
+  caseRid,
 }: ProjectFinancialResourceListParams) => {
   const baseUrl = `/api/resource_cost/financialHighlights/list/${projectRid ? 'project' : 'account'}`;
   const searchParams = new URLSearchParams();
@@ -32,6 +33,9 @@ export const ProjectFinancialResourceCostURL = ({
   }
   if (projectRid !== undefined) {
     searchParams.set('projectRid', projectRid);
+  }
+  if (caseRid !== undefined) {
+    searchParams.set('caseRid', caseRid);
   }
 
   // Only add filters if the object has properties
@@ -55,6 +59,7 @@ export const ProjectFinancialResourceCostExportURL = ({
   projectRid,
   accountRid,
   search,
+  caseRid,
 }: ProjectFinancialResourceExportParams): string => {
   const baseUrl = `/api/resource_cost/financialHighlights/export/${projectRid ? 'project' : 'account'}`;
   const searchParams = new URLSearchParams();
@@ -70,6 +75,9 @@ export const ProjectFinancialResourceCostExportURL = ({
   }
   if (projectRid !== undefined) {
     searchParams.set('projectRid', projectRid);
+  }
+  if (caseRid !== undefined) {
+    searchParams.set('caseRid', caseRid);
   }
 
   // Only add filters if the object has properties

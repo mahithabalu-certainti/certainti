@@ -280,6 +280,7 @@ export interface AccountFieldsTypes {
   tenant_id: string;
   support_email: string;
   is_send_interaction: boolean;
+  is_case_exists: boolean;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -401,6 +402,7 @@ export type AccountList = {
   parent_account_rid: string | null;
   database_connection_rid: string | null;
   country_rid: string;
+  country_code?: string;
   currency_rid: string;
   industry_rid: string;
   industry_name_other: string | null;
@@ -540,6 +542,7 @@ export interface FinancialSummaryBody {
   flag: FinancialSummaryFlag;
   summaryType: string;
   region_rid: string;
+  case_rid?: string;
 }
 
 export type FormFiscalDateType = {
@@ -556,8 +559,9 @@ export type FiscalDates = {
 
 export interface FinancialStateProps {
   accountId: string;
-  countryId: string;
-  fiscalYear: string;
+  countryId?: string;
+  fiscalYear?: string;
+  caseId?: string;
 }
 
 export interface ActivityMenuItem {
@@ -565,4 +569,12 @@ export interface ActivityMenuItem {
   onClick: () => void;
   disabled?: boolean;
   hide?: boolean;
+}
+
+export interface ActivityDropdownItem {
+  label: string;
+  hide?: boolean;
+  disabled?: boolean;
+  icon?: React.ElementType;
+  onClick: () => void;
 }

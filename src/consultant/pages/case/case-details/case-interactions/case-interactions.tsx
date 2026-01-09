@@ -15,6 +15,7 @@ import {
 } from '../../../../../common-service';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityDropdownItem,
   CaseDetails,
   ExportType,
   InteractionList,
@@ -98,6 +99,7 @@ interface InteractionsProps {
   loading: boolean;
   CaseDetails: CaseDetails | null;
   setExportType?: (type: ExportType) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseInteractions: React.FC<InteractionsProps> = ({
@@ -108,6 +110,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   loading,
   CaseDetails,
   setExportType,
+  activityMenuItems,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -742,6 +745,12 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory
+          }
+          activityMenuItems={activityMenuItems}
         />
         {viewDetails && !viewResponseHistory ? (
           <InteractionDetails
@@ -839,7 +848,6 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
                 onClose={() => setSendModalOpen(false)}
                 selectedRows={selectedRows}
                 onSuccessRefetch={handleRefresh}
-                interaction_level='Project'
               />
               <TableModal
                 title='Reminder Interaction'

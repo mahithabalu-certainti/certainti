@@ -55,6 +55,10 @@ export const createTextField = (
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -62,6 +66,7 @@ export const createTextField = (
       minErrorMessage: string;
       maxErrorMessage: string;
     };
+    maxLength?: number;
   } = {}
 ): FieldType => ({
   type: options.type ?? 'text',
@@ -78,12 +83,14 @@ export const createTextField = (
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
   lengthRequired: options.lengthRequired,
+  labelTooltip: options.labelTooltip,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
   prefixValue: options.prefixValue,
+  maxLength: options.maxLength,
 });
 
 export const createPhoneInputField = (
@@ -248,6 +255,10 @@ export const createSelectField = (
     assignDefaultValue?: boolean;
     dependantLabel?: string;
     isFiscalYear?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'select',
@@ -268,6 +279,7 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+  labelTooltip: others.labelTooltip,
 });
 export const createMultiSelectField = (
   name: string,
@@ -364,15 +376,24 @@ export const createButton = (
   onClick: others.onClick,
   disabled: others.disabled,
 });
+export interface EmptyFieldOptions {
+  name?: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+  hide?: boolean;
+}
+
 export const createEmptyField = (
   name: string,
   label: string,
-  options?: { name?: string; label?: string; type?: string; required?: boolean }
+  options?: EmptyFieldOptions
 ): FieldType => ({
   type: 'emptyFeild',
   name: options?.name || name,
   label: options?.label || label,
   required: options?.required ?? false,
+  hide: options?.hide,
 });
 
 export const createImgButton = (
@@ -418,6 +439,14 @@ export const createDateField = (
     errorMessage?: string;
     clearDate?: string;
     customDateOpen?: Date;
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    requiredErrorMessage?: string;
+    disableDatesBefore?: Date;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'date',
@@ -442,6 +471,11 @@ export const createDateField = (
   clearDate: others.clearDate,
   resetDependsFields: others.resetDependsFields,
   customDateOpen: others.customDateOpen,
+  defaultValue: others.defaultValue,
+  assignDefaultValue: others.assignDefaultValue,
+  requiredErrorMessage: others.requiredErrorMessage,
+  disableDatesBefore: others.disableDatesBefore,
+  labelTooltip: others.labelTooltip,
 });
 
 export const createFiscalDateField = (
@@ -453,6 +487,8 @@ export const createFiscalDateField = (
     greaterThan?: Record<string, string>;
     toBeNotSame?: Record<string, string>;
     hide?: boolean;
+    dateFormat?: string;
+    views?: ('day' | 'month' | 'year')[];
   }
 ): FieldType => ({
   type: 'fiscalDate',
@@ -463,6 +499,8 @@ export const createFiscalDateField = (
   greaterThan: others.greaterThan,
   toBeNotSame: others.toBeNotSame,
   hide: others.hide,
+  dateFormat: others.dateFormat,
+  views: others.views,
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [
@@ -510,7 +548,9 @@ export const REGEX_PATTERNS = {
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
+  NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
   ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
+  ALLOW_ZERO_TO_99: /^[0-9]{1,2}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -585,7 +625,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
-  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_]+$/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_()]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT
@@ -1111,4 +1151,68 @@ export const formatTimeToAMPM = (time?: string | null): string => {
   const parsed = dayjs(trimmed, ['HH:mm', 'HH:mm:ss', 'H:mm'], true);
   if (!parsed.isValid()) return '-';
   return parsed.format('hh:mm A'); // AM/PM
+};
+
+export const formatDateToYyyyMmmDd = (dateString: string): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const year = date.getFullYear();
+  const month = monthNames[date.getMonth()];
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`; // 2026-May-02
+};
+
+export const getCapitalizeWords = (value: string): string => {
+  if (!value) return '';
+
+  return (
+    value
+      // replace _, -, and multiple non-alphanumeric chars with space
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  );
+};
+
+/**
+ * Sanitizes a URL to prevent javascript: or data: URI injection attacks
+ * @param url - The URL to sanitize
+ * @returns The sanitized URL if valid, or null if invalid
+ */
+export const sanitizeUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+
+  const trimmedUrl = url.trim();
+
+  // Check if URL starts with safe protocols (http or https)
+  const isSafeUrl = /^https?:\/\//i.test(trimmedUrl);
+
+  if (!isSafeUrl) {
+    console.warn('Potentially unsafe URL detected and blocked:', trimmedUrl);
+    return null;
+  }
+
+  return trimmedUrl;
 };

@@ -64,6 +64,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   handleSorting,
   mode,
   onFilterChange,
+  resetFilterTrigger,
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -236,7 +237,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   const handleResetFilter = (clearSort: boolean = false) => {
-    if (!Object.keys(filterStates).length) return null;
+    if (!Object.keys(filterStates).length && !resetFilterTrigger) return null;
     clearFilters(value || 'resource');
     setSelectedSystemFilters([]);
     if (clearSort) {
@@ -250,6 +251,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     });
     handleCloseFilter();
   };
+
+  // React to resetFilterTrigger changes from parent component
+  useEffect(() => {
+    if (resetFilterTrigger !== undefined && resetFilterTrigger > 0) {
+      handleResetFilter(true);
+    }
+  }, [resetFilterTrigger]);
 
   const handleFilterOptionChange = (
     fieldName: string,

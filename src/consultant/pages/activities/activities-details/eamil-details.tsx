@@ -117,7 +117,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     },
     {
       label: 'Email Status',
-      value: data?.email_status ?? '',
+      value: data?.status_name ?? '',
       key: 'status_rid',
     },
     {

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { IconButton } from '@mui/material';
-import { InfoIcon } from '../../../../../assets';
+
 import QrePercentHistoryModal from './modal';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { ListTableColumn } from '../../../../../components/table/types';
@@ -8,20 +7,29 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
 interface ContentCellProps {
   content: string;
+  qrePercent?: number;
 }
 
-const ContentCell: React.FC<ContentCellProps> = ({ content }) => {
+const ContentCell: React.FC<ContentCellProps> = ({ content, qrePercent }) => {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <>
-      <IconButton size='small' onClick={() => setModalOpen(true)}>
-        <InfoIcon fontSize='small' />
-      </IconButton>
+      <span
+        onClick={() => setModalOpen(true)}
+        style={{
+          cursor: 'pointer',
+          color: '#0056D2',
+          textDecoration: 'underline',
+        }}
+      >
+        View
+      </span>
       <QrePercentHistoryModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         content={content}
+        qrePercent={qrePercent}
       />
     </>
   );
@@ -35,24 +43,42 @@ export const getQrePercentHistoryColumns = (
       id: 'version',
       sortId: 'version',
       label: 'Sequence',
+      sortable: true,
       width: '8%',
       sticky: true,
       hide: !permissionMap?.['version']?.read,
       render: (row: QrePercentHistoryItem) => (
         <div
           style={{
-            textAlign: 'right',
+            textAlign: 'left',
           }}
         >{`${row.version || '-'}`}</div>
       ),
     },
     {
-      id: 'type',
-      sortId: 'type',
-      label: 'Type',
-      width: '17%',
-      hide: !permissionMap?.['type']?.read,
-      render: (row: QrePercentHistoryItem) => row.type || '-',
+      id: 'qre_percent',
+      sortId: 'qre_percent',
+      label: 'QRE Percent Score',
+      sortable: true,
+      width: '13%',
+      hide: !permissionMap?.['qre_percent']?.read,
+      render: (row: QrePercentHistoryItem) => (
+        <div
+          style={{
+            textAlign: 'left',
+          }}
+        >{`${row.qre_percent + '%' || '-'}`}</div>
+      ),
+    },
+    {
+      id: 'created_datetime',
+      sortId: 'created_datetime',
+      label: 'Date',
+      sortable: true,
+      width: '20%',
+      hide: !permissionMap?.['created_datetime']?.read,
+      render: (row: QrePercentHistoryItem) =>
+        formatDateToYYYYMMDDWithTime(row.created_datetime) || '-',
     },
     {
       id: 'contents',
@@ -63,37 +89,15 @@ export const getQrePercentHistoryColumns = (
       render: (row: QrePercentHistoryItem) => (
         <div
           style={{
-            textAlign: 'center',
+            textAlign: 'left',
           }}
         >
           <ContentCell
             content={JSON.stringify(row.qre_detailed_breakdown || {})}
+            qrePercent={row.qre_percent}
           />
         </div>
       ),
-    },
-    {
-      id: 'qre_percent',
-      sortId: 'qre_percent',
-      label: 'QRE Percent Score',
-      width: '13%',
-      hide: !permissionMap?.['qre_percent']?.read,
-      render: (row: QrePercentHistoryItem) => (
-        <div
-          style={{
-            textAlign: 'right',
-          }}
-        >{`${row.qre_percent + '%' || '-'}`}</div>
-      ),
-    },
-    {
-      id: 'created_datetime',
-      sortId: 'created_datetime',
-      label: 'Date',
-      width: '20%',
-      hide: !permissionMap?.['created_datetime']?.read,
-      render: (row: QrePercentHistoryItem) =>
-        formatDateToYYYYMMDDWithTime(row.created_datetime) || '-',
     },
   ];
 };

@@ -97,6 +97,8 @@ export interface DateFieldConfig {
   fiscalYearValidation?: boolean;
   startFieldId?: string;
   endFieldId?: string;
+  startFieldLabel?: string;
+  endFieldLabel?: string;
 }
 
 export interface TableField {
@@ -216,6 +218,7 @@ export interface ListTableProps<T extends RowData> {
   hideHeaderSelect?: boolean;
   selectable?: boolean;
   onSelectionChange?: (selectedIds: string[]) => void;
+  initialSelectedIds?: string[];
   // Actions
   actionWidth: string | number;
   actionDisplayMode?: 'dropdown' | 'icon' | 'toggle';

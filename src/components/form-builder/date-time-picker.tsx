@@ -32,12 +32,38 @@ const StyledDateTimePicker: React.FC<StyledDateTimePickerProps> = ({
   maxDate,
 }) => {
   const today = dayjs().startOf('day');
+  const now = dayjs();
+
+  const handleChange = (newValue: Dayjs | null) => {
+    if (!newValue) {
+      onChange(null);
+      return;
+    }
+
+    if (disableFutureDates) {
+      // Check if it's a future time on today's date
+      if (newValue.isSame(now, 'day') && newValue.isAfter(now)) {
+        // It's today but future time - use current time
+        onChange(now);
+        return;
+      }
+
+      // Check if it's a future date
+      if (newValue.isAfter(now) && !newValue.isSame(now, 'day')) {
+        // Future date - don't allow, revert to current value
+        onChange(value ? dayjs(value) : null);
+        return;
+      }
+    }
+
+    onChange(newValue);
+  };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DateTimePicker
         value={value ? dayjs(value) : null}
-        onChange={(v) => onChange(v ? dayjs(v) : null)}
+        onChange={handleChange}
         disabled={disabled}
         format='YYYY-MM-DD hh:mm A'
         viewRenderers={{

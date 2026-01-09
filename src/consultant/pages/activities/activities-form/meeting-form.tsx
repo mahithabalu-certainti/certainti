@@ -34,6 +34,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { AllPermissions } from '../../../../common-service';
+import { ActivitySourceDetails } from '../../../types';
 
 // Types
 interface SuggestionState {
@@ -99,7 +100,17 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
 ];
 
-const MeetingForm: React.FC = () => {
+interface MeetingFormProps {
+  isFrom?: string;
+  onCloseModal?: () => void;
+  sourceDetails?: ActivitySourceDetails;
+}
+
+const MeetingForm: React.FC<MeetingFormProps> = ({
+  isFrom,
+  onCloseModal,
+  sourceDetails,
+}) => {
   const { activityId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
@@ -136,10 +147,18 @@ const MeetingForm: React.FC = () => {
 
   const isEditView = location.pathname.split('/').includes('edit');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const sourcePath = searchParams.get('source') || '';
-  const accountId = searchParams.get('accountId') || '';
-  const entityLevel = searchParams.get('entityLevel') || '';
-  const entityId = searchParams.get('entityId') || '';
+  const sourcePath = sourceDetails?.source
+    ? sourceDetails?.source
+    : searchParams.get('source') || '';
+  const accountId = sourceDetails?.accountId
+    ? sourceDetails?.accountId
+    : searchParams.get('accountId') || '';
+  const entityLevel = sourceDetails?.entityLevel
+    ? sourceDetails?.entityLevel
+    : searchParams.get('entityLevel') || '';
+  const entityId = sourceDetails?.entityId
+    ? sourceDetails?.entityId
+    : searchParams.get('entityId') || '';
 
   const [attendeesSuggestions, setAttendeesSuggestions] =
     useState<SuggestionState>({
@@ -862,7 +881,11 @@ const MeetingForm: React.FC = () => {
     const currentDate = now.format('YYYY-MM-DD');
     const currentTime = now.format('HH:mm');
 
-    if (!formData.attendees || formData.attendees.length === 0) {
+    // Check for pending input in Attendees field
+    if (attendeesInput.trim()) {
+      newErrors.attendees =
+        'Please confirm the entry by pressing Enter or clear the field to continue.';
+    } else if (!formData.attendees || formData.attendees.length === 0) {
       newErrors.attendees =
         'Field is required. Please include at least one attendee.';
     }
@@ -935,7 +958,8 @@ const MeetingForm: React.FC = () => {
         formData.recurrence_interval === '' ||
         parseInt(formData.recurrence_interval) < 1
       ) {
-        newErrors.recurrence_interval = 'Interval must be at least 1';
+        newErrors.recurrence_interval =
+          'Field is required. Recurrence Interval must be at least 1.';
       }
 
       if (
@@ -960,7 +984,11 @@ const MeetingForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (isFrom === 'modal') {
+      onCloseModal?.();
+    } else {
+      window.history.back();
+    }
   };
 
   const handleSubmit = () => {
@@ -1125,7 +1153,9 @@ const MeetingForm: React.FC = () => {
 
   return (
     <div>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
+      <div
+        className={`h-[50px] flex items-center justify-between ${isFrom === 'modal' ? 'px-6 rounded-t-2xl' : 'px-10'} sticky top-0 z-10 bg-white border-b border-[#CBD6E2]`}
+      >
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <MeetingIcon
             alt='meeting-icon'
@@ -1173,17 +1203,21 @@ const MeetingForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className={`${isEditView ? 'pb-6' : 'pb-4'}`}>
+      <div
+        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
+      >
         {formLoading ? (
           <SkeletonForm />
         ) : (
           <form>
-            <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+            <div
+              className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
+            >
               Meeting Information
             </div>
 
             {/* Attendees Field */}
-            <div className='px-10'>
+            <div className={`${isFrom === 'modal' ? 'px-6' : 'px-10'}`}>
               <MeetingAttendees
                 label='Meeting Participants'
                 field='attendees'
@@ -1213,7 +1247,7 @@ const MeetingForm: React.FC = () => {
 
             {/* Subject Field */}
             <div
-              className='grid md:grid-cols-1 gap-x-4 px-10 pt-3'
+              className={`grid md:grid-cols-1 gap-x-4 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
               style={{
                 display: shouldHideField('subject', isEditView, permissionMap)
                   ? 'none'
@@ -1248,7 +1282,9 @@ const MeetingForm: React.FC = () => {
             </div>
 
             {/* Date & Time Section - Microsoft Teams Layout */}
-            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
+            <div
+              className={`grid md:grid-cols-3 gap-x-4 gap-y-3 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
+            >
               {/* Start Date */}
               <div
                 style={{
@@ -1359,7 +1395,9 @@ const MeetingForm: React.FC = () => {
             </div>
 
             {/* Recurrence Type */}
-            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
+            <div
+              className={`grid md:grid-cols-3 gap-x-4 gap-y-3 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
+            >
               <div
                 style={{
                   display: shouldHideField(
@@ -1447,7 +1485,7 @@ const MeetingForm: React.FC = () => {
                     htmlFor='recurrence_interval'
                     className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
                   >
-                    Recurrence Interval
+                    Recurrence Interval<span className='text-red-500'> *</span>
                   </label>
                   <input
                     type='number'
@@ -1529,9 +1567,11 @@ const MeetingForm: React.FC = () => {
                     : 'block',
                 }}
               >
-                <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
+                <div
+                  className={`grid md:grid-cols-1 gap-x-4 gap-y-3 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
+                >
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
-                    Recurrence Days
+                    Recurrence Days<span className='text-red-500'> *</span>
                   </label>
                   <div className='flex flex-wrap gap-3 mt-2'>
                     {daysOfWeek.map((day) => (
@@ -1581,9 +1621,11 @@ const MeetingForm: React.FC = () => {
                     : 'block',
                 }}
               >
-                <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
+                <div
+                  className={`grid md:grid-cols-1 gap-x-4 gap-y-3 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
+                >
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
-                    Recurrence Days
+                    Recurrence Days<span className='text-red-500'> *</span>
                   </label>
                   <div className='flex flex-col gap-2 mt-2'>
                     {monthlyRecurrenceOptions.map((option) => (
@@ -1630,7 +1672,9 @@ const MeetingForm: React.FC = () => {
                 pointerEvents: disableAttachments ? 'none' : 'all',
               }}
             >
-              <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+              <div
+                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
+              >
                 Attachments
               </div>
               <div className='px-10 mt-3'>
@@ -1643,10 +1687,12 @@ const MeetingForm: React.FC = () => {
                     ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}  ${disableAttachments ? 'opacity-50' : 'opacity-100'}
                   `}
                   >
-                    <UploadIcon
-                      alt='Upload Icon'
-                      className='w-[36px] h-[24px]'
-                    />
+                    <React.Suspense fallback={null}>
+                      <UploadIcon
+                        alt='Upload Icon'
+                        className='w-[36px] h-[24px]'
+                      />
+                    </React.Suspense>
                     <div
                       className='text-[14px] text-[#0B0B0B]'
                       style={{ whiteSpace: 'nowrap' }}
@@ -1706,7 +1752,7 @@ const MeetingForm: React.FC = () => {
             {/* Audit Information for Edit View */}
             <div className={`${isEditView ? 'block pt-5' : 'hidden'}`}>
               <div
-                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
+                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
               >
                 Audit Information
               </div>

@@ -19,6 +19,7 @@ import {
 import { useGetResourceType } from '../../../../services/resource-list';
 import { clearFilters } from '../../components/filter/utils';
 import {
+  ActivityDropdownItem,
   ExportType,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
@@ -52,6 +53,7 @@ interface ProjectFinancialProps {
     params: ProjectFinancialProjectExportParams
   ) => void;
   setExportType: (type: ExportType) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const FinancialSummary: React.FC<ProjectFinancialProps> = ({
@@ -60,7 +62,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   setFinancialProjectCostParams,
   setExportType,
   countryId,
-  stateId,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -251,6 +253,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title='Financial Summary'
@@ -290,7 +294,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
           <StateWiseSummary
             fiscalYear={fiscalYearValue}
             countryId={countryId}
-            stateId={stateId}
             accountDetails={accountDetails}
           />
         )}

@@ -236,22 +236,6 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
     setSelectedFilters(newFilters);
   };
 
-  const handleSelectAllLabelClick =
-    (index: number) => (event: React.MouseEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const parentAccount = accounts?.find(
-        (acc) => acc.rid === selectedFilters[index].account
-      );
-      const allChildIds =
-        parentAccount?.child_accounts?.map((child) => child.rid) || [];
-      const isAllSelected =
-        selectedFilters[index].child.length === allChildIds.length;
-
-      handleSelectAllChildren(index, !isAllSelected);
-    };
-
   const handleSaveFilters = () => {
     const validFilters = selectedFilters.filter(
       (filter) => filter.account !== ''
@@ -479,45 +463,71 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                               '&.Mui-selected': {
                                 backgroundColor: 'transparent',
                               },
+                              padding: 0, // Remove padding from MenuItem
                             }}
-                            onClick={handleSelectAllLabelClick(index)}
                           >
-                            <Checkbox
-                              size='small'
-                              checked={Boolean(
-                                filter.account &&
-                                  filter.child.length ===
-                                    accounts?.find(
-                                      (acc) => acc.rid === filter.account
-                                    )?.child_accounts?.length
-                              )}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleSelectAllChildren(
-                                  index,
-                                  e.target.checked
-                                );
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              sx={{
-                                color: '#CBD6E2',
-                                '&.Mui-checked': {
-                                  color: '#1755E7',
-                                },
-                                padding: '0px',
-                                mr: 1,
-                              }}
-                            />
-                            <span
-                              className='pl-0.5 flex-1'
+                            <div
+                              className='flex items-center w-full px-[16px] py-1'
                               onClick={(e) => {
-                                e.preventDefault();
                                 e.stopPropagation();
-                                handleSelectAllLabelClick(index)(e);
+                                e.preventDefault();
+                                const parentAccount = accounts?.find(
+                                  (acc) => acc.rid === filter.account
+                                );
+                                const allChildIds =
+                                  parentAccount?.child_accounts?.map(
+                                    (child) => child.rid
+                                  ) || [];
+                                const isAllSelected =
+                                  filter.child.length === allChildIds.length;
+                                handleSelectAllChildren(index, !isAllSelected);
                               }}
                             >
-                              Select All
-                            </span>
+                              <Checkbox
+                                size='small'
+                                checked={Boolean(
+                                  filter.account &&
+                                    filter.child.length > 0 &&
+                                    filter.child.length ===
+                                      accounts?.find(
+                                        (acc) => acc.rid === filter.account
+                                      )?.child_accounts?.length
+                                )}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  const parentAccount = accounts?.find(
+                                    (acc) => acc.rid === filter.account
+                                  );
+                                  const allChildIds =
+                                    parentAccount?.child_accounts?.map(
+                                      (child) => child.rid
+                                    ) || [];
+                                  const isAllSelected =
+                                    filter.child.length === allChildIds.length;
+                                  handleSelectAllChildren(
+                                    index,
+                                    !isAllSelected
+                                  );
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Let the onChange handle the logic
+                                }}
+                                sx={{
+                                  color: '#CBD6E2',
+                                  '&.Mui-checked': {
+                                    color: '#1755E7',
+                                  },
+                                  '&.MuiCheckbox-indeterminate': {
+                                    color: '#1755E7',
+                                  },
+                                  padding: '0px',
+                                  mr: 1,
+                                  pointerEvents: 'none', // Let the parent div handle all clicks
+                                }}
+                              />
+                              <span className='pl-0.5 flex-1'>Select All</span>
+                            </div>
                           </MenuItem>
                         )}
                         {accounts?.find((acc) => acc.rid === filter.account)

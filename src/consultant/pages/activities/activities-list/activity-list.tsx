@@ -256,7 +256,7 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
         selectable={false}
         actionWidth={80}
         actionDisplayMode='dropdown'
-        actionMenuItems={actionMenuItems}
+        actionMenuItems={activityType === 'task' ? [] : actionMenuItems}
         loading={isLoading}
         error={isError ? 'Failed to load activity data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}

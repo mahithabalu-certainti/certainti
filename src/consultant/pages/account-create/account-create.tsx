@@ -125,6 +125,7 @@ export const AccountForm: React.FC = () => {
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
+  const isCaseExists = account?.accountDetails?.is_case_exists;
   const logoUrl = account?.accountById?.logo_url;
   const logoName = logoUrl
     ? decodeURIComponent(logoUrl.substring(logoUrl.lastIndexOf('/') + 1))
@@ -153,7 +154,7 @@ export const AccountForm: React.FC = () => {
   }, [account, logoName]);
 
   const statusOptions = useGetStatus();
-  const allCountries = useGetAllCountries();
+  const allCountries = useGetAllCountries('Active');
   const industry = useFetchIndustrys();
   const keyContactRoles = useKeyContactRoles('Account');
   const parentAccount = useFetchParentAccounts();
@@ -447,12 +448,14 @@ export const AccountForm: React.FC = () => {
     addKeyContactInfo,
     removeKeyContactInfo,
     isEditView,
+    isCaseExists,
     states.isLoading,
     showOthersField,
     permissionMap
   );
 
   const formLoading =
+    getAccount.isLoading ||
     allCountries.isLoading ||
     parentAccount.isLoading ||
     currency.isLoading ||

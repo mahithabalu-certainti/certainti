@@ -95,7 +95,14 @@ export const getAllActivityFilterFields = (
     hide: !isFieldVisibleInAnyModule('status_rid', permissionMaps),
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide: !isFieldVisibleInAnyModule('attachment_level', permissionMaps),
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -112,6 +119,7 @@ export const getAllActivityFilterFields = (
 
 export const getEmailFilterFields = (
   activityStatusOptions: { value: string; label: string }[],
+  userListOptions: { value: string; label: string }[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
@@ -136,7 +144,16 @@ export const getEmailFilterFields = (
       !permissionMap?.['status_rid']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -165,8 +182,12 @@ export const getEmailFilterFields = (
   {
     name: 'Email To',
     value: 'to_email',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: userListOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
+    operatorOption: enumOptions,
     hide:
       !permissionMap?.['to_email']?.edit && !permissionMap?.['to_email']?.read,
   },
@@ -194,6 +215,15 @@ export const getTaskFilterFields = (
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
   {
+    name: 'Task Name',
+    value: 'task_name',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['task_name']?.edit &&
+      !permissionMap?.['task_name']?.read,
+  },
+  {
     name: 'Task Status',
     value: 'status_name',
     type: 'enum',
@@ -207,7 +237,16 @@ export const getTaskFilterFields = (
       !permissionMap?.['status_rid']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -247,6 +286,7 @@ export const getTaskFilterFields = (
     value: 'effective_end_datetime',
     type: 'date',
     operatorOption: dateOptions,
+    isFutureDateEnabled: true,
     hide:
       !permissionMap?.['effective_end_datetime']?.edit &&
       !permissionMap?.['effective_end_datetime']?.read,
@@ -330,7 +370,16 @@ export const getMeetingFilterFields = (
       !permissionMap?.['effective_start_time']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -362,7 +411,16 @@ export const getCallFilterFields = (
       !permissionMap?.['call_platform']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
