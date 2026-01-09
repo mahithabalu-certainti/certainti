@@ -3,9 +3,11 @@ import ListTable from '../../../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { Tooltip } from '@mui/material';
 import { FinancialHighlightsResponse } from '../../../../../../types/dossier';
+import { costDisplay } from '../../../../../../../common-utils';
 
 interface FinancialWorkingProps {
   data: FinancialHighlightsResponse | null;
+  currencySymbol?: string;
 }
 
 interface FinancialWorkingRow {
@@ -15,25 +17,26 @@ interface FinancialWorkingRow {
   [key: string]: string | number | undefined;
 }
 
-const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
+const FinancialWorking: React.FC<FinancialWorkingProps> = ({
+  data,
+  currencySymbol,
+}) => {
   const computedFields = data?.data?.computed_fields;
+  const symbol = currencySymbol || '$';
 
   // Format value helper function
-  const formatValue = (value: string | number | null | undefined) => {
+  const formatValue = (
+    value: string | number | null | undefined,
+    currency?: string
+  ) => {
     if (value === 0 || value === '0') {
       return '-';
     }
     if (value === null || value === undefined || value === '') {
       return '';
     }
-    // Optional: formatting for numbers if desired,
-    // but strictly following user rule: 0 -> - and null -> empty.
-    // Assuming we pass through other values as-is or locale string usually looks better for financial data
     if (typeof value === 'number') {
-      return value.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+      return costDisplay(value, currency || '$');
     }
     return value;
   };
@@ -58,6 +61,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
         ) as React.ReactNode as string,
         width: 200,
         sortId: 'row_label',
+        sticky:true,
+        sx:{  position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',},
         render: (row: FinancialWorkingRow) => (
           <span className='font-semibold text-[#2D3E4F]'>{row.row_label}</span>
         ),
@@ -68,23 +78,24 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
     // User: "project name ... use that values are are column heading"
     projects.forEach((project, index: number) => {
       const label = project['Project Name'] || `Project ${index + 1}`;
+      const projectId = project['Project ID'] || `project_${index}`;
       generatedColumns.push({
-        id: project['Project ID'] || `project_${index}`,
+        id: projectId,
         label: (
           <Tooltip title={label} placement='top'>
             <span className='truncate block max-w-[200px]'>{label}</span>
           </Tooltip>
         ) as React.ReactNode as string,
         width: 180,
-        sx: {
-          textAlign: 'right',
-        },
-        sortId: project['Project ID'] || `project_${index}`,
+        sx: (row?: FinancialWorkingRow) => ({
+          textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
+        }),
+        sortId: projectId,
         render: (row: FinancialWorkingRow) => {
-          const projectId = project['Project ID'] || `project_${index}`;
+          const value = row[projectId];
           return (
             <span className='text-[#425A76]'>
-              {formatValue(row[projectId])}
+              {formatValue(value, symbol)}
             </span>
           );
         },
@@ -98,18 +109,18 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
       label: 'Total',
       width: 150,
       sortId: 'Total',
-      sx: {
-        textAlign: 'right',
-      },
+      sx: (row?: FinancialWorkingRow) => ({
+        textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
+      }),
       render: (row: FinancialWorkingRow) => (
         <span className='font-bold text-[#2D3E4F]'>
-          {formatValue(row.Total)}
+          {formatValue(row.Total, symbol)}
         </span>
       ),
     });
 
     return generatedColumns;
-  }, [computedFields]);
+  }, [computedFields, symbol]);
 
   const tableData = useMemo(() => {
     if (!computedFields) return [];
@@ -163,6 +174,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({ data }) => {
           showEmptyRow={true}
           actionMenuItems={[]}
           actionWidth={80}
+          stickyColumnsCount={1}
           tableStyle={{
             height: '100%',
             maxHeight: '300px',
