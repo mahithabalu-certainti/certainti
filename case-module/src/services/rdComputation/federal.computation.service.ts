@@ -355,8 +355,37 @@ export class FederalComputationService {
         let schemaName = rawQueries.fetchSchemaName(
             fetchParentAccountRnumber[0][0].r_number
         ); 
-        const result = await orgDb.query(fetchCountryData(schemaName, data.case_rid));
-        return result[0][0]
+        const [result] : any= await orgDb.query(fetchCountryData(schemaName, data.case_rid));
+        if(result.length > 0) {
+            const fetchCountryDetails : any = await mainDb.query(rawQueries.getCountryDetails(result[0].country_rid));
+            if(fetchCountryDetails[0][0].country_code === 'AUS') {
+                const finalAusData = result.map((d : any) => {
+                    return {
+                    ...d,
+                    computed_fields : {
+                        "Preliminary Calculation" : d.computed_fields["Preliminary Calculation"],
+                        "R&D Expenditure" : {
+                            'R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
+                            'R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
+                            'Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
+                            'Total of notional R&D deductions (X plus Y)':d.computed_fields["R&D Expenditure"]['Total of notional R&D deductions (X plus Y)']
+                        },
+                        "Additional Information" : d.computed_fields["Additional Information"],
+                        "Non-refundable tax offset": {
+                           'R&D entity total expenses' : d.computed_fields["Non-refundable tax offset"]['R&D entity total expenses'],
+                           'Total notional R&D deductions': d.computed_fields["Non-refundable tax offset"]['Total notional R&D deductions'],
+                           'R&D intensity' : d.computed_fields["Non-refundable tax offset"]['R&D intensity']
+                        },
+                        "Tier of intensity" : d.computed_fields["Tier of intensity"],
+                        "Non-refundable R&D tax offset" : d.computed_fields["Non-refundable R&D tax offset"]
+                        }
+                    }
+                })
+                return finalAusData[0]
+            } else {
+                return result[0]
+            }
+        }
     }
 
 }
