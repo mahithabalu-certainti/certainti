@@ -239,7 +239,7 @@ export interface FinancialHighlightsData {
   case_rid: string;
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
-  computed_fields: FinancialHighlightsComputedFields;
+  computed_fields: FinancialHighlightsComputedFields | AustraliaComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -249,7 +249,40 @@ export interface CaseSummaryData {
   case_rid: string;
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
-  computed_fields: FinancialHighlightsComputedFields;
+  computed_fields: FinancialHighlightsComputedFields | AustraliaComputedFields;
+}
+
+export interface AustraliaRdExpenditure {
+  [key: string]: number;
+}
+
+export interface AustraliaTierOfIntensity {
+  name: string;
+  "offset Amount": number;
+  "Notional deductions applied": number;
+}
+
+export interface AustraliaAdditionalInfo {
+  "Tax rate": string;
+}
+
+export interface AustraliaNonRefundableTaxOffset {
+  "R&D intensity": string;
+  "R&D entity total expenses": number;
+  "Total notional R&D deductions":  Record<string, string | number | unknown | null>;
+}
+
+export interface AustraliaComputedFields {
+  Title?: Record<string, string>;
+  Total?: Record<string, number>;
+  Columns?: string[];
+  Projects?: FinancialHighlightsProject[];
+  "R&D Expenditure": AustraliaRdExpenditure;
+  "Tier of intensity": AustraliaTierOfIntensity[];
+  "Additional Information": AustraliaAdditionalInfo;
+  "Preliminary Calculation": number;
+  "Non-refundable tax offset": AustraliaNonRefundableTaxOffset;
+  "Non-refundable R&D tax offset": number;
 }
 
 export interface FinancialHighlightsResponse {

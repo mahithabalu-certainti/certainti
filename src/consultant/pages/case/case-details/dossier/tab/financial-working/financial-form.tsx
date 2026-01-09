@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo } from 'react';
 import FinancialWorking from './financial-working';
+import FinancialWorkingAustralia from './financial-working-australia';
 import { useSelector } from 'react-redux';
 import {
   FormControl,
@@ -22,6 +23,7 @@ import {
   FinancialHighlightsResponse,
   RDCreditStatusResponse,
 } from '../../../../../../types';
+import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
 import {
   useFinancialHighlights,
@@ -241,7 +243,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       {/* Federal Level Radio Buttons */}
       <div className='pb-2'>
         <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-          <div>Jurisdiction Information</div>
+          <div>{caseDetails?.country_name} Financial Information</div>
           <div>
             <TextButton // icon={<RefreshIcon />}
               label={'Refresh'}
@@ -264,7 +266,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               label={'View'}
               loading={isFinancialHighlights}
               onClick={handleViewFinancialHighlights}
-              disabled={!isViewButtonEnabled() || isFinancialHighlights}
+              disabled={
+                !isViewButtonEnabled() ||
+                isFinancialHighlights ||
+                showFinancialValue
+              }
               sx={{
                 width: '55px',
                 minWidth: '55px',
@@ -281,6 +287,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               onClick={handleInitiateFinancialHighlights}
               disabled={
                 isInitiating ||
+                isRefetching ||
                 (!!dossierFinancialStatus &&
                   dossierFinancialStatus !== 'COMPLETED')
               }
@@ -456,11 +463,20 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       {/* Financial Working Section - Only shown after clicking View button */}
       {showFinancialValue && (
         <div>
-          <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-            Federal R&D Credit
-          </div>
+          {/* {caseDetails?.country_name !==
+            FinancialWorkingCountries.Australia && ( */}
+            <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+              {(financialData?.data?.input_params?.credit_type as string) ||
+                'Federal R&D Credit'}
+            </div>
+        {/* //   )} */}
           <div>
-            <FinancialWorking data={financialData} />
+            {caseDetails?.country_name ===
+            FinancialWorkingCountries.Australia ? (
+              <FinancialWorkingAustralia data={financialData} />
+            ) : (
+              <FinancialWorking data={financialData} />
+            )}
           </div>
         </div>
       )}
