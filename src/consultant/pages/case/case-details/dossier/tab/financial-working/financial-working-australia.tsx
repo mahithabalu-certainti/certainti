@@ -18,7 +18,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
   const computedFields = data.data.computed_fields as AustraliaComputedFields;
   const currencyCode = (data.data.input_params?.currency as string) || 'AUD';
 
-  const formatCurrency = (value: any) => {
+  const formatCurrency = (value: number | string | null | undefined) => {
     if (typeof value === 'number') {
       return new Intl.NumberFormat('en-AU', {
         style: 'currency',
@@ -33,7 +33,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: number | string | null | undefined) => {
     if (typeof value === 'number') {
       return <span className="font-bold text-[14px] text-[#2D3E4F]">{formatCurrency(value)}</span>;
     }
@@ -59,7 +59,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
     </div>
   );
 
-  const renderKeyValuePairs = (obj: Record<string, any>) => {
+  const renderKeyValuePairs = (obj: Record<string, number | string | null | undefined>) => {
     return Object.entries(obj).map(([key, value]) => {
       // Skip nested objects, arrays, and 'name' property (used as title)
       if (

@@ -61,6 +61,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         ) as React.ReactNode as string,
         width: 200,
         sortId: 'row_label',
+        sticky:true,
+        sx:{  position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',},
         render: (row: FinancialWorkingRow) => (
           <span className='font-semibold text-[#2D3E4F]'>{row.row_label}</span>
         ),
@@ -167,6 +174,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
           showEmptyRow={true}
           actionMenuItems={[]}
           actionWidth={80}
+          stickyColumnsCount={1}
           tableStyle={{
             height: '100%',
             maxHeight: '300px',

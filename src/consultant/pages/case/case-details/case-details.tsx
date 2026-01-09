@@ -1150,6 +1150,7 @@ export const CaseDetails = () => {
             onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
             maxHeight={isActionItemsExpanded ? 150 : 292}
+            isLoading={isLoading}
           />
         </div>
         <div
