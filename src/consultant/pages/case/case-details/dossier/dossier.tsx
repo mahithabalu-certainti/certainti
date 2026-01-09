@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AllPermissions } from '../../../../../common-service';
-import { ActivityDropdownItem, CaseDetails } from '../../../../types';
+import { ActivityDropdownItem, CaseDetails, ColorCode } from '../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ComingSoon, DetailsIcon } from '../../../../../assets';
+import { ComingSoon, DossierIcon } from '../../../../../assets';
 import {
   getProjectDocumentsFilterFields,
   getProjectSummaryFilterFields,
@@ -176,8 +176,10 @@ const Dossier: React.FC<DossierProps> = ({
 
       <SectionHeader
         title='Dossier'
-        titleIcon={<DetailsIcon alt='dossier-header-icon' />}
-        iconBg='#C5D89D'
+        titleIcon={<DossierIcon alt='dossier-header-icon' 
+        className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+        />}
+                iconBg={ColorCode.caseBgColor}
         bgType='circle'
         count={count}
         showItemCount={true}

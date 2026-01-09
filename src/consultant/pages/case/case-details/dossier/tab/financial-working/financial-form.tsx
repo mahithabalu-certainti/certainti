@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo } from 'react';
 import FinancialWorking from './financial-working';
+import FinancialWorkingAustralia from './financial-working-australia';
 import { useSelector } from 'react-redux';
 import {
   FormControl,
@@ -22,6 +23,7 @@ import {
   FinancialHighlightsResponse,
   RDCreditStatusResponse,
 } from '../../../../../../types';
+import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
 import {
   useFinancialHighlights,
@@ -166,12 +168,21 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     });
   };
 
-  const handleStatusUpdate = (statusData: RDCreditStatusResponse) => {
+  const handleStatusUpdate = (
+    statusData: RDCreditStatusResponse,
+    actionType?: 'initiate' | 'regenerate' | 'refresh'
+  ) => {
     const message = statusData?.data ?? statusData?.statusMessage ?? '';
     setDossierFinancialStatus(message);
 
     if (statusData?.data === 'COMPLETED') {
-      successToast(message || 'Process Completed');
+      if (actionType === 'initiate') {
+        successToast('Initiated successfully');
+      } else if (actionType === 'regenerate') {
+        successToast('Re-Generated successfully');
+      } else {
+        successToast(message || 'Process Completed');
+      }
     } else if (message) {
       // If there is a message but not completed, it might be an info or error
       // depending on business logic. User used errorToast in useEffect.
@@ -181,6 +192,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const handleInitiateFinancialHighlights = async () => {
     setDossierFinancialStatus('');
+    const actionType =
+      statusData?.data === 'COMPLETED' ? 'regenerate' : 'initiate';
     const payload = {
       account_rid: accountid,
       case_rid: caseId ?? '',
@@ -197,7 +210,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         // Refetch and handle status
         const result = await refetchRDCreditStatus();
         if (result.data) {
-          handleStatusUpdate(result.data);
+          handleStatusUpdate(result.data, actionType);
         }
       },
       onError: (error) => {
@@ -221,7 +234,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleRefreshStatus = async () => {
     const result = await refetchRDCreditStatus();
     if (result.data) {
-      handleStatusUpdate(result.data);
+      handleStatusUpdate(result.data, 'refresh');
     }
   };
 
@@ -230,7 +243,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       {/* Federal Level Radio Buttons */}
       <div className='pb-2'>
         <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-          <div>Jurisdiction Information</div>
+          <div>{caseDetails?.country_name} Financial Information</div>
           <div>
             <TextButton // icon={<RefreshIcon />}
               label={'Refresh'}
@@ -253,7 +266,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               label={'View'}
               loading={isFinancialHighlights}
               onClick={handleViewFinancialHighlights}
-              disabled={!isViewButtonEnabled() || isFinancialHighlights}
+              disabled={
+                !isViewButtonEnabled() ||
+                isFinancialHighlights ||
+                showFinancialValue
+              }
               sx={{
                 width: '55px',
                 minWidth: '55px',
@@ -268,7 +285,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               }
               loading={isInitiating}
               onClick={handleInitiateFinancialHighlights}
-              disabled={isInitiating}
+              disabled={
+                isInitiating ||
+                isRefetching ||
+                (!!dossierFinancialStatus &&
+                  dossierFinancialStatus !== 'COMPLETED')
+              }
               sx={{
                 width: statusData?.data === 'COMPLETED' ? '95px' : '55px',
                 minWidth: statusData?.data === 'COMPLETED' ? '95px' : '55px',
@@ -279,7 +301,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           </div>
         </div>
         <div className='px-4 pt-3'>
-          <FormControl component='fieldset'>
+          <FormControl component='fieldset' disabled={!caseDetails?.is_state_available}>
             <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-2 block'>
               Federal Level
             </label>
@@ -441,11 +463,23 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       {/* Financial Working Section - Only shown after clicking View button */}
       {showFinancialValue && (
         <div>
-          <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-            Federal R&D Credit
-          </div>
+          {/* {caseDetails?.country_name !==
+            FinancialWorkingCountries.Australia && ( */}
+            <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+              {(financialData?.data?.input_params?.credit_type as string) ||
+                'Federal R&D Credit'}
+            </div>
+        {/* //   )} */}
           <div>
-            <FinancialWorking data={financialData} />
+            {caseDetails?.country_name ===
+            FinancialWorkingCountries.Australia ? (
+              <FinancialWorkingAustralia data={financialData} />
+            ) : (
+              <FinancialWorking
+                data={financialData}
+                currencySymbol={caseDetails?.currency_symbol}
+              />
+            )}
           </div>
         </div>
       )}
