@@ -475,7 +475,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             FinancialWorkingCountries.Australia ? (
               <FinancialWorkingAustralia data={financialData} />
             ) : (
-              <FinancialWorking data={financialData} />
+              <FinancialWorking
+                data={financialData}
+                currencySymbol={caseDetails?.currency_symbol}
+              />
             )}
           </div>
         </div>
