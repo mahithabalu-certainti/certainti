@@ -505,10 +505,7 @@ export class CaseTaskSchemaService {
                 })
                 updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
               }
-              await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
-                    newValue: newValueString,
-                    oldValue: oldValueString
-                  }, accessToken);
+            
               if (updatedColumnsStorage.length > 0) {
                 combinedColumns = updatedColumnsStorage.join(', ')
               }
@@ -523,11 +520,15 @@ export class CaseTaskSchemaService {
                 event_datetime: new Date(),
                 description: `Task Updated : ${combinedColumns}`
               })
-            }
-  
-            return {
+            }    
+            await transaction.commit();
+           await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
+                    newValue: "newValueString",
+                    oldValue: "oldValueString"
+                  }, accessToken);
+           return {
               statusCode: HttpStatus.SUCCESS,
-              statusMessage: STATUS_MESSAGE.taskUpdatedSuccess
+              statusMessage: "Task updated successfully."
             }
           } else {
             return {
