@@ -70,7 +70,7 @@ async function financialRDCreditFederal(
 async function initiateRDCreditProcess(
   req: Request,
   res: Response
-): Promise<void> {
+): Promise<any> {
   const methodName = "initiateRDCreditProcess";
   try {
     // Step 1: Log request
@@ -102,12 +102,21 @@ async function initiateRDCreditProcess(
 
     logMessage(JSON.stringify(value));
     const resultState = await computationService.initiateRDCreditProcess(value.account_rid, value.case_rid, value.fiscal_year)
-    // Step 5: Handle service response
-    handleCustomResponse(
-      res,
-      resultState.statusCode,
-      resultState.message
-    );
+    if(resultState.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : resultState.message,
+        data : {}
+      })
+    } else {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : resultState.errorMessage,
+        data : {}
+      })
+    }
   } catch (err) {
     // Step 6: Catch unexpected errors
     const error = err as Error;

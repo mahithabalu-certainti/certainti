@@ -33,7 +33,7 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     'reductions', CAST(epw * ${reduction}/100 AS DECIMAL(18,2)),
     'net_epw', CAST(epw - (epw * ${reduction}/100) AS DECIMAL(18,2)),
     'total_project_value_labor', CAST(epw - (epw * ${reduction}/100) + employees AS DECIMAL(18,2))
-    )) AS projects
+    )ORDER BY CAST(epw - (epw * ${reduction}/100) + employees AS DECIMAL(18,2)) DESC) AS projects
     FROM
     calculate_cost
     `

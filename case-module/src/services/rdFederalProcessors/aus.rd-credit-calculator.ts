@@ -50,34 +50,7 @@ export class RdCreditCalculatorForAus {
         let preliminaryCalculation = totalAccountExpenditure;
         taxRate = extractConfig.tax_rate;
         rdTotalExpenses = Number(caseDetails.total_expenses)|| 0.00
-        totalNotionalObj = {
-          AggregatedTurnOver1 : {
-            1 : {
-              descriptions : "Do you have exempt entity ownership of 50% or greater?",
-              yes : "",
-              no : "X",
-            },
-            2 : {
-              descriptions : "Do you have an aggregated turnover of $20 million or greater? (If NO you must complete item 3 below)",
-              no : "",
-              yes : "X"
-            },
-            totalNotionalRdDeduction : totalAccountExpenditure
-          },
-          AggregatedTurnOver2 : {
-            1 : {
-              descriptions : "Do you have exempt entity ownership of 50% or greater?",
-              yes : "",
-              no : "",
-            },
-            2 : {
-              descriptions : "Do you have an aggregated turnover of $20 million or greater? (If NO you must complete item 3 below)",
-              no : "",
-              yes : ""
-            },
-            totalNotionalRdDeduction : 0.00
-          }
-        }
+        totalNotionalObj = totalAccountExpenditure;
         rdIntensity = parseFloat(Number(totalAccountExpenditure/rdTotalExpenses).toFixed(4))
         let conditionDeduction = extractConfig.intensity/100
         let notionalDeductionApplied = 0.00;
@@ -104,9 +77,11 @@ export class RdCreditCalculatorForAus {
             "offset Amount" : notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100)) || 0.00
           }
         ]
-        let nonRefundableRdTaxOffset = parseFloat(Number(calculateCredit[0]?.["offset Amount"]! + calculateCredit[1]?.["offset Amount"]!).toFixed(2))
+        let nonRefundableRdTaxOffset = parseFloat(Number(calculateCredit[0]?.["offset Amount"]! + calculateCredit[1]?.["offset Amount"]!).toFixed(2));
         const finalData = {
-          "Preliminary Calculation" : preliminaryCalculation,
+          "Preliminary Calculation" :{
+            "Add-back of R&D accounting expenditure (Item 7D)" : preliminaryCalculation
+          },
           "R&D Expenditure" : {
             "R&D expenditure - Research service provider (RSP)" : totalNonlaborQreCost,
             "R&D expenditure - Contract expenditure (not RSP)": totalSubconQreCost,
@@ -115,7 +90,7 @@ export class RdCreditCalculatorForAus {
             "Total of notional R&D deductions (X plus Y)": totalAccountExpenditure
           },
           "Additional Information" : {
-            "Tax rate" : `${extractConfig.tax_rate}%`
+            "Tax rate" : `${taxRate}%`
           },
           "Non-refundable tax offset" : {
             "R&D entity total expenses" : rdTotalExpenses,
@@ -123,7 +98,9 @@ export class RdCreditCalculatorForAus {
             "R&D intensity" : `${rdIntensity}%`
           },
           "Tier of intensity" : calculateCredit,
-          "Non-refundable R&D tax offset": nonRefundableRdTaxOffset
+          "Non-refundable R&D tax offset": {
+            "Total Offset Amount" : nonRefundableRdTaxOffset
+          }
         }
         return {
           inputFields : {
