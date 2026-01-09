@@ -32,7 +32,6 @@ export class RdCreditCalculatorForAus {
       if(calculateQreCost.length > 0) {
         let totalFteQreCost = 0.00;
         let totalSubconQreCost = 0.00;
-        let totalNonlaborQreCost = 0.00;
         let totalAllocatedNotionalDections = 0.00;
         let totalAccountExpenditure = 0.00;
         let rdTotalExpenses = 0.00;
@@ -43,9 +42,8 @@ export class RdCreditCalculatorForAus {
         calculateQreCost.forEach((cost : CalculateQreCostType) => {
           totalFteQreCost = parseFloat(Number(totalFteQreCost + Number(cost.fte_qre_amount)).toFixed(2));
           totalSubconQreCost = parseFloat(Number(totalSubconQreCost + Number(cost.subcon_qre_amount)).toFixed(2))
-          totalNonlaborQreCost = parseFloat(Number(totalNonlaborQreCost + Number(cost.nonlabor_qre_amount)).toFixed(2))
         })
-        totalAllocatedNotionalDections = totalFteQreCost + totalSubconQreCost + totalNonlaborQreCost;
+        totalAllocatedNotionalDections = totalFteQreCost + totalSubconQreCost;
         totalAccountExpenditure = totalAllocatedNotionalDections;
         let preliminaryCalculation = totalAccountExpenditure;
         taxRate = extractConfig.tax_rate;
@@ -83,7 +81,6 @@ export class RdCreditCalculatorForAus {
             "Add-back of R&D accounting expenditure (Item 7D)" : preliminaryCalculation
           },
           "R&D Expenditure" : {
-            "R&D expenditure - Research service provider (RSP)" : totalNonlaborQreCost,
             "R&D expenditure - Contract expenditure (not RSP)": totalSubconQreCost,
             "R&D expenditure - Salary expenditure": totalFteQreCost,
             "Total of allocated notional deductions" : totalAllocatedNotionalDections,
