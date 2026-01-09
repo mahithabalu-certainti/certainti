@@ -528,7 +528,7 @@ export class CaseTaskSchemaService {
                   }, accessToken);
            return {
               statusCode: HttpStatus.SUCCESS,
-              statusMessage: "Task updated successfully."
+              statusMessage: STATUS_MESSAGE.taskUpdatedSuccess
             }
           } else {
             return {
