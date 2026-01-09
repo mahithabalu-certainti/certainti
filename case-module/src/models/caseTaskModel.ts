@@ -26,9 +26,10 @@ interface CaseTaskAttributes {
     task_type_rid : string,
     task_description? : string,
     task_status_rid : string,
-    assigned_to? : string
+    assigned_to? : string | null
     weightage_rid? : string
     task_category_rid? : string
+    is_flagged? : boolean
 }
 
 export interface CaseTaskCreationAttributesModel 
@@ -59,9 +60,10 @@ implements CaseTaskAttributes {
     public task_type_rid! : string
     public task_description? : string
     public task_status_rid! : string
-    public assigned_to? : string
+    public assigned_to? : string | null
     public weightage_rid?: string;
     public task_category_rid? : string
+    public is_flagged?: boolean;
 
     static initialise(sequelize : Sequelize, schemaName : string) {
         return CaseTask.init({
@@ -168,6 +170,11 @@ implements CaseTaskAttributes {
             task_category_rid : {
                 type : DataTypes.STRING,
                 allowNull : true
+            },
+            is_flagged: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false
             }
         }, {
             sequelize,

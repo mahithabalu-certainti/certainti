@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs';
 import moment from "moment";
 import crypto from 'crypto';
 import { getSecret } from "./azureSecrets";
+import { WebPubSubServiceClient } from "@azure/web-pubsub";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -204,4 +205,9 @@ export async function decryptClientSecret(encryptedText: string): Promise<string
   decrypted = Buffer.concat([decrypted, decipher.final()]);
 
   return decrypted.toString();
+}
+
+export async function getWebPubSubClient() {
+  const connectionString = await getSecret(process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!);
+  return new WebPubSubServiceClient(connectionString!, "notificationsHub");
 }

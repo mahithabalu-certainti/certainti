@@ -3,7 +3,7 @@ import { CaseModelService } from "../caseModelsService";
 import { QueryTypes, Sequelize } from "sequelize";
 import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
-import { logMessage, setTaskTemplateData } from "../../utils/helpers";
+import { generateSasUrl, logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
 import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, TaskCategoryType, TaskType, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -518,6 +518,10 @@ export class CaseManagementService {
       }
       const setData = setTaskTemplateData(isTaskExists, data, data.userId)
       if(setData.length > 0) {
+        if(data.milestone_template_rid) {
+          const getMilestoneDetails : any = await mainDb.query(rawQueries.fetchMilestoneDetails(data.milestone_template_rid));
+          setData.push(`milestone_sequence = ${getMilestoneDetails[0][0].r_number}`);
+        }
         if(data.status_rid) {
           if(data.status_rid !== isTaskExists.status_rid) {
             const getAllStatus : any = await mainDb.query(rawQueries.getActiveStatusId());
@@ -634,13 +638,14 @@ export class CaseManagementService {
         let uniqueTaskTypeIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.task_type_rid) : '' ))]
         let statusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.status_rid) : ''))]
         let taskStatusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((a : any) => a.task_status_rid) : '' ))];
-
+        let tagsIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.flatMap((dd : any) => dd.tags !== null ? dd.tags.map((t : any) => t.rid) : '') : ''))]
         let priority;
         let assignedTo;
         let teamRole;
         let tasktype;
         let statusType;
         let taskStatusType;
+        let tagNames;
 
         let priorityQuery = rawQueries.getAllPriorityTypes(uniquePriorityIds)
         if(priorityQuery) {
@@ -666,14 +671,19 @@ export class CaseManagementService {
         if(taskStatusQuery) {
           taskStatusType = await mainDb.query(taskStatusQuery)
         }
+        let tagQuery = rawQueries.getAllTags(tagsIds)
+        if(tagQuery) {
+          tagNames = await mainDb.query(tagQuery) 
+        }
         const [fetchCaseStatus] = await mainDb.query<caseStatusType>(rawQueries.getCaseStatusById(caseDetails?.status_rid!), {type : QueryTypes.SELECT});
         
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
-        let assignedToMap : Map<string, string> = new Map(assignedTo?.[0]?.map((d : any) => [d.rid, d.name]));
+        let assignedToMap : Map<string, any> = new Map(assignedTo?.[0]?.map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         let teamRoleMap : Map<string, string> =new Map(teamRole?.[0]?.map((d : any) => [d.rid, d.role_name]));
         let taskTypeMap : Map<string, string> = new Map(tasktype?.[0]?.map((d : any) => [d.rid, d.task_type_name]));
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
         let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
+        let tagMap : Map<string, string> = new Map(tagNames?.[0]?.map((d : any) => [d.rid, d.tag_name]))
         
         let dynamicResult;
         if(fetchCaseStatus?.status_name.toLowerCase() === "audit review") {
@@ -681,17 +691,27 @@ export class CaseManagementService {
         } else {
           dynamicResult = result.array_agg.filter((d : any) => d.milestone_name.toLowerCase() !== 'audit review')
         }
-        
-        const finalStructure = dynamicResult.map((d : any) => {
+        const finalStructure = await Promise.all(dynamicResult.map(async (d : any) => {
+          let profileUrl : string | null
           return {
             rid : d.rid,
             milestone_name : d.milestone_name,
             task_count : d.task_count,
-            tasks : d.tasks !== null ? d.tasks.map((d : any) => {
+            tasks : d.tasks !== null ? await Promise.all(d.tasks.map(async (d : any) => {
+              if(assignedToMap.get(d.assigned_to) !== undefined) {
+                if(assignedToMap.get(d.assigned_to).profile_url !== null) {
+                  profileUrl = await generateSasUrl(assignedToMap.get(d.assigned_to).profile_url)
+                } else {
+                  profileUrl = null
+                }
+              } else {
+                profileUrl = null
+              }
               return {
                 rid: d.rid,
                 r_number: d.r_number,
                 task_name: d.task_name,
+                is_flagged: d.is_flagged,
                 created_by: d.created_by,
                 status_rid: d.status_rid,
                 assigned_to: d.assigned_to,
@@ -702,22 +722,30 @@ export class CaseManagementService {
                 checklists_count: d.checklists_count,
                 completed_checklist_items_count : d.complete_items,
                 comments_count : d.comments_count,
+                attachment_count : d.attachment_count || 0,
                 task_description: d.task_description,
                 effective_end_datetime: d.effective_end_datetime,
                 effective_start_datetime: d.effective_start_datetime,
                 case_team_member_role_rid: d.case_team_member_role_rid,
                 milestone_template_rid: d.milestone_template_rid,
                 priority_name : priorityMap.get(d.priority_rid) || null,
-                assigned_to_name : assignedToMap.get(d.assigned_to) || null,
+                assigned_to_name : assignedToMap.get(d.assigned_to) !== undefined ? assignedToMap.get(d.assigned_to).name : null,
                 case_team_member_role_name : teamRoleMap.get(d.case_team_member_role_rid) || null,
                 task_type_name : taskTypeMap.get(d.task_type_rid) || null,
                 status_name : statusMap.get(d.status_rid) || null,
                 task_status_rid : d.task_status_rid,
-                task_status_name : taskStatusMap.get(d.task_status_rid) || null
+                task_status_name : taskStatusMap.get(d.task_status_rid) || null,
+                profile_url : profileUrl,
+                tags : d.tags !== null ? d.tags.map((t : any) => {
+                  return {
+                    rid : t.rid,
+                    tag_name : tagMap.get(t.rid) || null
+                  }
+                }) : []
               }
-            }) : []
+            })) : []
           }
-        })
+        }))
         return {
           statusCode : HttpStatus.SUCCESS,
           data : finalStructure
@@ -801,8 +829,7 @@ export class CaseManagementService {
     // Set the user who is creating this checklist
 
     emailRequest.modified_by = userId;
-    if(emailRequest.template_name)
-    {
+
     const result = await this.caseManangementSchemaService.checkisExistingTemplateUnique(emailRequest);
     if (!result.isUnique) {
       return {
@@ -818,7 +845,14 @@ export class CaseManagementService {
         errorMessage: `A template with the category "${result.category_name}" already exists. Please choose a different category.`,
       };
     }
-  }
+     if (!result.isActiveCategoryExists) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: `Atleast one template with the category "${result.category_name}" needs to be in active status.`,
+      };
+    }
+  
     const response =
       await this.caseManangementSchemaService.updateEmailTemplate(
         emailRequest

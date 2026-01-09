@@ -4,6 +4,7 @@ import {
   exportUsers,
   updateUser,
   listUserById,
+  uploadProfileImage
 } from "./userController";
 import { userProfiles, userPermissionById, userRoles, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions,exportUserProfiles,getUserExtendedPermissions,updateUserExtendedPermissions } from "./userManagementController";
 import {
@@ -23,8 +24,9 @@ import {
   listUserGroupUser
 } from "./userGroupController";
 import { listSettings, updateSettings } from "./settingsController";
+import { listNotifications,updateNotificationStatus ,getWebsocketUrl} from "./notificationController";
 
-import { get } from "http";
+
 const controller = {
   userController: {
     createUser,
@@ -32,6 +34,7 @@ const controller = {
     exportUsers,
     listUsers,
     listUserById,
+    uploadProfileImage
   },
   userManagementController: {
     userProfiles,
@@ -65,6 +68,11 @@ const controller = {
   settingsController:{
     updateSettings,
     listSettings
+  },
+  notificationController:{
+    listNotifications,
+    updateNotificationStatus,
+    getWebsocketUrl
   }
 };
 

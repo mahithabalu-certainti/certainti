@@ -32,6 +32,7 @@ interface CaseAttributes {
   submitted_datetime?: Date;
   approved_datetime?: Date;
   tax_liability?: number;
+  financial_working_signoff? : boolean
 }
 
 export interface CaseCreationAttributes
@@ -69,6 +70,7 @@ export class Case
   public  total_nonlabor_cost?: number;
   public  heat_light_power?: number;
   public tax_liability?: number;
+  public financial_working_signoff? : boolean
 
   static initialize(
     sequelize: Sequelize,
@@ -102,9 +104,9 @@ export class Case
         fiscal_year: { type: DataTypes.INTEGER, allowNull: false },
         filing_type_rid: { type: DataTypes.STRING(100), allowNull: false },
         case_owner_rid: { type: DataTypes.STRING(50), allowNull: false },
-        case_startdate: { type: DataTypes.DATE, allowNull: false },
-        planned_submission_date: { type: DataTypes.DATE, allowNull: false },
-        statutory_submission_date: { type: DataTypes.DATE, allowNull: false },
+        case_startdate: { type: DataTypes.DATEONLY, allowNull: false },
+        planned_submission_date: { type: DataTypes.DATEONLY, allowNull: false },
+        statutory_submission_date: { type: DataTypes.DATEONLY, allowNull: false },
         status_rid: { type: DataTypes.STRING(50), allowNull: false },
         case_total_projects: { type: DataTypes.INTEGER, allowNull: true },
         case_total_qualified_projects: { type: DataTypes.INTEGER, allowNull: true },
@@ -118,6 +120,7 @@ export class Case
         total_nonlabor_cost: { type: DataTypes.DECIMAL, allowNull: true },
         heat_light_power: { type: DataTypes.DECIMAL, allowNull: true },
         tax_liability: { type: DataTypes.DECIMAL, allowNull: true },
+        financial_working_signoff : {type : DataTypes.BOOLEAN, defaultValue : false}
       },
       {
         sequelize,

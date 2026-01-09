@@ -1,26 +1,43 @@
 import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
-import { ICaseManagementService, ICaseService, IActivityService } from "./interfaces/interface";
+import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
-import { JurisdictionService }  from "./jurisdiction/jurisdictionServices";
-import { HistoricalSubmissionService }  from "./historicalSubmission/historicalSubmissionServices";
+import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
+import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
+import { ProjectResourceService } from "./projectResource/projectResourceService";
+import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import { ActivityService } from "./activities/activityService";
+import { ProjectService } from "./project/projectService";
+import { ChildCaseService } from "./cases/childCaseService";
+import { CaseTaskSchemaService } from "./cases/caseTask/caseTaskSchemaService";
+import { CaseTaskService } from "./cases/caseTask/caseTaskService";
+import { ChecklistService } from "./cases/caseChecklist/checklistService";
 
 class Services {
   private logger: Logger;
-  caseService: ICaseService;
+  caseService: IChildCaseService;
   caseManagementService: ICaseManagementService;
   jurisdictionService: JurisdictionService;
   historicalSubmissionService: HistoricalSubmissionService;
+  projectResourceService: ProjectResourceService;
+  projectTaskInjestionServices: ProjectInjestionTaskService;
   activityService: IActivityService;
+  projectService: ProjectService
+  caseTaskService : CaseTaskService
+  checklistService : ChecklistService
 
   constructor(logger: Logger) {
     this.logger = logger;
-    this.caseService = new CaseService(logger);
+    this.caseService = new ChildCaseService(logger);
     this.caseManagementService = new CaseManagementService(logger);
     this.jurisdictionService = new JurisdictionService(logger);
     this.historicalSubmissionService = new HistoricalSubmissionService(logger);
+    this.projectResourceService = new ProjectResourceService(logger);
+    this.projectTaskInjestionServices = new ProjectInjestionTaskService();
     this.activityService = new ActivityService(logger);
+    this.projectService = new ProjectService(logger)
+    this.caseTaskService = new CaseTaskService()
+    this.checklistService = new ChecklistService()
   }
 }
 

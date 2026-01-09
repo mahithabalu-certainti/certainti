@@ -756,8 +756,8 @@ export const rawQueries = {
         total_subcon_from_tasks INTEGER,
   
         -- Non-labor & Resources
-        total_nonlabor_prj DECIMAL(18,2),
-        total_nonlabor_from_prj_res DECIMAL(18,2),
+        total_nonlabor_prj INTEGER,
+        total_nonlabor_from_prj_res INTEGER,
         total_nonlabor_from_tasks INTEGER,
         total_resources_prj INTEGER,
         total_resources_from_prj_res INTEGER,
@@ -837,7 +837,8 @@ export const rawQueries = {
         claim_status TEXT,
         comments VARCHAR(2000),
         project_description VARCHAR(2000),
-        is_qualified BOOLEAN DEFAULT false
+        is_qualified BOOLEAN DEFAULT false,
+        signoff BOOLEAN DEFAULT false
       );
     `;
   },
@@ -2547,7 +2548,7 @@ export const rawQueries = {
          CONSTRAINT checklist_items_checklist_rid_fkey FOREIGN KEY (checklist_rid)
         REFERENCES ${schemaName}.checklists (rid) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE NO ACTION
+        ON DELETE CASCADE
       );
     `;
   },
@@ -3421,7 +3422,21 @@ export const rawQueries = {
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."notes_timeline"("${field}");
     `;
-  },          
+  }, 
+  checkCaseExistsForAccount (schemaName : string, accountRid : string) {
+    return `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`
+  },
+  fetchSchemaName(r_number: string) {
+    return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
+  },    
+  checkCaseTableExists(schemaName : string) {
+    return `SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = '${schemaName}'
+    AND table_name = 'cases'
+    )`
+  }     
 };
 
 export const DEFAULT_ACCOUNT_DETAILS = {

@@ -5,8 +5,12 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { logMessage, setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
-import { IUpdateProject } from "../utils/types";
+import { IUpdateProject,CaseStatusResult } from "../utils/types";
 import { ProjectService } from "./projectService";
+import { CaseProject } from "../models/caseProjectsModel";
+import { Case } from "../models/caseModel";
+import { QueryTypes } from "sequelize";
+
 
 const services = Configurations.getInstance().getServices();
 const projectService = services.projectServices;
@@ -35,6 +39,12 @@ class ProjectGraphQlServices {
         else {
             let schemaName = `"${MAIN_SCHEMA_NAME}_${checkAccountExists[0][0].r_number.replace('ACC-', '')}"`
             let findProjectFiscal : any = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
+            if(findProjectFiscal[0][0].is_qualified) {
+                return {
+                    statusCode : HttpStatus.NOT_FOUND,
+                    statusMessage : STATUS_MESSAGE.qualifiedProject
+                } 
+            }
             let findProjectSummary : any = await mainSequelize.query(rawQueries.findProjectSummary(data))
             let findProjectFisSummary : any = await mainSequelize.query(rawQueries.findProjectFiscalSummary(data))
             if(findProjectFiscal[0].length > 0 && findProjectFisSummary[0].length > 0) {
@@ -79,6 +89,7 @@ class ProjectGraphQlServices {
                 data.created_by = findProjectFiscal[0][0].created_by;
                 data.status_rid = findProjectFiscal[0][0].status_rid;
                 data.fiscal_year=data.fiscal_year? data.fiscal_year:findProjectFiscal[0][0].fiscal_year;
+                data.region_rid = findProjectFiscal[0][0].region_rid
                 await this.projectIngestion.updateProjectFiscalRegion(checkAccountExists[0][0].r_number, data, findProjectFiscal[0][0].project_code)
             }
             if(setProjectFiscalSummary.length > 0) {
@@ -138,14 +149,56 @@ class ProjectGraphQlServices {
                     }
                     if (newValue !== null && newValue !== undefined && typeof newValue === 'string') {
                         newValue = newValue.replace(/'/g, "''");
-                    }
-                        
+                    }   
                         if(newValue !== oldValue) {
                             await orgSequelize.query(rawQueries.insertProjectHistory(schemaName, data, attributeName, newValue, oldValue))
                         }
                     }
                 }
             }
+            const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(data.account_rid);
+
+            const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+            if (checkTableExists) {
+                const projectCaseMapping = await orgSequelize.query(rawQueries.fetchProjectFiscalCaseMapping(schemaName, data));
+                if (projectCaseMapping.length > 0) {
+                    for(let caseMapping of projectCaseMapping[0] as CaseProject[]) {
+                        const caseData = await Case.findOne({
+                        where: {
+                            rid: caseMapping.case_rid,
+                        },
+                        });
+                    
+                        if (!caseData) {
+                        continue;
+                        }
+                    
+                        const caseStatus = await mainSequelize.query(
+                        rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+                        {
+                            type: "SELECT",
+                        }
+                        ) as CaseStatusResult[];
+                    
+                        if (caseStatus[0]?.status_name === "Closed") {
+                        continue;
+                        }
+
+                        if(setProjectFiscalData.length > 0) {
+                            if(data.project_code) {
+                                if(data.project_code !== '') {
+                                await orgSequelize.query(rawQueries.updateCaseProjectPrjCode(schemaName, data.project_code, data.account_rid, data.project_rid, findProjectFiscal[0][0].project_code, caseMapping.case_rid))
+                                } 
+                            }
+                            await orgSequelize.query(rawQueries.updateCaseProjects(schemaName, setProjectFiscalData, data,  caseMapping.case_rid))
+                            await this.projectIngestion.updateCaseProjectFiscalRegion(checkAccountExists[0][0].r_number, data, caseMapping as CaseProject, findProjectFiscal[0][0].project_code)
+                        }
+
+                        await orgSequelize.query(rawQueries.updateCaseProjectEffectiveDatas(schemaName, updatedProjectFiscal[0][0], caseMapping.case_rid))
+                    }
+                }
+            }   
+
             let accountData : any = {}
             accountData.rid = data.account_rid
             let graphqlData : any = {};
