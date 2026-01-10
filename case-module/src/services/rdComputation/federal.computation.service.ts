@@ -112,48 +112,83 @@ export class FederalComputationService {
                         const otherCost = Number(caseDetails?.other) || 0.00
                         let reductionValue = `Reductions (${extractConfig.reduction}%)`
                         let grossReductionValue = `GROSS RDEC @ ${extractConfig.gross_rdec}%`
-                         const saveData = {
-                            Title : {
-                                "Account ID" : accountRid,
-                                "Account Name" : countryInfo.accountName,
-                                "Description": "Summary of SR&ED Expenditures",
-                                "Fiscal Year" : `04/01/${caseDetails?.fiscal_year - 1} - 03/31/${caseDetails?.fiscal_year}`
-                            },
-                            Columns : [
-                                "Project Credit Summary","Employees", "EPW", reductionValue, 
-                                "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
-                                "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
-                                "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit"
-                            ],
-                            Total : {
-                                "Employees" : totalEmployees,
-                                "EPW" : totalEpw,
-                                [reductionValue] : totalReduction,
-                                "Net EPW" : totalNetEpw,
-                                "Total Project Value/Labor" : totalProjectValue,
-                                "Materials/Software": materialSoftwareCost,
-                                "Subcontracts": subContracts,
-                                "Heat Light Power": heatLightPower,
-                                "Other": otherCost,
-                                "Total Salary + EPW Expenses": totalSalaryAndExpenses,
-                                "Total Employers Pension Contribution NIC": employersPensionContributions,
-                                "Total Qualifying RDEC": qualifyingRdc,
-                                [grossReductionValue] : `${extractConfig.gross_rdec}%`,
-                                "Total Final R&D Claim Credit" : grossReduction
-                            },
-                            Projects : result.computedFields[0].projects.map((d: any) => {
-                                return {
-                                    "Project ID": d.project_fiscal_rid,
-                                    "Project Name": d.project_name,
-                                    "Currency Symbol": mapCurrency.get(d.currency_rid) || null,
-                                    "Employees" : d.employees,
-                                    "EPW" : d.epw,
-                                    [reductionValue] : d.reductions,
-                                    "Net EPW" : d.net_epw,
-                                    "Total Project Value/Labor" : d.total_project_value_labor,
-                                }
+                        let selectedCost : number = 0.00;
+                        let targetCost = qualifyingRdc * 0.5
+                        let storePercentage = [];
+                        let calculatePercentage : number = 0.00;
+                        let storeProjectsCosts : number[]= [];
+                        let mapPercentageWithCosts : Map<number, number[]> = new Map();
+                        let storeAllProjectAsDuplicateForIterations : any[]= []
+                        let mapProjectQualified : Map<string, number> = new Map();
+                        result.computedFields[0].projects.forEach((d : any) => {
+                            storeAllProjectAsDuplicateForIterations.push({
+                                project_fiscal_rid : d.project_fiscal_rid,
+                                total_project_value_labor : d.total_project_value_labor
                             })
+                        })
+                        storeAllProjectAsDuplicateForIterations.sort((a,b) => {return a-b});
+                        for(let cost of storeAllProjectAsDuplicateForIterations) {
+                            if(selectedCost >= targetCost) {
+                                continue
+                            }
+                            selectedCost = parseFloat(Number(selectedCost + cost.total_project_value_labor).toFixed(2)) || 0.00
+                            calculatePercentage = parseFloat(Number((selectedCost/qualifyingRdc)*100).toFixed(2)) || 0.00;
+                            storePercentage.push(calculatePercentage);
+                            storeProjectsCosts.push(cost.total_project_value_labor)
+                            mapPercentageWithCosts.set(calculatePercentage, storeProjectsCosts)
+                            mapProjectQualified.set(cost.project_fiscal_rid, cost.total_project_value_labor)
                         }
+                        let fetchMoreThanFiftyPercentCost = mapPercentageWithCosts.get(storePercentage[0]!)?.reduce((previousValue : number, currentValue : number) => previousValue + currentValue, 0.00) || 0.00
+                        const saveData = {
+                        Title : {
+                            "Account ID" : accountRid,
+                            "Account Name" : countryInfo.accountName,
+                            "Description": "Summary of SR&ED Expenditures",
+                            "Fiscal Year" : `04/01/${caseDetails?.fiscal_year - 1} - 03/31/${caseDetails?.fiscal_year}`
+                        },
+                        Columns : [
+                            "Project Credit Summary","Employees", "EPW", reductionValue, 
+                            "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
+                            "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
+                            "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit"
+                        ],
+                        Total : {
+                            "Employees" : totalEmployees,
+                            "EPW" : totalEpw,
+                            [reductionValue] : totalReduction,
+                            "Net EPW" : totalNetEpw,
+                            "Total Project Value/Labor" : totalProjectValue,
+                            "Materials/Software": materialSoftwareCost,
+                            "Subcontracts": subContracts,
+                            "Heat Light Power": heatLightPower,
+                            "Other": otherCost,
+                            "Total Salary + EPW Expenses": totalSalaryAndExpenses,
+                            "Total Employers Pension Contribution NIC": employersPensionContributions,
+                            "Total Qualifying RDEC": qualifyingRdc,
+                            [grossReductionValue] : `${extractConfig.gross_rdec}%`,
+                            "Total Final R&D Claim Credit" : grossReduction
+                        },
+                        Projects : result.computedFields[0].projects.map((d: any) => {
+                            return {
+                                "Project ID": d.project_fiscal_rid,
+                                "Project Name": d.project_name,
+                                "Currency Symbol": mapCurrency.get(d.currency_rid) || null,
+                                "Employees" : d.employees,
+                                "EPW" : d.epw,
+                                [reductionValue] : d.reductions,
+                                "Net EPW" : d.net_epw,
+                                "Total Project Value/Labor" : d.total_project_value_labor,
+                                is_qualified : mapProjectQualified.get(d.project_fiscal_rid) ? true : false
+                            }
+                        }),
+                        "Percentage Calculation": {
+                            "Total Customer Groups" : result.computedFields[0].projects.length || 0,
+                            "Total QRE" : qualifyingRdc,
+                            "Total value of customer groups Greater than 50%" : fetchMoreThanFiftyPercentCost,
+                            "%" : `${parseFloat(Number((fetchMoreThanFiftyPercentCost/qualifyingRdc) * 100).toFixed(2))}%`
+
+                        }
+                    }
                         await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData); 
                         return {
                             statusCode : HttpStatus.SUCCESS,
