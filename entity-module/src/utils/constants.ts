@@ -1023,6 +1023,8 @@ export const rawQueries = {
     account_rid = '${account_rid}'
     AND
     fiscal_year = ${fiscal_year}
+    AND 
+    region_rid in (select region_rid from ${schemaName}.project_resource)
     `;
   },
   updateProjectFiscalEffectiveDatas(schemaName: string, data: any) {
