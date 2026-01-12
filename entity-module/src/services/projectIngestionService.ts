@@ -2371,6 +2371,14 @@ class ProjectIngestionService {
                 ["total_cost_fte_prj", "total_cost_fte"],
                 ["total_cost_subcon_prj", "total_cost_subcon"],
                 ["total_cost_nonlabor_prj", "total_cost_nonlabor"],
+                [
+                  Sequelize.literal(`EXISTS (
+                    SELECT 1
+                    FROM "${schemaName}"."project_resource" pr
+                    WHERE pr.project_fiscal_rid = "ProjectFiscal"."rid"
+                  )`),
+                  "is_project_exists",
+                ],
               ],
             },
           },
@@ -2536,6 +2544,14 @@ class ProjectIngestionService {
                   Sequelize.col("total_cost_nonlabor_prj"),
                   "total_cost_nonlabor",
                 ],
+                [
+                  Sequelize.literal(`EXISTS (
+                    SELECT 1
+                    FROM "${schemaName}"."project_resource" pr
+                    WHERE pr.project_fiscal_rid = "ProjectFiscal"."rid"
+                  )`),
+                  "is_project_exists",
+                ],
                 ...(apiSource === "interaction"
                   ? [
                     [
@@ -2653,9 +2669,9 @@ class ProjectIngestionService {
       }
     }
 
-    if (projects.length > 0) {
-      projects = await this.addProjectResourceExistsFlags(projects);
-    }
+    // if (projects.length > 0) {
+    //   projects = await this.addProjectResourceExistsFlags(projects);
+    // }
 
     return {
       projects,
