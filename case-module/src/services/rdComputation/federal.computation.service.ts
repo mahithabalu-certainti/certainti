@@ -423,6 +423,27 @@ export class FederalComputationService {
                     }
                 })
                 return finalAusData[0]
+            } else if(fetchCountryDetails[0][0].country_code === "GBR") {
+                const finalUkData = result.map((u : any) => {
+                    return {
+                        ...u,
+                        computed_fields : {
+                            "Title" : u.computed_fields["Title"],
+                            "Total" : u.computed_fields["Total"],
+                            "Columns" : u.computed_fields["Columns"],
+                            "Projects" : u.computed_fields["Projects"],
+                            "Technical Submissions by Cost that are 50% or more of Total QRE":u.computed_fields["Technical Submissions by Cost that are 50% or more of Total QRE"],
+                            "Total Project to be shared with HMRC" : u.computed_fields["Total Project to be shared with HMRC"],
+                            "Percentage Calculation": {
+                                "Total Customer Groups" : u.computed_fields["Percentage Calculation"]["Total Customer Groups"],
+                                "Total QRE" : u.computed_fields["Percentage Calculation"]["Total QRE"],
+                                "Total value of customer groups Greater than 50%" : u.computed_fields["Percentage Calculation"]["Total value of customer groups Greater than 50%"],
+                                "%" : u.computed_fields["Percentage Calculation"]["%"]
+                            }
+                        }
+                    }
+                })
+                return finalUkData[0];
             } else {
                 return result[0]
             }
