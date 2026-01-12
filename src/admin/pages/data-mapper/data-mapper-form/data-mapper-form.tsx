@@ -25,12 +25,7 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 
 const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
-const ACCEPTED_FILE_TYPES = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  'application/vnd.ms-excel', // .xls
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-];
+const ACCEPTED_FILE_TYPES = ['application/pdf'];
 
 const DataMapperForm: React.FC = () => {
   const { mapperId } = useParams();
@@ -190,12 +185,11 @@ const DataMapperForm: React.FC = () => {
       }
 
       const isAcceptedType =
-        ACCEPTED_FILE_TYPES.includes(file.type) ||
-        /\.(pdf|docx|xls|xlsx)$/i.test(file.name);
+        ACCEPTED_FILE_TYPES.includes(file.type) || /\.pdf$/i.test(file.name);
 
       if (!isAcceptedType) {
         showError(
-          `"${file.name}" is not a valid file. Only .pdf, .docx, .xls, or .xlsx files are allowed.`
+          `"${file.name}" is not a valid file. Only PDF files are allowed.`
         );
         continue;
       }
@@ -245,26 +239,16 @@ const DataMapperForm: React.FC = () => {
   };
 
   const handleExternalSubmit = () => {
+    setMessage(null);
+
+    if (selectedFiles.length === 0 && !existingFile) {
+      showError('Please upload a PDF file.');
+    }
+
     formRef.current?.requestSubmit();
   };
 
   const handleSubmitData = (data: Partial<DataMapperFormPayload>) => {
-    if (selectedFiles.length === 0 && !existingFile && !isEditView) {
-      showError('Please upload a file.');
-      return;
-    }
-
-    // File validation only if a file is selected
-    if (!existingFile && selectedFiles.length > 0) {
-      const file = selectedFiles[0];
-      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        showError(
-          `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB limit. Please upload a smaller file.`
-        );
-        return;
-      }
-    }
-
     const formDataPayload = new FormData();
     formDataPayload.append('form_name', data.form_name || '');
     formDataPayload.append(
@@ -436,7 +420,7 @@ const DataMapperForm: React.FC = () => {
                   </div>
                   <input
                     type='file'
-                    accept='.pdf,.docx,.xls,.xlsx'
+                    accept='.pdf'
                     className='hidden'
                     ref={fileInputRef}
                     onChange={handleFileSelect}

@@ -4,6 +4,7 @@ import {
   createSelectField,
   createDateField,
 } from '../../../../common-utils';
+import dayjs from 'dayjs';
 
 export const DataMapperFormData = (
   countryOptions: SelectOption[],
@@ -26,9 +27,11 @@ export const DataMapperFormData = (
           onChange: true,
         }),
         createDateField('effective_to_date', 'Effective To Date', {
-          required: false,
+          required: true,
           allowFutureDates: true,
-          minDate: effectiveFromDate,
+          minDate: effectiveFromDate
+            ? dayjs(effectiveFromDate).add(1, 'day').toDate()
+            : undefined,
         }),
         createSelectField('country_rid', 'Country', {
           options: countryOptions,
