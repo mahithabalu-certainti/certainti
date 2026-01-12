@@ -112,33 +112,34 @@ export class FederalComputationService {
                         const otherCost = Number(caseDetails?.other) || 0.00
                         let reductionValue = `Reductions (${extractConfig.reduction}%)`
                         let grossReductionValue = `GROSS RDEC @ ${extractConfig.gross_rdec}%`
-                        let selectedCost : number = 0.00;
-                        let targetCost = qualifyingRdc * 0.5
-                        let storePercentage = [];
-                        let calculatePercentage : number = 0.00;
-                        let storeProjectsCosts : number[]= [];
-                        let mapPercentageWithCosts : Map<number, number[]> = new Map();
-                        let storeAllProjectAsDuplicateForIterations : any[]= []
-                        let mapProjectQualified : Map<string, number> = new Map();
-                        result.computedFields[0].projects.forEach((d : any) => {
-                            storeAllProjectAsDuplicateForIterations.push({
-                                project_fiscal_rid : d.project_fiscal_rid,
-                                total_project_value_labor : d.total_project_value_labor
+                        const minProjectResult = this.selectMinimumProjectsCost(qualifyingRdc, 0.5, result.computedFields[0].projects);
+                        let projectsMoreOfQre50Percent;
+                        let totalProjectSharedWithHmrc = 0.00;
+                        
+                        if(result.computedFields[0].projects.length === 7) {
+                            projectsMoreOfQre50Percent = result.computedFields[0].projects.map((p : any, index : number) => {
+                                return {
+                                    "Project ID": p.project_fiscal_rid,
+                                    "Project Name": p.project_name,
+                                    "Currency Symbol": mapCurrency.get(p.currency_rid) || null,
+                                    "Total Project Value/Labor" : p.total_project_value_labor,
+                                }
                             })
-                        })
-                        storeAllProjectAsDuplicateForIterations.sort((a,b) => {return a-b});
-                        for(let cost of storeAllProjectAsDuplicateForIterations) {
-                            if(selectedCost >= targetCost) {
-                                continue
-                            }
-                            selectedCost = parseFloat(Number(selectedCost + cost.total_project_value_labor).toFixed(2)) || 0.00
-                            calculatePercentage = parseFloat(Number((selectedCost/qualifyingRdc)*100).toFixed(2)) || 0.00;
-                            storePercentage.push(calculatePercentage);
-                            storeProjectsCosts.push(cost.total_project_value_labor)
-                            mapPercentageWithCosts.set(calculatePercentage, storeProjectsCosts)
-                            mapProjectQualified.set(cost.project_fiscal_rid, cost.total_project_value_labor)
+                            projectsMoreOfQre50Percent.forEach((f : any) => {
+                                totalProjectSharedWithHmrc += f["Total Project Value/Labor"]
+                            })
+                        } else {
+                            projectsMoreOfQre50Percent = minProjectResult.selectedProjects.map((p : any, index : number) => {
+                                return {
+                                    "Project ID": p.project_fiscal_rid,
+                                    "Project Name": p.project_name,
+                                    "Currency Symbol": mapCurrency.get(p.currency_rid) || null,
+                                    "Total Project Value/Labor" : p.total_project_value_labor,                                }
+                            })
+                            projectsMoreOfQre50Percent.forEach((f : any) => {
+                                totalProjectSharedWithHmrc += f["Total Project Value/Labor"]
+                            })
                         }
-                        let fetchMoreThanFiftyPercentCost = mapPercentageWithCosts.get(storePercentage[0]!)?.reduce((previousValue : number, currentValue : number) => previousValue + currentValue, 0.00) || 0.00
                         const saveData = {
                         Title : {
                             "Account ID" : accountRid,
@@ -150,7 +151,9 @@ export class FederalComputationService {
                             "Project Credit Summary","Employees", "EPW", reductionValue, 
                             "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
                             "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
-                            "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit"
+                            "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit","Percentage Calculation",
+                            "Technical Submissions by Cost that are 50% or more of Total QRE",
+                            "Total Project to be shared with HMRC" 
                         ],
                         Total : {
                             "Employees" : totalEmployees,
@@ -178,15 +181,18 @@ export class FederalComputationService {
                                 [reductionValue] : d.reductions,
                                 "Net EPW" : d.net_epw,
                                 "Total Project Value/Labor" : d.total_project_value_labor,
-                                is_qualified : mapProjectQualified.get(d.project_fiscal_rid) ? true : false
+                                is_qualified : minProjectResult.selectedProjects.some((t) => t.project_name === d.project_name)
                             }
                         }),
                         "Percentage Calculation": {
                             "Total Customer Groups" : result.computedFields[0].projects.length || 0,
                             "Total QRE" : qualifyingRdc,
-                            "Total value of customer groups Greater than 50%" : fetchMoreThanFiftyPercentCost,
-                            "%" : `${parseFloat(Number((fetchMoreThanFiftyPercentCost/qualifyingRdc) * 100).toFixed(2))}%`
-
+                            "Total value of customer groups Greater than 50%" : minProjectResult.selectedSum,
+                            "%" : `${parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2))}%`
+                        },
+                        "Technical Submissions by Cost that are 50% or more of Total QRE" : projectsMoreOfQre50Percent,
+                        "Total Project to be shared with HMRC" : {
+                            "Total" : totalProjectSharedWithHmrc
                         }
                     }
                         await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData); 
@@ -422,6 +428,30 @@ export class FederalComputationService {
             }
         }
     }
+    
+    selectMinimumProjectsCost(totalCost : number, percentage : number, projects : any) {
+        const threshold = totalCost * percentage;
+        projects.sort((a : any, b : any) => {return b.total_project_value_labor - a.total_project_value_labor});
+        let bestSum = Infinity;
+        let bestCombination : any[] = [];
 
+        function choosebestComboCost(index : number, currentSum : number, currenctCombo : any) {
+            if(currentSum >= bestSum) return;
+            if(currentSum >= threshold) {
+                bestSum = currentSum;
+                bestCombination = [...currenctCombo];
+                return;
+            }
+            if(index === projects.length) return;
+
+            choosebestComboCost(index + 1, currentSum + projects[index].total_project_value_labor, [...currenctCombo, projects[index]]);
+            choosebestComboCost(index + 1, currentSum, currenctCombo)
+        }
+        choosebestComboCost(0, 0, []);
+        return {
+            selectedProjects : bestCombination,
+            selectedSum : bestSum
+        }
+    }
 }
 export default FederalComputationService;
