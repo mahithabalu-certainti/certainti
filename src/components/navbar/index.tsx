@@ -112,6 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isCaseModule = location.pathname.startsWith(`${CASE}/`);
   const isProjectModule = location.pathname.startsWith(`${PROJECT}/`);
   const isSpecificFYModule = isCaseModule || isProjectModule;
+  const environment = import.meta.env.VITE_ENVIRONMENT;
 
   const [globalAnchorEl, setGlobalAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -514,6 +515,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             {!showAdminSidebar && isViewAccountsEnable && (
               <>
+                {environment &&
+                  ['Dev', 'QA', 'Pre-Prod'].includes(environment) && (
+                    <>
+                      <div className='bg-[#FFFFFF26] px-2 h-[25px] flex justify-center items-center gap-1.5 mr-2 rounded-[2px] whitespace-nowrap'>
+                        <span className='text-[12px] font-normal text-white'>
+                          Environment: {environment}
+                        </span>
+                      </div>
+                      <div className='border-l border-[#FFFFFF4D] h-6 mr-2' />
+                    </>
+                  )}
                 {isAccountsNameEnabled && (
                   <>
                     <div className='relative'>
