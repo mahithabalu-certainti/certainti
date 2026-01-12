@@ -30,6 +30,7 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
   TechnicalSummaryExportListParams,
+  ColorCode,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -45,25 +46,30 @@ import {
   SideMenuPanel,
 } from '../../../../components';
 import {
-  AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
   CallLogIcon,
-  CasesIcon,
+  CaseIcon,
+  CaseTeamIcon,
   ChecklistIcon,
   ComingSoon,
-  DetailsIcon,
+  ConfigRuleIcon,
   DetailsKeyContactErrorIcon,
+  DossierIcon,
   DraftEmailIcon,
   FinancialIcon,
+  HistorySubmissionIcon,
   InteractionsIcon,
   MeetingIcon,
   NotesSideIcon,
   ProjectsSideIcon,
+  ProjectTaskIcon,
   ResourcesIcon,
+  ReviewProjectIcon,
   SettingIcon,
   TaskCreateIcon,
   TechSummaryIcon,
+  WorkBreakdownIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -109,6 +115,7 @@ import {
 } from '../../../services/financial/financial-service';
 import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
 import { CircularProgress } from '@mui/material';
+import { Dossier } from './dossier';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -142,7 +149,8 @@ export const CaseDetails = () => {
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
   const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
-
+  const [dossierFinancialStatus, setDossierFinancialStatus] =
+    useState<string>('');
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
@@ -876,6 +884,15 @@ export const CaseDetails = () => {
             setTechnicalSummaryParams={setTechnicalSummaryParams}
           />
         );
+      case 'dossier':
+        return (
+          <Dossier
+            activityMenuItems={activityMenuItems}
+            caseDetails={caseData}
+            setDossierFinancialStatus={setDossierFinancialStatus}
+            dossierFinancialStatus={dossierFinancialStatus}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -922,7 +939,7 @@ export const CaseDetails = () => {
         key: 'workBreakdown',
         id: AllModules.WORKBREAKDOWN,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: WorkBreakdownIcon,
       },
       {
         name: 'Financial Highlights',
@@ -936,14 +953,14 @@ export const CaseDetails = () => {
         key: 'caseReview',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: CasesIcon,
+        icon: ReviewProjectIcon,
       },
       {
         name: 'Case Team',
         key: 'caseTeam',
         id: AllModules.CASES_TEAM,
         disabled: false,
-        icon: CasesIcon,
+        icon: CaseTeamIcon,
       },
       {
         name: 'Case Projects',
@@ -951,7 +968,7 @@ export const CaseDetails = () => {
         id: AllMenus.FALLBACK,
         hide: !isReviewProjectEnable && !isProjectEnable,
         disabled: false,
-        icon: CasesIcon,
+        icon: ProjectsSideIcon,
       },
       {
         name: 'Case Project Resource',
@@ -965,14 +982,14 @@ export const CaseDetails = () => {
         key: 'projectTask',
         id: AllMenus.PROJECT_TASK,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: ProjectTaskIcon,
       },
       {
         name: 'Historical Submission',
         key: 'historical_submission',
         id: AllModules.HISTORICAL_SUBMISSION,
         disabled: false,
-        icon: InteractionsIcon,
+        icon: HistorySubmissionIcon,
       },
       {
         name: 'Interactions',
@@ -989,18 +1006,11 @@ export const CaseDetails = () => {
         icon: TechSummaryIcon,
       },
       {
-        name: 'RD Credit Forms',
-        key: 'rd_credit_forms',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: DetailsIcon,
-      },
-      {
         name: 'Dossier',
         key: 'dossier',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: DossierIcon,
       },
       {
         name: 'Activities',
@@ -1044,7 +1054,7 @@ export const CaseDetails = () => {
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: false,
             hide: false,
-            icon: ResourcesIcon,
+            icon: ConfigRuleIcon,
           },
         ],
       },
@@ -1078,9 +1088,9 @@ export const CaseDetails = () => {
           variant='sub'
           placeholder={'Case ID'}
           icon={
-            <AccountDetailsIcon
-              className='h-6 w-6 rounded'
-              style={{ backgroundColor: '#4B9BFF' }}
+            <CaseIcon
+              alt='case-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
             />
           }
           title={caseData?.r_number || ''}
@@ -1140,6 +1150,7 @@ export const CaseDetails = () => {
             onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
             maxHeight={isActionItemsExpanded ? 150 : 292}
+            isLoading={isLoading}
           />
         </div>
         <div
@@ -1163,6 +1174,21 @@ export const CaseDetails = () => {
                 <span className='ml-1 font-medium'>
                   Case team setup is missing. Please create a case team before
                   marking the task as complete.
+                </span>
+              </div>
+            </div>
+          )}
+          {dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED' && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box mb-2'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Status:</span>
+                <span className='ml-1 font-medium'>
+                  {dossierFinancialStatus || '-'}
                 </span>
               </div>
             </div>

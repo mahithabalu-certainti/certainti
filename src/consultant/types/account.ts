@@ -532,7 +532,10 @@ export type ExportType =
   | 'cases_projects'
   | 'case_task'
   | 'review_projects'
-  | 'activities';
+  | 'activities'
+  | 'dossier-project-summary'
+  | 'dossier-resource-summary'
+  | 'dossier-project-documents';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

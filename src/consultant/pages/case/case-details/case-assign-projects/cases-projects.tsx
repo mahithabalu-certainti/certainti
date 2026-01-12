@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
-import { InteractionDetailIcon } from '../../../../../assets';
+import { ProjectsSideIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
   AllPermissions,
@@ -42,6 +42,7 @@ import {
 import {
   ActivityDropdownItem,
   CaseAssignedExportParams,
+  ColorCode,
   ExportType,
 } from '../../../../types';
 import ProjectTab from './projects-tab';
@@ -669,9 +670,9 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       <SectionHeader
         title={isAssignProject ? 'Assign Projects' : 'Case Projects'}
         titleIcon={
-          <InteractionDetailIcon
+          <ProjectsSideIcon
             alt='financial-header-icon'
-            className={`w-7 h-7 p-1 bg-[#E25A32] 'rounded-[2px]' 'rounded-full'`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         count={count}
@@ -686,6 +687,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           ...btn,
           hide: Boolean(btn.hide),
         }))}
+        iconBg={ColorCode.caseBgColor}
+        bgType='circle'
       />
       {!isAssignProject && !projectDetailTab && (
         <SectionHeaderTab

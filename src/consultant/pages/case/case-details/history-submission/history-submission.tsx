@@ -19,8 +19,8 @@ import {
   TextField,
 } from '@mui/material';
 import {
-  ActionItemsIcon,
   ErrorInfoIcon,
+  HistorySubmissionIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
 } from '../../../../../assets';
@@ -33,7 +33,7 @@ import { useSearchParams } from 'react-router-dom';
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityMenuItem, CaseDetails } from '../../../../types';
+import { ActivityMenuItem, CaseDetails, ColorCode } from '../../../../types';
 import {
   useGetHistoricalSubmission,
   useUpdateHistorySubmission,
@@ -879,7 +879,12 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
   ];
 
   const getTitleIcon = () => {
-    return <ActionItemsIcon alt='action-items-icon' />;
+    return (
+      <HistorySubmissionIcon
+        alt='action-items-icon'
+        className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      />
+    );
   };
 
   // Add this function to check if a field should be visible
@@ -945,6 +950,8 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
         count={formData.historicalSubmissions.length}
         showItemCount={true}
         hideSection={false}
+        iconBg={ColorCode.caseBgColor}
+        bgType='circle'
       />
 
       <div className='flex flex-col gap-0 border border-[#CBD6E2]'>

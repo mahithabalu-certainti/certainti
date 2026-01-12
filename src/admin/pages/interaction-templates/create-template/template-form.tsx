@@ -32,7 +32,7 @@ import {
 } from './helper';
 import {
   ErrorInfoIcon,
-  InteractionDetailIcon,
+  InteractionTemplateIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
 } from '../../../../assets';
@@ -46,6 +46,7 @@ import {
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import { ColorCode } from '../../../../consultant/types';
 
 const TemplateForm: React.FC = () => {
   const { successToast } = useToast();
@@ -299,9 +300,9 @@ const TemplateForm: React.FC = () => {
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <InteractionDetailIcon
+          <InteractionTemplateIcon
             alt='interaction-template-icon'
-            className='h-7 w-7 p-[3px] rounded [&>path]:fill-[#fff] [&>path]:stroke-[#F16137] bg-[#F16137]'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
           />
           <div className='w-[90%]'>
             {isLoading ? (

@@ -30,7 +30,7 @@ import {
   shouldHideField,
 } from './helper';
 import {
-  ChecklistIcon,
+  ChecklistTemplateIcon,
   ErrorInfoIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
@@ -45,6 +45,7 @@ import {
 } from '../../../service/checklist-templates/checklist-template-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import { ColorCode } from '../../../../consultant/types';
 
 const ChecklistTemplateForm: React.FC = () => {
   const { successToast } = useToast();
@@ -290,9 +291,9 @@ const ChecklistTemplateForm: React.FC = () => {
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <ChecklistIcon
+          <ChecklistTemplateIcon
             alt='checklist-template-icon'
-            className='h-[24px] w-[24px] p-1 rounded [&>path]:stroke-[#fff] bg-[#3EBEB5]'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
           />
           <div className='w-[90%]'>
             {isLoading ? (
