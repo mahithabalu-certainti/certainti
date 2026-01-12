@@ -76,6 +76,10 @@ import { CaseProjectTask } from "../../models/caseProjectTaskModel";
 import { CaseKeyContactDetails } from "../../models/caseKeyContactModel";
 import { setupCaseKeyContactSequence } from "../../models/caseKeyContactModel";
 import { HelperMethods } from "./helperMethods";
+import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } from "../../models/rdCreditCountryCalcModel";
+import { RdCreditProcess } from "../../models/rdCreditProcessModel";
+import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -749,6 +753,18 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const RdCreditCountryCalculationsModel = RdCreditCountryCalculations.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const RdCreditProcessModel = RdCreditProcess.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const RdCreditStateCalculationsModel = RdCreditStateCalculations.initialize(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -787,6 +803,11 @@ class CaseSchemaService {
       await CaseProjectTaskModel.sync({ force: false });
       await CaseKeyContactDetailsModel.sync({ force: false });
       await setupCaseKeyContactSequence(orgDbSequlize, schemaName)
+      await RdCreditCountryCalculationsModel.sync({ force: false })
+      await setupRdCreditCountryCalculationSequence(orgDbSequlize, schemaName);
+      await RdCreditProcessModel.sync({ force: false });
+      await RdCreditStateCalculationsModel.sync({ force: false });
+      await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName)
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
@@ -1913,6 +1934,7 @@ class CaseSchemaService {
             industry_name: industryMap.get(d.industry_rid) || null,
             project_classification_name: classificationMap.get(d.project_classification_rid) || null,
             project_type_name: projectTypeMap.get(d.project_type_rid) || null,
+            currency_rid: d.currency_rid || null,
             currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
             currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
           };
@@ -4498,22 +4520,23 @@ class CaseSchemaService {
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
     const fiscalYear = data.fiscal_year;
     if (!fiscalStart || !fiscalEnd) return "";
-    // Start date
-    const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
-    const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
-    const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
+    const [splitMonthStart, splitDateStart] = fiscalStart.split("/");
+    const [splitMonthEnd, splitDateEnd] = fiscalEnd.split("/");
+    const fiscalDateRange = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
+    let effectiveStart = fiscalDateRange.startDate
+    let effectiveEnd = fiscalDateRange.endDate
 
     // Now send both to fetchPlatformConfig
     let [platFormConfig]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchPlatformConfig(
-        data.country_rid, formattedStartDate, formattedEndDate
+        data.country_rid, effectiveStart, effectiveEnd
       ), { type: 'SELECT' }
     );
     if (!platFormConfig) return "";
     const submissionMonth = platFormConfig?.config_json?.submission_date;
     if (!submissionMonth) return "";
 
-  const submissionDate = new Date(formattedEndDate);
+  const submissionDate = new Date(effectiveEnd);
   submissionDate.setMonth((submissionDate.getMonth()) + parseInt(submissionMonth));
 
   

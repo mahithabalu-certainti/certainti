@@ -199,6 +199,10 @@ export const STATUS_MESSAGE = {
   configUpdatedSuccess: "Configuration updated successfully",
   configCreationFailed: "Configuration creation failed",
   configUpdateFailed: "Configuration update failed",
+  rdCreditPreviewSuccess : "R&D Credit preview fetched successfully",
+  rdCreditPreview: "RD credit calculation results retrieved",
+  rdCreditProcessInitiatedSuccess : "RD credit calculation initiated successfully",
+  rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
@@ -956,7 +960,8 @@ export const rawQueries = {
   },
   fetchCaseById(schemaName: string) {
     return `
-    SELECT rid,r_number,case_name,account_rid ,fiscal_year
+    SELECT rid,r_number,case_name,account_rid ,fiscal_year, material_software_cost, heat_light_power, total_nonlabor_cost,
+    employers_pension_contribution,other, total_expenses
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
@@ -1393,7 +1398,7 @@ export const rawQueries = {
     WHERE g.rid = '${credit_config_group_rid}';
     `;
   },
-  getPlatformJurisdictionConfig() {
+  getPlatformJurisdictionConfig(countryRid : string) {
     return `
       SELECT 
       k.rid as credit_parameter_key_rid,
@@ -1414,7 +1419,8 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE g.credit_program_name = 'Platform Configuration'
-    AND g.is_federal = true;
+    AND g.is_federal = true
+    AND g.country_rid = '${countryRid}'
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
@@ -1569,6 +1575,9 @@ export const rawQueries = {
   },
   fetchMilestoneDetails (rid : string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
+  },
+  fetchAccountStartEndDate (accountRid : string, schemaName : string) {
+    return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
@@ -1970,4 +1979,9 @@ export const mainTableFiltersForCase: Record<any, any> = {
   role_name: "role_name",
   task_status_name: "task_status_name",
   assigned_to_name: "assigned_to_name"
+}
+
+export const onlyFederals = {
+  usa : "USA",
+  canada : "CAN"
 }

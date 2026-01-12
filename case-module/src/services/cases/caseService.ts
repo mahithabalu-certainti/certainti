@@ -50,6 +50,7 @@ import {
   ruleNames,
   ruleTemplateNames,
   entityNames,
+  onlyFederals,
 } from "../../utils/constants";
 import currency from "currency.js";
 import moment from "moment";
@@ -511,6 +512,15 @@ export class CaseService {
           queryResult.currency_code = null;
           queryResult.currency_rid = null;
         }
+        let isStateAvailable : boolean = false;
+        if(onlyFederals.usa == queryResult.country_code) {
+          isStateAvailable = true
+        } else if (onlyFederals.canada === queryResult.country_code) {
+          isStateAvailable = true
+        } else {
+          isStateAvailable = false;
+        }
+        queryResult.is_state_available = isStateAvailable
         return {
           statusCode: HttpStatus.SUCCESS,
           data: queryResult,

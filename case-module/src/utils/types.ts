@@ -16,7 +16,19 @@ export interface ICreateCases {
   status_rid?: string;
   heat_light_power?: number;
   total_nonlabor_cost?: number;
-  tax_liability?: number
+  tax_liability?: number;
+  employers_pension_contribution? : number
+  other? : number
+  material_software_cost? : number;
+  sub_contracts? : number;
+  cloud_software?: number;
+  unpaid_amounts_paid? : number;
+  unpaid_amounts? : number;
+  aggregated_turnover? : number;
+  total_expenses ? : number;
+  taxable_income ? : number;
+  export_sales_revenue? : number;
+
 }
 
 export type CaseHeadersColumns = {
@@ -56,6 +68,7 @@ export type CaseHeadersColumns = {
   account_status_rid : string,
   account_status_name : string
   is_send_interaction : boolean
+  is_state_available : boolean
 }
 
 export type FilingType = {
@@ -934,4 +947,28 @@ export type RegionIds = {
 export type RegionDetails = {
   rid : string
   state_name : string
+}
+export type ProjectComputeValue = {
+  project_name: string;
+  project_fiscal_rid: string;
+  employees: number;
+  epw: number;
+  reductions: number;
+  net_epw: number;
+  total_project_value_labor: number;
+}
+export type CalculateQreCostType = {
+  fte_qre_amount : number;
+  subcon_qre_amount : number;
+  nonlabor_qre_amount : number;
+}
+export type ProjectCalculatedDataCanada = {
+  project_code : string
+  project_name : string
+  total_effort_prj : number
+  total_cost_prj : number
+  total_cost_fte_prj : number
+  total_cost_subcon_prj : number
+  total_cost_nonlabor_prj : number
+  rd_percent_final : number
 }
