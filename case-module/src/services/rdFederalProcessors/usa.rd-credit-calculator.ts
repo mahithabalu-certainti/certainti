@@ -59,8 +59,14 @@ export class RdCreditCalculatorForUSA {
                 currency: this.currency,
             });
             logMessage(`Input Fields: ${JSON.stringify(inputFields)}`);
+            let taxCredit;
+            if(Number(rrc280C.reduction280c.no_elect280c["Multiply line 11 (if line 13 is No)"]) > Number(asc280C.reduction280c.no_elect280c["Multiply line 20 (equals line 25 if line 26 is No)"])) {
+                taxCredit = Number(rrc280C.reduction280c.no_elect280c["Multiply line 11 (if line 13 is No)"])
+            } else {
+                taxCredit = Number(asc280C.reduction280c.no_elect280c["Multiply line 20 (equals line 25 if line 26 is No)"])
+            }
 
-            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C);
+            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C, taxCredit);
 
             // Step 4: Return success response
             return {
@@ -109,14 +115,14 @@ export class RdCreditCalculatorForUSA {
         const line25 = line24; // because you don’t have line19 in ASC
 
         return {
-            tot_current_year_qre: totalQRE,
-            total_prior_3years_qre: line21,
-            adjusted_base_amount: line22,
-            excess_qre: line23,
-            asc_credit_amount: line24,
-            total_section_b_credit: line25,
-            final_credit: line25,
-            percentage_used: Math.round(percentage * 100)
+            "Total Qualified Research Expenses": Number(totalQRE),
+            "Total QREs for prior 3 tax years": Number(line21),
+            "Divide line 21 by 6.0": Number(line22),
+            "Subtract line 22 from line 20": Number(line23),
+            "Multiply line 23 by the percentage above": Number(line24),
+            "Add lines 19 and 24": Number(line25),
+            final_credit: Number(line25),
+            "Enter 14%. If QREs in any of the 3 years is zero, enter 6%": `${percentage}%`
         };
     }
 
@@ -148,16 +154,17 @@ export class RdCreditCalculatorForUSA {
 
         //---- Line 11: Enter smaller of line 9 or line 10
         const line11 = Decimal.min(line10, line9);
+        let dynamicLine5 = `Multiply line 5 by ${configRRC.qre_cap_rate}`
 
         return {
-            tot_current_year_qre: currentYearQRE,
-            fixed_base_percentage: Math.round(configRRC.fixed_base_percentage * 100),
-            average_annual_gross_receipts: line7,
-            base_amount: line8,
-            excess_qre_over_base_amount: line9,
-            half_total_qre: line10,
-            total_section_a_credit: line11,
-            final_credit: line11
+            "Total Qualified Research Expenses": Number(currentYearQRE),
+            "Fixed-base percentage": `${configRRC.fixed_base_percentage}%`,
+            "Average Annual Gross Receipts": Number(line7),
+            "Multiply line 7 by percentage on line 6": Number(line8),
+            "Subtract line 8 from line 5": Number(line9),
+            [dynamicLine5]: Number(line10),
+            "Enter smaller of line 9 or line 10": Number(line11),
+            final_credit: Number(line11)
         };
     }
 
@@ -169,8 +176,8 @@ export class RdCreditCalculatorForUSA {
      */
     async apply280C_RRC(creditRRC: any, configRRC: ConfigJson) {
         // ASC Federal 280C reduction rules
-        const rateWhenElect = configRRC.elect_280c_yes;  // elect 280C
-        const rateWhenNoElect = configRRC.elect_280c_no; // do not elect 280C
+        const rateWhenElect = configRRC.elect_280c_yes/100;  // elect 280C
+        const rateWhenNoElect = configRRC.elect_280c_no/100; // do not elect 280C
 
         const creditElect = creditRRC.final_credit.mul(rateWhenElect);
         const creditNoElect = creditRRC.final_credit.mul(rateWhenNoElect);
@@ -178,12 +185,12 @@ export class RdCreditCalculatorForUSA {
         return {
             reduction280c: {
                 elect280c: {
-                    rate: rateWhenElect,
-                    credit: await this.round2(creditElect)
+                    "Electing reduced credit under 280C": rateWhenElect,
+                    "Multiply line 11 (if line 13 is No)": Number(await this.round2(creditElect))
                 },
                 no_elect280c: {
-                    rate: rateWhenNoElect,
-                    credit: await this.round2(creditNoElect)
+                    "Electing reduced credit under 280C": rateWhenNoElect,
+                    "Multiply line 11 (if line 13 is No)":  Number(await this.round2(creditNoElect))
                 }
             }
         };
@@ -197,20 +204,20 @@ export class RdCreditCalculatorForUSA {
      */
     async apply280C_ASC(creditASC: any, configASC: ConfigJson) {
         // Federal RRC 280C reduction factors
-        const factorElect = configASC.elect_280c_yes;   // elect 280C → reduced credit
+        const factorElect = configASC.elect_280c_yes/100;   // elect 280C → reduced credit
         const factorNoElect = configASC.elect_280c_no; // no election → full credit
 
         const creditElect = creditASC.final_credit.mul(factorElect);
-        const creditNoElect = creditASC.final_credit.mul(factorNoElect);
+        const creditNoElect = creditASC.final_credit
         return {
             reduction280c: {
                 elect280c: {
-                    factor: factorElect,
-                    credit: await this.round2(creditElect)
+                    "Electing reduced credit under 280C": factorElect,
+                    "Multiply line 20 (equals line 25 if line 26 is No)": Number(await this.round2(creditElect))
                 },
                 no_elect280c: {
-                    factor: factorNoElect,
-                    credit: await this.round2(creditNoElect)
+                    "Electing reduced credit under 280C": factorNoElect,
+                    "Multiply line 20 (equals line 25 if line 26 is No)": Number(await this.round2(creditNoElect))
                 }
             }
         };
@@ -271,12 +278,11 @@ export class RdCreditCalculatorForUSA {
      * @param rrc280C 
      * @returns 
      */
-    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any) {
+    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any, taxCredit: any) {
         return {
-            computed_fields: {
-                asc: { creditASC, asc280C },
-                rrc: { creditRRC, rrc280C }
-            }
+            "ASC Credit": { creditASC, asc280C },
+            "Regular Credit": { creditRRC, rrc280C },
+            "Research and Development Tax Credit" : taxCredit
         }
     }
 
