@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useMutation } from '@apollo/client';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
+  CellEditData,
+  FieldChangeEvent,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import {
@@ -13,6 +17,10 @@ import { DataMapperListItem, DataMapperListParams } from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { DATA_MAPPER_EDIT } from '../../../../../routes';
 import { useDataMapperList } from '../../../../service/data-mapper/data-mapper-service';
+import { caseClient } from '../../../../../api/graphql/clients/client';
+import { UPDATE_DATA_MAPPER } from '../../../../../api/graphql/queries/data-mapper-query';
+import { useToast } from '../../../../../hooks';
+import dayjs from 'dayjs';
 
 interface IDataMapperTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -24,6 +32,10 @@ interface IDataMapperTableProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue?: string;
+  countryOptions: { label: string; value: string }[];
+  regionOptions: { label: string; value: string }[];
+  regionLoading?: boolean;
+  setCurrentCountry: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
@@ -34,11 +46,23 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  countryOptions,
+  regionOptions,
+  regionLoading,
+  setCurrentCountry,
 }) => {
+  const { errorToast } = useToast();
   const navigate = useNavigate();
   const [dataMapperList, setDataMapperList] = useState<DataMapperListItem[]>(
     []
   );
+  const [dateRange, setDateRange] = useState<{
+    endMin?: string;
+    endMax?: string;
+  }>({});
+  const [updateDataMapper] = useMutation(UPDATE_DATA_MAPPER, {
+    client: caseClient,
+  });
 
   const { data, isLoading, isError } = useDataMapperList(
     { ...tableParams, filters: appliedFilters, search: searchValue },
@@ -96,7 +120,34 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     document.body.removeChild(link);
   };
 
-  const dataMapperColumns = getDataMapperColumns(handleDownload);
+  const handleDateRange = (date: string) => {
+    // Set minimum end date to the day after the start date
+    const nextDay = date ? dayjs(date).add(1, 'day').format('YYYY-MM-DD') : '';
+    setDateRange({ endMin: nextDay, endMax: '' });
+  };
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'country_name' && event.value) {
+      setCurrentCountry(String(event.value));
+    }
+    if (event.columnId === 'effective_from_date' && event.value) {
+      handleDateRange(String(event.value) || '');
+    }
+  };
+
+  const handleCountry = (country: string) => {
+    setCurrentCountry(country);
+  };
+
+  const dataMapperColumns = getDataMapperColumns(
+    handleDownload,
+    countryOptions,
+    regionOptions,
+    handleCountry,
+    dateRange,
+    handleDateRange,
+    regionLoading
+  );
 
   const actionButtons: ActionItem<DataMapperListItem>[] = [
     {
@@ -139,6 +190,47 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
         .filter((col) => columnVisibility[col.id]),
     [columnOrder, columnVisibility, dataMapperColumns]
   );
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousDataList = [...dataMapperList];
+
+    const matchedData = dataMapperList.find((data) => data.rid === rowId);
+    if (!matchedData) {
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (usr, item) => {
+        const key = item.editId || item.columnId;
+        usr[key] = item.value;
+        return usr;
+      },
+      {
+        rid: rowId,
+      }
+    );
+
+    try {
+      const res = await updateDataMapper({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateDataMapperInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedItem = result.data;
+        setDataMapperList((prev) =>
+          prev.map((item) =>
+            item.rid === updatedItem.rid ? { ...item, ...updatedItem } : item
+          )
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update field');
+        setDataMapperList(previousDataList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setDataMapperList(previousDataList);
+    }
+  };
 
   return (
     <>
@@ -183,6 +275,8 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
       />
     </>
   );

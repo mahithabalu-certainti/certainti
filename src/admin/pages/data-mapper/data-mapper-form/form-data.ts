@@ -3,6 +3,7 @@ import {
   createTextField,
   createSelectField,
   createDateField,
+  REGEX_PATTERNS,
 } from '../../../../common-utils';
 import dayjs from 'dayjs';
 
@@ -14,12 +15,27 @@ export const DataMapperFormData = (
 ): FormType[] => {
   return [
     {
-      sectionName: 'Form Information',
+      sectionName: 'Basic Information',
       fillType: 'half',
       fields: [
         createTextField('form_name', 'Name', {
           required: true,
           placeholder: 'Enter Name',
+          errorHandling: [
+            {
+              regex: REGEX_PATTERNS.MIN_3,
+              errorMessage: 'Name must be more than 2 characters long',
+            },
+            {
+              regex: REGEX_PATTERNS.MAX_64,
+              errorMessage: 'Name must not exceed 64 characters',
+            },
+            {
+              regex: REGEX_PATTERNS.TEMPLATE_NAME_REGEX,
+              errorMessage:
+                "Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
+            },
+          ],
         }),
         createDateField('effective_from_date', 'Effective From Date', {
           required: true,

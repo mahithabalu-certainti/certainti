@@ -89,6 +89,20 @@ export const getDataMapperFilterFields = (
       operatorOption: enumOperator,
     },
     {
+      label: 'Effective From Date',
+      name: 'effective_from_date',
+      type: 'date',
+      operatorOption: requiredDateOptions,
+      isFutureDateEnabled: true,
+    },
+    {
+      label: 'Effective To Date',
+      name: 'effective_to_date',
+      type: 'date',
+      operatorOption: requiredDateOptions,
+      isFutureDateEnabled: true,
+    },
+    {
       name: 'status_rid',
       label: 'Status',
       type: 'enumSelect',

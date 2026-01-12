@@ -41,7 +41,7 @@ const DataMapper: React.FC = () => {
 
   const dataMapperStatus = useGetStatus();
   const allCountries = useGetAllCountries();
-  const Regions = useFetchState(currentCountry?.toString() || '');
+  const regions = useFetchState(currentCountry?.toString() || '');
 
   const statusOptions = useMemo(
     () =>
@@ -63,11 +63,11 @@ const DataMapper: React.FC = () => {
 
   const regionOptions = useMemo(
     () =>
-      Regions.data?.data.states.map((state) => ({
+      regions.data?.data.states.map((state) => ({
         label: state.state_name,
         value: state.rid,
       })) || [],
-    [Regions.data?.data.states]
+    [regions.data?.data.states]
   );
 
   const isModalOpen = Boolean(columnAnchorEl);
@@ -261,6 +261,10 @@ const DataMapper: React.FC = () => {
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
           searchValue={searchText}
+          countryOptions={countryOptions}
+          regionOptions={regionOptions}
+          regionLoading={regions.isLoading}
+          setCurrentCountry={setCurrentCountry}
         />
       </div>
     </div>

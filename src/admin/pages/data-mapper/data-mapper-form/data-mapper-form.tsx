@@ -249,6 +249,12 @@ const DataMapperForm: React.FC = () => {
   };
 
   const handleSubmitData = (data: Partial<DataMapperFormPayload>) => {
+    // Safety check: Ensure file exists
+    if (selectedFiles.length === 0 && !existingFile) {
+      showError('Please upload a PDF file.');
+      return;
+    }
+
     const formDataPayload = new FormData();
     formDataPayload.append('form_name', data.form_name || '');
     formDataPayload.append(

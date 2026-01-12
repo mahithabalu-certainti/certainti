@@ -1,10 +1,23 @@
 import { DownloadIcon } from '../../../../../assets';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getDateFormat,
+  REGEX_PATTERNS,
+} from '../../../../../common-utils';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../../components/table/types';
 import { DataMapperListItem } from '../../../../types';
 
 export const getDataMapperColumns = (
-  handleDownload?: (documentUrl: string) => void
+  handleDownload: (documentUrl: string) => void,
+  countryOptions: { label: string; value: string }[],
+  regionOptions: { label: string; value: string }[],
+  onCountryClick: (country: string) => void,
+  dateRange: { endMin?: string; endMax?: string },
+  handleDateRange: (date: string) => void,
+  regionLoading?: boolean
   // permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<DataMapperListItem>[] => [
   {
@@ -27,13 +40,35 @@ export const getDataMapperColumns = (
   },
   {
     id: 'form_name',
+    editId: 'form_name',
     sortId: 'form_name',
     label: 'Name',
     width: 200,
     sortable: true,
+    editable: true,
     // hide:
     //   !permissionMap?.['form_name']?.read &&
     //   !permissionMap?.['form_name']?.edit,
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Name must be more than 2 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Name must not exceed 64 characters',
+        },
+        {
+          regex: REGEX_PATTERNS.TEMPLATE_NAME_REGEX,
+          errorMessage:
+            "Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
+        },
+      ],
+    },
   },
   {
     id: 'document_name',
@@ -65,23 +100,147 @@ export const getDataMapperColumns = (
   },
   {
     id: 'country_name',
+    editId: 'country_rid',
     sortId: 'country_name',
     label: 'Country',
     width: 140,
     sortable: true,
+    editable: true,
     // hide:
     //   !permissionMap?.['country_name']?.read &&
     //   !permissionMap?.['country_name']?.edit,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: 'Choose Country',
+      options: countryOptions,
+      resetDependentFields: ['state_name'],
+      onChange: true,
+      getFieldData: (rowData: DependencyRowData) => {
+        onCountryClick(String(rowData.country_rid || ''));
+        return String(rowData.country_rid || '');
+      },
+      dependencies: [
+        {
+          dependsOn: 'state_name',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+      ],
+    },
   },
   {
     id: 'state_name',
+    editId: 'state_rid',
     sortId: 'state_name',
     label: 'Region',
     width: 140,
     sortable: true,
+    editable: true,
     // hide:
     //   !permissionMap?.['state_name']?.read &&
     //   !permissionMap?.['state_name']?.edit,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: 'Choose Region',
+      options: regionOptions,
+      loading: regionLoading,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.state_rid || '');
+      },
+      dependencies: [
+        {
+          dependsOn: 'country_name',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+      ],
+    },
+  },
+  {
+    id: 'effective_from_date',
+    editId: 'effective_from_date',
+    sortId: 'effective_from_date',
+    label: 'Effective From Date',
+    sortable: true,
+    editable: true,
+    width: 165,
+    // hide:
+    //   !permissionMap?.['effective_from_date']?.read &&
+    //   !permissionMap?.['effective_from_date']?.edit,
+    render: (row) =>
+      row.effective_from_date ? getDateFormat(row.effective_from_date) : '-',
+    field: {
+      type: 'date',
+      required: true,
+      placeholder: 'YYYY-MM-DD',
+      onChange: true,
+      dateConfig: {
+        disableFutureDates: false,
+        startFieldId: 'effective_from_date',
+        endFieldId: 'effective_to_date',
+        startFieldLabel: 'Effective From Date',
+        endFieldLabel: 'Effective To Date',
+      },
+      getFieldData: (rowData: DependencyRowData) => {
+        handleDateRange?.(String(rowData.effective_from_date) || '');
+        return String(rowData.effective_from_date) || '';
+      },
+      resetDependentFields: ['effective_to_date'],
+      dependencies: [
+        {
+          dependsOn: ['effective_to_date'],
+          action: 'enable',
+          condition: (value) => !value,
+          message: '',
+        },
+      ],
+    },
+  },
+  {
+    id: 'effective_to_date',
+    editId: 'effective_to_date',
+    sortId: 'effective_to_date',
+    label: 'Effective To Date',
+    sortable: true,
+    editable: true,
+    width: 160,
+    // hide:
+    //   !permissionMap?.['effective_to_date']?.read &&
+    //   !permissionMap?.['effective_to_date']?.edit,
+    render: (row) =>
+      row.effective_to_date ? getDateFormat(row.effective_to_date) : '-',
+    field: {
+      type: 'date',
+      required: true,
+      placeholder: 'YYYY-MM-DD',
+      dateConfig: {
+        disableFutureDates: false,
+        startFieldId: 'effective_from_date',
+        endFieldId: 'effective_to_date',
+        startFieldLabel: 'Effective From Date',
+        endFieldLabel: 'Effective To Date',
+        minDate: dateRange.endMin || '',
+      },
+      getFieldData: (rowData: DependencyRowData) => {
+        handleDateRange?.(String(rowData.effective_from_date) || '');
+        return String(rowData.effective_to_date) || '';
+      },
+      dependencies: [
+        {
+          dependsOn: ['effective_from_date'],
+          action: 'enable',
+          condition: (_, rowData) => {
+            const startDate = rowData.effective_from_date;
+            return !startDate;
+          },
+          message: '',
+        },
+      ],
+    },
   },
   {
     id: 'status_name',
