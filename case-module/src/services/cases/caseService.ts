@@ -28,6 +28,7 @@ import {
   ICreateChecklist,
   priorityTypes,
   ProjectFiscalType,
+  StateType,
   TagsTypes,
   TaskCardDetailsType,
   TaskCardResponse,
@@ -446,6 +447,7 @@ export class CaseService {
 
         let getCountryDetails: CountryType | undefined;
         let getCurrencyDetails: CurrencyType | undefined;
+        let getStateDetails : StateType | undefined;
         const [getAccountDetails] = await mainDb.query<AccountType>(
           rawQueries.fetchAccountDetails(queryResult.account_rid),
           { type: QueryTypes.SELECT }
@@ -457,6 +459,11 @@ export class CaseService {
         if (getAccountDetails?.country_rid != null)
           [getCountryDetails] = await mainDb.query<CountryType>(
             rawQueries.getCountryDetails(getAccountDetails.country_rid),
+            { type: QueryTypes.SELECT }
+          );
+        if (getAccountDetails?.country_rid != null)
+          [getStateDetails] = await mainDb.query<StateType>(
+            rawQueries.getCandaStateDetails(),
             { type: QueryTypes.SELECT }
           );
         if (getAccountDetails?.currency_rid !== null)
@@ -521,6 +528,10 @@ export class CaseService {
           isStateAvailable = false;
         }
         queryResult.is_state_available = isStateAvailable
+        if(queryResult.country_code === "CAN") {
+          queryResult.state_rid = getStateDetails?.rid || null;
+          queryResult.state_name = getStateDetails?.state_name || null;
+        }
         return {
           statusCode: HttpStatus.SUCCESS,
           data: queryResult,

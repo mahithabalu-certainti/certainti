@@ -185,11 +185,11 @@ export class RdCreditCalculatorForUSA {
         return {
             reduction280c: {
                 elect280c: {
-                    "Electing reduced credit under 280C": rateWhenElect,
+                    "Electing reduced credit under 280C": configRRC.elect_280c_yes,
                     "Multiply line 11 (if line 13 is No)": Number(await this.round2(creditElect))
                 },
                 no_elect280c: {
-                    "Electing reduced credit under 280C": rateWhenNoElect,
+                    "Electing reduced credit under 280C": configRRC.elect_280c_no,
                     "Multiply line 11 (if line 13 is No)":  Number(await this.round2(creditNoElect))
                 }
             }
@@ -212,11 +212,11 @@ export class RdCreditCalculatorForUSA {
         return {
             reduction280c: {
                 elect280c: {
-                    "Electing reduced credit under 280C": factorElect,
+                    "Electing reduced credit under 280C": configASC.elect_280c_yes,
                     "Multiply line 20 (equals line 25 if line 26 is No)": Number(await this.round2(creditElect))
                 },
                 no_elect280c: {
-                    "Electing reduced credit under 280C": factorNoElect,
+                    "Electing reduced credit under 280C": configASC.elect_280c_no,
                     "Multiply line 20 (equals line 25 if line 26 is No)": Number(await this.round2(creditNoElect))
                 }
             }
