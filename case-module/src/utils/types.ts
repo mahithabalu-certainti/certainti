@@ -69,6 +69,8 @@ export type CaseHeadersColumns = {
   account_status_name : string
   is_send_interaction : boolean
   is_state_available : boolean
+  state_rid : string | null,
+  state_name : string | null
 }
 
 export type FilingType = {
@@ -80,6 +82,10 @@ export type CountryType = {
   rid : string,
   country_name : string
   country_code: string
+}
+export type StateType = {
+  rid : string,
+  state_name : string
 }
 
 export type AccountType = {
