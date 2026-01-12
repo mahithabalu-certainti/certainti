@@ -263,10 +263,6 @@ const DataMapperForm: React.FC = () => {
       formDataPayload.append('file', selectedFiles[0]);
     }
 
-    if (!existingFile && isEditView && selectedFiles.length === 0) {
-      formDataPayload.append('is_file_deleted', 'true');
-    }
-
     if (isEditView) {
       formDataPayload.append('rid', mapperData?.rid || '');
       updateDataMapper.mutate(formDataPayload);
