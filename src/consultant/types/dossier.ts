@@ -227,9 +227,14 @@ export interface FinancialHighlightsProject {
 
 export interface FinancialHighlightsComputedFields {
   Title: Record<string, string>;
-  Total: Record<string, number>;
+  Total: Record<string, (number | string)>;
   Columns: string[];
   Projects: FinancialHighlightsProject[];
+  'Technical Submissions by Cost that are 50% or more of Total QRE'?: FinancialHighlightsProject[];
+  'Total Project to be shared with HMRC'?: {
+    Total: number;
+  };
+  'Percentage Calculation'?: Record<string, string | number>;
 }
 
 export interface FinancialHighlightsData {
