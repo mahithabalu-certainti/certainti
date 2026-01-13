@@ -82,15 +82,6 @@ export class FederalComputationService {
                 if(federalComputation) {
                     const result = await federalComputation.computeForUk(caseRid, accountRid, schemaName, extractConfig);
                     if(result.computedFields[0].projects !== null) {
-                        const uniqueCurrencyId = [...new Set(result.computedFields[0].projects.map((d: any) => d.currency_rid))];
-                        let getCurrency : any
-                        let mapCurrency;
-                        if(uniqueCurrencyId.length > 0) {
-                            getCurrency = await mainDb.query(rawQueries.fetchCurrencies(uniqueCurrencyId))
-                        } else {
-                            getCurrency = []
-                        }
-                        mapCurrency = new Map(getCurrency[0].map((d : any) => [d.rid, d.currency_symbol]))
                         let totalEmployees = 0.00
                         let totalEpw = 0.00
                         let totalReduction = 0.00
@@ -106,7 +97,7 @@ export class FederalComputationService {
                         const heatLightPower = Number(caseDetails?.heat_light_power) || 0.00
                         const totalSalaryAndExpenses = (totalProjectValue + materialSoftwareCost + heatLightPower) || 0.00 
                         const employersPensionContributions = Number(caseDetails?.employers_pension_contribution) || 0.00
-                        const qualifyingRdc = (totalSalaryAndExpenses + employersPensionContributions) || 0.00
+                        const qualifyingRdc = parseFloat(Number(totalSalaryAndExpenses + employersPensionContributions).toFixed(2)) || 0.00
                         const grossReduction = Number(((qualifyingRdc * extractConfig.gross_rdec)/100).toFixed(2)) || 0.00
                         const subContracts = Number(caseDetails?.sub_contracts) || 0.00
                         const otherCost = Number(caseDetails?.other) || 0.00
@@ -115,13 +106,12 @@ export class FederalComputationService {
                         const minProjectResult = this.selectMinimumProjectsCost(qualifyingRdc, 0.5, result.computedFields[0].projects);
                         let projectsMoreOfQre50Percent;
                         let totalProjectSharedWithHmrc = 0.00;
+                        let finalPercentage = parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2)) === Infinity ? '0.00%' : `${parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2))}%`
                         
                         if(result.computedFields[0].projects.length === 7) {
-                            projectsMoreOfQre50Percent = result.computedFields[0].projects.map((p : any, index : number) => {
+                            projectsMoreOfQre50Percent = result.computedFields[0].projects.map((p : any) => {
                                 return {
-                                    "Project ID": p.project_fiscal_rid,
-                                    "Project Name": p.project_name,
-                                    "Currency Symbol": mapCurrency.get(p.currency_rid) || null,
+                                    "Project Client Group Name": p.project_name,
                                     "Total Project Value/Labor" : p.total_project_value_labor,
                                 }
                             })
@@ -131,10 +121,9 @@ export class FederalComputationService {
                         } else {
                             projectsMoreOfQre50Percent = minProjectResult.selectedProjects.map((p : any, index : number) => {
                                 return {
-                                    "Project ID": p.project_fiscal_rid,
-                                    "Project Name": p.project_name,
-                                    "Currency Symbol": mapCurrency.get(p.currency_rid) || null,
-                                    "Total Project Value/Labor" : p.total_project_value_labor,                                }
+                                    "Project Client Group Name": p.project_name,
+                                    "Total Project Value/Labor" : p.total_project_value_labor
+                                }
                             })
                             projectsMoreOfQre50Percent.forEach((f : any) => {
                                 totalProjectSharedWithHmrc += f["Total Project Value/Labor"]
@@ -173,22 +162,21 @@ export class FederalComputationService {
                         },
                         Projects : result.computedFields[0].projects.map((d: any) => {
                             return {
-                                "Project ID": d.project_fiscal_rid,
-                                "Project Name": d.project_name,
-                                "Currency Symbol": mapCurrency.get(d.currency_rid) || null,
+                                "Project Client Group Name": d.project_client_group || d.project_name,
+                                "Total Projects" : d.total_projects_count || 0,
                                 "Employees" : d.employees,
                                 "EPW" : d.epw,
                                 [reductionValue] : d.reductions,
                                 "Net EPW" : d.net_epw,
                                 "Total Project Value/Labor" : d.total_project_value_labor,
-                                is_qualified : minProjectResult.selectedProjects.some((t) => t.project_name === d.project_name)
+                                is_qualified : minProjectResult.selectedProjects.some((t) => t.project_client_group === d.project_client_group)
                             }
                         }),
                         "Percentage Calculation": {
                             "Total Customer Groups" : result.computedFields[0].projects.length || 0,
                             "Total QRE" : qualifyingRdc,
-                            "Total value of customer groups Greater than 50%" : minProjectResult.selectedSum,
-                            "%" : `${parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2))}%`
+                            "Total value of customer groups Greater than 50%" : minProjectResult.selectedSum == Infinity ? 0.00 : minProjectResult.selectedSum,
+                            "%" : finalPercentage
                         },
                         "Technical Submissions by Cost that are 50% or more of Total QRE" : projectsMoreOfQre50Percent,
                         "Total Project to be shared with HMRC" : {

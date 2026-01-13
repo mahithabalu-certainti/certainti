@@ -956,7 +956,7 @@ export type RegionDetails = {
 }
 export type ProjectComputeValue = {
   project_name: string;
-  project_fiscal_rid: string;
+  total_projects : number;
   employees: number;
   epw: number;
   reductions: number;

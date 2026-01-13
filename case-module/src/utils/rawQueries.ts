@@ -2400,9 +2400,10 @@ export const fetchRdCreditConfigQuery = () => {
     )
     
     -- Effective date filter
-    AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS DATE))
-    AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS DATE))
-    group by rdcg.rid, rdval.config_json, st.state_code, ctry.rid
+    --AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS DATE))
+    --AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS DATE))
+    group by rdcg.rid, rdval.config_json, st.state_code, ctry.rid, rdval.effective_start_date
+    order by rdval.effective_start_date desc
     LIMIT 1
   `
   return query;
@@ -2424,10 +2425,11 @@ export const fetchRdCreditConfigStateLevelQuery = () => {
     )
     
     -- Effective date filter
-    AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS DATE))
-    AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS DATE))
+    --AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS DATE))
+    --AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS DATE))
 
-    group by rdcg.rid, rdval.config_json, st.rid , ctry.rid
+    group by rdcg.rid, rdval.config_json, st.rid , ctry.rid, rdval.effective_start_date
+    order by rdval.effective_start_date desc
   `
   return query;
 }
