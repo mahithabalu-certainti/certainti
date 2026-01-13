@@ -216,12 +216,36 @@ export class RdCreditCalculatorForTX {
      * @param qreActivitiesCreditInfo Information about QRET activities credit details.
      */
     buildComputedFields(qretInfo: any, precedingWithQretInfo: any, precedingWithNoQretInfo: any, qreActivitiesCreditInfo: any) {
+          let qret = {
+            "Total QRET for the period covered by this report":qretInfo.total_current_year_qre,
+            "Total QRET in 1st preceding tax period":qretInfo.prev1_qre,
+            "Total QRET in 2nd preceding tax period":qretInfo.prev2_qre,
+            "Total QRET in 3rd preceding tax period":qretInfo.prev3_qre,
+            "qret_high_edu_contract":qretInfo.qret_high_edu_contract
+        }
+        let precedingWithQret ={
+            "Average QRET for preceding periods":precedingWithQretInfo,
+            "Average QRET x 50% ":precedingWithQretInfo,
+            "Difference":precedingWithQretInfo,
+            "Credit":precedingWithQretInfo
+        }
+       
+        let precedingWithNoQret = {
+            "Credit (If amount in Item 1b is zero, multiply Item 1a by 2.5% (0.025)":precedingWithNoQretInfo.credit_eq_zero,
+            "Credit (If amount in Item 1b is greater than zero, multiply item 1a by 3.125% (0.03125))":precedingWithNoQretInfo.credit_gt_zero
+        }
+        let qreActivitiesCredit = {
+            "R&D activities credit" : qreActivitiesCreditInfo.rd_credit_activities,
+            "R&D activities credit carried forward from prior years":qreActivitiesCreditInfo.rd_credit_activities_carry_forward,
+            "R&D activities credit available":qreActivitiesCreditInfo.rd_credit_activities_avail
+
+        }
         return {
             computed_fields: {
-                qret: qretInfo,
-                preceding_with_qret: precedingWithQretInfo,
-                preceding_with_no_qret: precedingWithNoQretInfo,
-                qret_activities: qreActivitiesCreditInfo
+                "Qualified Research Expenses in Texas (QRET)": qret,
+                "Credit Calculation for Entities with 3 preceding periods of QRET ": precedingWithQret,
+                "Credit Calculation for Entities with no QRET in one or more of the 3 preceding periods": precedingWithNoQret,
+                "Research and Development (R&D) Activities Credit": qreActivitiesCredit
             }
         }
     }

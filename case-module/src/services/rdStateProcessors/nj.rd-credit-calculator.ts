@@ -93,7 +93,9 @@ export class RdCreditCalculatorForNJ {
         return {
             part4_final_credit: this.round2(part4_final_credit),
             tot_credit,
-            tot_available_credit: tot_credit
+            tot_available_credit: tot_credit,
+            config_percent:config.credit_rate
+
         }
     }
 
@@ -149,10 +151,33 @@ export class RdCreditCalculatorForNJ {
      * @returns 
      */
     buildComputedFields(part4ASCCreditCalculationInfo: any, part5DevelopmentTaxCreditCalculationInfo: any) {
+        let part4ASCCreditCalculation ={
+            "Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)":part4ASCCreditCalculationInfo.current_year_wages,
+            "Cost of Supplies":"",
+            "Rental or lease costs of computers":"",
+            "Enter the applicable percentage of contract research expenses (see instructions)":part4ASCCreditCalculationInfo.current_year_contract,
+            "Total qualified research expenses. Add lines 16 through 19":part4ASCCreditCalculationInfo.total_current_year_qre,
+            "Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified researach expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.":part4ASCCreditCalculationInfo.total_prev_qre,
+            "Divide line 21 by 6.0":part4ASCCreditCalculationInfo.average_tot_prev_qre,
+            "Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.":part4ASCCreditCalculationInfo.sub_credit,
+            "Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ":part4ASCCreditCalculationInfo.final_credit
+        }
+        let part5DevelopmentTaxCreditCalculation = {
+            "Enter the amount from line 1" :"",
+            "Enter the amount from line 4":"",
+            "Total - Add lines 25a and 25b":"",
+            "Enter either line 15 or 24 (whichever method was used for federal purposes)":part5DevelopmentTaxCreditCalculationInfo.part4_final_credit,
+            "Add lines 25c and 26":part5DevelopmentTaxCreditCalculationInfo.part4_final_credit,
+            // Show dynamic multiplier in label
+            [`Multiply line 27 by ${(part5DevelopmentTaxCreditCalculationInfo.config_percent ?? 0.1) * 100}%`]: part5DevelopmentTaxCreditCalculationInfo.tot_credit,
+            "Research and Development Tax Credit carried forward from prior year (do not recompute)":"",
+            "Total credit available - Add lines 28 and 29":part5DevelopmentTaxCreditCalculationInfo.tot_available_credit
+        }
+
         return {
             computed_fields: {
-                part4_asc_credit: part4ASCCreditCalculationInfo,
-                part5_dev_tax_credit: part5DevelopmentTaxCreditCalculationInfo
+                "CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)": part4ASCCreditCalculation,
+                "TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT": part5DevelopmentTaxCreditCalculation
             }
         }
     }
