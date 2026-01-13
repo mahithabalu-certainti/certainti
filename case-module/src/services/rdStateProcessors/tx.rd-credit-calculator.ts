@@ -110,7 +110,8 @@ export class RdCreditCalculatorForTX {
             average_qret_rate_50pct: this.round2(average_qret_rate_50pct),
             difference: this.round2(difference),
             credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
+            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
+            config: config
 
         }
 
@@ -128,7 +129,8 @@ export class RdCreditCalculatorForTX {
         const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct) : "N/A";
         return {
             credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
+            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
+            config: config
         }
     }
 
@@ -226,15 +228,15 @@ export class RdCreditCalculatorForTX {
 
         let precedingWithQret ={
             "Average QRET for preceding periods":precedingWithQretInfo.average_prev_year_qre,
-            "Average QRET x 50% ":precedingWithQretInfo.average_qret_rate_50pct,
+           [`Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct} `]:precedingWithQretInfo.average_qret_rate_50pct,
             "Difference":precedingWithQretInfo.difference,
-            "Credit (If amount in Item 1b is zero, multiply Item 7 by 5% (0.05);":precedingWithQretInfo.credit,
-            "Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by 6.25% (0.0625))":""
+            [`Credit (If amount in Item 1b is zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct};`]:precedingWithQretInfo.credit,
+            [`Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by${precedingWithQretInfo.config.average_qret_rate_50pct})`]: ""
         }
        
         let precedingWithNoQret = {
-            "Credit (If amount in Item 1b is zero, multiply Item 1a by 2.5% (0.025)":precedingWithNoQretInfo.credit_eq_zero,
-            "Credit (If amount in Item 1b is greater than zero, multiply item 1a by 3.125% (0.03125))":precedingWithNoQretInfo.credit_gt_zero
+            [`Credit (If amount in Item 1b is zero, multiply Item 1a by ${precedingWithQretInfo.config.qre_rate_5pct}`]:precedingWithNoQretInfo.credit_eq_zero,
+            [`Credit (If amount in Item 1b is greater than zero, multiply item 1a by ${precedingWithQretInfo.config.qre_rate_6_25pct})`]:precedingWithNoQretInfo.credit_gt_zero
         }
         let qreActivitiesCredit = {
             "R&D activities credit" : qreActivitiesCreditInfo.rd_credit_activities,
