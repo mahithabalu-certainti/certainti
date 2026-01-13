@@ -441,6 +441,9 @@ export const rawQueries = {
   getCountryDetails(countryRid: string) {
     return `SELECT rid, country_name,country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = '${countryRid}'`;
   },
+  getCandaStateDetails() {
+    return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE state_name ILIKE '%Ontario%'`;
+  },
   getOwnerDetails(caseOwnerRid: any[]) {
     return `SELECT rid, CONCAT(first_name,' ',last_name) AS name, profile_url FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${caseOwnerRid.map(
       (d: any) => `'${d}'`

@@ -2424,8 +2424,8 @@ export const fetchRdCreditConfigStateLevelQuery = () => {
     )
     
     -- Effective date filter
-    AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
-    AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
+    AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS DATE))
+    AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS DATE))
 
     group by rdcg.rid, rdval.config_json, st.rid , ctry.rid
   `

@@ -3878,7 +3878,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       ]);
 
       if (response?.data?.transaction_id) {
-        AiAssessmentAudit.update(updateData, {
+        logMessage(`Updating AiAssessmentAudit for transaction_id: ${response?.data?.transaction_id} ${schemaName}`);
+        await AiAssessmentAudit.update(updateData, {
           where: { transaction_id: response?.data?.transaction_id },
         });
       }
