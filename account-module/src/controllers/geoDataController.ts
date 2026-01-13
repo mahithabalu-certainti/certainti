@@ -179,7 +179,7 @@ async function states(req: Request, res: Response): Promise<void> {
     }
 
     let statusScope = req.query.statusScope;
-    if(!statusScope)
+    if (!statusScope)
     {
       statusScope = "all";
     }
