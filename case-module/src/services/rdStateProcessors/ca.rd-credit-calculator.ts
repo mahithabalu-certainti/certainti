@@ -120,7 +120,8 @@ export class RdCreditCalculatorForCA {
             smaller_of_excess_or_half: line15.toNumber(),
             credit_before_280c: line16.toNumber(),
             regular_credit: line17a.toNumber(),
-            reduced_credit_amount: { s_corp: s_corp_rate, corporation: corporation_rate, individual: individual_rate }
+            reduced_credit_amount: { s_corp: s_corp_rate, corporation: corporation_rate, individual: individual_rate },
+            config: config
         }
 
     }
@@ -165,10 +166,31 @@ export class RdCreditCalculatorForCA {
      * @returns 
      */
     async buildComputedFields(creditASC: any, creditRRC: any) {
+        let finalData = {
+            "Wages for qualified services. See instructions":creditRRC.wages,
+            "Cost of supplies. See instructions":creditRRC.supplies,
+            "Rental or lease costs of computers. See instructions":creditRRC.cost_to_rent,
+            "Enter the applicable percentage of contract research expenses (see instructions)":creditRRC.contract,
+            "Total qualified research expenses. Add line 5 through line 8 ":creditRRC.total_qre,
+            "Enter fixed-base percentage, but not more than 16% (.16). See instructions ":creditRRC.fixed_base_percentage,
+            "Enter average annual gross receipts. See instructions":creditRRC.average_gross_receipts,
+            "Base amount. Multiply line 11 by the percentage on line 10":creditRRC.base_amount,
+            "Subtract line 12 from line 9. If zero or less, enter -0-":creditRRC.excess_qre_over_base,
+            [`Multiply line 9 by ${creditRRC.config.qre_cap_rate}. See instructions`]:creditRRC.half_total_qre,
+            "Enter the smaller of line 13 or line 14":creditRRC.smaller_of_excess_or_half,
+            [`Multiply line 15 by ${creditRRC.config.credit_rate}`]:creditRRC.credit_before_280c,
+            "Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach":creditRRC.regular_credit,
+            "Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:":"",
+            [`${creditRRC.config.individual} for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
+            [`${creditRRC.config.corporation} for  corporations`]:creditRRC.reduced_credit_amount.s_corp,
+            [`${creditRRC.config.s_corp} for S corporations`]:creditRRC.reduced_credit_amount.corporation,
+            "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :":creditRRC.reduced_credit_amount
+
+        }
         return {
             computed_fields: {
-                asc: creditASC,
-                rrc: creditRRC
+                "Qualified research expenses paid or incurred.":finalData
+                
             }
         }
     }
