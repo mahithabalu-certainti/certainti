@@ -222,14 +222,20 @@ export interface FinancialHighlightsProject {
   'Project ID': string;
   'Project Name': string;
   'Currency Symbol'?: string;
-  [key: string]: string | number | undefined;
+  is_qualified?: boolean;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface FinancialHighlightsComputedFields {
   Title: Record<string, string>;
-  Total: Record<string, number>;
+  Total: Record<string, (number | string)>;
   Columns: string[];
   Projects: FinancialHighlightsProject[];
+  'Technical Submissions by Cost that are 50% or more of Total QRE'?: FinancialHighlightsProject[];
+  'Total Project to be shared with HMRC'?: {
+    Total: number;
+  };
+  'Percentage Calculation'?: Record<string, string | number>;
 }
 
 export interface FinancialHighlightsData {

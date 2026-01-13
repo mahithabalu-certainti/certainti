@@ -25,6 +25,7 @@ import {
 } from '../../../../../../types';
 import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
+import { costDisplay } from '../../../../../../../common-utils';
 import {
   useFinancialHighlights,
   useInitiateRDCreditProcess,
@@ -41,6 +42,108 @@ interface FormErrors {
   country?: string;
   region?: string;
 }
+
+const FinancialWorkingUKTable = ({
+  data,
+  currencySymbol,
+}: {
+  data: FinancialHighlightsResponse | null;
+  currencySymbol?: string;
+}) => {
+  const computedFields = data?.data?.computed_fields as any;
+  const submissions =
+    computedFields?.[
+      'Technical Submissions by Cost that are 50% or more of Total QRE'
+    ] || [];
+  const hmrcTotal =
+    computedFields?.['Total Project to be shared with HMRC']?.Total;
+
+  if (!submissions.length && !hmrcTotal) return null;
+
+  return (
+    <div className='pb-4'>
+      <table className='w-full border-collapse border border-[#CBD6E2]'>
+        <thead>
+          <tr className='bg-[#ECECEC]'>
+            <th className='border border-[#CBD6E2] px-3 py-2 text-left text-[13px] font-bold text-[#2D3E4F]'>
+              Technical Submissions by Cost that are 50% or more of Total QRE
+            </th>
+            <th className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F] w-[200px]'>
+              Total Project Value/Labor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {submissions.map((project: any, index: number) => (
+            <tr key={index} className='border-b border-[#CBD6E2]'>
+              <td className='border border-[#CBD6E2] px-3 py-2 text-[13px] text-[#425A76]'>
+                {project['Project Name']}
+              </td>
+              <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
+                {costDisplay(
+                  project['Total Project Value/Labor'] || 0,
+                  project['Currency Symbol'] || '£'
+                )}
+              </td>
+            </tr>
+          ))}
+          <tr className='bg-[#F9FAFB]'>
+            <td className='border border-[#CBD6E2] px-3 py-2 text-[13px] font-bold text-[#2D3E4F]'>
+              Total Project to be shared with HMRC
+            </td>
+            <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F]'>
+              {costDisplay(hmrcTotal || 0, currencySymbol || '£')}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const FinancialWorkingUKPercentageTable = ({
+  data,
+  currencySymbol,
+}: {
+  data: FinancialHighlightsResponse | null;
+  currencySymbol?: string;
+}) => {
+  const computedFields = data?.data?.computed_fields as any;
+  const percentageCalc = computedFields?.['Percentage Calculation'];
+
+  if (!percentageCalc) return null;
+
+  return (
+    <div className='pb-4'>
+      <table className='w-full border-collapse border border-[#CBD6E2]'>
+        <thead>
+          <tr className='bg-[#ECECEC]'>
+            <th className='border border-[#CBD6E2] px-3 py-2 text-left text-[13px] font-bold text-[#2D3E4F]'>
+              Percentage Calculation
+            </th>
+            <th className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F] w-[200px]'>
+              Value
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(percentageCalc).map(([key, value], index) => (
+            <tr key={index} className='border-b border-[#CBD6E2]'>
+              <td className='border border-[#CBD6E2] px-3 py-2 text-[13px] text-[#425A76]'>
+                {key}
+              </td>
+              <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
+                {typeof value === 'number' && key !== 'Total Customer Groups'
+                  ? costDisplay(value as number, currencySymbol || '£')
+                  : value as React.ReactNode}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   caseDetails,
@@ -123,6 +226,15 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const [financialData, setFinancialData] =
     useState<FinancialHighlightsResponse | null>(null);
+
+  const responseCurrencySymbol = useMemo(() => {
+    const computedFields = financialData?.data?.computed_fields as any;
+    const projects = computedFields?.Projects || [];
+    if (projects.length > 0) {
+      return projects[0]['Currency Symbol'] || '$';
+    }
+    return '$';
+  }, [financialData]);
 
   const handleViewFinancialHighlights = async () => {
     // const { data, isLoading, isError } = await fetchRDCreditPreview(
@@ -475,12 +587,25 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             FinancialWorkingCountries.Australia ? (
               <FinancialWorkingAustralia data={financialData} />
             ) : (
-              <FinancialWorking
-                data={financialData}
-                currencySymbol={caseDetails?.currency_symbol}
-              />
+              <FinancialWorking data={financialData} currencySymbol={responseCurrencySymbol} />
             )}
           </div>
+          {caseDetails?.country_name === FinancialWorkingCountries.UK && (
+            <div className='flex flex-wrap md:flex-nowrap gap-4 px-4 pt-4'>
+              <div className='w-full md:w-1/2'>
+                <FinancialWorkingUKTable 
+                  data={financialData} 
+                  currencySymbol={responseCurrencySymbol} 
+                />
+              </div>
+              <div className='w-full md:w-1/2'>
+                <FinancialWorkingUKPercentageTable 
+                  data={financialData} 
+                  currencySymbol={responseCurrencySymbol} 
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
