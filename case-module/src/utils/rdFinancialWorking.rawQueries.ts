@@ -39,6 +39,47 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     `
     return query;
 }
+export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number) => {
+    let query = 
+    `
+    WITH fetch_project_ids AS (
+    SELECT project_client_group, project_fiscal_rid 
+    FROM ${schemaName}.case_projects 
+    WHERE
+    case_rid = '${caseRid}'
+    AND
+    account_rid = '${accountRid}'
+    ),
+    calculate_cost AS (
+    SELECT 
+    CAST(SUM(COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS employees,
+    CAST(SUM(COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS epw,
+    cp.project_client_group, COUNT(cp.rid) AS total_projects
+    FROM
+    ${schemaName}.case_projects cp
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.project_fiscal_rid AND fpr.project_client_group = cp.project_client_group
+    WHERE
+    cp.project_fiscal_rid = fpr.project_fiscal_rid
+    GROUP BY
+    cp.project_client_group
+    ORDER BY cp.project_client_group ASC
+    )
+    SELECT 
+    array_agg(jsonb_build_object(
+    'project_name', project_client_group,
+    'total_projects_count', total_projects,
+    'employees', employees,
+    'epw', epw,
+    'reductions', CAST(epw * ${reduction}/100 AS DECIMAL(18,2)),
+    'net_epw', CAST(epw - (epw * ${reduction}/100) AS DECIMAL(18,2)),
+    'total_project_value_labor', CAST(epw - (epw * ${reduction}/100) + employees AS DECIMAL(18,2))
+    )ORDER BY CAST(epw - (epw * ${reduction}/100) + employees AS DECIMAL(18,2)) DESC) AS projects
+    FROM
+    calculate_cost
+    `
+    console.log("Query ===== > ", query)
+    return query;
+}
 export const calculateRDExpenditureQuery = (schemaName : string, caseRid : string, accountRid : string) => {
     let query = `
     SELECT 
@@ -75,4 +116,7 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : str
         cp.account_rid = '${accountRid}'
     `
     return query;
+}
+export const countAssignedProjects = (caseRid : string, schemaName : string) => {
+    return `SELECT COALESCE(COUNT(rid), 0) AS total FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
 }
