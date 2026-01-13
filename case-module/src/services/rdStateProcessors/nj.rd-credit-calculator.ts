@@ -157,7 +157,7 @@ export class RdCreditCalculatorForNJ {
             "Rental or lease costs of computers":"",
             "Enter the applicable percentage of contract research expenses (see instructions)":part4ASCCreditCalculationInfo.current_year_contract,
             "Total qualified research expenses. Add lines 16 through 19":part4ASCCreditCalculationInfo.total_current_year_qre,
-            "Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified researach expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.":part4ASCCreditCalculationInfo.total_prev_qre,
+            "Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.":part4ASCCreditCalculationInfo.total_prev_qre,
             "Divide line 21 by 6.0":part4ASCCreditCalculationInfo.average_tot_prev_qre,
             "Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.":part4ASCCreditCalculationInfo.sub_credit,
             "Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ":part4ASCCreditCalculationInfo.final_credit
