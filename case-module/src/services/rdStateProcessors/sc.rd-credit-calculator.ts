@@ -54,7 +54,8 @@ export class RdCreditCalculatorForSC {
             total_tax_liability,
             net_base_amount,
             fifty_percent_credit,
-            final_credit
+            final_credit,
+            config: config
 
         }
         const computedFields = await this.buildComputedFields(computeFieldsResp);
@@ -125,7 +126,7 @@ export class RdCreditCalculatorForSC {
         "Tax Liability (income tax and license fees) before claiming credits.": computeFieldsResp.total_tax_liability,
         "Total of all credits other than the Research Expenses Credit":"",
         "Line 5 minus line 6 (If less than zero enter zero).":computeFieldsResp.net_base_amount,
-        "Multiply line 7 by 50% (0.5).":computeFieldsResp.fifty_percent_credit,
+        [`Multiply line 7 by ${computeFieldsResp.config.carry_forward_credit_rate}.`]:computeFieldsResp.fifty_percent_credit,
         "Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)":computeFieldsResp.final_credit,
         "Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)":""
         }
