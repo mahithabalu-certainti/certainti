@@ -1883,6 +1883,11 @@ export class InteractionService {
             checkObj(projectInfo) ??
             checkObj(accountInfo);
           if (val !== undefined) return val;
+          
+          // Special handling for name field - return empty string if null/undefined
+          if ((raw === "name" || normalized === "name") && emailInfo && "name" in emailInfo) {
+            return emailInfo.name ?? "";
+          }
           // Check for direct placeholders
           if (raw === "Interaction Id" || normalized === "interactionrid" || noUnderscore === "interactionrid") {
             return interactionRid ?? "";
