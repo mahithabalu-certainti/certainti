@@ -54,7 +54,8 @@ export class RdCreditCalculatorForSC {
             total_tax_liability,
             net_base_amount,
             fifty_percent_credit,
-            final_credit
+            final_credit,
+            config: config
 
         }
         const computedFields = await this.buildComputedFields(computeFieldsResp);
@@ -116,9 +117,22 @@ export class RdCreditCalculatorForSC {
      * @returns 
      */
     buildComputedFields(computeFieldsResp: any) {
+
+        let finalData = {
+        "Qualified research expenses made in South Carolina.":computeFieldsResp.total_current_year_qre,
+        "Enter 5% of line 1. This is your current year credit.":computeFieldsResp.current_year_credit,
+        "Research Expenses Credit Carried forward from previous years (attach schedule).":"",
+        "Line 2 plus line 3 (Total Research Expenses Credit before limitations).":computeFieldsResp.tot_qre_credit,
+        "Tax Liability (income tax and license fees) before claiming credits.": computeFieldsResp.total_tax_liability,
+        "Total of all credits other than the Research Expenses Credit":"",
+        "Line 5 minus line 6 (If less than zero enter zero).":computeFieldsResp.net_base_amount,
+        [`Multiply line 7 by ${computeFieldsResp.config.carry_forward_credit_rate}.`]:computeFieldsResp.fifty_percent_credit,
+        "Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)":computeFieldsResp.final_credit,
+        "Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)":""
+        }
         return {
             computed_fields: {
-                credit_calculation: computeFieldsResp
+                credit_calculation: finalData
             }
         }
     }

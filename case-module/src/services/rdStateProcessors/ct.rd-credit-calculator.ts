@@ -114,6 +114,7 @@ export class RdCreditCalculatorForCT {
         const allowableTentativeTaxCredit = Decimal.max(tentativeCredit.minus(reductionTentativeTaxCredit), 0);
 
         return {
+            tentative_credit_rate: tentativeCreditRate,
             tentative_total_qre: tentativeTotalQREs,
             tentative_excess_qre: tentativeExcessQRE,
             tentative_balance: tentativeBalance,
@@ -203,11 +204,44 @@ export class RdCreditCalculatorForCT {
      * @returns 
      */
     async buildComputedFields(part1Computation: any, part1TentativeComputation: any, part2Computation: any) {
+       
+        let part1 = {
+            "Enter the amount of Connecticut research and experimental expenditures for the current income year.":part1Computation.total_qre,
+            "Enter the amount of Connecticut research and experimental expenditures for the first prior income year.":part1Computation.prior_year_1_qre,
+            "Balance: Subtract Line 2 from Line 1. If zero or less, the corporation is not eligible for this credit.":part1Computation.excess_qre,
+            "Tax credit: Multiply Line 3 by 20% (.20). Enter here and on Form CT-1120K,  Part I-C, Column B.":part1Computation.tax_credit
+        }
+
+       
+        let part2 = {
+            "Enter the amount of Connecticut research and experimental expenditures for the current income year. ":part1TentativeComputation.tentative_total_qre,
+            "Enter the amount of excess Connecticut research and experimental expenditures for the current income year.   From Form CT - 1120RC Part I, Line 3.":part1TentativeComputation.tentative_excess_qre,
+            "Balance: Subtract Line 2 from Line 1.  Net research and development expenses for 2023":part1TentativeComputation.tentative_balance,
+            "Qualified small businesses multiply amount on Line 3 by 6% (.06)":"",
+            "Companies headquartered in an Enterprise Zone, with revenues in excess of $3 billion, employing more than 2,500 employees, may elect to multiply amount on Line 3 by 3.5% (.035).":"", 
+            "All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.":"",
+            "Tentative credit: Enter the amount from Line 4a, 4b, or 4c.":part1TentativeComputation.tentative_credit,
+            "Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.":   part1TentativeComputation.reduction_tentative_tax_credit,    
+            "Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4. ":part1TentativeComputation.allowable_tentative_tax_credit
+
+        }
+
+        let part3 = {
+            "Allowable Tentative Tax Credit for 2024 from Part 1, line 6":part2Computation.part2_allowable_tentative_tax_credit,
+            "Multiply Line 1 by .3333":part2Computation.part2_one_third_rate,
+            "Current Year CT Business Tax Liability":part2Computation.current_year_ct_business_tax_liability,
+            [`Multiply Line 3 by ${(part2Computation.tentativeCreditRate)}% .`]:part2Computation.half_tax_liability,
+            "Multiply Line 1 by two (2).":part2Computation.double_credit,
+            "Enter 90% (.90) of Line 3 ":part2Computation.tax_limit,
+            "Enter the lesser of Line 5a or Line 5b":part2Computation.min_final,
+            "Enter the greater of Line 4 or Line 5":part2Computation.allowable_credit,
+            "2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.":part2Computation.final_credit
+        }
         return {
             computed_fields: {
-                part1_computation: part1Computation,
-                part1_tentative_computation: part1TentativeComputation,
-                part2_computation: part2Computation
+                "Part I - Credit Computation": part1,               
+                "Part I - Tentative Credit Computation": part2,
+                "Part II - Credit Computation": part3
             }
         }
     }

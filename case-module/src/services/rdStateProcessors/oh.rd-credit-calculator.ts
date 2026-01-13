@@ -37,8 +37,11 @@ export class RdCreditCalculatorForOH {
         }));
         logMessage(`${JSON.stringify(qreSum)}`)
         const prev1_qre = new Decimal(qreSum[0]?.wagesContractSum || 0);
+        const prev1_year = qreSum[0]?.fiscalYear;
         const prev2_qre = new Decimal(qreSum[1]?.wagesContractSum || 0);
+        const prev2_year = qreSum[1]?.fiscalYear;
         const prev3_qre = new Decimal(qreSum[2]?.wagesContractSum || 0);
+        const prev3_year = qreSum[2]?.fiscalYear;
 
         const tot_prev_year_qre = prev1_qre.plus(prev2_qre).plus(prev3_qre);
         const average_tot_prev_qre = tot_prev_year_qre.div(3);
@@ -63,7 +66,10 @@ export class RdCreditCalculatorForOH {
             total_current_year_qre,
             tot_prev_year_qre,
             final_excess_qre: this.round2(final_excess_qre),
-            final_credits_earned: this.round2(final_credits_earned)
+            final_credits_earned: this.round2(final_credits_earned),
+            prev1_year,
+            prev2_year,
+            prev3_year
         }
         const computedFields = await this.buildComputedFields(computeFieldsResp);
 
@@ -126,9 +132,19 @@ export class RdCreditCalculatorForOH {
      * @returns 
      */
     buildComputedFields(computeFieldsResp: any) {
+        let finalData = {
+            "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:":"",
+            [`Tax Year ${computeFieldsResp.prev1_year} QREs`]:computeFieldsResp.prev1_qre,
+            [`Tax Year ${computeFieldsResp.prev2_year} QREs`] :computeFieldsResp.prev2_qre,
+            [`Tax Year ${computeFieldsResp.prev3_year} QREs`]: computeFieldsResp.prev3_qre,
+            "Average": computeFieldsResp.average_tot_prev_qre,
+            "Total Investment in Qualifying Research Expense for Calendar Year 2025":computeFieldsResp.total_current_year_qre,
+            "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":computeFieldsResp.tot_prev_year_qre,
+            "Net Excess of Qualifying Research Expenses for the Taxable Year":computeFieldsResp.final_credits_earned   
+        }
         return {
             computed_fields: {
-                credit_calculation: computeFieldsResp
+                credit_calculation: finalData
             }
         }
     }

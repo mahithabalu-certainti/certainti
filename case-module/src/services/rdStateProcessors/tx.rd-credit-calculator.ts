@@ -110,7 +110,8 @@ export class RdCreditCalculatorForTX {
             average_qret_rate_50pct: this.round2(average_qret_rate_50pct),
             difference: this.round2(difference),
             credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
+            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
+            config: config
 
         }
 
@@ -128,7 +129,8 @@ export class RdCreditCalculatorForTX {
         const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct) : "N/A";
         return {
             credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
+            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
+            config: config
         }
     }
 
@@ -216,12 +218,38 @@ export class RdCreditCalculatorForTX {
      * @param qreActivitiesCreditInfo Information about QRET activities credit details.
      */
     buildComputedFields(qretInfo: any, precedingWithQretInfo: any, precedingWithNoQretInfo: any, qreActivitiesCreditInfo: any) {
+          let qret = {
+            "Total QRET for the period covered by this report":qretInfo.total_current_year_qre,
+            "Total QRET in 1st preceding tax period":qretInfo.prev1_qre,
+            "Total QRET in 2nd preceding tax period":qretInfo.prev2_qre,
+            "Total QRET in 3rd preceding tax period":qretInfo.prev3_qre,
+            "QRET under higher education contracts for the period covered by this report":qretInfo.qret_high_edu_contract
+        }
+
+        let precedingWithQret ={
+            "Average QRET for preceding periods":precedingWithQretInfo.average_prev_year_qre,
+           [`Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct} `]:precedingWithQretInfo.average_qret_rate_50pct,
+            "Difference":precedingWithQretInfo.difference,
+            [`Credit (If amount in Item 1b is zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct};`]:precedingWithQretInfo.credit,
+            [`Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by${precedingWithQretInfo.config.average_qret_rate_50pct})`]: ""
+        }
+       
+        let precedingWithNoQret = {
+            [`Credit (If amount in Item 1b is zero, multiply Item 1a by ${precedingWithQretInfo.config.qre_rate_5pct}`]:precedingWithNoQretInfo.credit_eq_zero,
+            [`Credit (If amount in Item 1b is greater than zero, multiply item 1a by ${precedingWithQretInfo.config.qre_rate_6_25pct})`]:precedingWithNoQretInfo.credit_gt_zero
+        }
+        let qreActivitiesCredit = {
+            "R&D activities credit" : qreActivitiesCreditInfo.rd_credit_activities,
+            "R&D activities credit carried forward from prior years":qreActivitiesCreditInfo.rd_credit_activities_carry_forward,
+            "R&D activities credit available":qreActivitiesCreditInfo.rd_credit_activities_avail
+
+        }
         return {
             computed_fields: {
-                qret: qretInfo,
-                preceding_with_qret: precedingWithQretInfo,
-                preceding_with_no_qret: precedingWithNoQretInfo,
-                qret_activities: qreActivitiesCreditInfo
+                "Qualified Research Expenses in Texas (QRET)": qret,
+                "Credit Calculation for Entities with 3 preceding periods of QRET ": precedingWithQret,
+                "Credit Calculation for Entities with no QRET in one or more of the 3 preceding periods": precedingWithNoQret,
+                "Research and Development (R&D) Activities Credit": qreActivitiesCredit
             }
         }
     }
