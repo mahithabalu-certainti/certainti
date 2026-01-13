@@ -14,7 +14,7 @@ interface FinancialWorkingRow {
   id: string;
   row_label: string;
   Total: number | string | undefined;
-  [key: string]: string | number | undefined;
+  [key: string]: string | number | boolean | undefined;
 }
 
 const FinancialWorking: React.FC<FinancialWorkingProps> = ({
@@ -26,7 +26,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
 
   // Format value helper function
   const formatValue = (
-    value: string | number | null | undefined,
+    value: string | number | boolean | null | undefined,
     currency?: string
   ) => {
     if (value === 0 || value === '0') {
@@ -79,6 +79,8 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     projects.forEach((project, index: number) => {
       const label = project['Project Name'] || `Project ${index + 1}`;
       const projectId = project['Project ID'] || `project_${index}`;
+      const isQualified = project['is_qualified'];
+
       generatedColumns.push({
         id: projectId,
         label: (
@@ -89,6 +91,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         width: 180,
         sx: (row?: FinancialWorkingRow) => ({
           textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
+          background: !row && isQualified ? '#ffff00' : undefined,
         }),
         sortId: projectId,
         render: (row: FinancialWorkingRow) => {

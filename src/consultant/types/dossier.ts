@@ -222,7 +222,8 @@ export interface FinancialHighlightsProject {
   'Project ID': string;
   'Project Name': string;
   'Currency Symbol'?: string;
-  [key: string]: string | number | undefined;
+  is_qualified?: boolean;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface FinancialHighlightsComputedFields {

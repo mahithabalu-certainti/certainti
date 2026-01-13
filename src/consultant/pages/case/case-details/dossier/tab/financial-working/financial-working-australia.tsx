@@ -33,7 +33,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
 
   const renderValue = (value: number | string | null | undefined) => {
     return (
-      <div className="min-w-[140px] px-3 py-1.5 rounded-md border border-gray-300 bg-gray-50 text-right">
+      <div className="min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block">
         <span className="text-[13px] font-semibold text-[#2D3E4F]">
           {typeof value === 'number' ? formatCurrency(value) : value ?? '--'}
         </span>
@@ -46,48 +46,54 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
     content: React.ReactNode,
     isPrimitive: boolean = false
   ) => (
-    <div className='bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow h-full'>
-      <div className='flex items-center mb-3'>
-        <div className='capitalize font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle'>
+    <div className='w-full border border-[#CBD6E2] mb-4'>
+      <div className='bg-[#ECECEC] border-b border-[#CBD6E2] px-3 py-1'>
+        <div className='capitalize font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%]'>
           {title}
         </div>
       </div>
-      {isPrimitive ? (
-        <div className='text-center py-2'>{content}</div>
-      ) : (
-        <div className='space-y-1'>{content}</div>
-      )}
+      <div className={`p-0 bg-white`}>
+        {isPrimitive ? (
+          <div className='px-3 py-2 text-left'>{content}</div>
+        ) : (
+          <div className='w-full'>{content}</div>
+        )}
+      </div>
     </div>
   );
 
   const renderKeyValuePairs = (obj: Record<string, number | string | null | undefined>) => {
     const entries = Object.entries(obj);
     
-    return entries.map(([key, value]) => {
-      // Skip nested objects, arrays, and 'name' property
-      if (
-        (typeof value === 'object' && value !== null && !Array.isArray(value)) ||
-        Array.isArray(value) ||
-        key === 'name'
-      )
-        return null;
+    return (
+      <table className='w-full border-collapse'>
+        <tbody>
+          {entries.map(([key, value]) => {
+            if (
+              (typeof value === 'object' && value !== null && !Array.isArray(value)) ||
+              Array.isArray(value) ||
+              key === 'name'
+            )
+              return null;
 
-      return (
-        <div
-          key={key}
-          className='flex justify-between items-center py-2 border-b border-gray-100 last:border-0'
-        >
-          <span className='text-sm text-gray-600 font-medium'>
-            {formatLabel(key)}
-          </span>
-          {renderValue(value)}
-        </div>
-      );
-    });
+            return (
+              <tr key={key} className='border-b border-[#CBD6E2] last:border-0'>
+                <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
+                  {formatLabel(key)}
+                </td>
+                <td className='px-3 py-1.5 text-right'>
+                  {renderValue(value)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
   };
 
   // Special renderer for Tier of intensity array
-  const renderTierTable = (tiers: Array<Record<string, any>>) => {
+  const renderTierTable = (tiers: Array<Record<string, any>>, headerLabel?: string) => {
     if (!tiers || tiers.length === 0) return null;
 
     // Get all unique keys from all tiers (excluding 'name')
@@ -104,36 +110,32 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
 
     return (
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="w-full border-collapse">
           <thead>
-            <tr>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Tier of intensity
+            <tr className="bg-gray-50 border-b border-[#CBD6E2]">
+              <th scope="col" className="px-3 py-1.5 text-left text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider">
+                {headerLabel || ''}
               </th>
               {columnKeys.map(key => (
                 <th 
                   key={key} 
                   scope="col" 
-                  className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-1.5 text-right text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider"
                 >
                   {formatLabel(key)}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody>
             {tiers.map((tier, index) => (
-              <tr key={index}>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                  {tier.name || `Tier ${index + 1}`}
+              <tr key={index} className="border-b border-[#CBD6E2] last:border-0">
+                <td className="px-3 py-1.5 text-sm font-medium text-[#425A76]">
+                  {tier.name || `${headerLabel} ${index + 1}`}
                 </td>
                 {columnKeys.map(key => (
-                  <td key={key} className="px-4 py-3 text-right">
-                    <div className="min-w-[140px] px-3 py-1.5 rounded-md border border-gray-300 bg-gray-50 text-right inline-block">
-                      <span className="text-[13px] font-semibold text-[#2D3E4F]">
-                        {typeof tier[key] === 'number' ? formatCurrency(tier[key]) : tier[key] ?? '--'}
-                      </span>
-                    </div>
+                  <td key={key} className="px-3 py-1.5 text-right">
+                    {renderValue(tier[key])}
                   </td>
                 ))}
               </tr>
@@ -145,10 +147,9 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
   };
 
   return (
-    <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg'>
+    <div className='p-4'>
       <div className='max-w-7xl mx-auto'>
-        {/* Main Grid */}
-        <div className='grid grid-cols-1 lg:grid-cols-1 gap-4'>
+        <div className='flex flex-col gap-0'>
           {Object.entries(computedFields).map(([key, value]) => {
             const title = formatLabel(key);
 
@@ -156,7 +157,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
             if (key === 'Tier of intensity' && Array.isArray(value)) {
               return (
                 <React.Fragment key={key}>
-                  {renderCard(title, renderTierTable(value))}
+                  {renderCard(title, renderTierTable(value, title))}
                 </React.Fragment>
               );
             }
