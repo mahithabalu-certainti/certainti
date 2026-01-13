@@ -254,7 +254,7 @@ export class JurisdictionSchemaService {
     );
     if(configMeta[0]?.is_federal){
     [platformConfig] = await this.mainDbSequelize.query(
-      rawQueries.getPlatformJurisdictionConfig(configRequest.country_rid)
+      rawQueries.getPlatformJurisdictionConfig(configRequest.country_rid || configMeta[0]?.country_rid)
     );
     const platformGroupConfigMap = Object.fromEntries(
       platformConfigValues.map((row) => [row.credit_config_group_rid, row.config_json])
