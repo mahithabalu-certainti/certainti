@@ -3045,6 +3045,16 @@ export class InteractionService {
           }
         });
         projectTypes = groupedProjectTypes;
+        if(!projectTypes || (typeof projectTypes === 'object' && Object.keys(projectTypes).length === 0))
+        {
+           return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: `No active projects found for the account`,
+            data: null,
+            status: "error",
+            errorMessage: `No active projects found for the account`,
+          };
+        }
        
         // Pass as IN clause to fetchProjectsByAccount
         const [projects]: any[] = await this.orgDbSequelize.query(

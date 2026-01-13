@@ -505,8 +505,7 @@ export const rawQueries = {
     AND credit_program_name = 'Platform Configuration'
     AND rg.is_federal = true 
     AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
-  ORDER BY rv.effective_start_date DESC
-  LIMIT 1`;
+  ORDER BY rv.effective_start_date DESC `;
   },
   fetchProjectTypeRid(projectType: string | string[]) {
     // Accepts either a string or array of strings
