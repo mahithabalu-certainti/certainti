@@ -288,10 +288,59 @@ export class RdCreditCalculatorForAZ {
      * @returns 
      */
     async buildComputedFields(creditASC: any, creditRRC: any) {
+        let rrc ={
+            "Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditRRC.wages,
+            "Cost of supplies":creditRRC.supplies,
+            "Cost to rent or lease computers":creditRRC.cost_to_rent,
+            "Contract research expenses: See instructions":creditRRC.contract,
+            "Total qualified research expenses. Add line 11 through line 14":creditRRC.total_current_year_qre,
+            "Average annual Arizona gross receipts: See instructions":creditRRC.average_gross_receipts,
+            "Fixed-base percentage [not more than 16% (.1600)]: See instructions":creditRRC.fixed_base_percentage,
+            "Base amount: Multiply line 16 by the percentage on line 17. Enter the result":creditRRC.base_amount,
+            "Subtract line 18 from line 15. If less than zero, enter 0":creditRRC.excess_qre_over_base,
+            "Enter 50% (.50) of line 15":creditRRC.half_total_qre,
+            "Multiply line 15 by 50% (.50). Enter the result":creditRRC.half_total_qre,
+            "Enter the lesser of line 19 or line 20":creditRRC.total_section_b_credit,
+            "Add lines 10 and 21. Enter the total":creditRRC.total_az_credit_before_limits,
+            "If line 22 is $2,500,000 or less, complete line 23 and skip lines 24 through 26.":"",
+            "If line 22 is more than $2,500,000, skip line 23 and complete lines 24 through 26.":"",
+            "Multiply line 22 by 24% (.24). Enter the result":creditRRC.credit_if_under_threshold,
+            "Subtract $2,500,000 from line 22. Enter the result":creditRRC.excess_amount,
+            "Multiply line 24 by 15% (.15). Enter the result":creditRRC.credit_on_excess,
+            "Add $600,000 to line 25. Enter the total":"",
+            "If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26 .":creditRRC.total_az_final_credit,
+            "If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page":""
+        }
+        let asc = {
+            "Basic research payments paid or incurred to qualified organizations:":"",
+            "Qualified organization base period amount":"",
+            "Subtract line 76 from line 75. Enter the difference. If less than zero, enter “0”.":"",
+            "Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditASC.wages,
+            "Current year cost of supplies":creditASC.supplies,
+            "Current year cost to rent or lease computers":"",
+            "Current contract research expenses: See instructions":creditASC.contract,
+            "Total research expenses for the current year: Add lines 78 through 81. Enter the total":creditASC.total_current_year_qre,
+            "Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC":creditASC.total_prior_3years_qre,
+            "Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result":creditASC.adjusted_base_amount,
+            "Subtract line 84 from line 82. Enter the difference. If less than zero, enter 0.":creditASC.excess_qre,
+            "Multiply line 82 by 50% (.50). Enter the result.":creditASC.half_total_qre,
+            "Enter the lesser of line 85 or line 86.":creditASC.total_section_b_credit,
+            "Add line 77 and line 87. Enter the total":creditASC.prior_year_credit_carryforward,
+            "If line 88 is $2,500,000 or less, complete lines 89 and 93. Skip lines 90 through 92.":"",
+            "If line 88 is more than $2,500,000, skip line 89. Complete lines 90 through 93.":"",
+            "If line 88 is $2,500,000 or less, multiply line 88 by 24% (.24). Enter the result.":creditASC.credit_if_under_threshold,
+            "If line 88 is more than $2,500,000, subtract $2,500,000 from line 88. Enter the difference.":creditASC.excess_amount,
+            "Multiply line 90 by 15% (.15). Enter the result.":creditASC.credit_on_excess,
+            "Add $600,000 to line 91. Enter the total. ":creditASC.credit_if_over_threshold,
+            "Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.":creditASC.total_az_final_credit
+
+        }
+
+
         return {
             computed_fields: {
-                asc: creditASC,
-                rrc: creditRRC
+                "Qualified research expenses paid or incurred.": rrc,
+                "Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"    : asc   
             }
         }
     }
