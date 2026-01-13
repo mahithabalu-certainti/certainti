@@ -248,6 +248,7 @@ export class JurisdictionSchemaService {
       );
     }
   
+    
     // Build a map of config group rid to config_json
     const groupConfigMap = Object.fromEntries(
       paramValues.map((row) => [row.credit_config_group_rid, row.config_json])
