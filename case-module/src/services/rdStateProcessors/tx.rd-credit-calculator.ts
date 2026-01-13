@@ -221,13 +221,15 @@ export class RdCreditCalculatorForTX {
             "Total QRET in 1st preceding tax period":qretInfo.prev1_qre,
             "Total QRET in 2nd preceding tax period":qretInfo.prev2_qre,
             "Total QRET in 3rd preceding tax period":qretInfo.prev3_qre,
-            "qret_high_edu_contract":qretInfo.qret_high_edu_contract
+            "QRET under higher education contracts for the period covered by this report":qretInfo.qret_high_edu_contract
         }
+
         let precedingWithQret ={
-            "Average QRET for preceding periods":precedingWithQretInfo,
-            "Average QRET x 50% ":precedingWithQretInfo,
-            "Difference":precedingWithQretInfo,
-            "Credit":precedingWithQretInfo
+            "Average QRET for preceding periods":precedingWithQretInfo.average_prev_year_qre,
+            "Average QRET x 50% ":precedingWithQretInfo.average_qret_rate_50pct,
+            "Difference":precedingWithQretInfo.difference,
+            "Credit (If amount in Item 1b is zero, multiply Item 7 by 5% (0.05);":precedingWithQretInfo.credit,
+            "Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by 6.25% (0.0625))":""
         }
        
         let precedingWithNoQret = {

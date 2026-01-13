@@ -238,7 +238,7 @@ export class RdCreditCalculatorForMA {
             "Average annual gross receipts from the 4 most recent taxable years":part3CreditCalInfo.avg_total_previous_receipts,
             "Base amount. Multiply line 14 by line 15. Not less than 50% of line 6":part3CreditCalInfo.base_amount,
             "Subtract line 16 from current year expenses on line 6. Not less than 0":"",
-            "Total group credit fro qualified research expenses. Multiply line 17 by 10%":"",
+            "Total group credit for qualified research expenses. Multiply line 17 by 10%":"",
             "Total group credit for basic research payments (see instructions)":"",
             "Total Research Credit for aggregate group. Combine line 18 and 19":"",
             "Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.": part3CreditCalInfo.aggregate_group_credit_percent,
