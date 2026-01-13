@@ -15,7 +15,7 @@ import {
 import { getDataMapperColumns } from './columns';
 import { DataMapperListItem, DataMapperListParams } from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { DATA_MAPPER_EDIT } from '../../../../../routes';
+import { DATA_MAPPER_CONFIG, DATA_MAPPER_EDIT } from '../../../../../routes';
 import { useDataMapperList } from '../../../../service/data-mapper/data-mapper-service';
 import { caseClient } from '../../../../../api/graphql/clients/client';
 import { UPDATE_DATA_MAPPER } from '../../../../../api/graphql/queries/data-mapper-query';
@@ -139,7 +139,15 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     setCurrentCountry(country);
   };
 
+  const handleConfig = (row: DataMapperListItem) => {
+    const path = generatePath(DATA_MAPPER_CONFIG, {
+      mapperId: row.rid,
+    });
+    navigate(path);
+  };
+
   const dataMapperColumns = getDataMapperColumns(
+    handleConfig,
     handleDownload,
     countryOptions,
     regionOptions,

@@ -65,6 +65,7 @@ export const WORKFLOW_BUILDER_EDIT = `${WORKFLOW_BUILDER}/edit/:ruleId`;
 export const DATA_MAPPER = `${ADMIN}/data-mapper`;
 export const DATA_MAPPER_CREATE = `${DATA_MAPPER}/create`;
 export const DATA_MAPPER_EDIT = `${DATA_MAPPER}/edit/:mapperId`;
+export const DATA_MAPPER_CONFIG = `${DATA_MAPPER}/config/:mapperId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

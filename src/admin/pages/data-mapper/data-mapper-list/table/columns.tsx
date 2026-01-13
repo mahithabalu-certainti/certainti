@@ -11,6 +11,7 @@ import {
 import { DataMapperListItem } from '../../../../types';
 
 export const getDataMapperColumns = (
+  handleConfig: (row: DataMapperListItem) => void,
   handleDownload: (documentUrl: string) => void,
   countryOptions: { label: string; value: string }[],
   regionOptions: { label: string; value: string }[],
@@ -296,6 +297,23 @@ export const getDataMapperColumns = (
     // hide:
     //   !permissionMap?.['modified_datetime']?.read &&
     //   !permissionMap?.['modified_datetime']?.edit,
+  },
+  {
+    id: 'config',
+    sortId: 'config',
+    label: 'Config',
+    width: 90,
+    sortable: false,
+    render: (row) => (
+      <span
+        onClick={() => {
+          handleConfig(row);
+        }}
+        className='cursor-pointer !text-[#1755E7] underline hover:text-[#1755E7]'
+      >
+        Config
+      </span>
+    ),
   },
   {
     id: 'attachment',

@@ -15,6 +15,7 @@ export interface SectionHeaderTabProps {
   defaultValue?: string;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  className?: string;
 }
 
 const SectionHeaderTab: React.FC<SectionHeaderTabProps> = ({
@@ -23,6 +24,7 @@ const SectionHeaderTab: React.FC<SectionHeaderTabProps> = ({
   defaultValue,
   isExpanded,
   onToggleExpand,
+  className = '',
 }) => {
   const visibleTabs = tabs.filter((tab) => !tab.hide);
 
@@ -54,7 +56,9 @@ const SectionHeaderTab: React.FC<SectionHeaderTabProps> = ({
   const activeIndex = visibleTabs.findIndex((tab) => tab.value === activeTab);
 
   return (
-    <div className='flex flex-col gap-0 border border-[#CBD6E2] pl-3'>
+    <div
+      className={`${className ? className : 'flex flex-col gap-0 border border-[#CBD6E2] pl-3'}`}
+    >
       <Box className='flex items-center justify-between gap-4 h-[40px] py-1 border-b border-[#CBD6E2] pr-3'>
         <Tabs
           value={activeIndex}

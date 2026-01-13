@@ -6,10 +6,17 @@ import {
   DataMapperListParams,
   DataMapperListItem,
   DataMapperExportListParams,
+  MappingDetailsData,
+  DataMapperConfigPayload,
+  DataMapperConfigResponse,
+  ObjectItem,
 } from '../../types/data-mapper';
 import {
+  DataMapperConfigMockData,
   DataMapperDetailsMockData,
   DataMapperListMockData,
+  MappingDetailsMockData,
+  ObjectsListMockData,
 } from '../../mockdata/data-mapper';
 
 const useApiMutationService = <T, V = void>(
@@ -154,4 +161,86 @@ export const ExportDataMapperList = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+//----- Mapping Details --------
+export const fetchMappingDetails = async (
+  rid: string
+): Promise<MappingDetailsData> => {
+  // const response = await caseServiceApi.get<MappingDetailsResponse>(
+  //   `/api/dataMapper/mappingDetail/${rid}`
+  // );
+  // return response.data.data;
+
+  console.log('mapping-details', rid);
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  return MappingDetailsMockData.data;
+};
+
+export const useMappingDetails = (
+  rid?: string,
+  isEnabled?: boolean
+): UseQueryResult<MappingDetailsData | undefined, Error> => {
+  return useQuery<MappingDetailsData | undefined, Error>({
+    queryKey: ['mapping-details', rid],
+    queryFn: () => fetchMappingDetails(rid!),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!rid && isEnabled,
+  });
+};
+
+//----- Object List --------
+export const fetchObjectsList = async (
+  country_rid: string,
+  state_rid: string
+): Promise<ObjectItem> => {
+  // const response = await caseServiceApi.get<ObjectsListResponse>(
+  //   `/api/dataMapper/objectsList?country_rid=${country_rid}&state_rid=${state_rid}`
+  // );
+  // return response.data.data;
+
+  console.log('objects-list', country_rid, state_rid);
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  return ObjectsListMockData.data;
+};
+
+export const useObjectsList = (
+  country_rid: string,
+  state_rid: string
+): UseQueryResult<ObjectItem | undefined, Error> => {
+  return useQuery<ObjectItem | undefined, Error>({
+    queryKey: ['mapper-objects-list', country_rid, state_rid],
+    queryFn: () => fetchObjectsList(country_rid, state_rid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!country_rid && !!state_rid,
+  });
+};
+
+//----- Data Mapper Config --------
+export const updateDataMapperConfig = async (
+  body: DataMapperConfigPayload
+): Promise<DataMapperConfigResponse> => {
+  // const response = await caseServiceApi.post<DataMapperConfigResponse>(
+  //   `/api/dataMapper/updateMapping`,
+  //   body
+  // );
+  // return response.data.data;
+
+  console.log('data-mapper-config', body);
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  return DataMapperConfigMockData;
+};
+
+export const useUpdateDataMapperConfig = () => {
+  return useMutation<DataMapperConfigResponse, Error, DataMapperConfigPayload>({
+    mutationFn: (body) => updateDataMapperConfig(body),
+  });
 };

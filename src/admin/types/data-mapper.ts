@@ -100,3 +100,104 @@ export interface DataMapperListResponse {
     totalCount: number;
   };
 }
+
+//--------- PDF Viewer Types --------
+export interface PDFField {
+  id: string;
+  name: string;
+  type: string;
+  page: number;
+  rect: number[];
+  defaultValue?: string;
+  possibleValues?: string[];
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PDFDocument {
+  file: File;
+  pageCount: number;
+  fields: PDFField[];
+}
+
+//----------- Mapping Details Types --------
+export interface FieldMapping {
+  rid: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string | null;
+  modified_by: string | null;
+  form_rid: string;
+  field_label: string;
+  field_id: string | null;
+  object_rid: string[];
+}
+
+export interface MappingDetailsData {
+  file: string;
+  form_name: string;
+  country_name: string;
+  state_name: string;
+  country_rid: string;
+  state_rid: string;
+  mappings: FieldMapping[];
+}
+
+export interface MappingDetailsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: MappingDetailsData;
+}
+
+//----------- Objects List Types --------
+export interface ObjectItem {
+  rid: string;
+  created_by: string;
+  modified_by: string | null;
+  created_datetime: string;
+  modified_datetime: string | null;
+  country_rid: string | null;
+  state_rid: string | null;
+  ref_table: string;
+  field_name: string | null;
+  parent_object: string;
+  object_name: string;
+  is_json: boolean;
+}
+
+export interface ObjectsListResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: ObjectItem[];
+}
+
+//----------- Data Mapper Config Types --------
+export interface DataMapperFieldMapping {
+  rid: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string | null;
+  modified_by: string | null;
+  form_rid: string;
+  field_label: string;
+  field_id: string | null;
+  object_rid: string | null;
+}
+
+export interface DataMapperConfigPayload {
+  form_rid: string;
+  mappings: DataMapperFieldMapping[];
+}
+
+export interface DataMapperConfigResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    rid: string;
+  };
+}
