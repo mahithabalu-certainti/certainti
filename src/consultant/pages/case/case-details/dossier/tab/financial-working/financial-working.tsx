@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo } from 'react';
 import ListTable from '../../../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../../../components/table/types';
@@ -38,6 +39,11 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
   const hasProjectCode = useMemo(
     () => projects.some((p) => p['Project Code']),
     [projects]
+  );
+  
+  const boldRows = useMemo(
+    () => (computedFields as any)?.BOLD || [],
+    [computedFields]
   );
 
   // Format value helper function
@@ -90,9 +96,14 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
           borderRight: '1px solid #CBD6E2 !important',
           borderBottom: '1px solid #CBD6E2 !important',
         },
-        render: (row: FinancialWorkingRow) => (
-          <span className='font-semibold text-[#2D3E4F]'>{row.row_label}</span>
-        ),
+        render: (row: FinancialWorkingRow) => {
+          const isBold = boldRows.includes(row.row_label);
+          return (
+            <span className={`${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}>
+              {row.row_label}
+            </span>
+          );
+        },
       },
     ];
 
@@ -123,8 +134,11 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         sortId: projectId,
         render: (row: FinancialWorkingRow) => {
           const value = row[projectId];
+          const isBold = boldRows.includes(row.row_label);
           return (
-            <span className='text-[#425A76]'>{formatValue(value, symbol)}</span>
+            <span className={isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76]'}>
+              {formatValue(value, symbol)}
+            </span>
           );
         },
       });
@@ -140,11 +154,14 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       // sx: (row?: FinancialWorkingRow) => ({
       //   textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
       // }),
-      render: (row: FinancialWorkingRow) => (
-        <span className='font-bold text-[#2D3E4F]'>
-          {formatValue(row.Total, symbol)}
-        </span>
-      ),
+      render: (row: FinancialWorkingRow) => {
+        const isBold = boldRows.includes(row.row_label);
+        return (
+          <span className={isBold ? 'font-bold text-[#1A2733]' : 'font-bold text-[#2D3E4F]'}>
+            {formatValue(row.Total, symbol)}
+          </span>
+        );
+      },
     });
 
     return generatedColumns;
@@ -194,9 +211,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     return row.id;
   };
 
-  if (!computedFields || !('Columns' in computedFields)) {
+  if (!data?.data || !computedFields || !('Columns' in computedFields)) {
     return (
-      <div className='p-4 text-center text-gray-500'>No data available</div>
+      <div className='p-8 text-center text-[#425A76] italic font-medium'>No data available</div>
     );
   }
 

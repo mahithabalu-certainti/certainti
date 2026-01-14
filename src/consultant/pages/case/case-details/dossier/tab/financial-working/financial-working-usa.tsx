@@ -11,18 +11,16 @@ interface FinancialWorkingUSAProps {
 
 const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
   // Check if data is present
-  if (!data?.data?.computed_fields) {
-    return (
-      <div className='p-4 text-center text-gray-500'>
-        No data available or invalid format
-      </div>
-    );
+  const rawComputedFields = data?.data?.computed_fields as USAComputedFields;
+  const computedFields = rawComputedFields?.computed_fields || rawComputedFields;
+
+  if (!data?.data || !computedFields || Object.keys(computedFields).length === 0) {
+    return <div className="p-8 text-center text-[#425A76] italic font-medium">No data available</div>;
   }
 
-  // Handle both old and new structure for USA
-  const rawComputedFields = data.data.computed_fields as USAComputedFields;
-  const computedFields = rawComputedFields.computed_fields || rawComputedFields;
-  const inputParams = data.data.input_params as Record<string, any>;
+  const boldRows = (computedFields as any)?.BOLD || [];
+
+  const inputParams = data?.data?.input_params as Record<string, any>;
   const qreSummary = inputParams?.qreSummary;
   const currencyCode =
     (inputParams?.metadata?.currency as string) ||
@@ -30,8 +28,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     'USD';
 
   const formatCurrency = (value: number | string | null | undefined) => {
-    if (value === null || value === undefined) return '--';
-
+    if (value === null || value === undefined) return '';
+    
     // Check if it's a percentage (string ending with %)
     if (typeof value === 'string' && value.trim().endsWith('%')) {
       return value;
@@ -56,22 +54,21 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const renderValue = (value: any) => {
-    if (value === null || value === undefined) return '--';
-
-    const isPercentage = typeof value === 'string' && value.endsWith('%');
-    const isNumeric =
-      !isPercentage &&
-      (typeof value === 'number' ||
-        (typeof value === 'string' &&
-          !isNaN(parseFloat(value.replace(/[^0-9.-]/g, ''))) &&
-          isFinite(Number(value.replace(/[^0-9.-]/g, '')))));
-
+  const renderValue = (value: any, isBold?: boolean) => {
+    const isEmpty = value === null || value === undefined || value === '';
+    
     return (
-      <div className='min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block'>
-        <span className='text-[13px] font-semibold text-[#2D3E4F]'>
-          {isNumeric ? formatCurrency(value) : (value ?? '--')}
-        </span>
+      <div className="w-[180px] min-h-[32px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] inline-flex items-center justify-end">
+        {!isEmpty && (
+          <span className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}>
+            {(() => {
+              const isPercentage = typeof value === 'string' && value.endsWith('%');
+              const isNumeric = !isPercentage && (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value.replace(/[^0-9.-]/g, ''))) && isFinite(Number(value.replace(/[^0-9.-]/g, '')))));
+              return isNumeric ? formatCurrency(value) : value;
+            })()}
+          </span>
+        )}
+        {isEmpty && <span>&nbsp;</span>}
       </div>
     );
   };
@@ -115,12 +112,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             )
               return null;
 
+            const isBold = boldRows.includes(key);
             return (
               <tr key={key} className='border-b border-[#CBD6E2] last:border-0'>
-                <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
+                <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}>
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>{renderValue(value)}</td>
+                <td className='px-3 py-1.5 text-right'>{renderValue(value, isBold)}</td>
               </tr>
             );
           })}
@@ -162,7 +160,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             </tr>
           </thead>
           <tbody>
-            {(() => {
+              {(() => {
               // Get unique keys from all columns to render rows
               const allRowKeys = new Set<string>();
               columnKeys.forEach((colKey) => {
@@ -171,24 +169,93 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 });
               });
 
-              return Array.from(allRowKeys).map((rowKey) => (
-                <tr
-                  key={rowKey}
-                  className='border-b border-[#CBD6E2] last:border-0'
-                >
-                  <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
-                    {formatLabel(rowKey)}
-                  </td>
-                  {columnKeys.map((colKey) => (
-                    <td key={colKey} className='px-3 py-1.5 text-right'>
-                      {renderValue(reduction280c[colKey][rowKey])}
+              return Array.from(allRowKeys).map((rowKey) => {
+                const isBold = boldRows.includes(rowKey);
+                return (
+                  <tr
+                    key={rowKey}
+                    className='border-b border-[#CBD6E2] last:border-0'
+                  >
+                    <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}>
+                      {formatLabel(rowKey)}
                     </td>
-                  ))}
-                </tr>
-              ));
+                    {columnKeys.map((colKey) => (
+                      <td key={colKey} className='px-3 py-1.5 text-right'>
+                        {renderValue(reduction280c[colKey][rowKey], isBold)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              });
             })()}
+
           </tbody>
         </table>
+      </div>
+    );
+  };
+
+  const renderCardContent = (value: any, key?: string) => {
+    if (typeof value !== 'object' || value === null) {
+      if (key) {
+        return (
+          <table className='w-full border-collapse'>
+            <tbody>
+              <tr className='border-b border-[#CBD6E2] last:border-0'>
+                <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
+                  {formatLabel(key)}
+                </td>
+                <td className='px-3 py-1.5 text-right'>
+                  {renderValue(value)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        );
+      }
+      return (
+        <div className='flex justify-start items-center p-3'>
+          {renderValue(value)}
+        </div>
+      );
+    }
+
+    if ((value as any).reduction280c) {
+      return render280C("Reduction 280C", value);
+    }
+
+    const entries = Object.entries(value);
+    const hasObjects = entries.some(([, v]) => typeof v === 'object' && v !== null && !Array.isArray(v));
+
+    if (!hasObjects) {
+      return renderKeyValuePairs(value);
+    }
+
+    return (
+      <div className="w-full">
+        {entries.map(([k, v]) => {
+          if (k === 'name') return null;
+          
+          if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+            if ((v as any).reduction280c) return render280C(k, v);
+            return (
+              <div key={k} className="border-b border-[#CBD6E2] last:border-0">
+                <div className="bg-[#F9FAFB] px-3 py-1 font-semibold text-[13px] text-[#2D3E4F] border-b border-[#CBD6E2]">
+                  {formatLabel(k)}
+                </div>
+                {renderKeyValuePairs(v)}
+              </div>
+            );
+          }
+          
+          const isBold = k && boldRows.includes(k);
+          return (
+            <div key={k} className="px-3 py-1.5 flex justify-between items-center border-b border-[#CBD6E2] last:border-0">
+              <span className={`text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}>{formatLabel(k)}</span>
+              {renderValue(v, isBold)}
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -204,67 +271,31 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             </React.Fragment>
           )}
 
-          {/* ASC Credit Section */}
-          {(computedFields['ASC Credit'] || computedFields.asc) && (
-            <React.Fragment>
-              <div className='mb-4'>
-                {renderCard(
-                  'ASC Credit',
-                  <div className='w-full'>
-                    {renderKeyValuePairs(
-                      computedFields['ASC Credit']?.creditASC ||
-                        computedFields.asc?.creditASC
-                    )}
-                    {render280C(
-                      'Reduction 280C',
-                      computedFields['ASC Credit']?.asc280C ||
-                        computedFields.asc?.asc280C
-                    )}
-                  </div>
-                )}
-              </div>
-            </React.Fragment>
-          )}
-
-          {/* Regular Credit Section */}
-          {(computedFields['Regular Credit'] || computedFields.rrc) && (
-            <React.Fragment>
-              <div className='mb-4'>
-                {renderCard(
-                  'Regular Credit',
-                  <div className='w-full'>
-                    {renderKeyValuePairs(
-                      computedFields['Regular Credit']?.creditRRC ||
-                        computedFields.rrc?.creditRRC
-                    )}
-                    {render280C(
-                      'Reduction 280C',
-                      computedFields['Regular Credit']?.rrc280C ||
-                        computedFields.rrc?.rrc280C
-                    )}
-                  </div>
-                )}
-              </div>
-            </React.Fragment>
-          )}
-
-          {/* Bottom Summary Section */}
+          {/* Dynamic Computed Fields Section */}
           {Object.entries(computedFields).map(([key, value]) => {
-            if (typeof value !== 'object' && key !== 'computed_fields') {
-              return (
-                <div key={key} className='mb-4'>
-                  {renderCard(
-                    formatLabel(key),
-                    <div className='flex justify-start items-center'>
-                      {renderValue(value as any)}
-                    </div>,
-                    true
-                  )}
-                </div>
-              );
-            }
-            return null;
+            if (key === 'computed_fields' || key === 'qreSummary') return null;
+            
+            return (
+              <div key={key} className="mb-4">
+                {renderCard(
+                  formatLabel(key),
+                  renderCardContent(value, key),
+                  false // Content handles padding via tables/rows
+                )}
+              </div>
+            );
           })}
+
+          {/* Top-level final_credit summary if present */}
+          {(data?.data as any)?.final_credit !== undefined && (
+            <div className="mb-4">
+              {renderCard(
+                "Final Credit",
+                renderCardContent((data?.data as any)?.final_credit, "Final Credit"),
+                false
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
