@@ -175,7 +175,8 @@ export class RdCreditCalculatorForCAN {
                 "TOTAL Credit with ORDTC": Math.round(totalCreditWithORDTC),
                 "TOTAL Credit with No ORDTC": Math.round(totalCreditWithNoORDTC)
             },
-            "Projects" : calculatedNewComputedValues
+            "Projects" : calculatedNewComputedValues,
+            BOLD : ["TOTAL Credit with ORDTC", "TOTAL Credit with No ORDTC", "Total Cost"]
         }
         return {
             inputFields : {

@@ -137,7 +137,7 @@ export class FederalComputationService {
                             "Fiscal Year" : `04/01/${caseDetails?.fiscal_year - 1} - 03/31/${caseDetails?.fiscal_year}`
                         },
                         Columns : [
-                            "Project Credit Summary","Employees", "EPW", reductionValue, 
+                            "Project Credit Summary","Employees","LABOUR", "EPW", reductionValue, 
                             "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
                             "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
                             "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit","Percentage Calculation",
@@ -145,6 +145,7 @@ export class FederalComputationService {
                             "Total Project to be shared with HMRC" 
                         ],
                         Total : {
+                            "LABOUR" : 0,
                             "Employees" : totalEmployees,
                             "EPW" : totalEpw,
                             [reductionValue] : totalReduction,
@@ -181,7 +182,10 @@ export class FederalComputationService {
                         "Technical Submissions by Cost that are 50% or more of Total QRE" : projectsMoreOfQre50Percent,
                         "Total Project to be shared with HMRC" : {
                             "Total" : totalProjectSharedWithHmrc
-                        }
+                        },
+                        BOLD : ["Total Project Value/Labor","LABOUR", "Total Salary + EPW Expenses", 
+                            "Technical Submissions by Cost that are 50% or more of Total QRE"
+                        ]
                     }
                         await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData); 
                         return {
@@ -239,10 +243,11 @@ export class FederalComputationService {
                                     "Expleo" : `FY-${caseDetails?.fiscal_year}`
                                 },
                             Columns : [
-                                "Project Credit Summary", "Employees", "EPW", `Reductions (${extractConfig.reduction}%)`, "Net EPW", "Unpaid amounts (+)", "Unpaid amounts (-)", 
+                                "Project Credit Summary", "LABOUR","Employees", "EPW", `Reductions (${extractConfig.reduction}%)`, "Net EPW", "Unpaid amounts (+)", "Unpaid amounts (-)", 
                                 "Total Labour", "Cloud Software", "Subcontracts", "Heat Light Power", "Other", "Total QRE", `Research and Development (R&D) Corporation Tax credit @${extractConfig.research_development_tax_credit}%`
                             ],
                             Total : {
+                                "LABOUR" : 0,
                                 Employees : totalEmployeesCost,
                                 EPW : totalEpwCost,
                                 [dynamicReductionKey] : totalReductionCost,
@@ -268,7 +273,8 @@ export class FederalComputationService {
                                     "Net EPW" : d.net_epw,
                                     "Total Labour" : d.total_project_value_labor,
                                 }
-                            })
+                            }),
+                            "BOLD" : ["Total Labour", "LABOUR", "Total QRE", dynamicRdCredit]
                         } 
                         await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData); 
                         return {
