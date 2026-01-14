@@ -174,9 +174,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     return row.id;
   };
 
-  if (!computedFields || !('Columns' in computedFields)) {
+  if (!data?.data || !computedFields || !('Columns' in computedFields)) {
     return (
-      <div className='p-4 text-center text-gray-500'>No data available</div>
+      <div className='p-8 text-center text-[#425A76] italic font-medium'>No data available</div>
     );
   }
 

@@ -171,6 +171,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
@@ -178,12 +179,21 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { successToast, errorToast } = useToast();
   // const queryClient = useQueryClient();
 
-  // Restore showFinancialValues if data exists
+  // Restore showFinancialValues and form states if data exists
   React.useEffect(() => {
     if (financialData) {
       setShowFinancialValues(true);
+      
+      // Restore region/federal state from payload if available
+      const stateRid = (financialData.data as any)?.state_rid;
+      if (stateRid) {
+        setIsFederal('no');
+        setSelectedRegion(stateRid);
+      } else if (financialData.data) {
+        setIsFederal('yes');
+      }
     }
-  }, []);
+  }, [financialData]);
 
   const { mutate: initiateProcess, isPending: isInitiating } =
     useInitiateRDCreditProcess();
@@ -267,18 +277,21 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const handleViewFinancialHighlightsForRegion = async () => {
     try {
+      setIsPreviewLoading(true);
       const response = await fetchRDCreditPreview(
         accountid,
         caseId ?? '',
         selectedRegion
       );
-      if (response && response.data) {
+      if (response) {
         setFinancialData(response as unknown as FinancialHighlightsResponse);
         setShowFinancialValues(true);
       }
     } catch (error) {
       console.error(error);
       errorToast('Failed to initiate');
+    } finally {
+      setIsPreviewLoading(false);
     }
   };
 
@@ -296,19 +309,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     financialHighlights(payload, {
       onSuccess: (data) => {
         console.log('Initiated successfully', data);
-        // Type guard: ensure the data is FinancialHighlightsResponse before setting state
-        if (
-          data &&
-          typeof data === 'object' &&
-          'data' in data &&
-          typeof data.data === 'object' &&
-          data.data !== null &&
-          !Array.isArray(data.data)
-        ) {
-          setFinancialData(data as FinancialHighlightsResponse);
-        } else {
-          setFinancialData(null);
-        }
+        setFinancialData(data as FinancialHighlightsResponse);
         setShowFinancialValues(true);
       },
       onError: (error) => {
@@ -434,11 +435,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             />
             <TextButton
               label={'View'}
-              loading={isFinancialHighlights}
+              loading={isFinancialHighlights || isPreviewLoading}
               onClick={handleViewFinancialHighlights}
               disabled={
                 !isViewButtonEnabled() ||
                 isFinancialHighlights ||
+                isPreviewLoading ||
                 showFinancialValue
               }
               sx={{

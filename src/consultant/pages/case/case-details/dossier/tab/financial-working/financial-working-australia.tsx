@@ -9,12 +9,13 @@ interface FinancialWorkingAustraliaProps {
 const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ data }) => {
     
   // Check if data is present and has correct structure
-  if (!data?.data?.computed_fields || !('R&D Expenditure' in data.data.computed_fields)) {
-      return <div className="p-4 text-center text-gray-500">No data available or invalid format</div>;
+  const computedFields = data?.data?.computed_fields as AustraliaComputedFields;
+  
+  if (!data?.data || !computedFields || !('R&D Expenditure' in computedFields)) {
+      return <div className="p-8 text-center text-[#425A76] italic font-medium">No data available</div>;
   }
 
-  const computedFields = data.data.computed_fields as AustraliaComputedFields;
-  const currencyCode = (data.data.input_params?.currency as string) || 'AUD';
+  const currencyCode = (data?.data?.input_params?.currency as string) || 'AUD';
 
   const formatCurrency = (value: number | string | null | undefined) => {
     if (typeof value === 'number') {
