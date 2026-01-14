@@ -160,7 +160,7 @@ export interface FieldMapping {
   form_rid: string;
   field_label: string;
   field_id: string | null;
-  object_rid: ObjectRidMap | null;
+  calculation_config: ObjectRidMap | null;
 }
 
 export interface MappingDetailsData {
@@ -209,7 +209,7 @@ export interface DataMapperFieldMapping {
   form_rid: string;
   field_label: string;
   field_id: string | null;
-  object_rid: ObjectRidMap | null;
+  calculation_config: ObjectRidMap | null;
 }
 
 export interface DataMapperConfigPayload {

@@ -176,7 +176,7 @@ interface FieldExpression {
 
 interface MappingItemForValidation {
   field_id: string | null;
-  object_rid: ObjectRidMap | null;
+  calculation_config: ObjectRidMap | null;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
 }
@@ -190,12 +190,16 @@ export function validateMappingItem(
   mapping: MappingItemForValidation
 ): ValidationErrors {
   const errors: ValidationErrors = {};
-  
-  // Check if there's any target content (either in object_rid or fieldExpressions)
-  const hasObjectRid = mapping.object_rid && Object.keys(mapping.object_rid).length > 0;
-  const hasFieldExpressions = mapping.fieldExpressions && mapping.fieldExpressions.length > 0;
+
+  // Check if there's any target content (either in calculation_config or fieldExpressions)
+  const hasCalculationConfig =
+    mapping.calculation_config &&
+    Object.keys(mapping.calculation_config).length > 0;
+  const hasFieldExpressions =
+    mapping.fieldExpressions && mapping.fieldExpressions.length > 0;
   const hasInputValue = mapping.inputValue && mapping.inputValue.trim() !== '';
-  const hasTarget = hasObjectRid || hasFieldExpressions || hasInputValue;
+  const hasTarget =
+    hasCalculationConfig || hasFieldExpressions || hasInputValue;
   const hasFieldId = mapping.field_id && mapping.field_id.trim() !== '';
 
   // Validate Field ID requirement
@@ -205,36 +209,40 @@ export function validateMappingItem(
 
   // Check for pending input value (unconverted text)
   if (hasInputValue) {
-    errors.targetError = 'Invalid text in Target. Please select from dropdown or use operators.';
+    errors.targetError =
+      'Invalid text in Target. Please select from dropdown or use operators.';
     return errors;
   }
 
-  // Validate fieldExpressions structure (this catches invalid structures that aren't in object_rid)
+  // Validate fieldExpressions structure (this catches invalid structures that aren't in calculation_config)
   if (hasFieldExpressions && mapping.fieldExpressions) {
     const expressions = mapping.fieldExpressions;
-    
+
     // Check if first item is an operator
     if (expressions.length > 0 && expressions[0].type === 'operator') {
       errors.targetError = 'Target cannot start with an operator';
       return errors;
     }
-    
+
     // Check if last item is an operator
-    if (expressions.length > 0 && expressions[expressions.length - 1].type === 'operator') {
+    if (
+      expressions.length > 0 &&
+      expressions[expressions.length - 1].type === 'operator'
+    ) {
       errors.targetError = 'Target must end with an Object ID, not an operator';
       return errors;
     }
-    
+
     // Check for consecutive operators or consecutive chips
     for (let i = 0; i < expressions.length - 1; i++) {
       const current = expressions[i];
       const next = expressions[i + 1];
-      
+
       if (current.type === 'operator' && next.type === 'operator') {
         errors.targetError = 'Cannot have consecutive operators';
         return errors;
       }
-      
+
       if (current.type === 'chip' && next.type === 'chip') {
         errors.targetError = 'Missing operator between Object IDs';
         return errors;
@@ -242,9 +250,9 @@ export function validateMappingItem(
     }
   }
 
-  // Validate Target structure in object_rid (for saved data)
-  if (hasObjectRid && mapping.object_rid) {
-    const keys = Object.keys(mapping.object_rid)
+  // Validate Target structure in calculation_config (for saved data)
+  if (hasCalculationConfig && mapping.calculation_config) {
+    const keys = Object.keys(mapping.calculation_config)
       .map(Number)
       .sort((a, b) => a - b);
     const operators = ['add', 'subtract', 'multiply', 'divide'];
@@ -252,19 +260,21 @@ export function validateMappingItem(
     // Check if structure follows the pattern
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
-      const value = mapping.object_rid[key];
+      const value = mapping.calculation_config[key];
       const isOdd = key % 2 === 1;
       const isEven = key % 2 === 0;
 
       // Odd indices should be object IDs (UUIDs)
       if (isOdd && operators.includes(value)) {
-        errors.targetError = 'Invalid target structure: Object ID expected at this position';
+        errors.targetError =
+          'Invalid target structure: Object ID expected at this position';
         return errors;
       }
 
       // Even indices should be operators
       if (isEven && !operators.includes(value)) {
-        errors.targetError = 'Invalid target structure: Operator expected at this position';
+        errors.targetError =
+          'Invalid target structure: Operator expected at this position';
         return errors;
       }
     }
@@ -274,14 +284,16 @@ export function validateMappingItem(
       // Last key should be odd (object ID) - can't end with an operator
       const lastKey = keys[keys.length - 1];
       if (lastKey % 2 === 0) {
-        errors.targetError = 'Target must end with an Object ID, not an operator';
+        errors.targetError =
+          'Target must end with an Object ID, not an operator';
         return errors;
       }
 
       // Check for gaps in the sequence
       for (let i = 0; i < keys.length - 1; i++) {
         if (keys[i + 1] - keys[i] !== 1) {
-          errors.targetError = 'Invalid target structure: Missing operator or object ID';
+          errors.targetError =
+            'Invalid target structure: Missing operator or object ID';
           return errors;
         }
       }

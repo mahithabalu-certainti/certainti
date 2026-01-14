@@ -32,7 +32,7 @@ interface MappingItem {
   rid: string;
   field_label: string;
   field_id: string | null;
-  object_rid: ObjectRidMap | null;
+  calculation_config: ObjectRidMap | null;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
@@ -63,13 +63,13 @@ const MappingTable: React.FC<MappingTableProps> = ({
     if (mappings && mappings.length > 0) {
       if (localMappings.length === 0) {
         // INITIALIZATION (First Load)
-        // Initialize mappings with fieldExpressions from object_rid if not present
+        // Initialize mappings with fieldExpressions from calculation_config if not present
         const initializedMappings = mappings.map((mapping) => {
           let fieldExpressions = mapping.fieldExpressions || [];
 
-          // If we have object_rid but no fieldExpressions, convert object_rid to fieldExpressions
-          if (mapping.object_rid && fieldExpressions.length === 0) {
-            const objectRidMap = mapping.object_rid as ObjectRidMap;
+          // If we have calculation_config but no fieldExpressions, convert calculation_config to fieldExpressions
+          if (mapping.calculation_config && fieldExpressions.length === 0) {
+            const objectRidMap = mapping.calculation_config as ObjectRidMap;
             const sortedKeys = Object.keys(objectRidMap)
               .map(Number)
               .sort((a, b) => a - b);
@@ -230,7 +230,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
             return {
               ...mapping,
               fieldExpressions: newExpressions,
-              object_rid:
+              calculation_config:
                 Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
               targetError: undefined,
               inputValue: '',
@@ -360,7 +360,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               ...m,
               fieldExpressions: newExpressions,
               inputValue: '',
-              object_rid:
+              calculation_config:
                 Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
               targetError: undefined, // Clear targetError when user makes changes
             };
@@ -414,7 +414,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
           const updatedMapping = {
             ...mapping,
             fieldExpressions: newExpressions,
-            object_rid:
+            calculation_config:
               Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
             targetError: undefined, // Clear targetError when user makes changes
           };
@@ -465,7 +465,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
           const updatedMapping = {
             ...mapping,
             fieldExpressions: newExpressions,
-            object_rid:
+            calculation_config:
               Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
             targetError: undefined, // Clear targetError when user makes changes
           };

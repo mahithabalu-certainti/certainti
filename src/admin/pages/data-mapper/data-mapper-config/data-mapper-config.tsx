@@ -33,7 +33,7 @@ interface MappingItem {
   modified_by?: string;
   field_label: string;
   field_id: string | null;
-  object_rid: ObjectRidMap | null;
+  calculation_config: ObjectRidMap | null;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
@@ -48,6 +48,7 @@ const DataMapperConfig: React.FC = () => {
   const [fields, setFields] = useState<PDFField[]>([]);
   const [selectedField, setSelectedField] = useState<PDFField | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+  const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
   const [mappings, setMappings] = useState<MappingItem[]>([]);
 
   const updateDataMapperConfig = useUpdateDataMapperConfig();
@@ -69,6 +70,7 @@ const DataMapperConfig: React.FC = () => {
 
     const loadPdfData = async () => {
       setIsLoadingPdf(true);
+      setPdfLoadError(null);
       try {
         // Handle base64 data
         const base64Data = mappingData.base64File.startsWith('data:')
@@ -92,6 +94,7 @@ const DataMapperConfig: React.FC = () => {
         setFields(extractedFields);
       } catch (err) {
         console.error('Error loading PDF:', err);
+        setPdfLoadError('Failed to load PDF document');
       } finally {
         setIsLoadingPdf(false);
       }
@@ -166,7 +169,7 @@ const DataMapperConfig: React.FC = () => {
         form_rid: mapperId || '',
         field_label: mapping.field_label,
         field_id: mapping.field_id,
-        object_rid: mapping.object_rid,
+        calculation_config: mapping.calculation_config,
       })),
     };
 
@@ -288,21 +291,33 @@ const DataMapperConfig: React.FC = () => {
 
             {/* Tab Content */}
             <div className='mt-4 px-10'>
-              {activeTab === 'pdf_view' && pdfFile && (
-                <PDFViewer
-                  file={pdfFile}
-                  fields={fields}
-                  onFieldClick={handleFieldClick}
-                  selectedField={selectedField}
-                />
-              )}
-              {activeTab === 'table_view' && (
+              <div className={activeTab === 'pdf_view' ? 'block' : 'hidden'}>
+                {pdfFile ? (
+                  <PDFViewer
+                    file={pdfFile}
+                    fields={fields}
+                    onFieldClick={handleFieldClick}
+                    selectedField={selectedField}
+                  />
+                ) : (
+                  <div className='flex items-center justify-center h-[200px] bg-gray-50 border border-gray-200 rounded'>
+                    <span
+                      className={`font-medium ${
+                        pdfLoadError ? 'text-red-500' : 'text-gray-500'
+                      }`}
+                    >
+                      {pdfLoadError || 'No PDF available'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className={activeTab === 'table_view' ? 'block' : 'hidden'}>
                 <MappingTable
                   mappings={mappings}
                   objectsList={objectsList || []}
                   onMappingsChange={handleMappingsChange}
                 />
-              )}
+              </div>
             </div>
           </div>
         )}

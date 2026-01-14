@@ -241,7 +241,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Are you claiming a pass through of this credit from a partnership?',
         field_id: null,
-        object_rid: {
+        calculation_config: {
           1: 'D001-892f359c-3dcf-4668-a0a2-6bbb1a5c57a2',
         },
       },
@@ -254,7 +254,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Is this pass through credit refundable?',
         field_id: null,
-        object_rid: {
+        calculation_config: {
           1: 'D001-892f359c-3dcf-4668-a0a2-6bbb1a5c57a2',
           2: 'add',
           3: 'D001-f671026e-3428-4c5c-84db-48b4a7401024',
@@ -270,7 +270,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Basic research payments paid or incurred to qualified organizations: See instructions.',
         field_id: null,
-        object_rid: {
+        calculation_config: {
           1: 'D001-a1b2c3d4-aaaa-bbbb-cccc-ddddeeeeffff',
           2: 'subtract',
           3: 'D001-f9998888-7777-6666-5555-444433332222',
@@ -287,7 +287,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Qualified organization base period amount.',
         field_id: null,
-        object_rid: {
+        calculation_config: {
           1: 'D001-f671026e-3428-4c5c-84db-48b4a7401024',
           2: 'divide',
           3: 'D001-892f359c-3dcf-4668-a0a2-6bbb1a5c57a2',
@@ -303,7 +303,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Subtract line 9 from line 8. If less than zero, enter "0".',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-67ec8f5f-adf6-4a3a-98c7-b33ec06d27b7',
@@ -315,7 +315,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Wages for qualified services (do not include wages used in figuring the federal work opportunity credit).',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-aca7bad7-e041-4283-8bcd-b3b65b15642c',
@@ -326,7 +326,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Cost of supplies.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-04406ae4-ac58-4dde-9dbf-1fa1bfc15994',
@@ -337,7 +337,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Is this credit refundable?',
         field_id: 'id',
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-ca3a4f4a-3b97-4635-b7c3-dd59c920af23',
@@ -348,7 +348,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Contract research expenses: See instructions.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-8e8603e8-68f2-4f02-b81c-c58d29e46943',
@@ -360,7 +360,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Total research expenses: Add lines 11 through 14. Enter the total.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-e7b365f3-cbf9-439a-9a60-817679b591af',
@@ -371,7 +371,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Average annual Arizona gross receipts: See instructions.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-77932630-91b2-48bd-85c1-39e04964eebc',
@@ -383,7 +383,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Fixed-base percentage (not more than 16% (.1600)): See instructions',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-303b2c25-0c6a-46c3-9821-014b51b22deb',
@@ -395,7 +395,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Base amount: Multiply line 16 by the percentage on line 17. Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-f2ea2a8e-51df-4577-86a0-d7599f8b2ad0',
@@ -407,7 +407,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Subtract line 18 from line 15. If less than zero, enter "0"',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-663769f6-2c96-4adb-be53-9c264eb5338e',
@@ -418,7 +418,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Multiply line 15 by 50% (.50). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-4f0cad44-d6c2-4246-a806-c84a2f0d2ecd',
@@ -429,7 +429,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Enter the lesser of line 19 or line 20.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-25708758-d4ff-4d3b-be0a-f657e12c140b',
@@ -440,7 +440,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Add lines 10 and 21. Enter the total.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-269c2419-f125-4a04-8ad0-5d6f72d6e451',
@@ -451,7 +451,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Multiply line 22 by 24% (.24). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-9db44579-7758-4d8f-a0d1-9eb6c56bd266',
@@ -462,7 +462,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Subtract $2,500,000 from line 22. Enter the difference.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-e169508b-3523-4395-a1dd-720a676a4d01',
@@ -473,7 +473,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Multiply line 24 by 15% (.15). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-1cd16012-e7a0-4f66-b322-b8ab18738fe2',
@@ -484,7 +484,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Add $600,000 to line 25. Enter the total',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-68502bc5-10e1-4f6a-baa0-8efd2f39c518',
@@ -496,7 +496,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-24ffa8eb-8c3e-4678-8156-bb73716b5a68',
@@ -508,7 +508,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page 5, Part 12, line 93.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-3f31caea-26c7-4ce3-9765-08740d90ec1a',
@@ -520,7 +520,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the total amount of this credit received from all Form(s) 308-P, Part 2, line 4. Include copies of those forms with your return.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-72aeec81-8552-4a33-820a-150e421babf2',
@@ -532,7 +532,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           "Total Current Year Credit: If the taxpayer is electing the regular credit, add line 27a and line 28. Enter the total. If the taxpayer is electing to claim the Alternative Simplified Credit, add line 27b and line 28. Enter the total. Partnerships: Enter this amount on Part 2, line 3 of the partner's Form 308-P. S Corporations passing this credit through to its shareholders: Enter this amount on Part 2, line 3 of the shareholder's Form 308-S.",
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-dc14ff1d-e12e-453e-86b4-b462e93c8e6d',
@@ -544,7 +544,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the amount of your current year credit from Part 4, line 29.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-f5256f9d-b7ce-4ace-bb6d-fd48c5852b62',
@@ -555,7 +555,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Multiply line 30 by 75% (.75). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-01fe9aac-4846-4695-b27a-e9c8614a85be',
@@ -567,7 +567,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the amount of your maximum refundable credit from Part 1, line 2a2',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-fa6dcc0d-c959-467f-bae4-f656220c387e',
@@ -579,7 +579,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the total maximum refundable credits received from partnerships on Form(s) 308-P, Part 3, line 6.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-c96efd4e-a531-496b-8329-3b289cc747fc',
@@ -591,7 +591,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Add line 32 and line 33. Enter the total. This is the maximum refundable credit for this taxable year',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-180878d4-c380-4d85-9990-edb019793cab',
@@ -603,7 +603,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the lesser of line 31 or line 34. This is the maximum refund amount to be passed through to partners or shareholders',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-dd63fd63-faac-4ba7-a8b9-7c77e9e47834',
@@ -615,7 +615,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'The S Corporation has made an irrevocable election for the taxable year ending MM,DD,YYYY to: (check only one box):',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-66a9682c-5047-4708-a625-75ade98db1a3',
@@ -627,7 +627,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Claim the credit for increased research and development as shown on Part 4, line 29 (for the taxable year indicated above):',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-721b6ac5-6b2c-426f-8248-b6f90ec45fd9',
@@ -639,7 +639,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Pass the credit as shown on Part 4, line 29 (for the taxable year indicated above) through to its shareholders.:',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-4a7f7b16-afcd-41bb-bed7-c89d4e13a8b4',
@@ -651,7 +651,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           "Current taxable year's credit: Enter the amount from Part 4, line 29",
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-b89fc239-21d0-41aa-b537-6aabed40dd25',
@@ -663,7 +663,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           "Enter the current year's tax, including recapture amounts, from Form 99T, line 8; or Form 120, line 18; or Form 120A, line 10; Form 120S, line 14; or Form 120X, line 18(c).",
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-a2e07ae5-079f-442e-b49c-e88dd5d2edc1',
@@ -675,7 +675,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Nonrefundable tax credits: Enter the amount of nonrefundable tax credits from Form 300, Part 1, line 16 less the amount (if any) on Form 300, Part 1, line 1, column (c).',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-35b2702e-9cea-4ad5-bb3a-ec95d5037c49',
@@ -687,7 +687,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           "Current taxable year's credit for increased research activities that will be used to offset the current taxable year's tax liability: Subtract line 38b from line 38a and enter the difference. If the difference is zero or more, enter it on Part 11, line 72; also enter it on Form 300, Part 1, line 1, column (a), and Form 300, Part 2, line 25. If less than",
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-a2e2a2a1-7321-43bf-af2c-6b0362d4d075',
@@ -699,7 +699,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Current taxable year\'s excess credit: Subtract line 38c from line 37 and enter the difference. If less than zero, enter "0", because no refund is available',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-b53fc69f-e809-4aab-8fa0-d74b6ec27c7d',
@@ -711,7 +711,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Tentative refundable credit: Multiply line 39 by 75% (.75). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-22d51fab-d111-45bb-8cad-057992c342f7',
@@ -723,7 +723,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the maximum refundable credit amount authorized by ACA from Part 1, line 2a2',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-723c6700-c3a9-4529-8a90-cd0ceb614f18',
@@ -735,7 +735,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           "Enter the partner's maximum refundable credit amount from Form 308-P, Part 3, line 6. If this credit was passed through to you from more than one partnership, total the amounts indicated on Forms 308-P, Part 3, line 6.",
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-133ab2f2-2c92-489f-8b1b-215988ed894f',
@@ -747,7 +747,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Add the amounts on lines 41a and 41b. Enter the total here',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-78ca53b8-7062-47a2-97cf-7211501acc4f',
@@ -758,7 +758,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: '<MISSING CELL VALUE>',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-6c313a0f-3c8b-4aa8-a4ee-ed21a9d2583b',
@@ -770,7 +770,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the credit carryover generated before 01/01/2022 from Part 8, line 58, column (d)',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-356c6be7-6d43-4a4e-bade-1b621ae38615',
@@ -782,7 +782,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the credit carryover generated after 12/31/2021 from Part 9, line 69, column (d)',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-6d1e65ce-f56b-4845-8d5c-b567f8a28f39',
@@ -794,7 +794,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Add lines 70a and 70b. Enter the total. This is the total credit carryover available.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-b04fc9d2-20a4-48cc-84d0-37bacde0e0f0',
@@ -806,7 +806,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Current year\'s credit: If you completed Part 7 and are receiving a refund, enter the amount from Part 7, line 38c. If you are not receiving a refund, enter the amount from Part 4, line 29. Partnerships and S Corporations that passed the current year credit through to partners or shareholders, enter "0". Also enter this amount on Form 300, Part 1, line 1, column (a)',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-0ebb8a37-67c7-4ae5-984e-f8e470faeb05',
@@ -818,7 +818,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Total credit carryover: If you completed Part 7 and are receiving a refund, enter "0". Otherwise, enter the credit carryover from Part 10, line 71. Also enter this amount on Form 300, Part 1, line 1, column (b).',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-6ae974b3-6534-4140-8ae3-0f9230dbf41c',
@@ -830,7 +830,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Total available credit: Add lines 72 and 73. Enter the total. Also enter this amount on Form 300, Part 1, line 1, column (c)',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-c61bf7ac-d2f3-4768-bb49-4fffc1706436',
@@ -842,7 +842,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Basic research payments paid or incurred to qualified organizations:',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-5a788378-576d-4bac-aefb-ba104943cf34',
@@ -853,7 +853,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Qualified organization base period amount.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-9ff14bcc-39ea-4f89-87c0-1169078d0453',
@@ -865,7 +865,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Subtract line 76 from line 75. Enter the difference. If less than zero, enter "0".',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-6954b9dc-3e8b-44b2-983c-57fa06ce9246',
@@ -877,7 +877,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit).',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-d5770958-f6f5-4842-8a02-88e0cca50341',
@@ -888,7 +888,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Current year cost of supplies.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-4ce54fec-c9b4-479c-a44a-36ab927f9c7d',
@@ -899,7 +899,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Current year cost to rent or lease computers.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-c126bb71-eb7f-4091-8948-db0df49437b0',
@@ -910,7 +910,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Current contract research expenses: See instructions.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-01f98974-3ce0-4811-a1ae-4c60734fdff5',
@@ -922,7 +922,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Total research expenses for the current year: Add lines 78 through 81. Enter the total.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-8470f03f-12a0-47de-bb22-e3a375bd8240',
@@ -934,7 +934,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-d08feb43-4a83-4b8d-bbf3-c2cd6011e2be',
@@ -946,7 +946,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-5d618b45-2604-40e9-b027-1e708edb7b6e',
@@ -958,7 +958,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Subtract line 84 from line 82. Enter the difference. If less than zero, enter "0".',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-06ab0e41-b279-439e-b6f2-5690589f1361',
@@ -969,7 +969,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Multiply line 82 by 50% (.50). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-1c55ec97-ab46-4107-8faa-dd417ab39e17',
@@ -980,7 +980,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Enter the lesser of line 85 or line 86.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-dddd93b7-44f5-4d2a-bfc5-d4ee3bd6a093',
@@ -991,7 +991,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Add line 77 and line 87. Enter the total.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-214ca08e-7ca5-4e44-9969-129a55815430',
@@ -1003,7 +1003,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'If line 88 is $2,500,000 or less, multiply line 88 by 24% (.24). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-1ac770e0-5380-4825-851a-160f929f3817',
@@ -1015,7 +1015,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'If line 88 is more than $2,500,000, subtract $2,500,000 from line 88. Enter the difference.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-7dfd6f71-c2d9-4ada-8993-064701995b83',
@@ -1026,7 +1026,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Multiply line 90 by 15% (.15). Enter the result.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-18275aa6-0776-411e-a8e2-a82b10a8ac21',
@@ -1037,7 +1037,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Add $600,000 to line 91. Enter the total.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-e1427da1-62f7-4e90-8427-d974c6a3fc3f',
@@ -1049,7 +1049,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-f8b85644-4a47-417d-9861-584f9c280144',
@@ -1060,7 +1060,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Current year tax liability',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-e3e7e996-baf7-4f43-b88b-79dd5f2710cc',
@@ -1071,7 +1071,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Statutory credit limitation',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-8998aa4a-ec56-4321-b10d-81a873a11149',
@@ -1083,7 +1083,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Subtract line 3 from line 2. If line 2 is less than line 3 enter 0',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-0b5cc3bf-8d4e-429c-8706-dcf3859f19b8',
@@ -1094,7 +1094,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: '50% of line 4',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-701fc83e-b60e-43fb-b143-d844b893dae5',
@@ -1105,7 +1105,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Sum of lines 3 and 5',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-43be96db-adc1-47c7-9275-f2eaa4f5f66f',
@@ -1117,7 +1117,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the smaller of lines 2 or 6, but not more than $750,000. This is the current year limit for allowable credit',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-8a81adf2-e01e-444d-aa3f-e8d57c5467bb',
@@ -1128,7 +1128,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         form_rid: 'D001-831e9ea9-f696-40f4-b176-5ed64e5641b2',
         field_label: 'Cost to rent or lease computers.',
         field_id: 'A',
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-d4c14f77-f94b-40ef-a7e1-509a554121a4',
@@ -1140,7 +1140,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Did you have qualified research expenses for the tax year indicated above?',
         field_id: 'P',
-        object_rid: null,
+        calculation_config: null,
       },
       {
         rid: 'D001-056332eb-0b37-411b-a8a7-7224a61ca7f6',
@@ -1152,7 +1152,7 @@ export const MappingDetailsMockData: MappingDetailsResponse = {
         field_label:
           'Enter the maximum refund amount authorized by the ACA here and on Part 5, line 32 and Part 7, line 41a',
         field_id: null,
-        object_rid: null,
+        calculation_config: null,
       },
     ],
     base64File:
