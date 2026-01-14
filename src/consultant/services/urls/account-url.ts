@@ -52,7 +52,7 @@ export const StateUrl = (
 ) => {
   const countryIds = Array.isArray(countryId)
     ? countryId.join(',')
-    : countryId ?? '';
+    : (countryId ?? '');
 
   let url = `/api/accounts/states/?countryIds=${encodeURIComponent(countryIds)}`;
 
@@ -64,7 +64,6 @@ export const StateUrl = (
 
   return url;
 };
-
 
 export const CityUrl = (stateId: string) =>
   `/api/accounts/cities?stateIds=["${stateId}"]`;

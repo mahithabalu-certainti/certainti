@@ -903,7 +903,7 @@ export const FormData = (
       calculatedTotalCost,
       disableTotalCost,
       removeKeyContact,
-      isCustomerGroup
+      isCustomerGroup,
     ]
   );
 };

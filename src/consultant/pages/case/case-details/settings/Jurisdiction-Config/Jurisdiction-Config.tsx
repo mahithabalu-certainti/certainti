@@ -47,7 +47,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
     level,
     caseId as string
   );
-  const states = useFetchState(cuurrency_rid,'active');
+  const states = useFetchState(cuurrency_rid, 'active');
 
   const configDetails = data?.data;
   const memoizedState: SelectOption[] = useMemo(
