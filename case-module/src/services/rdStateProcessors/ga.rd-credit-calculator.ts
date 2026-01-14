@@ -245,12 +245,30 @@ export class RdCreditCalculatorForGA {
      */
     buildComputedFields(inputInfo: any, ratioCalculationInfo: any, baseAmountInfo: any, taxCreditInfo: any, creditAndCarryForwardInfo: any) {
         return {
-            computed_fields: {
-                input_info: inputInfo,
-                ratio_calculation_info: ratioCalculationInfo,
-                base_amount_info: baseAmountInfo,
-                tax_credit_info: taxCreditInfo,
-                credit_and_carry_forward_info: creditAndCarryForwardInfo
+            "Input Information": {
+                "Current Year Georgia Gross Receipts" : inputInfo.curent_year_gross_receipts,
+                "Current Year Research Expenses in Georgia" : inputInfo.current_year_qre,
+                "Total of all other credits": inputInfo.total_of_all_other_credits,
+                "Credit carry-over from PY": inputInfo.carry_forward_prior_year,
+                "Current Tax Liability Without Credits" : inputInfo.current_year_tax_liability
+            },
+            "Ratio Calculation": {
+                "3 Previous Years" : ratioCalculationInfo.previous_years,
+                "Equals Ratio" : ratioCalculationInfo.sum_ratio,
+                "Calculation of Average" : ratioCalculationInfo.average_ratio
+            },
+            base_amount_info: baseAmountInfo,
+            tax_credit_info: taxCreditInfo,
+            "Application of Credit and Carry-Forward": {
+                "1) Current Tax Liability w/o applied credits - E" : creditAndCarryForwardInfo.current_year_tax_liability,
+                "2) Value of all Other Credits Claimed - C" : creditAndCarryForwardInfo.value_of_other_credit_claimed,
+                "3) Remaining Tax Liability (C-E)" : creditAndCarryForwardInfo.remaining_tax_liability,
+                "4) Maximum Credit Allowed" : creditAndCarryForwardInfo.max_credits_allowed,
+                "5) Research Tax Credit - J" : creditAndCarryForwardInfo.research_tax_credit,
+                "5a)Tax Carryover from PY - D": creditAndCarryForwardInfo.tax_carryover_py,
+                "6) Total available Research Tax Credit (J+D)" : creditAndCarryForwardInfo.total_tax_credit,
+                "7) Credit to be claimed on return" : creditAndCarryForwardInfo.credit_claimed_return,
+                "8) Unused Credit or Carry-Forward" : creditAndCarryForwardInfo.unused_credit
             }
         }
     }
