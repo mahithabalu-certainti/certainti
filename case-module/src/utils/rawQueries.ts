@@ -2368,6 +2368,11 @@ export const fetchAvailableConfigLevelQuery = () => {
         ctry.country_code,
         rdcg.is_federal,
         ROW_NUMBER() OVER (
+          PARTITION BY 
+            ctry.country_code,
+            CASE WHEN rdcg.is_federal THEN 'FEDERAL'
+            ELSE rdcg.state_rid
+            END
           ORDER BY
             CASE
               WHEN rdval.effective_start_date >= :effectiveStart THEN 1
@@ -2389,6 +2394,7 @@ export const fetchAvailableConfigLevelQuery = () => {
         -- Overlap logic
         AND (rdval.effective_start_date IS NULL OR rdval.effective_start_date <= :effectiveEnd)
         AND (rdval.effective_end_date IS NULL OR rdval.effective_end_date >= :effectiveStart)
+        AND rdval.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ='Active')
   )
   SELECT country_code, is_federal
   FROM eligible_configs
@@ -2431,6 +2437,7 @@ export const fetchRdCreditConfigQuery = () => {
     -- Effective date filter
     AND (rdval.effective_start_date IS NULL OR rdval.effective_start_date <= :effectiveEnd)
     AND (rdval.effective_end_date IS NULL OR rdval.effective_end_date >= :effectiveStart)
+    AND rdval.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ='Active')
   ) 
   SELECT config_json, country_rid
   FROM eligible_configs
@@ -2445,6 +2452,8 @@ export const fetchRdCreditConfigStateLevelQuery = () => {
     SELECT 
     rdval.config_json, st.state_code, st.rid AS state_rid, ctry.rid AS country_rid,
     ROW_NUMBER() OVER(
+      PARTITION BY 
+      st.state_code
       ORDER BY
         CASE
           WHEN rdval.effective_start_date >= :effectiveStart THEN 1
@@ -2467,6 +2476,7 @@ export const fetchRdCreditConfigStateLevelQuery = () => {
     -- Effective date filter
     AND (rdval.effective_start_date IS NULL OR rdval.effective_start_date <= :effectiveEnd)
     AND (rdval.effective_end_date IS NULL OR rdval.effective_end_date >= :effectiveStart)
+    AND rdval.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ='Active')
   )
   select config_json, state_code, state_rid, country_rid
   from eligible_configs

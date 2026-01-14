@@ -121,7 +121,7 @@ export class RdCreditCalculatorForUSA {
             "Subtract line 22 from line 20": Number(line23),
             "Multiply line 23 by the percentage above": Number(line24),
             "Add lines 19 and 24": Number(line25),
-            final_credit: Number(line25),
+            final_credit: line25,
             "Enter 14%. If QREs in any of the 3 years is zero, enter 6%": `${percentage}%`
         };
     }
@@ -164,7 +164,7 @@ export class RdCreditCalculatorForUSA {
             "Subtract line 8 from line 5": Number(line9),
             [dynamicLine5]: Number(line10),
             "Enter smaller of line 9 or line 10": Number(line11),
-            final_credit: Number(line11)
+            final_credit: line11
         };
     }
 
@@ -176,18 +176,18 @@ export class RdCreditCalculatorForUSA {
      */
     async apply280C_RRC(creditRRC: any, configRRC: ConfigJson) {
         // ASC Federal 280C reduction rules
-        const rateWhenElect = configRRC.elect_280c_yes/100;  // elect 280C
+        // const rateWhenElect = configRRC.elect_280c_yes/100;  // elect 280C
         const rateWhenNoElect = configRRC.elect_280c_no/100; // do not elect 280C
 
-        const creditElect = creditRRC.final_credit.mul(rateWhenElect);
+        // const creditElect = creditRRC.final_credit.mul(rateWhenElect);
         const creditNoElect = creditRRC.final_credit.mul(rateWhenNoElect);
 
         return {
             reduction280c: {
-                elect280c: {
-                    "Electing reduced credit under 280C": configRRC.elect_280c_yes,
-                    "Multiply line 11 (if line 13 is No)": Number(await this.round2(creditElect))
-                },
+                // elect280c: {
+                //     "Electing reduced credit under 280C": configRRC.elect_280c_yes,
+                //     "Multiply line 11 (if line 13 is No)": Number(await this.round2(creditElect))
+                // },
                 no_elect280c: {
                     "Electing reduced credit under 280C": configRRC.elect_280c_no,
                     "Multiply line 11 (if line 13 is No)":  Number(await this.round2(creditNoElect))
@@ -207,14 +207,14 @@ export class RdCreditCalculatorForUSA {
         const factorElect = configASC.elect_280c_yes/100;   // elect 280C → reduced credit
         const factorNoElect = configASC.elect_280c_no; // no election → full credit
 
-        const creditElect = creditASC.final_credit.mul(factorElect);
+        // const creditElect = creditASC.final_credit.mul(factorElect);
         const creditNoElect = creditASC.final_credit
         return {
             reduction280c: {
-                elect280c: {
-                    "Electing reduced credit under 280C": configASC.elect_280c_yes,
-                    "Multiply line 20 (equals line 25 if line 26 is No)": Number(await this.round2(creditElect))
-                },
+                // elect280c: {
+                //     "Electing reduced credit under 280C": configASC.elect_280c_yes,
+                //     "Multiply line 20 (equals line 25 if line 26 is No)": Number(await this.round2(creditElect))
+                // },
                 no_elect280c: {
                     "Electing reduced credit under 280C": configASC.elect_280c_no,
                     "Multiply line 20 (equals line 25 if line 26 is No)": Number(await this.round2(creditNoElect))
