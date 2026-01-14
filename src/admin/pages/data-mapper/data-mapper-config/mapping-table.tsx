@@ -803,13 +803,13 @@ const MappingTable: React.FC<MappingTableProps> = ({
                               sx={{
                                 fontSize: '14px',
                                 height: '20px',
-                                backgroundColor: '#f3f4f6',
-                                borderColor: '#9ca3af',
-                                color: '#4b5563',
+                                backgroundColor: '#f7fa3245',
+                                borderColor: '#b9bb3dff',
+                                color: '#000',
                                 margin: '1px',
                                 '& .MuiChip-deleteIcon': {
                                   fontSize: '14px',
-                                  color: '#0176D3',
+                                  color: '#616220ff',
                                   '&:hover': {
                                     color: '#ef4444',
                                   },
@@ -817,7 +817,10 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                 '& .MuiChip-label': {
                                   paddingLeft: '6px',
                                   paddingRight: '6px',
-                                  paddingBottom: '2px',
+                                  paddingBottom:
+                                    item.value === '*' ? '0px' : '2px',
+                                  paddingTop:
+                                    item.value === '*' ? '6px' : '0px',
                                 },
                               }}
                             />
