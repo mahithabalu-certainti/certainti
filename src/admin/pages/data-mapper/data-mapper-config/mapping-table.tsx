@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Table as MuiTable,
   TableBody,
@@ -57,6 +57,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<
     Record<string, number>
   >({});
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     if (mappings && mappings.length > 0) {
@@ -756,11 +757,14 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 <div className='relative h-full'>
                   <div className='relative w-full h-full'>
                     <div
-                      className={`h-full w-full px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 focus-within:border-2 ${
+                      className={`h-full w-full px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${
                         mapping.targetError
                           ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500 pr-8'
                           : 'border-gray-300 bg-white focus-within:border-blue-400'
                       }`}
+                      onClick={() => {
+                        inputRefs.current[mapping.rid]?.focus();
+                      }}
                     >
                       {(mapping.fieldExpressions || []).map((item, idx) => (
                         <div key={idx} className='flex items-center'>
@@ -822,6 +826,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                       ))}
 
                       <input
+                        ref={(el) => (inputRefs.current[mapping.rid] = el)}
                         type='text'
                         value={mapping.inputValue || ''}
                         onChange={(e) =>
