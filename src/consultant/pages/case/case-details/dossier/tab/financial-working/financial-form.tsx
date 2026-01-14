@@ -204,7 +204,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     isFederal: true,
   };
 
-  const region = useFetchState((caseDetails?.country_rid ?? '') as string);
+  const region = useFetchState((caseDetails?.country_rid ?? '') as string,'active');
 
   const regionListOptions = useMemo(
     () =>
