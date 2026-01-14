@@ -271,7 +271,7 @@ export const CaseFormData = (
               !permissionMap?.['case_name']?.edit &&
               !permissionMap?.['case_name']?.read,
           }),
-          createTextField('cloud_software ', 'Cloud Software', {
+          createTextField('cloud_software', 'Cloud Software', {
             required: false,
             placeholder: 'Enter Cloud Software',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -347,7 +347,7 @@ export const CaseFormData = (
               !permissionMap?.['case_name']?.edit &&
               !permissionMap?.['case_name']?.read,
           }),
-          createTextField('total_expenses ', 'Total Expenses', {
+          createTextField('total_expenses', 'Total Expenses', {
             required: false,
             placeholder: 'Enter Total Expenses',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
