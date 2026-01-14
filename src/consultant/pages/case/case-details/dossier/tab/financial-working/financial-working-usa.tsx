@@ -7,16 +7,27 @@ interface FinancialWorkingUSAProps {
 }
 
 const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
-  // Check if data is present and has correct structure
-  if (!data?.data?.computed_fields || !('computed_fields' in data.data.computed_fields)) {
+  // Check if data is present
+  if (!data?.data?.computed_fields) {
     return <div className="p-4 text-center text-gray-500">No data available or invalid format</div>;
   }
 
-  const computedFieldsRoot = (data.data.computed_fields as USAComputedFields).computed_fields;
-  const currencyCode = (data.data.input_params?.currency as string) || 'USD';
+  // Handle both old and new structure for USA
+  const rawComputedFields = data.data.computed_fields as USAComputedFields;
+  const computedFields = rawComputedFields.computed_fields || rawComputedFields;
+  const inputParams = data.data.input_params as Record<string, any>;
+  const qreSummary = inputParams?.qreSummary;
+  const currencyCode = (inputParams?.metadata?.currency as string) || (inputParams?.currency as string) || 'USD';
 
   const formatCurrency = (value: number | string | null | undefined) => {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (value === null || value === undefined) return '--';
+    
+    // Check if it's a percentage (string ending with %)
+    if (typeof value === 'string' && value.trim().endsWith('%')) {
+        return value;
+    }
+
+    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : value;
     if (typeof numValue === 'number' && !isNaN(numValue)) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -28,11 +39,15 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
   };
 
   const formatLabel = (key: string) => {
+    if (key.includes(' ')) return key;
     return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const renderValue = (value: number | string | null | undefined) => {
-    const isNumeric = typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)) && isFinite(Number(value)));
+  const renderValue = (value: any) => {
+    if (value === null || value === undefined) return '--';
+    
+    const isPercentage = typeof value === 'string' && value.endsWith('%');
+    const isNumeric = !isPercentage && (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value.replace(/[^0-9.-]/g, ''))) && isFinite(Number(value.replace(/[^0-9.-]/g, '')))));
     
     return (
       <div className="min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block">
@@ -50,7 +65,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
   ) => (
     <div className='w-full border border-[#CBD6E2] mb-4'>
       <div className='bg-[#ECECEC] border-b border-[#CBD6E2] px-3 py-1'>
-        <div className='capitalize font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%]'>
+        <div className='font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%]'>
           {title}
         </div>
       </div>
@@ -65,6 +80,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
   );
 
   const renderKeyValuePairs = (obj: Record<string, any>) => {
+    if (!obj) return null;
     const entries = Object.entries(obj);
 
     return (
@@ -74,7 +90,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             if (
               (typeof value === 'object' && value !== null && !Array.isArray(value)) ||
               Array.isArray(value) ||
-              key === 'name'
+              key === 'name' ||
+              key.toLowerCase().includes('280c')
             )
               return null;
 
@@ -98,7 +115,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     const reduction280c = data?.reduction280c;
     if (!reduction280c) return null;
 
-    const columnKeys = ['elect280c', 'no_elect280c'];
+    // Detect available columns (elect280c, no_elect280c, etc.)
+    const columnKeys = Object.keys(reduction280c).filter(k => typeof reduction280c[k] === 'object');
+    if (columnKeys.length === 0) return null;
 
     return (
       <div className='overflow-x-auto'>
@@ -120,20 +139,23 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             </tr>
           </thead>
           <tbody>
-             {/* We need to extract the properties from the options */}
-             {/* Typically rate/credit or credit/factor */}
              {(() => {
-                const sampleOption = reduction280c[columnKeys[0]];
-                const keysToRender = Object.keys(sampleOption);
+                // Get unique keys from all columns to render rows
+                const allRowKeys = new Set<string>();
+                columnKeys.forEach(colKey => {
+                    Object.keys(reduction280c[colKey]).forEach(rowKey => {
+                        allRowKeys.add(rowKey);
+                    });
+                });
                 
-                return keysToRender.map((propKey) => (
-                  <tr key={propKey} className='border-b border-[#CBD6E2] last:border-0'>
+                return Array.from(allRowKeys).map((rowKey) => (
+                  <tr key={rowKey} className='border-b border-[#CBD6E2] last:border-0'>
                     <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
-                      {formatLabel(propKey)}
+                      {formatLabel(rowKey)}
                     </td>
-                    {columnKeys.map((optionKey) => (
-                      <td key={optionKey} className='px-3 py-1.5 text-right'>
-                        {renderValue(reduction280c[optionKey][propKey])}
+                    {columnKeys.map((colKey) => (
+                      <td key={colKey} className='px-3 py-1.5 text-right'>
+                        {renderValue(reduction280c[colKey][rowKey])}
                       </td>
                     ))}
                   </tr>
@@ -149,21 +171,59 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     <div className='p-4'>
       <div className='max-w-7xl mx-auto'>
         <div className='flex flex-col gap-0'>
-          {/* RRC Section */}
-          {computedFieldsRoot.rrc && (
-            <>
-              {renderCard("Regular credit", renderKeyValuePairs(computedFieldsRoot.rrc.creditRRC))}
-              {renderCard("RRC 280C", render280C("reduction280c", computedFieldsRoot.rrc.rrc280C))}
-            </>
+          
+          {/* QRE Summary Section */}
+          {qreSummary && (
+            <React.Fragment>
+              {renderCard("QRE Summary", renderKeyValuePairs(qreSummary))}
+            </React.Fragment>
           )}
 
-          {/* ASC Section */}
-          {computedFieldsRoot.asc && (
-            <>
-              {renderCard("ASC credit", renderKeyValuePairs(computedFieldsRoot.asc.creditASC))}
-              {renderCard("ASC 280C", render280C("reduction280c", computedFieldsRoot.asc.asc280C))}
-            </>
+          {/* ASC Credit Section */}
+          {(computedFields['ASC Credit'] || computedFields.asc) && (
+            <React.Fragment>
+              <div className="mb-4">
+                {renderCard("ASC Credit", (
+                  <div className="w-full">
+                    {renderKeyValuePairs((computedFields['ASC Credit']?.creditASC || computedFields.asc?.creditASC))}
+                    {render280C("Reduction 280C", (computedFields['ASC Credit']?.asc280C || computedFields.asc?.asc280C))}
+                  </div>
+                ))}
+              </div>
+            </React.Fragment>
           )}
+
+          {/* Regular Credit Section */}
+          {(computedFields['Regular Credit'] || computedFields.rrc) && (
+            <React.Fragment>
+              <div className="mb-4">
+                {renderCard("Regular Credit", (
+                  <div className="w-full">
+                    {renderKeyValuePairs((computedFields['Regular Credit']?.creditRRC || computedFields.rrc?.creditRRC))}
+                    {render280C("Reduction 280C", (computedFields['Regular Credit']?.rrc280C || computedFields.rrc?.rrc280C))}
+                  </div>
+                ))}
+              </div>
+            </React.Fragment>
+          )}
+
+          {/* Bottom Summary Section */}
+          {Object.entries(computedFields).map(([key, value]) => {
+            if (typeof value !== 'object' && key !== 'computed_fields') {
+              return (
+                <div key={key} className="mb-4">
+                  {renderCard(
+                    formatLabel(key),
+                    <div className='flex justify-start items-center'>
+                       {renderValue(value as any)}
+                    </div>,
+                    true
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })}
         </div>
       </div>
     </div>

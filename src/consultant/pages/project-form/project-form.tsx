@@ -502,8 +502,9 @@ const ProjectForm: React.FC = () => {
       const selectedClassification = memoizedCountry.find(
         (option) => String(option.value) === String(data.fieldValue)
       );
+      console.log(selectedClassification)
       setIsCustomerGroup(
-        selectedClassification?.label.toLowerCase() === FinancialWorkingCountries.UK
+        selectedClassification?.label === FinancialWorkingCountries.UK
       );
     }
     if (data.fieldName === 'industry_rid') {
@@ -651,7 +652,7 @@ const ProjectForm: React.FC = () => {
     costFinancials.total_cost && costFinancials.total_cost !== '0'
       ? costFinancials.total_cost
       : '';
-
+console.log(iscustomerGroup)
   const formConfig = FormData(
     memoizedStatus,
     memoizedProjectTypes,

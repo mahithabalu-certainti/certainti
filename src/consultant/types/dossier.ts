@@ -330,16 +330,7 @@ export interface USACreditRRC {
 }
 
 export interface USAComputedFields {
-  computed_fields: {
-    asc: {
-      asc280C: USAReduction280C;
-      creditASC: USACreditASC;
-    };
-    rrc: {
-      rrc280C: USAReduction280C;
-      creditRRC: USACreditRRC;
-    };
-  };
+  [key: string]: any;
 }
 
 export interface FinancialHighlightsResponse {

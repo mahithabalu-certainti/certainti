@@ -90,9 +90,6 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
           <Tooltip title={name || topLabel} placement='top'>
             <div className='flex flex-col items-center justify-center py-1 leading-tight'>
               <span className='truncate block max-w-[200px] font-bold'>{topLabel}</span>
-              {hasProjectCode && code && name && (
-                <span className='text-[11px] font-medium text-[#425A76] truncate block max-w-[180px]'>{name}</span>
-              )}
             </div>
           </Tooltip>
         ) as React.ReactNode as string,
@@ -141,8 +138,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     // User: "remaining column are row in table"
     // We take columns list starting from index 1
     const rowKeys = [...columnsList.slice(1)];
+    
+    // Filter out Project Code if it exists in rows and we are showing it in header
+    const filteredRowKeys = hasProjectCode 
+      ? ['Project Name', ...rowKeys.filter(k => k !== 'Project Code')] 
+      : rowKeys;
 
-    const data: FinancialWorkingRow[] = rowKeys.map((key: string) => {
+    const data: FinancialWorkingRow[] = filteredRowKeys.map((key: string) => {
       const rowData: FinancialWorkingRow = {
         id: key, // Use the key name as row ID (assuming unique)
         row_label: key,
@@ -152,9 +154,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       // Map each project's value for this key
       projects.forEach((project, pIndex: number) => {
         const projectId = project['Project ID'] || `project_${pIndex}`;
-        // "some values are missing in column row add that values are null"
-        // Accessing property by key. If missing, it's undefined.
-        rowData[projectId] = project[key as keyof typeof project];
+        // Special handling for Project Name row
+        if (key === 'Project Name') {
+          rowData[projectId] = project['Project Name'];
+        } else {
+          // Accessing property by key. If missing, it's undefined.
+          rowData[projectId] = project[key as keyof typeof project];
+        }
       });
 
       return rowData;
