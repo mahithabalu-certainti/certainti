@@ -2895,7 +2895,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "notes",
           "is_mandatory",
         ],
-        order: [
+       order: [
           ["question_seq_num", "ASC"],
           ["created_datetime", "ASC"],
         ],
@@ -2929,7 +2929,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "notes",
           "is_mandatory",
         ],
-        order : [['created_datetime', 'DESC']],
+        order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"],
+        ],
         where: { interaction_rid: interactionRid },
       });
 
