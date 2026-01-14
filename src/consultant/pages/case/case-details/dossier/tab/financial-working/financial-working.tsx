@@ -79,7 +79,6 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     projects.forEach((project, index: number) => {
       const label = project['Project Name'] || `Project ${index + 1}`;
       const projectId = project['Project ID'] || `project_${index}`;
-      const isQualified = project['is_qualified'];
 
       generatedColumns.push({
         id: projectId,
@@ -91,7 +90,6 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         width: 180,
         sx: (row?: FinancialWorkingRow) => ({
           textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
-          background: !row && isQualified ? '#ffff00' : undefined,
         }),
         sortId: projectId,
         render: (row: FinancialWorkingRow) => {

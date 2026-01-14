@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { useLocation, useParams } from 'react-router-dom';
@@ -47,7 +48,7 @@ const GeoBasedRuleForm: React.FC = () => {
   const projectTypeOptions = useGetProjectType();
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
-  const states = useFetchState(currentCountry);
+  const states = useFetchState(currentCountry,'active');
   const { data: formConfigList } = useFormConfigList(
     currentCountry,
     isFederal,

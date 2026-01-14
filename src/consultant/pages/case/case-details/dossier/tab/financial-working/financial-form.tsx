@@ -223,7 +223,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     setIsFederal(value);
     setShowFinancialValues(false);
     setFinancialData(null);
-    setDossierFinancialStatus('');
     if (value === 'no' && caseDetails?.state_rid) {
       setSelectedRegion(caseDetails?.state_rid);
     } else {
@@ -236,7 +235,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     setSelectedRegion(value);
     setErrors((prev) => ({ ...prev, region: '' }));
     setFinancialData(null);
-    setDossierFinancialStatus('');
 
     // Reset PDF when region changes (but not shown yet)
     if (showFinancialValue) {
@@ -433,8 +431,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                   dossierFinancialStatus !== 'COMPLETED')
               }
               sx={{
-                width: statusData?.data === 'COMPLETED' ? '95px' : '55px',
-                minWidth: statusData?.data === 'COMPLETED' ? '95px' : '55px',
+                width:dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
+                minWidth: dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
                 fontSize: '13px',
                 fontWeight: 400,
               }}
@@ -603,7 +601,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       </div>
 
       {showFinancialValue && (
-        <div>
+        <div className=''>
           {/* Dynamic Title Header based on Country */}
           {(() => {
             const title = (financialData?.data?.computed_fields as any)?.Title || {};
