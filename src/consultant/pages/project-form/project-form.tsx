@@ -83,7 +83,7 @@ const ProjectForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
   const [showOthersField, setShowOthersField] = useState(false);
   const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
-  const [iscustomerGroup, setIsCustomerGroup] = useState(false);
+  const [isCustomerGroup, setIsCustomerGroup] = useState(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const dispatch = useAppDispatch();
@@ -502,7 +502,6 @@ const ProjectForm: React.FC = () => {
       const selectedClassification = memoizedCountry.find(
         (option) => String(option.value) === String(data.fieldValue)
       );
-      console.log(selectedClassification)
       setIsCustomerGroup(
         selectedClassification?.label === FinancialWorkingCountries.UK
       );
@@ -652,7 +651,6 @@ const ProjectForm: React.FC = () => {
     costFinancials.total_cost && costFinancials.total_cost !== '0'
       ? costFinancials.total_cost
       : '';
-console.log(iscustomerGroup)
   const formConfig = FormData(
     memoizedStatus,
     memoizedProjectTypes,
@@ -679,7 +677,7 @@ console.log(iscustomerGroup)
     globalType,
     account?.is_project_exists,
     isCaseExists,
-    iscustomerGroup
+    isCustomerGroup
   );
 
   const formLoading =
