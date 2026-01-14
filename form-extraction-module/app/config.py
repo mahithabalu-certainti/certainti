@@ -1,38 +1,77 @@
-# app/config.py
-from __future__ import annotations
-
+from pydantic_settings import BaseSettings
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 import os
-from functools import lru_cache
-from pydantic import BaseModel
+from dotenv import load_dotenv
 
+load_dotenv()
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
     """
-    App configuration.
-
-    Required env var:
-      - VISION_AGENT_API_KEY : LandingAI API key
-
-    Optional env vars:
-      - ADE_ENVIRONMENT      : 'us', 'eu', etc. (if omitted, SDK default is used)
-      - ADE_PARSE_MODEL      : parse model id (default: 'dpt-2-latest')
-      - ADE_EXTRACT_MODEL    : extract model id (default: 'extract-latest')
+    App configuration with Key Vault integration.
     """
+    # Key Vault
+    KEY_VAULT_URI: str = os.getenv("KEY_VAULT_URI", "")
 
+    # Database
+    MAINDB_NAME: str = ""
+    MAINDB_USERNAME: str = ""
+    MAINDB_PASSWORD: str = ""
+    MAINDB_ENDPOINT: str = ""
+    MAIN_PG_DB_PORT: str = "5432"
+    MAIN_SCHEMA_NAME: str = "trd365"
+
+    # Kafka
+    KAFKA_BROKER: str = os.getenv("KAFKA_BROKER", "kafka:9094")
+    KAFKA_DATA_MAPPER_TOPIC: str = os.getenv("KAFKA_DATA_MAPPER_TOPIC", "data_mapper_request")
+    KAFKA_GROUP_ID: str = os.getenv("KAFKA_GROUP_ID", "form_extraction_group")
+
+    # ADE
     landing_api_key: str = os.getenv("VISION_AGENT_API_KEY", "")
     landing_environment: str | None = os.getenv("ADE_ENVIRONMENT")
-
     ade_parse_model: str = os.getenv("ADE_PARSE_MODEL", "dpt-2-latest")
     ade_extract_model: str = os.getenv("ADE_EXTRACT_MODEL", "extract-latest")
 
-    kafka_broker: str = os.getenv("KAFKA_BROKER", "kafka:9092")
-    kafka_topic: str = os.getenv("KAFKA_DATA_MAPPER_TOPIC", "data_mapper_request")
-    kafka_group_id: str = os.getenv("KAFKA_GROUP_ID", "form_extraction_group")
-
     class Config:
         arbitrary_types_allowed = True
+        env_file = ".env"
+        extra = 'ignore'
+
+    def load_secrets_from_keyvault(self):
+        if not self.KEY_VAULT_URI:
+            print("[Config] KEY_VAULT_URI not set, using env vars only.")
+            # Fallback to env vars if KV not used, ensuring required fields are populated
+            self.MAINDB_NAME = os.getenv("MAINDB_NAME", self.MAINDB_NAME)
+            self.MAINDB_USERNAME = os.getenv("MAINDB_USERNAME", self.MAINDB_USERNAME)
+            self.MAINDB_PASSWORD = os.getenv("MAINDB_PASSWORD", self.MAINDB_PASSWORD)
+            self.MAINDB_ENDPOINT = os.getenv("MAINDB_ENDPOINT", self.MAINDB_ENDPOINT)
+            self.MAIN_PG_DB_PORT = os.getenv("MAIN_PG_DB_PORT", self.MAIN_PG_DB_PORT)
+            self.MAIN_SCHEMA_NAME = os.getenv("MAIN_SCHEMA_NAME", self.MAIN_SCHEMA_NAME)
+            return
+
+        try:
+            credential = DefaultAzureCredential()
+            client = SecretClient(vault_url=self.KEY_VAULT_URI, credential=credential)
+            
+            self.MAINDB_NAME = client.get_secret(os.getenv("MAINDB_NAME", "MAINDB-NAME")).value
+            self.MAINDB_USERNAME = client.get_secret(os.getenv("MAINDB_USERNAME", "MAINDB-USERNAME")).value
+            self.MAINDB_PASSWORD = client.get_secret(os.getenv("MAINDB_PASSWORD", "MAINDB-PASSWORD")).value
+            self.MAINDB_ENDPOINT = client.get_secret(os.getenv("MAINDB_ENDPOINT", "MAINDB-ENDPOINT")).value
+            
+            # Non-secret configs that might be in KV or env
+            self.MAIN_SCHEMA_NAME = os.getenv("MAIN_SCHEMA_NAME", "trd365")
+            print("[Config] Secrets loaded from Key Vault.")
+            
+        except Exception as e:
+            print(f"[Key Vault] Failed to load secrets: {str(e)}")
+            print("[Config] Falling back to environment variables.")
+            self.MAINDB_NAME = os.getenv("MAINDB_NAME", self.MAINDB_NAME)
+            self.MAINDB_USERNAME = os.getenv("MAINDB_USERNAME", self.MAINDB_USERNAME)
+            self.MAINDB_PASSWORD = os.getenv("MAINDB_PASSWORD", self.MAINDB_PASSWORD)
+            self.MAINDB_ENDPOINT = os.getenv("MAINDB_ENDPOINT", self.MAINDB_ENDPOINT)
 
 
-@lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    settings.load_secrets_from_keyvault()
+    return settings

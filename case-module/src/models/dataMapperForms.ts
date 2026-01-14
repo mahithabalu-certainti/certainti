@@ -29,6 +29,8 @@ interface DataMapperFormsAttributes {
     status_rid: string;
 
     is_active: boolean;
+
+    error_message?: string | null;
 }
 
 export interface DataMapperFormsCreationAttributes
@@ -41,6 +43,7 @@ export interface DataMapperFormsCreationAttributes
         | "modified_by"
         | "effective_to_date"
         | "is_active"
+        | "error_message"
     > { }
 
 export class DataMapperForms
@@ -70,6 +73,8 @@ export class DataMapperForms
     public status_rid!: string;
 
     public is_active!: boolean;
+
+    public error_message?: string | null;
 
     static initialize(
         sequelize: Sequelize,
@@ -149,6 +154,10 @@ export class DataMapperForms
                     allowNull: false,
                     defaultValue: true,
                 },
+                error_message: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                },
             },
             {
                 sequelize,
@@ -158,6 +167,13 @@ export class DataMapperForms
                 underscored: true,
             }
         );
+    }
+
+    static associate(models: any) {
+        DataMapperForms.hasMany(models.DataMapperFormMappings, {
+            foreignKey: "form_rid",
+            as: "dataMapperFormMappings",
+        });
     }
 }
 

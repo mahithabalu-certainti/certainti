@@ -16,6 +16,10 @@ import { TaskAttachments } from "./taskAttachmentModel";
 import { CaseTaskWorkflowConnector } from "./caseTaskWorkflowConnectorModel";
 import { ProjectResourceFiscal } from "./projectResourceFiscal";
 import { ProjectTask } from "./projectTask";
+import { DataMapperForms } from "./dataMapperForms";
+import { DataMapperFormMappings } from "./dataMapperFormMappings";
+import { DataMapperObjects } from "./dataMapperObjects";
+
 
 export const models = {
   Case,
@@ -33,7 +37,11 @@ export const models = {
   CaseProjectResource,
   CaseProjectTask,
   ProjectResourceFiscal,
-  ProjectTask,  
+  ProjectTask,
+  DataMapperForms,
+  DataMapperFormMappings,
+  DataMapperObjects,
+
 };
 
 export async function initModels() {

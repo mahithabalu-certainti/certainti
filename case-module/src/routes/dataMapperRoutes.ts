@@ -9,11 +9,53 @@ const routes: Router = Router()
 
 routes.post(
   "/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("rd_form_data_mapper_create"),
   upload.single('file'),
   controller.dataMapperController.createDataMapper
 );
 
+routes.post(
+  "/list",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  controller.dataMapperController.listDataMapperForms
+);
+
+routes.post(
+  "/export",
+  checkUserStatusMiddleware("rd_form_data_mapper_export"),
+  controller.dataMapperController.exportDataMapperForms
+);
+
+routes.get(
+  "/detail/:rid",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  controller.dataMapperController.getDataMapperFormsDetail
+);
+
+routes.post(
+  "/update",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  upload.single('file'),
+  controller.dataMapperController.editDataMapper
+);
+
+routes.get(
+  "/mappingDetail/:rid",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  controller.dataMapperController.getDataMapperFormsMappingDetail
+);
+
+routes.post(
+  "/updateMapping",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  controller.dataMapperController.editDataMapperMapping
+);
+
+routes.get(
+  "/objectsList",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  controller.dataMapperController.getObjectsList
+);
 
 
 export default routes

@@ -1,5 +1,7 @@
 import Decimal from "decimal.js";
 import Joi from "joi";
+
+
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
@@ -1206,6 +1208,77 @@ const rdCreditDataSchema = Joi.object({
   stateCode: Joi.string().max(255).required(),
 });
 
+const listDataMapperSchema = Joi.object({
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).optional(),
+  search: Joi.string().allow("", null).optional(),
+  filters: Joi.object().default({}).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC").optional(),
+});
+
+const getObjectsListSchema = Joi.object({
+  country_rid: Joi.string().required(),
+  state_rid: Joi.string().optional(),
+});
+
+const exportDataMapperSchema = Joi.object({
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).optional(),
+  search: Joi.string().allow("", null).optional(),
+  filters: Joi.object().default({}).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC").optional(),
+  timezone: Joi.string().optional(),
+});
+
+const updateDataMapperMappingSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  mappings: Joi.array().required()
+})
+
+const updateDataMapperSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  form_name: Joi.string().max(120).optional()
+    .messages({
+      'string.empty': 'Name cannot be empty',
+      'string.max': 'Name must be less than or equal to 120 characters'
+    }),
+  effective_from_date: Joi.date().optional()
+    .messages({
+      'date.base': 'Effective from date must be a valid date'
+    }),
+  effective_to_date: Joi.date().optional().allow(null, '')
+    .messages({
+      'date.base': 'Effective to date must be a valid date'
+    }),
+  country_rid: Joi.string().pattern(uuidRegex).optional()
+    .messages({
+      'string.empty': 'Country cannot be empty'
+    }),
+  state_rid: Joi.string().pattern(uuidRegex).optional()
+    .messages({
+      'string.empty': 'State cannot be empty'
+    }),
+  is_active: Joi.boolean().optional()
+})
+  .custom((value, helpers) => {
+    const { effective_from_date, effective_to_date } = value;
+    if (
+      effective_from_date &&
+      effective_to_date &&
+      new Date(effective_to_date) < new Date(effective_from_date)
+    ) {
+      return helpers.error('any.custom', {
+        message: 'Effective to date should be greater than effective from date'
+      });
+    }
+    return value;
+  })
+  .messages({
+    'any.custom': 'Effective to date should be greater than effective from date'
+  });
+
 
 export {
   createCaseSchema,
@@ -1267,4 +1340,9 @@ export {
   rdCreditGenerationSchema,
   rdCreditProcessSchema,
   rdCreditDataSchema,
+  listDataMapperSchema,
+  exportDataMapperSchema,
+  updateDataMapperSchema,
+  updateDataMapperMappingSchema,
+  getObjectsListSchema
 };

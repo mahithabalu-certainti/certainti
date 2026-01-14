@@ -1,3 +1,4 @@
+
 import os
 import tempfile
 from pathlib import Path
@@ -5,7 +6,6 @@ import threading
 import json
 import requests
 import io
-from confluent_kafka import Consumer, KafkaException
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from .schemas import ExtractionResponse
 from .ade_service import ADEForm6765Service
 from .config import get_settings
+from .kafka_consumer import consume_messages
 
 settings = get_settings()
 
@@ -88,91 +89,6 @@ async def extract_form(file: UploadFile = File(...)):
 
     # FastAPI will serialize the Pydantic model to JSON
     return JSONResponse(content=extracted.model_dump())
-
-
-def process_kafka_message(message):
-    """
-    Process a single Kafka message:
-    1. Parse JSON payload
-    2. Download file from file_url
-    3. Run extraction
-    """
-    try:
-        msg_value = json.loads(message.value().decode("utf-8"))
-        print(f"Received Kafka message: {msg_value}")
-
-        file_url = msg_value.get("file_url")
-        if not file_url:
-            print("Error: No file_url in message")
-            return
-
-        # Download file
-        try:
-            response = requests.get(file_url)
-            response.raise_for_status()
-            file_content = response.content
-            print(f"Downloaded file from {file_url}, size: {len(file_content)} bytes")
-        except Exception as e:
-            print(f"Failed to download file: {e}")
-            return
-
-        # Save to temp file for ADE
-        suffix = ".pdf" # Assuming PDF for now, or extract from url/headers
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp_path = Path(tmp.name)
-            tmp.write(file_content)
-        
-        try:
-            print(f"Starting extraction for {tmp_path}")
-            extracted = ade_service.extract_form(tmp_path)
-            print("Extraction successful")
-            # TODO: What to do with the result? 
-            # The requirements just said "call the method extract_form"
-            # In a real app, we'd probably save this to DB or send a notification.
-            print(f"Extracted data: {extracted.model_dump_json()[:200]}...") 
-        except Exception as e:
-            print(f"Extraction failed: {e}")
-        finally:
-            try:
-                tmp_path.unlink(missing_ok=True)
-            except:
-                pass
-
-    except Exception as e:
-        print(f"Error processing message: {e}")
-
-
-def consume_messages():
-    """
-    Kafka consumer loop running in a background thread.
-    """
-    conf = {
-        'bootstrap.servers': settings.kafka_broker,
-        'group.id': settings.kafka_group_id,
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True
-    }
-
-    consumer = Consumer(conf)
-    
-    try:
-        consumer.subscribe([settings.kafka_topic])
-        print(f"Subscribed to topic: {settings.kafka_topic}")
-
-        while True:
-            msg = consumer.poll(1.0)
-            if msg is None:
-                continue
-            if msg.error():
-                print(f"Consumer error: {msg.error()}")
-                continue
-            
-            process_kafka_message(msg)
-
-    except Exception as e:
-        print(f"Kafka consumer crashed: {e}")
-    finally:
-        consumer.close()
 
 
 @app.on_event("startup")
