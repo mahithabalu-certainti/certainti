@@ -67,6 +67,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         sx:{  position: 'sticky',
       left: 0,
       background: '#fff',
+      padding: '0px 8px 0px 14px !important',
       zIndex: 10,
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',},
@@ -94,9 +95,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
           </Tooltip>
         ) as React.ReactNode as string,
         width: 180,
-        sx: (row?: FinancialWorkingRow) => ({
-          textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
-        }),
+        // sx: (row?: FinancialWorkingRow) => ({
+        //   textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
+        // }),
         sortId: projectId,
         render: (row: FinancialWorkingRow) => {
           const value = row[projectId];
@@ -116,9 +117,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       label: 'Total',
       width: 150,
       sortId: 'Total',
-      sx: (row?: FinancialWorkingRow) => ({
-        textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
-      }),
+      // sx: (row?: FinancialWorkingRow) => ({
+      //   textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
+      // }),
       render: (row: FinancialWorkingRow) => (
         <span className='font-bold text-[#2D3E4F]'>
           {formatValue(row.Total, symbol)}
