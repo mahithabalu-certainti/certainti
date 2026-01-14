@@ -1,16 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { FinancialHighlightsResponse, AustraliaComputedFields } from '../../../../../../types/dossier';
+import {
+  FinancialHighlightsResponse,
+  AustraliaComputedFields,
+} from '../../../../../../types/dossier';
 
 interface FinancialWorkingAustraliaProps {
-    data: FinancialHighlightsResponse | null;
+  data: FinancialHighlightsResponse | null;
 }
 
-const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ data }) => {
-    
+const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
+  data,
+}) => {
   // Check if data is present and has correct structure
-  if (!data?.data?.computed_fields || !('R&D Expenditure' in data.data.computed_fields)) {
-      return <div className="p-4 text-center text-gray-500">No data available or invalid format</div>;
+  if (
+    !data?.data?.computed_fields ||
+    !('R&D Expenditure' in data.data.computed_fields)
+  ) {
+    return (
+      <div className='p-4 text-center text-gray-500'>
+        No data available or invalid format
+      </div>
+    );
   }
 
   const computedFields = data.data.computed_fields as AustraliaComputedFields;
@@ -28,14 +39,14 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
   };
 
   const formatLabel = (key: string) => {
-    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const renderValue = (value: number | string | null | undefined) => {
     return (
-      <div className="min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block">
-        <span className="text-[13px] font-semibold text-[#2D3E4F]">
-          {typeof value === 'number' ? formatCurrency(value) : value ?? '--'}
+      <div className='min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block'>
+        <span className='text-[13px] font-semibold text-[#2D3E4F]'>
+          {typeof value === 'number' ? formatCurrency(value) : (value ?? '--')}
         </span>
       </div>
     );
@@ -62,15 +73,19 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
     </div>
   );
 
-  const renderKeyValuePairs = (obj: Record<string, number | string | null | undefined>) => {
+  const renderKeyValuePairs = (
+    obj: Record<string, number | string | null | undefined>
+  ) => {
     const entries = Object.entries(obj);
-    
+
     return (
       <table className='w-full border-collapse'>
         <tbody>
           {entries.map(([key, value]) => {
             if (
-              (typeof value === 'object' && value !== null && !Array.isArray(value)) ||
+              (typeof value === 'object' &&
+                value !== null &&
+                !Array.isArray(value)) ||
               Array.isArray(value) ||
               key === 'name'
             )
@@ -81,9 +96,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
                 <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>
-                  {renderValue(value)}
-                </td>
+                <td className='px-3 py-1.5 text-right'>{renderValue(value)}</td>
               </tr>
             );
           })}
@@ -93,13 +106,16 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
   };
 
   // Special renderer for Tier of intensity array
-  const renderTierTable = (tiers: Array<Record<string, any>>, headerLabel?: string) => {
+  const renderTierTable = (
+    tiers: Array<Record<string, any>>,
+    headerLabel?: string
+  ) => {
     if (!tiers || tiers.length === 0) return null;
 
     // Get all unique keys from all tiers (excluding 'name')
     const allKeys = new Set<string>();
-    tiers.forEach(tier => {
-      Object.keys(tier).forEach(key => {
+    tiers.forEach((tier) => {
+      Object.keys(tier).forEach((key) => {
         if (key !== 'name') {
           allKeys.add(key);
         }
@@ -109,18 +125,21 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
     const columnKeys = Array.from(allKeys);
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+      <div className='overflow-x-auto'>
+        <table className='w-full border-collapse'>
           <thead>
-            <tr className="bg-gray-50 border-b border-[#CBD6E2]">
-              <th scope="col" className="px-3 py-1.5 text-left text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider">
+            <tr className='bg-gray-50 border-b border-[#CBD6E2]'>
+              <th
+                scope='col'
+                className='px-3 py-1.5 text-left text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'
+              >
                 {headerLabel || ''}
               </th>
-              {columnKeys.map(key => (
-                <th 
-                  key={key} 
-                  scope="col" 
-                  className="px-3 py-1.5 text-right text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider"
+              {columnKeys.map((key) => (
+                <th
+                  key={key}
+                  scope='col'
+                  className='px-3 py-1.5 text-right text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'
                 >
                   {formatLabel(key)}
                 </th>
@@ -129,12 +148,15 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({ d
           </thead>
           <tbody>
             {tiers.map((tier, index) => (
-              <tr key={index} className="border-b border-[#CBD6E2] last:border-0">
-                <td className="px-3 py-1.5 text-sm font-medium text-[#425A76]">
+              <tr
+                key={index}
+                className='border-b border-[#CBD6E2] last:border-0'
+              >
+                <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
                   {tier.name || `${headerLabel} ${index + 1}`}
                 </td>
-                {columnKeys.map(key => (
-                  <td key={key} className="px-3 py-1.5 text-right">
+                {columnKeys.map((key) => (
+                  <td key={key} className='px-3 py-1.5 text-right'>
                     {renderValue(tier[key])}
                   </td>
                 ))}

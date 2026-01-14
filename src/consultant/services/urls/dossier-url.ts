@@ -42,7 +42,7 @@ export const getRDCreditPreviewURL = (
   caseRid: string,
   stateRid: string
 ): string => {
-  return `/api/rd-credit/preview/${accountRid}/${caseRid}${stateRid ?`/${stateRid}` : ''}`;
+  return `/api/rd-credit/preview/${accountRid}/${caseRid}${stateRid ? `/${stateRid}` : ''}`;
 };
 
 export const getRDCreditStatusURL = (

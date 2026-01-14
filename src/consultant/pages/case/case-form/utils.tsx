@@ -35,7 +35,8 @@ export const transformCaseFormPayload = (
     sub_contracts: formData.sub_contracts || null,
     public_sub_contracts: formData.public_sub_contracts || null,
     material_software_cost: formData.material_software_cost || null,
-    employers_pension_contribution: formData.employers_pension_contribution || null,
+    employers_pension_contribution:
+      formData.employers_pension_contribution || null,
     taxable_income: formData.taxable_income || null,
     export_sales_revenue: formData.export_sales_revenue || null,
     other: formData.other || null,

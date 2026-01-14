@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AllPermissions } from '../../../../../common-service';
-import { ActivityDropdownItem, CaseDetails, ColorCode, FinancialHighlightsResponse } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  CaseDetails,
+  ColorCode,
+  FinancialHighlightsResponse,
+} from '../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -106,7 +111,7 @@ const Dossier: React.FC<DossierProps> = ({
   }, [tabParam]);
 
   const tabs = [
-      {
+    {
       label: 'Financial Workings',
       value: 'financial_workings',
       hide: false,
@@ -180,10 +185,13 @@ const Dossier: React.FC<DossierProps> = ({
 
       <SectionHeader
         title='Dossier'
-        titleIcon={<DossierIcon alt='dossier-header-icon' 
-        className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-        />}
-                iconBg={ColorCode.caseBgColor}
+        titleIcon={
+          <DossierIcon
+            alt='dossier-header-icon'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        }
+        iconBg={ColorCode.caseBgColor}
         bgType='circle'
         count={count}
         showItemCount={true}
