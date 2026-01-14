@@ -123,6 +123,34 @@ export interface PDFDocument {
 }
 
 //----------- Mapping Details Types --------
+export type ObjectRidMap = Record<number, string>;
+export interface FormDetail {
+  rid: string;
+  r_number: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string | null;
+  modified_by: string | null;
+  form_name: string;
+  browse_file: string;
+  document_name: string;
+  effective_from_date: string;
+  effective_to_date: string | null;
+  country_rid: string;
+  state_rid: string;
+  format: string;
+  size_in_mb: string;
+  status_rid: string;
+  is_active: boolean;
+  error_message: string | null;
+  extracted_data: unknown | null;
+  country_name: string;
+  state_name: string;
+  status_name: string;
+  created_by_name: string;
+  modified_by_name: string | null;
+}
+
 export interface FieldMapping {
   rid: string;
   created_datetime: string;
@@ -132,17 +160,13 @@ export interface FieldMapping {
   form_rid: string;
   field_label: string;
   field_id: string | null;
-  object_rid: string[];
+  object_rid: ObjectRidMap | null;
 }
 
 export interface MappingDetailsData {
-  file: string;
-  form_name: string;
-  country_name: string;
-  state_name: string;
-  country_rid: string;
-  state_rid: string;
+  formDetail: FormDetail;
   mappings: FieldMapping[];
+  base64File: string;
 }
 
 export interface MappingDetailsResponse {
@@ -185,7 +209,7 @@ export interface DataMapperFieldMapping {
   form_rid: string;
   field_label: string;
   field_id: string | null;
-  object_rid: string[];
+  object_rid: ObjectRidMap | null;
 }
 
 export interface DataMapperConfigPayload {

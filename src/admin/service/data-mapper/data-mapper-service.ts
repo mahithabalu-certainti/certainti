@@ -12,7 +12,6 @@ import {
   ObjectItem,
 } from '../../types/data-mapper';
 import {
-  DataMapperConfigMockData,
   DataMapperDetailsMockData,
   DataMapperListMockData,
   MappingDetailsMockData,
@@ -226,17 +225,11 @@ export const useObjectsList = (
 export const updateDataMapperConfig = async (
   body: DataMapperConfigPayload
 ): Promise<DataMapperConfigResponse> => {
-  // const response = await caseServiceApi.post<DataMapperConfigResponse>(
-  //   `/api/dataMapper/updateMapping`,
-  //   body
-  // );
-  // return response.data.data;
-
-  console.log('data-mapper-config', body);
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return DataMapperConfigMockData;
+  const response = await caseServiceApi.post<DataMapperConfigResponse>(
+    `/api/dataMapper/updateMapping`,
+    body
+  );
+  return response.data;
 };
 
 export const useUpdateDataMapperConfig = () => {

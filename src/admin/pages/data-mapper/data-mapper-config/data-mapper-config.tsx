@@ -8,13 +8,22 @@ import {
   useUpdateDataMapperConfig,
 } from '../../../service/data-mapper/data-mapper-service';
 import { PDFField } from '../../../types';
-import * as pdfjsLib from 'pdfjs-dist';
 import { useParams } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import { DataMapperIcon } from '../../../../assets';
 import { useToast } from '../../../../hooks';
+import { extractPDFFields, validateMappingItem } from './helper';
+
+interface ObjectRidMap {
+  [key: number]: string;
+}
+
+interface FieldExpression {
+  type: 'chip' | 'operator';
+  value: string;
+}
 
 interface MappingItem {
   rid: string;
@@ -24,16 +33,11 @@ interface MappingItem {
   modified_by?: string;
   field_label: string;
   field_id: string | null;
-  object_rid: string[];
-}
-
-interface PDFAnnotation {
-  id?: string;
-  fieldName?: string;
-  fieldType?: string;
-  rect?: number[];
-  defaultValue?: string;
-  options?: Array<{ displayValue: string }>;
+  object_rid: ObjectRidMap | null;
+  fieldExpressions?: FieldExpression[];
+  inputValue?: string;
+  fieldIdError?: string;
+  targetError?: string;
 }
 
 const DataMapperConfig: React.FC = () => {
@@ -49,8 +53,8 @@ const DataMapperConfig: React.FC = () => {
   const updateDataMapperConfig = useUpdateDataMapperConfig();
   const { data: mappingData, isLoading } = useMappingDetails(mapperId, true);
   const { data: objectsList, isLoading: isLoadingObjects } = useObjectsList(
-    mappingData?.country_rid || '',
-    mappingData?.state_rid || ''
+    mappingData?.formDetail?.country_rid || '',
+    mappingData?.formDetail?.state_rid || ''
   );
 
   useEffect(() => {
@@ -59,82 +63,33 @@ const DataMapperConfig: React.FC = () => {
     }
   }, [mappingData?.mappings]);
 
-  // Extract PDF fields from the PDF file
-  const extractFieldsFromPDF = async (pdf: pdfjsLib.PDFDocumentProxy) => {
-    try {
-      const extractedFields: PDFField[] = [];
-
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const annotations = await page.getAnnotations();
-
-        annotations.forEach((annotation: PDFAnnotation, index: number) => {
-          if (annotation.fieldType) {
-            const rect = annotation.rect || [0, 0, 0, 0];
-            const field: PDFField = {
-              id: annotation.id || `field-${pageNum}-${index}`,
-              name: annotation.fieldName || `Field ${index + 1}`,
-              type: annotation.fieldType || 'text',
-              page: pageNum - 1,
-              rect: rect,
-              x: rect[0],
-              y: rect[1],
-              width: rect[2] - rect[0],
-              height: rect[3] - rect[1],
-              defaultValue: annotation.defaultValue,
-              possibleValues: annotation.options?.map(
-                (opt) => opt.displayValue
-              ),
-            };
-            extractedFields.push(field);
-          }
-        });
-      }
-
-      setFields(extractedFields);
-    } catch (err) {
-      console.error('Error extracting fields:', err);
-    }
-  };
-
-  // Load PDF from URL or base64 when mapping data is available
+  // Load PDF from base64 when mapping data is available
   useEffect(() => {
-    if (!mappingData?.file) return;
+    if (!mappingData?.base64File) return;
 
     const loadPdfData = async () => {
       setIsLoadingPdf(true);
       try {
-        let blob: Blob;
+        // Handle base64 data
+        const base64Data = mappingData.base64File.startsWith('data:')
+          ? mappingData.base64File.split(',')[1]
+          : mappingData.base64File;
 
-        // Check if the file is base64 data
-        if (mappingData.file.startsWith('data:application/pdf;base64,')) {
-          // Handle base64 data
-          const base64Data = mappingData.file.split(',')[1];
-          const binaryString = atob(base64Data);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          blob = new Blob([bytes], { type: 'application/pdf' });
-        } else if (mappingData.file.startsWith('data:')) {
-          // Handle other base64 formats
-          const response = await fetch(mappingData.file);
-          blob = await response.blob();
-        } else {
-          // Handle URL
-          const response = await fetch(mappingData.file);
-          blob = await response.blob();
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
         }
+        const blob = new Blob([bytes], { type: 'application/pdf' });
 
         const file = new File([blob], 'document.pdf', {
           type: 'application/pdf',
         });
         setPdfFile(file);
 
-        // Extract fields from the PDF
-        const arrayBuffer = await blob.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        await extractFieldsFromPDF(pdf);
+        // Extract fields from the PDF using the helper function
+        const extractedFields = await extractPDFFields(file);
+        setFields(extractedFields);
       } catch (err) {
         console.error('Error loading PDF:', err);
       } finally {
@@ -143,7 +98,7 @@ const DataMapperConfig: React.FC = () => {
     };
 
     loadPdfData();
-  }, [mappingData?.file]);
+  }, [mappingData?.base64File]);
 
   const tabs = [
     {
@@ -174,10 +129,32 @@ const DataMapperConfig: React.FC = () => {
     window.history.back();
     setFields([]);
     setSelectedField(null);
-    setActiveTab('pdf_view');
   };
 
   const handleSubmit = async () => {
+    // Validate all mappings and set errors
+    let hasErrors = false;
+    const validatedMappings = mappings.map((mapping) => {
+      const errors = validateMappingItem(mapping);
+      if (errors.fieldIdError || errors.targetError) {
+        hasErrors = true;
+      }
+      return {
+        ...mapping,
+        fieldIdError: errors.fieldIdError,
+        targetError: errors.targetError,
+      };
+    });
+
+    // Update mappings with validation errors
+    setMappings(validatedMappings);
+
+    if (hasErrors) {
+      // Switch to table view to show errors
+      setActiveTab('table_view');
+      return;
+    }
+
     const payload = {
       form_rid: mapperId || '',
       mappings: mappings.map((mapping) => ({
@@ -220,7 +197,7 @@ const DataMapperConfig: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {'Data Mapper'}
+                {`Data Mapper ${mappingData?.formDetail?.r_number ? `> ${mappingData?.formDetail?.r_number || ''}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
@@ -232,6 +209,7 @@ const DataMapperConfig: React.FC = () => {
           <TextButton
             label='Save'
             onClick={handleSubmit}
+            loading={updateDataMapperConfig.isPending}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -242,6 +220,7 @@ const DataMapperConfig: React.FC = () => {
           <TextButton
             label='Cancel'
             onClick={goBack}
+            disabled={updateDataMapperConfig.isPending}
             sx={{
               width: '75px',
               minWidth: '75px',
@@ -263,9 +242,18 @@ const DataMapperConfig: React.FC = () => {
             </div>
             <div className='grid grid-cols-8 gap-4 px-10 py-2'>
               {[
-                { label: 'Name', value: mappingData?.form_name || '' },
-                { label: 'Country', value: mappingData?.country_name || '' },
-                { label: 'State', value: mappingData?.state_name || '' },
+                {
+                  label: 'Name',
+                  value: mappingData?.formDetail?.form_name || '',
+                },
+                {
+                  label: 'Country',
+                  value: mappingData?.formDetail?.country_name || '',
+                },
+                {
+                  label: 'State',
+                  value: mappingData?.formDetail?.state_name || '',
+                },
               ].map(({ label, value }) => (
                 <React.Fragment key={label}>
                   <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
@@ -291,9 +279,10 @@ const DataMapperConfig: React.FC = () => {
               Data Mapping
             </div>
             <SectionHeaderTab
+              key={activeTab}
               tabs={tabs}
               onTabChange={handleTabChange}
-              defaultValue={'pdf_view'}
+              defaultValue={activeTab}
               className='flex flex-col gap-0 border border-[#CBD6E2] border-r-0 border-l-0  px-10'
             />
 

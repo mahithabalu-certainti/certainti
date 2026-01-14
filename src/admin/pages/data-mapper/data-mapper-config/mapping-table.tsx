@@ -7,7 +7,9 @@ import {
   TableHead,
   TableRow,
   Chip,
+  Tooltip,
 } from '@mui/material';
+import { ErrorInfoIcon } from '../../../../assets';
 
 interface ObjectItem {
   rid: string;
@@ -22,13 +24,19 @@ interface FieldExpression {
   value: string;
 }
 
+interface ObjectRidMap {
+  [key: number]: string;
+}
+
 interface MappingItem {
   rid: string;
   field_label: string;
   field_id: string | null;
-  object_rid: string[];
+  object_rid: ObjectRidMap | null;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
+  fieldIdError?: string;
+  targetError?: string;
 }
 
 interface MappingTableProps {
@@ -52,15 +60,85 @@ const MappingTable: React.FC<MappingTableProps> = ({
 
   useEffect(() => {
     if (mappings && mappings.length > 0) {
-      // Initialize mappings with fieldExpressions and inputValue if not present
-      const initializedMappings = mappings.map((mapping) => ({
-        ...mapping,
-        fieldExpressions: mapping.fieldExpressions || [],
-        inputValue: mapping.inputValue || '',
-      }));
-      setLocalMappings(initializedMappings);
+      if (localMappings.length === 0) {
+        // INITIALIZATION (First Load)
+        // Initialize mappings with fieldExpressions from object_rid if not present
+        const initializedMappings = mappings.map((mapping) => {
+          let fieldExpressions = mapping.fieldExpressions || [];
+
+          // If we have object_rid but no fieldExpressions, convert object_rid to fieldExpressions
+          if (mapping.object_rid && fieldExpressions.length === 0) {
+            const objectRidMap = mapping.object_rid as ObjectRidMap;
+            const sortedKeys = Object.keys(objectRidMap)
+              .map(Number)
+              .sort((a, b) => a - b);
+
+            fieldExpressions = sortedKeys
+              .map((key) => {
+                const value = objectRidMap[key];
+                const isEven = key % 2 === 0;
+
+                if (isEven) {
+                  // Even keys are operators
+                  const operatorMap: Record<string, string> = {
+                    add: '+',
+                    subtract: '-',
+                    multiply: '*',
+                    divide: '/',
+                  };
+                  return {
+                    type: 'operator' as const,
+                    value: operatorMap[value] || value,
+                  };
+                } else {
+                  // Odd keys are object IDs - find the corresponding parent.child
+                  const objectItem = objectsList.find(
+                    (obj) => obj.rid === value
+                  );
+                  if (objectItem) {
+                    return {
+                      type: 'chip' as const,
+                      value: `${objectItem.parent_object}.${objectItem.object_name}`,
+                    };
+                  }
+                  return null;
+                }
+              })
+              .filter(Boolean) as FieldExpression[];
+          }
+
+          return {
+            ...mapping,
+            fieldExpressions,
+            inputValue: mapping.inputValue || '',
+          };
+        });
+        setLocalMappings(initializedMappings);
+      } else {
+        // UPDATE (Sync Errors)
+        // If localMappings exists, sync ONLY the errors from incoming mappings prop
+        setLocalMappings((prev) =>
+          prev.map((localMap) => {
+            const propMap = mappings.find((m) => m.rid === localMap.rid);
+            if (propMap) {
+              // Only update if errors have changed
+              if (
+                localMap.fieldIdError !== propMap.fieldIdError ||
+                localMap.targetError !== propMap.targetError
+              ) {
+                return {
+                  ...localMap,
+                  fieldIdError: propMap.fieldIdError,
+                  targetError: propMap.targetError,
+                };
+              }
+            }
+            return localMap;
+          })
+        );
+      }
     }
-  }, [mappings]);
+  }, [mappings, objectsList, localMappings.length]);
 
   // Monitor input value changes to update autocomplete
   useEffect(() => {
@@ -97,9 +175,13 @@ const MappingTable: React.FC<MappingTableProps> = ({
   }, [objectsList]);
 
   const handleFieldIdChange = (rid: string, value: string): void => {
-    const updatedMappings = localMappings.map((mapping) =>
-      mapping.rid === rid ? { ...mapping, field_id: value } : mapping
-    );
+    const updatedMappings = localMappings.map((mapping) => {
+      if (mapping.rid === rid) {
+        // Only clear fieldIdError if it exists, don't validate
+        return { ...mapping, field_id: value, fieldIdError: undefined };
+      }
+      return mapping;
+    });
     setLocalMappings(updatedMappings);
     onMappingsChange(updatedMappings);
   };
@@ -109,28 +191,62 @@ const MappingTable: React.FC<MappingTableProps> = ({
     const isOperator = ['+', '-', '*', '/'].includes(lastChar);
 
     if (isOperator && value.length === 1) {
-      setLocalMappings((prev) =>
-        prev.map((mapping) => {
+      setLocalMappings((prev) => {
+        const updated = prev.map((mapping) => {
           if (mapping.rid === rid) {
+            const newExpressions = [
+              ...(mapping.fieldExpressions || []),
+              { type: 'operator' as const, value: lastChar },
+            ];
+
+            // Rebuild ObjectRidMap from expressions
+            const objectRidMap: ObjectRidMap = {};
+            let index = 1;
+
+            newExpressions.forEach((exp) => {
+              if (exp.type === 'chip') {
+                // Odd indices for object IDs
+                const [parent, child] = exp.value.split('.');
+                const objectId = targetOptions[parent]?.[child] || '';
+                if (objectId) {
+                  objectRidMap[index] = objectId;
+                  index += 2; // Next odd number
+                }
+              } else if (exp.type === 'operator') {
+                // Even indices for operators - only add if there's a preceding chip
+                if (index > 1) {
+                  const operatorMap: Record<string, string> = {
+                    '+': 'add',
+                    '-': 'subtract',
+                    '*': 'multiply',
+                    '/': 'divide',
+                  };
+                  objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+                }
+              }
+            });
+
             return {
               ...mapping,
-              fieldExpressions: [
-                ...(mapping.fieldExpressions || []),
-                { type: 'operator' as const, value: lastChar },
-              ],
+              fieldExpressions: newExpressions,
+              object_rid:
+                Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
+              targetError: undefined,
               inputValue: '',
             };
           }
           return mapping;
-        })
-      );
+        });
+        onMappingsChange(updated);
+        return updated;
+      });
       return;
     }
 
     setLocalMappings((prev) =>
       prev.map((mapping) => {
         if (mapping.rid === rid) {
-          return { ...mapping, inputValue: value };
+          return { ...mapping, inputValue: value, targetError: undefined };
         }
         return mapping;
       })
@@ -143,37 +259,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
 
     // Update parent component
     const updated = localMappings.map((m) =>
-      m.rid === rid ? { ...m, inputValue: value } : m
+      m.rid === rid ? { ...m, inputValue: value, targetError: undefined } : m
     );
     onMappingsChange(updated);
   };
 
   const handleInputBlur = (rid: string): void => {
-    const mapping = localMappings.find((m) => m.rid === rid);
-    if (!mapping) return;
-
-    const currentInput = mapping.inputValue || '';
-    const atIndex = currentInput.lastIndexOf('@');
-
-    if (atIndex !== -1) {
-      const afterAt = currentInput.substring(atIndex + 1);
-      const dotCount = (afterAt.match(/\./g) || []).length;
-
-      if (
-        (afterAt && dotCount < 1) ||
-        (dotCount >= 1 && afterAt.endsWith('.'))
-      ) {
-        setLocalMappings((prev) =>
-          prev.map((m) => {
-            if (m.rid === rid) {
-              return { ...m, inputValue: '' };
-            }
-            return m;
-          })
-        );
-      }
-    }
-
     setTimeout(() => {
       setShowAutocomplete((prev) => ({ ...prev, [rid]: false }));
     }, 150);
@@ -237,21 +328,42 @@ const MappingTable: React.FC<MappingTableProps> = ({
               value: selectedValue,
             });
 
-            // Extract RIDs from chips for object_rid array
-            const objectRids = newExpressions
-              .filter((exp) => exp.type === 'chip')
-              .map((exp) => {
-                const [parent, child] = exp.value.split('.');
-                return targetOptions[parent]?.[child] || '';
-              })
-              .filter(Boolean);
+            // Build ObjectRidMap from expressions
+            const objectRidMap: ObjectRidMap = {};
+            let index = 1;
 
-            return {
+            newExpressions.forEach((exp) => {
+              if (exp.type === 'chip') {
+                // Odd indices for object IDs
+                const [parent, child] = exp.value.split('.');
+                const objectId = targetOptions[parent]?.[child] || '';
+                if (objectId) {
+                  objectRidMap[index] = objectId;
+                  index += 2; // Next odd number
+                }
+              } else if (exp.type === 'operator') {
+                // Even indices for operators - only add if there's a preceding chip
+                if (index > 1) {
+                  const operatorMap: Record<string, string> = {
+                    '+': 'add',
+                    '-': 'subtract',
+                    '*': 'multiply',
+                    '/': 'divide',
+                  };
+                  objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+                }
+              }
+            });
+
+            const updatedMapping = {
               ...m,
               fieldExpressions: newExpressions,
               inputValue: '',
-              object_rid: objectRids,
+              object_rid:
+                Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
+              targetError: undefined, // Clear targetError when user makes changes
             };
+            return updatedMapping;
           }
           return m;
         });
@@ -271,20 +383,41 @@ const MappingTable: React.FC<MappingTableProps> = ({
             (_, index) => index !== indexToRemove
           );
 
-          // Update object_rid array
-          const objectRids = newExpressions
-            .filter((exp) => exp.type === 'chip')
-            .map((exp) => {
-              const [parent, child] = exp.value.split('.');
-              return targetOptions[parent]?.[child] || '';
-            })
-            .filter(Boolean);
+          // Rebuild ObjectRidMap from remaining expressions
+          const objectRidMap: ObjectRidMap = {};
+          let index = 1;
 
-          return {
+          newExpressions.forEach((exp) => {
+            if (exp.type === 'chip') {
+              // Odd indices for object IDs
+              const [parent, child] = exp.value.split('.');
+              const objectId = targetOptions[parent]?.[child] || '';
+              if (objectId) {
+                objectRidMap[index] = objectId;
+                index += 2; // Next odd number
+              }
+            } else if (exp.type === 'operator') {
+              // Even indices for operators - only add if there's a preceding chip
+              if (index > 1) {
+                const operatorMap: Record<string, string> = {
+                  '+': 'add',
+                  '-': 'subtract',
+                  '*': 'multiply',
+                  '/': 'divide',
+                };
+                objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+              }
+            }
+          });
+
+          const updatedMapping = {
             ...mapping,
             fieldExpressions: newExpressions,
-            object_rid: objectRids,
+            object_rid:
+              Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
+            targetError: undefined, // Clear targetError when user makes changes
           };
+          return updatedMapping;
         }
         return mapping;
       });
@@ -297,12 +430,45 @@ const MappingTable: React.FC<MappingTableProps> = ({
     setLocalMappings((prev) => {
       const updated = prev.map((mapping) => {
         if (mapping.rid === rid) {
-          return {
+          const newExpressions = (mapping.fieldExpressions || []).filter(
+            (_, index) => index !== indexToRemove
+          );
+
+          // Rebuild ObjectRidMap from remaining expressions
+          const objectRidMap: ObjectRidMap = {};
+          let index = 1;
+
+          newExpressions.forEach((exp) => {
+            if (exp.type === 'chip') {
+              // Odd indices for object IDs
+              const [parent, child] = exp.value.split('.');
+              const objectId = targetOptions[parent]?.[child] || '';
+              if (objectId) {
+                objectRidMap[index] = objectId;
+                index += 2; // Next odd number
+              }
+            } else if (exp.type === 'operator') {
+              // Even indices for operators - only add if there's a preceding chip
+              if (index > 1) {
+                const operatorMap: Record<string, string> = {
+                  '+': 'add',
+                  '-': 'subtract',
+                  '*': 'multiply',
+                  '/': 'divide',
+                };
+                objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+              }
+            }
+          });
+
+          const updatedMapping = {
             ...mapping,
-            fieldExpressions: (mapping.fieldExpressions || []).filter(
-              (_, index) => index !== indexToRemove
-            ),
+            fieldExpressions: newExpressions,
+            object_rid:
+              Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
+            targetError: undefined, // Clear targetError when user makes changes
           };
+          return updatedMapping;
         }
         return mapping;
       });
@@ -528,9 +694,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               lineHeight: '21px',
               color: '#425A76',
               p: '8px',
-              height: '32px',
-              minHeight: '32px',
-              maxHeight: '32px',
+              verticalAlign: 'top',
               borderRight: '1px solid #CBD6E2 !important',
               borderBottom: '1px solid #CBD6E2 !important',
             },
@@ -541,27 +705,63 @@ const MappingTable: React.FC<MappingTableProps> = ({
         >
           {localMappings.map((mapping) => (
             <TableRow key={mapping.rid}>
-              <TableCell>{mapping.field_label}</TableCell>
-              <TableCell>
-                <input
-                  type='text'
-                  value={mapping.field_id || ''}
-                  onChange={(e) =>
-                    handleFieldIdChange(mapping.rid, e.target.value)
-                  }
-                  placeholder='Enter Field ID'
-                  className='w-full min-h-[30px] px-2 py-1 border border-gray-300 rounded-[2px] text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500'
-                />
+              <TableCell sx={{ p: '8px' }}>{mapping.field_label}</TableCell>
+              <TableCell sx={{ p: '8px' }}>
+                <div
+                  className={`flex relative h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                >
+                  <textarea
+                    value={mapping.field_id || ''}
+                    onChange={(e) =>
+                      handleFieldIdChange(mapping.rid, e.target.value)
+                    }
+                    placeholder='Enter Field ID'
+                    rows={1}
+                    className={`w-full h-full px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none ${
+                      mapping.fieldIdError
+                        ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
+                        : 'border-gray-300 focus:border-blue-400'
+                    }`}
+                  />
+                  {mapping.fieldIdError && (
+                    <Tooltip
+                      title={mapping.fieldIdError}
+                      arrow
+                      placement='top'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#FEF2F2',
+                            mr: 1,
+                          },
+                        },
+                      }}
+                    >
+                      <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
+                        <React.Suspense fallback={null}>
+                          <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+                        </React.Suspense>
+                      </span>
+                    </Tooltip>
+                  )}
+                </div>
               </TableCell>
               <TableCell
                 sx={{
-                  position: 'relative', // Enable absolute positioning for dropdown
-                  overflow: 'visible', // Allow dropdown to overflow cell
+                  position: 'relative',
+                  overflow: 'visible',
+                  p: '8px',
                 }}
               >
-                <div className='relative'>
-                  <div className='relative w-full'>
-                    <div className='min-h-[30px] w-full border border-gray-300 rounded-[2px] px-3 py-1 bg-white flex flex-wrap items-center gap-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500'>
+                <div className='relative h-full'>
+                  <div className='relative w-full h-full'>
+                    <div
+                      className={`h-full w-full px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 focus-within:border-2 ${
+                        mapping.targetError
+                          ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500 pr-8'
+                          : 'border-gray-300 bg-white focus-within:border-blue-400'
+                      }`}
+                    >
                       {(mapping.fieldExpressions || []).map((item, idx) => (
                         <div key={idx} className='flex items-center'>
                           {item.type === 'chip' ? (
@@ -634,10 +834,32 @@ const MappingTable: React.FC<MappingTableProps> = ({
                             ? 'Type @ to add fields or +, -, *, / for operators'
                             : 'Add more...'
                         }
-                        className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
+                        className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
                         style={{ minWidth: '80px' }}
                       />
                     </div>
+
+                    {mapping.targetError && (
+                      <Tooltip
+                        title={mapping.targetError}
+                        arrow
+                        placement='top'
+                        slotProps={{
+                          tooltip: {
+                            sx: {
+                              backgroundColor: '#FEF2F2',
+                              mr: 1,
+                            },
+                          },
+                        }}
+                      >
+                        <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] right-[4px] bg-[#FEF2F2] cursor-pointer'>
+                          <React.Suspense fallback={null}>
+                            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+                          </React.Suspense>
+                        </span>
+                      </Tooltip>
+                    )}
                   </div>
 
                   {showAutocomplete[mapping.rid] &&
