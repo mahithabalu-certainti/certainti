@@ -46,10 +46,25 @@ export const GlobalAccountUrl = '/api/accounts/list/global';
 export const AccountDetailUrl = (accountId: string) =>
   `/api/accounts/list/${accountId}`;
 
-export const StateUrl = (countryId: string | string[] | null) => {
-  const countryID = JSON.stringify(countryId ?? []);
-  return `/api/accounts/states/?countryIds=${countryID}`;
+export const StateUrl = (
+  countryId: string | string[] | null,
+  statusScope?: string
+) => {
+  const countryIds = Array.isArray(countryId)
+    ? countryId.join(',')
+    : countryId ?? '';
+
+  let url = `/api/accounts/states/?countryIds=${encodeURIComponent(countryIds)}`;
+
+  if (statusScope && statusScope.trim()) {
+    url = `/api/accounts/states/?statusScope=${encodeURIComponent(
+      statusScope.trim()
+    )}&countryIds=${encodeURIComponent(countryIds)}`;
+  }
+
+  return url;
 };
+
 
 export const CityUrl = (stateId: string) =>
   `/api/accounts/cities?stateIds=["${stateId}"]`;

@@ -214,6 +214,222 @@ export const CaseFormData = (
               !permissionMap?.['case_name']?.edit &&
               !permissionMap?.['case_name']?.read,
           }),
+          createTextField('employers_pension_contribution', 'Employers Pension Contribution', {
+            required: false,
+            placeholder: 'Enter Employers Pension Contribution',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Employers Pension Contribution: your estimated pension contribution due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('material_software_cost', 'Material & Software Cost', {
+            required: false,
+            placeholder: 'Enter Material & Software Cost',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Material & Software Cost: your estimated cost due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('sub_contracts', 'Subcontracts', {
+            required: false,
+            placeholder: 'Enter Subcontracts',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Subcontracts: your estimated subcontracts due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('cloud_software ', 'Cloud Software', {
+            required: false,
+            placeholder: 'Enter Cloud Software',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Cloud Software: your estimated cloud software due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('unpaid_amounts_paid', 'Unpaid Amounts (+)', {
+            required: false,
+            placeholder: 'Enter Unpaid Amounts (+)',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Unpaid Amounts (+): your estimated unpaid amounts due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('unpaid_amounts', 'Unpaid Amounts (-)', {
+            required: false,
+            placeholder: 'Enter Unpaid Amounts (-)',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Unpaid Amounts (-): your estimated unpaid amounts due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('aggregated_turnover', 'Aggregated Turnover', {
+            required: false,
+            placeholder: 'Enter Aggregated Turnover',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Aggregated Turnover: your estimated aggregated turnover due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('total_expenses ', 'Total Expenses', {
+            required: false,
+            placeholder: 'Enter Total Expenses',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Total Expenses: your estimated total expenses due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('taxable_income', 'Taxable Income', {
+            required: false,
+            placeholder: 'Enter Taxable Income',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Taxable Income: your estimated taxable income due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('export_sales_revenue', 'Export Sales Revenue', {
+            required: false,
+            placeholder: 'Enter Export Sales Revenue',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Export Sales Revenue: your estimated export sales revenue due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('other', 'Other', {
+            required: false,
+            placeholder: 'Enter Other',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Other: your estimated other due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+           createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide: isEditView,
+          }),
           createDateField('case_startdate', 'Planned Start Date', {
             required: true,
             onChange: true,

@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import FinancialWorking from './financial-working';
 import FinancialWorkingAustralia from './financial-working-australia';
+import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
 import {
   FormControl,
@@ -27,6 +28,7 @@ import { FinancialWorkingCountries } from '../../../../../../types/interactions'
 import TextButton from '../../../../../../../components/button/text-button';
 import { costDisplay } from '../../../../../../../common-utils';
 import {
+  fetchRDCreditPreview,
   useFinancialHighlights,
   useInitiateRDCreditProcess,
   useRDCreditStatus,
@@ -36,6 +38,8 @@ interface FinancialWorkingFormProps {
   caseDetails?: CaseDetails;
   setDossierFinancialStatus: (status: string) => void;
   dossierFinancialStatus: string;
+  financialData: FinancialHighlightsResponse | null;
+  setFinancialData: (data: FinancialHighlightsResponse | null) => void;
 }
 
 interface FormErrors {
@@ -58,8 +62,6 @@ const FinancialWorkingUKTable = ({
   const hmrcTotal =
     computedFields?.['Total Project to be shared with HMRC']?.Total;
 
-  if (!submissions.length && !hmrcTotal) return null;
-
   return (
     <div className='pb-4'>
       <table className='w-full border-collapse border border-[#CBD6E2]'>
@@ -74,27 +76,40 @@ const FinancialWorkingUKTable = ({
           </tr>
         </thead>
         <tbody>
-          {submissions.map((project: any, index: number) => (
-            <tr key={index} className='border-b border-[#CBD6E2]'>
-              <td className='border border-[#CBD6E2] px-3 py-2 text-[13px] text-[#425A76]'>
-                {project['Project Name']}
-              </td>
-              <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
-                {costDisplay(
-                  project['Total Project Value/Labor'] || 0,
-                  project['Currency Symbol'] || '£'
-                )}
+          {submissions.length > 0 ? (
+            submissions.map((project: any, index: number) => (
+              <tr key={index} className='border-b border-[#CBD6E2]'>
+                <td className='border border-[#CBD6E2] px-3 py-2 text-[13px] text-[#425A76]'>
+                  {project['Project Name']}
+                </td>
+                <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
+                  {costDisplay(
+                    project['Total Project Value/Labor'] || 0,
+                    project['Currency Symbol'] || '£'
+                  )}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr className='border-b border-[#CBD6E2]'>
+              <td
+                colSpan={2}
+                className='border border-[#CBD6E2] px-3 py-4 text-center text-[13px] text-[#425A76] italic'
+              >
+                No data available
               </td>
             </tr>
-          ))}
-          <tr className='bg-[#F9FAFB]'>
-            <td className='border border-[#CBD6E2] px-3 py-2 text-[13px] font-bold text-[#2D3E4F]'>
-              Total Project to be shared with HMRC
-            </td>
-            <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F]'>
-              {costDisplay(hmrcTotal || 0, currencySymbol || '£')}
-            </td>
-          </tr>
+          )}
+          {hmrcTotal !== undefined && hmrcTotal !== null && (
+            <tr className='bg-[#F9FAFB]'>
+              <td className='border border-[#CBD6E2] px-3 py-2 text-[13px] font-bold text-[#2D3E4F]'>
+                Total Project to be shared with HMRC
+              </td>
+              <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F]'>
+                {costDisplay(hmrcTotal || 0, currencySymbol || '£')}
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -116,7 +131,7 @@ const FinancialWorkingUKPercentageTable = ({
   return (
     <div className='pb-4'>
       <table className='w-full border-collapse border border-[#CBD6E2]'>
-        <thead>
+        {/* <thead>
           <tr className='bg-[#ECECEC]'>
             <th className='border border-[#CBD6E2] px-3 py-2 text-left text-[13px] font-bold text-[#2D3E4F]'>
               Percentage Calculation
@@ -125,7 +140,7 @@ const FinancialWorkingUKPercentageTable = ({
               Value
             </th>
           </tr>
-        </thead>
+        </thead> */}
         <tbody>
           {Object.entries(percentageCalc).map(([key, value], index) => (
             <tr key={index} className='border-b border-[#CBD6E2]'>
@@ -149,6 +164,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   caseDetails,
   setDossierFinancialStatus,
   dossierFinancialStatus,
+  financialData,
+  setFinancialData,
 }) => {
   const [isFederal, setIsFederal] = useState<string>('yes');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
@@ -160,6 +177,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const { successToast, errorToast } = useToast();
   // const queryClient = useQueryClient();
+
+  // Restore showFinancialValues if data exists
+  React.useEffect(() => {
+    if (financialData) {
+      setShowFinancialValues(true);
+    }
+  }, []);
 
   const { mutate: initiateProcess, isPending: isInitiating } =
     useInitiateRDCreditProcess();
@@ -210,13 +234,19 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     const value = event.target.value;
     setIsFederal(value);
     setShowFinancialValues(false);
-    setSelectedRegion('');
+    setFinancialData(null);
+    if (value === 'no' && caseDetails?.state_rid) {
+      setSelectedRegion(caseDetails?.state_rid);
+    } else {
+      setSelectedRegion('');
+    }
     setErrors((prev) => ({ ...prev, region: '' }));
   };
 
   const handleRegionChange = (value: string) => {
     setSelectedRegion(value);
     setErrors((prev) => ({ ...prev, region: '' }));
+    setFinancialData(null);
 
     // Reset PDF when region changes (but not shown yet)
     if (showFinancialValue) {
@@ -224,8 +254,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     }
   };
 
-  const [financialData, setFinancialData] =
-    useState<FinancialHighlightsResponse | null>(null);
+
 
   const responseCurrencySymbol = useMemo(() => {
     const computedFields = financialData?.data?.computed_fields as any;
@@ -236,20 +265,29 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     return '$';
   }, [financialData]);
 
-  const handleViewFinancialHighlights = async () => {
-    // const { data, isLoading, isError } = await fetchRDCreditPreview(
-    //     accountid,
-    //     caseId,
-    //     selectedRegion
-    //   );
+  const handleViewFinancialHighlightsForRegion = async () => {
+    try {
+      const response = await fetchRDCreditPreview(
+        accountid,
+        caseId ?? '',
+        selectedRegion
+      );
+      if (response && response.data) {
+        setFinancialData(response as unknown as FinancialHighlightsResponse);
+        setShowFinancialValues(true);
+      }
+    } catch (error) {
+      console.error(error);
+      errorToast('Failed to initiate');
+    }
+  };
 
-    // // Validate region if federal is "No"
-    // if (isFederal === 'no' && !selectedRegion) {
-    //     setErrors((prev) => ({ ...prev, region: 'Please select a region' }));
-    //     return;
-    // }
-    // // Show PDF viewer - React Query hook will automatically fetch the data
-    // setShowPdfViewer(true);
+  const handleViewFinancialHighlights = async () => {
+    if (selectedRegion && !caseDetails?.state_rid) {
+      await handleViewFinancialHighlightsForRegion();
+      return;
+    }
+
     const payload = {
       account_rid: accountid,
       case_rid: caseId ?? '',
@@ -332,7 +370,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     });
   };
   const isViewButtonEnabled = () => {
-    const isStatusCompleted = statusData?.data === 'COMPLETED';
+    const isStatusCompleted = dossierFinancialStatus === 'COMPLETED';
     if (!isStatusCompleted) return false;
 
     if (isFederal === 'yes') {
@@ -349,6 +387,26 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       handleStatusUpdate(result.data, 'refresh');
     }
   };
+
+  if (
+    !caseDetails?.case_total_projects ||
+    caseDetails?.case_total_projects === 0 ||
+    caseDetails?.case_total_projects === '0'
+  ) {
+    return (
+      <div className='w-full p-8 flex flex-col items-center justify-center text-center'>
+        <div className='bg-[#FEF8F0] border border-[#FFC77B] rounded-md p-6 max-w-md'>
+          <p className='text-[15px] font-semibold text-[#2D3E4F] mb-2'>
+            No projects assigned to this case.
+          </p>
+          <p className='text-[13px] text-[#425A76]'>
+            Please assign projects to the case to view financial highlights and
+            calculations.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='w-full'>
@@ -393,7 +451,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             />
             <TextButton
               label={
-                statusData?.data === 'COMPLETED' ? 'Re-Generate' : 'Initiate'
+                dossierFinancialStatus === 'COMPLETED' ? 'Re-Generate' : 'Initiate'
               }
               loading={isInitiating}
               onClick={handleInitiateFinancialHighlights}
@@ -404,8 +462,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                   dossierFinancialStatus !== 'COMPLETED')
               }
               sx={{
-                width: statusData?.data === 'COMPLETED' ? '95px' : '55px',
-                minWidth: statusData?.data === 'COMPLETED' ? '95px' : '55px',
+                width:dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
+                minWidth: dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
                 fontSize: '13px',
                 fontWeight: 400,
               }}
@@ -532,8 +590,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
-                  accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
+                  (accountPermissionMap?.['region_rid']?.read &&
+                    !accountPermissionMap?.['region_rid']?.edit) ||
+                  !!caseDetails?.state_rid
                 }
               >
                 <MenuItem
@@ -572,22 +631,70 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         </div>
       </div>
 
-      {/* Financial Working Section - Only shown after clicking View button */}
       {showFinancialValue && (
-        <div>
-          {/* {caseDetails?.country_name !==
-            FinancialWorkingCountries.Australia && ( */}
-            <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-              {(financialData?.data?.input_params?.credit_type as string) ||
-                'Federal R&D Credit'}
-            </div>
-        {/* //   )} */}
+        <div className=''>
+          {/* Dynamic Title Header based on Country */}
+          {(() => {
+            const title = (financialData?.data?.computed_fields as any)?.Title || {};
+            const countryName = caseDetails?.country_name;
+
+            if (countryName === FinancialWorkingCountries.Ireland) {
+              return (
+                <div className='flex flex-col items-center justify-center py-1 text-[#2D3E4F] '>
+                  <div className='text-[14px] font-semibold'>
+                  Expleo  -  {title['Expleo'] || ''}
+                  </div>
+                  <div className='text-[14px] font-semibold mt-1'>
+                    {title['Description'] || 'Summary of R&D Expenditures'}
+                  </div>
+                </div>
+              );
+            }
+
+            if (countryName === FinancialWorkingCountries.UK) {
+              return (
+                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                  <div className='text-[14px] font-semibold'>
+                    {title['Account Name'] || ''}
+                  </div>
+                  <div className='text-[14px] font-semibold mt-1'>
+                    {title['Description'] || 'Summary of SR&ED Expenditures'}
+                  </div>
+                  <div className='text-[14px] mt-1'>
+                    <span className='font-semibold'>Fiscal Year:</span> {title['Fiscal Year'] || ''}
+                  </div>
+                </div>
+              );
+            }
+
+            if (countryName === FinancialWorkingCountries.Canada) {
+              return (
+                <div className='flex items-center justify-start py-1 text-[#2D3E4F] px-4'>
+                  <div className='text-[14px] font-semibold'>
+                    Ref - {title['Fiscal Year'] || ''} - {title['Descriptions'] || ''}
+                  </div>
+                </div>
+              );
+            }
+
+            // Default fallback or no title
+            return null;
+          })()}
+
+          <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+            {(financialData?.data?.input_params?.credit_type as string) ||
+              'Federal R&D Credit'}
+          </div>
           <div>
-            {caseDetails?.country_name ===
-            FinancialWorkingCountries.Australia ? (
+            {caseDetails?.country_name === FinancialWorkingCountries.Australia ? (
               <FinancialWorkingAustralia data={financialData} />
+            ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
+              <FinancialWorkingUSA data={financialData} />
             ) : (
-              <FinancialWorking data={financialData} currencySymbol={responseCurrencySymbol} />
+              <FinancialWorking
+                data={financialData}
+                currencySymbol={responseCurrencySymbol}
+              />
             )}
           </div>
           {caseDetails?.country_name === FinancialWorkingCountries.UK && (

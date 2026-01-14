@@ -221,6 +221,7 @@ export type DynamicNumberMap = Record<string, number>;
 export interface FinancialHighlightsProject {
   'Project ID': string;
   'Project Name': string;
+  'Project Code'?: string;
   'Currency Symbol'?: string;
   is_qualified?: boolean;
   [key: string]: string | number | boolean | undefined;
@@ -245,7 +246,7 @@ export interface FinancialHighlightsData {
   case_rid: string;
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
-  computed_fields: FinancialHighlightsComputedFields | AustraliaComputedFields;
+  computed_fields: FinancialHighlightsComputedFields | AustraliaComputedFields | USAComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -255,7 +256,7 @@ export interface CaseSummaryData {
   case_rid: string;
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
-  computed_fields: FinancialHighlightsComputedFields | AustraliaComputedFields;
+  computed_fields: FinancialHighlightsComputedFields | AustraliaComputedFields | USAComputedFields;
 }
 
 export interface AustraliaRdExpenditure {
@@ -289,6 +290,47 @@ export interface AustraliaComputedFields {
   "Preliminary Calculation": number;
   "Non-refundable tax offset": AustraliaNonRefundableTaxOffset;
   "Non-refundable R&D tax offset": number;
+}
+
+export interface USAReduction280C {
+  reduction280c: {
+    elect280c: {
+      credit: string;
+      factor?: number;
+      rate?: number;
+    };
+    no_elect280c: {
+      credit: string;
+      factor?: number;
+      rate?: number;
+    };
+  };
+}
+
+export interface USACreditASC {
+  excess_qre: string;
+  final_credit: string;
+  percentage_used: number;
+  asc_credit_amount: string;
+  adjusted_base_amount: string;
+  tot_current_year_qre: string;
+  total_prior_3years_qre: string;
+  total_section_b_credit: string;
+}
+
+export interface USACreditRRC {
+  base_amount: string;
+  final_credit: string;
+  half_total_qre: string;
+  tot_current_year_qre: string;
+  fixed_base_percentage: number;
+  total_section_a_credit: string;
+  excess_qre_over_base_amount: string;
+  average_annual_gross_receipts: string;
+}
+
+export interface USAComputedFields {
+  [key: string]: any;
 }
 
 export interface FinancialHighlightsResponse {
