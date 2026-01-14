@@ -164,7 +164,7 @@ const Dossier: React.FC<DossierProps> = ({
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={true}
+        filterVisibility={tabParam !== 'financial_workings'}
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -173,9 +173,9 @@ const Dossier: React.FC<DossierProps> = ({
         handleFilter={handleFilter}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={true}
+        showRefresh={tabParam !== 'financial_workings'}
         onRefreshClick={handleRefresh}
-        showSearch={true}
+        showSearch={tabParam !== 'financial_workings'}
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}

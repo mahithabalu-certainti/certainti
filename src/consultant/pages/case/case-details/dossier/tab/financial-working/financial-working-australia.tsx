@@ -19,6 +19,8 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
       return <div className="p-8 text-center text-[#425A76] italic font-medium">No data available</div>;
   }
 
+  const boldRows = (computedFields as any)?.BOLD || [];
+
   const currencyCode = (data?.data?.input_params?.currency as string) || 'AUD';
 
   const formatCurrency = (value: number | string | null | undefined) => {
@@ -36,10 +38,10 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
     return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const renderValue = (value: number | string | null | undefined) => {
+  const renderValue = (value: number | string | null | undefined, isBold?: boolean) => {
     return (
       <div className='min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block'>
-        <span className='text-[13px] font-semibold text-[#2D3E4F]'>
+        <span className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}>
           {typeof value === 'number' ? formatCurrency(value) : (value ?? '--')}
         </span>
       </div>
@@ -85,12 +87,13 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
             )
               return null;
 
+            const isBold = boldRows.includes(key);
             return (
               <tr key={key} className='border-b border-[#CBD6E2] last:border-0'>
-                <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
+                <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}>
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>{renderValue(value)}</td>
+                <td className='px-3 py-1.5 text-right'>{renderValue(value, isBold)}</td>
               </tr>
             );
           })}
@@ -141,21 +144,25 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
             </tr>
           </thead>
           <tbody>
-            {tiers.map((tier, index) => (
-              <tr
-                key={index}
-                className='border-b border-[#CBD6E2] last:border-0'
-              >
-                <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
-                  {tier.name || `${headerLabel} ${index + 1}`}
-                </td>
-                {columnKeys.map((key) => (
-                  <td key={key} className='px-3 py-1.5 text-right'>
-                    {renderValue(tier[key])}
+            {tiers.map((tier, index) => {
+              const rowName = tier.name || `${headerLabel} ${index + 1}`;
+              const isBold = boldRows.includes(rowName);
+              return (
+                <tr
+                  key={index}
+                  className='border-b border-[#CBD6E2] last:border-0'
+                >
+                  <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}>
+                    {rowName}
                   </td>
-                ))}
-              </tr>
-            ))}
+                  {columnKeys.map((key) => (
+                    <td key={key} className='px-3 py-1.5 text-right'>
+                      {renderValue(tier[key], isBold)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

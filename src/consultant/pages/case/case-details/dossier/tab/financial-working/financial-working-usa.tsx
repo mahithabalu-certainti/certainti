@@ -18,6 +18,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     return <div className="p-8 text-center text-[#425A76] italic font-medium">No data available</div>;
   }
 
+  const boldRows = (computedFields as any)?.BOLD || [];
+
   const inputParams = data?.data?.input_params as Record<string, any>;
   const qreSummary = inputParams?.qreSummary;
   const currencyCode =
@@ -52,13 +54,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: any, isBold?: boolean) => {
     const isEmpty = value === null || value === undefined || value === '';
     
     return (
       <div className="w-[180px] min-h-[32px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] inline-flex items-center justify-end">
         {!isEmpty && (
-          <span className="text-[13px] font-semibold text-[#2D3E4F]">
+          <span className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}>
             {(() => {
               const isPercentage = typeof value === 'string' && value.endsWith('%');
               const isNumeric = !isPercentage && (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value.replace(/[^0-9.-]/g, ''))) && isFinite(Number(value.replace(/[^0-9.-]/g, '')))));
@@ -110,12 +112,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             )
               return null;
 
+            const isBold = boldRows.includes(key);
             return (
               <tr key={key} className='border-b border-[#CBD6E2] last:border-0'>
-                <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
+                <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}>
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>{renderValue(value)}</td>
+                <td className='px-3 py-1.5 text-right'>{renderValue(value, isBold)}</td>
               </tr>
             );
           })}
@@ -166,44 +169,26 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 });
               });
 
-              return Array.from(allRowKeys).map((rowKey) => (
-                <tr
-                  key={rowKey}
-                  className='border-b border-[#CBD6E2] last:border-0'
-                >
-                  <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
-                    {formatLabel(rowKey)}
-                  </td>
-                  {columnKeys.map((colKey) => (
-                    <td key={colKey} className='px-3 py-1.5 text-right'>
-                      {renderValue(reduction280c[colKey][rowKey])}
-                    </td>
-                  ))}
-                </tr>
-              ));
-            })()}
-             {(() => {
-                // Get unique keys from all columns to render rows
-                const allRowKeys = new Set<string>();
-                columnKeys.forEach(colKey => {
-                    Object.keys(reduction280c[colKey]).forEach(rowKey => {
-                        allRowKeys.add(rowKey);
-                    });
-                });
-                
-                return Array.from(allRowKeys).map((rowKey) => (
-                  <tr key={rowKey} className='border-b border-[#CBD6E2] last:border-0'>
-                    <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
+              return Array.from(allRowKeys).map((rowKey) => {
+                const isBold = boldRows.includes(rowKey);
+                return (
+                  <tr
+                    key={rowKey}
+                    className='border-b border-[#CBD6E2] last:border-0'
+                  >
+                    <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}>
                       {formatLabel(rowKey)}
                     </td>
                     {columnKeys.map((colKey) => (
                       <td key={colKey} className='px-3 py-1.5 text-right'>
-                        {renderValue(reduction280c[colKey][rowKey])}
+                        {renderValue(reduction280c[colKey][rowKey], isBold)}
                       </td>
                     ))}
                   </tr>
-                ));
-             })()}
+                );
+              });
+            })()}
+
           </tbody>
         </table>
       </div>
@@ -240,7 +225,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     }
 
     const entries = Object.entries(value);
-    const hasObjects = entries.some(([_, v]) => typeof v === 'object' && v !== null && !Array.isArray(v));
+    const hasObjects = entries.some(([, v]) => typeof v === 'object' && v !== null && !Array.isArray(v));
 
     if (!hasObjects) {
       return renderKeyValuePairs(value);
@@ -263,10 +248,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             );
           }
           
+          const isBold = k && boldRows.includes(k);
           return (
             <div key={k} className="px-3 py-1.5 flex justify-between items-center border-b border-[#CBD6E2] last:border-0">
-              <span className="text-sm text-[#425A76] font-medium">{formatLabel(k)}</span>
-              {renderValue(v)}
+              <span className={`text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}>{formatLabel(k)}</span>
+              {renderValue(v, isBold)}
             </div>
           );
         })}
