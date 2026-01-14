@@ -2548,13 +2548,13 @@ export class ProjectResourceService {
       transaction
     );
 
-    // await this.projectResourceSchema.cleanupOrphanedAccountFiscalRegion(
-    //   accountNumber,
-    //   projectResourceData.account_rid,
-    //   projectData.fiscal_year,
-    //   existingProjectResource.region_rid || "",
-    //   transaction
-    // );
+    await this.projectResourceSchema.cleanupOrphanedAccountFiscalRegion(
+      accountNumber,
+      projectResourceData.account_rid,
+      projectData.fiscal_year,
+      existingProjectResource.region_rid || "",
+      transaction
+    );
     // }
     // }
   }

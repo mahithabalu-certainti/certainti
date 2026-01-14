@@ -368,6 +368,7 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
         working-directory: entity-module
+        
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
           ACR_NAME=${{ secrets.PROD_ACR_NAME }}
@@ -1141,7 +1142,7 @@ jobs:
         working-directory: rule-builder-module
         run: |
           KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
-          ENV_FILE=".env.rule-buildermodule"
+          ENV_FILE=".env.rulebuildermodule"
           
           # Ensure Azure CLI is authenticated
           az account show > /dev/null 2>&1
@@ -1154,6 +1155,9 @@ jobs:
           echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
           
           KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
+          MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
+          MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
           
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
@@ -1178,6 +1182,10 @@ jobs:
           SCHEDULER_EXPRESSION=scheduler-expression 
           SCHEDULER_EXPRESSION_RULE_ENGINE=scheduler-expression-rule-engine
           AZURE_WEB_PUBSUB_CONNECTION_STRING=pubsub-connection-string
+          MAIL_TENANT_ID=$MAIL_TENANT_ID
+          MAIL_CLIENT_ID=$MAIL_CLIENT_ID
+          MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
+          SUPPORT_EMAIL=interactions@certainti.ai
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -1197,7 +1205,7 @@ jobs:
             fi
             
             # Move .env file with sudo
-            sudo mv /tmp/.env.rule-buildermodule /app/backend/.env.rule-buildermodule
+            sudo mv /tmp/.env.rulebuildermodule /app/backend/.env.rulebuildermodule
             echo ".env file moved successfully!"
           
             # Update only the rule-builder-module image tag

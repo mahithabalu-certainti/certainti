@@ -562,6 +562,12 @@ export class ChecklistSchemaService {
           [entityId]
         );
         allChecklists.push(...accountAttachments);
+         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+        const tableExists = await this.helperMethod.checkTableExists(schemaName, "cases");
+      if (tableExists) {
         const cases = await this.helperMethod.getCasesByAccountId(
           accountNumber,
           entityId
@@ -573,7 +579,7 @@ export class ChecklistSchemaService {
           caseIds
         );
         allChecklists.push(...caseAttachments);
-
+      }
         const projects = await this.helperMethod.getProjectsByAccountId(
           accountNumber,
           entityId,

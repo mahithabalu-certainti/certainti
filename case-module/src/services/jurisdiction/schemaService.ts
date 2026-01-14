@@ -248,13 +248,14 @@ export class JurisdictionSchemaService {
       );
     }
   
+    
     // Build a map of config group rid to config_json
     const groupConfigMap = Object.fromEntries(
       paramValues.map((row) => [row.credit_config_group_rid, row.config_json])
     );
     if(configMeta[0]?.is_federal){
     [platformConfig] = await this.mainDbSequelize.query(
-      rawQueries.getPlatformJurisdictionConfig()
+      rawQueries.getPlatformJurisdictionConfig(configRequest.country_rid || configMeta[0]?.country_rid)
     );
     const platformGroupConfigMap = Object.fromEntries(
       platformConfigValues.map((row) => [row.credit_config_group_rid, row.config_json])
@@ -394,7 +395,24 @@ export class JurisdictionSchemaService {
 
     // 4. GraphQL update
     if (configRequest?.apiType === "graphql") {
-      await response.update(configRequest);
+      configRequest.modified_datetime = new Date();
+     const sequelizeInstance = JurisdictionConfig.sequelize as Sequelize;
+      if (!sequelizeInstance) {
+        // Fallback to non-transactional behavior if no sequelize instance is available
+        await response.update(configRequest);
+        await JurisdictionConfig.update(configRequest, {
+          where: { federal_config_id: configRequest.config_rid },
+        });
+      } else {
+        await sequelizeInstance.transaction(async (t: Transaction) => {
+          await response.update(configRequest, { transaction: t });
+          await JurisdictionConfig.update(configRequest, {
+            where: { federal_config_id: configRequest.config_rid },
+            transaction: t,
+          });
+        });
+      }
+
       updated = true;
     }
   

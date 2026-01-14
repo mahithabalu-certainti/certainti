@@ -448,6 +448,9 @@ export const rawQueries = {
   getCountryDetails(countryRid: string) {
     return `SELECT rid, country_name,country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = '${countryRid}'`;
   },
+  getCandaStateDetails() {
+    return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE state_name ILIKE '%Ontario%'`;
+  },
   getOwnerDetails(caseOwnerRid: any[]) {
     return `SELECT rid, CONCAT(first_name,' ',last_name) AS name, profile_url FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${caseOwnerRid.map(
       (d: any) => `'${d}'`
@@ -1405,7 +1408,7 @@ export const rawQueries = {
     WHERE g.rid = '${credit_config_group_rid}';
     `;
   },
-  getPlatformJurisdictionConfig() {
+  getPlatformJurisdictionConfig(countryRid : string) {
     return `
       SELECT 
       k.rid as credit_parameter_key_rid,
@@ -1426,7 +1429,8 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE g.credit_program_name = 'Platform Configuration'
-    AND g.is_federal = true;
+    AND g.is_federal = true
+    AND g.country_rid = '${countryRid}'
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
@@ -1581,6 +1585,9 @@ export const rawQueries = {
   },
   fetchMilestoneDetails (rid : string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
+  },
+  fetchAccountStartEndDate (accountRid : string, schemaName : string) {
+    return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
@@ -1982,4 +1989,9 @@ export const mainTableFiltersForCase: Record<any, any> = {
   role_name: "role_name",
   task_status_name: "task_status_name",
   assigned_to_name: "assigned_to_name"
+}
+
+export const onlyFederals = {
+  usa : "USA",
+  canada : "CAN"
 }

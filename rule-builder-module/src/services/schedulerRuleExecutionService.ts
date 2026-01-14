@@ -42,7 +42,9 @@ export class SchedulerService {
     const [findSchedulerExists]: any[] = await mainDb.query(
       rawQueries.schedulerSelectRunning(),
       {
-        replacements: { status: schedulerStatus.Running },
+        replacements: { status: schedulerStatus.Running ,
+        scheduler_name : 'RuleEngine'
+        },
         type: "SELECT",
       }
     );
@@ -55,6 +57,7 @@ export class SchedulerService {
             created_datetime: now,
             started_at: now,
             status: schedulerStatus.Running,
+            scheduler_name : 'RuleEngine'
           },
           type: "INSERT",
         }

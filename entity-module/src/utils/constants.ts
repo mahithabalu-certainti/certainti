@@ -879,7 +879,7 @@ export const rawQueries = {
         )
       )
     `,
-   fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
+  fetchPlatformConfig(rid: string, formattedStartDate: string, formattedEndDate: string) {
     return `
     SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
   join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
@@ -1010,6 +1010,12 @@ export const rawQueries = {
     AND
     country_rid = '${country_rid}'`;
   },
+  fetchStatesName(stateIds: string[]) {
+    let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
+    return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state 
+    WHERE 
+    rid IN (${formattedStateIds})`;
+  },
   fetchStatesIds(schemaName: string, account_rid: string, fiscal_year: number) {
     return `
     SELECT region_rid FROM ${schemaName}.account_fiscal_region 
@@ -1017,6 +1023,8 @@ export const rawQueries = {
     account_rid = '${account_rid}'
     AND
     fiscal_year = ${fiscal_year}
+    AND 
+    region_rid in (select region_rid from ${schemaName}.project_resource)
     `;
   },
   updateProjectFiscalEffectiveDatas(schemaName: string, data: any) {
@@ -2350,7 +2358,7 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
-   fetchAllPlatformConfig(rid: string) {
+  fetchAllPlatformConfig(rid: string) {
     return `
     SELECT config_json,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
     join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid

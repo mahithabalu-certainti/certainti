@@ -258,14 +258,14 @@ export class CaseTaskService {
             accessToken
           );
           if (result.statusCode === HttpStatus.SUCCESS) {
-            await transaction.commit();
-          } else {
-            await transaction.rollback();
-          }
-          return {
+           return {
             statusCode: result.statusCode,
             statusMessage: result.statusMessage,
           };
+          } else {
+            await transaction.rollback();
+          }
+          
         }
       } else {
         return {
@@ -679,6 +679,7 @@ export class CaseTaskService {
           created_by: data.modified_by,
           created_datetime: new Date(),
           activity_rid: data.task_rid,
+          account_rid: data.account_rid,
           attribute_name: "Comments",
           old_value: "CREATE",
           new_value: "deleted a comment",

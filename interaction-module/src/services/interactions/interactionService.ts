@@ -1883,6 +1883,11 @@ export class InteractionService {
             checkObj(projectInfo) ??
             checkObj(accountInfo);
           if (val !== undefined) return val;
+          
+          // Special handling for name field - return empty string if null/undefined
+          if ((raw === "name" || normalized === "name") && emailInfo && "name" in emailInfo) {
+            return emailInfo.name ?? "";
+          }
           // Check for direct placeholders
           if (raw === "Interaction Id" || normalized === "interactionrid" || noUnderscore === "interactionrid") {
             return interactionRid ?? "";
@@ -3025,7 +3030,7 @@ export class InteractionService {
         );
     const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchAccountDetailsInfo(
-        schemaName,req.data[0].account_rid, 
+        req.data[0].account_rid,schemaName
       ), { type: 'SELECT' }
     );
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
@@ -3048,6 +3053,16 @@ export class InteractionService {
           }
         });
         projectTypes = groupedProjectTypes;
+        if(!projectTypes || (typeof projectTypes === 'object' && Object.keys(projectTypes).length === 0))
+        {
+           return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: `No active projects found for the account`,
+            data: null,
+            status: "error",
+            errorMessage: `No active projects found for the account`,
+          };
+        }
        
         // Pass as IN clause to fetchProjectsByAccount
         const [projects]: any[] = await this.orgDbSequelize.query(
@@ -3065,13 +3080,14 @@ export class InteractionService {
           : [];
         if (projectIds.length === 0) {
           logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
-           return {
-              statusCode: HttpStatus.FAILED,
-              statusMessage: `No active projects found for the account with the project type ${projectTypes}`,
-              data: null,
-              status: "error",
-              errorMessage: `No active projects found for the account with the project type ${projectTypes}`,
-            };
+          
+          return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: `No active projects found for the account`,
+            data: null,
+            status: "error",
+            errorMessage: `No active projects found for the account`,
+          };
         }
         payload.project_id = projectIds;
       }
@@ -3286,6 +3302,7 @@ export class InteractionService {
         }
         if(type === 'data_ingestion')
         {
+          logMessage(`Processing data_ingestion type for account: ${company_id}  ${accountNumber}`);
           await this.interactionSchemaService.updateAIProcessed(accountNumber, project_id,parsedMessage);
         }
       }

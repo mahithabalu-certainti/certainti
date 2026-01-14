@@ -378,10 +378,10 @@ export const rawQueries = {
     return query;
   },
   schedulerSelectRunning(): string {
-    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.scheduler_executions WHERE status = :status LIMIT 1`;
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.scheduler_executions WHERE scheduler_name = :scheduler_name AND status = :status LIMIT 1`;
   },
   schedulerInsertRunning(): string {
-    return `INSERT INTO ${MAIN_SCHEMA_NAME}.scheduler_executions (created_datetime, started_at, status) VALUES (:created_datetime, :started_at, :status) RETURNING *`;
+    return `INSERT INTO ${MAIN_SCHEMA_NAME}.scheduler_executions (created_datetime, started_at, status, scheduler_name) VALUES (:created_datetime, :started_at, :status, :scheduler_name) RETURNING *`;
   },
   fetchAllParentRNumber() {
     let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
@@ -398,7 +398,7 @@ export const rawQueries = {
     return `SELECT rid, task_status_name from ${MAIN_SCHEMA_NAME}.case_task_status`;
   },
   fetchTaskTypes() {
-    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status = 'Active'`;
+    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and lower(status) = 'active'`;
   },
    fetchAllCases() {
     return `SELECT cs.rid,
@@ -472,6 +472,23 @@ export const rawQueries = {
     },
     fetchRuleTypeByName(ruleTypeName: string) {
       return `SELECT rid, name FROM ${MAIN_SCHEMA_NAME}.condition_category WHERE lower(name) = lower('${ruleTypeName}') LIMIT 1`;
+    },
+    insertHistoryLog() {
+      return `INSERT INTO ${MAIN_SCHEMA_NAME}.notification_history (
+        created_by,
+        created_datetime,
+        user_rid,
+        user_email,
+        action_name,
+        entity_rid
+      ) VALUES (
+        :created_by,
+        NOW(),
+        :user_rid,
+        :user_email,
+        :action_name,
+        :entity_rid
+      )`;
     },
     checkTableExists(schemaName: string, table: string) {
       return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;
