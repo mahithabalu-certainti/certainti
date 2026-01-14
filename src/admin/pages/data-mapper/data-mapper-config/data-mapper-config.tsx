@@ -13,7 +13,7 @@ import { useParams } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
-import { EditIcon } from '../../../../assets';
+import { DataMapperIcon } from '../../../../assets';
 import { useToast } from '../../../../hooks';
 
 interface MappingItem {
@@ -208,9 +208,9 @@ const DataMapperConfig: React.FC = () => {
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <React.Suspense fallback={null}>
-            <EditIcon
+            <DataMapperIcon
               alt='data-mapper-icon'
-              className='h-7 w-7 p-1.5 rounded [&>path]:stroke-[#0176D3] bg-[#E3F2FD]'
+              className='h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#82BA8B]'
             />
           </React.Suspense>
           <div className='w-[90%]'>

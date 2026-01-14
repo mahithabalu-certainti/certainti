@@ -1,6 +1,6 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../types/manage-user';
-import { NewFilterIcon, RefreshIcon, SettingIcon } from '../../../../assets';
+import { DataMapperIcon, NewFilterIcon, RefreshIcon } from '../../../../assets';
 import { ActionsDropdown, FilterModal } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,6 @@ import { DataMapperTable } from './table/data-mapper-table';
 import { getDataMapperFilterFields } from './helpers';
 import { ExportDataMapperList } from '../../../service/data-mapper/data-mapper-service';
 import { useGetAllCountries, useGetStatus } from '../../../../common-service';
-import { ColorCode } from '../../../../consultant/types';
 import { useFetchState } from '../../../../consultant/services/account';
 import { FilterValue } from '../../../../consultant/types/account-filter';
 import SearchBar from '../../../../components/search/search-bar';
@@ -148,10 +147,12 @@ const DataMapper: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <SettingIcon
-              alt='data-mapper-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
-            />
+            <React.Suspense fallback={null}>
+              <DataMapperIcon
+                alt='data-mapper-icon'
+                className='h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#82BA8B]'
+              />
+            </React.Suspense>
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
                 Admin

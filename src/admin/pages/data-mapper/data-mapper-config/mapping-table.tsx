@@ -7,7 +7,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Paper,
 } from '@mui/material';
 
 interface ObjectItem {
@@ -446,78 +445,104 @@ const MappingTable: React.FC<MappingTableProps> = ({
 
   return (
     <TableContainer
-      component={Paper}
       sx={{
         boxShadow: 'none',
-        border: '1px solid #f1f1f1',
-        mt: 1,
-        mb: 2,
-        overflow: 'visible',
+        overflow: 'auto',
+        maxHeight: 'calc(100vh - 290px)',
+        minHeight: 'auto',
+        height: 'fit-content',
+        border: '1px solid #CBD6E2',
+        borderRadius: 1,
       }}
     >
-      <MuiTable sx={{ minWidth: 650 }} aria-label='data mapping table'>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: '#f3f4f6' }}>
+      <MuiTable
+        stickyHeader
+        sx={{
+          minWidth: 650,
+          height: '100%',
+          borderCollapse: 'separate !important',
+          borderSpacing: 0,
+          '& .MuiTableCell-root': {
+            borderBottom: '1px solid #CBD6E2',
+            borderRight: '1px solid #CBD6E2',
+          },
+          '& .MuiTableRow-root:last-child .MuiTableCell-root': {
+            borderBottom: 'none',
+          },
+        }}
+        aria-label='data-mapping-table'
+      >
+        <TableHead
+          sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 600,
+              fontSize: '13px',
+              lineHeight: '21px',
+              color: '#2A2A2A',
+              padding: '0px',
+              px: '8px',
+              height: '28px',
+              bgcolor: '#FCFCFC',
+              borderBottom: '1px solid #CBD6E2 !important',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+            },
+            '& .MuiTableCell-root:first-of-type': {
+              borderTopLeftRadius: '4px',
+            },
+            '& .MuiTableCell-root:last-child': {
+              borderTopRightRadius: '4px',
+            },
+          }}
+        >
+          <TableRow>
             <TableCell
               sx={{
-                fontWeight: 'bold',
                 width: '30%',
-                borderRight: '1px solid #f1f1f1',
-                borderBottom: '1px solid #f1f1f1',
-                padding: '8px',
               }}
             >
               Field Label
             </TableCell>
             <TableCell
               sx={{
-                fontWeight: 'bold',
                 width: '20%',
-                borderRight: '1px solid #f1f1f1',
-                borderBottom: '1px solid #f1f1f1',
-                padding: '8px',
               }}
             >
               Field ID
             </TableCell>
             <TableCell
               sx={{
-                fontWeight: 'bold',
                 width: '50%',
-                borderBottom: '1px solid #f1f1f1',
-                padding: '8px',
               }}
             >
               Target
             </TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody
+          sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 500,
+              fontSize: '13px',
+              lineHeight: '21px',
+              color: '#425A76',
+              p: '8px',
+              height: '32px',
+              minHeight: '32px',
+              maxHeight: '32px',
+              borderRight: '1px solid #CBD6E2 !important',
+              borderBottom: '1px solid #CBD6E2 !important',
+            },
+            '& .MuiTableRow-root:last-child .MuiTableCell-root': {
+              borderBottom: 'none !important',
+            },
+          }}
+        >
           {localMappings.map((mapping) => (
-            <TableRow
-              key={mapping.rid}
-              sx={{
-                '&:last-child td': {
-                  borderBottom: '1px solid #f1f1f1',
-                },
-              }}
-            >
-              <TableCell
-                sx={{
-                  borderRight: '1px solid #f1f1f1',
-                  borderBottom: '1px solid #f1f1f1',
-                  padding: '8px',
-                }}
-              >
-                {mapping.field_label}
-              </TableCell>
-              <TableCell
-                sx={{
-                  borderRight: '1px solid #f1f1f1',
-                  borderBottom: '1px solid #f1f1f1',
-                  padding: '8px',
-                }}
-              >
+            <TableRow key={mapping.rid}>
+              <TableCell>{mapping.field_label}</TableCell>
+              <TableCell>
                 <input
                   type='text'
                   value={mapping.field_id || ''}
@@ -525,20 +550,18 @@ const MappingTable: React.FC<MappingTableProps> = ({
                     handleFieldIdChange(mapping.rid, e.target.value)
                   }
                   placeholder='Enter Field ID'
-                  className='w-full px-2 py-1 border border-gray-300 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500'
+                  className='w-full min-h-[30px] px-2 py-1 border border-gray-300 rounded-[2px] text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500'
                 />
               </TableCell>
               <TableCell
                 sx={{
-                  borderBottom: '1px solid #f1f1f1',
-                  padding: '8px',
                   position: 'relative', // Enable absolute positioning for dropdown
                   overflow: 'visible', // Allow dropdown to overflow cell
                 }}
               >
                 <div className='relative'>
                   <div className='relative w-full'>
-                    <div className='min-h-[32px] w-full border border-gray-300 rounded-sm px-3 py-1 bg-white flex flex-wrap items-center gap-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500'>
+                    <div className='min-h-[30px] w-full border border-gray-300 rounded-[2px] px-3 py-1 bg-white flex flex-wrap items-center gap-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500'>
                       {(mapping.fieldExpressions || []).map((item, idx) => (
                         <div key={idx} className='flex items-center'>
                           {item.type === 'chip' ? (
@@ -557,6 +580,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                 '& .MuiChip-deleteIcon': {
                                   fontSize: '14px',
                                   color: '#0176D3',
+                                  '&:hover': {
+                                    color: '#ef4444',
+                                  },
                                 },
                                 '& .MuiChip-label': {
                                   paddingLeft: '6px',
@@ -571,7 +597,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                               variant='outlined'
                               onDelete={() => removeOperator(mapping.rid, idx)}
                               sx={{
-                                fontSize: '11px',
+                                fontSize: '14px',
                                 height: '20px',
                                 backgroundColor: '#f3f4f6',
                                 borderColor: '#9ca3af',
@@ -579,11 +605,15 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                 margin: '1px',
                                 '& .MuiChip-deleteIcon': {
                                   fontSize: '14px',
-                                  color: '#ef4444',
+                                  color: '#0176D3',
+                                  '&:hover': {
+                                    color: '#ef4444',
+                                  },
                                 },
                                 '& .MuiChip-label': {
                                   paddingLeft: '6px',
                                   paddingRight: '6px',
+                                  paddingBottom: '2px',
                                 },
                               }}
                             />
@@ -604,7 +634,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                             ? 'Type @ to add fields or +, -, *, / for operators'
                             : 'Add more...'
                         }
-                        className='flex-1 min-w-0 border-none outline-none bg-transparent text-sm placeholder-gray-400'
+                        className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
                         style={{ minWidth: '80px' }}
                       />
                     </div>

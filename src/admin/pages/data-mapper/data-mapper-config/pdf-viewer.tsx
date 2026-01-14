@@ -11,7 +11,7 @@ import {
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { PDFField } from '../../../types';
-import { ArrowBackIcon } from '../../../../assets';
+import { ArrowBackIcon, ZoomInIcon, ZoomOutIcon } from '../../../../assets';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
 import FieldDetailsPanel from './field-details-panel';
 
@@ -158,6 +158,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               >
                 Zoom:
               </Typography>
+              <IconButton
+                size='small'
+                onClick={handleZoomOut}
+                disabled={scale <= 0.5}
+                disableRipple
+                sx={{
+                  '&.Mui-disabled': { color: '#CBD6E2' },
+                }}
+              >
+                <ZoomOutIcon
+                  className={`w-4.5 h-4.5 ${scale <= 0.5 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
+                />
+              </IconButton>
               <FormControl size='small'>
                 <Select
                   value={Math.round(scale * 100)}
@@ -178,19 +191,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               </FormControl>
               <IconButton
                 size='small'
-                onClick={handleZoomOut}
-                disabled={scale <= 0.5}
-                disableRipple
-              >
-                <span className='text-xl font-bold'>-</span>
-              </IconButton>
-              <IconButton
-                size='small'
                 onClick={handleZoomIn}
                 disabled={scale >= 3}
                 disableRipple
+                sx={{
+                  '&.Mui-disabled': { color: '#CBD6E2' },
+                }}
               >
-                <span className='text-xl font-bold'>+</span>
+                <ZoomInIcon
+                  className={`w-4.5 h-4.5 ${scale >= 3 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
+                />
               </IconButton>
             </Box>
 

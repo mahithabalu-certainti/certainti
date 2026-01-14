@@ -14,7 +14,7 @@ import {
   ManageUserAccessIcon,
   TaskTemplateIcon,
   WorkflowIcon,
-  SettingsIcon,
+  DataMapperIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { AdminNavItem } from '../../consultant/types';
@@ -99,7 +99,7 @@ export const sideNavAdminItems: AdminNavItem[] = [
       {
         id: MenuOption.DATA_MAPPER,
         name: 'RD Form data mapper',
-        icon: SettingsIcon,
+        icon: DataMapperIcon,
         link: DATA_MAPPER,
         matchLink: DATA_MAPPER,
       },

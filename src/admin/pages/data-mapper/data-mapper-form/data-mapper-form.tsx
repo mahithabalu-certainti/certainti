@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import { EditIcon, UploadIcon } from '../../../../assets';
+import { DataMapperIcon, UploadIcon } from '../../../../assets';
 import {
   Layout,
   OnChange,
@@ -309,9 +309,9 @@ const DataMapperForm: React.FC = () => {
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <React.Suspense fallback={null}>
-            <EditIcon
+            <DataMapperIcon
               alt='data-mapper-icon'
-              className='h-7 w-7 p-1.5 rounded [&>path]:stroke-[#0176D3] bg-[#E3F2FD]'
+              className='h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#82BA8B]'
             />
           </React.Suspense>
           <div className='w-[90%]'>
