@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AllPermissions } from '../../../../../common-service';
-import { ActivityDropdownItem, CaseDetails, ColorCode } from '../../../../types';
+import { ActivityDropdownItem, CaseDetails, ColorCode, FinancialHighlightsResponse } from '../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -32,6 +32,8 @@ interface DossierProps {
   caseDetails?: CaseDetails;
   setDossierFinancialStatus: (status: string) => void;
   dossierFinancialStatus: string;
+  financialData: FinancialHighlightsResponse | null;
+  setFinancialData: (data: FinancialHighlightsResponse | null) => void;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -39,6 +41,8 @@ const Dossier: React.FC<DossierProps> = ({
   caseDetails,
   setDossierFinancialStatus,
   dossierFinancialStatus,
+  financialData,
+  setFinancialData,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -198,6 +202,8 @@ const Dossier: React.FC<DossierProps> = ({
             caseDetails={caseDetails}
             setDossierFinancialStatus={setDossierFinancialStatus}
             dossierFinancialStatus={dossierFinancialStatus}
+            financialData={financialData}
+            setFinancialData={setFinancialData}
           />
         )}
 

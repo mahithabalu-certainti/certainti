@@ -23,6 +23,7 @@ import {
   ColorCode,
   enumValue,
   FieldType,
+  FinancialWorkingCountries,
   KeyContactHeader,
   OthersEnum,
   ParentChildSelectOption,
@@ -82,6 +83,7 @@ const ProjectForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
   const [showOthersField, setShowOthersField] = useState(false);
   const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
+  const [iscustomerGroup, setIsCustomerGroup] = useState(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const dispatch = useAppDispatch();
@@ -497,6 +499,12 @@ const ProjectForm: React.FC = () => {
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
+      const selectedClassification = memoizedCountry.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+      setIsCustomerGroup(
+        selectedClassification?.label.toLowerCase() === FinancialWorkingCountries.UK
+      );
     }
     if (data.fieldName === 'industry_rid') {
       const selectedIndustry = memoizedIndustry.find(
@@ -669,7 +677,8 @@ const ProjectForm: React.FC = () => {
     disableTotalCost,
     globalType,
     account?.is_project_exists,
-    isCaseExists
+    isCaseExists,
+    iscustomerGroup
   );
 
   const formLoading =

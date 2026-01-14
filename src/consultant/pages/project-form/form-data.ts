@@ -205,7 +205,8 @@ export const FormData = (
   disableTotalCost?: boolean,
   globalType?: boolean,
   isProjectExists?: boolean,
-  isCaseExists?: boolean
+  isCaseExists?: boolean,
+  iscustomerGroup?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -403,6 +404,7 @@ export const FormData = (
           }),
           createTextField('project_client_group', 'Client Group', {
             placeholder: 'Enter Client Group',
+            required: iscustomerGroup,
             disabled:
               isEditView &&
               permissionMap?.['project_client_group']?.read &&
@@ -901,6 +903,7 @@ export const FormData = (
       calculatedTotalCost,
       disableTotalCost,
       removeKeyContact,
+      iscustomerGroup
     ]
   );
 };

@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import FinancialWorking from './financial-working';
 import FinancialWorkingAustralia from './financial-working-australia';
+import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
 import {
   FormControl,
@@ -37,6 +38,8 @@ interface FinancialWorkingFormProps {
   caseDetails?: CaseDetails;
   setDossierFinancialStatus: (status: string) => void;
   dossierFinancialStatus: string;
+  financialData: FinancialHighlightsResponse | null;
+  setFinancialData: (data: FinancialHighlightsResponse | null) => void;
 }
 
 interface FormErrors {
@@ -161,6 +164,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   caseDetails,
   setDossierFinancialStatus,
   dossierFinancialStatus,
+  financialData,
+  setFinancialData,
 }) => {
   const [isFederal, setIsFederal] = useState<string>('yes');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
@@ -172,6 +177,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const { successToast, errorToast } = useToast();
   // const queryClient = useQueryClient();
+
+  // Restore showFinancialValues if data exists
+  React.useEffect(() => {
+    if (financialData) {
+      setShowFinancialValues(true);
+    }
+  }, []);
 
   const { mutate: initiateProcess, isPending: isInitiating } =
     useInitiateRDCreditProcess();
@@ -242,8 +254,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     }
   };
 
-  const [financialData, setFinancialData] =
-    useState<FinancialHighlightsResponse | null>(null);
+
 
   const responseCurrencySymbol = useMemo(() => {
     const computedFields = financialData?.data?.computed_fields as any;
@@ -376,6 +387,26 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       handleStatusUpdate(result.data, 'refresh');
     }
   };
+
+  if (
+    !caseDetails?.case_total_projects ||
+    caseDetails?.case_total_projects === 0 ||
+    caseDetails?.case_total_projects === '0'
+  ) {
+    return (
+      <div className='w-full p-8 flex flex-col items-center justify-center text-center'>
+        <div className='bg-[#FEF8F0] border border-[#FFC77B] rounded-md p-6 max-w-md'>
+          <p className='text-[15px] font-semibold text-[#2D3E4F] mb-2'>
+            No projects assigned to this case.
+          </p>
+          <p className='text-[13px] text-[#425A76]'>
+            Please assign projects to the case to view financial highlights and
+            calculations.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='w-full'>
@@ -655,9 +686,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               'Federal R&D Credit'}
           </div>
           <div>
-            {caseDetails?.country_name ===
-            FinancialWorkingCountries.Australia ? (
+            {caseDetails?.country_name === FinancialWorkingCountries.Australia ? (
               <FinancialWorkingAustralia data={financialData} />
+            ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
+              <FinancialWorkingUSA data={financialData} />
             ) : (
               <FinancialWorking
                 data={financialData}
