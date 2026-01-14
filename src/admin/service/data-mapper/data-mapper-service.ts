@@ -196,7 +196,7 @@ export const useMappingDetails = (
 export const fetchObjectsList = async (
   country_rid: string,
   state_rid: string
-): Promise<ObjectItem> => {
+): Promise<ObjectItem[]> => {
   // const response = await caseServiceApi.get<ObjectsListResponse>(
   //   `/api/dataMapper/objectsList?country_rid=${country_rid}&state_rid=${state_rid}`
   // );
@@ -212,8 +212,8 @@ export const fetchObjectsList = async (
 export const useObjectsList = (
   country_rid: string,
   state_rid: string
-): UseQueryResult<ObjectItem | undefined, Error> => {
-  return useQuery<ObjectItem | undefined, Error>({
+): UseQueryResult<ObjectItem[], Error> => {
+  return useQuery<ObjectItem[], Error>({
     queryKey: ['mapper-objects-list', country_rid, state_rid],
     queryFn: () => fetchObjectsList(country_rid, state_rid),
     retry: 0,

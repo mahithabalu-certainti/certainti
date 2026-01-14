@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
 import { SectionHeaderTab, TruncateWithTooltip } from '../../../../components';
 import PDFViewer from './pdf-viewer';
 import MappingTable from './mapping-table';
@@ -16,15 +14,37 @@ import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import { EditIcon } from '../../../../assets';
+import { useToast } from '../../../../hooks';
+
+interface MappingItem {
+  rid: string;
+  created_datetime?: string;
+  created_by?: string;
+  modified_datetime?: string;
+  modified_by?: string;
+  field_label: string;
+  field_id: string | null;
+  object_rid: string[];
+}
+
+interface PDFAnnotation {
+  id?: string;
+  fieldName?: string;
+  fieldType?: string;
+  rect?: number[];
+  defaultValue?: string;
+  options?: Array<{ displayValue: string }>;
+}
 
 const DataMapperConfig: React.FC = () => {
   const { mapperId } = useParams();
+  const { successToast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('pdf_view');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [fields, setFields] = useState<PDFField[]>([]);
   const [selectedField, setSelectedField] = useState<PDFField | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
-  const [mappings, setMappings] = useState<any[]>([]);
+  const [mappings, setMappings] = useState<MappingItem[]>([]);
 
   const updateDataMapperConfig = useUpdateDataMapperConfig();
   const { data: mappingData, isLoading } = useMappingDetails(mapperId, true);
@@ -33,12 +53,9 @@ const DataMapperConfig: React.FC = () => {
     mappingData?.state_rid || ''
   );
 
-  console.log('objectsList', objectsList);
-
-  // Initialize mappings when mapping data is loaded
   useEffect(() => {
     if (mappingData?.mappings) {
-      setMappings(mappingData.mappings);
+      setMappings(mappingData.mappings as MappingItem[]);
     }
   }, [mappingData?.mappings]);
 
@@ -51,7 +68,7 @@ const DataMapperConfig: React.FC = () => {
         const page = await pdf.getPage(pageNum);
         const annotations = await page.getAnnotations();
 
-        annotations.forEach((annotation: any, index: number) => {
+        annotations.forEach((annotation: PDFAnnotation, index: number) => {
           if (annotation.fieldType) {
             const rect = annotation.rect || [0, 0, 0, 0];
             const field: PDFField = {
@@ -66,7 +83,7 @@ const DataMapperConfig: React.FC = () => {
               height: rect[3] - rect[1],
               defaultValue: annotation.defaultValue,
               possibleValues: annotation.options?.map(
-                (opt: any) => opt.displayValue
+                (opt) => opt.displayValue
               ),
             };
             extractedFields.push(field);
@@ -149,7 +166,7 @@ const DataMapperConfig: React.FC = () => {
     setSelectedField(field);
   };
 
-  const handleMappingsChange = (updatedMappings: any[]) => {
+  const handleMappingsChange = (updatedMappings: MappingItem[]) => {
     setMappings(updatedMappings);
   };
 
@@ -162,28 +179,26 @@ const DataMapperConfig: React.FC = () => {
 
   const handleSubmit = async () => {
     const payload = {
-      rid: mapperId,
+      form_rid: mapperId || '',
       mappings: mappings.map((mapping) => ({
         rid: mapping.rid,
-        created_datetime: mapping.created_datetime,
-        created_by: mapping.created_by,
-        modified_datetime: mapping.modified_datetime,
-        modified_by: mapping.modified_by,
-        form_rid: mapperId,
+        created_datetime: mapping.created_datetime || '',
+        created_by: mapping.created_by || '',
+        modified_datetime: mapping.modified_datetime || null,
+        modified_by: mapping.modified_by || null,
+        form_rid: mapperId || '',
         field_label: mapping.field_label,
         field_id: mapping.field_id,
-        object_rid: mapping.object_rid || [],
+        object_rid: mapping.object_rid,
       })),
     };
 
-    console.log('Save payload:', payload);
-
-    try {
-      // Call your update service here
-      // await updateDataMapperConfig.mutateAsync(payload);
-    } catch (error) {
-      console.error('Error saving mappings:', error);
-    }
+    updateDataMapperConfig.mutate(payload, {
+      onSuccess: () => {
+        successToast('Data Mapper Config saved successfully');
+        goBack();
+      },
+    });
   };
 
   const formLoading = isLoading || isLoadingObjects || isLoadingPdf;

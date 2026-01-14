@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box,
   Select,
@@ -7,13 +7,13 @@ import {
   Typography,
   IconButton,
   SelectChangeEvent,
-  Tooltip,
 } from '@mui/material';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { PDFField } from '../../../types';
-import { ArrowBackIcon, CopyIcon, TickIcon } from '../../../../assets';
+import { ArrowBackIcon } from '../../../../assets';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
+import FieldDetailsPanel from './field-details-panel';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -24,148 +24,21 @@ interface PDFViewerProps {
   selectedField: PDFField | null;
 }
 
-interface DetailItemProps {
-  label: string;
-  value: string | React.ReactNode;
-  onCopy?: () => void;
-  multiline?: boolean;
-}
-
 const ZOOM_LEVELS = [50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300];
 
-const DetailItem = ({
-  label,
-  value,
-  onCopy,
-  multiline = false,
-}: DetailItemProps) => {
-  const [showCopied, setShowCopied] = useState(false);
-
-  const handleCopy = () => {
-    if (onCopy) {
-      onCopy();
-      setShowCopied(true);
-      setTimeout(() => setShowCopied(false), 2000);
-    }
-  };
-  return (
-    <div>
-      <div className='font-semibold text-sm text-gray-700 mb-1'>{label}</div>
-
-      <div
-        className={`flex items-start justify-between bg-gray-50 border border-gray-200 rounded-[2px] p-2 ${
-          multiline ? 'flex-col space-y-2' : ''
-        }`}
-      >
-        <div className='flex-1 text-gray-700 break-all text-sm pl-1'>
-          {value}
-        </div>
-
-        {onCopy && (
-          <Tooltip title={showCopied ? 'Copied' : 'Copy'} arrow placement='top'>
-            <button
-              onClick={handleCopy}
-              className='ml-2 pt-0.5 text-gray-500 hover:text-blue-600 transition cursor-pointer'
-            >
-              {showCopied ? (
-                <TickIcon alt='tick-icon' className='w-4 h-4' />
-              ) : (
-                <CopyIcon className='w-4 h-4' />
-              )}
-            </button>
-          </Tooltip>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const FieldDetailsPanel = ({ field }: { field: PDFField | null }) => {
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  if (!field) {
-    return (
-      <div className='bg-white rounded-[4px] border border-[#CBD6E2] sticky top-0 h-fit'>
-        <div className='py-2.5 px-4 text-xl font-bold text-[#425A76] border-b border-[#CBD6E2]'>
-          Field Details
-        </div>
-        <div className='flex-1 min-h-[100px] text-base text-[#425a76cf] break-all p-4'>
-          Click on a field to view its details.
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className='bg-white rounded-[4px] border border-[#CBD6E2] sticky top-0 h-fit'>
-      <div className='py-2.5 px-4 text-xl font-bold text-[#425A76] border-b border-[#CBD6E2]'>
-        Field Details
-      </div>
-
-      <div className='space-y-6 p-4'>
-        <DetailItem
-          label='Field ID'
-          value={field.id}
-          onCopy={() => copyToClipboard(field.id)}
-        />
-
-        <DetailItem
-          label='Field Name'
-          value={field.name}
-          onCopy={() => copyToClipboard(field.name)}
-        />
-
-        <div className='grid grid-cols-1 gap-4'>
-          <DetailItem label='Field Type' value={field.type} />
-          <DetailItem label='Page' value={String(field.page + 1)} />
-          <DetailItem
-            label='Position'
-            value={
-              <>
-                <span>
-                  X: {field.x.toFixed(2)}, Y: {field.y.toFixed(2)}
-                </span>
-                <span>Width: {field.width.toFixed(2)}</span>
-                <span> Height: {field.height.toFixed(2)}</span>
-              </>
-            }
-            multiline
-          />
-        </div>
-
-        {field.possibleValues && field.possibleValues.length > 0 && (
-          <DetailItem
-            label='Possible Values'
-            value={field.possibleValues.join(', ') || '-'}
-            multiline
-          />
-        )}
-
-        {field.defaultValue && (
-          <DetailItem
-            label='Default Value'
-            value={field.defaultValue}
-            multiline
-          />
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default function PDFViewer({
+const PDFViewer: React.FC<PDFViewerProps> = ({
   file,
   fields,
   onFieldClick,
   selectedField,
-}: PDFViewerProps) {
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1);
+  const [canvasDisplayScale, setCanvasDisplayScale] = useState(1);
 
   useEffect(() => {
     const loadPDF = async () => {
@@ -179,6 +52,16 @@ export default function PDFViewer({
   const renderPage = useCallback(
     async (pageNum: number) => {
       if (!pdfDoc || !canvasRef.current) return;
+
+      // Cancel any ongoing render task
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+        } catch {
+          // Ignore cancellation errors
+        }
+        renderTaskRef.current = null;
+      }
 
       try {
         const page = await pdfDoc.getPage(pageNum);
@@ -197,9 +80,23 @@ export default function PDFViewer({
           canvas: canvas,
         };
 
-        await page.render(renderContext).promise;
-      } catch (error) {
-        console.error('Error rendering page:', error);
+        // Store the render task so we can cancel it if needed
+        renderTaskRef.current = page.render(renderContext);
+        await renderTaskRef.current.promise;
+        renderTaskRef.current = null;
+
+        // Set display scale to 1 since canvas is not CSS-scaled
+        setCanvasDisplayScale(1);
+      } catch (error: unknown) {
+        // Ignore cancellation errors
+        if (
+          error &&
+          typeof error === 'object' &&
+          'name' in error &&
+          error.name !== 'RenderingCancelledException'
+        ) {
+          console.error('Error rendering page:', error);
+        }
       }
     },
     [pdfDoc, scale]
@@ -242,7 +139,14 @@ export default function PDFViewer({
   return (
     <div className='flex gap-4 h-full max-h-[calc(100vh-290px)]'>
       {/* Left Side - PDF Viewer (70%) */}
-      <Box className='flex-1 flex flex-col' style={{ flex: '0 0 70%' }}>
+      <Box
+        className='flex-1 flex flex-col'
+        sx={{
+          flex: '0 0 70%',
+          maxWidth: '70%',
+          minWidth: 0,
+        }}
+      >
         {/* PDF Controls */}
         <div className='bg-white rounded-[4px] border border-[#CBD6E2] px-3 py-2 mb-4'>
           <Box className='flex items-center gap-4 flex-wrap'>
@@ -364,10 +268,10 @@ export default function PDFViewer({
                 onClick={() => onFieldClick(field)}
                 className='absolute cursor-pointer border-2 transition-all hover:bg-blue-500 hover:bg-opacity-30'
                 style={{
-                  left: `${field.x * scale}px`,
-                  top: `${field.y * scale}px`,
-                  width: `${field.width * scale}px`,
-                  height: `${field.height * scale}px`,
+                  left: `${field.x * scale * canvasDisplayScale}px`,
+                  top: `${field.y * scale * canvasDisplayScale}px`,
+                  width: `${field.width * scale * canvasDisplayScale}px`,
+                  height: `${field.height * scale * canvasDisplayScale}px`,
                   borderColor:
                     selectedField?.id === field.id ? '#dc2626' : '#3b82f6',
                   backgroundColor:
@@ -388,4 +292,6 @@ export default function PDFViewer({
       </div>
     </div>
   );
-}
+};
+
+export default PDFViewer;

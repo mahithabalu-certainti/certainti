@@ -185,7 +185,7 @@ export interface DataMapperFieldMapping {
   form_rid: string;
   field_label: string;
   field_id: string | null;
-  object_rid: string | null;
+  object_rid: string[];
 }
 
 export interface DataMapperConfigPayload {
