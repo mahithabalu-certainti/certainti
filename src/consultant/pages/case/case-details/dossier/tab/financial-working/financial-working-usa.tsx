@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { FinancialHighlightsResponse, USAComputedFields } from '../../../../../../types/dossier';
+import {
+  FinancialHighlightsResponse,
+  USAComputedFields,
+} from '../../../../../../types/dossier';
 
 interface FinancialWorkingUSAProps {
   data: FinancialHighlightsResponse | null;
@@ -17,17 +20,23 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
   const inputParams = data?.data?.input_params as Record<string, any>;
   const qreSummary = inputParams?.qreSummary;
-  const currencyCode = (inputParams?.metadata?.currency as string) || (inputParams?.currency as string) || 'USD';
+  const currencyCode =
+    (inputParams?.metadata?.currency as string) ||
+    (inputParams?.currency as string) ||
+    'USD';
 
   const formatCurrency = (value: number | string | null | undefined) => {
     if (value === null || value === undefined) return '';
     
     // Check if it's a percentage (string ending with %)
     if (typeof value === 'string' && value.trim().endsWith('%')) {
-        return value;
+      return value;
     }
 
-    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : value;
+    const numValue =
+      typeof value === 'string'
+        ? parseFloat(value.replace(/[^0-9.-]/g, ''))
+        : value;
     if (typeof numValue === 'number' && !isNaN(numValue)) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -92,7 +101,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
         <tbody>
           {entries.map(([key, value]) => {
             if (
-              (typeof value === 'object' && value !== null && !Array.isArray(value)) ||
+              (typeof value === 'object' &&
+                value !== null &&
+                !Array.isArray(value)) ||
               Array.isArray(value) ||
               key === 'name' ||
               key.toLowerCase().includes('280c')
@@ -104,9 +115,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>
-                  {renderValue(value)}
-                </td>
+                <td className='px-3 py-1.5 text-right'>{renderValue(value)}</td>
               </tr>
             );
           })}
@@ -120,7 +129,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     if (!reduction280c) return null;
 
     // Detect available columns (elect280c, no_elect280c, etc.)
-    const columnKeys = Object.keys(reduction280c).filter(k => typeof reduction280c[k] === 'object');
+    const columnKeys = Object.keys(reduction280c).filter(
+      (k) => typeof reduction280c[k] === 'object'
+    );
     if (columnKeys.length === 0) return null;
 
     return (
@@ -128,7 +139,10 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
         <table className='w-full border-collapse'>
           <thead>
             <tr className='bg-gray-50 border-b border-[#CBD6E2]'>
-              <th scope='col' className='px-3 py-1.5 text-left text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'>
+              <th
+                scope='col'
+                className='px-3 py-1.5 text-left text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'
+              >
                 {formatLabel(title)}
               </th>
               {columnKeys.map((key) => (
@@ -143,6 +157,31 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             </tr>
           </thead>
           <tbody>
+              {(() => {
+              // Get unique keys from all columns to render rows
+              const allRowKeys = new Set<string>();
+              columnKeys.forEach((colKey) => {
+                Object.keys(reduction280c[colKey]).forEach((rowKey) => {
+                  allRowKeys.add(rowKey);
+                });
+              });
+
+              return Array.from(allRowKeys).map((rowKey) => (
+                <tr
+                  key={rowKey}
+                  className='border-b border-[#CBD6E2] last:border-0'
+                >
+                  <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
+                    {formatLabel(rowKey)}
+                  </td>
+                  {columnKeys.map((colKey) => (
+                    <td key={colKey} className='px-3 py-1.5 text-right'>
+                      {renderValue(reduction280c[colKey][rowKey])}
+                    </td>
+                  ))}
+                </tr>
+              ));
+            })()}
              {(() => {
                 // Get unique keys from all columns to render rows
                 const allRowKeys = new Set<string>();
@@ -153,7 +192,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 });
                 
                 return Array.from(allRowKeys).map((rowKey) => (
-                   <tr key={rowKey} className='border-b border-[#CBD6E2] last:border-0'>
+                  <tr key={rowKey} className='border-b border-[#CBD6E2] last:border-0'>
                     <td className='px-3 py-1.5 text-sm font-medium text-[#425A76]'>
                       {formatLabel(rowKey)}
                     </td>
@@ -239,11 +278,10 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     <div className='p-4'>
       <div className='max-w-7xl mx-auto'>
         <div className='flex flex-col gap-0'>
-          
           {/* QRE Summary Section */}
           {qreSummary && (
             <React.Fragment>
-              {renderCard("QRE Summary", renderKeyValuePairs(qreSummary))}
+              {renderCard('QRE Summary', renderKeyValuePairs(qreSummary))}
             </React.Fragment>
           )}
 

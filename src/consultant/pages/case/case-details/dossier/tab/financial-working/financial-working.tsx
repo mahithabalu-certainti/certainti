@@ -2,7 +2,10 @@ import React, { useMemo } from 'react';
 import ListTable from '../../../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { Tooltip } from '@mui/material';
-import { FinancialHighlightsResponse, FinancialHighlightsComputedFields } from '../../../../../../types/dossier';
+import {
+  FinancialHighlightsResponse,
+  FinancialHighlightsComputedFields,
+} from '../../../../../../types/dossier';
 import { costDisplay } from '../../../../../../../common-utils';
 
 interface FinancialWorkingProps {
@@ -21,11 +24,21 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
   data,
   currencySymbol,
 }) => {
-  const computedFields = data?.data?.computed_fields as FinancialHighlightsComputedFields;
+  const computedFields = data?.data
+    ?.computed_fields as FinancialHighlightsComputedFields;
   const symbol = currencySymbol || '$';
 
-  const projects = useMemo(() => (computedFields && 'Projects' in computedFields) ? computedFields.Projects : [], [computedFields]);
-  const hasProjectCode = useMemo(() => projects.some(p => p['Project Code']), [projects]);
+  const projects = useMemo(
+    () =>
+      computedFields && 'Projects' in computedFields
+        ? computedFields.Projects
+        : [],
+    [computedFields]
+  );
+  const hasProjectCode = useMemo(
+    () => projects.some((p) => p['Project Code']),
+    [projects]
+  );
 
   // Format value helper function
   const formatValue = (
@@ -51,7 +64,11 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
 
     // 1. First Column: Label from Columns[0]
     // User: "LABOUR has frist column heading"
-    const firstColumnHeader = hasProjectCode ? 'Project Code' : (columnsList.length > 0 ? columnsList[0] : '');
+    const firstColumnHeader = hasProjectCode
+      ? 'Project Code'
+      : columnsList.length > 0
+        ? columnsList[0]
+        : '';
 
     const generatedColumns: ListTableColumn<FinancialWorkingRow>[] = [
       {
@@ -63,14 +80,16 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         ) as React.ReactNode as string,
         width: 200,
         sortId: 'row_label',
-        sticky:true,
-        sx:{  position: 'sticky',
-      left: 0,
-      background: '#fff',
-      padding: '0px 8px 0px 14px !important',
-      zIndex: 10,
-      borderRight: '1px solid #CBD6E2 !important',
-      borderBottom: '1px solid #CBD6E2 !important',},
+        sticky: true,
+        sx: {
+          position: 'sticky',
+          left: 0,
+          background: '#fff',
+          padding: '0px 8px 0px 14px !important',
+          zIndex: 10,
+          borderRight: '1px solid #CBD6E2 !important',
+          borderBottom: '1px solid #CBD6E2 !important',
+        },
         render: (row: FinancialWorkingRow) => (
           <span className='font-semibold text-[#2D3E4F]'>{row.row_label}</span>
         ),
@@ -82,7 +101,8 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     projects.forEach((project, index: number) => {
       const code = project['Project Code'];
       const name = project['Project Name'];
-      const topLabel = (hasProjectCode ? (code || name) : name) || `Project ${index + 1}`;
+      const topLabel =
+        (hasProjectCode ? code || name : name) || `Project ${index + 1}`;
       const projectId = project['Project ID'] || `project_${index}`;
 
       generatedColumns.push({
@@ -90,7 +110,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         label: (
           <Tooltip title={name || topLabel} placement='top'>
             <div className='flex flex-col items-center justify-center py-1 leading-tight'>
-              <span className='truncate block max-w-[200px] font-bold'>{topLabel}</span>
+              <span className='truncate block max-w-[200px] font-bold'>
+                {topLabel}
+              </span>
             </div>
           </Tooltip>
         ) as React.ReactNode as string,
@@ -102,9 +124,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         render: (row: FinancialWorkingRow) => {
           const value = row[projectId];
           return (
-            <span className='text-[#425A76]'>
-              {formatValue(value, symbol)}
-            </span>
+            <span className='text-[#425A76]'>{formatValue(value, symbol)}</span>
           );
         },
       });
@@ -139,10 +159,10 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     // User: "remaining column are row in table"
     // We take columns list starting from index 1
     const rowKeys = [...columnsList.slice(1)];
-    
+
     // Filter out Project Code if it exists in rows and we are showing it in header
-    const filteredRowKeys = hasProjectCode 
-      ? ['Project Name', ...rowKeys.filter(k => k !== 'Project Code')] 
+    const filteredRowKeys = hasProjectCode
+      ? ['Project Name', ...rowKeys.filter((k) => k !== 'Project Code')]
       : rowKeys;
 
     const data: FinancialWorkingRow[] = filteredRowKeys.map((key: string) => {

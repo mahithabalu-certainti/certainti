@@ -150,7 +150,7 @@ const FinancialWorkingUKPercentageTable = ({
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                 {typeof value === 'number' && key !== 'Total Customer Groups'
                   ? costDisplay(value as number, currencySymbol || '£')
-                  : value as React.ReactNode}
+                  : (value as React.ReactNode)}
               </td>
             </tr>
           ))}
@@ -214,7 +214,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     isFederal: true,
   };
 
-  const region = useFetchState((caseDetails?.country_rid ?? '') as string,'active');
+  const region = useFetchState(
+    (caseDetails?.country_rid ?? '') as string,
+    'active'
+  );
 
   const regionListOptions = useMemo(
     () =>
@@ -263,8 +266,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       setShowFinancialValues(false);
     }
   };
-
-
 
   const responseCurrencySymbol = useMemo(() => {
     const computedFields = financialData?.data?.computed_fields as any;
@@ -453,7 +454,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             />
             <TextButton
               label={
-                dossierFinancialStatus === 'COMPLETED' ? 'Re-Generate' : 'Initiate'
+                dossierFinancialStatus === 'COMPLETED'
+                  ? 'Re-Generate'
+                  : 'Initiate'
               }
               loading={isInitiating}
               onClick={handleInitiateFinancialHighlights}
@@ -464,8 +467,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                   dossierFinancialStatus !== 'COMPLETED')
               }
               sx={{
-                width:dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
-                minWidth: dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
+                width: dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
+                minWidth:
+                  dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
                 fontSize: '13px',
                 fontWeight: 400,
               }}
@@ -473,7 +477,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           </div>
         </div>
         <div className='px-4 pt-3'>
-          <FormControl component='fieldset' disabled={!caseDetails?.is_state_available}>
+          <FormControl
+            component='fieldset'
+            disabled={!caseDetails?.is_state_available}
+          >
             <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-2 block'>
               Federal Level
             </label>
@@ -637,14 +644,15 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         <div className=''>
           {/* Dynamic Title Header based on Country */}
           {(() => {
-            const title = (financialData?.data?.computed_fields as any)?.Title || {};
+            const title =
+              (financialData?.data?.computed_fields as any)?.Title || {};
             const countryName = caseDetails?.country_name;
 
             if (countryName === FinancialWorkingCountries.Ireland) {
               return (
                 <div className='flex flex-col items-center justify-center py-1 text-[#2D3E4F] '>
                   <div className='text-[14px] font-semibold'>
-                  Expleo  -  {title['Expleo'] || ''}
+                    Expleo - {title['Expleo'] || ''}
                   </div>
                   <div className='text-[14px] font-semibold mt-1'>
                     {title['Description'] || 'Summary of R&D Expenditures'}
@@ -663,7 +671,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                     {title['Description'] || 'Summary of SR&ED Expenditures'}
                   </div>
                   <div className='text-[14px] mt-1'>
-                    <span className='font-semibold'>Fiscal Year:</span> {title['Fiscal Year'] || ''}
+                    <span className='font-semibold'>Fiscal Year:</span>{' '}
+                    {title['Fiscal Year'] || ''}
                   </div>
                 </div>
               );
@@ -673,7 +682,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               return (
                 <div className='flex items-center justify-start py-1 text-[#2D3E4F] px-4'>
                   <div className='text-[14px] font-semibold'>
-                    Ref - {title['Fiscal Year'] || ''} - {title['Descriptions'] || ''}
+                    Ref - {title['Fiscal Year'] || ''} -{' '}
+                    {title['Descriptions'] || ''}
                   </div>
                 </div>
               );
@@ -688,7 +698,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               'Federal R&D Credit'}
           </div>
           <div>
-            {caseDetails?.country_name === FinancialWorkingCountries.Australia ? (
+            {caseDetails?.country_name ===
+            FinancialWorkingCountries.Australia ? (
               <FinancialWorkingAustralia data={financialData} />
             ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
               <FinancialWorkingUSA data={financialData} />
@@ -702,15 +713,15 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           {caseDetails?.country_name === FinancialWorkingCountries.UK && (
             <div className='flex flex-wrap md:flex-nowrap gap-4 px-4 pt-4'>
               <div className='w-full md:w-1/2'>
-                <FinancialWorkingUKTable 
-                  data={financialData} 
-                  currencySymbol={responseCurrencySymbol} 
+                <FinancialWorkingUKTable
+                  data={financialData}
+                  currencySymbol={responseCurrencySymbol}
                 />
               </div>
               <div className='w-full md:w-1/2'>
-                <FinancialWorkingUKPercentageTable 
-                  data={financialData} 
-                  currencySymbol={responseCurrencySymbol} 
+                <FinancialWorkingUKPercentageTable
+                  data={financialData}
+                  currencySymbol={responseCurrencySymbol}
                 />
               </div>
             </div>

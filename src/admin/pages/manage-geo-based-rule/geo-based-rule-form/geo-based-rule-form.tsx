@@ -48,7 +48,7 @@ const GeoBasedRuleForm: React.FC = () => {
   const projectTypeOptions = useGetProjectType();
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
-  const states = useFetchState(currentCountry,'active');
+  const states = useFetchState(currentCountry, 'active');
   const { data: formConfigList } = useFormConfigList(
     currentCountry,
     isFederal,
