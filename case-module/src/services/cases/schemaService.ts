@@ -566,7 +566,6 @@ class CaseSchemaService {
       const { CaseSummary } = await this.caseModelService.getModels(
         accountNumber
       );
-      console.log("caseData in summary", caseRid);
 
       await CaseSummary.create({
         ...caseData,
@@ -4719,7 +4718,7 @@ class CaseSchemaService {
 
   async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
     try {
-      console.log("Triggering rule engine with data:", data);
+      logMessage(`Triggering rule engine with data: ${JSON.stringify(data)}`);
       const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
       const response = await axios.post(
         `${RULE_ENGINE_BASE_URL}/workflow/execute`,
