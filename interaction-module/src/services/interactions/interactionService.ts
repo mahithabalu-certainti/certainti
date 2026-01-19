@@ -3014,9 +3014,6 @@ export class InteractionService {
         if (!this.mainDbSequelize) {
           this.mainDbSequelize = await initMainDbSequelize();
         }
-        if (!this.mainDbSequelize) {
-          this.mainDbSequelize = await initMainDbSequelize();
-        }
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
@@ -3068,7 +3065,6 @@ export class InteractionService {
         const [projects]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchProjectsByAccount(
             req.data[0].account_rid,
-            projectType[0].rid,
             schemaName,
             status_rid!,
             fiscalStart,fiscalEnd,
