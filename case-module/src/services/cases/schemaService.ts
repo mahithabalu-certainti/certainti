@@ -201,14 +201,14 @@ class CaseSchemaService {
       if (!tableExists) {
         await this.createCaseTables(accountNumber);
       }
-      const [amendementType]: any[] = await this.mainDbSequelize!.query(
+      const [amendmentType]: any[] = await this.mainDbSequelize!.query(
         rawQueries.fetchFilingTypeByName(caseFilingTypes.amendment),
         {
           replacements: { rid: caseRequest.filing_type_rid },
           type: "SELECT",
         }
       );
-      caseRequest.filing_type_rid = amendementType?.rid;
+      caseRequest.filing_type_rid = amendmentType?.rid;
       //  await this.createCaseTables(accountNumber);
       caseRequest.case_rid = caseRequest.parent_case_rid;
       const casecreationResponse = await Case.create(caseRequest, {
