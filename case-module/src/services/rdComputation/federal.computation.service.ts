@@ -107,8 +107,10 @@ export class FederalComputationService {
                         let projectsMoreOfQre50Percent;
                         let totalProjectSharedWithHmrc = 0.00;
                         let finalPercentage = parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2)) === Infinity ? '0.00%' : `${parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2))}%`
+                        let dynamicKeyNameForTotalCount : string;
                         
                         if(result.computedFields[0].projects.length === 7) {
+                            dynamicKeyNameForTotalCount = `Total Projects`
                             projectsMoreOfQre50Percent = result.computedFields[0].projects.map((p : any) => {
                                 return {
                                     "Project Client Group Name": p.project_name,
@@ -119,6 +121,7 @@ export class FederalComputationService {
                                 totalProjectSharedWithHmrc += f["Total Project Value/Labor"]
                             })
                         } else {
+                            dynamicKeyNameForTotalCount = `Total Customer Groups`
                             projectsMoreOfQre50Percent = minProjectResult.selectedProjects.map((p : any, index : number) => {
                                 return {
                                     "Project Client Group Name": p.project_name,
@@ -140,9 +143,7 @@ export class FederalComputationService {
                             "Project Credit Summary","Employees","LABOUR", "EPW", reductionValue, 
                             "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
                             "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
-                            "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit","Percentage Calculation",
-                            "Technical Submissions by Cost that are 50% or more of Total QRE",
-                            "Total Project to be shared with HMRC" 
+                            "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit"
                         ],
                         Total : {
                             "LABOUR" : 0,
@@ -174,7 +175,7 @@ export class FederalComputationService {
                             }
                         }),
                         "Percentage Calculation": {
-                            "Total Customer Groups" : result.computedFields[0].projects.length || 0,
+                            [dynamicKeyNameForTotalCount] : result.computedFields[0].projects.length || 0,
                             "Total QRE" : qualifyingRdc,
                             "Total value of customer groups Greater than 50%" : minProjectResult.selectedSum == Infinity ? 0.00 : minProjectResult.selectedSum,
                             "%" : finalPercentage
@@ -291,7 +292,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
-                    const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails);
+                    const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
                     await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
