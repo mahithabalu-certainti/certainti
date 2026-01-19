@@ -17,7 +17,8 @@ async function signOffFinancialWorking (req : Request, res : Response) {
             return;
         }
         const data = req.body;
-        const result = await childCaseService.signOffFinancialWorking(data);
+        data.userId = userId;
+        const result = await childCaseService.signOffFinancialWorking(data, req.file);
         if(result.statusCode === HttpStatus.SUCCESS) {
             return res.status(HttpStatus.SUCCESS).json({
                 statusCode : HttpStatus.SUCCESS,

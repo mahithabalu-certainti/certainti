@@ -304,6 +304,7 @@ routes.put(
 routes.post(
   "/financialWorking/signOff",
   checkUserStatusMiddleware("NA"),
+  upload.single('file'),
   controller.childCaseController.signOffFinancialWorking
 )
 routes.get(

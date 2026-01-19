@@ -1,3 +1,5 @@
+import { ProjectFiscalIds } from "./types";
+
 export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number) => {
     let query = 
     `
@@ -97,7 +99,7 @@ export const calculateRDExpenditureQuery = (schemaName : string, caseRid : strin
 export const fetchCountryData = (schemaName : string, caseRid : string) => {
     return `SELECT rid, created_datetime, modified_datetime, case_rid, country_rid, input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = '${caseRid}'`
 }
-export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : string, accountRid : string) => {
+export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string) => {
     let query = 
     `SELECT
         cp.project_code,
@@ -109,9 +111,9 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : str
         COALESCE(cp.total_cost_nonlabor_prj, 0.00) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
     FROM
-        ${schemaName}.case_projects cp
+        ${schemaName}.project_fiscal cp
     WHERE
-        cp.case_rid = '${caseRid}'
+        cp.rid IN (${caseRid.map((d : any) => `'${d.project_fiscal_rid}'`).join(',')})
         AND
         cp.account_rid = '${accountRid}'
     `
@@ -119,4 +121,8 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : str
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
     return `SELECT COALESCE(COUNT(rid), 0) AS total FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+}
+
+export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) => {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
 }
