@@ -122,11 +122,6 @@ const Dossier: React.FC<DossierProps> = ({
 
   const tabs = [
     {
-      label: 'Financial Workings',
-      value: 'financial_workings',
-      hide: false,
-    },
-    {
       label: 'Summary',
       value: 'summary',
       hide: false,
@@ -214,7 +209,7 @@ const Dossier: React.FC<DossierProps> = ({
         iconBg={ColorCode.caseBgColor}
         bgType='circle'
         count={count}
-        showItemCount={tabParam !== 'financial_workings'}
+        showItemCount={showTableControls}
         buttons={headerButtons}
       />
 
