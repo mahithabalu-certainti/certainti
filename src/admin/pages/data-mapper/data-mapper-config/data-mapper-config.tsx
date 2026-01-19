@@ -110,7 +110,7 @@ const DataMapperConfig: React.FC = () => {
       hide: false,
     },
     {
-      label: 'Table',
+      label: 'Field Mapping',
       value: 'table_view',
       hide: false,
     },
@@ -254,8 +254,20 @@ const DataMapperConfig: React.FC = () => {
                   value: mappingData?.formDetail?.country_name || '',
                 },
                 {
-                  label: 'State',
+                  label: 'Region',
                   value: mappingData?.formDetail?.state_name || '',
+                },
+                {
+                  label: 'Status',
+                  value: mappingData?.formDetail?.status_name || '',
+                },
+                {
+                  label: 'Effective From Date',
+                  value: mappingData?.formDetail?.effective_from_date || '',
+                },
+                {
+                  label: 'Effective To Date',
+                  value: mappingData?.formDetail?.effective_to_date || '',
                 },
               ].map(({ label, value }) => (
                 <React.Fragment key={label}>
@@ -270,7 +282,7 @@ const DataMapperConfig: React.FC = () => {
                       tooltipMaxWidth={'50vw'}
                     >
                       <span className='font-medium text-[13px] text-[#425A76]'>
-                        {value}
+                        {value || '-'}
                       </span>
                     </TruncateWithTooltip>
                   </div>

@@ -59,7 +59,7 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
       const name = field.getName();
       const widgets = (field as any).acroField.getWidgets();
 
-      widgets.forEach((widget: any, index: number) => {
+      widgets.forEach((widget: any) => {
         const rect = widget.getRectangle();
         let pageNumber = 0;
 
@@ -137,7 +137,7 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
         }
 
         extractedFields.push({
-          id: `${name}[${index}]`,
+          id: name,
           name,
           type: fieldType,
           page: pageNumber,
