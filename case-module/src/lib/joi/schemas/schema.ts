@@ -28,6 +28,7 @@ const positiveDecimal18_2 = Joi.string()
 
 const createCaseSchema = Joi.object({
   account_rid: Joi.string().required(),
+  parent_case_rid: Joi.string().optional().allow("", null),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().optional().allow(""),
   case_owner_rid: Joi.string().required(),
@@ -1160,4 +1161,5 @@ export {
    rdCreditGenerationSchema,
   rdCreditProcessSchema,
   rdCreditDataSchema,
+  caseClosedListSchema
 };

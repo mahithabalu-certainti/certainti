@@ -217,7 +217,9 @@ export const caseStatuses = {
 };
 
 export const caseFilingTypes = {
- regular: "Regular",};
+ regular: "Regular",
+  amendment: "Amendment",
+};
 
 export const SUMMARY_HIGHLIGHTS_FLAG = {
   all: "all",

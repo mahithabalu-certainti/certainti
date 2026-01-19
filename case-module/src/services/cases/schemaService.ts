@@ -15,6 +15,7 @@ import {
 import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
+  caseFilingTypes,
   entityNames,
   ENV_PREFIX,
   filtersColumnsForCaseSummary,
@@ -200,30 +201,106 @@ class CaseSchemaService {
       if (!tableExists) {
         await this.createCaseTables(accountNumber);
       }
+      const [amendementType]: any[] = await this.mainDbSequelize!.query(
+        rawQueries.fetchFilingTypeByName(caseFilingTypes.amendment),
+        {
+          replacements: { rid: caseRequest.filing_type_rid },
+          type: "SELECT",
+        }
+      );
+      caseRequest.filing_type_rid = amendementType?.rid;
       //  await this.createCaseTables(accountNumber);
-      caseRequest.parent_case_rid = caseRequest.case_rid;
+      caseRequest.case_rid = caseRequest.parent_case_rid;
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
       });
       // Clone case tasks
-      const { CaseTask } = await this.caseModelService.getModels(accountNumber);
+      const { CaseTask,CaseTeam, CheckList, CheckListItem,CaseMilestone } = await this.caseModelService.getModels(accountNumber);
+      
+      // Clone case milestones
+      const originalCaseMilestones = await CaseMilestone.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const milestone of originalCaseMilestones) {
+        const {  case_rid, created_datetime,r_number, eid, ...rest } = milestone;
+        await CaseMilestone.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+      
       const originalCaseTasks = await CaseTask.findAll({
         where: { case_rid: caseRequest.case_rid },
         raw: true
       });
       for (const task of originalCaseTasks) {
-        const { rid, case_rid, created_datetime, ...rest } = task;
+        const { rid, case_rid, created_datetime, checklist_template_rid,r_number, eid, ...rest } = task;
+        const newTaskRid = `${ENV_PREFIX}${uuidv4()}`;
         await CaseTask.create({
           ...rest,
           case_rid: casecreationResponse.rid,
           created_datetime: new Date(),
           created_by: caseRequest.created_by,
-          rid: `${ENV_PREFIX}${uuidv4()}`,
+          rid: newTaskRid,
         }, { transaction });
+
+        // Clone checklists if checklist_template_rid is not null
+        if (checklist_template_rid) {
+          const originalChecklists = await CheckList.findAll({
+            where: { checklist_template_rid: checklist_template_rid },
+            raw: true
+          });
+          
+          for (const checklist of originalChecklists) {
+            const { rid: checklistRid, checklist_template_rid: templateRid, created_datetime: checklistCreatedDate, ...checklistRest } = checklist;
+            const newChecklistRid = `${ENV_PREFIX}${uuidv4()}`;
+            
+            await CheckList.create({
+              ...checklistRest,
+              case_rid: casecreationResponse.rid,
+              checklist_template_rid: templateRid,
+              created_datetime: new Date(),
+              created_by: caseRequest.created_by
+            }, { transaction });
+
+            // Clone checklist items
+            const originalChecklistItems = await CheckListItem.findAll({
+              where: { checklist_rid: checklistRid },
+              raw: true
+            });
+
+            for (const item of originalChecklistItems) {
+              const { rid: itemRid, checklist_rid: itemChecklistRid, created_datetime: itemCreatedDate, ...itemRest } = item;
+              await CheckListItem.create({
+                ...itemRest,
+                checklist_rid: newChecklistRid,
+                created_datetime: new Date(),
+                created_by: caseRequest.created_by
+              }, { transaction });
+            }
+          }
+        }
       }
+
         
 
       //clone case team
+      const originalCaseTeams =  await CaseTeam.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const team of originalCaseTeams) {
+        const { rid, case_rid, created_datetime, ...rest } = team;
+        await CaseTeam.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by,
+        }, { transaction });
+      }
       // Clone case projects
       const { CaseProject } = await this.caseModelService.getModels(accountNumber);
       // Fetch all projects for the original case
@@ -272,6 +349,7 @@ class CaseSchemaService {
           created_by: caseRequest.created_by
         }, { transaction });
       }
+      return casecreationResponse;
 
   }
 
@@ -290,6 +368,9 @@ class CaseSchemaService {
       const tableExists = await this.checkTableExists(schemaName, "cases");
       if (!tableExists) {
         await this.createCaseTables(accountNumber);
+      }
+      if (caseRequest.parent_case_rid) {
+        return this.cloneCase(accountNumber, caseRequest, transaction);
       }
       //  await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
@@ -485,11 +566,12 @@ class CaseSchemaService {
       const { CaseSummary } = await this.caseModelService.getModels(
         accountNumber
       );
+      console.log("caseData in summary", caseRid);
 
       await CaseSummary.create({
-        case_rid: caseRid,
-        r_number: caseRnumber,
         ...caseData,
+        case_rid: caseRid,
+         r_number: caseRnumber
       });
     } catch (error) {
       logMessage(`Error creating case summary: ${error}`);
