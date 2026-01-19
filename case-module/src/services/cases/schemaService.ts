@@ -209,7 +209,6 @@ class CaseSchemaService {
         }
       );
       caseRequest.filing_type_rid = amendmentType?.rid;
-      //  await this.createCaseTables(accountNumber);
       caseRequest.case_rid = caseRequest.parent_case_rid;
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
