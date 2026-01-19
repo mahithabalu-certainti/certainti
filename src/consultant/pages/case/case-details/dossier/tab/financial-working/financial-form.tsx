@@ -248,11 +248,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     setIsFederal(value);
     setShowFinancialValues(false);
     setFinancialData(null);
-    if (value === 'no' && caseDetails?.state_rid) {
-      setSelectedRegion(caseDetails?.state_rid);
-    } else {
-      setSelectedRegion('');
-    }
+    setSelectedRegion('');
     setErrors((prev) => ({ ...prev, region: '' }));
   };
 
@@ -297,7 +293,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   };
 
   const handleViewFinancialHighlights = async () => {
-    if (selectedRegion && !caseDetails?.state_rid) {
+    if (isFederal === 'no' && selectedRegion) {
       await handleViewFinancialHighlightsForRegion();
       return;
     }
@@ -599,9 +595,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
-                  (accountPermissionMap?.['region_rid']?.read &&
-                    !accountPermissionMap?.['region_rid']?.edit) ||
-                  !!caseDetails?.state_rid
+                  accountPermissionMap?.['region_rid']?.read &&
+                  !accountPermissionMap?.['region_rid']?.edit
                 }
               >
                 <MenuItem
