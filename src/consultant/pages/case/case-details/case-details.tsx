@@ -31,6 +31,7 @@ import {
   ProjectFinancialResourceExportParams,
   TechnicalSummaryExportListParams,
   ColorCode,
+  FinancialHighlightsResponse,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -151,6 +152,8 @@ export const CaseDetails = () => {
   const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
   const [dossierFinancialStatus, setDossierFinancialStatus] =
     useState<string>('');
+  const [financialData, setFinancialData] =
+    useState<FinancialHighlightsResponse | null>(null);
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
@@ -891,6 +894,8 @@ export const CaseDetails = () => {
             caseDetails={caseData}
             setDossierFinancialStatus={setDossierFinancialStatus}
             dossierFinancialStatus={dossierFinancialStatus}
+            financialData={financialData}
+            setFinancialData={setFinancialData}
           />
         );
       default:
