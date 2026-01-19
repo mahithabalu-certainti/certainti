@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize";
+import { QueryTypes, Sequelize } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import RDCreditSchemaService from "./schemaService";
@@ -198,7 +198,14 @@ export class StateComputationService {
                 if (stateComputation) {
                     const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName);
                     logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
-                    const result = await stateComputation.compute(extractConfig, stateRDData);
+                    let result;
+                    
+                    if(config.state_code === "ON") {
+                        const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
+                    } else {
+                        result = await stateComputation.compute(extractConfig, stateRDData);
+                    }
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                         fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
                         result.inputFields, result.computedFields
