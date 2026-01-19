@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   GetProjectTypeApiResponse,
@@ -46,7 +47,7 @@ export const useAccountProjects = (
 };
 
 export const fetchPostProjects = async (
-  body: Record<string, Object>
+  body: Record<string, any>
 ): Promise<{ projects: Project[]; count: number }> => {
   const response = await resourceServiceApi.post<ProjectAccordionResponse>(
     '/api/project/list',
@@ -63,7 +64,7 @@ export const useAllProjects = () => {
   return useMutation<
     { projects: Project[]; count: number },
     Error,
-    Record<string, Object | string | number>
+    Record<string, any>
   >({
     mutationFn: (body) => fetchPostProjects({ ...body }),
   });

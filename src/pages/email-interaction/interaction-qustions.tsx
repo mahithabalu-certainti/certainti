@@ -192,6 +192,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         ? true
         : false
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerData]);
   // const handleEditClick = () => {
   //   setIsEditing(true);

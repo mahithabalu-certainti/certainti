@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -279,7 +280,6 @@ const AccountInteractionForm = () => {
     if (commonSuccess) {
       successToast('Interaction created successfully');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess]);
   useEffect(() => {
     const interactionOptions = getInteractionLevel.data?.data?.interactionLevel;

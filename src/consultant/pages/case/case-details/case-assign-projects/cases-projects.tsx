@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import { ProjectsSideIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
@@ -204,6 +203,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
 
       navigate({ search: newParams.toString() }, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.get('list')]); // Run when the list parameter changes
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>

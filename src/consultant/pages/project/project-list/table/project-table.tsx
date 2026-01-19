@@ -160,6 +160,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         }
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshProjectsTrigger]);
 
   const getRowId = (row: Project) => {

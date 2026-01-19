@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { resourceServiceApi } from '../../../api/api';
 import {
@@ -20,7 +21,7 @@ export const fetchTasksList = async (
     ? '/api/task/list/summaryMilestone'
     : '/api/task/list/summaryActivity';
 
-  let filtersToSend: Record<string, any> = params.filters
+  const filtersToSend: Record<string, any> = params.filters
     ? { ...params.filters }
     : {};
 
@@ -107,7 +108,7 @@ export const exportTasksData = async (
   }
 
   // Build the payload similar to fetchTasksList
-  let filtersToSend: Record<string, any> = params.filters
+  const filtersToSend: Record<string, any> = params.filters
     ? { ...params.filters }
     : {};
 

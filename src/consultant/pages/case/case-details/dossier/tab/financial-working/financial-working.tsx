@@ -40,7 +40,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     () => projects.some((p) => p['Project Code']),
     [projects]
   );
-  
+
   const boldRows = useMemo(
     () => (computedFields as any)?.BOLD || [],
     [computedFields]
@@ -99,7 +99,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         render: (row: FinancialWorkingRow) => {
           const isBold = boldRows.includes(row.row_label);
           return (
-            <span className={`${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}>
+            <span
+              className={`${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
+            >
               {row.row_label}
             </span>
           );
@@ -136,7 +138,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
           const value = row[projectId];
           const isBold = boldRows.includes(row.row_label);
           return (
-            <span className={isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76]'}>
+            <span
+              className={isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76]'}
+            >
               {formatValue(value, symbol)}
             </span>
           );
@@ -157,7 +161,11 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       render: (row: FinancialWorkingRow) => {
         const isBold = boldRows.includes(row.row_label);
         return (
-          <span className={isBold ? 'font-bold text-[#1A2733]' : 'font-bold text-[#2D3E4F]'}>
+          <span
+            className={
+              isBold ? 'font-bold text-[#1A2733]' : 'font-bold text-[#2D3E4F]'
+            }
+          >
             {formatValue(row.Total, symbol)}
           </span>
         );
@@ -165,6 +173,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     });
 
     return generatedColumns;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [computedFields, symbol, projects, hasProjectCode]);
 
   const tableData = useMemo(() => {
@@ -213,7 +222,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
 
   if (!data?.data || !computedFields || !('Columns' in computedFields)) {
     return (
-      <div className='p-8 text-center text-[#425A76] italic font-medium'>No data available</div>
+      <div className='p-8 text-center text-[#425A76] italic font-medium'>
+        No data available
+      </div>
     );
   }
 

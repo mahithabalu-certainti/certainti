@@ -620,6 +620,7 @@ export const CaseFormData = (
       selectedFiscalYear,
       globalType,
       calculatedStatutoryDate,
+      statusOptions,
     ]
   );
 };
