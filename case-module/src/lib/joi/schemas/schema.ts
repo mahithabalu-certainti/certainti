@@ -1099,8 +1099,6 @@ const rdCreditDataSchema = Joi.object({
   stateCode: Joi.string().max(255).required(),
 });
 
-
-
 export {
   createCaseSchema,
   updateCaseSchema,
