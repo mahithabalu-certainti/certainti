@@ -15,9 +15,9 @@ type extractConfig = {
     provincial_oitc_amount : number
 }
 
-export class RdCreditCalculatorForCAN {
+export class RdCreditCalculatorForON {
     country = "CAN";
-    creditType = "Federal R&D Credit - CAN";
+    creditType = "State R&D Credit - ON"
     currency = "CAD";
 
     private orgDbSequelize: Sequelize | null = null;
@@ -29,7 +29,7 @@ export class RdCreditCalculatorForCAN {
         return this.orgDbSequelize;
     }
 
-    async computeForCanada(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
+    async compute(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
         const orgDb = await this.getOrgDb();
         const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, caseRid, accountRid), {type : QueryTypes.SELECT})
         let fteQreAdjustment = extractConfig.fte_qre_adjustment;
