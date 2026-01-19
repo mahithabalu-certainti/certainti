@@ -94,8 +94,6 @@ const caseClosedListSchema = Joi.object({
   account_rid: Joi.string().required()
 });
 
-
-
 const exportCasesAccountSchema = Joi.object({
   account_rid: Joi.string().required(),
   filters: Joi.string().default("{}"),
