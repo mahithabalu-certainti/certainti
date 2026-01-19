@@ -1,9 +1,58 @@
-<?xml version="1.0" encoding="utf-8"?>
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Outer clipboard -->
+  <path
+    d="M10.6667 2.66602H12
+       C12.3536 2.66602 12.6928 2.80649 12.9428 3.05654
+       C13.1928 3.30659 13.3333 3.64573 13.3333 3.99935
+       V13.3327
+       C13.3333 13.6863 13.1928 14.0254 12.9428 14.2755
+       C12.6928 14.5255 12.3536 14.666 12 14.666
+       H3.99999
+       C3.64637 14.666 3.30723 14.5255 3.05718 14.2755
+       C2.80713 14.0254 2.66666 13.6863 2.66666 13.3327
+       V3.99935
+       C2.66666 3.64573 2.80713 3.30659 3.05718 3.05654
+       C3.30723 2.80649 3.64637 2.66602 3.99999 2.66602
+       H5.33332"
+    stroke="white"
+    stroke-width="1.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <g>
-        <path fill="none" d="M0 0H24V24H0z"/>
-        <path d="M17 2v2h3c.552 0 1 .448 1 1v16c0 .552-.448 1-1 1H4c-.552 0-1-.448-1-1V5c0-.552.448-1 1-1h3V2h10zM7 6H5v14h14V6h-2v2H7V6zm6 5v2h2v2h-2.001L13 17h-2l-.001-2H9v-2h2v-2h2zm2-7H9v2h6V4z"/>
-    </g>
+  <!-- Top clip -->
+  <path
+    d="M10 1.33398H6.00001
+       C5.63182 1.33398 5.33334 1.63246 5.33334 2.00065
+       V3.33398
+       C5.33334 3.70217 5.63182 4.00065 6.00001 4.00065
+       H10
+       C10.3682 4.00065 10.6667 3.70217 10.6667 3.33398
+       V2.00065
+       C10.6667 1.63246 10.3682 1.33398 10 1.33398Z"
+    stroke="white"
+    stroke-width="1.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- PERFECTLY CENTERED PLUS -->
+  <path
+    d="M8 7V11"
+    stroke="white"
+    stroke-width="1.2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M6 9H10"
+    stroke="white"
+    stroke-width="1.2"
+    stroke-linecap="round"
+  />
 </svg>
