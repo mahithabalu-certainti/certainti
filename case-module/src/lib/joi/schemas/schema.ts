@@ -1086,7 +1086,8 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
 
 const rdCreditGenerationSchema = Joi.object({
   account_rid : Joi.string().max(255).required(),
-  case_rid : Joi.string().max(255).required()
+  case_rid : Joi.string().max(255).required(),
+  fiscal_year : Joi.number().required()
 });
 
 const rdCreditProcessSchema = Joi.object({
