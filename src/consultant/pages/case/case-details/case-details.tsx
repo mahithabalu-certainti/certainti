@@ -85,7 +85,11 @@ import { RootState } from '../../../../store/store';
 
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useDispatch, useSelector } from 'react-redux';
-import { setTemporaryFiscalYear } from '../../../../store/slices/account-slice';
+import {
+  setTemporaryFiscalYear,
+  setDossierFinancialStatus as setDossierFinancialStatusAction,
+  setFinancialData as setFinancialDataAction,
+} from '../../../../store/slices/account-slice';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import Setting from './settings/setting';
@@ -150,10 +154,17 @@ export const CaseDetails = () => {
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
   const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
-  const [dossierFinancialStatus, setDossierFinancialStatus] =
-    useState<string>('');
-  const [financialData, setFinancialData] =
-    useState<FinancialHighlightsResponse | null>(null);
+  const { dossierFinancialStatus, financialData } = useSelector(
+    (state: RootState) => state.account
+  );
+
+  const setDossierFinancialStatus = (status: string) => {
+    dispatch(setDossierFinancialStatusAction(status));
+  };
+
+  const setFinancialData = (data: FinancialHighlightsResponse | null) => {
+    dispatch(setFinancialDataAction(data));
+  };
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
@@ -325,6 +336,12 @@ export const CaseDetails = () => {
       dispatch(setTemporaryFiscalYear(caseData.fiscal_year.toString()));
     }
   }, [caseData, dispatch]);
+
+  useEffect(() => {
+    // Reset dossier states when case changes to avoid showing stale data from previous case
+    setDossierFinancialStatus('');
+    setFinancialData(null);
+  }, [caseId]);
 
   useEffect(() => {
     setIsActionItemsExpanded(false);
