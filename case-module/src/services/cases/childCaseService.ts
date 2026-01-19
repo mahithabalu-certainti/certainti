@@ -109,7 +109,7 @@ export class ChildCaseService extends CaseService {
             return {
                 statusCode: HttpStatus.FAILED,
                 message: STATUS_MESSAGE.dataNotAvailable,
-                errorMessage: "Closed case status not found",
+                errorMessage: "Regular filing type not found",
             };
           } 
         const { accountNumber, parentAccountId } =
