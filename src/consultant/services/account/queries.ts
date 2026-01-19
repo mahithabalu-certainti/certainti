@@ -78,10 +78,13 @@ export const useFetchClassification = () => {
   });
 };
 
-export const useFetchState = (countryId: string | string[] | null) => {
+export const useFetchState = (
+  countryId: string | string[] | null,
+  status?: string
+) => {
   return useQuery<StatesApiResponse, Error>({
-    queryKey: ['states', countryId], // Add countryId to query key
-    queryFn: () => fetchState(countryId),
+    queryKey: ['states', countryId, status], // Add countryId to query key
+    queryFn: () => fetchState(countryId, status),
     retry: 0,
     enabled: !!countryId && countryId.length > 0, // Only fetch if countryId exists
   });

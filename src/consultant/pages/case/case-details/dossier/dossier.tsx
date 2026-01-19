@@ -1,10 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AllPermissions } from '../../../../../common-service';
-import { ActivityDropdownItem, CaseDetails } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  CaseDetails,
+  ColorCode,
+  FinancialHighlightsResponse,
+} from '../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { DetailsIcon } from '../../../../../assets';
+import { DossierIcon } from '../../../../../assets';
 import {
   DossierSummary,
   FinancialWorkingForm,
@@ -40,6 +45,8 @@ interface DossierProps {
   caseDetails?: CaseDetails;
   setDossierFinancialStatus: (status: string) => void;
   dossierFinancialStatus: string;
+  financialData: FinancialHighlightsResponse | null;
+  setFinancialData: (data: FinancialHighlightsResponse | null) => void;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -47,6 +54,8 @@ const Dossier: React.FC<DossierProps> = ({
   caseDetails,
   setDossierFinancialStatus,
   dossierFinancialStatus,
+  financialData,
+  setFinancialData,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -112,6 +121,11 @@ const Dossier: React.FC<DossierProps> = ({
   }, [tabParam]);
 
   const tabs = [
+    {
+      label: 'Financial Workings',
+      value: 'financial_workings',
+      hide: false,
+    },
     {
       label: 'Summary',
       value: 'summary',
@@ -191,11 +205,16 @@ const Dossier: React.FC<DossierProps> = ({
 
       <SectionHeader
         title='Dossier'
-        titleIcon={<DetailsIcon alt='dossier-header-icon' />}
-        iconBg='#C5D89D'
+        titleIcon={
+          <DossierIcon
+            alt='dossier-header-icon'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        }
+        iconBg={ColorCode.caseBgColor}
         bgType='circle'
         count={count}
-        showItemCount={true}
+        showItemCount={tabParam !== 'financial_workings'}
         buttons={headerButtons}
       />
 
@@ -227,6 +246,8 @@ const Dossier: React.FC<DossierProps> = ({
             caseDetails={caseDetails}
             setDossierFinancialStatus={setDossierFinancialStatus}
             dossierFinancialStatus={dossierFinancialStatus}
+            financialData={financialData}
+            setFinancialData={setFinancialData}
           />
         )}
 

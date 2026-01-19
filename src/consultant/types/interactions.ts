@@ -42,6 +42,14 @@ export enum ColorCode {
   taskBgColor = '#e64c94',
 }
 
+export enum FinancialWorkingCountries {
+  Australia = 'Australia',
+  Canada = 'Canada',
+  Ireland = 'Ireland',
+  UK = 'United Kingdom',
+  US = 'United States',
+}
+
 export interface globalFiltersType {
   [key: string]: string[];
 }

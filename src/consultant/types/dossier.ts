@@ -397,15 +397,22 @@ export type DynamicNumberMap = Record<string, number>;
 export interface FinancialHighlightsProject {
   'Project ID': string;
   'Project Name': string;
+  'Project Code'?: string;
   'Currency Symbol'?: string;
-  [key: string]: string | number | undefined;
+  is_qualified?: boolean;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface FinancialHighlightsComputedFields {
   Title: Record<string, string>;
-  Total: Record<string, number>;
+  Total: Record<string, number | string>;
   Columns: string[];
   Projects: FinancialHighlightsProject[];
+  'Technical Submissions by Cost that are 50% or more of Total QRE'?: FinancialHighlightsProject[];
+  'Total Project to be shared with HMRC'?: {
+    Total: number;
+  };
+  'Percentage Calculation'?: Record<string, string | number>;
 }
 
 export interface FinancialHighlightsData {
@@ -415,7 +422,10 @@ export interface FinancialHighlightsData {
   case_rid: string;
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
-  computed_fields: FinancialHighlightsComputedFields;
+  computed_fields:
+    | FinancialHighlightsComputedFields
+    | AustraliaComputedFields
+    | USAComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -425,7 +435,87 @@ export interface CaseSummaryData {
   case_rid: string;
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
-  computed_fields: FinancialHighlightsComputedFields;
+  computed_fields:
+    | FinancialHighlightsComputedFields
+    | AustraliaComputedFields
+    | USAComputedFields;
+}
+
+export interface AustraliaRdExpenditure {
+  [key: string]: number;
+}
+
+export interface AustraliaTierOfIntensity {
+  name: string;
+  'offset Amount': number;
+  'Notional deductions applied': number;
+}
+
+export interface AustraliaAdditionalInfo {
+  'Tax rate': string;
+}
+
+export interface AustraliaNonRefundableTaxOffset {
+  'R&D intensity': string;
+  'R&D entity total expenses': number;
+  'Total notional R&D deductions': Record<
+    string,
+    string | number | unknown | null
+  >;
+}
+
+export interface AustraliaComputedFields {
+  Title?: Record<string, string>;
+  Total?: Record<string, number>;
+  Columns?: string[];
+  Projects?: FinancialHighlightsProject[];
+  'R&D Expenditure': AustraliaRdExpenditure;
+  'Tier of intensity': AustraliaTierOfIntensity[];
+  'Additional Information': AustraliaAdditionalInfo;
+  'Preliminary Calculation': number;
+  'Non-refundable tax offset': AustraliaNonRefundableTaxOffset;
+  'Non-refundable R&D tax offset': number;
+}
+
+export interface USAReduction280C {
+  reduction280c: {
+    elect280c: {
+      credit: string;
+      factor?: number;
+      rate?: number;
+    };
+    no_elect280c: {
+      credit: string;
+      factor?: number;
+      rate?: number;
+    };
+  };
+}
+
+export interface USACreditASC {
+  excess_qre: string;
+  final_credit: string;
+  percentage_used: number;
+  asc_credit_amount: string;
+  adjusted_base_amount: string;
+  tot_current_year_qre: string;
+  total_prior_3years_qre: string;
+  total_section_b_credit: string;
+}
+
+export interface USACreditRRC {
+  base_amount: string;
+  final_credit: string;
+  half_total_qre: string;
+  tot_current_year_qre: string;
+  fixed_base_percentage: number;
+  total_section_a_credit: string;
+  excess_qre_over_base_amount: string;
+  average_annual_gross_receipts: string;
+}
+
+export interface USAComputedFields {
+  [key: string]: any;
 }
 
 export interface FinancialHighlightsResponse {
