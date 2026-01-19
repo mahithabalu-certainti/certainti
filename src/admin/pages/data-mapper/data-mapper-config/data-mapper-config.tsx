@@ -261,14 +261,6 @@ const DataMapperConfig: React.FC = () => {
                   label: 'Status',
                   value: mappingData?.formDetail?.status_name || '',
                 },
-                {
-                  label: 'Effective From Date',
-                  value: mappingData?.formDetail?.effective_from_date || '',
-                },
-                {
-                  label: 'Effective To Date',
-                  value: mappingData?.formDetail?.effective_to_date || '',
-                },
               ].map(({ label, value }) => (
                 <React.Fragment key={label}>
                   <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>

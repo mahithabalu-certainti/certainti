@@ -89,7 +89,7 @@ const FieldDetailsPanel = ({ field }: FieldDetailsPanelProps) => {
         Field Details
       </div>
 
-      <div className='space-y-6 p-4'>
+      <div className='space-y-6 p-4 max-h-[calc(100vh-335px)] overflow-auto'>
         <DetailItem
           label='Field ID'
           value={field.id}
@@ -112,7 +112,7 @@ const FieldDetailsPanel = ({ field }: FieldDetailsPanelProps) => {
                 <span>
                   X: {field.x.toFixed(2)}, Y: {field.y.toFixed(2)}
                 </span>
-                <span>Width: {field.width.toFixed(2)}</span>
+                <span className='mx-2'> Width: {field.width.toFixed(2)}</span>
                 <span> Height: {field.height.toFixed(2)}</span>
               </>
             }
@@ -120,7 +120,7 @@ const FieldDetailsPanel = ({ field }: FieldDetailsPanelProps) => {
           />
         </div>
 
-        {field.possibleValues && field.possibleValues.length > 0 && (
+        {/* {field.possibleValues && field.possibleValues.length > 0 && (
           <DetailItem
             label='Possible Values'
             value={field.possibleValues.join(', ') || '-'}
@@ -134,7 +134,7 @@ const FieldDetailsPanel = ({ field }: FieldDetailsPanelProps) => {
             value={field.defaultValue}
             multiline
           />
-        )}
+        )} */}
       </div>
     </div>
   );
