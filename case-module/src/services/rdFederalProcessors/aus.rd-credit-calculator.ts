@@ -26,7 +26,7 @@ export class RdCreditCalculatorForAus {
         return this.orgDbSequelize;
     }
 
-    async computeForAus(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
+    async computeForAus(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any) {
       const orgDb = await this.getOrgDb();
       const calculateQreCost = await orgDb.query<CalculateQreCostType>(calculateRDExpenditureQuery(schemaName, caseRid, accountRid), {type : QueryTypes.SELECT});
       if(calculateQreCost.length > 0) {
@@ -72,11 +72,17 @@ export class RdCreditCalculatorForAus {
           {
             name : `Tier 2 Intensity: > ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_2_rd_premium}%)`,
             "Notional deductions applied" : notionalDeductionAppliedForTier2,
-            "offset Amount" : notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100)) || 0.00
+            "offset Amount" : parseFloat(Number(notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100))).toFixed(2)) || 0.00
           }
         ]
         let nonRefundableRdTaxOffset = parseFloat(Number(calculateCredit[0]?.["offset Amount"]! + calculateCredit[1]?.["offset Amount"]!).toFixed(2));
         const finalData = {
+          Title : {
+            "Account ID" : accountRid,
+            "Account Name" : countryInfo.accountName,
+            "Description": "Research and development Tax Incentive Schedule",
+            "Fiscal Year": caseDetails.fiscal_year
+        },
           "Preliminary Calculation" :{
             "Add-back of R&D accounting expenditure (Item 7D)" : preliminaryCalculation
           },
