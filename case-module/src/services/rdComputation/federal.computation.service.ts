@@ -206,8 +206,8 @@ export class FederalComputationService {
                     let totalEpwCost = 0.00;
                     let totalReductionCost = 0.00;
                     let totalNetEpw = 0.00;
-                    let unpaidAmountPaid = Number(caseDetails?.unpaid_amount_paid) || 0.00
-                    let paidAmount = Number(caseDetails?.paid_amount) || 0.00
+                    let unpaidAmountPaid = Number(caseDetails?.unpaid_amounts_paid) || 0.00
+                    let paidAmount = Number(caseDetails?.unpaid_amounts) || 0.00
                     let cloudSoftwareCost = Number(caseDetails?.cloud_software) || 0.00
                     let subContracts = Number(caseDetails?.sub_contracts) || 0.00
                     let heatLightPower = Number(caseDetails?.heat_light_power) || 0.00
