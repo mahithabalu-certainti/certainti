@@ -3,7 +3,7 @@ import { CaseService } from "./caseService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
-import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { caseFilingTypes, caseStatuses, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 
@@ -86,4 +86,59 @@ export class ChildCaseService extends CaseService {
             return []
         }
     }
+
+    async getClosedCasesList(data: { account_rid: string }): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { cases: any };
+      }> {
+        const orgDb = await this.getOrgDb();
+        const mainDb = await this.getMainDb();
+        try {
+          const [caseStatus]: any = await mainDb.query(rawQueries.fetchCaseStatusByType(caseStatuses.CLOSED));
+          if (caseStatus.length === 0) {
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: STATUS_MESSAGE.dataNotAvailable,
+                errorMessage: "Closed case status not found",
+            };
+          } 
+           const [caseFilingType]: any = await mainDb.query(rawQueries.fetchFilingTypeByName(caseFilingTypes.regular));
+           if (caseFilingType.length === 0) {
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: STATUS_MESSAGE.dataNotAvailable,
+                errorMessage: "Regular filing type not found",
+            };
+          } 
+        const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+            if (!accountNumber) {
+                throw new Error("Invalid account ID");
+            }
+          const { Case } = await this.caseModelService.getModels(accountNumber);
+            const closedCases = await Case.findAll({
+                where: {
+                    account_rid: data.account_rid,
+                    status_rid: caseStatus[0].rid,
+                    filing_type_rid: caseFilingType[0].rid
+                }
+            });
+            return {
+            statusCode: HttpStatus.SUCCESS,
+            message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
+            data: { cases: closedCases },
+          };
+        } catch (error) {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: STATUS_MESSAGE.dataNotAvailable,
+            errorMessage: (error as Error).message,
+          };
+        }
+}
 }

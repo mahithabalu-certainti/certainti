@@ -29,6 +29,7 @@ export interface ICreateCases {
   taxable_income ? : number;
   export_sales_revenue? : number;
 
+  parent_case_rid?: string;
 }
 
 export type CaseHeadersColumns = {

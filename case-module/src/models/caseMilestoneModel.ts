@@ -3,7 +3,7 @@ import { logMessage } from "../utils/helpers";
 import { ENV_PREFIX } from "../utils/constants";
 
 interface CaseMilestoneAttributes {
-    eid : string,
+    eid? : string,
     rid : string,
     r_number? : string,
     created_by : string,
@@ -23,7 +23,7 @@ extends Optional<CaseMilestoneAttributes, "rid"> {}
 
 export class CaseMilestone extends Model<CaseMilestoneAttributes, CaseMilestoneCreationAttributes>
 implements CaseMilestoneAttributes {
-    public eid! : string;
+    public eid? : string;
     public rid! : string;
     public r_number? : string;
     public created_by!: string;

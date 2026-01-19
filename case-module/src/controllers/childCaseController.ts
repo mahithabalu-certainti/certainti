@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import Configurations from "../config/config";
-import { errorLog, handleErrorResponse } from "../utils/helpers";
+import { errorLog, handleErrorResponse, handleSuccessResponse, successLog, validateRequest } from "../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import { caseClosedListSchema } from "../lib/joi/schemas/schema";
 
 const services = Configurations.getInstance().getServices();
 const childCaseService = services.caseService;
@@ -92,7 +93,44 @@ async function RegionListForFinancialHighlights (req : Request, res : Response) 
   }
 }
 
+async function getClosedCasesList(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Closed Cases List";
+  try {
+    const value = await validateRequest(req, caseClosedListSchema, res,"GET");
+     if (!value) {
+          errorLog(methodName, "Request body is empty");
+          return;
+        }
+    const response = await childCaseService.getClosedCasesList(value);
+    if (response.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, response.data);
+      return;
+    } else {
+      errorLog(methodName, response.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        response.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
     signOffFinancialWorking,
-    RegionListForFinancialHighlights
+    RegionListForFinancialHighlights,
+    getClosedCasesList
 }

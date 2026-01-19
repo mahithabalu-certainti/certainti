@@ -216,6 +216,11 @@ export const caseStatuses = {
   CLOSED: "Closed",
 };
 
+export const caseFilingTypes = {
+ regular: "Regular",
+  amendment: "Amendment",
+};
+
 export const SUMMARY_HIGHLIGHTS_FLAG = {
   all: "all",
   rdQualified: "rd_qualified",
@@ -318,6 +323,10 @@ export const rawQueries = {
       WHERE status = 'active'
       ORDER BY filing_type_name ASC
     `;
+  },
+  fetchFilingTypeByName(typeName: string): string {
+    return `
+    SELECT rid, filing_type_name as name FROM ${MAIN_SCHEMA_NAME}.case_filing_type WHERE filing_type_name = '${typeName}'`;
   },
   getActivityStatus(activityType: string) {
     return `
