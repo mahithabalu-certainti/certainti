@@ -840,7 +840,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectFiscalSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact, isEmailRecipient, technicalPointOfContactEmail ,projectPointOfContactEmail } =
+    const { technicalConsultant, projectPointOfContact, isEmailRecipient, technicalPointOfContactEmail, projectPointOfContactEmail } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
