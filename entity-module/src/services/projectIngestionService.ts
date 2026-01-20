@@ -3168,6 +3168,7 @@ class ProjectIngestionService {
           ["country_rid", "country"],
           ["region_rid", "region"],
           ["currency_rid", "currency"],
+          ["is_rd_claim_qualified", "is_rd_claim_qualified"]
         ],
       },
     });
