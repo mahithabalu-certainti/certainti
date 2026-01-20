@@ -268,7 +268,7 @@ export class ProjectFiscalSummary
   public project_point_of_contact?: string | null;
   public technical_point_of_contact?: string | null;
   public project_point_of_contact_email?:string | null;
-  public technical_point_of_contact_email?:string | null;
+  public technical_point_of_contact_email?: string | null;
 
   public comments?: string | null;
   public project_description?: string | null;
