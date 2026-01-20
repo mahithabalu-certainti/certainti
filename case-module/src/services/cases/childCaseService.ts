@@ -128,6 +128,7 @@ export class ChildCaseService extends CaseService {
             }
           const { Case } = await this.caseModelService.getModels(accountNumber);
             const closedCases = await Case.findAll({
+                attributes: ['rid', 'case_name'],
                 where: {
                     account_rid: data.account_rid,
                     status_rid: caseStatus[0].rid,
