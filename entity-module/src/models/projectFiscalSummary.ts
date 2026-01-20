@@ -130,6 +130,8 @@ export interface ProjectFiscalSummaryAttributes {
 
   project_point_of_contact?: string | null;
   technical_point_of_contact?: string | null;
+  project_point_of_contact_email?:string | null;
+  technical_point_of_contact_email?:string | null;
   is_interaction_recipient:boolean | false;
 }
 interface ProjectFiscalSummaryCreationAttributes
@@ -265,6 +267,8 @@ export class ProjectFiscalSummary
 
   public project_point_of_contact?: string | null;
   public technical_point_of_contact?: string | null;
+  public project_point_of_contact_email?:string | null;
+  public technical_point_of_contact_email?:string | null;
 
   public comments?: string | null;
   public project_description?: string | null;
@@ -493,6 +497,14 @@ export class ProjectFiscalSummary
         },
         technical_point_of_contact: {
           type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        project_point_of_contact_email: {
+          type: DataTypes.STRING(150),
+          allowNull: true,
+        },
+        technical_point_of_contact_email: {
+          type: DataTypes.STRING(150),
           allowNull: true,
         },
         project_description: {

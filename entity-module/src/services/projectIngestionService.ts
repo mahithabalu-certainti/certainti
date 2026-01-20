@@ -840,7 +840,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectFiscalSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact, isEmailRecipient } =
+    const { technicalConsultant, projectPointOfContact, isEmailRecipient, technicalPointOfContactEmail ,projectPointOfContactEmail } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -861,6 +861,8 @@ class ProjectIngestionService {
       endDate,
       technicalConsultant,
       projectPointOfContact,
+      projectPointOfContactEmail,
+      technicalPointOfContactEmail,
       isEmailRecipient,
       projectFiscalId
     );
@@ -2245,6 +2247,8 @@ class ProjectIngestionService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "account_name",
       "project_code",
       "project_client_group",
@@ -2730,6 +2734,8 @@ class ProjectIngestionService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "account_name",
       "project_code",
       "project_client_group",
@@ -3090,8 +3096,10 @@ class ProjectIngestionService {
             fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
             "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
+          "Project Point of Contact Email": fiscal.project_point_of_contact_email || "-",
           "Technical Point of Contact":
             fiscal.technical_point_of_contact || "-",
+          "Technical Point of Contact Email": fiscal.technical_point_of_contact_email || "-",
           Comments: fiscal.comments || "-",
           "Last Modified": modifiedDateTime
             ? timezone && isValidTimezone(timezone)
@@ -3536,6 +3544,8 @@ class ProjectIngestionService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "classification_name",
       "industry_name",
       "name",
