@@ -2350,6 +2350,7 @@ class ProjectIngestionService {
                     required: true,
                     where: {
                       document_rid: documentRid,
+                      event_name:"insert"
                     },
                     attributes: [
                       "rid",
@@ -2522,6 +2523,7 @@ class ProjectIngestionService {
                   required: true,
                   where: {
                     document_rid: documentRid,
+                     event_name:"insert"
                   },
                   attributes: [
                     "rid",
@@ -2595,6 +2597,27 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
+           include: [
+              ...(documentRid
+                ? [
+                  {
+                    model: ProjectTimeline,
+                    as: "ProjectTimelines",
+                    required: true,
+                    where: {
+                      document_rid: documentRid,
+                      event_name:"insert"
+                    },
+                    attributes: [
+                      "rid",
+                      "entity_rid", // THIS IS CRUCIAL
+                      "document_rid",
+                      "event_name",
+                    ],
+                  },
+                ]
+                : []),
+            ],
           required: !!documentRid,
           where: {
             account_rid: accountData.rid,
