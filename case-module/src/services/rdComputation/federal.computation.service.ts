@@ -113,7 +113,7 @@ export class FederalComputationService {
                             dynamicKeyNameForTotalCount = `Total Projects`
                             projectsMoreOfQre50Percent = result.computedFields[0].projects.map((p : any) => {
                                 return {
-                                    "Project Client Group Name": p.project_name,
+                                    "Project Name": p.project_name,
                                     "Total Project Value/Labor" : p.total_project_value_labor,
                                 }
                             })
@@ -124,7 +124,7 @@ export class FederalComputationService {
                             dynamicKeyNameForTotalCount = `Total Customer Groups`
                             projectsMoreOfQre50Percent = minProjectResult.selectedProjects.map((p : any, index : number) => {
                                 return {
-                                    "Project Client Group Name": p.project_name,
+                                    "Project Name": p.project_name,
                                     "Total Project Value/Labor" : p.total_project_value_labor
                                 }
                             })
@@ -140,7 +140,7 @@ export class FederalComputationService {
                             "Fiscal Year" : `04/01/${caseDetails?.fiscal_year - 1} - 03/31/${caseDetails?.fiscal_year}`
                         },
                         Columns : [
-                            "Project Credit Summary","Employees","LABOUR", "EPW", reductionValue, 
+                            "Project Credit Summary","Employees","Total Projects","LABOUR", "EPW", reductionValue, 
                             "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
                             "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
                             "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit"
@@ -164,7 +164,7 @@ export class FederalComputationService {
                         },
                         Projects : result.computedFields[0].projects.map((d: any) => {
                             return {
-                                "Project Client Group Name": d.project_client_group || d.project_name,
+                                "Project Name": d.project_client_group || d.project_name,
                                 "Total Projects" : d.total_projects_count || 0,
                                 "Employees" : d.employees,
                                 "EPW" : d.epw,

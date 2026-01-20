@@ -503,7 +503,7 @@ export interface IActivityService {
 }
 
 export interface IChildCaseService extends ICaseService {
-  signOffFinancialWorking(data: any): Promise<{
+  signOffFinancialWorking(data: any, file : any): Promise<{
     statusCode: number;
     statusMessage: string;
   }>;

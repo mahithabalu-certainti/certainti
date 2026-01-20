@@ -6,6 +6,7 @@ import { Logger } from "winston";
 import { caseFilingTypes, caseStatuses, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
+import { uploadToAzureBlob } from "../../utils/helpers";
 
 export class ChildCaseService extends CaseService {
 
@@ -18,7 +19,7 @@ export class ChildCaseService extends CaseService {
         return orgDb;
     }
 
-    async signOffFinancialWorking (data : any) {
+    async signOffFinancialWorking (data : any, file : any) {
         const mainDb = await this.mainDbConfiguration();
         const orgDb = await this.orgDbConfiguration();
         const parentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -35,6 +36,11 @@ export class ChildCaseService extends CaseService {
                     statusCode : HttpStatus.BAD_REQUEST,
                     statusMessage : STATUS_MESSAGE.noProjectsAssignedToCase
                 }
+            }
+            const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+            if(file !== undefined) {
+                const fileUploadedResult = await uploadToAzureBlob(file, data.account_rid, '', parentAccount[0][0].r_number, 'signoff')
+                await orgDb.query(rawQueries.insertDataIntoAttachments(schemaName, data.case_rid, data.userId, data.account_rid, fileUploadedResult.url, fileUploadedResult.name, caseDetails?.fiscal_year, fileUploadedResult.extension, fileUploadedResult.size))
             }
             const caseResult : any = await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, data.sign_off));
             if(caseResult[1].rowCount) {
