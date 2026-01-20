@@ -445,7 +445,46 @@ export class FederalComputationService {
                     }
                 })
                 return finalUkData[0];
-            } else {
+            } else if(fetchCountryDetails[0][0].country_code === "USA") {
+                const finalUSAData = result.map((u : any) => {
+                    let creditRRC = u["computed_fields"]["Regular Credit"]["creditRRC"]
+                    let creditASC = u["computed_fields"]["ASC Credit"]["creditASC"]
+                    let creditASCKey = Object.keys(creditASC).find((v : string) => v.startsWith("Enter"))
+                    
+                    return {
+                        ...u,
+                        "computed_fields" : {
+                            "Regular Credit" : {
+                                "creditRRC" : {
+                                    "5 Total Qualified Research Expenses" : creditRRC["5 Total Qualified Research Expenses"],
+                                    "6 Fixed-base percentage" : creditRRC["6 Fixed-base percentage"],
+                                    "7 Average Annual Gross Receipts" : creditRRC["7 Average Annual Gross Receipts"],
+                                    "8 Multiply line 7 by percentage on line 6" : creditRRC["8 Multiply line 7 by percentage on line 6"],
+                                    "9 Subtract line 8 from line 5" : creditRRC["9 Subtract line 8 from line 5"],
+                                    "10 Multiply line 5 by 10" : creditRRC["10 Multiply line 5 by 10"],
+                                    "11 Enter smaller of line 9 or line 10" : creditRRC["11 Enter smaller of line 9 or line 10"]
+                                },
+                                "rrc280C" : u["computed_fields"]["Regular Credit"]["rrc280C"]
+                            },
+                            "ASC Credit" : {
+                                "creditASC": {
+                                    "20 Total Qualified Research Expenses" : creditASC["20 Total Qualified Research Expenses"],
+                                    "21 Total QREs for prior 3 tax years" : creditASC["21 Total QREs for prior 3 tax years"],
+                                    "22 Divide line 21 by 6.0" : creditASC["22 Divide line 21 by 6.0"],
+                                    "23 Subtract line 22 from line 20" : creditASC["23 Subtract line 22 from line 20"],
+                                    [creditASCKey!] : creditASC[creditASCKey!],
+                                    "24 Multiply line 23 by the percentage above" : creditASC["24 Multiply line 23 by the percentage above"],
+                                    "25 Add lines 19 and 24": creditASC["25 Add lines 19 and 24"],
+                                },
+                                "asc280C": u["computed_fields"]["ASC Credit"]["asc280C"]
+                            },
+                            "Research and Development Tax Credit": u["computed_fields"]['Research and Development Tax Credit']
+                        }
+                    }
+                })
+                return finalUSAData[0];
+            }
+            else {
                 return result[0]
             }
         }
