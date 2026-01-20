@@ -2354,7 +2354,7 @@ class ProjectIngestionService {
                     required: true,
                     where: {
                       document_rid: documentRid,
-                      event_name:"insert"
+                      event_name: "insert"
                     },
                     attributes: [
                       "rid",
@@ -2527,7 +2527,7 @@ class ProjectIngestionService {
                   required: true,
                   where: {
                     document_rid: documentRid,
-                     event_name:"insert"
+                    event_name: "insert"
                   },
                   attributes: [
                     "rid",
