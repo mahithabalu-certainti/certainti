@@ -376,7 +376,7 @@ const createResourcesSchema = Joi.object({
         "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
-    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+    .pattern(/^[A-Za-z\s\-'.,]{3,64}$/)
     .min(3)
     .max(64)
     .optional()
@@ -571,7 +571,7 @@ const updateResourceSchema = Joi.object({
         "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
-    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+    .pattern(/^[A-Za-z\s\-'.,]{3,64}$/)
     .min(3)
     .max(64)
     .optional()
