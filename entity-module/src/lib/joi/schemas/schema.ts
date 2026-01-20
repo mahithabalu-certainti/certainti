@@ -247,7 +247,7 @@ const createResourcesSchema = Joi.object({
     'any.required': 'Resource type is required'
   }),
   name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
@@ -297,7 +297,7 @@ const createResourcesSchema = Joi.object({
       "any.allowOnly": "Organization name cannot be null or empty"
     }),
   role: Joi.string()
-    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+    .pattern(/^[A-Za-z\s\-'.,]{3,64}$/)
     .min(3)
     .max(64)
     .optional()
@@ -442,7 +442,7 @@ const updateResourceSchema = Joi.object({
     'any.required': 'Resource type is required'
   }),
   name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-'.,]{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
@@ -492,7 +492,7 @@ const updateResourceSchema = Joi.object({
       "any.allowOnly": "Organization name cannot be null or empty"
     }),
   role: Joi.string()
-    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+    .pattern(/^[A-Za-z\s\-'.,]{3,64}$/)
     .min(3)
     .max(64)
     .optional()

@@ -504,6 +504,7 @@ export class ProjectMapper {
     technicalConsultant: string | null,
     projectPointOfContact: string | null,
     projectPointOfContactEmail: string | null,
+    technicalPointOfContactEmail: string | null,
     isEmailRecipient: boolean | false
   ) {
     return {
@@ -555,6 +556,7 @@ export class ProjectMapper {
       technical_point_of_contact: technicalConsultant,
       project_point_of_contact: projectPointOfContact,
       project_point_of_contact_email: projectPointOfContactEmail,
+      technical_point_of_contact_email: technicalPointOfContactEmail,
       is_interaction_recipient: isEmailRecipient,
     };
   }
