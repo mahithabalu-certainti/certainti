@@ -130,9 +130,9 @@ export interface ProjectFiscalSummaryAttributes {
 
   project_point_of_contact?: string | null;
   technical_point_of_contact?: string | null;
-  project_point_of_contact_email?:string | null;
-  technical_point_of_contact_email?:string | null;
-  is_interaction_recipient:boolean | false;
+  project_point_of_contact_email?: string | null;
+  technical_point_of_contact_email?: string | null;
+  is_interaction_recipient: boolean | false;
 }
 interface ProjectFiscalSummaryCreationAttributes
   extends Optional<ProjectFiscalSummaryAttributes, "rid"> {}
