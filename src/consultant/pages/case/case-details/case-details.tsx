@@ -818,6 +818,7 @@ export const CaseDetails = () => {
               setExportType={setExportType}
               refetchCaseDetails={refetchCaseDetails}
               activityMenuItems={activityMenuItems}
+              isCaseTeamCreated={!!isCaseTeamCreated}
             />
           </div>
         );

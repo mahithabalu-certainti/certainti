@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 //-------- Project Documents ----------
 export interface ProjectDocumentsListURLParams {
   page: number;
@@ -205,6 +206,14 @@ export interface RDCreditInitiatePayload {
   account_rid: string;
   case_rid: string;
   fiscal_year?: number;
+}
+
+export interface SignOffFinancialHighlightsPayload {
+  case_rid: string;
+  account_rid: string;
+  sign_off: boolean;
+  file: any;
+  comments: string;
 }
 export interface InputParams {
   country: string;
