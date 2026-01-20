@@ -1592,8 +1592,8 @@ export const rawQueries = {
   fetchAccountStartEndDate (accountRid : string, schemaName : string) {
     return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   },
-  insertDataIntoAttachments (schemaName : string, caseRid : string, userId : string, accountRid : string, browseFile : string, documentName : string, fiscalYear : number, format : string, size : number) {
-    return `INSERT INTO ${schemaName}.attachments (created_by, created_datetime, account_rid, browse_file, document_name, attach_to, attachment_level, fiscal_year, format, size_in_mb, document_category_rid, document_type_rid, document_category_others, document_type_others) VALUES ('${userId}', NOW(), '${accountRid}', '${browseFile}', '${documentName}', '${caseRid}', 'case', ${fiscalYear}, '${format}', ${size}, '', '', '', '')`
+  insertDataIntoAttachments (schemaName : string, caseRid : string, userId : string, accountRid : string, browseFile : string, documentName : string, fiscalYear : number, format : string, size : number, comments : any) {
+    return `INSERT INTO ${schemaName}.attachments (created_by, created_datetime, account_rid, browse_file, document_name, attach_to, attachment_level, fiscal_year, format, size_in_mb, document_category_rid, document_type_rid, document_category_others, document_type_others, comments) VALUES ('${userId}', NOW(), '${accountRid}', '${browseFile}', '${documentName}', '${caseRid}', 'case', ${fiscalYear}, '${format}', ${size}, '', '', '', '', '${comments.replace(/'/g, "")}')`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
