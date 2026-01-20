@@ -399,6 +399,12 @@ export class FederalComputationService {
                     return {
                     ...d,
                     computed_fields : {
+                        "Title" : {
+                            "Account ID" : d.computed_fields["Title"]["Account ID"],
+                            "Account Name": d.computed_fields["Title"]["Account Name"],
+                            "Description" : d.computed_fields["Title"]["Description"],
+                            "Fiscal Year" : d.computed_fields["Title"]["Fiscal Year"]
+                        },
                         "Preliminary Calculation" : d.computed_fields["Preliminary Calculation"],
                         "R&D Expenditure" : {
                             'R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
