@@ -220,9 +220,13 @@ export class RdCreditCalculatorForTX {
     buildComputedFields(qretInfo: any, precedingWithQretInfo: any, precedingWithNoQretInfo: any, qreActivitiesCreditInfo: any) {
           let qret = {
             "1a. Total QRET for the period covered by this report":qretInfo.total_current_year_qre,
+            "1b. QRET under higher education contracts for the period covered by this report ":"",
             "2a. Total QRET in 1st preceding tax period":qretInfo.prev1_qre,
+            "2b. QRET under higher education contracts for the 1st preceding tax period":"",
             "3a. Total QRET in 2nd preceding tax period":qretInfo.prev2_qre,
+            "3b. QRET under higher education contracts for the 2nd preceding tax period":"",
             "4a. Total QRET in 3rd preceding tax period":qretInfo.prev3_qre,
+            "4b. QRET under higher education contracts for the 3rd preceding tax period":""
         }
 
         let precedingWithQret ={
