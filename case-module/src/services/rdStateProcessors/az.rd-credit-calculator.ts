@@ -307,7 +307,7 @@ export class RdCreditCalculatorForAZ {
             "22 Add lines 10 and 21. Enter the total":creditRRC.total_az_credit_before_limits,
            [`* If line 22 is $ ${creditRRC?.config?.threshold_amount} or less, complete line 23 and skip lines 24 through 26.`]:"",
             [`* If line 22 is more than $ ${creditRRC?.config?.threshold_amount}, skip line 23 and complete lines 24 through 26.`]:"",
-            [`23 Multiply line 22 by ${creditRRC?.config?.config.credit_rate} % (${(creditRRC?.config?.credit_rate) / 100}). Enter the result`]:creditRRC.credit_if_under_threshold,
+            [`23 Multiply line 22 by ${creditRRC?.config?.credit_rate} % (${(creditRRC?.config?.credit_rate) / 100}). Enter the result`]:creditRRC.credit_if_under_threshold,
             [`24 Subtract $ ${creditRRC?.config?.threshold_amount} from line 22. Enter the difference`]:creditRRC.excess_amount,
             [`25 Multiply line 24 by ${creditRRC?.config?.tier2_rate}. Enter the result`]:creditRRC.credit_on_excess,
             [`26 Add ${creditRRC?.config?.tier2_base_add} to line 25. Enter the total`] :creditRRC.credit_if_over_threshold,
