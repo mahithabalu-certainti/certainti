@@ -299,10 +299,10 @@ export const getAccountColumns = (
           }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
-          {row.finance_executive}
+          {row.finance_executive || '-'}
         </div>
       ) : (
-        <span>{row.finance_executive}</span>
+        <span>{row.finance_executive || '-'}</span>
       );
     },
   },
@@ -327,10 +327,10 @@ export const getAccountColumns = (
           }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
-          {row.finance_lead}
+          {row.finance_lead || '-'}
         </div>
       ) : (
-        <span>{row.finance_lead}</span>
+        <span>{row.finance_lead || '-'} </span>
       );
     },
   },
@@ -359,10 +359,10 @@ export const getAccountColumns = (
           }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
-          {row.professional_services_consultant}
+          {row.professional_services_consultant || '-'}
         </div>
       ) : (
-        <span>{row.professional_services_consultant}</span>
+        <span>{row.professional_services_consultant || '-'} </span>
       );
     },
   },

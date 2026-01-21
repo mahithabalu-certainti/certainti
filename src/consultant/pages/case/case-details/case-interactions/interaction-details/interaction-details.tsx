@@ -1,3 +1,4 @@
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../store/store';
@@ -6,9 +7,8 @@ import {
   useSendInteraction,
 } from '../../../../../services/interactions/interactions-service';
 import { useToast } from '../../../../../../hooks';
-import { useMemo } from 'react';
 import { AllPermissions } from '../../../../../../common-service';
-import { StatusTypeEnum } from '../../../../../types';
+import { InteractionList, StatusTypeEnum } from '../../../../../types';
 import { INTERACTIONS_EDIT } from '../../../../../../routes';
 import DetailsSection, {
   DetailItem,
@@ -22,7 +22,10 @@ import SectionHeader from '../../../../../../components/details-section/section-
 import { InteractionDetailIcon } from '../../../../../../assets';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
-import { InteractionQuestions } from '../../../../../../components';
+import {
+  InteractionQuestions,
+  SendInteractionModal,
+} from '../../../../../../components';
 import { useProjectDetail } from '../../../../../services/project';
 
 interface InteractionDetailsProps {
@@ -55,6 +58,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const { data: projectData, isLoading: projectDetailsLoading } =
     useProjectDetail(accountId, projectFiscalRid || '');
   const projectDetails = projectData?.data?.project;
+  const [reInitiateModalOpen, setReInitiateModalOpen] = useState(false);
+
   const interactionFieldsEditable = useMemo(
     () =>
       permission
@@ -161,6 +166,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
+    },
+    {
+      label: 'Re-Initiate Interaction',
+      variant: 'outlined' as const,
+      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction,
+      onClick: () => setReInitiateModalOpen(true),
+      sx: { width: '160px', minWidth: '160px' },
     },
     {
       label: 'Reminder',
@@ -346,6 +358,26 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           />
         </div>
       )}
+      <SendInteractionModal
+        title='Re-Initiate Interaction'
+        isOpen={reInitiateModalOpen}
+        onClose={() => setReInitiateModalOpen(false)}
+        selectedRows={
+          data
+            ? [
+                {
+                  rid: data.interaction_rid || interactionId || '',
+                  interaction_level_name: data.interaction_level_name || '',
+                  project_fiscal_rid: data.project_fiscal_rid || '',
+                  recipient_name: data.recipient_name || '',
+                  recipient_email: data.recipient_email || '',
+                  status_name: data.status_name || '',
+                } as InteractionList,
+              ]
+            : []
+        }
+        onSuccessRefetch={refetch}
+      />
     </>
   );
 };
