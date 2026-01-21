@@ -1581,7 +1581,13 @@ export const rawQueries = {
     let ids = ProjectRegionIds.filter((d : any) => d.region_rid !== null)
     let validIds;
     validIds = ids.map((d : any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
-    return `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = true WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
+    let finalQuery;
+    if(validIds === '') {
+      finalQuery = ''
+    } else {
+      finalQuery = `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = true WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
+    }
+    return finalQuery;
   },
   fetchStates(stateIds: string[]) {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
