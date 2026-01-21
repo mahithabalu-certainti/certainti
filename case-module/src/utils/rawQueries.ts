@@ -26,6 +26,9 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
+    c.employers_pension_contribution, c.other, c.material_software_cost, 
+    c.sub_contracts, c.cloud_software,c.unpaid_amounts_paid, c.unpaid_amounts,
+    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
     ELSE FALSE END AS is_case_team_created
     FROM
@@ -290,7 +293,7 @@ export const fetchProjectsForCases = (
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid
+    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -2360,4 +2363,127 @@ export const signoffProjectTechSummary  = (schemaName : string, projectFiscalRid
 
 export const getValidRegionIdsFromCases = (schemaName : string, accountId : string, caseId : string) => {
   return `SELECT region_rid AS rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseId}' AND account_rid = '${accountId}' AND region_rid IS NOT NULL`
+}
+export const fetchAvailableConfigLevelQuery = () => {
+   let query = `
+     WITH eligible_configs AS (
+    SELECT
+        ctry.country_code,
+        rdcg.is_federal,
+        ROW_NUMBER() OVER (
+          PARTITION BY 
+            ctry.country_code,
+            CASE WHEN rdcg.is_federal THEN 'FEDERAL'
+            ELSE rdcg.state_rid
+            END
+          ORDER BY
+            CASE
+              WHEN rdval.effective_start_date >= :effectiveStart THEN 1
+              ELSE 2
+            END,
+          rdval.effective_start_date DESC
+      ) AS rn
+      FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
+      JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey
+          ON rdkey.credit_config_group_rid = rdcg.rid
+      JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval
+          ON rdval.credit_config_group_rid = rdcg.rid
+      JOIN ${MAIN_SCHEMA_NAME}.country ctry
+          ON ctry.rid = rdcg.country_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.state st
+          ON st.rid = rdcg.state_rid
+        AND st.country_rid = ctry.rid
+      WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
+        -- Overlap logic
+        AND (rdval.effective_start_date IS NULL OR rdval.effective_start_date <= :effectiveEnd)
+        AND (rdval.effective_end_date IS NULL OR rdval.effective_end_date >= :effectiveStart)
+        AND rdval.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ='Active')
+  )
+  SELECT country_code, is_federal
+  FROM eligible_configs
+  WHERE rn = 1;
+  `
+  return query;
+}
+export const fetchRdCreditConfigQuery = () => {
+  let query = `
+  WITH eligible_configs AS (
+    SELECT 
+    rdval.config_json, ctry.rid AS country_rid,
+    ROW_NUMBER() OVER (
+      ORDER BY
+        CASE
+          WHEN rdval.effective_start_date >= :effectiveStart THEN 1
+          ELSE 2
+        END,
+      rdval.effective_start_date DESC
+    ) AS rn
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
+    JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
+    WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
+
+    -- State filter
+    AND (
+        (:regionName IS NOT NULL AND LOWER(st.state_code) = LOWER(:regionName))
+        OR (:regionName IS NULL AND st.state_code IS NULL)
+    )
+
+    -- ProgramName filter (RRC vs ASC for USA Federal)
+    AND (
+        (:programName IS NOT NULL AND LOWER(rdcg.credit_program_name) = LOWER(:programName))
+        OR (:programName IS NULL)
+    )
+    
+    -- Effective date filter
+    AND (rdval.effective_start_date IS NULL OR rdval.effective_start_date <= :effectiveEnd)
+    AND (rdval.effective_end_date IS NULL OR rdval.effective_end_date >= :effectiveStart)
+    AND rdval.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ='Active')
+  ) 
+  SELECT config_json, country_rid
+  FROM eligible_configs
+  WHERE rn = 1;
+  `
+  return query;
+}
+export const fetchRdCreditConfigStateLevelQuery = () => {
+  let query =  
+  `
+  WITH eligible_configs AS (
+    SELECT 
+    rdval.config_json, st.state_code, st.rid AS state_rid, ctry.rid AS country_rid,
+    ROW_NUMBER() OVER(
+      PARTITION BY 
+      st.state_code
+      ORDER BY
+        CASE
+          WHEN rdval.effective_start_date >= :effectiveStart THEN 1
+          ELSE 2
+        END,
+      rdval.effective_start_date DESC
+    ) AS rn
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
+    JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
+    JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
+    WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
+    AND rdcg.is_federal IS FALSE
+    -- ProgramName filter
+    AND (
+        (:programName IS NOT NULL AND LOWER(rdcg.credit_program_name) = LOWER(:programName))
+        OR (:programName IS NULL)
+    )
+    -- Effective date filter
+    AND (rdval.effective_start_date IS NULL OR rdval.effective_start_date <= :effectiveEnd)
+    AND (rdval.effective_end_date IS NULL OR rdval.effective_end_date >= :effectiveStart)
+    AND rdval.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ='Active')
+  )
+  select config_json, state_code, state_rid, country_rid
+  from eligible_configs
+  where rn = 1
+  `
+  return query;
 }

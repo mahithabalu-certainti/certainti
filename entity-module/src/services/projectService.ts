@@ -2311,6 +2311,8 @@ export class ProjectService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "classification_name",
       "industry_name",
       "project_type_name",

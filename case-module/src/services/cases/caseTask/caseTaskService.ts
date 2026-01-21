@@ -258,14 +258,14 @@ export class CaseTaskService {
             accessToken
           );
           if (result.statusCode === HttpStatus.SUCCESS) {
-            await transaction.commit();
-          } else {
-            await transaction.rollback();
-          }
-          return {
+           return {
             statusCode: result.statusCode,
             statusMessage: result.statusMessage,
           };
+          } else {
+            await transaction.rollback();
+          }
+          
         }
       } else {
         return {
