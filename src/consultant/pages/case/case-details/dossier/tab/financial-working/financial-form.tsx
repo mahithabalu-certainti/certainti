@@ -41,6 +41,7 @@ interface FinancialWorkingFormProps {
   dossierFinancialStatus: string;
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
+  refetchCaseDetails: () => void;
 }
 
 interface FormErrors {
@@ -167,6 +168,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   dossierFinancialStatus,
   financialData,
   setFinancialData,
+  refetchCaseDetails
 }) => {
   const [isFederal, setIsFederal] = useState<string>('yes');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
@@ -738,6 +740,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         onClose={() => setIsSignOffModalOpen(false)}
         caseId={caseId ?? ''}
         accountId={accountid}
+         refetchCaseDetails={refetchCaseDetails}
       />
     </div>
   );

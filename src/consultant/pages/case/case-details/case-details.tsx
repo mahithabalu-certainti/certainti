@@ -920,6 +920,7 @@ export const CaseDetails = () => {
             dossierFinancialStatus={dossierFinancialStatus}
             financialData={financialData}
             setFinancialData={setFinancialData}
+            refetchCaseDetails={refetchCaseDetails}
           />
         );
       default:

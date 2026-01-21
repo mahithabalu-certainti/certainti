@@ -39,6 +39,7 @@ interface DossierProps {
   dossierFinancialStatus: string;
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
+  refetchCaseDetails: () => void;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -48,6 +49,7 @@ const Dossier: React.FC<DossierProps> = ({
   dossierFinancialStatus,
   financialData,
   setFinancialData,
+  refetchCaseDetails
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -213,6 +215,7 @@ const Dossier: React.FC<DossierProps> = ({
             dossierFinancialStatus={dossierFinancialStatus}
             financialData={financialData}
             setFinancialData={setFinancialData}
+            refetchCaseDetails={refetchCaseDetails}
           />
         )}
 

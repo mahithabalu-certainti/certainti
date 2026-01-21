@@ -12,6 +12,7 @@ interface SignOffModalProps {
   onClose: () => void;
   caseId: string;
   accountId: string;
+  refetchCaseDetails: () => void;
 }
 
 const SignOffModal: React.FC<SignOffModalProps> = ({
@@ -19,6 +20,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
   onClose,
   caseId,
   accountId,
+  refetchCaseDetails,
 }) => {
   const [signOffFile, setSignOffFile] = useState<File | null>(null);
   const [signOffComments, setSignOffComments] = useState<string>('');
@@ -47,6 +49,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
             successToast(response?.statusMessage || 'Signed off successfully');
             setSignOffFile(null);
             setSignOffComments('');
+            refetchCaseDetails();
             onClose();
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,7 +86,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
     >
       <div className='bg-white rounded-lg shadow-lg w-[500px] flex flex-col'>
         {/* Header Section */}
-        <div className='flex justify-between items-center border-b border-[#CBD6E2] px-6 py-[2px]'>
+        <div className='flex justify-between items-center border-b border-[#CBD6E2] px-[12px] py-[2px]'>
           <h2 className='text-[#2D3E4F] text-[16px] p-1 font-semibold'>
             Sign Off Financial Highlights
           </h2>
