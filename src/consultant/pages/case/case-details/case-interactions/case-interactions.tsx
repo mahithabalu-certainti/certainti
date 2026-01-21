@@ -458,7 +458,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive|| !isCaseTeamCreated || isFinancialWorkingSignoff,
+      disabled: accountInActive || !isCaseTeamCreated || isFinancialWorkingSignoff,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !createInteractionsEnable || viewResponseHistory,

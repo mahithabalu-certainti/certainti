@@ -212,7 +212,7 @@ export interface SignOffFinancialHighlightsPayload {
   case_rid: string;
   account_rid: string;
   sign_off: boolean;
-  file: any;
+  file: File | null;
   comments: string;
 }
 export interface InputParams {

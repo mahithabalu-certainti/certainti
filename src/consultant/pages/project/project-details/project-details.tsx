@@ -252,7 +252,6 @@ export const ProjectDetails = () => {
     data?.data?.project?.status_name?.toLowerCase() === 'in-active';
   const rdQualified = data?.data?.project?.is_rd_trigger_qualified;
     const isProjectSignedOff = data?.data?.project?.is_rd_claim_qualified;
-  console.log(isProjectSignedOff);
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;

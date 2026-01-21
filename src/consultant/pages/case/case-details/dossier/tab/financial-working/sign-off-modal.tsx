@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 
 import {  UploadIcon,
@@ -44,12 +43,13 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
           comments: signOffComments,
         },
         {
-          onSuccess: (response: any) => {
+          onSuccess: (response: { statusMessage?: string }) => {
             successToast(response?.statusMessage || 'Signed off successfully');
             setSignOffFile(null);
             setSignOffComments('');
             onClose();
           },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onError: (error: any) => {
             errorToast(
               error?.response?.data?.statusMessage || 'Failed to sign off'
@@ -147,7 +147,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
                 type='file'
                 className='hidden'
                 onChange={(e) => setSignOffFile(e.target.files?.[0] || null)}
-                onClick={(e) => ((e.target as any).value = null)}
+                onClick={(e) => ((e.target as HTMLInputElement).value = '')}
               />
             </div>
           </div>
