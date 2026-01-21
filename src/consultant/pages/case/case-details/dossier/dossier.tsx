@@ -155,7 +155,7 @@ const Dossier: React.FC<DossierProps> = ({
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
-      hide: false,
+      hide: tabParam === 'financial_workings',
     },
   ];
 
@@ -194,8 +194,9 @@ const Dossier: React.FC<DossierProps> = ({
         iconBg={ColorCode.caseBgColor}
         bgType='circle'
         count={count}
-        showItemCount={true}
+        showItemCount={tabParam !== 'financial_workings'}
         buttons={headerButtons}
+        
       />
 
       <SectionHeaderTab
