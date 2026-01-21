@@ -359,14 +359,12 @@ class RDCreditSchemaService {
      */
     async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
-        let arrayComputedFields = [];
-        arrayComputedFields.push(computed_fields)
         return await RdCreditStateCalculations.upsert(
             {
                 case_rid,
                 country_rid,
                 input_params,
-                computed_fields : arrayComputedFields,
+                computed_fields,
                 state_rid
             },
             {
