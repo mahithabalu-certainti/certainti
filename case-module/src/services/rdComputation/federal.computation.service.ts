@@ -69,7 +69,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if (federalComputation) {
-                const result = await federalComputation.compute(extractConfig, federalRDData, date);
+                const result = await federalComputation.compute(extractConfig, federalRDData, annualGrossReceipts.length, date);
                 await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields);
                 return {
                     statusCode: HttpStatus.SUCCESS,
