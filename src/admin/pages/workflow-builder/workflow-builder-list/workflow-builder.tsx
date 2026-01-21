@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../common-utils';
 import { RootState } from '../../../../store/store';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import { ColorCode } from '../../../../consultant/types';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -142,7 +143,7 @@ const WorkflowBuilder: React.FC = () => {
           <div className='flex items-center justify-center'>
             <WorkflowIcon
               alt='workflow-icon'
-              className='h-7 w-7 p-1 rounded bg-[#3992ec]'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

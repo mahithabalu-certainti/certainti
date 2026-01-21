@@ -145,6 +145,8 @@ export interface CaseDetails {
   account_status_rid?: string;
   is_send_interaction?: boolean;
   is_case_team_created?: boolean;
+  is_state_available?: boolean;
+  state_rid?: string;
 }
 
 export interface CaseDetailsResponse {
@@ -172,6 +174,18 @@ export interface CaseFormFields {
   total_nonlabor_cost?: string;
   tax_liability?: string;
   status_rid?: string;
+  total_expenses?: string | null;
+  aggregated_turnover: string | null;
+  unpaid_amounts_paid: string | null;
+  unpaid_amounts: string | null;
+  cloud_software: string | null;
+  sub_contracts: string | null;
+  public_sub_contracts: string | null;
+  material_software_cost: string | null;
+  employers_pension_contribution: string | null;
+  taxable_income: string | null;
+  export_sales_revenue: string | null;
+  other: string | null;
 }
 
 export interface CaseFormPayload {
@@ -190,6 +204,18 @@ export interface CaseFormPayload {
   total_nonlabor_cost?: string | null;
   tax_liability?: string | null;
   status_rid?: string;
+  total_expenses?: string | null;
+  aggregated_turnover: string | null;
+  unpaid_amounts_paid: string | null;
+  unpaid_amounts: string | null;
+  cloud_software: string | null;
+  sub_contracts: string | null;
+  public_sub_contracts: string | null;
+  material_software_cost: string | null;
+  employers_pension_contribution: string | null;
+  taxable_income: string | null;
+  export_sales_revenue: string | null;
+  other: string | null;
 }
 
 export interface updateCaseJurisdictionPayload {

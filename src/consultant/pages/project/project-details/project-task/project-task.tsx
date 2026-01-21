@@ -1,12 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import {
-  AcceptIcon,
-  CreateResourceIcon,
-  RejectIcon,
-  ResourcesIcon,
-} from '../../../../../assets';
+import { AcceptIcon, ProjectTaskIcon, RejectIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import {
   useProjectTaskDetail,
@@ -40,6 +35,7 @@ import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from './project-task-details';
 import {
   ActivityDropdownItem,
+  ColorCode,
   ExportType,
   FilterType,
   FormFiscalDateType,
@@ -792,20 +788,17 @@ export const ProjectTask = ({
           <SectionHeader
             title={viewDetails ? 'Project Task' : 'Project Tasks'}
             titleIcon={
-              viewDetails ? (
-                <ResourcesIcon
-                  alt='resource header icon'
-                  className='[&>path]:stroke-white w-[14px] h-[14px]'
-                />
-              ) : (
-                <CreateResourceIcon />
-              )
+              <ProjectTaskIcon
+                alt='resource header icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
             }
             count={totalItems}
             showItemCount={!viewDetails}
             buttons={headerButtons}
             subValue={resourceData?.r_number}
-            iconBg={viewDetails ? '#7785ff' : ''}
+            iconBg={ColorCode.projectBgColor}
+            bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             {showProjectTaskDetails ? (

@@ -7,7 +7,11 @@ import {
   websocketService,
   getNotificationConnectionUrl,
 } from '../services/websocket/websocket-service';
-import { setConnectionError, setConnectionStatus, setWebSocketUrl } from '../store/slices';
+import {
+  setConnectionError,
+  setConnectionStatus,
+  setWebSocketUrl,
+} from '../store/slices';
 
 /**
  * Custom hook to manage WebSocket connection
@@ -22,20 +26,20 @@ export const useWebSocket = () => {
 
   // Callback to fetch new WebSocket URL and token
   const refreshWebSocketUrl = useCallback(async (): Promise<string | null> => {
-     console.log('🔄 Fetching new WebSocket connection URL...');
+    console.log('🔄 Fetching new WebSocket connection URL...');
     try {
       const response = await getNotificationConnectionUrl();
-      
+
       if (response?.data?.webSocketUrl) {
         const websocketBaseUrl = import.meta.env.VITE_WEBSOCKET_URL;
         const newWebsocketUrl = `${websocketBaseUrl}?access_token=${response.data.webSocketUrl}`;
-        
+
         // Update Redux with new WebSocket URL
         dispatch(setWebSocketUrl(newWebsocketUrl));
-        
+
         return newWebsocketUrl;
       }
-      
+
       return null;
     } catch (error) {
       console.error('Failed to fetch new WebSocket URL:', error);

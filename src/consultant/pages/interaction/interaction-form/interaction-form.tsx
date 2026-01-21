@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Project } from '../../../types/project';
 import {
+  ColorCode,
   FilterState,
   InteractionFormData,
   InteractionFormErrors,
@@ -49,8 +50,9 @@ import {
   validateInteractionForm,
 } from './helper';
 import {
+  EditIcon,
   ErrorInfoIcon,
-  InteractionDetailIcon,
+  InteractionsIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
 } from '../../../../assets';
@@ -774,7 +776,17 @@ const InteractionForm = () => {
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <InteractionDetailIcon className='h-8 w-8 bg-[#6FBDA0] p-1.5 border-box rounded' />
+          {isEditView ? (
+            <EditIcon
+              alt='projrct-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
+            />
+          ) : (
+            <InteractionsIcon
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
+            />
+          )}
           <div className='w-[90%]'>
             {isEditView && (
               <>

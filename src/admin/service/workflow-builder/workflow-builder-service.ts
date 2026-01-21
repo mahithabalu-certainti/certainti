@@ -506,7 +506,6 @@ export const useUpdateRuleStatus = () => {
   });
 };
 
-
 export const ExportWorkflowRuleList = async (
   params: WorkflowRuleExportListURLParams
 ) => {
