@@ -11,7 +11,7 @@ export const jurisdictionConfigFormFields = (
 ): FormType[] => {
   return [
     {
-      sectionName: '',
+      sectionName: 'emptyName',
       fillType: 'half',
       fields: [
         createCheckboxField('is_federal_level', 'Federal Level Submission', {

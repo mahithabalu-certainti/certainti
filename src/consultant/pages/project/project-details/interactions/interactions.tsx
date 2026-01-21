@@ -97,6 +97,7 @@ interface InteractionsProps {
   rdQualified: boolean;
   loading: boolean;
   activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -107,6 +108,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   rdQualified,
   loading,
   activityMenuItems,
+  isProjectSignedOff,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -439,7 +441,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive || rdQualified,
+      disabled: accountInActive || rdQualified || isProjectSignedOff,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       tooltipValue: 'Project type not allowed due to Configuration setting',
@@ -450,7 +452,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Send Interaction',
       variant: 'outlined' as const,
       disabled:
-        selectedRows.length === 0 || accountInActive || !isSendInteraction,
+        selectedRows.length === 0 ||
+        accountInActive ||
+        !isSendInteraction ||
+        isProjectSignedOff,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
       hide: !sendInteractionsEnable || viewResponseHistory,
@@ -459,7 +464,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction,
+        accountInActive || interactionList.length === 0 || !isSendInteraction || isProjectSignedOff,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
       hide: viewResponseHistory,
@@ -468,7 +473,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Reminder',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction,
+        accountInActive || interactionList.length === 0 || !isSendInteraction || isProjectSignedOff,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
@@ -619,7 +624,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       icon: EditIcon,
       hide: !interactionFieldsEditable,
       disabled: (row: InteractionList) =>
-        accountInActive || disableInteractionEditBtn(row),
+     isProjectSignedOff ||   accountInActive || disableInteractionEditBtn(row),
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -713,7 +718,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
-    permissionMap
+    permissionMap,
   );
 
   const filterFields = !viewInteractionHistory
@@ -821,6 +826,7 @@ const Interactions: React.FC<InteractionsProps> = ({
             handleBackClick={handleBackClick}
             projectDetails={projectDetails}
             isSendInteraction={isSendInteraction}
+            isProjectSignedOff={isProjectSignedOff}
           />
         ) : viewInteractionHistory ? (
           <InteractionHistory

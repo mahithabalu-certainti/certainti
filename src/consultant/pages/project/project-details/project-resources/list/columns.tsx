@@ -32,7 +32,8 @@ export const getProjectResourcesColumns = (
   handleCountry: (country: string) => void,
   regionLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  accountOrProjectInActive?: boolean
+  accountOrProjectInActive?: boolean,
+  isProjectSignedOff?: boolean,
 ): ListTableColumn<ProjectResourcesListType>[] => [
   {
     id: 'resource_code',
@@ -91,7 +92,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['country_rid']?.read &&
       permissionMap?.['country_rid']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['country_rid']?.read &&
       !permissionMap?.['country_rid']?.edit,
@@ -126,7 +128,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['region_rid']?.read &&
       permissionMap?.['region_rid']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['region_rid']?.read &&
       !permissionMap?.['region_rid']?.edit,
@@ -183,7 +186,9 @@ export const getProjectResourcesColumns = (
     width: '200px',
     editable:
       permissionMap?.['project_resource_role']?.read &&
-      permissionMap?.['project_resource_role']?.edit,
+      permissionMap?.['project_resource_role']?.edit &&
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['project_resource_role']?.read &&
       !permissionMap?.['project_resource_role']?.edit,
@@ -227,7 +232,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['total_hours_pro_res']?.read &&
       permissionMap?.['total_hours_pro_res']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['total_hours_pro_res']?.read &&
       !permissionMap?.['total_hours_pro_res']?.edit,
@@ -315,7 +321,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['description']?.read &&
       permissionMap?.['description']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['description']?.read &&
       !permissionMap?.['description']?.edit,

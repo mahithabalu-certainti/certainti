@@ -95,12 +95,12 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
     if (sourceTab) newSearchParams.set('tab', sourceTab);
     navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
   };
-
+const isProjectSignedOff = projectDetails?.is_rd_claim_qualified;
   const headerButtons = [
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || isProjectSignedOff,
       onClick: () => handleEdit(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !projectEditIsEnable,

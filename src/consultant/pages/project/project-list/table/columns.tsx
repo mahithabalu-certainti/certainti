@@ -93,7 +93,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_name',
@@ -127,7 +133,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_type_name',
@@ -152,7 +164,13 @@ export const getAllProjectListColumns = (
       placeholder: '',
       options: projectTypeOption,
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'account_name',
@@ -200,6 +218,10 @@ export const getAllProjectListColumns = (
       { key: 'account_status_name', matchValue: ['Active'] },
       {
         key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,
       },
     ],
@@ -271,7 +293,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_client_group',
@@ -310,7 +338,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_group',
@@ -349,7 +383,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_effort',
@@ -387,6 +427,10 @@ export const getAllProjectListColumns = (
       {
         key: 'total_effort',
         matchValue: [null, '0.00'],
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
       },
     ],
   },
@@ -427,6 +471,10 @@ export const getAllProjectListColumns = (
         key: 'total_cost',
         matchValue: [null, '0.00'],
       },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
     ],
   },
   {
@@ -462,7 +510,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_subcon',
@@ -497,7 +551,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_nonlabor',
@@ -532,7 +592,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'assessment_status',
@@ -734,7 +800,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: 'Active' }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: 'Active' },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'modified_datetime',

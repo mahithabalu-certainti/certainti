@@ -147,6 +147,7 @@ export interface CaseDetails {
   is_case_team_created?: boolean;
   is_state_available?: boolean;
   state_rid?: string;
+  financial_working_signoff?: boolean;
 }
 
 export interface CaseDetailsResponse {
