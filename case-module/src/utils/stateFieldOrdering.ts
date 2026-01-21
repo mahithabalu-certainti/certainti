@@ -109,7 +109,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     AZ: {
         sectionOrder: [
             "Qualified research expenses paid or incurred.",
-            "Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"
+            "Part 12 Current Taxable Year's Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"
         ],
         sectionFieldOrders: {
             "Qualified research expenses paid or incurred.": [
@@ -122,20 +122,20 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: /^17 Fixed-base percentage \[not more than \d+(\.\d+)?%\]: See instructions$/, order: 7 },
                 { pattern: "18 Base amount: Multiply line 16 by the percentage on line 17. Enter the result", order: 8 },
                 { pattern: "19 Subtract line 18 from line 15. If less than zero, enter 0", order: 9 },
-                { pattern: /^20 Multiply line 15 by \d+(\.\d+)?%?\. Enter the result$/, order: 10 },
+                { pattern: /^20 Multiply line 15 by \d+(\.\d+)?\s*%\s*\(\d*\.?\d+\)\. Enter the result$/, order: 10 },
                 { pattern: /^Enter \d+(\.\d+)?%? of line 15$/, order: 11 },
                 { pattern: "21 Enter the lesser of line 19 or line 20", order: 12 },
                 { pattern: "22 Add lines 10 and 21. Enter the total", order: 13 },
                 { pattern: /^\* If line 22 is \$ \d+(\,\d{3})*(\.\d+)? or less, complete line 23 and skip lines 24 through 26\.$/, order: 14 },
                 { pattern: /^\* If line 22 is more than \$ \d+(\,\d{3})*(\.\d+)?, skip line 23 and complete lines 24 through 26\.$/, order: 15 },
-                { pattern: "23 Multiply line 22 by 24% (.24). Enter the result", order: 16 },
-                { pattern: /^24 Subtract \$ \d+(\,\d{3})*(\.\d+)? from line 22\. Enter the result$/, order: 17 },
+                { pattern: /^23 Multiply line 22 by \d+(\.\d+)?\s*%\s*\(\d*\.?\d+\)\. Enter the result$/, order: 16 },
+                { pattern: /^24 Subtract \$ \d+(\,\d{3})*(\.\d+)? from line 22\. Enter the difference$/, order: 17 },
                 { pattern: /^25 Multiply line 24 by \d+(\.\d+)?%?\. Enter the result$/, order: 18 },
                 { pattern: /^26 Add \d+(\,\d{3})*(\.\d+)? to line 25\. Enter the total$/, order: 19 },
                 { pattern: "27 a If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26 .", order: 20 },
                 { pattern: "27 b If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page", order: 21 }
             ],
-            "Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)": [
+            "Part 12 Current Taxable Year's Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)": [
                 { pattern: "75 Basic research payments paid or incurred to qualified organizations:", order: 1 },
                 { pattern: "76 Qualified organization base period amount", order: 2 },
                 { pattern: "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.", order: 3 },
