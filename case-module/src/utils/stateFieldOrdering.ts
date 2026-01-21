@@ -11,6 +11,7 @@ interface FieldPattern {
 interface StateFieldConfig {
     sectionOrder: string[];
     sectionFieldOrders: { [sectionKey: string]: FieldPattern[] };
+    BOLD: string[];
 }
 
 // Configuration for each state's field ordering with dynamic key support
@@ -49,7 +50,8 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "13. R&D activities credit carried forward from prior years", order: 2 },
                 { pattern: "14. R&D activities credit available", order: 3 }
             ]
-        }
+        },
+        BOLD: []
     },
     MA: {
         sectionOrder: [
@@ -82,7 +84,8 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: /^16 Base amount\. Multiply line 14 by line 15\. Not less than \d+(\.\d+)?% of line 6$/, order: 3 },
                 { pattern: "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.", order: 4 }
             ]
-        }
+        },
+        BOLD: []
     },
     SC: {
         sectionOrder: [
@@ -100,7 +103,8 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "9 Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)", order: 8 },
                 { pattern: "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)", order: 9 }
             ]
-        }
+        },
+        BOLD: []
     },
     AZ: {
         sectionOrder: [
@@ -154,10 +158,166 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: /^92 Add \d+(\,\d{3})*(\.\d+)? to line 91\. Enter the total\. $/, order: 20 },
                 { pattern: "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.", order: 21 }
             ]
-        }
+        },
+        BOLD: ["15 Total qualified research expenses. Add line 11 through line 14"]
+    },
+    CO: {
+        sectionOrder: [
+            "Qualified research expenses paid or incurred."
+        ],
+        sectionFieldOrders: {
+            "Qualified research expenses paid or incurred.": [
+                { pattern: "5 Wages for qualified services. See instructions", order: 1 },
+                { pattern: "6 Cost of supplies. See instructions", order: 2 },
+                { pattern: "7 Rental or lease costs of computers. See instructions", order: 3 },
+                { pattern: "8 Enter the applicable percentage of contract research expenses (see instructions)", order: 4 },
+                { pattern: "9 Total qualified research expenses. Add line 5 through line 8 ", order: 5 },
+                { pattern: "10 Enter fixed-base percentage, but not more than 16% (.16). See instructions ", order: 6 },
+                { pattern: "11 Enter average annual gross receipts. See instructions", order: 7 },
+                { pattern: "12 Base amount. Multiply line 11 by the percentage on line 10", order: 8 },
+                { pattern: "13 Subtract line 12 from line 9. If zero or less, enter -0-", order: 9 },
+                { pattern: /^14 Multiply line 9 by \d+(\.\d+)?%?\. See instructions$/, order: 10 },
+                { pattern: "15 Enter the smaller of line 13 or line 14", order: 11 },
+                { pattern: /^16 Multiply line 15 by \d+(\.\d+)?%?$/, order: 12 },
+                { pattern: "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach", order: 13 },
+                { pattern: "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:", order: 14 },
+                { pattern: /^\d+(\.\d+)?%? for individuals and estates or trusts$/, order: 15 },
+                { pattern: /^\d+(\.\d+)?%? for  corporations$/, order: 16 },
+                { pattern: /^\d+(\.\d+)?%? for S corporations$/, order: 17 },
+                { pattern: "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :", order: 18 }
+            ]
+        },
+        BOLD: []
+    },
+    CT: {
+        sectionOrder: [
+            "Part I - Credit Computation",
+            "Part I - Tentative Credit Computation", 
+            "Part II - Credit Computation"
+        ],
+        sectionFieldOrders: {
+            "Part I - Credit Computation": [
+                { pattern: "1 Enter the amount of Connecticut research and experimental expenditures for the current income year.", order: 1 },
+                { pattern: "2 Enter the amount of Connecticut research and experimental expenditures for the first prior income year.", order: 2 },
+                { pattern: "3 Balance: Subtract Line 2 from Line 1. If zero or less, the corporation is not eligible for this credit.", order: 3 },
+                { pattern: /^4 Tax credit: Multiply Line 3 by \d+(\.\d+)?%\. Enter here and on Form CT-1120K,  Part I-C, Column B\.$/, order: 4 }
+            ],
+            "Part I - Tentative Credit Computation": [
+                { pattern: "1 Enter the amount of Connecticut research and experimental expenditures for the current income year. ", order: 1 },
+                { pattern: "2 Enter the amount of excess Connecticut research and experimental expenditures for the current income year.   From Form CT - 1120RC Part I, Line 3.", order: 2 },
+                { pattern: "3 Balance: Subtract Line 2 from Line 1.  Net research and development expenses for 2023", order: 3 },
+                { pattern: "4c All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.", order: 4 },
+                { pattern: "4 Tentative credit: Enter the amount from Line 4a, 4b, or 4c.", order: 5 },
+                { pattern: "5 Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.", order: 6 },
+                { pattern: "6 Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4. ", order: 7 }
+            ],
+            "Part II - Credit Computation": [
+                { pattern: "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6", order: 1 },
+                { pattern: /^2 Multiply Line 1 by \.\d+$/, order: 2 },
+                { pattern: "3 Current Year CT Business Tax Liability", order: 3 },
+                { pattern: /^4 Multiply Line 3 by \d+(\.\d+)?%\s*\.$/, order: 4 },
+                { pattern: "5a Multiply Line 1 by two (2).", order: 5 },
+                { pattern: /^5b Enter \d+(\.\d+)?% \(\.\d+\) of Line 3$/, order: 6 },
+                { pattern: "5 Enter the lesser of Line 5a or Line 5b", order: 7 },
+                { pattern: "6 Enter the greater of Line 4 or Line 5", order: 8 },
+                { pattern: "7 2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.", order: 9 }
+            ]
+        },
+        BOLD: []
+    },
+    OH: {
+        sectionOrder: [
+            "credit_calculation"
+        ],
+        sectionFieldOrders: {
+            "credit_calculation": [
+                { pattern: "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:", order: 1 },
+                { pattern: /^Tax Year \d{4} QREs$/, order: 2 },
+                { pattern: /^Tax Year \d{4} QREs$/, order: 3 },
+                { pattern: /^Tax Year \d{4} QREs$/, order: 4 },
+                { pattern: "Average", order: 5 },
+                { pattern: /^Total Investment in Qualifying Research Expense for Calendar Year \d{4}$/, order: 6 },
+                { pattern: "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years", order: 7 },
+                { pattern: "Net Excess of Qualifying Research Expenses for the Taxable Year", order: 8 },
+                { pattern: /^\d{4} Credit Earned \(\d+(\.\d+)?%\)$/, order: 9 }
+            ]
+        },
+        BOLD: []
+    },
+    NJ: {
+        sectionOrder: [
+            "CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)",
+            "TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT"
+        ],
+        sectionFieldOrders: {
+            "CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)": [
+                { pattern: "16 Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)", order: 1 },
+                { pattern: "19 Enter the applicable percentage of contract research expenses (see instructions)", order: 2 },
+                { pattern: "20 Total qualified research expenses. Add lines 16 through 19", order: 3 },
+                { pattern: "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.", order: 4 },
+                { pattern: /^22 Divide line 21 by \d+(\.\d+)?$/, order: 5 },
+                { pattern: "23 Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.", order: 6 },
+                { pattern: "24 Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ", order: 7 }
+            ],
+            "TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT": [
+                { pattern: "26 Enter either line 15 or 24 (whichever method was used for federal purposes)", order: 1 },
+                { pattern: "27 Add lines 25c and 26", order: 2 },
+                { pattern: /^28 Multiply line 27 by \d+(\.\d+)?%$/, order: 3 },
+                { pattern: "29 Research and Development Tax Credit carried forward from prior year (do not recompute)", order: 4 },
+                { pattern: "30 Total credit available - Add lines 28 and 29", order: 5 }
+            ]
+        },
+        BOLD: []
+    },
+    ID: {
+        sectionOrder: [
+            "Basic Research Payments. Only corporations complete lines 1 through 3",
+            "Qualiﬁed Research Expenses Paid or Incurred for Research Conducted in Idaho"
+        ],
+        sectionFieldOrders: {
+            "Basic Research Payments. Only corporations complete lines 1 through 3": [
+                { pattern: "Basic research payments paid or incurred during the tax year to qualiﬁed organizations", order: 1 },
+                { pattern: "Qualiﬁed organization base period amount", order: 2 },
+                { pattern: "Subtract line 2 from line 1. If less than zero, enter zero", order: 3 }
+            ],
+            "Qualiﬁed Research Expenses Paid or Incurred for Research Conducted in Idaho": [
+                { pattern: "Wages for qualiﬁed services performed in Idaho", order: 1 },
+                { pattern: "Cost of supplies used in Idaho", order: 2 },
+                { pattern: "Rental or lease costs of computers in Idaho", order: 3 },
+                { pattern: "Enter the applicable percentage of contract research expenses", order: 4 },
+                { pattern: "Total qualiﬁed research expenses for research conducted in Idaho. Add lines 4 through 7 ", order: 5 },
+                { pattern: "Enter ﬁxed-base percentage, but not more than 16%, from page 2, Part A or B", order: 6 },
+                { pattern: "Enter average annual Idaho gross receipts from page 2, Part C", order: 7 },
+                { pattern: "Base amount. Multiply line 10 by the percentage on line 9", order: 8 },
+                { pattern: "Subtract line 11 from line 8. If zero or less, enter zero", order: 9 },
+                { pattern: "Multiply line 8 by 50%", order: 10 },
+                { pattern: "Enter the smaller amount from line 12 or line 13", order: 11 },
+                { pattern: "Add lines 3 and 14 ", order: 12 },
+                { pattern: "Credit earned. Multiply line 15 by 5% ", order: 13 },
+                { pattern: "Pass-through share of credit from an S corporation, partnership, trust, or estate", order: 14 },
+                { pattern: "Credit received through unitary sharing. Include a schedule", order: 15 },
+                { pattern: "Carryover of credit for Idaho research activities from prior years", order: 16 },
+                { pattern: "Credit distributed to shareholders, partners, or beneﬁciaries", order: 17 },
+                { pattern: "Credit shared with unitary aﬃliates", order: 18 },
+                { pattern: "Total credit available subject to limitations. Add lines 16 through 19,then subtract lines 20 and 21", order: 19 },
+                { pattern: "Enter the Idaho income tax from your tax return", order: 20 },
+                { pattern: "Credit for income tax paid to other states ", order: 21 },
+                { pattern: "Part-year resident grocery credit ", order: 22 },
+                { pattern: "Credit for contributions to Idaho educational entities", order: 23 },
+                { pattern: "Investment tax credit", order: 24 },
+                { pattern: "Credit for contributions to Idaho youth and rehabilitation facilities", order: 25 },
+                { pattern: "Credit for production equipment using post-consumer waste", order: 26 },
+                { pattern: "Promoter-sponsored event credit ", order: 27 },
+                { pattern: "Add lines 24a through 24g ", order: 28 },
+                { pattern: "Net income tax after allowance of other credits. Subtract line 24h from line 23", order: 29 },
+                { pattern: "Total credit available subject to limitations. Enter the amount from line 22", order: 30 },
+                { pattern: "Credit for Idaho research activities allowed. Enter the smaller amount from line 25 or line 26 here and on Form 44, Part I, line 4", order: 31 }
+            ]
+        },
+        BOLD: []
     }
-
-    // TODO: Add configurations for other states (GA, OH, NJ, etc.)
+ 
+    // TODO: Add configurations for other states (GA, etc.)
 };
 
 /**

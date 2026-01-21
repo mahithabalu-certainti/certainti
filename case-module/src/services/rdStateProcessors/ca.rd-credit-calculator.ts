@@ -189,7 +189,8 @@ export class RdCreditCalculatorForCA {
         }
         return {
             computed_fields: {
-                "Qualified research expenses paid or incurred.":finalData
+                "Qualified research expenses paid or incurred.":finalData,
+                "BOLD":["15 Total qualified research expenses. Add line 11 through line 14"]
                 
             }
         }
