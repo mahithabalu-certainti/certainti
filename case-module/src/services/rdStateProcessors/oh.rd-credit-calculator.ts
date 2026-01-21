@@ -132,6 +132,7 @@ export class RdCreditCalculatorForOH {
      * @returns 
      */
     buildComputedFields(computeFieldsResp: any, config : ConfigJson) {
+        logMessage(`COMPUTE_FIELDS_RESP_${JSON.stringify(computeFieldsResp)}`)
         let finalData = {
             "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:":"",
             [`Tax Year ${computeFieldsResp.prev1_year} QREs`]:computeFieldsResp.prev1_qre,
