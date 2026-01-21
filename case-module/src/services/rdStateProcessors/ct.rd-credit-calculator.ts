@@ -39,7 +39,7 @@ export class RdCreditCalculatorForCT {
             currency: this.currency,
         });
 
-        const computedFields = await this.buildComputedFields(part1Computation, part1TentativeComputation, part2Computation);
+        const computedFields = await this.buildComputedFields(part1Computation, part1TentativeComputation, part2Computation, config);
         return {
             inputFields,
             computedFields
@@ -203,39 +203,37 @@ export class RdCreditCalculatorForCT {
      * @param part1Computation 
      * @returns 
      */
-    async buildComputedFields(part1Computation: any, part1TentativeComputation: any, part2Computation: any) {
+    async buildComputedFields(part1Computation: any, part1TentativeComputation: any, part2Computation: any, extractConfig : ConfigJson) {
        
         let part1 = {
-            "Enter the amount of Connecticut research and experimental expenditures for the current income year.":part1Computation.total_qre,
-            "Enter the amount of Connecticut research and experimental expenditures for the first prior income year.":part1Computation.prior_year_1_qre,
-            "Balance: Subtract Line 2 from Line 1. If zero or less, the corporation is not eligible for this credit.":part1Computation.excess_qre,
-            "Tax credit: Multiply Line 3 by 20% (.20). Enter here and on Form CT-1120K,  Part I-C, Column B.":part1Computation.tax_credit
+            "1 Enter the amount of Connecticut research and experimental expenditures for the current income year.":part1Computation.total_qre,
+            "2 Enter the amount of Connecticut research and experimental expenditures for the first prior income year.":part1Computation.prior_year_1_qre,
+            "3 Balance: Subtract Line 2 from Line 1. If zero or less, the corporation is not eligible for this credit.":part1Computation.excess_qre,
+            [`4 Tax credit: Multiply Line 3 by ${extractConfig.credit_rate}%. Enter here and on Form CT-1120K,  Part I-C, Column B.`]:part1Computation.tax_credit
         }
 
        
         let part2 = {
-            "Enter the amount of Connecticut research and experimental expenditures for the current income year. ":part1TentativeComputation.tentative_total_qre,
-            "Enter the amount of excess Connecticut research and experimental expenditures for the current income year.   From Form CT - 1120RC Part I, Line 3.":part1TentativeComputation.tentative_excess_qre,
-            "Balance: Subtract Line 2 from Line 1.  Net research and development expenses for 2023":part1TentativeComputation.tentative_balance,
-            "Qualified small businesses multiply amount on Line 3 by 6% (.06)":"",
-            "Companies headquartered in an Enterprise Zone, with revenues in excess of $3 billion, employing more than 2,500 employees, may elect to multiply amount on Line 3 by 3.5% (.035).":"", 
-            "All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.":"",
-            "Tentative credit: Enter the amount from Line 4a, 4b, or 4c.":part1TentativeComputation.tentative_credit,
-            "Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.":   part1TentativeComputation.reduction_tentative_tax_credit,    
-            "Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4. ":part1TentativeComputation.allowable_tentative_tax_credit
+            "1 Enter the amount of Connecticut research and experimental expenditures for the current income year. ":part1TentativeComputation.tentative_total_qre,
+            "2 Enter the amount of excess Connecticut research and experimental expenditures for the current income year.   From Form CT - 1120RC Part I, Line 3.":part1TentativeComputation.tentative_excess_qre,
+            "3 Balance: Subtract Line 2 from Line 1.  Net research and development expenses for 2023":part1TentativeComputation.tentative_balance,
+            "4c All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.":"",
+            "4 Tentative credit: Enter the amount from Line 4a, 4b, or 4c.":part1TentativeComputation.tentative_credit,
+            "5 Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.":   part1TentativeComputation.reduction_tentative_tax_credit,    
+            "6 Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4. ":part1TentativeComputation.allowable_tentative_tax_credit
 
         }
 
         let part3 = {
-            "Allowable Tentative Tax Credit for 2024 from Part 1, line 6":part2Computation.part2_allowable_tentative_tax_credit,
-            "Multiply Line 1 by .3333":part2Computation.part2_one_third_rate,
-            "Current Year CT Business Tax Liability":part2Computation.current_year_ct_business_tax_liability,
-            [`Multiply Line 3 by ${(part2Computation.tentativeCreditRate)}% .`]:part2Computation.half_tax_liability,
-            "Multiply Line 1 by two (2).":part2Computation.double_credit,
-            "Enter 90% (.90) of Line 3 ":part2Computation.tax_limit,
-            "Enter the lesser of Line 5a or Line 5b":part2Computation.min_final,
-            "Enter the greater of Line 4 or Line 5":part2Computation.allowable_credit,
-            "2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.":part2Computation.final_credit
+            "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6":part2Computation.part2_allowable_tentative_tax_credit,
+            [`2 Multiply Line 1 by .${extractConfig.one_third_rate}`]:part2Computation.part2_one_third_rate,
+            "3 Current Year CT Business Tax Liability":part2Computation.current_year_ct_business_tax_liability,
+            [`4 Multiply Line 3 by ${(part2Computation.tentativeCreditRate)}% .`]:part2Computation.half_tax_liability,
+            "5a Multiply Line 1 by two (2).":part2Computation.double_credit,
+            [`5b Enter ${extractConfig.tax_limit_rate}% (.${extractConfig.tax_limit_rate}) of Line 3`]:part2Computation.tax_limit,
+            "5 Enter the lesser of Line 5a or Line 5b":part2Computation.min_final,
+            "6 Enter the greater of Line 4 or Line 5":part2Computation.allowable_credit,
+            "7 2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.":part2Computation.final_credit
         }
         return {
             computed_fields: {
