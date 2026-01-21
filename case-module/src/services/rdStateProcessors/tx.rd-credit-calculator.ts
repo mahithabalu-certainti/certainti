@@ -95,7 +95,7 @@ export class RdCreditCalculatorForTX {
         const average_prev_year_qre = tot_prev_year_qre.div(3);
 
         //----Line6: Average QRET x 50%
-        const average_qret_rate_50pct = average_prev_year_qre.mul(config.average_qret_rate_50pct);
+        const average_qret_rate_50pct = average_prev_year_qre.mul(config.average_qret_rate_50pct/100);
 
         //----Line7: Difference
         const difference = new Decimal(qretInfo.total_current_year_qre).minus(average_qret_rate_50pct);
