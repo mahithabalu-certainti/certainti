@@ -205,8 +205,7 @@ export class RdCreditCalculatorForTX {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-            },
-            qreSummary
+            }
         };
     }
 
