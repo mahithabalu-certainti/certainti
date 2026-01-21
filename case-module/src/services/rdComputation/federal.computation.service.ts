@@ -56,6 +56,9 @@ export class FederalComputationService {
             const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
             logMessage(`Country Info: ${JSON.stringify(countryInfo)}`);
             if(countryInfo.countryCode == "USA") {
+                const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+                let fetchEndDate : any = await orgDb.query(rawQueries.fetchFiscalEndDate(accountRid, schemaName));
+                let date = fetchEndDate[0][0].fiscal_end_date+`/${caseDetails.fiscal_year}`
                 const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb); //current yer QREs
                 logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
                 const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
@@ -66,7 +69,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if (federalComputation) {
-                const result = await federalComputation.compute(extractConfig, federalRDData);
+                const result = await federalComputation.compute(extractConfig, federalRDData, date);
                 await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields);
                 return {
                     statusCode: HttpStatus.SUCCESS,
@@ -446,14 +449,17 @@ export class FederalComputationService {
                 })
                 return finalUkData[0];
             } else if(fetchCountryDetails[0][0].country_code === "USA") {
+                
                 const finalUSAData = result.map((u : any) => {
                     let creditRRC = u["computed_fields"]["Regular Credit"]["creditRRC"]
                     let creditASC = u["computed_fields"]["ASC Credit"]["creditASC"]
                     let creditASCKey = Object.keys(creditASC).find((v : string) => v.startsWith("Enter"))
-                    
+                    let creditRRCKey = Object.keys(creditRRC).find((d : string) => d.startsWith("10 Multiply line 5"))
+                    let refinedRRCKey = creditRRCKey + "%"
                     return {
                         ...u,
                         "computed_fields" : {
+                            "Year Ended": u["computed_fields"]["Year Ended"],
                             "Regular Credit" : {
                                 "creditRRC" : {
                                     "5 Total Qualified Research Expenses" : creditRRC["5 Total Qualified Research Expenses"],
@@ -461,7 +467,7 @@ export class FederalComputationService {
                                     "7 Average Annual Gross Receipts" : creditRRC["7 Average Annual Gross Receipts"],
                                     "8 Multiply line 7 by percentage on line 6" : creditRRC["8 Multiply line 7 by percentage on line 6"],
                                     "9 Subtract line 8 from line 5" : creditRRC["9 Subtract line 8 from line 5"],
-                                    "10 Multiply line 5 by 10" : creditRRC["10 Multiply line 5 by 10"],
+                                    [refinedRRCKey!] : creditRRC[creditRRCKey!],
                                     "11 Enter smaller of line 9 or line 10" : creditRRC["11 Enter smaller of line 9 or line 10"]
                                 },
                                 "rrc280C" : u["computed_fields"]["Regular Credit"]["rrc280C"]

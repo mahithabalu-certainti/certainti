@@ -33,7 +33,7 @@ export class RdCreditCalculatorForUSA {
      * @param caseRid 
      * @returns 
      */
-    async compute(config: any, federalRdData: FederalRDData) {
+    async compute(config: any, federalRdData: FederalRDData, date? : string) {
         try {
             const { asc, rrc } = this.splitAscRrcConfig(config);
             logMessage(`Extracted ASC Config: ${JSON.stringify(asc)}`);
@@ -65,7 +65,7 @@ export class RdCreditCalculatorForUSA {
 
             taxCredit = rrcValue! > ascValue! ? rrcValue : ascValue;
 
-            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C, taxCredit);
+            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C, taxCredit, date);
 
             // Step 4: Return success response
             return {
@@ -270,8 +270,9 @@ export class RdCreditCalculatorForUSA {
      * @param rrc280C 
      * @returns 
      */
-    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any, taxCredit: any) {
+    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any, taxCredit: any, date : any) {
         return {
+            "Year Ended": date,
             "ASC Credit": { creditASC, asc280C },
             "Regular Credit": { creditRRC, rrc280C },
             "Research and Development Tax Credit" : taxCredit
