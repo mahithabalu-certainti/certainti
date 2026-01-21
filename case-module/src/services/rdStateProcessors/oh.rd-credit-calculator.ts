@@ -71,7 +71,7 @@ export class RdCreditCalculatorForOH {
             prev2_year,
             prev3_year
         }
-        const computedFields = await this.buildComputedFields(computeFieldsResp);
+        const computedFields = await this.buildComputedFields(computeFieldsResp, config);
 
         return {
             inputFields,
@@ -131,7 +131,7 @@ export class RdCreditCalculatorForOH {
      * @param part5DevelopmentTaxCreditCalculationInfo 
      * @returns 
      */
-    buildComputedFields(computeFieldsResp: any) {
+    buildComputedFields(computeFieldsResp: any, config : ConfigJson) {
         let finalData = {
             "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:":"",
             [`Tax Year ${computeFieldsResp.prev1_year} QREs`]:computeFieldsResp.prev1_qre,
@@ -140,7 +140,8 @@ export class RdCreditCalculatorForOH {
             "Average": computeFieldsResp.average_tot_prev_qre,
             "Total Investment in Qualifying Research Expense for Calendar Year 2025":computeFieldsResp.total_current_year_qre,
             "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":computeFieldsResp.tot_prev_year_qre,
-            "Net Excess of Qualifying Research Expenses for the Taxable Year":computeFieldsResp.final_credits_earned   
+            "Net Excess of Qualifying Research Expenses for the Taxable Year":computeFieldsResp.final_excess_qre,
+            [`2025 Credit Earned (${config.credit_earned_percent}%)`] : computeFieldsResp.final_credits_earned
         }
         return {
             computed_fields: {

@@ -80,7 +80,7 @@ import { CaseKeyContactDetails } from "../../models/caseKeyContactModel";
 import { setupCaseKeyContactSequence } from "../../models/caseKeyContactModel";
 import { HelperMethods } from "./helperMethods";
 import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } from "../../models/rdCreditCountryCalcModel";
-import { RdCreditProcess } from "../../models/rdCreditProcessModel";
+import { RdCreditProcess, setupRdCreditProcessSequence } from "../../models/rdCreditProcessModel";
 import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 
@@ -977,8 +977,9 @@ class CaseSchemaService {
       await RdCreditCountryCalculationsModel.sync({ force: false })
       await setupRdCreditCountryCalculationSequence(orgDbSequlize, schemaName);
       await RdCreditProcessModel.sync({ force: false });
+      await setupRdCreditProcessSequence(orgDbSequlize, schemaName);
       await RdCreditStateCalculationsModel.sync({ force: false });
-      await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName)
+      await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName);
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);

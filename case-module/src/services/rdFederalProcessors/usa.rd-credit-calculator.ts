@@ -33,7 +33,7 @@ export class RdCreditCalculatorForUSA {
      * @param caseRid 
      * @returns 
      */
-    async compute(config: any, federalRdData: FederalRDData, date? : string) {
+    async compute(config: any, federalRdData: FederalRDData, annualGrossReceiptsCount : number, date? : string) {
         try {
             const { asc, rrc } = this.splitAscRrcConfig(config);
             logMessage(`Extracted ASC Config: ${JSON.stringify(asc)}`);
@@ -50,7 +50,7 @@ export class RdCreditCalculatorForUSA {
             const asc280C = await this.apply280C_ASC(creditASC, extractConfigAsc);
 
             const extractConfigRRC = rrc;
-            const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, extractConfigRRC, 4);
+            const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, extractConfigRRC, annualGrossReceiptsCount);
             const rrc280C = await this.apply280C_RRC(creditRRC, extractConfigRRC);
 
             const inputFields = await this.buildInputParams(federalRdData.currentYearQREs, federalRdData.prior3YearsQREs, federalRdData.annualGrossReceipts || [], {
