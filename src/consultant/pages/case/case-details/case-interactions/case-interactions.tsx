@@ -435,15 +435,10 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled:
-        accountInActive ||
-        interactionList.length === 0 ||
-        !isSendInteraction ||
-        !isCaseTeamCreated ||
-        isFinancialWorkingSignoff,
-      onClick: () => setReminderModalOpen(true),
-      sx: { width: '80px', minWidth: '80px' },
-      hide: viewResponseHistory,
+      disabled: accountInActive,
+      onClick: () => handleCreate(),
+      sx: { width: '48px', minWidth: '48px' },
+      hide: !createInteractionsEnable || viewResponseHistory,
     },
     {
       label: 'Send Interaction',

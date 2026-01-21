@@ -441,7 +441,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive || rdQualified,
+      disabled: accountInActive || rdQualified || isProjectSignedOff,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       tooltipValue: 'Project type not allowed due to Configuration setting',
@@ -464,7 +464,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction,
+        accountInActive || interactionList.length === 0 || !isSendInteraction || isProjectSignedOff,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
       hide: viewResponseHistory,
@@ -473,7 +473,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Reminder',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction,
+        accountInActive || interactionList.length === 0 || !isSendInteraction || isProjectSignedOff,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,

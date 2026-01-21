@@ -172,8 +172,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction,
-      onClick: () => setReInitiateModalOpen(true),
+      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction || isFinancialWorkingSignoff,
+      onClick: () => setReInitiateModalOpen(true),  
       sx: { width: '160px', minWidth: '160px' },
     },
     {
