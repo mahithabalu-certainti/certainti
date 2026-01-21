@@ -141,7 +141,7 @@ export class RdCreditCalculatorForCT {
         const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability);
 
         //Line 4: Multiply Line 3 by 50%
-        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate || 0));
+        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate/100 || 0));
 
         //Line 5a: Double Credit for Certain Expenses: Multiply Line 1 by 2
         const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.double_credit_multiplier || 0));
@@ -228,7 +228,7 @@ export class RdCreditCalculatorForCT {
             "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6":part2Computation.part2_allowable_tentative_tax_credit,
             [`2 Multiply Line 1 by .${extractConfig.one_third_rate}`]:part2Computation.part2_one_third_rate,
             "3 Current Year CT Business Tax Liability":part2Computation.current_year_ct_business_tax_liability,
-            [`4 Multiply Line 3 by ${(part2Computation.tentativeCreditRate)}% .`]:part2Computation.half_tax_liability,
+            [`4 Multiply Line 3 by ${(extractConfig.half_tax_liability_rate)}% .`]:part2Computation.half_tax_liability,
             "5a Multiply Line 1 by two (2).":part2Computation.double_credit,
             [`5b Enter ${extractConfig.tax_limit_rate}% (.${extractConfig.tax_limit_rate}) of Line 3`]:part2Computation.tax_limit,
             "5 Enter the lesser of Line 5a or Line 5b":part2Computation.min_final,
