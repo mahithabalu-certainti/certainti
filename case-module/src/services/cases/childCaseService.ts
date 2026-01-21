@@ -52,7 +52,10 @@ export class ChildCaseService extends CaseService {
                 caseProjectIds.forEach((d) => {
                     mapIdsForCaseProjectregions.push(mappedValuesForCasesRegions.get(d))
                 })
-                await orgDb.query(rawQueries.updateClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName))
+                let query = rawQueries.updateClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName)
+                if(query) {
+                    await orgDb.query(query)
+                }
                 return {
                     statusCode : HttpStatus.SUCCESS,
                     statusMessage : STATUS_MESSAGE.financialWorkingSignedOff
