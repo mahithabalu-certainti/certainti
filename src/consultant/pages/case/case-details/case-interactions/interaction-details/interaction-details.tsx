@@ -30,6 +30,7 @@ interface InteractionDetailsProps {
   handleBackClick: () => void;
   // projectDetails: NewProjectData | null;
   isSendInteraction: boolean;
+  isFinancialWorkingSignoff?: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
@@ -37,6 +38,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   handleBackClick,
   // projectDetails,
   isSendInteraction,
+  isFinancialWorkingSignoff,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -157,7 +159,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive || disableInteractionEditBtn,
+      disabled: accountInActive || disableInteractionEditBtn || isFinancialWorkingSignoff,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
@@ -165,7 +167,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction,
+      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction || isFinancialWorkingSignoff,
       onClick: () => handleRemainder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
@@ -334,6 +336,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
             project_fiscal_rid: projectDetails?.rid || '',
             interaction_rid: data?.interaction_rid || interactionId || '',
           }}
+          isProjectSignedOff={Boolean(isFinancialWorkingSignoff)}
         />
       )}
       {!isLoading && !error && (

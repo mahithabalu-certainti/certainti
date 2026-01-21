@@ -71,6 +71,7 @@ interface casesProjectProps {
   refetchCaseDetails: () => void;
   activityMenuItems: ActivityDropdownItem[];
   isCaseTeamCreated: boolean;
+  isFinancialWorkingSignoff?: boolean;
 }
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -95,6 +96,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   refetchCaseDetails,
   activityMenuItems,
   isCaseTeamCreated,
+  isFinancialWorkingSignoff
 }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
@@ -311,7 +313,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: 'RD Assessment',
       variant: 'outlined' as const,
-      disabled: accountInActive || selectedRows.length === 0 || !isCaseTeamCreated,
+      disabled: accountInActive || selectedRows.length === 0 || !isCaseTeamCreated || isFinancialWorkingSignoff,
       onClick: () => handleTriggerAIBtn(),
       loading: triggerAIMutation.isPending,
       sx: { width: '115px', minWidth: '115px' },
@@ -323,7 +325,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: isAssignProject ? 'Assign' : 'Remove',
       variant: 'outlined' as const,
-      disabled: selectedRows.length === 0 || accountInActive || !isCaseTeamCreated,
+      disabled: selectedRows.length === 0 || accountInActive || !isCaseTeamCreated || isFinancialWorkingSignoff,
       onClick: () =>
         isAssignProject ? handletoAssignprojects() : handleRemoveProjects(),
       sx: { width: '80px', minWidth: '80px' },
@@ -337,7 +339,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: isAssignProject ? 'Back to Assigned Projects' : 'Assign Projects',
       variant: 'outlined' as const,
-      disabled: !isCaseTeamCreated,
+      disabled: !isCaseTeamCreated || isFinancialWorkingSignoff,
       onClick: () =>
         isAssignProject
           ? handleBackToAssignedProjects()

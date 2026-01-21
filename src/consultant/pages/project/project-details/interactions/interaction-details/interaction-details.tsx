@@ -35,6 +35,7 @@ interface InteractionDetailsProps {
   handleBackClick: () => void;
   projectDetails: NewProjectData | null;
   isSendInteraction: boolean;
+  isProjectSignedOff?: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
@@ -42,6 +43,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   handleBackClick,
   projectDetails,
   isSendInteraction,
+  isProjectSignedOff,
 }) => {
   const { projectid } = useParams();
   const navigate = useNavigate();
@@ -180,7 +182,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive || disableInteractionEditBtn,
+      disabled: isProjectSignedOff || accountInActive || disableInteractionEditBtn,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
@@ -188,7 +190,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction,
+      disabled: isProjectSignedOff || accountInActive || !disableRemainderBtn || !isSendInteraction,
       onClick: () => handleRemainder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
@@ -254,7 +256,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Response Received On',
-      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
+      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-', 
       key: 'response_updated_on',
     },
   ];
@@ -361,6 +363,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
               '',
             interaction_rid: data?.interaction_rid || interactionId || '',
           }}
+          isProjectSignedOff={Boolean(isProjectSignedOff)}
         />
       )}
       {!isLoading && !error && (

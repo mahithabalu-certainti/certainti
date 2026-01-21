@@ -197,6 +197,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     }
   }, [financialData]);
 
+  const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
+
   const { mutate: initiateProcess, isPending: isInitiating } =
     useInitiateRDCreditProcess();
   const { mutate: financialHighlights, isPending: isFinancialHighlights } =
@@ -355,17 +357,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       },
     });
   };
-  const isViewButtonEnabled = () => {
-    const isStatusCompleted = dossierFinancialStatus === 'COMPLETED';
-    if (!isStatusCompleted) return false;
-
-    if (isFederal === 'yes') {
-      return true;
-    } else if (isFederal === 'no') {
-      return selectedRegion !== '';
-    }
-    return false;
-  };
 
   const handleRefreshStatus = async () => {
     const result = await refetchRDCreditStatus();
@@ -404,7 +395,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             <TextButton
               label={'Sign off'}
               onClick={() => setIsSignOffModalOpen(true)}
-              disabled={false}
+              disabled={ dossierFinancialStatus === 'COMPLETED' || isFinancialWorkingSignoff}
               sx={{
                 width: 'auto',
                 minWidth: '65px',
@@ -434,7 +425,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               loading={isFinancialHighlights || isPreviewLoading}
               onClick={handleViewFinancialHighlights}
               disabled={
-                !isViewButtonEnabled() ||
+              dossierFinancialStatus === 'COMPLETED' ||
                 isFinancialHighlights ||
                 isPreviewLoading ||
                 showFinancialValue

@@ -201,9 +201,9 @@ const Projects: React.FC<ProjectsProps> = ({
     setRefreshProjectsTrigger(Date.now());
   };
 
-  const getProjectDisableReason = (isRdTriggerQualified: boolean): string => {
-    if (isRdTriggerQualified) {
-      return 'Project type not allowed due to Configuration setting';
+  const getProjectDisableReason = (isRdClaimQualified?: boolean): string => {
+    if (isRdClaimQualified) {
+      return 'Project is signed off';
     }
     return '';
   };
@@ -216,7 +216,7 @@ const Projects: React.FC<ProjectsProps> = ({
             project?.ProjectFiscal?.map((fiscal) => {
               // Get message for THIS specific fiscal object
               const checkBoxMessage = getProjectDisableReason(
-                fiscal?.is_rd_trigger_qualified === false
+                !!fiscal?.is_rd_claim_qualified
               );
 
               return {
@@ -226,24 +226,10 @@ const Projects: React.FC<ProjectsProps> = ({
               };
             }) || [];
 
-          // Check if ANY fiscal in this project is disabled
-          const hasDisabledChild = updatedProjectFiscal.some(
-            (fiscal) => fiscal.disableCheckBox
-          );
-
-          // Get the disable reason for the parent based on child condition
-          const parentDisableMessage = hasDisabledChild
-            ? getProjectDisableReason(true) // Or use appropriate logic for parent
-            : null;
-
           return {
             ...project,
             // Update the ProjectFiscal array with the new objects
             ProjectFiscal: updatedProjectFiscal,
-            // Set parent-level disable props based on child condition
-            disableCheckBox: hasDisabledChild,
-            checkBoxMessage: parentDisableMessage,
-            hasDisabledFiscal: hasDisabledChild,
           };
         }) || [];
 
@@ -359,7 +345,8 @@ const Projects: React.FC<ProjectsProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
-      disabled: accountInActive,
+      disabled: (row: Project) =>
+        accountInActive || !!row.is_rd_claim_qualified,
       onClick: (row: Project) => handleEdit(row),
       hide: !isProjectFieldsEditable,
     },

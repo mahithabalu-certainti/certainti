@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -32,6 +32,7 @@ import {
   HistorySubmissionIcon,
   ProjectTaskIcon,
   ManageGroupAccount,
+  DetailsKeyContactErrorIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -250,6 +251,8 @@ export const ProjectDetails = () => {
   const projectInActive =
     data?.data?.project?.status_name?.toLowerCase() === 'in-active';
   const rdQualified = data?.data?.project?.is_rd_trigger_qualified;
+    const isProjectSignedOff = data?.data?.project?.is_rd_claim_qualified;
+  console.log(isProjectSignedOff);
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -753,6 +756,7 @@ export const ProjectDetails = () => {
             projectCode={projectData?.project_code}
             projectFiscalYear={projectData?.fiscal_year}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'projectsTask':
@@ -771,6 +775,7 @@ export const ProjectDetails = () => {
             projectCode={projectData?.project_code}
             projectFiscalYear={projectData?.fiscal_year}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'rd-assessment-history':
@@ -792,6 +797,7 @@ export const ProjectDetails = () => {
             rdQualified={!rdQualified}
             loading={isPending}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'technicalSummary':
@@ -836,6 +842,7 @@ export const ProjectDetails = () => {
             refetchProjectDetails={refetch}
             projectFiscalYear={projectData?.fiscal_year}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'checklist':
@@ -1064,6 +1071,21 @@ export const ProjectDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 283px)', overflow: 'auto' }}
         >
+            {isProjectSignedOff && !isLoading && (
+                      <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+                        <div>
+                          <React.Suspense fallback={null}>
+                            <DetailsKeyContactErrorIcon alt='key-contact' />
+                          </React.Suspense>
+                        </div>
+                        <div>
+                          <span className='font-bold mr-1 capitalize'>{projectData?.project_code || ''}</span>-
+                          <span className='ml-1 font-medium'>
+                           Financial workings of this Case is signed off. Project changes are no longer allowed.
+                          </span>
+                        </div>
+                      </div>
+                    )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
