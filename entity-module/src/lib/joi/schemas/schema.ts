@@ -297,7 +297,7 @@ const createResourcesSchema = Joi.object({
       "any.allowOnly": "Organization name cannot be null or empty"
     }),
   role: Joi.string()
-    .pattern(/^[A-Za-z\s\-'.,]{3,64}$/)
+    .pattern(/^[A-Za-z0-9\s\-'.,]{3,64}$/)
     .min(3)
     .max(64)
     .optional()
