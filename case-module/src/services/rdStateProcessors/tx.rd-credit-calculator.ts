@@ -95,7 +95,7 @@ export class RdCreditCalculatorForTX {
         const average_prev_year_qre = tot_prev_year_qre.div(3);
 
         //----Line6: Average QRET x 50%
-        const average_qret_rate_50pct = average_prev_year_qre.mul(config.average_qret_rate_50pct);
+        const average_qret_rate_50pct = average_prev_year_qre.mul(config.average_qret_rate_50pct/100);
 
         //----Line7: Difference
         const difference = new Decimal(qretInfo.total_current_year_qre).minus(average_qret_rate_50pct);
@@ -103,8 +103,8 @@ export class RdCreditCalculatorForTX {
         //----Line8: Credit.
         //(If amount in Item 1b is zero, multiply Item 7 by 5% (0.05); 
         //otherwise, leave Item 8 blank and calculate credit in Item 9)
-        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? difference.mul(config.qre_rate_5pct) : "N/A";
-        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? difference.mul(config.qre_rate_6_25pct) : "N/A";
+        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? difference.mul(config.qre_rate_5pct/100) : "N/A";
+        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? difference.mul(config.qre_rate_6_25pct/100) : "N/A";
         return {
             average_prev_year_qre: this.round2(average_prev_year_qre),
             average_qret_rate_50pct: this.round2(average_qret_rate_50pct),
@@ -125,8 +125,8 @@ export class RdCreditCalculatorForTX {
      * @returns 
      */
     precedingCalculationWithNoQRET(qretInfo: any, average_prev_year_qre: Decimal, config: ConfigJson) {
-        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? average_prev_year_qre.mul(config.wages_rate_2_5pct) : "N/A";
-        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct) : "N/A";
+        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? average_prev_year_qre.mul(config.wages_rate_2_5pct/100) : "N/A";
+        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct/100) : "N/A";
         return {
             credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
             credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
@@ -205,8 +205,7 @@ export class RdCreditCalculatorForTX {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-            },
-            qreSummary
+            }
         };
     }
 
@@ -231,10 +230,10 @@ export class RdCreditCalculatorForTX {
 
         let precedingWithQret ={
             "5. Average QRET for preceding periods":precedingWithQretInfo.average_prev_year_qre,
-           [`6. Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct} `]:precedingWithQretInfo.average_qret_rate_50pct,
+           [`6. Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct}%`]:precedingWithQretInfo.average_qret_rate_50pct,
             "7. Difference":precedingWithQretInfo.difference,
-            [`8. Credit (If amount in Item 1b is zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct};`]:precedingWithQretInfo.credit,
-            [`9. Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by${precedingWithQretInfo.config.average_qret_rate_50pct})`]: ""
+            [`8. Credit (If amount in Item 1b is zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct};`]:precedingWithQretInfo.credit_eq_zero,
+            [`9. Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct})`]: precedingWithQretInfo.credit_gt_zero
         }
        
         let precedingWithNoQret = {

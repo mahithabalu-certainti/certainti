@@ -44,7 +44,7 @@ export class RdCreditCalculatorForAZ {
             creditType: this.creditType,
             currency: this.currency,
         });
-        const computedFields = await this.buildComputedFields(ascResult, rrcResult);
+        const computedFields = await this.buildComputedFields(ascResult, rrcResult, config);
 
         return {
             inputFields,
@@ -289,7 +289,7 @@ export class RdCreditCalculatorForAZ {
      * @param creditRRC 
      * @returns 
      */
-    async buildComputedFields(creditASC: any, creditRRC: any) {
+    async buildComputedFields(creditASC: any, creditRRC: any, config : ConfigJson) {
         let rrc ={
             "11 Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditRRC.wages,
             "12 Cost of supplies":creditRRC.supplies,
@@ -310,12 +310,10 @@ export class RdCreditCalculatorForAZ {
             [`23 Multiply line 22 by ${creditRRC?.config?.credit_rate} % (${(creditRRC?.config?.credit_rate) / 100}). Enter the result`]:creditRRC.credit_if_under_threshold,
             [`24 Subtract $ ${creditRRC?.config?.threshold_amount} from line 22. Enter the difference`]:creditRRC.excess_amount,
             [`25 Multiply line 24 by ${creditRRC?.config?.tier2_rate}. Enter the result`]:creditRRC.credit_on_excess,
-            [`26 Add ${creditRRC?.config?.tier2_base_add} to line 25. Enter the total`] :"",
+            [`26 Add ${creditRRC?.config?.tier2_base_add} to line 25. Enter the total`] :creditRRC.credit_if_over_threshold,
             "27 a If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26 .":creditRRC.total_az_final_credit,
             "27 b If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page":""
         }
-
-         
 
         let asc = {
             "75 Basic research payments paid or incurred to qualified organizations:":"",
