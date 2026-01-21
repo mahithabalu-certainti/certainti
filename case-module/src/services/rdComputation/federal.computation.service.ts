@@ -110,10 +110,8 @@ export class FederalComputationService {
                         let projectsMoreOfQre50Percent;
                         let totalProjectSharedWithHmrc = 0.00;
                         let finalPercentage = parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2)) === Infinity ? '0.00%' : `${parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2))}%`
-                        let dynamicKeyNameForTotalCount : string;
                         
                         if(result.computedFields[0].projects.length === 7) {
-                            dynamicKeyNameForTotalCount = `Total Projects`
                             projectsMoreOfQre50Percent = result.computedFields[0].projects.map((p : any) => {
                                 return {
                                     "Project Name": p.project_name,
@@ -124,7 +122,6 @@ export class FederalComputationService {
                                 totalProjectSharedWithHmrc += f["Total Project Value/Labor"]
                             })
                         } else {
-                            dynamicKeyNameForTotalCount = `Total Customer Groups`
                             projectsMoreOfQre50Percent = minProjectResult.selectedProjects.map((p : any, index : number) => {
                                 return {
                                     "Project Name": p.project_name,
@@ -168,7 +165,7 @@ export class FederalComputationService {
                         Projects : result.computedFields[0].projects.map((d: any) => {
                             return {
                                 "Project Name": d.project_client_group || d.project_name,
-                                "Total Projects" : d.total_projects_count || 0,
+                                "Total Projects" : JSON.stringify(d.total_projects_count) || '0',
                                 "Employees" : d.employees,
                                 "EPW" : d.epw,
                                 [reductionValue] : d.reductions,
@@ -178,7 +175,7 @@ export class FederalComputationService {
                             }
                         }),
                         "Percentage Calculation": {
-                            [dynamicKeyNameForTotalCount] : result.computedFields[0].projects.length || 0,
+                            [result.dynamicKeyNameForTotalCount] : result.computedFields[0].projects.length || 0,
                             "Total QRE" : qualifyingRdc,
                             "Total value of customer groups Greater than 50%" : minProjectResult.selectedSum == Infinity ? 0.00 : minProjectResult.selectedSum,
                             "%" : finalPercentage
@@ -429,6 +426,11 @@ export class FederalComputationService {
                 return finalAusData[0]
             } else if(fetchCountryDetails[0][0].country_code === "GBR") {
                 const finalUkData = result.map((u : any) => {
+                    let dynamicGroupName : string;
+                    dynamicGroupName = Object.keys(u.computed_fields["Percentage Calculation"]).find((d : any) => d.startsWith('Total Projects'))!
+                    if(dynamicGroupName == undefined) {
+                        dynamicGroupName = Object.keys(u.computed_fields["Percentage Calculation"]).find((d : any) => d.startsWith('Total Customer Groups'))!
+                    }
                     return {
                         ...u,
                         computed_fields : {
@@ -439,7 +441,7 @@ export class FederalComputationService {
                             "Technical Submissions by Cost that are 50% or more of Total QRE":u.computed_fields["Technical Submissions by Cost that are 50% or more of Total QRE"],
                             "Total Project to be shared with HMRC" : u.computed_fields["Total Project to be shared with HMRC"],
                             "Percentage Calculation": {
-                                "Total Customer Groups" : u.computed_fields["Percentage Calculation"]["Total Customer Groups"],
+                                [dynamicGroupName!] : u.computed_fields["Percentage Calculation"][dynamicGroupName!],
                                 "Total QRE" : u.computed_fields["Percentage Calculation"]["Total QRE"],
                                 "Total value of customer groups Greater than 50%" : u.computed_fields["Percentage Calculation"]["Total value of customer groups Greater than 50%"],
                                 "%" : u.computed_fields["Percentage Calculation"]["%"]

@@ -26,9 +26,13 @@ export class RdCreditCalculatorForUK {
         const orgDb = await this.getOrgDb();
         const checkTotalProjectCount : any = await orgDb.query(countAssignedProjects(caseRid, schemaName));
         let calculateComputedValues;
+        let dynamicKeyNameForTotalCount : string;
+
         if(checkTotalProjectCount[0][0].total >= 15) {
+            dynamicKeyNameForTotalCount = `Total Customer Groups`
             calculateComputedValues = await orgDb.query<ProjectComputeValue>(fetchProjectCostDetailsForUkBasedOnCases(caseRid, accountRid, schemaName, extractConfig.reduction), {type : QueryTypes.SELECT})
         } else {
+            dynamicKeyNameForTotalCount = `Total Projects`
             calculateComputedValues = await orgDb.query<ProjectComputeValue>(fetchProjectCostDetailsBasedOnCases(caseRid, accountRid, schemaName, extractConfig.reduction), {type : QueryTypes.SELECT})
         }
         return {
@@ -37,7 +41,8 @@ export class RdCreditCalculatorForUK {
                 credit_type : this.creditType,
                 currency : this.currency
             },
-            computedFields : calculateComputedValues
+            computedFields : calculateComputedValues,
+            dynamicKeyNameForTotalCount : dynamicKeyNameForTotalCount
         }
     }
 }
