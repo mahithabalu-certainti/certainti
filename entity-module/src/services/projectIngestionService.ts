@@ -2107,6 +2107,7 @@ class ProjectIngestionService {
       technicalConsultant,
       projectPointOfContact,
       projectPointOfContactEmail,
+      technicalPointOfContactEmail,
       isEmailRecipient,
     } = await this.keyContactService.calculateKeyContactDetails(
       projectData.key_contacts,
@@ -2127,6 +2128,7 @@ class ProjectIngestionService {
       technicalConsultant,
       projectPointOfContact,
       projectPointOfContactEmail,
+      technicalPointOfContactEmail,
       isEmailRecipient
     );
 
