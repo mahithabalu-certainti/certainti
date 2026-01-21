@@ -9,6 +9,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../hooks';
 interface SendInteractionModalProps {
   isOpen: boolean;
+  title?: string;
   onClose: () => void;
   selectedRows: InteractionList[];
   onSuccessRefetch: () => void;
@@ -16,6 +17,7 @@ interface SendInteractionModalProps {
 
 const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   isOpen,
+  title,
   onClose,
   selectedRows,
   onSuccessRefetch,
@@ -132,7 +134,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
       <div className='bg-white rounded-lg shadow-lg w-full max-w-xl p-5'>
         <div className='flex justify-between items-center border-b border-[#CBD6E2] pb-3'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>
-            Send Interaction
+            {title || 'Send Interaction'}
           </h2>
           <button
             onClick={handleClose}
