@@ -231,7 +231,7 @@ export class RdCreditCalculatorForTX {
 
         let precedingWithQret ={
             "5. Average QRET for preceding periods":precedingWithQretInfo.average_prev_year_qre,
-           [`6. Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct} `]:precedingWithQretInfo.average_qret_rate_50pct,
+           [`6. Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct}%`]:precedingWithQretInfo.average_qret_rate_50pct,
             "7. Difference":precedingWithQretInfo.difference,
             [`8. Credit (If amount in Item 1b is zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct};`]:precedingWithQretInfo.credit,
             [`9. Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by${precedingWithQretInfo.config.average_qret_rate_50pct})`]: ""
