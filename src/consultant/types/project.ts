@@ -192,6 +192,8 @@ export type Project = {
   project_status: string;
   project_point_of_contact: string | null;
   technical_point_of_contact: string | null;
+  project_point_of_contact_email: string | null;
+  technical_point_of_contact_email: string | null;
   r_number: string;
   program_name: string | null;
   project_startdate: string | null;

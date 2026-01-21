@@ -248,7 +248,7 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
                 errorMessage:
-                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
+                  'Only letters, spaces, apostrophes, hyphens, commas, and periods are allowed.',
               },
             ],
             placeholder: 'Enter Name',
@@ -292,7 +292,7 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
                 errorMessage:
-                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
+                  'Only letters, spaces, apostrophes, hyphens, commas, and periods are allowed.',
               },
             ],
             placeholder: 'Enter First Name',
@@ -331,7 +331,7 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
                 errorMessage:
-                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
+                  'Only letters, spaces, apostrophes, hyphens, commas, and periods are allowed.',
               },
             ],
             placeholder: 'Enter Last Name',
@@ -368,9 +368,13 @@ export const ResourceFormData = (
                 errorMessage: 'Max length exceeded.',
               },
               {
-                regex: RESOURCE_REGEX.ROLE,
+                regex: RESOURCE_REGEX.NUMBER_ONLY,
+                errorMessage: 'Role cannot contain only numbers.',
+              },
+              {
+                regex: RESOURCE_REGEX.ROLE_WITH_NUMBER,
                 errorMessage:
-                  'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+                  'Allows only letters, numbers, apostrophes, spaces, hyphens, commas, and periods.',
               },
             ],
           }),

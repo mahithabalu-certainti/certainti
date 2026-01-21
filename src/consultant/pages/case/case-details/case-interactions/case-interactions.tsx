@@ -55,6 +55,7 @@ import { getCaseInteractionHistoryFilterFields } from './interaction-history/hel
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { Box } from '@mui/material';
 import {
+  ReInitiateModal,
   SectionTabPanel,
   SendInteractionModal,
 } from '../../../../../components';
@@ -146,6 +147,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   const [refreshModelInteractions, setRefreshModelInteractions] =
     useState<number>(Date.now());
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [reInitiateModalOpen, setReInitiateModalOpen] = useState(false);
   const [modelTableParms, setModdelTableParms] = useState<ModelTableParams>({
     page: 0,
     limit: 100,
@@ -219,12 +221,12 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       case_rid: caseId || '',
       reminder_specific_list: true,
     },
-    reminderModalOpen,
+    reminderModalOpen || reInitiateModalOpen,
     refreshModelInteractions
   );
 
   useEffect(() => {
-    if (reminderModalOpen) {
+    if (reminderModalOpen || reInitiateModalOpen) {
       console.log(
         'modelTableData',
 
@@ -233,6 +235,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     }
   }, [
     reminderModalOpen,
+    reInitiateModalOpen,
     modelTableData,
     isModelDataLoading,
     isModelDataError,
@@ -430,7 +433,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
 
   const headerButtons = [
     {
-      label: 'Reminder',
+      label: 'New',
       variant: 'outlined' as const,
       disabled:
         accountInActive ||
@@ -456,12 +459,22 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       hide: !sendInteractionsEnable || viewResponseHistory,
     },
     {
-      label: 'New',
+      label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
-      disabled: accountInActive || !isCaseTeamCreated || isFinancialWorkingSignoff,
-      onClick: () => handleCreate(),
-      sx: { width: '48px', minWidth: '48px' },
-      hide: !createInteractionsEnable || viewResponseHistory,
+      disabled:
+        accountInActive || interactionList.length === 0 || !isSendInteraction,
+      onClick: () => setReInitiateModalOpen(true),
+      sx: { width: '160px', minWidth: '160px' },
+      hide: viewResponseHistory,
+    },
+    {
+      label: 'Reminder',
+      variant: 'outlined' as const,
+      disabled:
+        accountInActive || interactionList.length === 0 || !isSendInteraction,
+      onClick: () => setReminderModalOpen(true),
+      sx: { width: '80px', minWidth: '80px' },
+      hide: viewResponseHistory,
     },
     {
       label: 'Show/Hide Fields',
@@ -648,6 +661,46 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       },
     });
   };
+
+  const handleReInitiateBtn = (
+    data: InteractionList[],
+    recipient?: { name: string; email: string }
+  ) => {
+    const interactions = data.map((item) => ({
+      interaction_rid: item.rid || '',
+      interaction_level: item.interaction_level_name || '',
+      project_fiscal_rid: item.project_fiscal_rid || '',
+    }));
+
+    const payload = {
+      account_rid: accountId || '',
+      interactions,
+      email_info: {
+        email: recipient?.email.trim() || '',
+        name: recipient?.name.trim() || recipient?.email.split('@')[0] || '',
+      },
+    };
+
+    sendInteraction.mutate(payload, {
+      onSuccess: (response) => {
+        successToast(response?.statusMessage);
+        handleCloseReInitiate();
+        refetch();
+      },
+    });
+  };
+
+  const handleCloseReInitiate = () => {
+    setReInitiateModalOpen(false);
+    setModdelTableParms({
+      page: 0,
+      limit: 100,
+      sort: 'r_number',
+      sort_by: 'ASC',
+      filter: {},
+    });
+  };
+
   const handleClose = () => {
     setReminderModalOpen(false);
     setModdelTableParms({
@@ -886,6 +939,28 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
                 showFilter={true}
                 filterMenu={modelFIlterFields}
                 emptyMessage='No interaction available to send reminder'
+              />
+              <ReInitiateModal
+                title='Re-Initiate Interaction'
+                contextKey='Case-reinitiate-interactions'
+                isOpen={reInitiateModalOpen}
+                onClose={handleCloseReInitiate}
+                data={modelTableData?.interactions}
+                loading={isModelDataLoading}
+                isError={isModelDataError}
+                visibleColumns={interactionModelColumn}
+                totalCount={modelTableData?.count || 0}
+                tableParms={modelTableParms}
+                setTableParms={setModdelTableParms}
+                handleSend={handleReInitiateBtn}
+                handleFilter={handleModelFilter}
+                onRefreshClick={handleRefreshModel}
+                saveBtnLoading={sendInteraction.isPending}
+                showRefresh={true}
+                filterVisibility={modelShowFilter}
+                showFilter={true}
+                filterMenu={modelFIlterFields}
+                emptyMessage='No interaction available to re-initiate'
               />
             </div>
           </>
