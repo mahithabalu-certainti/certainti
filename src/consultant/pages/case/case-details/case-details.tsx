@@ -182,6 +182,7 @@ export const CaseDetails = () => {
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
+  const isFinancialWorkingSignoff = caseData?.financial_working_signoff;
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -819,6 +820,8 @@ export const CaseDetails = () => {
               setExportType={setExportType}
               refetchCaseDetails={refetchCaseDetails}
               activityMenuItems={activityMenuItems}
+              isCaseTeamCreated={!!isCaseTeamCreated}
+              isFinancialWorkingSignoff={isFinancialWorkingSignoff}
             />
           </div>
         );
@@ -851,6 +854,8 @@ export const CaseDetails = () => {
             setAttachmentParams={setAttachmentParams}
             caseDetails={caseData}
             activityMenuItems={activityMenuItems}
+            isCaseTeamCreated={!!isCaseTeamCreated}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
       case 'settings':
@@ -886,6 +891,8 @@ export const CaseDetails = () => {
             setInteractionsParams={setInteractionsParams}
             setExportType={setExportType}
             activityMenuItems={activityMenuItems}
+            isCaseTeamCreated={!!isCaseTeamCreated}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
       case 'projectResource':
@@ -914,6 +921,7 @@ export const CaseDetails = () => {
             dossierFinancialStatus={dossierFinancialStatus}
             financialData={financialData}
             setFinancialData={setFinancialData}
+            refetchCaseDetails={refetchCaseDetails}
           />
         );
       default:
@@ -1195,8 +1203,22 @@ export const CaseDetails = () => {
               <div>
                 <span className='font-bold mr-1 capitalize'>Case Team</span>-
                 <span className='ml-1 font-medium'>
-                  Case team setup is missing. Please create a case team before
-                  marking the task as complete.
+                 Case activities are unavailable until the case team is setup.
+                </span>
+              </div>
+            </div>
+          )}
+          {isFinancialWorkingSignoff && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Case</span>-
+                <span className='ml-1 font-medium'>
+                Financial workings of this Case is signed off. Project changes are no longer allowed.
                 </span>
               </div>
             </div>

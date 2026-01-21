@@ -71,6 +71,7 @@ interface AttachmentsProps {
   refetchProjectDetails: () => void;
   projectFiscalYear?: number | string;
   activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
@@ -80,6 +81,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   refetchProjectDetails,
   projectFiscalYear,
   activityMenuItems,
+  isProjectSignedOff,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -252,7 +254,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
       onClick: () => handleOpen(),
       sx: { width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,

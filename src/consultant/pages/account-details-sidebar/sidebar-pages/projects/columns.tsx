@@ -101,6 +101,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_name',
@@ -135,6 +141,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_type_name',
@@ -160,6 +172,12 @@ export const getProjectColumns = (
       placeholder: '',
       options: memoizedProjectTypes,
     },
+     conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'fiscal_year',
@@ -193,6 +211,10 @@ export const getProjectColumns = (
     conditionallyEdit: [
       {
         key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,
       },
     ],
@@ -264,6 +286,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_client_group',
@@ -303,6 +331,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_group',
@@ -342,6 +376,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_effort',
@@ -361,6 +401,10 @@ export const getProjectColumns = (
       {
         key: 'total_effort',
         matchValue: [null, '0.00'],
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
       },
     ],
     sx: {
@@ -403,6 +447,10 @@ export const getProjectColumns = (
       {
         key: 'total_cost',
         matchValue: [null, '0.00'],
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
       },
     ],
     render: (row: Project) =>
@@ -455,6 +503,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_subcon',
@@ -490,6 +544,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_nonlabor',
@@ -524,6 +584,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_point_of_contact',
@@ -725,6 +791,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'modified_datetime',

@@ -41,7 +41,8 @@ export const CaseFormData = (
   selectedFiscalYear?: string,
   globalType?: boolean,
   calculatedStatutoryDate?: string,
-  statusOptions?: SelectOption[]
+  statusOptions?: SelectOption[],
+  isAustralianCountry?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -362,7 +363,7 @@ export const CaseFormData = (
               !permissionMap?.['case_name']?.read,
           }),
           createTextField('total_expenses', 'Total Expenses', {
-            required: false,
+            required: isAustralianCountry,
             placeholder: 'Enter Total Expenses',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
@@ -620,6 +621,7 @@ export const CaseFormData = (
       selectedFiscalYear,
       globalType,
       calculatedStatutoryDate,
+      isAustralianCountry,
       statusOptions,
     ]
   );

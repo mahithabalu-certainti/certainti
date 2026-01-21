@@ -96,6 +96,7 @@ export const ProjectTask = ({
   accountOrProjectInActive,
   projectFiscalYear,
   activityMenuItems,
+  isProjectSignedOff,
 }: {
   projectID?: string;
   accountData?: {
@@ -112,6 +113,7 @@ export const ProjectTask = ({
   accountOrProjectInActive?: boolean;
   projectFiscalYear?: number | string;
   activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -405,11 +407,11 @@ export const ProjectTask = ({
           : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: viewDetails ? !isProjectTaskFieldsEditable : !isTaskCreateEnable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
     {
       label: 'Show/Hide Fields',
-      variant: 'outlined' as const,
+       variant: 'outlined' as const,
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
@@ -564,7 +566,8 @@ export const ProjectTask = ({
     fiscalDatesArg,
     isAttachmentCreateEnable,
     isNoteCreateEnable,
-    isChecklistCreateEnable
+    isChecklistCreateEnable,
+    isProjectSignedOff,
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
