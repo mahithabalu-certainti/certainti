@@ -51,6 +51,39 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
             ]
         }
     },
+    MA: {
+        sectionOrder: [
+            "PART 1. QUALIFIED RESEARCH EXPENSES",
+            "PART 2. CREDIT DETERMINED UNDER c. 63, s. 38M(b), (ALTERNATE SIMPLIFIED METHOD)",
+            "PART 3. CREDIT DETERMINED UNDER c. 63, A. 38M(a)"
+        ],
+        sectionFieldOrders: {
+            "PART 1. QUALIFIED RESEARCH EXPENSES": [
+                { pattern: "1 Qualified wage expenses for this corporation", order: 1 },
+                { pattern: "2 Qualified supply expenses for this corporation", order: 2 },
+                { pattern: "3 Qualified computer rental time expenses for this corporation", order: 3 },
+                { pattern: /^4 Enter \d+(\.\d+)?% of qualified contract expenses for this corporation$/, order: 4 },
+                { pattern: "5 Total qualified research expenses for this corporation. Add lines 1 through 4", order: 5 },
+                { pattern: "6 Total qualified research expenses for this aggregate group", order: 6 }
+            ],
+            "PART 2. CREDIT DETERMINED UNDER c. 63, s. 38M(b), (ALTERNATE SIMPLIFIED METHOD)": [
+                { pattern: "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10", order: 1 },
+                { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 2 },
+                { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 3 },
+                { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 4 },
+                { pattern: "10 Applicable rate for Alternative Simplified Method", order: 5 },
+                { pattern: "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10", order: 6 },
+                { pattern: "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6", order: 7 },
+                { pattern: "13 Amount of group credit for this corporation. Multiply line 11 by line 12", order: 8 }
+            ],
+            "PART 3. CREDIT DETERMINED UNDER c. 63, A. 38M(a)": [
+                { pattern: "14 Fixed-base ratio (see instructions)", order: 1 },
+                { pattern: "15 Average annual gross receipts from the 4 most recent taxable years", order: 2 },
+                { pattern: /^16 Base amount\. Multiply line 14 by line 15\. Not less than \d+(\.\d+)?% of line 6$/, order: 3 },
+                { pattern: "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.", order: 4 }
+            ]
+        }
+    }
  
     // TODO: Add configurations for other states (GA, OH, MA, NJ, etc.)
 };
