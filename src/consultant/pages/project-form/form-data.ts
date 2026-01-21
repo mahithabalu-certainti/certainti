@@ -279,17 +279,12 @@ export const FormData = (
               !permissionMap?.['project_name']?.edit,
             errorHandling: [
               {
-                regex: REGEX_PATTERNS.MIN_4,
-                errorMessage: 'Name must be more than 3 characters long',
+                regex: REGEX_PATTERNS.MIN_2,
+                errorMessage: 'Name must be at least 2 characters long.',
               },
               {
                 regex: REGEX_PATTERNS.MAX_255,
                 errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.PROJECT_NAME,
-                errorMessage:
-                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
               },
             ],
           }),
