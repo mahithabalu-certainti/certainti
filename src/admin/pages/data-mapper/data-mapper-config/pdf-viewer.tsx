@@ -137,8 +137,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   );
 
   return (
-    <div className='flex gap-4 h-full max-h-[calc(100vh-290px)]'>
-      {/* Left Side - PDF Viewer (70%) */}
+    <div className='flex h-full max-h-[calc(100vh-290px)]'>
+      {/* Left Side */}
       <Box
         className='flex-1 flex flex-col'
         sx={{
@@ -295,9 +295,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           </Box>
         </div>
       </Box>
-
-      {/* Right Side - Field Details (30%) */}
-      <div className='flex-shrink-0' style={{ width: '30%' }}>
+      <div className='w-[1%] h-full'></div>
+      {/* Right Side */}
+      <div className='flex-shrink-0' style={{ width: '29%' }}>
         <FieldDetailsPanel field={selectedField} />
       </div>
     </div>
