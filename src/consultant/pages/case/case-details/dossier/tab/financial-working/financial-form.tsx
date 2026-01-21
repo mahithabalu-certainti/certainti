@@ -357,6 +357,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       },
     });
   };
+  const isViewButtonEnabled = () => {
+    const isStatusCompleted = dossierFinancialStatus === 'COMPLETED';
+    if (isStatusCompleted) return true;
+
+    return false;
+  };
 
   const handleRefreshStatus = async () => {
     const result = await refetchRDCreditStatus();
@@ -395,7 +401,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             <TextButton
               label={'Sign off'}
               onClick={() => setIsSignOffModalOpen(true)}
-              disabled={ dossierFinancialStatus === 'COMPLETED' || isFinancialWorkingSignoff}
+              disabled={dossierFinancialStatus !== 'COMPLETED'}
               sx={{
                 width: 'auto',
                 minWidth: '65px',
@@ -425,10 +431,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               loading={isFinancialHighlights || isPreviewLoading}
               onClick={handleViewFinancialHighlights}
               disabled={
-              dossierFinancialStatus === 'COMPLETED' ||
+                !isViewButtonEnabled() ||
                 isFinancialHighlights ||
                 isPreviewLoading ||
-                showFinancialValue
+                showFinancialValue 
               }
               sx={{
                 width: '55px',
@@ -449,6 +455,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               disabled={
                 isInitiating ||
                 isRefetching ||
+                isFinancialWorkingSignoff ||
                 (!!dossierFinancialStatus &&
                   dossierFinancialStatus !== 'COMPLETED')
               }
