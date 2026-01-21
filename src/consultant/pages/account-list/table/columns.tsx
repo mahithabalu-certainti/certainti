@@ -330,7 +330,7 @@ export const getAccountColumns = (
           {row.finance_lead || '-'}
         </div>
       ) : (
-        <span>{row.finance_lead || '-'} </span>
+        <span>{row.finance_lead || '-'}</span>
       );
     },
   },
@@ -362,7 +362,7 @@ export const getAccountColumns = (
           {row.professional_services_consultant || '-'}
         </div>
       ) : (
-        <span>{row.professional_services_consultant || '-'} </span>
+        <span>{row.professional_services_consultant || '-'}</span>
       );
     },
   },

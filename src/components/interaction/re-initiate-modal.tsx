@@ -193,9 +193,6 @@ const ReInitiateModal: React.FC<ReInitiateModalProps> = ({
 
   const handleBack = () => {
     setStep(1);
-    // setShowAlternateRecipient(false);
-    // setRecipient({ name: '', email: '' });
-    // setErrors({});
   };
 
   const handleSubmit = () => {
