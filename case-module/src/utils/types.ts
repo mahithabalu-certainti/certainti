@@ -979,3 +979,13 @@ export type ProjectCalculatedDataCanada = {
   total_cost_nonlabor_prj : number
   rd_percent_final : number
 }
+
+// Flat array structure interface
+export interface FieldData {
+    label: string;
+    field_type: string;
+    value: string | number;
+    value_field_id: string;
+    section_id?: string;
+    id?: string;
+}
