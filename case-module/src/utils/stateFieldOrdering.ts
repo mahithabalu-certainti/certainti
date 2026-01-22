@@ -164,7 +164,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         },
         BOLD: ["15 Total qualified research expenses. Add line 11 through line 14"]
     },
-    CO: {
+    CA: {
         sectionOrder: [
             "Qualified research expenses paid or incurred."
         ],
@@ -189,6 +189,23 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: /^\d+(\.\d+)?%? for S corporations$/, order: 17 },
                 { pattern: "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :", order: 18 }
             ]
+        },
+        BOLD: []
+    },
+    CO: {
+        sectionOrder: [
+            "computed_fields"
+        ],
+        sectionFieldOrders: {
+            "computed_fields": [
+            { pattern : "A.Enter the current year qualified expenditures", order : 1 },
+            { pattern : "B.Enter the first preceding year expenditures", order : 2 },
+            { pattern : "C. Enter the second preceding year expenditures", order : 3 },
+            { pattern : /^D.Enter the sum of lines B and C$/, order: 4 },
+            { pattern : /^E.Enter \d+(\.\d+)?%? of line D$/, order: 5 },
+            { pattern : /^F.Enter line A minus line E$/, order: 6 },
+            { pattern : /^G.Allowable amount: \d+(\.\d+)?%? of line F$/, order: 7 }
+        ]
         },
         BOLD: []
     },
@@ -331,16 +348,27 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
  */
 export function reorderComputedFieldsForState(stateCode: string, computedFields: any): any {
     const config = stateConfigurations[stateCode];
-    
+
     if (!config) {
         // If no configuration exists for this state, return original fields
         logMessage(`No field ordering configuration found for state: ${stateCode}`);
         return computedFields;
     }
 
+    if (
+        stateCode === "CO" &&
+        config.sectionFieldOrders["computed_fields"]
+    ) {
+        const reordered = reorderSectionFields(
+            computedFields,
+            config.sectionFieldOrders["computed_fields"]
+        );
+        return reordered;
+    }
+
+    // 🔹 Default behavior for other states
     const reorderedFields: any = {};
 
-    // First, reorder the main sections according to state config
     config.sectionOrder.forEach(sectionKey => {
 
         // Try exact match first
@@ -387,6 +415,15 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
             } else {
                 return; // Skip this section
             }
+        if (!computedFields[sectionKey]) return;
+
+        if (config.sectionFieldOrders[sectionKey]) {
+            reorderedFields[sectionKey] = reorderSectionFields(
+                computedFields[sectionKey],
+                config.sectionFieldOrders[sectionKey]
+            );
+        } else {
+            reorderedFields[sectionKey] = computedFields[sectionKey];
         }
         
         // Check if this section has specific field ordering requirements
@@ -400,7 +437,6 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
         }
     });
 
-    // Add any remaining sections that weren't in the configuration
     Object.keys(computedFields).forEach(sectionKey => {
         if (!reorderedFields[sectionKey] && sectionKey !== 'BOLD') {
             reorderedFields[sectionKey] = computedFields[sectionKey];
@@ -408,6 +444,8 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
     });
     return reorderedFields;
 }
+
+
 
 /**
  * Reorders fields within a specific section using pattern matching for dynamic keys
@@ -463,7 +501,6 @@ function reorderSectionFields(sectionData: any, fieldPatterns: FieldPattern[]): 
     fieldEntries.forEach(entry => {
         orderedSection[entry.key] = entry.value;
     });
-    
     return orderedSection;
 }
 
