@@ -383,7 +383,6 @@ export enum AllPermissions {
   DOSSIER_FINANCIAL_VIEW_EDIT = 'financial_working_view',
   DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
   DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',
-
 }
 
 export interface Country {

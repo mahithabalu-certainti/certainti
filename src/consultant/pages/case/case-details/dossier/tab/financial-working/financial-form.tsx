@@ -26,7 +26,10 @@ import {
 } from '../../../../../../types';
 import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
-import { checkPermission, costDisplay } from '../../../../../../../common-utils';
+import {
+  checkPermission,
+  costDisplay,
+} from '../../../../../../../common-utils';
 import {
   fetchRDCreditPreview,
   useFinancialHighlights,
@@ -183,13 +186,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { successToast, errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
 
-
-    const { data } = useFetchCasesConfigFields(
-      accountid as string,
-      'case',
-      caseId as string
-    );
-     const configDetails = data?.data.states;
+  const { data } = useFetchCasesConfigFields(
+    accountid as string,
+    'case',
+    caseId as string
+  );
+  const configDetails = data?.data.states;
 
   // Restore showFinancialValues and form states if data exists
   React.useEffect(() => {
@@ -209,16 +211,14 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
 
-      const isSignoffVisible = checkPermission(
+  const isSignoffVisible = checkPermission(
     permission,
     AllPermissions.DOSSIER_FINANCIAL_SIGNOFF
   );
-      const isInitiateVisible = checkPermission(
+  const isInitiateVisible = checkPermission(
     permission,
     AllPermissions.DOSSIER_FINANCIAL_INITIATE
   );
-
-
 
   const { mutate: initiateProcess, isPending: isInitiating } =
     useInitiateRDCreditProcess();
@@ -392,8 +392,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
     return false;
   };
-  
-
 
   if (
     !caseDetails?.case_total_projects ||
@@ -460,7 +458,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                   ? 'Re-Generate'
                   : 'Initiate'
               }
-               hide={!isInitiateVisible}
+              hide={!isInitiateVisible}
               loading={isInitiating}
               onClick={handleInitiateFinancialHighlights}
               disabled={
@@ -704,37 +702,41 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               );
             }
 
-             if (countryName === FinancialWorkingCountries.US) {
-               const metadata = (financialData?.data?.input_params as any)?.metadata || {};
-               const description = metadata['Description'] || metadata['Descriptions'];
-               const taxYearEnded = metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
-               const fiscalYearEnded = metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
-               const stateDetails = metadata['stateDetails'];
+            if (countryName === FinancialWorkingCountries.US) {
+              const metadata =
+                (financialData?.data?.input_params as any)?.metadata || {};
+              const description =
+                metadata['Description'] || metadata['Descriptions'];
+              const taxYearEnded =
+                metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
+              const fiscalYearEnded =
+                metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
+              const stateDetails = metadata['stateDetails'];
 
               return (
                 <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
-                   {description && (
-                  <div className='text-[14px] font-semibold mt-1'>
-                    {description}
-                  </div>
-                   )}
-                   {taxYearEnded && (
-                  <div className='text-[14px] mt-1'>
-                    <span className='font-semibold'>Tax Year Ended:</span>{' '}
-                    {taxYearEnded}
-                  </div>
-                   )}
-                   {fiscalYearEnded && (
-                  <div className='text-[14px] mt-1'>
-                    <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
-                    {fiscalYearEnded}
-                  </div>
-                   )}
-                   {stateDetails && (
-                  <div className='text-[14px] mt-1 font-semibold'>
-                     {stateDetails}
-                  </div>
-                   )}
+                  {description && (
+                    <div className='text-[14px] font-semibold mt-1'>
+                      {description}
+                    </div>
+                  )}
+                  {taxYearEnded && (
+                    <div className='text-[14px] mt-1'>
+                      <span className='font-semibold'>Tax Year Ended:</span>{' '}
+                      {taxYearEnded}
+                    </div>
+                  )}
+                  {fiscalYearEnded && (
+                    <div className='text-[14px] mt-1'>
+                      <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
+                      {fiscalYearEnded}
+                    </div>
+                  )}
+                  {stateDetails && (
+                    <div className='text-[14px] mt-1 font-semibold'>
+                      {stateDetails}
+                    </div>
+                  )}
                 </div>
               );
             }

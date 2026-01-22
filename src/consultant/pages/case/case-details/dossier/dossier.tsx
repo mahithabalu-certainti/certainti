@@ -25,7 +25,6 @@ import { useSelector } from 'react-redux';
 import { useToast } from '../../../../../hooks';
 import { useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
 
-
 const DossierTabs = [
   {
     id: AllPermissions.DOSSIER_OVERVIEW,
@@ -107,9 +106,11 @@ const Dossier: React.FC<DossierProps> = ({
   const handleSearchReset = () => {
     setResetSearch(false);
   };
-  const {
-    refetch: refetchRDCreditStatus,
-  } = useRDCreditStatus(accountid, caseId ?? '', false);
+  const { refetch: refetchRDCreditStatus } = useRDCreditStatus(
+    accountid,
+    caseId ?? '',
+    false
+  );
 
   const handleStatusUpdate = (
     statusData: RDCreditStatusResponse,
@@ -117,7 +118,7 @@ const Dossier: React.FC<DossierProps> = ({
   ) => {
     const message = statusData?.data ?? statusData?.statusMessage ?? '';
     setDossierFinancialStatus(message);
-     setRefreshTrigger(Date.now())
+    setRefreshTrigger(Date.now());
     if (statusData?.data === 'COMPLETED') {
       if (actionType === 'initiate' || actionType === 'refresh') {
         successToast('Initiated successfully');
@@ -134,12 +135,12 @@ const Dossier: React.FC<DossierProps> = ({
     }
   };
   const handleFilter = () => setShowFilter(!showFilter);
- const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const isFinancialView = checkPermission(
     permission,
     AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
-  )
+  );
 
   const filterFields = useMemo(() => {
     switch (tabParam) {
@@ -208,7 +209,9 @@ const Dossier: React.FC<DossierProps> = ({
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={tabParam !== 'financial_workings' && tabParam !== 'rd_form'}
+        filterVisibility={
+          tabParam !== 'financial_workings' && tabParam !== 'rd_form'
+        }
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -217,8 +220,13 @@ const Dossier: React.FC<DossierProps> = ({
         handleFilter={handleFilter}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={tabParam === 'financial_workings' ? Boolean( dossierFinancialStatus &&
-                dossierFinancialStatus !== 'COMPLETED') : tabParam !== 'rd_form' }
+        showRefresh={
+          tabParam === 'financial_workings'
+            ? Boolean(
+                dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
+              )
+            : tabParam !== 'rd_form'
+        }
         onRefreshClick={handleRefresh}
         showSearch={tabParam !== 'financial_workings' && tabParam !== 'rd_form'}
         onSearch={(text) => setSearchText(text)}
