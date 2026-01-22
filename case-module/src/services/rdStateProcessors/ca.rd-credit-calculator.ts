@@ -13,6 +13,7 @@ export interface ConfigJson {
     corporation: number;
     individual: number;
     sub_con_percent: number;
+    reduced_credit_amount_percentage : number
 }
 export class RdCreditCalculatorForCA {
 
@@ -73,7 +74,7 @@ export class RdCreditCalculatorForCA {
         const line7 = 0;
 
         //---- Line 8: contract
-        const line8 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const line8 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
 
         //---- Line 9: total QREs   
         const line9 = new Decimal(line5).plus(new Decimal(line6)).plus(new Decimal(line7)).plus(new Decimal(line8));
@@ -106,6 +107,7 @@ export class RdCreditCalculatorForCA {
         const s_corp_rate = line17a.mul(config.s_corp).toNumber();
         const corporation_rate = line17a.mul(config.corporation).toNumber();
         const individual_rate = line17a.mul(config.individual).toNumber();
+        const reducedCreditAmountPercentage = line17a.mul(config.reduced_credit_amount_percentage/100).toNumber()
 
         return {
             wages: line5,
@@ -122,6 +124,7 @@ export class RdCreditCalculatorForCA {
             credit_before_280c: line16.toNumber(),
             regular_credit: line17a.toNumber(),
             reduced_credit_amount: { s_corp: s_corp_rate, corporation: corporation_rate, individual: individual_rate },
+            reducedCreditAmountPercentageValue : reducedCreditAmountPercentage,
             config: config
         }
 
@@ -185,10 +188,10 @@ export class RdCreditCalculatorForCA {
             [`16 Multiply line 15 by ${creditRRC.config.credit_rate}`]:creditRRC.credit_before_280c,
             "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach":creditRRC.regular_credit,
             "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:":"",
-            [`${creditRRC.config.individual} for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
-            [`${creditRRC.config.corporation} for  corporations`]:creditRRC.reduced_credit_amount.s_corp,
-            [`${creditRRC.config.s_corp} for S corporations`]:creditRRC.reduced_credit_amount.corporation,
-            "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :":creditRRC.reduced_credit_amount
+            [`${creditRRC.config.individual}% (${creditRRC.config.individual/100}) for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
+            [`${creditRRC.config.corporation}% (${creditRRC.config.corporation/100}) for  corporations`]:creditRRC.reduced_credit_amount.s_corp,
+            [`${creditRRC.config.s_corp}% (${creditRRC.config.s_corp/100}) for S corporations`]:creditRRC.reduced_credit_amount.corporation,
+            "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :":creditRRC.reducedCreditAmountPercentageValue
 
         }
         return {
