@@ -415,6 +415,7 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
             } else {
                 return; // Skip this section
             }
+        }
         if (!computedFields[sectionKey]) return;
 
         if (config.sectionFieldOrders[sectionKey]) {
