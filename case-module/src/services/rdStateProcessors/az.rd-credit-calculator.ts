@@ -197,7 +197,7 @@ export class RdCreditCalculatorForAZ {
             // If line 88 is $2,500,000 or less, complete line 89 and skip lines 90 through 92.
             // If line 88 is more than $2,500,000, skip line 89 and complete lines 90 through 92.
             if (line88.lte(config.threshold_amount)) {
-                line89 = line88.mul(config.tier1_rate);
+                line89 = line88.mul(config.tier1_rate/100);
                 line93 = line89;
             } else {
                 line90 = line88.minus(config.threshold_amount);
@@ -209,18 +209,18 @@ export class RdCreditCalculatorForAZ {
                 wages: line78,
                 supplies: line79,
                 contract: line81,
-                total_current_year_qre: line82,
-                total_prior_3years_qre: line83,
-                adjusted_base_amount: line84,
-                excess_qre: line85,
-                half_total_qre: line86,
-                total_section_b_credit: line87,
-                prior_year_credit_carryforward: line77,
-                credit_if_under_threshold: line89,
-                excess_amount: line90,
-                credit_on_excess: line91,
-                credit_if_over_threshold: line92,
-                total_az_final_credit: line93,
+                total_current_year_qre: parseFloat(Number(line82).toFixed(2)) || 0.00,
+                total_prior_3years_qre: parseFloat(Number(line83).toFixed(2)) || 0.00,
+                adjusted_base_amount: parseFloat(Number(line84).toFixed(2)) || 0.00,
+                excess_qre: parseFloat(Number(line85).toFixed(2)) || 0.00,
+                half_total_qre: parseFloat(Number(line86).toFixed(2)) || 0.00,
+                total_section_b_credit: parseFloat(Number(line87).toFixed(2)) || 0.00,
+                prior_year_credit_carryforward: line77 === '' ? 0.00 : parseFloat(Number(line77).toFixed(2)),
+                credit_if_under_threshold: parseFloat(Number(line89).toFixed(2)) || 0.00,
+                excess_amount: parseFloat(Number(line90).toFixed(2)) || 0.00,
+                credit_on_excess: parseFloat(Number(line91).toFixed(2)) || 0.00,
+                credit_if_over_threshold: parseFloat(Number(line92).toFixed(2)) || 0.00,
+                total_az_final_credit: parseFloat(Number(line93).toFixed(2)) || 0.00,
                 config: config
             }
 
@@ -242,7 +242,7 @@ export class RdCreditCalculatorForAZ {
         const lessThan3Years = prior3YearsQREs.length < 3;
         const hasZeroQRE = prior3YearsQREs.some(y => y.qre === 0);
 
-        const ascEligible = !(lessThan3Years || hasZeroQRE);
+        const ascEligible = (lessThan3Years || hasZeroQRE);
         return ascEligible;
     }
 
@@ -284,7 +284,6 @@ export class RdCreditCalculatorForAZ {
             },
             qreSummary
         };
-
     }
 
     /**
@@ -311,7 +310,7 @@ export class RdCreditCalculatorForAZ {
             "22 Add lines 10 and 21. Enter the total":creditRRC.total_az_credit_before_limits,
            [`* If line 22 is $ ${creditRRC?.config?.threshold_amount} or less, complete line 23 and skip lines 24 through 26.`]:"",
             [`* If line 22 is more than $ ${creditRRC?.config?.threshold_amount}, skip line 23 and complete lines 24 through 26.`]:"",
-            [`23 Multiply line 22 by ${creditRRC?.config?.credit_rate} % (${(creditRRC?.config?.credit_rate) / 100}). Enter the result`]:creditRRC.credit_if_under_threshold,
+            [`23 Multiply line 22 by ${creditRRC?.config?.credit_rate}% (${(creditRRC?.config?.credit_rate)/100}). Enter the result`]:creditRRC.credit_if_under_threshold,
             [`24 Subtract $ ${creditRRC?.config?.threshold_amount} from line 22. Enter the difference`]:creditRRC.excess_amount,
             [`25 Multiply line 24 by ${creditRRC?.config?.tier2_rate}. Enter the result`]:creditRRC.credit_on_excess,
             [`26 Add ${creditRRC?.config?.tier2_base_add} to line 25. Enter the total`] :creditRRC.credit_if_over_threshold,
@@ -331,15 +330,15 @@ export class RdCreditCalculatorForAZ {
             "83 Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC":creditASC.total_prior_3years_qre || '',
             "84 Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result":creditASC.adjusted_base_amount || '',
             "85 Subtract line 84 from line 82. Enter the difference. If less than zero, enter 0.":creditASC.excess_qre || '',
-            "86 Multiply line 82 by 50% (.50). Enter the result.":creditASC.half_total_qre || '',
+            [`86 Multiply line 82 by ${creditASC?.config?.qre_cap_rate}% (${creditASC?.config?.qre_cap_rate/100}). Enter the result.`]:creditASC.half_total_qre || '',
             "87 Enter the lesser of line 85 or line 86.":creditASC.total_section_b_credit   || '',
             "88 Add line 77 and line 87. Enter the total":creditASC.prior_year_credit_carryforward || '',
-            [`* If line 88 is ${creditRRC?.config?.threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]:"",
-            [`* If line 88 is more than ${creditRRC?.config?.threshold_amount}, skip line 89. Complete lines 90 through 93.`]:"",
-            [`89 If line 88 is ${creditRRC?.config?.threshold_amount} or less, multiply line 88 by 24% (.24). Enter the result.`]:creditASC.credit_if_under_threshold || '',
-            [`90 If line 88 is more than ${creditRRC?.config?.threshold_amount}, subtract ${creditRRC?.config?.threshold_amount} from line 88. Enter the difference.`]:creditASC.excess_amount || '',
-            [`91 Multiply line 90 by  ${creditRRC?.config?.tier2_rate}. Enter the result.`]:creditASC.credit_on_excess || '',
-            [`92 Add ${creditRRC?.config?.tier2_base_add} to line 91. Enter the total. `]:creditASC.credit_if_over_threshold || '',
+            [`* If line 88 is ${creditASC?.config?.threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]:"",
+            [`* If line 88 is more than ${creditASC?.config?.threshold_amount}, skip line 89. Complete lines 90 through 93.`]:"",
+            [`89 If line 88 is ${creditASC?.config?.threshold_amount} or less, multiply line 88 by ${creditASC?.config?.tier1_rate}% (${creditASC?.config?.tier1_rate/100}). Enter the result.`]:creditASC.credit_if_under_threshold || '',
+            [`90 If line 88 is more than ${creditASC?.config?.threshold_amount}, subtract ${creditASC?.config?.threshold_amount} from line 88. Enter the difference.`]:creditASC.excess_amount || '',
+            [`91 Multiply line 90 by  ${creditASC?.config?.tier2_rate}. Enter the result.`]:creditASC.credit_on_excess || '',
+            [`92 Add ${creditASC?.config?.tier2_base_add} to line 91. Enter the total. `]:creditASC.credit_if_over_threshold || '',
             "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.":creditASC.total_az_final_credit || ''
         }
 
