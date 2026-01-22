@@ -23,7 +23,7 @@ export class RdCreditCalculatorForCO {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : number) {
         const wages = stateRdData.currentYearQREs.wages || 0;
         const supplies = stateRdData.currentYearQREs.supplies || 0;
         const costToRent = 0;
@@ -42,22 +42,23 @@ export class RdCreditCalculatorForCO {
         const sumPriorTwoYears = new Decimal(priorYear1QREs).plus(new Decimal(priorYear2QREs));
 
         //---- Line E: 50% of Sum of Prior Year 1 and 2 QREs
-        const fiftyPercentOfPriorTwoYears = sumPriorTwoYears.mul(config.qre_cap_rate || 0);
+        const fiftyPercentOfPriorTwoYears = sumPriorTwoYears.mul(config.qre_cap_rate/100 || 0);
 
         //---- Line F: Excess QREs
         const excessQRE = Decimal.max(totalQREs.minus(fiftyPercentOfPriorTwoYears), 0);
 
         //---- Line G: Allowable Credit
-        const allowableCredit = excessQRE.mul(new Decimal(config.credit_rate || 0));
+        const allowableCredit = excessQRE.mul(new Decimal(config.credit_rate/100 || 0));
 
 
-        const inputFields = await this.buildInputParams(totalQREs, priorYear1QREs, priorYear2QREs, {
+        const inputFields = await this.buildInputParams({
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            FiscalYearEnded : fiscalYear
         });
 
-        const computedFields = await this.buildComputedFields({ sumPriorTwoYears, fiftyPercentOfPriorTwoYears, excessQRE, allowableCredit });
+        const computedFields = await this.buildComputedFields({ sumPriorTwoYears, fiftyPercentOfPriorTwoYears, excessQRE, allowableCredit, config, totalQREs, priorYear1QREs, priorYear2QREs});
 
         return {
             inputFields,
@@ -73,22 +74,15 @@ export class RdCreditCalculatorForCO {
      * @param metadata 
      * @returns 
      */
-    async buildInputParams(totalQREs: Decimal, priorYear1QREs: Decimal, priorYear2QREs: Decimal, metadata: any = {}) {
-
-        const qreSummary: Record<string, any> = {
-            "A.Enter the current year qualified expenditures": totalQREs.toNumber() || 0
-        };
-
-        qreSummary[`B.Enter the first preceding year expenditures`] = priorYear1QREs.toNumber() || 0;
-        qreSummary[`C. Enter the second preceding year expenditures`] = priorYear2QREs.toNumber() || 0;
+    async buildInputParams(metadata: any = {}) {
 
         return {
             metadata: {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-            },
-            qreSummary
+                "Fiscal Year Ended" : metadata.FiscalYearEnded
+            }
         };
 
     }
@@ -102,10 +96,13 @@ export class RdCreditCalculatorForCO {
     async buildComputedFields(data: any) {
         return {
             computed_fields: {
+                "A.Enter the current year qualified expenditures": data.totalQREs.toNumber() || 0,
+                "B.Enter the first preceding year expenditures": data.priorYear1QREs.toNumber() || 0,
+                "C. Enter the second preceding year expenditures" : data.priorYear2QREs.toNumber() || 0,
                 "D.Enter the sum of lines B and C": data.sumPriorTwoYears.toNumber(),
-                "G.Allowable amount: 3% of line F": data.allowableCredit.toNumber(),
-                "E.Enter 50% of line D": data.fiftyPercentOfPriorTwoYears.toNumber(),
-                "F.Enter line A minus line E": data.excessQRE.toNumber()
+                [`E.Enter ${data.config.qre_cap_rate}% of line D`]: data.fiftyPercentOfPriorTwoYears.toNumber(),
+                 "F.Enter line A minus line E": data.excessQRE.toNumber(),
+                [`G.Allowable amount: ${data.config.credit_rate}% of line F`]: data.allowableCredit.toNumber(),
             }
         }
     }
