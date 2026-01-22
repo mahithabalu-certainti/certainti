@@ -3,6 +3,9 @@
  * Supports dynamic keys using pattern matching
  */
 
+import { log } from "console";
+import { logMessage } from "./helpers";
+
 interface FieldPattern {
     pattern: string | RegExp;
     order: number;
@@ -146,16 +149,16 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "82 Total research expenses for the current year: Add lines 78 through 81. Enter the total", order: 8 },
                 { pattern: "83 Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC", order: 9 },
                 { pattern: "84 Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result", order: 10 },
-                { pattern: "85 Subtract line 84 from line 82. Enter the difference. If less than zero, enter 0.", order: 11 },
+                { pattern: /^85 Subtract line 84 from line 82\. Enter the difference\. If less than zero, enter [\"\"]?0[\"\"]?\.$/, order: 11 },
                 { pattern: "86 Multiply line 82 by 50% (.50). Enter the result.", order: 12 },
                 { pattern: "87 Enter the lesser of line 85 or line 86.", order: 13 },
                 { pattern: "88 Add line 77 and line 87. Enter the total", order: 14 },
-                { pattern: /^\* If line 88 is \d+(\,\d{3})*(\.\d+)? or less, complete lines 89 and 93\. Skip lines 90 through 92\.$/, order: 15 },
-                { pattern: /^\* If line 88 is more than \d+(\,\d{3})*(\.\d+)?, skip line 89\. Complete lines 90 through 93\.$/, order: 16 },
-                { pattern: /^89 If line 88 is \d+(\,\d{3})*(\.\d+)? or less, multiply line 88 by 24% \(\.24\)\. Enter the result\.$/, order: 17 },
-                { pattern: /^90 If line 88 is more than \d+(\,\d{3})*(\.\d+)?, subtract \d+(\,\d{3})*(\.\d+)? from line 88\. Enter the difference\.$/, order: 18 },
+                { pattern: /^\* If line 88 is more than \d+, skip line 89\. Complete lines 90 through 93\.$/, order: 15 },
+                { pattern: /^\* If line 88 is \d+ or less, complete lines 89 and 93\. Skip lines 90 through 92\.$/, order: 16 },
+                { pattern: /^89 If line 88 is \d+ or less, multiply line 88 by 24% \(\.24\)\. Enter the result\.$/, order: 17 },
+                { pattern: /^90 If line 88 is more than \d+, subtract \d+ from line 88\. Enter the difference\.$/, order: 18 },
                 { pattern: /^91 Multiply line 90 by  \d+(\.\d+)?%?\. Enter the result\.$/, order: 19 },
-                { pattern: /^92 Add \d+(\,\d{3})*(\.\d+)? to line 91\. Enter the total\. $/, order: 20 },
+                { pattern: /^92 Add \d+(\.\d+)? to line 91\. Enter the total\. $/, order: 20 },
                 { pattern: "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.", order: 21 }
             ]
         },
@@ -331,7 +334,7 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
     
     if (!config) {
         // If no configuration exists for this state, return original fields
-        console.log(`No field ordering configuration found for state: ${stateCode}`);
+        logMessage(`No field ordering configuration found for state: ${stateCode}`);
         return computedFields;
     }
 
@@ -339,26 +342,70 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
 
     // First, reorder the main sections according to state config
     config.sectionOrder.forEach(sectionKey => {
+
+        // Try exact match first
+        let matchedSectionKey = sectionKey;
         if (computedFields[sectionKey]) {
-            // Check if this section has specific field ordering requirements
-            if (config.sectionFieldOrders[sectionKey]) {
-                reorderedFields[sectionKey] = reorderSectionFields(
-                    computedFields[sectionKey], 
-                    config.sectionFieldOrders[sectionKey]
-                );
+        } else {
+          
+            const flexibleMatch = Object.keys(computedFields).find(fieldSection => {
+              
+                
+                // Try different matching strategies
+                const strategies = [
+                    // Strategy 1: Exact match
+                    () => fieldSection === sectionKey,
+                    // Strategy 2: Normalized comparison
+                    () => {
+                        const normalizedConfig = sectionKey.trim().toLowerCase().replace(/\s+/g, ' ');
+                        const normalizedField = fieldSection.trim().toLowerCase().replace(/\s+/g, ' ');
+                        return normalizedConfig === normalizedField;
+                    },
+                    // Strategy 3: Contains key phrases
+                    () => {
+                        return fieldSection.includes('Part 12') && fieldSection.includes('Alternative Simplified Credit');
+                    },
+                    // Strategy 4: Starts with same prefix
+                    () => {
+                        return fieldSection.startsWith('Part 12 Current Taxable Year');
+                    }
+                ];
+                
+                for (let i = 0; i < strategies.length; i++) {
+                    const strategy = strategies[i];
+                    if (strategy) {
+                        const result = strategy();
+                        if (result) return true;
+                    }
+                }
+                
+                return false;
+            });
+            
+            if (flexibleMatch) {
+                matchedSectionKey = flexibleMatch;
             } else {
-                reorderedFields[sectionKey] = computedFields[sectionKey];
+                return; // Skip this section
             }
+        }
+        
+        // Check if this section has specific field ordering requirements
+        if (config.sectionFieldOrders[sectionKey]) {
+            reorderedFields[matchedSectionKey] = reorderSectionFields(
+                computedFields[matchedSectionKey], 
+                config.sectionFieldOrders[sectionKey]
+            );
+        } else {
+            reorderedFields[matchedSectionKey] = computedFields[matchedSectionKey];
         }
     });
 
     // Add any remaining sections that weren't in the configuration
     Object.keys(computedFields).forEach(sectionKey => {
-        if (!reorderedFields[sectionKey]) {
+        if (!reorderedFields[sectionKey] && sectionKey !== 'BOLD') {
             reorderedFields[sectionKey] = computedFields[sectionKey];
         }
     });
-
     return reorderedFields;
 }
 
@@ -375,7 +422,6 @@ function reorderSectionFields(sectionData: any, fieldPatterns: FieldPattern[]): 
     // Match each field in sectionData to patterns and assign order
     Object.keys(sectionData).forEach(fieldKey => {
         let matchFound = false;
-        
         for (const fieldPattern of fieldPatterns) {
             if (typeof fieldPattern.pattern === 'string') {
                 // Exact string match
