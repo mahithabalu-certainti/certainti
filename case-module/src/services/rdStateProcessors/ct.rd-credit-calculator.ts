@@ -193,7 +193,7 @@ export class RdCreditCalculatorForCT {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
                 "Description": "Research Tax Credit",
                 stateDetails : "Connecticut - Credit Calculation"
             },

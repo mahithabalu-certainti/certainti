@@ -82,9 +82,9 @@ class RDCreditSchemaService {
             const [data]: any[] = await this.orgDbSequelize.query(
                 `
                     SELECT 
-                        SUM(cpr.total_cost_fte_prj) AS total_wages,
-                        SUM(cpr.total_cost_nonlabor_prj) AS total_supplies,
-                        SUM(cpr.total_cost_subcon_prj) AS total_contract,
+                        SUM(cpr.total_cost_fte_from_prj_res) AS total_wages,
+                        SUM(cpr.total_cost_nonlabor_from_prj_res) AS total_supplies,
+                        SUM(cpr.total_cost_subcon_from_prj_res) AS total_contract,
                         cs.tax_liability as business_tax_liability
                     FROM ${schemaName}.case_projects cp
                     JOIN ${schemaName}.project_fiscal pf
