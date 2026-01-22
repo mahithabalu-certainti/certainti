@@ -206,7 +206,8 @@ export const STATUS_MESSAGE = {
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
-  regionsFetchedSuccess : "Regions listed successfully"
+  regionsFetchedSuccess : "Regions listed successfully",
+  financialWorkingInitiated:"Financial workings are being computed. Refresh the page to check the status"
 };
 
 export const caseStatuses = {

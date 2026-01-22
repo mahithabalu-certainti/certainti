@@ -3,7 +3,6 @@
  * Supports dynamic keys using pattern matching
  */
 
-import { log } from "console";
 import { logMessage } from "./helpers";
 
 interface FieldPattern {
@@ -12,6 +11,7 @@ interface FieldPattern {
 }
 
 interface StateFieldConfig {
+    hasFieldOrderingConfig?: boolean;
     sectionOrder: string[];
     sectionFieldOrders: { [sectionKey: string]: FieldPattern[] };
     BOLD: string[];
@@ -110,9 +110,10 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         BOLD: []
     },
     AZ: {
+        hasFieldOrderingConfig: true,
         sectionOrder: [
             "Qualified research expenses paid or incurred.",
-            "Part 12 Current Taxable Year's Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"
+            "Part 12 Current Taxable Year’s Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"
         ],
         sectionFieldOrders: {
             "Qualified research expenses paid or incurred.": [
@@ -138,7 +139,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "27 a If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26 .", order: 20 },
                 { pattern: "27 b If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page", order: 21 }
             ],
-            "Part 12 Current Taxable Year's Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)": [
+            "Part 12 Current Taxable Year’s Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)": [
                 { pattern: "75 Basic research payments paid or incurred to qualified organizations:", order: 1 },
                 { pattern: "76 Qualified organization base period amount", order: 2 },
                 { pattern: "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.", order: 3 },
@@ -350,7 +351,6 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
     const config = stateConfigurations[stateCode];
 
     if (!config) {
-        // If no configuration exists for this state, return original fields
         logMessage(`No field ordering configuration found for state: ${stateCode}`);
         return computedFields;
     }
@@ -366,75 +366,37 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
         return reordered;
     }
 
-    // 🔹 Default behavior for other states
     const reorderedFields: any = {};
 
     config.sectionOrder.forEach(sectionKey => {
 
-        // Try exact match first
-        let matchedSectionKey = sectionKey;
         if (computedFields[sectionKey]) {
+            if (config.sectionFieldOrders[sectionKey]) {
+                reorderedFields[sectionKey] = reorderSectionFields(
+                    computedFields[sectionKey], 
+                    config.sectionFieldOrders[sectionKey]
+                );
+            } else {
+                reorderedFields[sectionKey] = computedFields[sectionKey];
+            }
         } else {
-          
-            const flexibleMatch = Object.keys(computedFields).find(fieldSection => {
-              
-                
-                // Try different matching strategies
-                const strategies = [
-                    // Strategy 1: Exact match
-                    () => fieldSection === sectionKey,
-                    // Strategy 2: Normalized comparison
-                    () => {
-                        const normalizedConfig = sectionKey.trim().toLowerCase().replace(/\s+/g, ' ');
-                        const normalizedField = fieldSection.trim().toLowerCase().replace(/\s+/g, ' ');
-                        return normalizedConfig === normalizedField;
-                    },
-                    // Strategy 3: Contains key phrases
-                    () => {
-                        return fieldSection.includes('Part 12') && fieldSection.includes('Alternative Simplified Credit');
-                    },
-                    // Strategy 4: Starts with same prefix
-                    () => {
-                        return fieldSection.startsWith('Part 12 Current Taxable Year');
-                    }
-                ];
-                
-                for (let i = 0; i < strategies.length; i++) {
-                    const strategy = strategies[i];
-                    if (strategy) {
-                        const result = strategy();
-                        if (result) return true;
-                    }
-                }
-                
-                return false;
+            // Try to find a match with similar text (for cases where there might be encoding differences)
+            const similarSection = Object.keys(computedFields).find(availableSection => {
+                const normalizedAvailable = availableSection.trim().replace(/\s+/g, ' ').replace(/'/g, "'");
+                const normalizedConfig = sectionKey.trim().replace(/\s+/g, ' ').replace(/'/g, "'");
+                return normalizedAvailable === normalizedConfig;
             });
             
-            if (flexibleMatch) {
-                matchedSectionKey = flexibleMatch;
-            } else {
-                return; // Skip this section
+            if (similarSection) {
+                if (config.sectionFieldOrders[sectionKey]) {
+                    reorderedFields[similarSection] = reorderSectionFields(
+                        computedFields[similarSection], 
+                        config.sectionFieldOrders[sectionKey]
+                    );
+                } else {
+                    reorderedFields[similarSection] = computedFields[similarSection];
+                }
             }
-        }
-        if (!computedFields[sectionKey]) return;
-
-        if (config.sectionFieldOrders[sectionKey]) {
-            reorderedFields[sectionKey] = reorderSectionFields(
-                computedFields[sectionKey],
-                config.sectionFieldOrders[sectionKey]
-            );
-        } else {
-            reorderedFields[sectionKey] = computedFields[sectionKey];
-        }
-        
-        // Check if this section has specific field ordering requirements
-        if (config.sectionFieldOrders[sectionKey]) {
-            reorderedFields[matchedSectionKey] = reorderSectionFields(
-                computedFields[matchedSectionKey], 
-                config.sectionFieldOrders[sectionKey]
-            );
-        } else {
-            reorderedFields[matchedSectionKey] = computedFields[matchedSectionKey];
         }
     });
 
@@ -443,6 +405,12 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
             reorderedFields[sectionKey] = computedFields[sectionKey];
         }
     });
+
+    // Add BOLD array from configuration
+    if (config.BOLD && config.BOLD.length > 0) {
+        reorderedFields.BOLD = config.BOLD;
+    }
+    
     return reorderedFields;
 }
 
