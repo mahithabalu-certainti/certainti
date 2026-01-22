@@ -41,7 +41,8 @@ export const CaseFormData = (
   selectedFiscalYear?: string,
   globalType?: boolean,
   calculatedStatutoryDate?: string,
-  statusOptions?: SelectOption[]
+  statusOptions?: SelectOption[],
+  isAustralianCountry?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -173,12 +174,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['heat_light_power']?.edit &&
+              permissionMap?.['heat_light_power']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['heat_light_power']?.edit &&
+              !permissionMap?.['heat_light_power']?.read,
           }),
           createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
             required: false,
@@ -188,12 +189,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['total_nonlabor_cost']?.edit &&
+              permissionMap?.['total_nonlabor_cost']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['total_nonlabor_cost']?.edit &&
+              !permissionMap?.['total_nonlabor_cost']?.read,
           }),
           createTextField('tax_liability', 'Tax Liability', {
             required: false,
@@ -207,12 +208,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['tax_liability']?.edit &&
+              permissionMap?.['tax_liability']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['tax_liability']?.edit &&
+              !permissionMap?.['tax_liability']?.read,
           }),
           createTextField(
             'employers_pension_contribution',
@@ -230,12 +231,12 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                permissionMap?.['case_name']?.read,
+                !permissionMap?.['employers_pension_contribution']?.edit &&
+                permissionMap?.['employers_pension_contribution']?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                !permissionMap?.['case_name']?.read,
+                !permissionMap?.['employers_pension_contribution']?.edit &&
+                !permissionMap?.['employers_pension_contribution']?.read,
             }
           ),
           createTextField(
@@ -254,12 +255,12 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                permissionMap?.['case_name']?.read,
+                !permissionMap?.['material_software_cost']?.edit &&
+                permissionMap?.['material_software_cost']?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                !permissionMap?.['case_name']?.read,
+                !permissionMap?.['material_software_cost']?.edit &&
+                !permissionMap?.['material_software_cost']?.read,
             }
           ),
           createTextField('sub_contracts', 'Subcontracts', {
@@ -274,12 +275,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['sub_contracts']?.edit &&
+              permissionMap?.['sub_contracts']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['sub_contracts']?.edit &&
+              !permissionMap?.['sub_contracts']?.read,
           }),
           createTextField('cloud_software', 'Cloud Software', {
             required: false,
@@ -294,12 +295,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['cloud_software']?.edit &&
+              permissionMap?.['cloud_software']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['cloud_software']?.edit &&
+              !permissionMap?.['cloud_software']?.read,
           }),
           createTextField('unpaid_amounts_paid', 'Unpaid Amounts (+)', {
             required: false,
@@ -314,12 +315,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['unpaid_amounts_paid']?.edit &&
+              permissionMap?.['unpaid_amounts_paid']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['unpaid_amounts_paid']?.edit &&
+              !permissionMap?.['unpaid_amounts_paid']?.read,
           }),
           createTextField('unpaid_amounts', 'Unpaid Amounts (-)', {
             required: false,
@@ -334,12 +335,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['unpaid_amounts']?.edit &&
+              permissionMap?.['unpaid_amounts']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['unpaid_amounts']?.edit &&
+              !permissionMap?.['unpaid_amounts']?.read,
           }),
           createTextField('aggregated_turnover', 'Aggregated Turnover', {
             required: false,
@@ -354,15 +355,15 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['aggregated_turnover']?.edit &&
+              permissionMap?.['aggregated_turnover']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['aggregated_turnover']?.edit &&
+              !permissionMap?.['aggregated_turnover']?.read,
           }),
           createTextField('total_expenses', 'Total Expenses', {
-            required: false,
+            required: isAustralianCountry,
             placeholder: 'Enter Total Expenses',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
@@ -374,12 +375,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['total_expenses']?.edit &&
+              permissionMap?.['total_expenses']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['total_expenses']?.edit &&
+              !permissionMap?.['total_expenses']?.read,
           }),
           createTextField('taxable_income', 'Taxable Income', {
             required: false,
@@ -394,12 +395,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['taxable_income']?.edit &&
+              permissionMap?.['taxable_income']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['taxable_income']?.edit &&
+              !permissionMap?.['taxable_income']?.read,
           }),
           createTextField('export_sales_revenue', 'Export Sales Revenue', {
             required: false,
@@ -414,12 +415,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['export_sales_revenue']?.edit &&
+              permissionMap?.['export_sales_revenue']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['export_sales_revenue']?.edit &&
+              !permissionMap?.['export_sales_revenue']?.read,
           }),
           createTextField('other', 'Other', {
             required: false,
@@ -433,12 +434,12 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['other']?.edit &&
+              permissionMap?.['other']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['other']?.edit &&
+              !permissionMap?.['other']?.read,
           }),
           createEmptyField('', '', {
             name: 'emptyData',
@@ -620,6 +621,8 @@ export const CaseFormData = (
       selectedFiscalYear,
       globalType,
       calculatedStatutoryDate,
+      isAustralianCountry,
+      statusOptions,
     ]
   );
 };

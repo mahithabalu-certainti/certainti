@@ -46,7 +46,7 @@ export const useAccountProjects = (
 };
 
 export const fetchPostProjects = async (
-  body: Record<string, Object>
+  body: Record<string, object | string | string[] | number | unknown>
 ): Promise<{ projects: Project[]; count: number }> => {
   const response = await resourceServiceApi.post<ProjectAccordionResponse>(
     '/api/project/list',
@@ -63,7 +63,7 @@ export const useAllProjects = () => {
   return useMutation<
     { projects: Project[]; count: number },
     Error,
-    Record<string, Object | string | number>
+    Record<string, object | string | string[] | number | unknown>
   >({
     mutationFn: (body) => fetchPostProjects({ ...body }),
   });

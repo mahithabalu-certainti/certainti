@@ -380,6 +380,9 @@ export enum AllPermissions {
   WORKFLOW_BUILDER_DELETE = 'workflow_rule_delete',
   DOSSIER_OVERVIEW = 'dossier_overview',
   DOSSIER_TIMELINE = 'dossier_timeline',
+  DOSSIER_FINANCIAL_VIEW_EDIT = 'financial_working_view',
+  DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
+  DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',
 }
 
 export interface Country {

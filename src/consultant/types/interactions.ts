@@ -198,6 +198,8 @@ export type InteractionList = {
   interaction_level_name?: string;
   project_code?: string;
   project_name?: string;
+  key_contact_name?: string | null;
+  key_contact_email?: string | null;
 };
 
 export type InteractionTemplateList = {

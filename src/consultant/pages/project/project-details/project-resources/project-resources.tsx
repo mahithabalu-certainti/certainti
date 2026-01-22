@@ -90,6 +90,7 @@ export const ProjectResources = ({
   accountOrProjectInActive,
   projectFiscalYear,
   activityMenuItems,
+  isProjectSignedOff,
 }: {
   projectID?: string;
   accountData?: {
@@ -106,6 +107,7 @@ export const ProjectResources = ({
   accountOrProjectInActive?: boolean;
   projectFiscalYear?: number | string;
   activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -383,7 +385,7 @@ export const ProjectResources = ({
       onClick: (row: ProjectResourcesListType) =>
         handleEditProjectResource(row),
       hide: !isProjectResourceFieldsEditable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
   ];
   const isResourceCreateViewEnable = checkPermission(
@@ -508,7 +510,7 @@ export const ProjectResources = ({
       hide: viewDetails
         ? !isProjectResourceFieldsEditable
         : !isResourceCreateViewEnable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
     {
       label: 'Show/Hide Fields',
@@ -578,7 +580,8 @@ export const ProjectResources = ({
     handleCountry,
     region.isPending,
     permissionMap,
-    accountOrProjectInActive
+    accountOrProjectInActive,
+    isProjectSignedOff
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
