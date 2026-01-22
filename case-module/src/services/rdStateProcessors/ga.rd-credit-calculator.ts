@@ -311,6 +311,7 @@ export class RdCreditCalculatorForGA {
         }
     }
 
+    
     /**
      * 
      * @param value 
