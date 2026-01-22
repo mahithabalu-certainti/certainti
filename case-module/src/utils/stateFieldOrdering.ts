@@ -109,62 +109,66 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         },
         BOLD: []
     },
-    AZ: {
-        hasFieldOrderingConfig: true,
-        sectionOrder: [
-            "Qualified research expenses paid or incurred.",
-            "Part 12 Current Taxable Year’s Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"
-        ],
-        sectionFieldOrders: {
-            "Qualified research expenses paid or incurred.": [
-                { pattern: "11 Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)", order: 1 },
-                { pattern: "12 Cost of supplies", order: 2 },
-                { pattern: "13 Cost to rent or lease computers", order: 3 },
-                { pattern: "14 Contract research expenses: See instructions", order: 4 },
-                { pattern: "15 Total qualified research expenses. Add line 11 through line 14", order: 5 },
-                { pattern: "16 Average annual Arizona gross receipts: See instructions", order: 6 },
-                { pattern: /^17 Fixed-base percentage \[not more than \d+(\.\d+)?%\]: See instructions$/, order: 7 },
-                { pattern: "18 Base amount: Multiply line 16 by the percentage on line 17. Enter the result", order: 8 },
-                { pattern: "19 Subtract line 18 from line 15. If less than zero, enter 0", order: 9 },
-                { pattern: /^20 Multiply line 15 by \d+(\.\d+)?\s*%\s*\(\d*\.?\d+\)\. Enter the result$/, order: 10 },
-                { pattern: /^Enter \d+(\.\d+)?%? of line 15$/, order: 11 },
-                { pattern: "21 Enter the lesser of line 19 or line 20", order: 12 },
-                { pattern: "22 Add lines 10 and 21. Enter the total", order: 13 },
-                { pattern: /^\* If line 22 is \$ \d+(\,\d{3})*(\.\d+)? or less, complete line 23 and skip lines 24 through 26\.$/, order: 14 },
-                { pattern: /^\* If line 22 is more than \$ \d+(\,\d{3})*(\.\d+)?, skip line 23 and complete lines 24 through 26\.$/, order: 15 },
-                { pattern: /^23 Multiply line 22 by \d+(\.\d+)?\s*%\s*\(\d*\.?\d+\)\. Enter the result$/, order: 16 },
-                { pattern: /^24 Subtract \$ \d+(\,\d{3})*(\.\d+)? from line 22\. Enter the difference$/, order: 17 },
-                { pattern: /^25 Multiply line 24 by \d+(\.\d+)?%?\. Enter the result$/, order: 18 },
-                { pattern: /^26 Add \d+(\,\d{3})*(\.\d+)? to line 25\. Enter the total$/, order: 19 },
-                { pattern: "27 a If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26 .", order: 20 },
-                { pattern: "27 b If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page", order: 21 }
-            ],
-            "Part 12 Current Taxable Year’s Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)": [
-                { pattern: "75 Basic research payments paid or incurred to qualified organizations:", order: 1 },
-                { pattern: "76 Qualified organization base period amount", order: 2 },
-                { pattern: "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.", order: 3 },
-                { pattern: "78 Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit)", order: 4 },
-                { pattern: "79 Current year cost of supplies", order: 5 },
-                { pattern: "80 Current year cost to rent or lease computers", order: 6 },
-                { pattern: "81 Current contract research expenses: See instructions", order: 7 },
-                { pattern: "82 Total research expenses for the current year: Add lines 78 through 81. Enter the total", order: 8 },
-                { pattern: "83 Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC", order: 9 },
-                { pattern: "84 Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result", order: 10 },
-                { pattern: /^85 Subtract line 84 from line 82\. Enter the difference\. If less than zero, enter [\"\"]?0[\"\"]?\.$/, order: 11 },
-                { pattern: "86 Multiply line 82 by 50% (.50). Enter the result.", order: 12 },
-                { pattern: "87 Enter the lesser of line 85 or line 86.", order: 13 },
-                { pattern: "88 Add line 77 and line 87. Enter the total", order: 14 },
-                { pattern: /^\* If line 88 is more than \d+, skip line 89\. Complete lines 90 through 93\.$/, order: 15 },
-                { pattern: /^\* If line 88 is \d+ or less, complete lines 89 and 93\. Skip lines 90 through 92\.$/, order: 16 },
-                { pattern: /^89 If line 88 is \d+ or less, multiply line 88 by 24% \(\.24\)\. Enter the result\.$/, order: 17 },
-                { pattern: /^90 If line 88 is more than \d+, subtract \d+ from line 88\. Enter the difference\.$/, order: 18 },
-                { pattern: /^91 Multiply line 90 by  \d+(\.\d+)?%?\. Enter the result\.$/, order: 19 },
-                { pattern: /^92 Add \d+(\.\d+)? to line 91\. Enter the total\. $/, order: 20 },
-                { pattern: "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.", order: 21 }
-            ]
-        },
-        BOLD: ["15 Total qualified research expenses. Add line 11 through line 14"]
-    },
+   AZ: {
+  sectionOrder: [
+    "Qualified research expenses paid or incurred.",
+    "Part 12 Current Taxable Year's Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"
+  ],
+
+  sectionFieldOrders: {
+    "Qualified research expenses paid or incurred.": [
+      { pattern: /^11 Wages for qualified services/, order: 11 },
+      { pattern: /^12 Cost of supplies/, order: 12 },
+      { pattern: /^13 Cost to rent or lease computers/, order: 13 },
+      { pattern: /^14 Contract research expenses/, order: 14 },
+      { pattern: /^15 Total qualified research expenses/, order: 15 },
+      { pattern: /^16 Average annual Arizona gross receipts/, order: 16 },
+      { pattern: /^17 Fixed-base percentage/, order: 17 },
+      { pattern: /^18 Base amount/, order: 18 },
+      { pattern: /^19 Subtract line 18 from line 15/, order: 19 },
+      { pattern: /^20 Multiply line 15/, order: 20 },
+      { pattern: /^Enter 20 of line 15/, order: 20.1 },
+      { pattern: /^21 Enter the lesser of line 19 or line 20/, order: 21 },
+      { pattern: /^22 Add lines 10 and 21/, order: 22 },
+      { pattern: /^\* If line 22 is \$ .* less/, order: 22.1 },
+      { pattern: /^\* If line 22 is more than/, order: 22.2 },
+      { pattern: /^24 Subtract \$ .* from line 22/, order: 24 },
+      { pattern: /^25 Multiply line 24/, order: 25 },
+      { pattern: /^26 Add .* to line 25/, order: 26 },
+      { pattern: /^27 a If the taxpayer is electing the regular credit/, order: 27 },
+      { pattern: /^27 b If the taxpayer is electing the Alternative Simplified Credit/, order: 28 }
+    ],
+
+    "Part 12 Current Taxable Year's Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)": [
+      { pattern: /^75 Basic research payments/, order: 75 },
+      { pattern: /^76 Qualified organization base period amount/, order: 76 },
+      { pattern: /^77 Subtract line 76 from line 75/, order: 77 },
+      { pattern: /^78 Current year wages/, order: 78 },
+      { pattern: /^79 Current year cost of supplies/, order: 79 },
+      { pattern: /^80 Current year cost to rent/, order: 80 },
+      { pattern: /^81 Current contract research expenses/, order: 81 },
+      { pattern: /^82 Total research expenses/, order: 82 },
+      { pattern: /^83 Enter your total qualified research expenses/, order: 83 },
+      { pattern: /^84 Average qualified research expenses/, order: 84 },
+      { pattern: /^85 Subtract line 84 from line 82/, order: 85 },
+      { pattern: /^86 Multiply line 82/, order: 86 },
+      { pattern: /^87 Enter the lesser of line 85 or line 86/, order: 87 },
+      { pattern: /^88 Add line 77 and line 87/, order: 88 },
+      { pattern: /^\* If line 88 is .* less/, order: 88.1 },
+      { pattern: /^\* If line 88 is more than/, order: 88.2 },
+      { pattern: /^89 If line 88 is .* multiply/, order: 89 },
+      { pattern: /^90 If line 88 is more than/, order: 90 },
+      { pattern: /^91 Multiply line 90/, order: 91 },
+      { pattern: /^92 Add .* to line 91/, order: 92 },
+      { pattern: /^93 Enter the amount from line 89 or 92/, order: 93 }
+    ]
+  },
+
+  BOLD: [
+    "15 Total qualified research expenses. Add line 11 through line 14"
+  ]
+},
+
     CA: {
         sectionOrder: [
             "Qualified research expenses paid or incurred."

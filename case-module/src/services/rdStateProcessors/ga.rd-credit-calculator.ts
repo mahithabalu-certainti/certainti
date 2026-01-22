@@ -234,7 +234,6 @@ export class RdCreditCalculatorForGA {
                 "Description": "Research Tax Credit",
                 stateDetails : "Georgia -  Credit Calculations"
             },
-            qreSummary
         };
     }
 
