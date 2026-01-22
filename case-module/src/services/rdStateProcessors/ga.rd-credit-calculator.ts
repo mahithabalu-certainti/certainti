@@ -25,7 +25,7 @@ export class RdCreditCalculatorForGA {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const inputInfo = this.computeInputInformation(stateRdData.currentYearQREs, stateRdData.annualGrossReceipts || []);
         const ratioCalculationInfo = this.ratioCalculation(stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || []);
         const baseAmountInfo = this.taxBaseCalculation(inputInfo.curent_year_gross_receipts, ratioCalculationInfo.average_ratio, config);
@@ -36,6 +36,7 @@ export class RdCreditCalculatorForGA {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(inputInfo, ratioCalculationInfo, baseAmountInfo, taxCreditInfo, creditAndCarryForwardInfo);
@@ -229,6 +230,9 @@ export class RdCreditCalculatorForGA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "Georgia -  Credit Calculations"
             },
             qreSummary
         };

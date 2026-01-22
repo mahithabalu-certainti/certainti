@@ -26,7 +26,7 @@ export class RdCreditCalculatorForSC {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
@@ -45,6 +45,7 @@ export class RdCreditCalculatorForSC {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computeFieldsResp = {
@@ -105,6 +106,9 @@ export class RdCreditCalculatorForSC {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "South Carolina - Credit Calculation"
             },
             qreSummary
         };

@@ -23,7 +23,7 @@ export class RdCreditCalculatorForTX {
      * @param config Configuration values used for the TX R&D credit calculation.
      * @param stateRdData State R&D data for TX, including currentYearQREs, prior3YearsQREs, and related fields.
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
 
         const qretInfo = this.creditCalculationQRET(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config)
         const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, config);
@@ -34,6 +34,7 @@ export class RdCreditCalculatorForTX {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(qretInfo, precedingWithQretInfo, precedingWithNoQretInfo, qreActivitiesCreditInfo);
@@ -205,6 +206,9 @@ export class RdCreditCalculatorForTX {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "Texas - Credit Calculation"
             }
         };
     }

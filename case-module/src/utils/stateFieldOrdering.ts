@@ -194,10 +194,10 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     },
     CO: {
         sectionOrder: [
-            "computed_fields"
+            "PART IV: Research and Experimental Activities Credit"
         ],
         sectionFieldOrders: {
-            "computed_fields": [
+            "PART IV: Research and Experimental Activities Credit": [
             { pattern : "A.Enter the current year qualified expenditures", order : 1 },
             { pattern : "B.Enter the first preceding year expenditures", order : 2 },
             { pattern : "C. Enter the second preceding year expenditures", order : 3 },

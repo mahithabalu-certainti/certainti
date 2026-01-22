@@ -28,7 +28,7 @@ export class RdCreditCalculatorForMA {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(stateRdData.currentYearQREs, config);
         const part2ASCCreditCalculationInfo = this.part2ASCCreditCalculation(stateRdData.prior3YearsQREs, part1QualifiedResearchExpenseInfo.total_qre, part1QualifiedResearchExpenseInfo.total_qre_aggregate, config);
         const part3CreditCalInfo = this.part3CreditCalculation(stateRdData.annualGrossReceipts || [], part2ASCCreditCalculationInfo.aggregate_group_credit_percent, config);
@@ -37,6 +37,7 @@ export class RdCreditCalculatorForMA {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(part1QualifiedResearchExpenseInfo, part2ASCCreditCalculationInfo, part3CreditCalInfo, config);
@@ -202,6 +203,9 @@ export class RdCreditCalculatorForMA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "MA Research Credit"
             },
             qreSummary
         };

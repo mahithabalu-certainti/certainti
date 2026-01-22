@@ -23,7 +23,7 @@ export class RdCreditCalculatorForCO {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const wages = stateRdData.currentYearQREs.wages || 0;
         const supplies = stateRdData.currentYearQREs.supplies || 0;
         const costToRent = 0;
@@ -81,7 +81,9 @@ export class RdCreditCalculatorForCO {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-                "Fiscal Year Ended" : metadata.FiscalYearEnded
+                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "Colorado - Credit Calculation"
             }
         };
 
@@ -96,13 +98,15 @@ export class RdCreditCalculatorForCO {
     async buildComputedFields(data: any) {
         return {
             computed_fields: {
-                "A.Enter the current year qualified expenditures": data.totalQREs.toNumber() || 0,
-                "B.Enter the first preceding year expenditures": data.priorYear1QREs.toNumber() || 0,
-                "C. Enter the second preceding year expenditures" : data.priorYear2QREs.toNumber() || 0,
-                "D.Enter the sum of lines B and C": data.sumPriorTwoYears.toNumber(),
-                [`E.Enter ${data.config.qre_cap_rate}% of line D`]: data.fiftyPercentOfPriorTwoYears.toNumber(),
-                 "F.Enter line A minus line E": data.excessQRE.toNumber(),
-                [`G.Allowable amount: ${data.config.credit_rate}% of line F`]: data.allowableCredit.toNumber(),
+                "PART IV: Research and Experimental Activities Credit" : {
+                    "A.Enter the current year qualified expenditures": data.totalQREs.toNumber() || 0,
+                    "B.Enter the first preceding year expenditures": data.priorYear1QREs.toNumber() || 0,
+                    "C. Enter the second preceding year expenditures" : data.priorYear2QREs.toNumber() || 0,
+                    "D.Enter the sum of lines B and C": data.sumPriorTwoYears.toNumber(),
+                    [`E.Enter ${data.config.qre_cap_rate}% of line D`]: data.fiftyPercentOfPriorTwoYears.toNumber(),
+                    "F.Enter line A minus line E": data.excessQRE.toNumber(),
+                    [`G.Allowable amount: ${data.config.credit_rate}% of line F`]: data.allowableCredit.toNumber(),
+                }
             }
         }
     }

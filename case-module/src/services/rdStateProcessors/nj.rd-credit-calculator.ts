@@ -27,7 +27,7 @@ export class RdCreditCalculatorForNJ {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const part5DevelopmentTaxCreditCalculationInfo = this.part5DevelopmentTaxCreditCalculation(new Decimal(part4ASCCreditCalculationInfo.final_credit), config);
 
@@ -35,6 +35,7 @@ export class RdCreditCalculatorForNJ {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(part4ASCCreditCalculationInfo, part5DevelopmentTaxCreditCalculationInfo, config);
@@ -139,6 +140,9 @@ export class RdCreditCalculatorForNJ {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "NJ Research and Development Tax Credit"
             },
             qreSummary
         };
