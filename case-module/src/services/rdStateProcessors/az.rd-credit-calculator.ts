@@ -347,9 +347,9 @@ export class RdCreditCalculatorForAZ {
         return {
             computed_fields: {
                 "Qualified research expenses paid or incurred.": rrc,
-                "Part 12 Current Taxable Year’s Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"    : asc   ,
-                "BOLD":["15 Total qualified research expenses. Add line 11 through line 14"]
-            }
+                "Part 12 Current Taxable Year's Alternative Simplified Credit Calculation- (Complete lines 75 through 93 if electing the Alternative Simplified Credit. To elect the regular credit, complete Part 2, lines 8 through 27a.)"    : asc   
+            },
+            BOLD: ["15 Total qualified research expenses. Add line 11 through line 14"]
         }
     }
 }
