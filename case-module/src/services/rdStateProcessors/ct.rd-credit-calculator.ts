@@ -28,7 +28,7 @@ export class RdCreditCalculatorForCT {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const part1Computation = this.part1CreditComputation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const part1TentativeComputation = this.part1TentativeTaxCreditComputation(stateRdData.currentYearQREs, part1Computation.excess_qre, config);
         const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, stateRdData.currentYearQREs.business_tax_liability || 0, config);
@@ -37,6 +37,7 @@ export class RdCreditCalculatorForCT {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(part1Computation, part1TentativeComputation, part2Computation, config);
@@ -192,8 +193,10 @@ export class RdCreditCalculatorForCT {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "Connecticut - Credit Calculation"
             },
-            qreSummary
         };
 
     }
