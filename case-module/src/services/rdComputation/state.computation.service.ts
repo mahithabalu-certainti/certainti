@@ -210,13 +210,10 @@ export class StateComputationService {
                     if(config.state_code === "ON") {
                         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
                         result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
-                    } 
-                    else if(config.state_code === "CO") {
+                    } else {
                         result = await stateComputation.compute(extractConfig, stateRDData, formatted);
                     }
-                    else {
-                        result = await stateComputation.compute(extractConfig, stateRDData);
-                    }
+                    
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                         fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
                         result.inputFields, result.computedFields

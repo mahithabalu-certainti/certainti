@@ -28,7 +28,7 @@ export class RdCreditCalculatorForCA {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
 
         const priorYearsCount = 4;
         const totalGrossReceipts = new Decimal((stateRdData.annualGrossReceipts || []).reduce(
@@ -41,6 +41,7 @@ export class RdCreditCalculatorForCA {
             country: this.country,
             creditType: this.creditType,
             currency: this.creditType,
+            fiscalYearEnded : fiscalYear
         });
         const computedFields = await this.buildComputedFields(ascResult, rrcResult);
 
@@ -153,6 +154,9 @@ export class RdCreditCalculatorForCA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "California - Credit Calculation"
             },
             qreSummary
         };

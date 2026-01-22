@@ -383,6 +383,9 @@ class RDCreditSchemaService {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditStateCalculations.findOne({
+            attributes : {
+                exclude : ["final_credit"]
+            },
             where: {
                 case_rid,
                 state_rid
@@ -452,7 +455,7 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'IN-PROGRESS' },
+            { status: 'In Progress' },
             { where: { rid } }
         );
     }

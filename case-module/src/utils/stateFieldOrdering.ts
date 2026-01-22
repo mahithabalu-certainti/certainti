@@ -194,10 +194,10 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     },
     CO: {
         sectionOrder: [
-            "computed_fields"
+            "PART IV: Research and Experimental Activities Credit"
         ],
         sectionFieldOrders: {
-            "computed_fields": [
+            "PART IV: Research and Experimental Activities Credit": [
             { pattern : "A.Enter the current year qualified expenditures", order : 1 },
             { pattern : "B.Enter the first preceding year expenditures", order : 2 },
             { pattern : "C. Enter the second preceding year expenditures", order : 3 },
@@ -370,6 +370,52 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
     const reorderedFields: any = {};
 
     config.sectionOrder.forEach(sectionKey => {
+
+        // Try exact match first
+        let matchedSectionKey = sectionKey;
+        if (computedFields[sectionKey]) {
+        } else {
+          
+            const flexibleMatch = Object.keys(computedFields).find(fieldSection => {
+              
+                
+                // Try different matching strategies
+                const strategies = [
+                    // Strategy 1: Exact match
+                    () => fieldSection === sectionKey,
+                    // Strategy 2: Normalized comparison
+                    () => {
+                        const normalizedConfig = sectionKey.trim().toLowerCase().replace(/\s+/g, ' ');
+                        const normalizedField = fieldSection.trim().toLowerCase().replace(/\s+/g, ' ');
+                        return normalizedConfig === normalizedField;
+                    },
+                    // Strategy 3: Contains key phrases
+                    () => {
+                        return fieldSection.includes('Part 12') && fieldSection.includes('Alternative Simplified Credit');
+                    },
+                    // Strategy 4: Starts with same prefix
+                    () => {
+                        return fieldSection.startsWith('Part 12 Current Taxable Year');
+                    }
+                ];
+                
+                for (let i = 0; i < strategies.length; i++) {
+                    const strategy = strategies[i];
+                    if (strategy) {
+                        const result = strategy();
+                        if (result) return true;
+                    }
+                }
+                
+                return false;
+            });
+            
+            if (flexibleMatch) {
+                matchedSectionKey = flexibleMatch;
+            } else {
+                return; // Skip this section
+            }
+        }
         if (!computedFields[sectionKey]) return;
         if (computedFields[sectionKey]) {
             // Check if this section has specific field ordering requirements
