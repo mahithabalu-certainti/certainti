@@ -237,9 +237,9 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: /^16 Multiply line 15 by \d+(\.\d+)?%?$/, order: 12 },
                 { pattern: "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach", order: 13 },
                 { pattern: "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:", order: 14 },
-                { pattern: /^\d+(\.\d+)?%? for individuals and estates or trusts$/, order: 15 },
-                { pattern: /^\d+(\.\d+)?%? for  corporations$/, order: 16 },
-                { pattern: /^\d+(\.\d+)?%? for S corporations$/, order: 17 },
+                { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for individuals and estates or trusts$/, order: 15 },
+                { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for  corporations$/, order: 16 },
+                { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for S corporations$/, order: 17 },
                 { pattern: "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :", order: 18 }
             ]
         },

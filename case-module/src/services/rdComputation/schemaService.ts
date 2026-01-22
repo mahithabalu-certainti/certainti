@@ -73,7 +73,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize): Promise<QRE> {
+    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize, currentFiscalYear : any): Promise<QRE> {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -91,11 +91,11 @@ class RDCreditSchemaService {
                         ON cp.project_fiscal_rid = pf.rid
                     JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
                     JOIN ${schemaName}.case_project_fiscal_region cpr ON cpr.case_project_rid = cp.rid
-                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = pf.fiscal_year AND cpr.region_rid = :regionRid
+                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid
                     GROUP BY cs.tax_liability
                 `,
                 {
-                    replacements: { caseRid, regionRid },
+                    replacements: { caseRid, regionRid, currentFiscalYear },
                     type: QueryTypes.SELECT,
                 }
             );

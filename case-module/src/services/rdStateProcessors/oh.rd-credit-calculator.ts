@@ -26,7 +26,7 @@ export class RdCreditCalculatorForOH {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year? : string) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
@@ -50,7 +50,7 @@ export class RdCreditCalculatorForOH {
         logMessage(`EXCESS_${excess_qre}`)
         const final_excess_qre = new Decimal(excess_qre.lt(0) ? 0 : excess_qre);
 
-        const final_credits_earned = final_excess_qre.mul(config.credit_earned_percent);
+        const final_credits_earned = final_excess_qre.mul(config.credit_earned_percent/100);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
@@ -70,7 +70,8 @@ export class RdCreditCalculatorForOH {
             final_credits_earned: this.round2(final_credits_earned),
             prev1_year,
             prev2_year,
-            prev3_year
+            prev3_year,
+            year
         }
         const computedFields = await this.buildComputedFields(computeFieldsResp, config);
 
@@ -108,9 +109,9 @@ export class RdCreditCalculatorForOH {
 
         prior3YearsQREs.forEach((item) => {
             qreSummary[`${item.fiscalYear}`] = {
-                wages: item.wages,
-                contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                "QRE Wages": item.wages,
+                "QRE Contractor": item.contract,
+                "TOTAL": new Decimal(item.wages || 0).plus(Number(item.contract || 0))
             }
         });
 
@@ -125,7 +126,9 @@ export class RdCreditCalculatorForOH {
                 "Description": "Research Tax Credit",
                 stateDetails : "Ohio Credit Calculation"
             },
-            qreSummary
+            qreSummary : {
+                "Current & Prior years information" : qreSummary
+            }
         };
     }
 
@@ -138,13 +141,13 @@ export class RdCreditCalculatorForOH {
     buildComputedFields(computeFieldsResp: any, config : ConfigJson) {
         logMessage(`COMPUTE_FIELDS_RESP_${JSON.stringify(computeFieldsResp)}`)
         let finalData = {
-            "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:":"",
+            "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:":JSON.stringify(computeFieldsResp.year),
             [`Tax Year ${computeFieldsResp.prev1_year} QREs`]:computeFieldsResp.prev1_qre,
             [`Tax Year ${computeFieldsResp.prev2_year} QREs`] :computeFieldsResp.prev2_qre,
             [`Tax Year ${computeFieldsResp.prev3_year} QREs`]: computeFieldsResp.prev3_qre,
             "Average": computeFieldsResp.average_tot_prev_qre,
             "Total Investment in Qualifying Research Expense for Calendar Year 2025":computeFieldsResp.total_current_year_qre,
-            "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":computeFieldsResp.tot_prev_year_qre,
+            "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":computeFieldsResp.average_tot_prev_qre,
             "Net Excess of Qualifying Research Expenses for the Taxable Year":computeFieldsResp.final_excess_qre,
             [`2025 Credit Earned (${config.credit_earned_percent}%)`] : computeFieldsResp.final_credits_earned
         }
