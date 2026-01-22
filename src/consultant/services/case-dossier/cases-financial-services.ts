@@ -96,7 +96,6 @@ export const useFinancialHighlights = () => {
   });
 };
 
-
 export const signOffFinancialHighlights = async (
   payload: SignOffFinancialHighlightsPayload
 ): Promise<RDCreditInitiateResponse> => {

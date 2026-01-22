@@ -1,4 +1,3 @@
- 
 import {
   formatDateToYYYYMMDDWithTime,
   REGEX_PATTERNS,

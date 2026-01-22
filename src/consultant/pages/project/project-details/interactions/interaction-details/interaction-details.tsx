@@ -187,7 +187,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: isProjectSignedOff || accountInActive || disableInteractionEditBtn,
+      disabled:
+        isProjectSignedOff || accountInActive || disableInteractionEditBtn,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
@@ -195,14 +196,22 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
-      disabled: isProjectSignedOff || accountInActive || !disableRemainderBtn || !isSendInteraction,
+      disabled:
+        isProjectSignedOff ||
+        accountInActive ||
+        !disableRemainderBtn ||
+        !isSendInteraction,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
     },
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: isProjectSignedOff || accountInActive || !disableRemainderBtn || !isSendInteraction,
+      disabled:
+        isProjectSignedOff ||
+        accountInActive ||
+        !disableRemainderBtn ||
+        !isSendInteraction,
       onClick: () => handleRemainder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
@@ -268,7 +277,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Response Received On',
-      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-', 
+      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
       key: 'response_updated_on',
     },
   ];

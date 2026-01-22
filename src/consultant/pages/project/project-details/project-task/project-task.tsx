@@ -411,7 +411,7 @@ export const ProjectTask = ({
     },
     {
       label: 'Show/Hide Fields',
-       variant: 'outlined' as const,
+      variant: 'outlined' as const,
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
@@ -567,7 +567,7 @@ export const ProjectTask = ({
     isAttachmentCreateEnable,
     isNoteCreateEnable,
     isChecklistCreateEnable,
-    isProjectSignedOff,
+    isProjectSignedOff
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());

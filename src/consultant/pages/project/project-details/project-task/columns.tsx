@@ -38,7 +38,7 @@ export const getProjectTaskColumns = (
   isAttachmentCreateEnable?: boolean,
   isNoteCreateEnable?: boolean,
   isChecklistCreateEnable?: boolean,
-  isProjectSignedOff?: boolean,
+  isProjectSignedOff?: boolean
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',

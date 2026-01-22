@@ -164,7 +164,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive || disableInteractionEditBtn || isFinancialWorkingSignoff,
+      disabled:
+        accountInActive ||
+        disableInteractionEditBtn ||
+        isFinancialWorkingSignoff,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
@@ -172,14 +175,22 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction || isFinancialWorkingSignoff,
-      onClick: () => setReInitiateModalOpen(true),  
+      disabled:
+        accountInActive ||
+        !disableRemainderBtn ||
+        !isSendInteraction ||
+        isFinancialWorkingSignoff,
+      onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
     },
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction || isFinancialWorkingSignoff,
+      disabled:
+        accountInActive ||
+        !disableRemainderBtn ||
+        !isSendInteraction ||
+        isFinancialWorkingSignoff,
       onClick: () => handleRemainder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,

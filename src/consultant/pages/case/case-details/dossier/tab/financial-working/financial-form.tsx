@@ -168,7 +168,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   dossierFinancialStatus,
   financialData,
   setFinancialData,
-  refetchCaseDetails
+  refetchCaseDetails,
 }) => {
   const [isFederal, setIsFederal] = useState<string>('yes');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
@@ -187,7 +187,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   React.useEffect(() => {
     if (financialData) {
       setShowFinancialValues(true);
-      
+
       // Restore region/federal state from payload if available
       const stateRid = (financialData.data as any)?.state_rid;
       if (stateRid) {
@@ -271,7 +271,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const responseCurrencySymbol = caseDetails?.currency_symbol || '$';
 
-
   const handleViewFinancialHighlightsForRegion = async () => {
     try {
       setIsPreviewLoading(true);
@@ -328,7 +327,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       } else if (actionType === 'regenerate') {
         successToast('Re-Generated successfully');
       }
-    } 
+    }
   };
 
   const handleInitiateFinancialHighlights = async () => {
@@ -354,7 +353,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           handleStatusUpdate(result.data, actionType);
         }
       },
-      onError: (error:any) => {
+      onError: (error: any) => {
         errorToast(error?.response.data.statusMessage || 'Failed to initiate');
       },
     });
@@ -412,7 +411,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 marginRight: '10px',
               }}
             />
-            <TextButton 
+            <TextButton
               label={'Refresh'}
               onClick={handleRefreshStatus}
               disabled={
@@ -436,7 +435,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 !isViewButtonEnabled() ||
                 isFinancialHighlights ||
                 isPreviewLoading ||
-                showFinancialValue 
+                showFinancialValue
               }
               sx={{
                 width: '55px',
@@ -740,7 +739,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         onClose={() => setIsSignOffModalOpen(false)}
         caseId={caseId ?? ''}
         accountId={accountid}
-         refetchCaseDetails={refetchCaseDetails}
+        refetchCaseDetails={refetchCaseDetails}
       />
     </div>
   );

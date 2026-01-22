@@ -70,7 +70,7 @@ interface AttachmentsProps {
   >;
   accountInActive: boolean;
   caseDetails?: CaseDetails;
-  activityMenuItems: ActivityDropdownItem[];  
+  activityMenuItems: ActivityDropdownItem[];
   isCaseTeamCreated?: boolean;
   isFinancialWorkingSignoff?: boolean;
 }
@@ -223,7 +223,11 @@ export const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: accountInActive || !caseFiscalYear || !isCaseTeamCreated || isFinancialWorkingSignoff,
+      disabled:
+        accountInActive ||
+        !caseFiscalYear ||
+        !isCaseTeamCreated ||
+        isFinancialWorkingSignoff,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
