@@ -318,26 +318,25 @@ export class RdCreditCalculatorForAZ {
         let asc = {
             "75 Basic research payments paid or incurred to qualified organizations:":"",
             "76 Qualified organization base period amount":"",
-            "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter “0”.":"",
-            "78 Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditASC.wages,
-            "79 Current year cost of supplies":creditASC.supplies,
+            "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.":"",
+            "78 Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditASC.wages || '',
+            "79 Current year cost of supplies":creditASC.supplies || '',
             "80 Current year cost to rent or lease computers":"",
-            "81 Current contract research expenses: See instructions":creditASC.contract,
-            "82 Total research expenses for the current year: Add lines 78 through 81. Enter the total":creditASC.total_current_year_qre,
-            "83 Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC":creditASC.total_prior_3years_qre,
-            "84 Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result":creditASC.adjusted_base_amount,
-            "85 Subtract line 84 from line 82. Enter the difference. If less than zero, enter 0.":creditASC.excess_qre,
-            "86 Multiply line 82 by 50% (.50). Enter the result.":creditASC.half_total_qre,
-            "87 Enter the lesser of line 85 or line 86.":creditASC.total_section_b_credit,
-            "88 Add line 77 and line 87. Enter the total":creditASC.prior_year_credit_carryforward,
+            "81 Current contract research expenses: See instructions":creditASC.contract || '',
+            "82 Total research expenses for the current year: Add lines 78 through 81. Enter the total":creditASC.total_current_year_qre || '',
+            "83 Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC":creditASC.total_prior_3years_qre || '',
+            "84 Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result":creditASC.adjusted_base_amount || '',
+            "85 Subtract line 84 from line 82. Enter the difference. If less than zero, enter 0.":creditASC.excess_qre || '',
+            "86 Multiply line 82 by 50% (.50). Enter the result.":creditASC.half_total_qre || '',
+            "87 Enter the lesser of line 85 or line 86.":creditASC.total_section_b_credit   || '',
+            "88 Add line 77 and line 87. Enter the total":creditASC.prior_year_credit_carryforward || '',
             [`* If line 88 is ${creditRRC?.config?.threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]:"",
             [`* If line 88 is more than ${creditRRC?.config?.threshold_amount}, skip line 89. Complete lines 90 through 93.`]:"",
-            [`89 If line 88 is ${creditRRC?.config?.threshold_amount} or less, multiply line 88 by 24% (.24). Enter the result.`]:creditASC.credit_if_under_threshold,
-            [`90 If line 88 is more than ${creditRRC?.config?.threshold_amount}, subtract ${creditRRC?.config?.threshold_amount} from line 88. Enter the difference.`]:creditASC.excess_amount,
-            [`91 Multiply line 90 by  ${creditRRC?.config?.tier2_rate}. Enter the result.`]:creditASC.credit_on_excess,
-            [`92 Add ${creditRRC?.config?.tier2_base_add} to line 91. Enter the total. `]:creditASC.credit_if_over_threshold,
-            "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.":creditASC.total_az_final_credit
-
+            [`89 If line 88 is ${creditRRC?.config?.threshold_amount} or less, multiply line 88 by 24% (.24). Enter the result.`]:creditASC.credit_if_under_threshold || '',
+            [`90 If line 88 is more than ${creditRRC?.config?.threshold_amount}, subtract ${creditRRC?.config?.threshold_amount} from line 88. Enter the difference.`]:creditASC.excess_amount || '',
+            [`91 Multiply line 90 by  ${creditRRC?.config?.tier2_rate}. Enter the result.`]:creditASC.credit_on_excess || '',
+            [`92 Add ${creditRRC?.config?.tier2_base_add} to line 91. Enter the total. `]:creditASC.credit_if_over_threshold || '',
+            "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.":creditASC.total_az_final_credit || ''
         }
 
 
