@@ -455,7 +455,7 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'IN-PROGRESS' },
+            { status: 'In Progress' },
             { where: { rid } }
         );
     }
