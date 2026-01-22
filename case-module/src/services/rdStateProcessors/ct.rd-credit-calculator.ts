@@ -147,7 +147,7 @@ export class RdCreditCalculatorForCT {
         const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.double_credit_multiplier || 0));
 
         //Line 5b: Enter 90% of Line 3
-        const taxLimit = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.tax_limit_rate || 0));
+        const taxLimit = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.tax_limit_rate/100 || 0));
 
         //Line 5: Enter the lesser of Line 5a or Line 5b
         const minFinal = Decimal.min(doubleCredit, taxLimit);
