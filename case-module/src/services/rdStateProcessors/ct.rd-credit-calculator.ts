@@ -229,7 +229,7 @@ export class RdCreditCalculatorForCT {
 
         let part3 = {
             "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6":part2Computation.part2_allowable_tentative_tax_credit,
-            [`2 Multiply Line 1 by .${extractConfig.one_third_rate}`]:part2Computation.part2_one_third_rate,
+            [`2 Multiply Line 1 by .${extractConfig.one_third_rate}%`]:part2Computation.part2_one_third_rate,
             "3 Current Year CT Business Tax Liability":part2Computation.current_year_ct_business_tax_liability,
             [`4 Multiply Line 3 by ${(extractConfig.half_tax_liability_rate)}% .`]:part2Computation.half_tax_liability,
             "5a Multiply Line 1 by two (2).":part2Computation.double_credit,

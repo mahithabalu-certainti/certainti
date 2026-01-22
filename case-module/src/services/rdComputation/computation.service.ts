@@ -183,7 +183,7 @@ export class ComputationService {
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: "RD Credit Status fetched successfully",
-                data: STATUS_MESSAGE.financialWorkingInitiated,
+                data: status,
             };
         } catch (error) {
             logMessage(`Error fetching RD Credit Status: ${error}`);
