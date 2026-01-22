@@ -197,6 +197,12 @@ export class StateComputationService {
                 logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                 if (stateComputation) {
                     let currentFiscalYear = parseInt(effectiveEnd.split('-')[0]!);
+                    const date = new Date(effectiveEnd);
+                    const formatted = date.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric"
+                    });
                     const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName, currentFiscalYear);
                     logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
                     let result;
@@ -204,7 +210,11 @@ export class StateComputationService {
                     if(config.state_code === "ON") {
                         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
                         result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
-                    } else {
+                    } 
+                    else if(config.state_code === "CO") {
+                        result = await stateComputation.compute(extractConfig, stateRDData, formatted);
+                    }
+                    else {
                         result = await stateComputation.compute(extractConfig, stateRDData);
                     }
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
