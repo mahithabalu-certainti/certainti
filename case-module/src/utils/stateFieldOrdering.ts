@@ -19,6 +19,54 @@ interface StateFieldConfig {
 
 // Configuration for each state's field ordering with dynamic key support
 const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
+    GA: {
+        sectionOrder: [
+            "Input Information",
+            "Ratio Calculation",
+            "Calculation of Average",
+            "Calculation of Tax Base",
+            "Calculation of Tax Credit",
+            "Application of Credit and Carry-Forward"
+        ],
+        sectionFieldOrders: {
+            "Input Information": [
+                { pattern: "Current Year Georgia Gross Receipts", order: 1 },
+                { pattern: "Current Year Research Expenses in Georgia", order: 2 },
+                { pattern: "Total of all other credits", order: 3 },
+                { pattern: "Credit carry-over from PY", order: 4 },
+                { pattern: "Current Tax Liability Without Credits", order: 5 }
+            ],
+            "Ratio Calculation": [
+                { pattern: "table_headers", order: 1 },
+                { pattern: "table_rows", order: 2 },
+                { pattern: "Total", order: 3 }
+            ],
+            "Calculation of Average": [
+                { pattern: "table_headers", order: 1 },
+                { pattern: "table_rows", order: 2 }
+            ],
+            "Calculation of Tax Base": [
+                { pattern: "table_headers", order: 1 },
+                { pattern: "table_rows", order: 2 }
+            ],
+            "Calculation of Tax Credit": [
+                { pattern: "table_headers", order: 1 },
+                { pattern: "table_rows", order: 2 }
+            ],
+            "Application of Credit and Carry-Forward": [
+                { pattern: "1) Current Tax Liability w/o applied credits - E", order: 1 },
+                { pattern: "2) Value of all Other Credits Claimed - C", order: 2 },
+                { pattern: "3) Remaining Tax Liability (C-E)", order: 3 },
+                { pattern: "4) Maximum Credit Allowed", order: 4 },
+                { pattern: "5) Research Tax Credit - J", order: 5 },
+                { pattern: "5a)Tax Carryover from PY - D", order: 6 },
+                { pattern: "6) Total available Research Tax Credit (J+D)", order: 7 },
+                { pattern: "7) Credit to be claimed on return", order: 8 },
+                { pattern: "8) Unused Credit or Carry-Forward", order: 9 }
+            ]
+        },
+        BOLD: []
+    },
     TX: {
         sectionOrder: [
             "Qualified Research Expenses in Texas (QRET)",
