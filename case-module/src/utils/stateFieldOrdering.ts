@@ -507,6 +507,7 @@ function reorderSectionFields(sectionData: any, fieldPatterns: FieldPattern[]): 
             }
         }
         
+        
         // If no pattern matched, add to end with high order number
         if (!matchFound) {
             fieldEntries.push({

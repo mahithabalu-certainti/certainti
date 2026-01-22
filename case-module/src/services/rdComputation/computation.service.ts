@@ -141,15 +141,15 @@ export class ComputationService {
             if (stateCode && stateCode.state_code && hasFieldOrderingConfig(stateCode.state_code)) {
                 if (results && (results as any).computed_fields) {
                     if(stateCode.state_code === "GA"){
-                    const computedFields = (results as any).computed_fields;
-                    const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
-                    (results as any).computed_fields = reorderedFields;
+                     const computedFields = (results as any).computed_fields;
+                     const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
+                     (results as any).computed_fields = reorderedFields;
                     }
                     else
                     {
                      const computedFields = (results as any).computed_fields.computed_fields;
-                    const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
-                    (results as any).computed_fields.computed_fields = reorderedFields;
+                     const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
+                     (results as any).computed_fields.computed_fields = reorderedFields;
                     }                  
                     logMessage(`Applied field ordering for state: ${stateCode.state_code}`);
                 }
