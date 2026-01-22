@@ -49,7 +49,7 @@ const Dossier: React.FC<DossierProps> = ({
   dossierFinancialStatus,
   financialData,
   setFinancialData,
-  refetchCaseDetails
+  refetchCaseDetails,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -198,7 +198,6 @@ const Dossier: React.FC<DossierProps> = ({
         count={count}
         showItemCount={tabParam !== 'financial_workings'}
         buttons={headerButtons}
-        
       />
 
       <SectionHeaderTab

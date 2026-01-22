@@ -123,6 +123,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       search: searchValue,
       caseRid: caseRid,
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, appliedFilters, searchValue]);
 
   useEffect(() => {

@@ -899,6 +899,7 @@ export const FormData = (
       disableTotalCost,
       removeKeyContact,
       isCustomerGroup,
+      isCaseExists,
     ]
   );
 };

@@ -164,6 +164,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         }
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshProjectsTrigger]);
 
   const getRowId = (row: Project) => {
@@ -292,7 +293,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
       disabled: (row: Project) =>
-        (row.account_status_name?.toLowerCase() !== 'active') ||
+        row.account_status_name?.toLowerCase() !== 'active' ||
         !!row.is_rd_claim_qualified,
       hide: !isProjectEditEnable,
     },

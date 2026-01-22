@@ -281,5 +281,6 @@ export const GeoBasedRuleFormFieldsData = (
     isFederal,
     regionLoading,
     caseNamePrefix,
+    projectTypeOptions,
   ]);
 };

@@ -581,7 +581,7 @@ export const ProjectResources = ({
     region.isPending,
     permissionMap,
     accountOrProjectInActive,
-    isProjectSignedOff,
+    isProjectSignedOff
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());

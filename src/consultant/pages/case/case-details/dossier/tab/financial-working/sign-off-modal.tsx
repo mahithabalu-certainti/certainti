@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 
-import {  UploadIcon,
-  CloseIcon,
-} from '../../../../../../../assets';
+import { UploadIcon, CloseIcon } from '../../../../../../../assets';
 import TextButton from '../../../../../../../components/button/text-button';
 import { useToast } from '../../../../../../../hooks';
 import { useSignOffFinancialHighlights } from '../../../../../../services/case-dossier/cases-financial-services';
@@ -26,7 +24,8 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
   const [signOffComments, setSignOffComments] = useState<string>('');
   const [commentError, setCommentError] = useState(false);
   const { successToast, errorToast } = useToast();
-  const { mutate: signOff, isPending: isSigningOff } = useSignOffFinancialHighlights();
+  const { mutate: signOff, isPending: isSigningOff } =
+    useSignOffFinancialHighlights();
 
   const handleSignOffSubmit = async () => {
     if (!signOffComments.trim()) {
@@ -102,7 +101,9 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
             <textarea
               rows={4}
               className={`w-full p-2 text-[13px] bg-[#F9FAFB] border rounded-md focus:outline-none focus:ring-1 transition-all ${
-                commentError ? 'border-red-500 focus:ring-red-500' : 'border-[#CBD6E2] focus:ring-[#0176D3]'
+                commentError
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-[#CBD6E2] focus:ring-[#0176D3]'
               }`}
               placeholder='Enter your comments here...'
               value={signOffComments}
@@ -125,7 +126,9 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
             </span>
             <div
               className='border-2 border-dashed border-[#CBD6E2] rounded-md p-3 flex flex-col items-center justify-center cursor-pointer bg-[#F9FAFB] hover:bg-[#F4F6F9] transition-colors gap-2 relative'
-              onClick={() => document.getElementById('sign-off-file-input')?.click()}
+              onClick={() =>
+                document.getElementById('sign-off-file-input')?.click()
+              }
             >
               {signOffFile ? (
                 <div className='flex items-center gap-2'>

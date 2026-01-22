@@ -251,7 +251,7 @@ export const ProjectDetails = () => {
   const projectInActive =
     data?.data?.project?.status_name?.toLowerCase() === 'in-active';
   const rdQualified = data?.data?.project?.is_rd_trigger_qualified;
-    const isProjectSignedOff = data?.data?.project?.is_rd_claim_qualified;
+  const isProjectSignedOff = data?.data?.project?.is_rd_claim_qualified;
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -1070,21 +1070,25 @@ export const ProjectDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 283px)', overflow: 'auto' }}
         >
-            {isProjectSignedOff && !isLoading && (
-                      <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
-                        <div>
-                          <React.Suspense fallback={null}>
-                            <DetailsKeyContactErrorIcon alt='key-contact' />
-                          </React.Suspense>
-                        </div>
-                        <div>
-                          <span className='font-bold mr-1 capitalize'>{projectData?.project_code || ''}</span>-
-                          <span className='ml-1 font-medium'>
-                           Financial workings of this Case is signed off. Project changes are no longer allowed.
-                          </span>
-                        </div>
-                      </div>
-                    )}
+          {isProjectSignedOff && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>
+                  {projectData?.project_code || ''}
+                </span>
+                -
+                <span className='ml-1 font-medium'>
+                  Financial workings of this Case is signed off. Project changes
+                  are no longer allowed.
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
