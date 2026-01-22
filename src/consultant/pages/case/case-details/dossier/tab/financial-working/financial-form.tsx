@@ -26,7 +26,10 @@ import {
 } from '../../../../../../types';
 import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
-import { costDisplay } from '../../../../../../../common-utils';
+import {
+  checkPermission,
+  costDisplay,
+} from '../../../../../../../common-utils';
 import {
   fetchRDCreditPreview,
   useFinancialHighlights,
@@ -34,6 +37,7 @@ import {
   useRDCreditStatus,
 } from '../../../../../../services/case-dossier/cases-financial-services';
 import SignOffModal from './sign-off-modal';
+import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
 
 interface FinancialWorkingFormProps {
   caseDetails?: CaseDetails;
@@ -181,7 +185,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const { successToast, errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
-  // const queryClient = useQueryClient();
+
+  const { data } = useFetchCasesConfigFields(
+    accountid as string,
+    'case',
+    caseId as string
+  );
+  const configDetails = data?.data.states;
 
   // Restore showFinancialValues and form states if data exists
   React.useEffect(() => {
@@ -200,6 +210,15 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   }, [financialData]);
 
   const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
+
+  const isSignoffVisible = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_SIGNOFF
+  );
+  const isInitiateVisible = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_INITIATE
+  );
 
   const { mutate: initiateProcess, isPending: isInitiating } =
     useInitiateRDCreditProcess();
@@ -225,14 +244,23 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     'active'
   );
 
-  const regionListOptions = useMemo(
-    () =>
-      region.data?.data.states.map((state) => ({
+  const regionListOptions = useMemo(() => {
+    const states = region.data?.data.states || [];
+    if (Array.isArray(configDetails) && configDetails.length > 0) {
+      return states
+        .filter((state) => configDetails.includes(state.rid))
+        .map((state) => ({
+          label: state.state_name,
+          value: state.rid,
+        }));
+    }
+    return (
+      states.map((state) => ({
         label: state.state_name,
         value: state.rid,
-      })) || [],
-    [region.data?.data.states]
-  );
+      })) || []
+    );
+  }, [region.data?.data.states, configDetails]);
 
   // Permission
   const accountViewEditFields = useMemo(
@@ -365,13 +393,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     return false;
   };
 
-  const handleRefreshStatus = async () => {
-    const result = await refetchRDCreditStatus();
-    if (result.data) {
-      handleStatusUpdate(result.data, 'refresh');
-    }
-  };
-
   if (
     !caseDetails?.case_total_projects ||
     caseDetails?.case_total_projects === 0 ||
@@ -403,25 +424,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               label={'Sign off'}
               onClick={() => setIsSignOffModalOpen(true)}
               disabled={dossierFinancialStatus !== 'COMPLETED'}
+              hide={!isSignoffVisible}
               sx={{
                 width: 'auto',
                 minWidth: '65px',
-                fontSize: '13px',
-                fontWeight: 400,
-                marginRight: '10px',
-              }}
-            />
-            <TextButton
-              label={'Refresh'}
-              onClick={handleRefreshStatus}
-              disabled={
-                !dossierFinancialStatus ||
-                dossierFinancialStatus === 'COMPLETED' ||
-                isRefetching
-              }
-              sx={{
-                width: 'auto',
-                minWidth: '55px',
                 fontSize: '13px',
                 fontWeight: 400,
                 marginRight: '10px',
@@ -444,6 +450,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 fontWeight: 400,
                 marginRight: '10px',
               }}
+              // hide={isInitiateVisible}
             />
             <TextButton
               label={
@@ -451,6 +458,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                   ? 'Re-Generate'
                   : 'Initiate'
               }
+              hide={!isInitiateVisible}
               loading={isInitiating}
               onClick={handleInitiateFinancialHighlights}
               disabled={
@@ -690,6 +698,45 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                     Ref - {title['Fiscal Year'] || ''} -{' '}
                     {title['Descriptions'] || ''}
                   </div>
+                </div>
+              );
+            }
+
+            if (countryName === FinancialWorkingCountries.US) {
+              const metadata =
+                (financialData?.data?.input_params as any)?.metadata || {};
+              const description =
+                metadata['Description'] || metadata['Descriptions'];
+              const taxYearEnded =
+                metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
+              const fiscalYearEnded =
+                metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
+              const stateDetails = metadata['stateDetails'];
+
+              return (
+                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                  {description && (
+                    <div className='text-[14px] font-semibold mt-1'>
+                      {description}
+                    </div>
+                  )}
+                  {taxYearEnded && (
+                    <div className='text-[14px] mt-1'>
+                      <span className='font-semibold'>Tax Year Ended:</span>{' '}
+                      {taxYearEnded}
+                    </div>
+                  )}
+                  {fiscalYearEnded && (
+                    <div className='text-[14px] mt-1'>
+                      <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
+                      {fiscalYearEnded}
+                    </div>
+                  )}
+                  {stateDetails && (
+                    <div className='text-[14px] mt-1 font-semibold'>
+                      {stateDetails}
+                    </div>
+                  )}
                 </div>
               );
             }

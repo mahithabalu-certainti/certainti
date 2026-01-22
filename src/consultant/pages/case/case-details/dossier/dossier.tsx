@@ -5,8 +5,9 @@ import {
   CaseDetails,
   ColorCode,
   FinancialHighlightsResponse,
+  RDCreditStatusResponse,
 } from '../../../../types';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ComingSoon, DossierIcon } from '../../../../../assets';
@@ -17,6 +18,12 @@ import {
 } from './helper';
 import { ProjectDocuments } from './tab';
 import FinancialWorkingForm from './tab/financial-working/financial-form';
+import { AccessRestricted } from '../../../../../components/account-restricted';
+import { checkPermission } from '../../../../../common-utils';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { useToast } from '../../../../../hooks';
+import { useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
 
 const DossierTabs = [
   {
@@ -52,7 +59,10 @@ const Dossier: React.FC<DossierProps> = ({
   refetchCaseDetails,
 }) => {
   const navigate = useNavigate();
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
+  const accountid = searchParams.get('accountID') ?? '';
+  const { successToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
@@ -96,8 +106,41 @@ const Dossier: React.FC<DossierProps> = ({
   const handleSearchReset = () => {
     setResetSearch(false);
   };
-  const handleRefresh = () => setRefreshTrigger(Date.now());
+  const { refetch: refetchRDCreditStatus } = useRDCreditStatus(
+    accountid,
+    caseId ?? '',
+    false
+  );
+
+  const handleStatusUpdate = (
+    statusData: RDCreditStatusResponse,
+    actionType?: 'initiate' | 'regenerate' | 'refresh'
+  ) => {
+    const message = statusData?.data ?? statusData?.statusMessage ?? '';
+    setDossierFinancialStatus(message);
+    setRefreshTrigger(Date.now());
+    if (statusData?.data === 'COMPLETED') {
+      if (actionType === 'initiate' || actionType === 'refresh') {
+        successToast('Initiated successfully');
+      } else if (actionType === 'regenerate') {
+        successToast('Re-Generated successfully');
+      }
+    }
+  };
+
+  const handleRefresh = async () => {
+    const result = await refetchRDCreditStatus();
+    if (result.data) {
+      handleStatusUpdate(result.data, 'refresh');
+    }
+  };
   const handleFilter = () => setShowFilter(!showFilter);
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const isFinancialView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
+  );
 
   const filterFields = useMemo(() => {
     switch (tabParam) {
@@ -166,7 +209,9 @@ const Dossier: React.FC<DossierProps> = ({
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={tabParam !== 'financial_workings'}
+        filterVisibility={
+          tabParam !== 'financial_workings' && tabParam !== 'rd_form'
+        }
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -175,9 +220,15 @@ const Dossier: React.FC<DossierProps> = ({
         handleFilter={handleFilter}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={tabParam !== 'financial_workings'}
+        showRefresh={
+          tabParam === 'financial_workings'
+            ? Boolean(
+                dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
+              )
+            : tabParam !== 'rd_form'
+        }
         onRefreshClick={handleRefresh}
-        showSearch={tabParam !== 'financial_workings'}
+        showSearch={tabParam !== 'financial_workings' && tabParam !== 'rd_form'}
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
@@ -207,16 +258,19 @@ const Dossier: React.FC<DossierProps> = ({
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
-        {tabParam === 'financial_workings' && (
-          <FinancialWorkingForm
-            caseDetails={caseDetails}
-            setDossierFinancialStatus={setDossierFinancialStatus}
-            dossierFinancialStatus={dossierFinancialStatus}
-            financialData={financialData}
-            setFinancialData={setFinancialData}
-            refetchCaseDetails={refetchCaseDetails}
-          />
-        )}
+        {tabParam === 'financial_workings' &&
+          (!isFinancialView ? (
+            <AccessRestricted />
+          ) : (
+            <FinancialWorkingForm
+              caseDetails={caseDetails}
+              setDossierFinancialStatus={setDossierFinancialStatus}
+              dossierFinancialStatus={dossierFinancialStatus}
+              financialData={financialData}
+              setFinancialData={setFinancialData}
+              refetchCaseDetails={refetchCaseDetails}
+            />
+          ))}
 
         {tabParam === 'project-assigned-documents' && (
           <ProjectDocuments
