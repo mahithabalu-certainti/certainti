@@ -57,6 +57,7 @@ export class RdCreditCalculatorForUSA {
                 country: this.country,
                 creditType: this.creditType,
                 currency: this.currency,
+                fiscalYearEnded : date,
             });
             logMessage(`Input Fields: ${JSON.stringify(inputFields)}`);
             let taxCredit;
@@ -65,7 +66,7 @@ export class RdCreditCalculatorForUSA {
 
             taxCredit = rrcValue! > ascValue! ? rrcValue : ascValue;
 
-            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C, taxCredit, date);
+            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C, taxCredit);
 
             // Step 4: Return success response
             return {
@@ -256,6 +257,10 @@ export class RdCreditCalculatorForUSA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "For the Year Ended" : metadata.fiscalYearEnded,
+                "Descriptions" : "Research Tax Credit",
+                "Tax Year Ended:" : metadata.fiscalYearEnded
+
             },
             qreSummary
         };
@@ -270,9 +275,8 @@ export class RdCreditCalculatorForUSA {
      * @param rrc280C 
      * @returns 
      */
-    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any, taxCredit: any, date : any) {
+    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any, taxCredit: any) {
         return {
-            "Year Ended": date,
             "ASC Credit": { creditASC, asc280C },
             "Regular Credit": { creditRRC, rrc280C },
             "Research and Development Tax Credit" : taxCredit

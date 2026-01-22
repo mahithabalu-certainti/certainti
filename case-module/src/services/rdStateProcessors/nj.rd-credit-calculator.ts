@@ -140,7 +140,7 @@ export class RdCreditCalculatorForNJ {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
                 "Description": "Research Tax Credit",
                 stateDetails : "NJ Research and Development Tax Credit"
             },

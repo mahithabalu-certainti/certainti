@@ -55,7 +55,7 @@ export class RdCreditCalculatorForCO {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-            FiscalYearEnded : fiscalYear
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields({ sumPriorTwoYears, fiftyPercentOfPriorTwoYears, excessQRE, allowableCredit, config, totalQREs, priorYear1QREs, priorYear2QREs});
@@ -81,7 +81,7 @@ export class RdCreditCalculatorForCO {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
                 "Description": "Research Tax Credit",
                 stateDetails : "Colorado - Credit Calculation"
             }

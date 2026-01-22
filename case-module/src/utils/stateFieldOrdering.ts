@@ -234,11 +234,11 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
             ],
             "Part II - Credit Computation": [
                 { pattern: "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6", order: 1 },
-                { pattern: /^2 Multiply Line 1 by \.\d+$/, order: 2 },
+                { pattern: /^2 Multiply Line 1 by \d+(\.\d+)?%$/, order: 2 },
                 { pattern: "3 Current Year CT Business Tax Liability", order: 3 },
                 { pattern: /^4 Multiply Line 3 by \d+(\.\d+)?%\s*\.$/, order: 4 },
-                { pattern: "5a Multiply Line 1 by two (2).", order: 5 },
-                { pattern: /^5b Enter \d+(\.\d+)?% \(\.\d+\) of Line 3$/, order: 6 },
+                { pattern: /^5a Multiply Line 1 by \d+(\.\d+)?$/, order: 5 },
+                { pattern: /^5b Enter \d+(\.\d+)?% \(\d+(\.\d+)?\) of Line 3$/, order: 6 },
                 { pattern: "5 Enter the lesser of Line 5a or Line 5b", order: 7 },
                 { pattern: "6 Enter the greater of Line 4 or Line 5", order: 8 },
                 { pattern: "7 2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.", order: 9 }

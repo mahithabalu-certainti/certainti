@@ -193,7 +193,7 @@ export class RdCreditCalculatorForCT {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-                "Fiscal Year Ended" : metadata.FiscalYearEnded,
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
                 "Description": "Research Tax Credit",
                 stateDetails : "Connecticut - Credit Calculation"
             },
@@ -229,11 +229,11 @@ export class RdCreditCalculatorForCT {
 
         let part3 = {
             "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6":part2Computation.part2_allowable_tentative_tax_credit,
-            [`2 Multiply Line 1 by .${extractConfig.one_third_rate}`]:part2Computation.part2_one_third_rate,
+            [`2 Multiply Line 1 by ${extractConfig.one_third_rate}%`]:part2Computation.part2_one_third_rate,
             "3 Current Year CT Business Tax Liability":part2Computation.current_year_ct_business_tax_liability,
             [`4 Multiply Line 3 by ${(extractConfig.half_tax_liability_rate)}% .`]:part2Computation.half_tax_liability,
-            "5a Multiply Line 1 by two (2).":part2Computation.double_credit,
-            [`5b Enter ${extractConfig.tax_limit_rate}% (.${extractConfig.tax_limit_rate}) of Line 3`]:part2Computation.tax_limit,
+            [`5a Multiply Line 1 by ${extractConfig.double_credit_multiplier}`]:part2Computation.double_credit,
+            [`5b Enter ${extractConfig.tax_limit_rate}% (${extractConfig.tax_limit_rate}) of Line 3`]:part2Computation.tax_limit,
             "5 Enter the lesser of Line 5a or Line 5b":part2Computation.min_final,
             "6 Enter the greater of Line 4 or Line 5":part2Computation.allowable_credit,
             "7 2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.":part2Computation.final_credit

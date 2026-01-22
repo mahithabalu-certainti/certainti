@@ -38,7 +38,7 @@ export class RdCreditProcess
                     allowNull: true,
                 },
                 status: {
-                    type: DataTypes.STRING(50),
+                    type: DataTypes.STRING(1000),
                     allowNull: true,
                 },
                 created_datetime: {
