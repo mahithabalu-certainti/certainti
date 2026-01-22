@@ -256,6 +256,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
         errorToast(result?.statusMessage || 'Failed to update field');
         setTemplateList(previousTemplates);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.statusMessage ||

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   Suspense,
   useCallback,
@@ -1202,7 +1203,7 @@ export const CaseDetails = () => {
               <div>
                 <span className='font-bold mr-1 capitalize'>Case Team</span>-
                 <span className='ml-1 font-medium'>
-                 Case activities are unavailable until the case team is setup.
+                  Case activities are unavailable until the case team is setup.
                 </span>
               </div>
             </div>
@@ -1217,7 +1218,8 @@ export const CaseDetails = () => {
               <div>
                 <span className='font-bold mr-1 capitalize'>Case</span>-
                 <span className='ml-1 font-medium'>
-                Financial workings of this Case is signed off. Project changes are no longer allowed.
+                  Financial workings of this Case is signed off. Project changes
+                  are no longer allowed.
                 </span>
               </div>
             </div>

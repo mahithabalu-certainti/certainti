@@ -457,7 +457,10 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction || isFinancialWorkingSignoff,
+        accountInActive ||
+        interactionList.length === 0 ||
+        !isSendInteraction ||
+        isFinancialWorkingSignoff,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
       hide: viewResponseHistory,

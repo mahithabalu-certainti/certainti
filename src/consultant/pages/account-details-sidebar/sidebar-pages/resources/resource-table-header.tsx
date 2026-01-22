@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SxProps } from '@mui/material';
 import React from 'react';
 import TextButton from '../../../../../components/button/text-button';

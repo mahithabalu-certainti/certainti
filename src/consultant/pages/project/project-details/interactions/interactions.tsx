@@ -464,7 +464,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction || isProjectSignedOff,
+        accountInActive ||
+        interactionList.length === 0 ||
+        !isSendInteraction ||
+        isProjectSignedOff,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
       hide: viewResponseHistory,
@@ -473,7 +476,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Reminder',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction || isProjectSignedOff,
+        accountInActive ||
+        interactionList.length === 0 ||
+        !isSendInteraction ||
+        isProjectSignedOff,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
@@ -624,7 +630,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       icon: EditIcon,
       hide: !interactionFieldsEditable,
       disabled: (row: InteractionList) =>
-     isProjectSignedOff ||   accountInActive || disableInteractionEditBtn(row),
+        isProjectSignedOff || accountInActive || disableInteractionEditBtn(row),
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -718,7 +724,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
-    permissionMap,
+    permissionMap
   );
 
   const filterFields = !viewInteractionHistory

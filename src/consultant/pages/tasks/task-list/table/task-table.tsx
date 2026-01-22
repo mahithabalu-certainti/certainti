@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useSelector } from 'react-redux';
 import { TaskList, TasksListURLParams } from '../../../../types/task';
@@ -728,7 +729,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       setTotalCount(data.data.count || data.data.totalCount || 0);
       setTaskList(data.data.tasks || []);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {

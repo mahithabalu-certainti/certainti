@@ -33,7 +33,7 @@ export const getProjectResourcesColumns = (
   regionLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountOrProjectInActive?: boolean,
-  isProjectSignedOff?: boolean,
+  isProjectSignedOff?: boolean
 ): ListTableColumn<ProjectResourcesListType>[] => [
   {
     id: 'resource_code',

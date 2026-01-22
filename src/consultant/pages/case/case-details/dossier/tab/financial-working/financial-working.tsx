@@ -40,7 +40,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     () => projects.some((p) => p['Project Code']),
     [projects]
   );
-  
+
   const boldRows = useMemo(
     () => (computedFields as any)?.BOLD || [],
     [computedFields]
@@ -183,6 +183,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     });
 
     return generatedColumns;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [computedFields, symbol, projects, hasProjectCode]);
 
   const tableData = useMemo(() => {
@@ -231,7 +232,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
 
   if (!data?.data || !computedFields || !('Columns' in computedFields)) {
     return (
-      <div className='p-8 text-center text-[#425A76] italic font-medium'>No data available</div>
+      <div className='p-8 text-center text-[#425A76] italic font-medium'>
+        No data available
+      </div>
     );
   }
 

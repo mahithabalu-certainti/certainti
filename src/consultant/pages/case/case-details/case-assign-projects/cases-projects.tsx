@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import { ProjectsSideIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
@@ -96,7 +95,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   refetchCaseDetails,
   activityMenuItems,
   isCaseTeamCreated,
-  isFinancialWorkingSignoff
+  isFinancialWorkingSignoff,
 }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
@@ -208,6 +207,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
 
       navigate({ search: newParams.toString() }, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.get('list')]); // Run when the list parameter changes
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -313,7 +313,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: 'RD Assessment',
       variant: 'outlined' as const,
-      disabled: accountInActive || selectedRows.length === 0 || !isCaseTeamCreated || isFinancialWorkingSignoff,
+      disabled:
+        accountInActive ||
+        selectedRows.length === 0 ||
+        !isCaseTeamCreated ||
+        isFinancialWorkingSignoff,
       onClick: () => handleTriggerAIBtn(),
       loading: triggerAIMutation.isPending,
       sx: { width: '115px', minWidth: '115px' },
@@ -325,7 +329,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: isAssignProject ? 'Assign' : 'Remove',
       variant: 'outlined' as const,
-      disabled: selectedRows.length === 0 || accountInActive || !isCaseTeamCreated || isFinancialWorkingSignoff,
+      disabled:
+        selectedRows.length === 0 ||
+        accountInActive ||
+        !isCaseTeamCreated ||
+        isFinancialWorkingSignoff,
       onClick: () =>
         isAssignProject ? handletoAssignprojects() : handleRemoveProjects(),
       sx: { width: '80px', minWidth: '80px' },

@@ -172,7 +172,7 @@ export const getProjectColumns = (
       placeholder: '',
       options: memoizedProjectTypes,
     },
-     conditionallyEdit: [
+    conditionallyEdit: [
       {
         key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,

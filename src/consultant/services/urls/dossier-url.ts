@@ -63,5 +63,3 @@ export const getFinancialHighlightsURL = (): string => {
 export const getSignOffFinancialHighlightsURL = (): string => {
   return `/api/cases/financialWorking/signoff`;
 };
-
-

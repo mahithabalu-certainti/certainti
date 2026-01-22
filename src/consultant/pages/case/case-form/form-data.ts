@@ -42,7 +42,7 @@ export const CaseFormData = (
   globalType?: boolean,
   calculatedStatutoryDate?: string,
   statusOptions?: SelectOption[],
-  isAustralianCountry?: boolean,
+  isAustralianCountry?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -621,7 +621,8 @@ export const CaseFormData = (
       selectedFiscalYear,
       globalType,
       calculatedStatutoryDate,
-      isAustralianCountry
+      isAustralianCountry,
+      statusOptions,
     ]
   );
 };
