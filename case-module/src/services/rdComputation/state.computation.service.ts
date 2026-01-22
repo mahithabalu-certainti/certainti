@@ -159,8 +159,8 @@ export class StateComputationService {
      * @param orgDb 
      * @param schemaName 
      */
-    async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string) {
-        const currentFiscalYear = this.getCurrentFiscalYear();
+    async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
+        const currentFiscalYear = fiscalYear
 
         const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb); //current yer QREs
         logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
@@ -196,7 +196,8 @@ export class StateComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                 if (stateComputation) {
-                    const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName);
+                    let currentFiscalYear = parseInt(effectiveEnd.split('-')[0]!);
+                    const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName, currentFiscalYear);
                     logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
                     let result;
                     

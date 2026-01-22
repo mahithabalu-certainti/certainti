@@ -102,7 +102,7 @@ export class RdCreditCalculatorForCT {
         const tentativeBalance = Decimal.max(tentativeTotalQREs.minus(tentativeExcessQRE), 0);
 
         //Line 4c: Tetative credit rate.
-        const tentativeCreditRate = new Decimal(extractConfig.tentative_credit_rate || 0);
+        const tentativeCreditRate = tentativeBalance.mul(new Decimal(extractConfig.tentative_credit_rate || 0));
 
         //Line 4: Tentative credit rate from line 4c
         const tentativeCredit = tentativeCreditRate;
@@ -141,7 +141,7 @@ export class RdCreditCalculatorForCT {
         const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability);
 
         //Line 4: Multiply Line 3 by 50%
-        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate || 0));
+        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate/100 || 0));
 
         //Line 5a: Double Credit for Certain Expenses: Multiply Line 1 by 2
         const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.double_credit_multiplier || 0));
@@ -217,7 +217,7 @@ export class RdCreditCalculatorForCT {
             "1 Enter the amount of Connecticut research and experimental expenditures for the current income year. ":part1TentativeComputation.tentative_total_qre,
             "2 Enter the amount of excess Connecticut research and experimental expenditures for the current income year.   From Form CT - 1120RC Part I, Line 3.":part1TentativeComputation.tentative_excess_qre,
             "3 Balance: Subtract Line 2 from Line 1.  Net research and development expenses for 2023":part1TentativeComputation.tentative_balance,
-            "4c All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.":"",
+            "4c All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.":part1TentativeComputation.tentative_credit,
             "4 Tentative credit: Enter the amount from Line 4a, 4b, or 4c.":part1TentativeComputation.tentative_credit,
             "5 Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.":   part1TentativeComputation.reduction_tentative_tax_credit,    
             "6 Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4. ":part1TentativeComputation.allowable_tentative_tax_credit
@@ -228,7 +228,7 @@ export class RdCreditCalculatorForCT {
             "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6":part2Computation.part2_allowable_tentative_tax_credit,
             [`2 Multiply Line 1 by .${extractConfig.one_third_rate}`]:part2Computation.part2_one_third_rate,
             "3 Current Year CT Business Tax Liability":part2Computation.current_year_ct_business_tax_liability,
-            [`4 Multiply Line 3 by ${(part2Computation.tentativeCreditRate)}% .`]:part2Computation.half_tax_liability,
+            [`4 Multiply Line 3 by ${(extractConfig.half_tax_liability_rate)}% .`]:part2Computation.half_tax_liability,
             "5a Multiply Line 1 by two (2).":part2Computation.double_credit,
             [`5b Enter ${extractConfig.tax_limit_rate}% (.${extractConfig.tax_limit_rate}) of Line 3`]:part2Computation.tax_limit,
             "5 Enter the lesser of Line 5a or Line 5b":part2Computation.min_final,
