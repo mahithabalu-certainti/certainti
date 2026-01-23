@@ -462,7 +462,7 @@ export const CaseFormData = (
               !permissionMap?.['export_sales_revenue']?.edit &&
               !permissionMap?.['export_sales_revenue']?.read,
           }),
-          createTextField('llinois_research_payments_corp_only', 'Illinois Research Payments (Corp Only)', {
+          createTextField('illinois_research_payments_corp_only', 'Illinois Research Payments (Corp Only)', {
             required: false,
             placeholder: 'Enter Illinois Research Payments (Corp Only)',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -509,7 +509,7 @@ export const CaseFormData = (
             labelTooltip: {
               showTooltip: true,
               tooltipMessage:
-                'Export Sales Revenue: your estimated export sales revenue due.',
+                'Qualified Computer Rental Time Expenses: your estimated qualified computer rental time expenses.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
