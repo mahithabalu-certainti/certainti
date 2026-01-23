@@ -176,8 +176,19 @@ export class RdCreditCalculatorForTX {
      * @returns The rounded value as a Decimal with two decimal places.
     */
     round2(value: any) {
-    if (typeof value !== "number") return value;
-    return new Decimal(value).toDecimalPlaces(2).toNumber();
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
+    }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
 }
 
     /**

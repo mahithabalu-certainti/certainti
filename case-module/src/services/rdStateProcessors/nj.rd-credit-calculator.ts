@@ -1,5 +1,6 @@
 import { Decimal } from "decimal.js";
 import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
+import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
     credit_rate: number;
@@ -27,8 +28,8 @@ export class RdCreditCalculatorForNJ {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : string) {
-        const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : string, caseDetails : Case) {
+        const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config, caseDetails);
         const part5DevelopmentTaxCreditCalculationInfo = this.part5DevelopmentTaxCreditCalculation(new Decimal(part4ASCCreditCalculationInfo.final_credit), config);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
@@ -55,10 +56,11 @@ export class RdCreditCalculatorForNJ {
      * @param config 
      * @returns 
      */
-    part4ASCCreditCalculation(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson) {
+    part4ASCCreditCalculation(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson, caseDetails : Case) {
 
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const costOfSupplies = new Decimal(currentYearQREs.supplies || 0)
 
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
 
@@ -107,10 +109,20 @@ export class RdCreditCalculatorForNJ {
     * @returns 
     */
     round2(value: any) {
-    if (typeof value !== "number") return value;
-    return new Decimal(value).toDecimalPlaces(2).toNumber();
-}
+    if (value === null || value === undefined) return value;
 
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
+    }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
     /**
     * 
     * @param currentYearQREs 
