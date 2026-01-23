@@ -221,9 +221,10 @@ export class RdCreditCalculatorForUSA {
      * @param value 
      * @returns 
      */
-    async round2(value: Decimal | number): Promise<Decimal> {
-        return new Decimal(value).toDecimalPlaces(2);
-    }
+    async round2(value: any) {
+    if (typeof value !== "number") return value;
+    return new Decimal(value).toDecimalPlaces(2).toNumber();
+}
 
     /**
      * 

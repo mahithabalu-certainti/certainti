@@ -89,9 +89,10 @@ export class RdCreditCalculatorForOH {
     * @param value 
     * @returns 
     */
-    round2(value: Decimal | number): Decimal {
-        return new Decimal(value).toDecimalPlaces(2);
-    }
+    round2(value: any) {
+    if (typeof value !== "number") return value;
+    return new Decimal(value).toDecimalPlaces(2).toNumber();
+}
 
     /**
     * 
