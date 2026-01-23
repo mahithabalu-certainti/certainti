@@ -976,7 +976,8 @@ export const rawQueries = {
     SELECT rid,r_number,case_name,account_rid ,fiscal_year, material_software_cost, heat_light_power, total_nonlabor_cost,
     employers_pension_contribution,other, total_expenses, other, sub_contracts, cloud_software, unpaid_amounts_paid,
     unpaid_amounts, aggregated_turnover, taxable_income, export_sales_revenue,
-    illinois_cost_of_supplies, illinois_lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only
+    lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
+    basic_research_payments, qualified_computer_rental_time_expenses
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;

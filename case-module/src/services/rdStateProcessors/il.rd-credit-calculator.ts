@@ -30,7 +30,8 @@ export class RdCreditCalculatorForIL {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-            fiscalYearEnded : fiscalYear
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
         });
 
         const computedFields = await this.buildComputedFields(columnABasePeriodExpenseInfo, columnBCurrentYearExpenseInfo, caseDetails!, config);
@@ -66,17 +67,17 @@ export class RdCreditCalculatorForIL {
 
         const total_prior_year_contract = priorYear1Contract.plus(priorYear2Contract).plus(priorYear3Contract);
         const average_prior_year_contract = total_prior_year_contract.div(3);
-        const illinois_cost_of_supplies = caseData.illinois_cost_of_supplies || 0.00
-        const illinois_lease_costs_of_computers = caseData.illinois_lease_costs_of_computers || 0.00
+        const cost_of_supplies = 0.00
+        const lease_costs_of_computers = caseData.lease_costs_of_computers || 0.00
 
-        const total_qres = average_prior_year_contract.plus(average_prior_year_wages).plus(illinois_cost_of_supplies).plus(illinois_lease_costs_of_computers);
+        const total_qres = average_prior_year_contract.plus(average_prior_year_wages).plus(cost_of_supplies).plus(lease_costs_of_computers);
 
         return {
-            average_prior_year_wages: this.round2(average_prior_year_wages).toNumber(),
-            average_prior_year_contract: this.round2(average_prior_year_contract).toNumber(),
-            illinois_cost_of_supplies : illinois_cost_of_supplies,
-            illinois_lease_costs_of_computers: illinois_lease_costs_of_computers,
-            total_qres: this.round2(total_qres).toNumber(),
+            average_prior_year_wages: this.round2(average_prior_year_wages),
+            average_prior_year_contract: this.round2(average_prior_year_contract),
+            cost_of_supplies : cost_of_supplies,
+            lease_costs_of_computers: lease_costs_of_computers,
+            total_qres: this.round2(total_qres),
             llinois_research_payments_corp_only : caseData.llinois_research_payments_corp_only || 0.00
         }
     }
@@ -91,12 +92,12 @@ export class RdCreditCalculatorForIL {
     columnBCurrentYearExpense(currentYearQREs: QRE, final_total_qres_column_a: number, config: ConfigJson, caseData : Case) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
-        const illinois_cost_of_supplies = caseData.illinois_cost_of_supplies || 0.00
-        const illinois_lease_costs_of_computers = caseData.illinois_lease_costs_of_computers || 0.00
+        const cost_of_supplies = new Decimal(currentYearQREs.supplies || 0)
+        const lease_costs_of_computers = caseData.lease_costs_of_computers || 0.00
         const llinois_research_payments_corp_only = caseData.llinois_research_payments_corp_only || 0.00
 
         //---Line 28 : D16
-        const total_qre = current_year_wages.plus(current_year_contract).plus(illinois_cost_of_supplies || 0.00).plus(illinois_lease_costs_of_computers || 0.00).plus(llinois_research_payments_corp_only || 0.00);
+        const total_qre = current_year_wages.plus(current_year_contract).plus(cost_of_supplies || 0.00).plus(lease_costs_of_computers || 0.00).plus(llinois_research_payments_corp_only || 0.00);
 
         const excessQRE = new Decimal(total_qre.minus(final_total_qres_column_a));
         const final_excess_qre = new Decimal(excessQRE.gt(0) ? excessQRE : 0);
@@ -106,15 +107,15 @@ export class RdCreditCalculatorForIL {
         const il_research_development_credit = final_credit.plus(illinois_rd_credit_partnership_corp)
 
         return {
-            current_year_wages,
-            current_year_contract,
+            current_year_wages : this.round2(current_year_wages),
+            current_year_contract : this.round2(current_year_contract),
             total_qre,
-            final_excess_qre: this.round2(final_excess_qre).toNumber(),
-            final_credit: this.round2(final_credit).toNumber(),
+            final_excess_qre: this.round2(final_excess_qre),
+            final_credit: this.round2(final_credit),
             illinois_rd_credit_partnership_corp : illinois_rd_credit_partnership_corp,
-            il_research_development_credit : this.round2(il_research_development_credit).toNumber(),
-            illinois_cost_of_supplies : illinois_cost_of_supplies,
-            illinois_lease_costs_of_computers : illinois_lease_costs_of_computers,
+            il_research_development_credit : this.round2(il_research_development_credit),
+            cost_of_supplies : cost_of_supplies,
+            lease_costs_of_computers : lease_costs_of_computers,
             llinois_research_payments_corp_only : llinois_research_payments_corp_only
         }
     }
@@ -129,21 +130,22 @@ export class RdCreditCalculatorForIL {
      */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
-        const qreSummary: Record<string, any> = {
+        let storeData : any[] = []
+        storeData.push({
+            year : metadata.currentYear,
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
             contract: currentYearQREs.contract
-        };
+        })
 
-        // Add prior 3 years QREs
-        prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_wages_${i + 1}`] = item.wages || 0;
+        prior3YearsQREs.forEach((item) => {
+            storeData.push({
+                year : item.fiscalYear,
+                wages: item.wages,
+                contract: item.contract,
+                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+            })
         });
-
-        prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_contract_${i + 1}`] = item.contract || 0;
-        });
-
 
         return {
             metadata: {
@@ -154,6 +156,7 @@ export class RdCreditCalculatorForIL {
                 "Description": "Research Tax Credit",
                 stateDetails : "IL Research and Development Tax Credit"
             },
+            "Current & Prior years information" : storeData
         };
     }
 
@@ -165,13 +168,13 @@ export class RdCreditCalculatorForIL {
      */
     buildComputedFields(columnABasePeriodExpenseInfo: any, columnBCurrentYearExpenseInfo: any, caseData : Case, config : ConfigJson) {
         return {
-            computed_fields : [
+            "computed_fields" : [
                 {
                     "Column Name" : "Column A",
                     "SubColumn Name " : `Base Period avg. expenses (${caseData.fiscal_year - 3}-${caseData.fiscal_year - 1})`,
                     "Line 23. Illinois wages for qualified services" : columnABasePeriodExpenseInfo.average_prior_year_wages,
-                    "Line 24. Illinois cost of supplies" : columnABasePeriodExpenseInfo.illinois_cost_of_supplies,
-                    "Line 25. Illinois rental or lease costs of computers" : columnABasePeriodExpenseInfo.illinois_lease_costs_of_computers,
+                    "Line 24. Illinois cost of supplies" : columnABasePeriodExpenseInfo.cost_of_supplies,
+                    "Line 25. Illinois rental or lease costs of computers" : columnABasePeriodExpenseInfo.lease_costs_of_computers,
                     [`Line 26. ${config.sub_con_percent}% of Illinois contract expenses`] : columnABasePeriodExpenseInfo.average_prior_year_contract,
                     "Line 27. Illinois basic research payments to qualified organizations (corporations only)" : columnABasePeriodExpenseInfo.llinois_research_payments_corp_only,
                     "Line 28. Add lines 23 through 27 of each column. Total Illinois qualifying expenses" : columnABasePeriodExpenseInfo.total_qres,
@@ -184,8 +187,8 @@ export class RdCreditCalculatorForIL {
                     "Column Name" : "Column B",
                     "SubColumn Name" : `${caseData.fiscal_year} Expenses`,
                     "Line 23. Illinois wages for qualified services" : columnBCurrentYearExpenseInfo.current_year_wages,
-                    "Line 24. Illinois cost of supplies" : columnBCurrentYearExpenseInfo.illinois_cost_of_supplies,
-                    "Line 25. Illinois rental or lease costs of computers" : columnBCurrentYearExpenseInfo.illinois_lease_costs_of_computers,
+                    "Line 24. Illinois cost of supplies" : columnBCurrentYearExpenseInfo.cost_of_supplies,
+                    "Line 25. Illinois rental or lease costs of computers" : columnBCurrentYearExpenseInfo.lease_costs_of_computers,
                     [`Line 26. ${config.sub_con_percent}% of Illinois contract expenses`] : columnBCurrentYearExpenseInfo.current_year_contract,
                     "Line 27. Illinois basic research payments to qualified organizations (corporations only)" : columnBCurrentYearExpenseInfo.llinois_research_payments_corp_only,
                     "Line 28. Add lines 23 through 27 of each column. Total Illinois qualifying expenses" : columnBCurrentYearExpenseInfo.total_qre,
@@ -203,8 +206,20 @@ export class RdCreditCalculatorForIL {
     * @param value 
     * @returns 
     */
-    round2(value: Decimal | number): Decimal {
-        return new Decimal(value).toDecimalPlaces(2);
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
     }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 
 }

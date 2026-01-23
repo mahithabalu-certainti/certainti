@@ -56,7 +56,8 @@ export class RdCreditCalculatorForOH {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-            fiscalYearEnded : fiscalYear
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
         });
 
         const computeFieldsResp = {
@@ -88,9 +89,21 @@ export class RdCreditCalculatorForOH {
     * @param value 
     * @returns 
     */
-    round2(value: Decimal | number): Decimal {
-        return new Decimal(value).toDecimalPlaces(2);
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
     }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 
     /**
     * 
@@ -101,18 +114,21 @@ export class RdCreditCalculatorForOH {
     */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
-        const qreSummary: Record<string, any> = {
+        let storeData : any[] = []
+        storeData.push({
+            year : metadata.currentYear,
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
             contract: currentYearQREs.contract
-        };
+        })
 
         prior3YearsQREs.forEach((item) => {
-            qreSummary[`${item.fiscalYear}`] = {
-                "QRE Wages": item.wages,
-                "QRE Contractor": item.contract,
-                "TOTAL": new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-            }
+            storeData.push({
+                year : item.fiscalYear,
+                wages: item.wages,
+                contract: item.contract,
+                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+            })
         });
 
 
@@ -126,9 +142,7 @@ export class RdCreditCalculatorForOH {
                 "Description": "Research Tax Credit",
                 stateDetails : "Ohio Credit Calculation"
             },
-            qreSummary : {
-                "Current & Prior years information" : qreSummary
-            }
+            "Current & Prior years information" : storeData
         };
     }
 
@@ -146,10 +160,10 @@ export class RdCreditCalculatorForOH {
             [`Tax Year ${computeFieldsResp.prev2_year} QREs`] :computeFieldsResp.prev2_qre,
             [`Tax Year ${computeFieldsResp.prev3_year} QREs`]: computeFieldsResp.prev3_qre,
             "Average": computeFieldsResp.average_tot_prev_qre,
-            "Total Investment in Qualifying Research Expense for Calendar Year 2025":computeFieldsResp.total_current_year_qre,
+            [`Total Investment in Qualifying Research Expense for Calendar Year ${computeFieldsResp.year}`]:computeFieldsResp.total_current_year_qre,
             "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":computeFieldsResp.average_tot_prev_qre,
             "Net Excess of Qualifying Research Expenses for the Taxable Year":computeFieldsResp.final_excess_qre,
-            [`2025 Credit Earned (${config.credit_earned_percent}%)`] : computeFieldsResp.final_credits_earned
+            [`${computeFieldsResp.year} Credit Earned (${config.credit_earned_percent}%)`] : computeFieldsResp.final_credits_earned
         }
         return {
             computed_fields: {

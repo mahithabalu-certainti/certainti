@@ -41,7 +41,7 @@ export class RdCreditCalculatorForCA {
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.annualGrossReceipts || [], {
             country: this.country,
             creditType: this.creditType,
-            currency: this.creditType,
+            currency: this.currency,
             fiscalYearEnded : fiscalYear
         });
         const computedFields = await this.buildComputedFields(ascResult, rrcResult);

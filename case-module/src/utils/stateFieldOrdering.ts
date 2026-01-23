@@ -123,20 +123,24 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "6 Total qualified research expenses for this aggregate group", order: 6 }
             ],
             "PART 2. CREDIT DETERMINED UNDER c. 63, s. 38M(b), (ALTERNATE SIMPLIFIED METHOD)": [
-                { pattern: "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10", order: 1 },
-                { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 2 },
-                { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 3 },
-                { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 4 },
-                { pattern: "10 Applicable rate for Alternative Simplified Method", order: 5 },
-                { pattern: "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10", order: 6 },
-                { pattern: "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6", order: 7 },
-                { pattern: "13 Amount of group credit for this corporation. Multiply line 11 by line 12", order: 8 }
+                { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 1 },
+                { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 2 },
+                { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 3 },
+                { pattern: "10 Applicable rate for Alternative Simplified Method", order: 4 },
+                { pattern: "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10", order: 5 },
+                { pattern: "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6", order: 6 },
+                { pattern: "13 Amount of group credit for this corporation. Multiply line 11 by line 12", order: 7 }
             ],
             "PART 3. CREDIT DETERMINED UNDER c. 63, A. 38M(a)": [
                 { pattern: "14 Fixed-base ratio (see instructions)", order: 1 },
                 { pattern: "15 Average annual gross receipts from the 4 most recent taxable years", order: 2 },
                 { pattern: /^16 Base amount\. Multiply line 14 by line 15\. Not less than \d+(\.\d+)?% of line 6$/, order: 3 },
-                { pattern: "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.", order: 4 }
+                { pattern: "17 Subtract line 16 from current year expenses on line 6. Not less than 0", order: 4 },
+                { pattern: /^18 Total group credit for qualified research expenses\. Multiply line 17 by \d+(\.\d+)?%$/, order: 5 },
+                { pattern: "19 Total group credit for basic research payments (see instructions)", order: 6 },
+                { pattern: "20 Total Research Credit for aggregate group. Combine line 18 and 19", order: 7 },
+                { pattern: "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.", order: 8 },
+                { pattern: "22 Amount of credit for this corporation. Multiply line 20 by line 21.", order: 9 }
             ]
         },
         BOLD: []
@@ -330,12 +334,14 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         sectionFieldOrders: {
             "CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)": [
                 { pattern: "16 Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)", order: 1 },
-                { pattern: "19 Enter the applicable percentage of contract research expenses (see instructions)", order: 2 },
-                { pattern: "20 Total qualified research expenses. Add lines 16 through 19", order: 3 },
-                { pattern: "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.", order: 4 },
-                { pattern: /^22 Divide line 21 by \d+(\.\d+)?$/, order: 5 },
-                { pattern: "23 Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.", order: 6 },
-                { pattern: "24 Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ", order: 7 }
+                { pattern : "17 Cost of Supplies", order : 2 },
+                { pattern : "18 Rental or lease costs of computers", order : 3 },
+                { pattern: "19 Enter the applicable percentage of contract research expenses (see instructions)", order: 4 },
+                { pattern: "20 Total qualified research expenses. Add lines 16 through 19", order: 5 },
+                { pattern: "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.", order: 6 },
+                { pattern: /^22 Divide line 21 by \d+(\.\d+)?$/, order: 7 },
+                { pattern: "23 Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.", order: 8 },
+                { pattern: "24 Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ", order: 9 }
             ],
             "TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT": [
                 { pattern: "26 Enter either line 15 or 24 (whichever method was used for federal purposes)", order: 1 },

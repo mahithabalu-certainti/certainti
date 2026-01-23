@@ -55,10 +55,11 @@ const createCaseSchema = Joi.object({
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
   other: positiveDecimal18_2,
-  illinois_cost_of_supplies : positiveDecimal18_2,
-  illinois_lease_costs_of_computers : positiveDecimal18_2,
+  lease_costs_of_computers : positiveDecimal18_2,
   illinois_rd_credit_partnership_corp : positiveDecimal18_2,
-  illinois_research_payments_corp_only : positiveDecimal18_2
+  illinois_research_payments_corp_only : positiveDecimal18_2,
+  basic_research_payments : positiveDecimal18_2,
+  qualified_computer_rental_time_expenses : positiveDecimal18_2
 });
 
 
@@ -92,10 +93,11 @@ const updateCaseSchema = Joi.object({
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
   other: positiveDecimal18_2,
-  illinois_cost_of_supplies : positiveDecimal18_2,
-  illinois_lease_costs_of_computers : positiveDecimal18_2,
+  lease_costs_of_computers : positiveDecimal18_2,
   illinois_rd_credit_partnership_corp : positiveDecimal18_2,
-  illinois_research_payments_corp_only : positiveDecimal18_2
+  illinois_research_payments_corp_only : positiveDecimal18_2,
+  basic_research_payments : positiveDecimal18_2,
+  qualified_computer_rental_time_expenses : positiveDecimal18_2
 });
 
 const caseClosedListSchema = Joi.object({
