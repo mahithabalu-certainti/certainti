@@ -41,11 +41,14 @@ export const transformCaseFormPayload = (
     export_sales_revenue: formData.export_sales_revenue || null,
     other: formData.other || null,
     status_rid: formData.status_rid,
-    illinois_research_payments_corp_only: formData.illinois_research_payments_corp_only || null,
+    illinois_research_payments_corp_only:
+      formData.illinois_research_payments_corp_only || null,
     lease_costs_of_computers: formData.lease_costs_of_computers || null,
-    qualified_computer_rental_time_expenses: formData.qualified_computer_rental_time_expenses || null,
+    qualified_computer_rental_time_expenses:
+      formData.qualified_computer_rental_time_expenses || null,
     basic_research_payments: formData.basic_research_payments || null,
-    illinois_rd_credit_partnership_corp: formData.illinois_rd_credit_partnership_corp || null,
+    illinois_rd_credit_partnership_corp:
+      formData.illinois_rd_credit_partnership_corp || null,
   };
 
   if (isEditView && originalData) {

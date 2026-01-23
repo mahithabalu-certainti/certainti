@@ -42,24 +42,40 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
   const isValidCurrencyCode = (code: string): boolean => {
     // Common ISO 4217 currency codes
     const validCurrencyCodes = [
-      'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD',
-      'MXN', 'SGD', 'HKD', 'NOK', 'KRW', 'TRY', 'INR', 'RUB', 'BRL', 'ZAR'
+      'USD',
+      'EUR',
+      'GBP',
+      'JPY',
+      'AUD',
+      'CAD',
+      'CHF',
+      'CNY',
+      'SEK',
+      'NZD',
+      'MXN',
+      'SGD',
+      'HKD',
+      'NOK',
+      'KRW',
+      'TRY',
+      'INR',
+      'RUB',
+      'BRL',
+      'ZAR',
     ];
     return validCurrencyCodes.includes(code.toUpperCase());
   };
- 
+
   // Extract and validate currency code
   const rawCurrencyCode =
     (inputParams?.metadata?.currency as string) ||
     (inputParams?.currency as string) ||
     'USD';
- 
+
   // Validate currency code - if invalid, default to USD
   const currencyCode = isValidCurrencyCode(rawCurrencyCode)
     ? rawCurrencyCode.toUpperCase()
     : 'USD';
-
-
 
   const formatCurrency = (value: number | string | null | undefined) => {
     if (value === null || value === undefined) return '';
@@ -507,18 +523,24 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
             // Special handling for "tables" - don't render it as a card
             // Instead, render each table inside it directly
-            if (key === 'tables' && typeof value === 'object' && value !== null) {
+            if (
+              key === 'tables' &&
+              typeof value === 'object' &&
+              value !== null
+            ) {
               return (
                 <React.Fragment key={key}>
-                  {Object.entries(value).map(([tableName, tableData], index) => (
-                    <div key={`${key}_${index}`} className='mb-4'>
-                      {renderCard(
-                        tableName,
-                        renderTableSection(tableData),
-                        false
-                      )}
-                    </div>
-                  ))}
+                  {Object.entries(value).map(
+                    ([tableName, tableData], index) => (
+                      <div key={`${key}_${index}`} className='mb-4'>
+                        {renderCard(
+                          tableName,
+                          renderTableSection(tableData),
+                          false
+                        )}
+                      </div>
+                    )
+                  )}
                 </React.Fragment>
               );
             }
