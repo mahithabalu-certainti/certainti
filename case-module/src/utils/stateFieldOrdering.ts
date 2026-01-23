@@ -183,6 +183,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
       { pattern: /^22 Add lines 10 and 21/, order: 22 },
       { pattern: /^\* If line 22 is \$ .* less/, order: 22.1 },
       { pattern: /^\* If line 22 is more than/, order: 22.2 },
+      { pattern: /^23 Multiply line 22 by \d+(\.\d+)?% \(0?\.\d+\)\. Enter the result/, order: 23 },
       { pattern: /^24 Subtract \$ .* from line 22/, order: 24 },
       { pattern: /^25 Multiply line 24/, order: 25 },
       { pattern: /^26 Add .* to line 25/, order: 26 },
