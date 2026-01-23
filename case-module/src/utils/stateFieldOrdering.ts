@@ -334,12 +334,14 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         sectionFieldOrders: {
             "CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)": [
                 { pattern: "16 Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)", order: 1 },
-                { pattern: "19 Enter the applicable percentage of contract research expenses (see instructions)", order: 2 },
-                { pattern: "20 Total qualified research expenses. Add lines 16 through 19", order: 3 },
-                { pattern: "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.", order: 4 },
-                { pattern: /^22 Divide line 21 by \d+(\.\d+)?$/, order: 5 },
-                { pattern: "23 Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.", order: 6 },
-                { pattern: "24 Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ", order: 7 }
+                { pattern : "17 Cost of Supplies", order : 2 },
+                { pattern : "18 Rental or lease costs of computers", order : 3 },
+                { pattern: "19 Enter the applicable percentage of contract research expenses (see instructions)", order: 4 },
+                { pattern: "20 Total qualified research expenses. Add lines 16 through 19", order: 5 },
+                { pattern: "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.", order: 6 },
+                { pattern: /^22 Divide line 21 by \d+(\.\d+)?$/, order: 7 },
+                { pattern: "23 Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.", order: 8 },
+                { pattern: "24 Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ", order: 9 }
             ],
             "TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT": [
                 { pattern: "26 Enter either line 15 or 24 (whichever method was used for federal purposes)", order: 1 },
