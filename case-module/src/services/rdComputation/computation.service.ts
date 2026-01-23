@@ -7,6 +7,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import StateComputationService from "./state.computation.service";
 import FederalComputationService from "./federal.computation.service";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
+import { reorderComputedFieldsForState, hasFieldOrderingConfig } from "../../utils/stateFieldOrdering";
 
 enum ConfigType {
     NONE = "NONE",
@@ -129,6 +130,30 @@ export class ComputationService {
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
             const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(fetchParentAccountRnumber[0][0].r_number, caseRid, stateRid);
+             //statecode
+            const [stateCode]:any[] = await mainDb.query(rawQueries.fetchStatesByIds(),
+            {
+                replacements: { ids: stateRid ? [stateRid] : [] },
+                type: "SELECT",
+            });
+
+            // Use utility function to reorder computed fields for any configured state
+            if (stateCode && stateCode.state_code && hasFieldOrderingConfig(stateCode.state_code)) {
+                if (results && (results as any).computed_fields) {
+                    if(stateCode.state_code === "GA"){
+                     const computedFields = (results as any).computed_fields;
+                     const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
+                     (results as any).computed_fields = reorderedFields;
+                    }
+                    else
+                    {
+                     const computedFields = (results as any).computed_fields.computed_fields;
+                     const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
+                     (results as any).computed_fields.computed_fields = reorderedFields;
+                    }                  
+                    logMessage(`Applied field ordering for state: ${stateCode.state_code}`);
+                }
+            }
 
             return {
                 statusCode: HttpStatus.SUCCESS,

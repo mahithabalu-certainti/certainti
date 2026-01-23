@@ -159,10 +159,10 @@ export class StateComputationService {
      * @param orgDb 
      * @param schemaName 
      */
-    async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string) {
-        const currentFiscalYear = this.getCurrentFiscalYear();
+    async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
+        const currentFiscalYear = fiscalYear
 
-        const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb); //current yer QREs
+        const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb, currentFiscalYear); //current yer QREs
         logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
 
         const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, regionRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
@@ -189,14 +189,21 @@ export class StateComputationService {
         );
         const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
         const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
-
+        let currentFiscalYear = parseInt(effectiveEnd.split('-')[0]!);
         for (const config of configStateLevel) {
             try {
                 const stateComputation = stateCalculators[config.state_code];
                 const extractConfig = this.extractConfigJson(config.config_json);
                 logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                 if (stateComputation) {
-                    const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName);
+                    
+                    const date = new Date(effectiveEnd);
+                    const formatted = date.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric"
+                    });
+                    const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName, currentFiscalYear);
                     logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
                     let result;
                     
@@ -204,8 +211,9 @@ export class StateComputationService {
                         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
                         result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
                     } else {
-                        result = await stateComputation.compute(extractConfig, stateRDData);
+                        result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear);
                     }
+                    
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                         fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
                         result.inputFields, result.computedFields

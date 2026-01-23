@@ -73,7 +73,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize): Promise<QRE> {
+    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize, currentFiscalYear : any): Promise<QRE> {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -82,20 +82,20 @@ class RDCreditSchemaService {
             const [data]: any[] = await this.orgDbSequelize.query(
                 `
                     SELECT 
-                        SUM(cpr.total_cost_fte_prj) AS total_wages,
-                        SUM(cpr.total_cost_nonlabor_prj) AS total_supplies,
-                        SUM(cpr.total_cost_subcon_prj) AS total_contract,
+                        SUM(cpr.total_cost_fte_from_prj_res) AS total_wages,
+                        SUM(cpr.total_cost_nonlabor_from_prj_res) AS total_supplies,
+                        SUM(cpr.total_cost_subcon_from_prj_res) AS total_contract,
                         cs.tax_liability as business_tax_liability
                     FROM ${schemaName}.case_projects cp
                     JOIN ${schemaName}.project_fiscal pf
                         ON cp.project_fiscal_rid = pf.rid
                     JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
                     JOIN ${schemaName}.case_project_fiscal_region cpr ON cpr.case_project_rid = cp.rid
-                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = pf.fiscal_year AND cpr.region_rid = :regionRid
+                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid
                     GROUP BY cs.tax_liability
                 `,
                 {
-                    replacements: { caseRid, regionRid },
+                    replacements: { caseRid, regionRid, currentFiscalYear },
                     type: QueryTypes.SELECT,
                 }
             );
@@ -383,6 +383,9 @@ class RDCreditSchemaService {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditStateCalculations.findOne({
+            attributes : {
+                exclude : ["final_credit"]
+            },
             where: {
                 case_rid,
                 state_rid
@@ -452,7 +455,7 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'IN-PROGRESS' },
+            { status: 'Financial workings are being computed. Refresh the page to check the status' },
             { where: { rid } }
         );
     }

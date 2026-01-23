@@ -21,7 +21,7 @@ export class RdCreditCalculatorForIL {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const columnABasePeriodExpenseInfo = this.columnABasePeriodExpense(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const columnBCurrentYearExpenseInfo = this.columnBCurrentYearExpense(stateRdData.currentYearQREs, columnABasePeriodExpenseInfo.total_qres, config);
 
@@ -29,6 +29,7 @@ export class RdCreditCalculatorForIL {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(columnABasePeriodExpenseInfo, columnBCurrentYearExpenseInfo);
@@ -133,6 +134,9 @@ export class RdCreditCalculatorForIL {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "IL Research and Development Tax Credit"
             },
             qreSummary
         };

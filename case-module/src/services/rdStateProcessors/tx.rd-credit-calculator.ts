@@ -23,7 +23,7 @@ export class RdCreditCalculatorForTX {
      * @param config Configuration values used for the TX R&D credit calculation.
      * @param stateRdData State R&D data for TX, including currentYearQREs, prior3YearsQREs, and related fields.
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
 
         const qretInfo = this.creditCalculationQRET(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config)
         const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, config);
@@ -34,6 +34,7 @@ export class RdCreditCalculatorForTX {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(qretInfo, precedingWithQretInfo, precedingWithNoQretInfo, qreActivitiesCreditInfo);
@@ -95,7 +96,7 @@ export class RdCreditCalculatorForTX {
         const average_prev_year_qre = tot_prev_year_qre.div(3);
 
         //----Line6: Average QRET x 50%
-        const average_qret_rate_50pct = average_prev_year_qre.mul(config.average_qret_rate_50pct);
+        const average_qret_rate_50pct = average_prev_year_qre.mul(config.average_qret_rate_50pct/100);
 
         //----Line7: Difference
         const difference = new Decimal(qretInfo.total_current_year_qre).minus(average_qret_rate_50pct);
@@ -103,8 +104,8 @@ export class RdCreditCalculatorForTX {
         //----Line8: Credit.
         //(If amount in Item 1b is zero, multiply Item 7 by 5% (0.05); 
         //otherwise, leave Item 8 blank and calculate credit in Item 9)
-        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? difference.mul(config.qre_rate_5pct) : "N/A";
-        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? difference.mul(config.qre_rate_6_25pct) : "N/A";
+        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? difference.mul(config.qre_rate_5pct/100) : "N/A";
+        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? difference.mul(config.qre_rate_6_25pct/100) : "N/A";
         return {
             average_prev_year_qre: this.round2(average_prev_year_qre),
             average_qret_rate_50pct: this.round2(average_qret_rate_50pct),
@@ -125,8 +126,8 @@ export class RdCreditCalculatorForTX {
      * @returns 
      */
     precedingCalculationWithNoQRET(qretInfo: any, average_prev_year_qre: Decimal, config: ConfigJson) {
-        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? average_prev_year_qre.mul(config.wages_rate_2_5pct) : "N/A";
-        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct) : "N/A";
+        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? average_prev_year_qre.mul(config.wages_rate_2_5pct/100) : "N/A";
+        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct/100) : "N/A";
         return {
             credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
             credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
@@ -205,8 +206,10 @@ export class RdCreditCalculatorForTX {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-            },
-            qreSummary
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "Texas - Credit Calculation"
+            }
         };
     }
 
@@ -219,29 +222,32 @@ export class RdCreditCalculatorForTX {
      */
     buildComputedFields(qretInfo: any, precedingWithQretInfo: any, precedingWithNoQretInfo: any, qreActivitiesCreditInfo: any) {
           let qret = {
-            "Total QRET for the period covered by this report":qretInfo.total_current_year_qre,
-            "Total QRET in 1st preceding tax period":qretInfo.prev1_qre,
-            "Total QRET in 2nd preceding tax period":qretInfo.prev2_qre,
-            "Total QRET in 3rd preceding tax period":qretInfo.prev3_qre,
-            "QRET under higher education contracts for the period covered by this report":qretInfo.qret_high_edu_contract
+            "1a. Total QRET for the period covered by this report":qretInfo.total_current_year_qre,
+            "1b. QRET under higher education contracts for the period covered by this report ":"",
+            "2a. Total QRET in 1st preceding tax period":qretInfo.prev1_qre,
+            "2b. QRET under higher education contracts for the 1st preceding tax period":"",
+            "3a. Total QRET in 2nd preceding tax period":qretInfo.prev2_qre,
+            "3b. QRET under higher education contracts for the 2nd preceding tax period":"",
+            "4a. Total QRET in 3rd preceding tax period":qretInfo.prev3_qre,
+            "4b. QRET under higher education contracts for the 3rd preceding tax period":""
         }
 
         let precedingWithQret ={
-            "Average QRET for preceding periods":precedingWithQretInfo.average_prev_year_qre,
-           [`Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct} `]:precedingWithQretInfo.average_qret_rate_50pct,
-            "Difference":precedingWithQretInfo.difference,
-            [`Credit (If amount in Item 1b is zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct};`]:precedingWithQretInfo.credit,
-            [`Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by${precedingWithQretInfo.config.average_qret_rate_50pct})`]: ""
+            "5. Average QRET for preceding periods":precedingWithQretInfo.average_prev_year_qre,
+           [`6. Average QRET x ${precedingWithQretInfo.config.average_qret_rate_50pct}%`]:precedingWithQretInfo.average_qret_rate_50pct,
+            "7. Difference":precedingWithQretInfo.difference,
+            [`8. Credit (If amount in Item 1b is zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct};`]:precedingWithQretInfo.credit_eq_zero,
+            [`9. Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by ${precedingWithQretInfo.config.average_qret_rate_50pct})`]: precedingWithQretInfo.credit_gt_zero
         }
        
         let precedingWithNoQret = {
-            [`Credit (If amount in Item 1b is zero, multiply Item 1a by ${precedingWithQretInfo.config.qre_rate_5pct}`]:precedingWithNoQretInfo.credit_eq_zero,
-            [`Credit (If amount in Item 1b is greater than zero, multiply item 1a by ${precedingWithQretInfo.config.qre_rate_6_25pct})`]:precedingWithNoQretInfo.credit_gt_zero
+            [`10. Credit (If amount in Item 1b is zero, multiply Item 1a by ${precedingWithQretInfo.config.qre_rate_5pct}`]:precedingWithNoQretInfo.credit_eq_zero,
+            [`11. Credit (If amount in Item 1b is greater than zero, multiply item 1a by ${precedingWithQretInfo.config.qre_rate_6_25pct})`]:precedingWithNoQretInfo.credit_gt_zero
         }
         let qreActivitiesCredit = {
-            "R&D activities credit" : qreActivitiesCreditInfo.rd_credit_activities,
-            "R&D activities credit carried forward from prior years":qreActivitiesCreditInfo.rd_credit_activities_carry_forward,
-            "R&D activities credit available":qreActivitiesCreditInfo.rd_credit_activities_avail
+            "12. R&D activities credit" : qreActivitiesCreditInfo.rd_credit_activities,
+            "13. R&D activities credit carried forward from prior years":qreActivitiesCreditInfo.rd_credit_activities_carry_forward,
+            "14. R&D activities credit available":qreActivitiesCreditInfo.rd_credit_activities_avail
 
         }
         return {

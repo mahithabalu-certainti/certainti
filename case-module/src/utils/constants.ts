@@ -206,7 +206,8 @@ export const STATUS_MESSAGE = {
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
-  regionsFetchedSuccess : "Regions listed successfully"
+  regionsFetchedSuccess : "Regions listed successfully",
+  financialWorkingInitiated:"Financial workings are being computed. Refresh the page to check the status"
 };
 
 export const caseStatuses = {
@@ -1104,7 +1105,7 @@ export const rawQueries = {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
   fetchStatesByIds() {
-    return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`;
+    return `SELECT rid, state_name,state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`;
   },
   GET_COUNTRIES: `
     SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)

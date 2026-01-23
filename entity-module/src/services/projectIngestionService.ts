@@ -3006,8 +3006,10 @@ class ProjectIngestionService {
       "QRE Percent Final": "QRE Percent Final",
       "QRE Final": "QRE Final",
       "Project Point of Contact": "Key Contacts List",
+      "Project Point of Contact Email": "Key Contacts List",
       "Technical Point of Contact": "Key Contacts List",
-      Comments: "Comments",
+      "Technical Point of Contact Email": "Key Contacts List",
+      "Comments": "Comments",
       "Last Modified": "Updated On",
       "Project ID": "Project ID",
     };

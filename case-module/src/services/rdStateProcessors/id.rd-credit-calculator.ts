@@ -26,13 +26,14 @@ export class RdCreditCalculatorForID {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
         const qreCalInfo = this.qreCreditCalculation(stateRdData.currentYearQREs, config);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
+            fiscalYearEnded : fiscalYear
         });
 
         const computedFields = await this.buildComputedFields(qreCalInfo);
@@ -121,6 +122,9 @@ export class RdCreditCalculatorForID {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "Idaho - Credit Calculations"
             },
             qreSummary
         };

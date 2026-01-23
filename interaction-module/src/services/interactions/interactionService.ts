@@ -1885,7 +1885,7 @@ export class InteractionService {
           if (val !== undefined) return val;
           
           // Special handling for name field - return empty string if null/undefined
-          if ((raw === "name" || normalized === "name") && emailInfo && "name" in emailInfo) {
+          if ((raw === "name" || normalized === "name" || raw === 'recipient name' || raw === 'Recipient Name') && emailInfo && "name" in emailInfo) {
             return emailInfo.name ?? "";
           }
           // Check for direct placeholders

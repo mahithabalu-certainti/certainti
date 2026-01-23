@@ -461,7 +461,6 @@ export class FederalComputationService {
                     return {
                         ...u,
                         "computed_fields" : {
-                            "Year Ended": u["computed_fields"]["Year Ended"],
                             "Regular Credit" : {
                                 "creditRRC" : {
                                     "5 Total Qualified Research Expenses" : creditRRC["5 Total Qualified Research Expenses"],
