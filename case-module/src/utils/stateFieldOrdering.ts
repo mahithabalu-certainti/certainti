@@ -22,10 +22,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     GA: {
         sectionOrder: [
             "Input Information",
-            "Ratio Calculation",
-            "Calculation of Average",
-            "Calculation of Tax Base",
-            "Calculation of Tax Credit",
+            "tables",
             "Application of Credit and Carry-Forward"
         ],
         sectionFieldOrders: {
@@ -35,6 +32,12 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "Total of all other credits", order: 3 },
                 { pattern: "Credit carry-over from PY", order: 4 },
                 { pattern: "Current Tax Liability Without Credits", order: 5 }
+            ],
+            tables: [
+                { pattern: "Ratio Calculation", order: 1 },
+                { pattern: "Calculation of Average", order: 2 },
+                { pattern: "Calculation of Tax Base", order: 3 },
+                { pattern: "Calculation of Tax Credit", order: 4 }
             ],
             "Ratio Calculation": [
                 { pattern: "table_headers", order: 1 },
