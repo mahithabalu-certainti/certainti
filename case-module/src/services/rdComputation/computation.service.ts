@@ -147,7 +147,7 @@ export class ComputationService {
                     data: {
                         ...results,
                         computed_fields: {
-                            computed_fields: computedFields.computed_fields.map((col: any) => {
+                            illinois: computedFields.computed_fields.map((col: any) => {
                                 const orderedCol: any = {};
                                 if (col["Column Name"]) {
                                     orderedCol["Column Name"] = col["Column Name"];
