@@ -128,8 +128,9 @@ export class RdCreditCalculatorForSC {
         "3 Research Expenses Credit Carried forward from previous years (attach schedule).":"",
         "4 Line 2 plus line 3 (Total Research Expenses Credit before limitations).":computeFieldsResp.tot_qre_credit,
         "5 Tax Liability (income tax and license fees) before claiming credits.": computeFieldsResp.total_tax_liability,
+        "6 Total of all credits other than the Research Expenses Credit":"",
         "7 Line 5 minus line 6 (If less than zero enter zero).":computeFieldsResp.net_base_amount,
-        [`8 Multiply line 7 by ${computeFieldsResp.config.carry_forward_credit_rate}.`]:computeFieldsResp.fifty_percent_credit,
+        [`8 Multiply line 7 by ${computeFieldsResp.config.carry_forward_credit_rate} % (${computeFieldsResp.config.carry_forward_credit_rate / 100}).`]:computeFieldsResp.fifty_percent_credit,
         "9 Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)":computeFieldsResp.final_credit,
         "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)":""
         }

@@ -22,10 +22,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     GA: {
         sectionOrder: [
             "Input Information",
-            "Ratio Calculation",
-            "Calculation of Average",
-            "Calculation of Tax Base",
-            "Calculation of Tax Credit",
+            "tables",
             "Application of Credit and Carry-Forward"
         ],
         sectionFieldOrders: {
@@ -35,6 +32,12 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "Total of all other credits", order: 3 },
                 { pattern: "Credit carry-over from PY", order: 4 },
                 { pattern: "Current Tax Liability Without Credits", order: 5 }
+            ],
+            tables: [
+                { pattern: "Ratio Calculation", order: 1 },
+                { pattern: "Calculation of Average", order: 2 },
+                { pattern: "Calculation of Tax Base", order: 3 },
+                { pattern: "Calculation of Tax Credit", order: 4 }
             ],
             "Ratio Calculation": [
                 { pattern: "table_headers", order: 1 },
@@ -140,19 +143,20 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     },
     SC: {
         sectionOrder: [
-            "SOUTH CAROLINA RESEARCH EXPENSES CREDIT"
+            "credit_calculation"
         ],
         sectionFieldOrders: {
-            "SOUTH CAROLINA RESEARCH EXPENSES CREDIT": [
+            "credit_calculation": [
                 { pattern: "1 Qualified research expenses made in South Carolina.", order: 1 },
-                { pattern: /^2 Enter \d+(\.\d+)?% of line 1\. This is your current year credit\.$/, order: 2 },
+                { pattern: /^2 Enter .+% of line 1\. This is your current year credit\.$/, order: 2 },
                 { pattern: "3 Research Expenses Credit Carried forward from previous years (attach schedule).", order: 3 },
                 { pattern: "4 Line 2 plus line 3 (Total Research Expenses Credit before limitations).", order: 4 },
                 { pattern: "5 Tax Liability (income tax and license fees) before claiming credits.", order: 5 },
-                { pattern: "7 Line 5 minus line 6 (If less than zero enter zero).", order: 6 },
-                { pattern: /^8 Multiply line 7 by \d+(\.\d+)?%?\.$/, order: 7 },
-                { pattern: "9 Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)", order: 8 },
-                { pattern: "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)", order: 9 }
+                { pattern: "6 Total of all credits other than the Research Expenses Credit", order: 6 },
+                { pattern: "7 Line 5 minus line 6 (If less than zero enter zero).", order: 7 },
+                { pattern: /^8 Multiply line 7 by .+\.$/, order: 8 },
+                { pattern: "9 Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)", order: 9 },
+                { pattern: "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)", order: 10 }
             ]
         },
         BOLD: []
@@ -180,6 +184,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
       { pattern: /^22 Add lines 10 and 21/, order: 22 },
       { pattern: /^\* If line 22 is \$ .* less/, order: 22.1 },
       { pattern: /^\* If line 22 is more than/, order: 22.2 },
+      { pattern: /^23 Multiply line 22 by \d+(\.\d+)?% \(0?\.\d+\)\. Enter the result/, order: 23 },
       { pattern: /^24 Subtract \$ .* from line 22/, order: 24 },
       { pattern: /^25 Multiply line 24/, order: 25 },
       { pattern: /^26 Add .* to line 25/, order: 26 },
@@ -551,3 +556,20 @@ export function getConfiguredStates(): string[] {
 export function addStateConfiguration(stateCode: string, config: StateFieldConfig): void {
     stateConfigurations[stateCode] = config;
 }
+
+export const IL_LINE_ORDER: Array<{
+    label?: string;   // optional
+    pattern: RegExp;
+}> = [
+    { label: "Line 23. Illinois wages for qualified services", pattern: /^Line 23\./ },
+    { label: "Line 24. Illinois cost of supplies", pattern: /^Line 24\./ },
+    { label: "Line 25. Illinois rental or lease costs of computers", pattern: /^Line 25\./ },
+    { pattern: /^Line 26\.\s*\d+(\.\d+)?% of Illinois contract expenses/ },
+    { label: "Line 27. Illinois basic research payments to qualified organizations (corporations only)", pattern: /^Line 27\./ },
+    { label: "Line 28. Add lines 23 through 27 of each column. Total Illinois qualifying expenses", pattern: /^Line 28\./ },
+    { label: "Line 29. Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero", pattern: /^Line 29\./ },
+    { pattern: /^Line 30\.\s*Multiply Line 29 by \d+(\.\d+)?%/ },
+    { label: "Line 31. Enter any distributive share of R&D Credit from partnerships and S corporations", pattern: /^Line 31\./ },
+    { label: "Line 32. IL Research and Development Credit", pattern: /^Line 32\./ }
+];
+
