@@ -390,7 +390,8 @@ class RDCreditSchemaService {
                 case_rid,
                 state_rid
             },
-            order: [['created_datetime', 'DESC']]
+            order: [['created_datetime', 'DESC']],
+            raw : true
 
         });
     }
