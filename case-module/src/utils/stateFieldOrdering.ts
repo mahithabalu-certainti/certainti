@@ -143,19 +143,20 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     },
     SC: {
         sectionOrder: [
-            "SOUTH CAROLINA RESEARCH EXPENSES CREDIT"
+            "credit_calculation"
         ],
         sectionFieldOrders: {
-            "SOUTH CAROLINA RESEARCH EXPENSES CREDIT": [
+            "credit_calculation": [
                 { pattern: "1 Qualified research expenses made in South Carolina.", order: 1 },
-                { pattern: /^2 Enter \d+(\.\d+)?% of line 1\. This is your current year credit\.$/, order: 2 },
+                { pattern: /^2 Enter .+% of line 1\. This is your current year credit\.$/, order: 2 },
                 { pattern: "3 Research Expenses Credit Carried forward from previous years (attach schedule).", order: 3 },
                 { pattern: "4 Line 2 plus line 3 (Total Research Expenses Credit before limitations).", order: 4 },
                 { pattern: "5 Tax Liability (income tax and license fees) before claiming credits.", order: 5 },
-                { pattern: "7 Line 5 minus line 6 (If less than zero enter zero).", order: 6 },
-                { pattern: /^8 Multiply line 7 by \d+(\.\d+)?%?\.$/, order: 7 },
-                { pattern: "9 Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)", order: 8 },
-                { pattern: "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)", order: 9 }
+                { pattern: "6 Total of all credits other than the Research Expenses Credit", order: 6 },
+                { pattern: "7 Line 5 minus line 6 (If less than zero enter zero).", order: 7 },
+                { pattern: /^8 Multiply line 7 by .+\.$/, order: 8 },
+                { pattern: "9 Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)", order: 9 },
+                { pattern: "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)", order: 10 }
             ]
         },
         BOLD: []
