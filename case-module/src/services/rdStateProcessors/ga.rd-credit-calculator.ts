@@ -254,13 +254,12 @@ export class RdCreditCalculatorForGA {
             "Georgia Gross Receipts",
             "Equals Ratio (%)"
         ];
-
-        const ratioTableRows = ratioCalculationInfo.previous_years.map((item: any) => [
-            item.fiscal_year,
-            item.prior_qre,
-            item.prior_receipts,
-            item.ratio
-        ]);
+        const ratioTableRows = ratioCalculationInfo.previous_years.map((item: any) => ({
+            "3 Previous Years": item.fiscal_year,
+            "Georgia Research Expenses": item.prior_qre,
+            "Georgia Gross Receipts": item.prior_receipts,
+            "Equals Ratio (%)": item.ratio
+        }));
 
         return {
             "Input Information": {
@@ -270,32 +269,42 @@ export class RdCreditCalculatorForGA {
                 "Credit carry-over from PY": inputInfo.carry_forward_prior_year,
                 "Current Tax Liability Without Credits" : inputInfo.current_year_tax_liability
             },
-            "Ratio Calculation": {
-                "Total": ratioCalculationInfo.sum_ratio,
-                "table_rows": ratioTableRows,
-                "table_headers": ratioTableHeaders,
-                
-                
-            },
-            "Calculation of Average": {
-                "table_headers": ["Total - F", "Average Research Ratio (F/3) - G" ],
-                "table_rows": [
-                    [ratioCalculationInfo.sum_ratio, ratioCalculationInfo.average_ratio]
-                ]
-            },
-            "Calculation of Tax Base":
-            {
-                "table_headers": ["Current Year Georgia Gross Receipts - A", "Lesser of G or 30%", "Base Amount"],
-                "table_rows": [
-                    [baseAmountInfo.current_year_gross_receipt, baseAmountInfo.tax_base_rate, baseAmountInfo.base_amount]
-                ]
-            },
-            "Calculation of Tax Credit":
-            {
-                table_headers: ["Current Year Research Expense - B", "Base Amount From - H", "Difference - I","Tax Credit (10% of I)"],
-                table_rows: [
-                    [taxCreditInfo.current_year_qre, baseAmountInfo.base_amount, taxCreditInfo.difference, taxCreditInfo.tax_credit]
-                ]
+            tables: {
+                "Ratio Calculation": {
+                    table_headers: ratioTableHeaders,
+                    table_rows: ratioTableRows,
+                    Total: ratioCalculationInfo.sum_ratio
+                },
+                "Calculation of Average": {
+                    table_headers: ["Total - F", "Average Research Ratio (F/3) - G"],
+                    table_rows: [
+                        {
+                            "Total - F": ratioCalculationInfo.sum_ratio,
+                            "Average Research Ratio (F/3) - G": ratioCalculationInfo.average_ratio
+                        }
+                    ]
+                },
+                "Calculation of Tax Base": {
+                    table_headers: ["Current Year Georgia Gross Receipts - A", "Lesser of G or 30%", "Base Amount"],
+                    table_rows: [
+                        {
+                            "Current Year Georgia Gross Receipts - A": baseAmountInfo.current_year_gross_receipt,
+                            "Lesser of G or 30%": baseAmountInfo.tax_base_rate,
+                            "Base Amount": baseAmountInfo.base_amount
+                        }
+                    ]
+                },
+                "Calculation of Tax Credit": {
+                    table_headers: ["Current Year Research Expense - B", "Base Amount From - H", "Difference - I", "Tax Credit (10% of I)"],
+                    table_rows: [
+                        {
+                            "Current Year Research Expense - B": taxCreditInfo.current_year_qre,
+                            "Base Amount From - H": baseAmountInfo.base_amount,
+                            "Difference - I": taxCreditInfo.difference,
+                            "Tax Credit (10% of I)": taxCreditInfo.tax_credit
+                        }
+                    ]
+                }
             },
             "Application of Credit and Carry-Forward": {
                 "1) Current Tax Liability w/o applied credits - E" : creditAndCarryForwardInfo.current_year_tax_liability,
@@ -311,6 +320,7 @@ export class RdCreditCalculatorForGA {
         }
     }
 
+    
     /**
      * 
      * @param value 
