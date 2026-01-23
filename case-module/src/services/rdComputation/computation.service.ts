@@ -7,7 +7,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import StateComputationService from "./state.computation.service";
 import FederalComputationService from "./federal.computation.service";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
-import { reorderComputedFieldsForState, hasFieldOrderingConfig } from "../../utils/stateFieldOrdering";
+import { reorderComputedFieldsForState, hasFieldOrderingConfig, IL_LINE_ORDER } from "../../utils/stateFieldOrdering";
 
 enum ConfigType {
     NONE = "NONE",
@@ -136,7 +136,41 @@ export class ComputationService {
                 replacements: { ids: stateRid ? [stateRid] : [] },
                 type: "SELECT",
             });
+            const findValueByPattern = (obj: any, pattern: RegExp) =>
+            Object.entries(obj).find(([key]) => pattern.test(key))?.[1];
 
+            if (stateCode && stateCode.state_code === "IL") {
+                const computedFields = (results as any).computed_fields;
+                return {
+                    statusCode: HttpStatus.SUCCESS,
+                    message: STATUS_MESSAGE.rdCreditPreview,
+                    data: {
+                        ...results,
+                        computed_fields: {
+                            computed_fields: computedFields.computed_fields.map((col: any) => {
+                                const orderedCol: any = {};
+                                if (col["Column Name"]) {
+                                    orderedCol["Column Name"] = col["Column Name"];
+                                }
+                                if (col["SubColumn Name"]) {
+                                    orderedCol["SubColumn Name"] = col["SubColumn Name"];
+                                }
+                                IL_LINE_ORDER.forEach(({ label, pattern }) => {
+                                const entry = Object.entries(col).find(([key]) => pattern.test(key));
+                                if (entry) {
+                                    const [actualKey, actualValue] = entry;
+                                    orderedCol[label ?? actualKey] = actualValue;
+                                }
+                            });
+                            return orderedCol;
+                            }),
+                            BOLD: [
+                                "Line 32. IL Research and Development Credit"
+                            ]
+                        }
+                    }
+                };
+            }
             // Use utility function to reorder computed fields for any configured state
             if (stateCode && stateCode.state_code && hasFieldOrderingConfig(stateCode.state_code)) {
                 if (results && (results as any).computed_fields) {

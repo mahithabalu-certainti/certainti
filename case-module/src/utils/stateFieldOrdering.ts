@@ -554,3 +554,20 @@ export function getConfiguredStates(): string[] {
 export function addStateConfiguration(stateCode: string, config: StateFieldConfig): void {
     stateConfigurations[stateCode] = config;
 }
+
+export const IL_LINE_ORDER: Array<{
+    label?: string;   // optional
+    pattern: RegExp;
+}> = [
+    { label: "Line 23. Illinois wages for qualified services", pattern: /^Line 23\./ },
+    { label: "Line 24. Illinois cost of supplies", pattern: /^Line 24\./ },
+    { label: "Line 25. Illinois rental or lease costs of computers", pattern: /^Line 25\./ },
+    { pattern: /^Line 26\.\s*\d+(\.\d+)?% of Illinois contract expenses/ },
+    { label: "Line 27. Illinois basic research payments to qualified organizations (corporations only)", pattern: /^Line 27\./ },
+    { label: "Line 28. Add lines 23 through 27 of each column. Total Illinois qualifying expenses", pattern: /^Line 28\./ },
+    { label: "Line 29. Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero", pattern: /^Line 29\./ },
+    { pattern: /^Line 30\.\s*Multiply Line 29 by \d+(\.\d+)?%/ },
+    { label: "Line 31. Enter any distributive share of R&D Credit from partnerships and S corporations", pattern: /^Line 31\./ },
+    { label: "Line 32. IL Research and Development Credit", pattern: /^Line 32\./ }
+];
+
