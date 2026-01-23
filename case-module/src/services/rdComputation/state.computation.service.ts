@@ -190,6 +190,7 @@ export class StateComputationService {
         const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
         const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
         let currentFiscalYear = parseInt(effectiveEnd.split('-')[0]!);
+        const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
         for (const config of configStateLevel) {
             try {
                 const stateComputation = stateCalculators[config.state_code];
@@ -208,10 +209,9 @@ export class StateComputationService {
                     let result;
                     
                     if(config.state_code === "ON") {
-                        const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
                         result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
                     } else {
-                        result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear);
+                        result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
                     }
                     
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(

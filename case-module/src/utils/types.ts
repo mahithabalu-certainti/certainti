@@ -28,7 +28,10 @@ export interface ICreateCases {
   total_expenses ? : number;
   taxable_income ? : number;
   export_sales_revenue? : number;
-
+  illinois_cost_of_supplies? : number;
+  illinois_lease_costs_of_computers? : number;
+  illinois_rd_credit_partnership_corp? : number
+  illinois_research_payments_corp_only? : number
   parent_case_rid?: string;
 }
 
