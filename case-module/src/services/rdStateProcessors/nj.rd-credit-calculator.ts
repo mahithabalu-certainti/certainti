@@ -61,8 +61,9 @@ export class RdCreditCalculatorForNJ {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
         const costOfSupplies = new Decimal(currentYearQREs.supplies || 0)
+        const leaseComputerCost = new Decimal(caseDetails.lease_costs_of_computers || 0.00)
 
-        const total_current_year_qre = current_year_wages.plus(current_year_contract);
+        const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(costOfSupplies).plus(leaseComputerCost);
 
         const qreSum = prior3YearsQREs.map(item => ({
             fiscalYear: item.fiscalYear,
@@ -81,7 +82,9 @@ export class RdCreditCalculatorForNJ {
             total_prev_qre,
             average_tot_prev_qre: this.round2(average_tot_prev_qre),
             sub_credit: this.round2(sub_credit),
-            final_credit: this.round2(final_credit)
+            final_credit: this.round2(final_credit),
+            costOfSupplies : this.round2(costOfSupplies),
+            leaseComputerCost : this.round2(leaseComputerCost)
         }
     }
 
@@ -92,7 +95,7 @@ export class RdCreditCalculatorForNJ {
      * @returns 
      */
     part5DevelopmentTaxCreditCalculation(part4_final_credit: Decimal, config: ConfigJson) {
-        const tot_credit = this.round2(part4_final_credit.mul(config.credit_rate));
+        const tot_credit = this.round2(part4_final_credit.mul(config.credit_rate/100));
 
         return {
             part4_final_credit: this.round2(part4_final_credit),
@@ -174,6 +177,8 @@ export class RdCreditCalculatorForNJ {
     buildComputedFields(part4ASCCreditCalculationInfo: any, part5DevelopmentTaxCreditCalculationInfo: any, config : ConfigJson) {
         let part4ASCCreditCalculation ={
             "16 Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)":part4ASCCreditCalculationInfo.current_year_wages,
+            "17 Cost of Supplies" : part4ASCCreditCalculationInfo.costOfSupplies,
+            "18 Rental or lease costs of computers" : part4ASCCreditCalculationInfo.leaseComputerCost,
             "19 Enter the applicable percentage of contract research expenses (see instructions)":part4ASCCreditCalculationInfo.current_year_contract,
             "20 Total qualified research expenses. Add lines 16 through 19":part4ASCCreditCalculationInfo.total_current_year_qre,
             "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.":part4ASCCreditCalculationInfo.total_prev_qre,
@@ -185,7 +190,7 @@ export class RdCreditCalculatorForNJ {
             "26 Enter either line 15 or 24 (whichever method was used for federal purposes)":part5DevelopmentTaxCreditCalculationInfo.part4_final_credit,
             "27 Add lines 25c and 26":part5DevelopmentTaxCreditCalculationInfo.part4_final_credit,
             // Show dynamic multiplier in label
-            [`28 Multiply line 27 by ${(part5DevelopmentTaxCreditCalculationInfo.config_percent ?? 0.1) * 100}%`]: part5DevelopmentTaxCreditCalculationInfo.tot_credit,
+            [`28 Multiply line 27 by ${(part5DevelopmentTaxCreditCalculationInfo.config_percent)}%`]: part5DevelopmentTaxCreditCalculationInfo.tot_credit,
             "29 Research and Development Tax Credit carried forward from prior year (do not recompute)":"",
             "30 Total credit available - Add lines 28 and 29":part5DevelopmentTaxCreditCalculationInfo.tot_available_credit
         }
