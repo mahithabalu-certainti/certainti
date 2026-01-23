@@ -48,6 +48,8 @@ interface CaseAttributes {
   illinois_lease_costs_of_computers? : number;
   illinois_rd_credit_partnership_corp? : number;
   illinois_research_payments_corp_only? : number;
+  basic_research_payments? : number
+  qualified_computer_rental_time_expenses? : number
 }
 
 export interface CaseCreationAttributes
@@ -101,6 +103,8 @@ export class Case
   public illinois_lease_costs_of_computers? : number;
   public illinois_rd_credit_partnership_corp? : number;
   public llinois_research_payments_corp_only? : number;
+  public basic_research_payments? : number
+  public qualified_computer_rental_time_expenses? : number;
 
   static initialize(
     sequelize: Sequelize,
@@ -165,7 +169,9 @@ export class Case
         illinois_cost_of_supplies : {type : DataTypes.DECIMAL, allowNull : true},
         illinois_lease_costs_of_computers : {type : DataTypes.DECIMAL, allowNull : true},
         illinois_rd_credit_partnership_corp : {type : DataTypes.DECIMAL, allowNull : true},
-        illinois_research_payments_corp_only : {type : DataTypes.DECIMAL, allowNull : true}
+        illinois_research_payments_corp_only : {type : DataTypes.DECIMAL, allowNull : true},
+        basic_research_payments : {type : DataTypes.DECIMAL, allowNull : true},
+        qualified_computer_rental_time_expenses : {type : DataTypes.DECIMAL, allowNull : true}
       },
       {
         sequelize,

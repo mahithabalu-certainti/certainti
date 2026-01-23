@@ -32,6 +32,8 @@ export interface ICreateCases {
   illinois_lease_costs_of_computers? : number;
   illinois_rd_credit_partnership_corp? : number
   illinois_research_payments_corp_only? : number
+  basic_research_payments? : number
+  qualified_computer_rental_time_expenses? : number
   parent_case_rid?: string;
 }
 
