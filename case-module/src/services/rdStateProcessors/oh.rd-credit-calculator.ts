@@ -126,9 +126,6 @@ export class RdCreditCalculatorForOH {
                 "Description": "Research Tax Credit",
                 stateDetails : "Ohio Credit Calculation"
             },
-            qreSummary : {
-                "Current & Prior years information" : qreSummary
-            }
         };
     }
 
@@ -146,10 +143,10 @@ export class RdCreditCalculatorForOH {
             [`Tax Year ${computeFieldsResp.prev2_year} QREs`] :computeFieldsResp.prev2_qre,
             [`Tax Year ${computeFieldsResp.prev3_year} QREs`]: computeFieldsResp.prev3_qre,
             "Average": computeFieldsResp.average_tot_prev_qre,
-            "Total Investment in Qualifying Research Expense for Calendar Year 2025":computeFieldsResp.total_current_year_qre,
+            [`Total Investment in Qualifying Research Expense for Calendar Year ${computeFieldsResp.year}`]:computeFieldsResp.total_current_year_qre,
             "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":computeFieldsResp.average_tot_prev_qre,
             "Net Excess of Qualifying Research Expenses for the Taxable Year":computeFieldsResp.final_excess_qre,
-            [`2025 Credit Earned (${config.credit_earned_percent}%)`] : computeFieldsResp.final_credits_earned
+            [`${computeFieldsResp.year} Credit Earned (${config.credit_earned_percent}%)`] : computeFieldsResp.final_credits_earned
         }
         return {
             computed_fields: {
