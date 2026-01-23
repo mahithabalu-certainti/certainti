@@ -217,6 +217,80 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     );
   };
 
+  // New function to render table sections from Table array structure
+  const renderTableSection = (tableName: string, tableData: any) => {
+    if (!tableData || typeof tableData !== 'object') return null;
+
+    const { table_headers, table_rows } = tableData;
+
+    if (!table_headers || !Array.isArray(table_headers)) return null;
+
+    return (
+      <div className='border-b border-[#CBD6E2] last:border-0'>
+        <div className='bg-[#F9FAFB] px-3 py-1 font-semibold text-[13px] text-[#2D3E4F] border-b border-[#CBD6E2]'>
+          {tableName}
+        </div>
+        <div className='overflow-x-auto'>
+          <table className='w-full border-collapse'>
+            <thead>
+              <tr className='bg-gray-50 border-b border-[#CBD6E2]'>
+                {table_headers.map((header: string, index: number) => (
+                  <th
+                    key={index}
+                    scope='col'
+                    className={`px-3 py-1.5 text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider ${
+                      index === 0 ? 'text-left' : 'text-right'
+                    }`}
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {table_rows && Array.isArray(table_rows) && table_rows.length > 0 ? (
+                table_rows.map((row: any[], rowIndex: number) => (
+                  <tr
+                    key={rowIndex}
+                    className='border-b border-[#CBD6E2] last:border-0'
+                  >
+                    {row.map((cell: any, cellIndex: number) => (
+                      <td
+                        key={cellIndex}
+                        className={`px-3 py-1.5 ${
+                          cellIndex === 0
+                            ? 'text-left text-sm text-[#425A76] font-medium'
+                            : 'text-right'
+                        }`}
+                      >
+                        {cellIndex === 0 ? (
+                          <span className='text-sm text-[#425A76] font-medium'>
+                            {cell}
+                          </span>
+                        ) : (
+                          renderValue(cell)
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={table_headers.length}
+                    className='px-3 py-2 text-center text-sm text-[#425A76] italic'
+                  >
+                    No data available
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   const renderCardContent = (value: any, key?: string) => {
     if (typeof value !== 'object' || value === null) {
       if (key) {
@@ -242,6 +316,26 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
     if ((value as any).reduction280c) {
       return render280C('Reduction 280C', value);
+    }
+
+    // Check if value contains a "Table" key with an array structure
+    if ((value as any).Table && Array.isArray((value as any).Table)) {
+      const tableArray = (value as any).Table;
+      return (
+        <div className='w-full'>
+          {tableArray.map((tableObj: any, index: number) => {
+            // Each item in the Table array should be an object with a single key
+            // The key is the table name, and the value contains table_headers and table_rows
+            const tableName = Object.keys(tableObj)[0];
+            const tableData = tableObj[tableName];
+            return (
+              <React.Fragment key={index}>
+                {renderTableSection(tableName, tableData)}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      );
     }
 
     const entries = Object.entries(value);
