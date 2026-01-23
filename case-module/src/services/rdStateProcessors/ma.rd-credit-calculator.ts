@@ -60,7 +60,7 @@ export class RdCreditCalculatorForMA {
      */
     part1QualifiedResearchExpense(currentYearQREs: QRE, config: ConfigJson, caseData : Case) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         const current_year_supply = new Decimal(currentYearQREs.supplies || 0.00)
         const qualified_computer_rental_time_expenses = new Decimal(caseData.qualified_computer_rental_time_expenses || 0.00)
 
@@ -128,7 +128,7 @@ export class RdCreditCalculatorForMA {
      */
     part3CreditCalculation(annualGrossReceipts: AnnualGrossReceipt[], aggregate_group_credit_percent: Decimal, config: ConfigJson, part1TotalAggregate : Decimal, part1TotalQre : Decimal,  caseDetails : Case) {
 
-        const currentFiscalYear = this.getCurrentFiscalYear();
+        const currentFiscalYear = caseDetails.fiscal_year;
         // Filter out current year
         const previousYearsGrossReceipts = annualGrossReceipts.filter(
             (item) => item.fiscalYear !== currentFiscalYear
