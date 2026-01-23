@@ -198,9 +198,6 @@ export class RdCreditCalculatorForMA {
     */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}) {
         let storeData : any[] = []
-        const qreSummary: Record<string, any> = {
-            
-        };
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,

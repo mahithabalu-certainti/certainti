@@ -165,7 +165,7 @@ export class RdCreditCalculatorForIL {
      */
     buildComputedFields(columnABasePeriodExpenseInfo: any, columnBCurrentYearExpenseInfo: any, caseData : Case, config : ConfigJson) {
         return {
-            Illinois : [
+            "computed_fields" : [
                 {
                     "Column Name" : "Column A",
                     "SubColumn Name " : `Base Period avg. expenses (${caseData.fiscal_year - 3}-${caseData.fiscal_year - 1})`,

@@ -27,7 +27,7 @@ export class RdCreditCalculatorForNJ {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : string) {
         const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const part5DevelopmentTaxCreditCalculationInfo = this.part5DevelopmentTaxCreditCalculation(new Decimal(part4ASCCreditCalculationInfo.final_credit), config);
 
@@ -35,7 +35,8 @@ export class RdCreditCalculatorForNJ {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-            fiscalYearEnded : fiscalYear
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
         });
 
         const computedFields = await this.buildComputedFields(part4ASCCreditCalculationInfo, part5DevelopmentTaxCreditCalculationInfo, config);
@@ -119,18 +120,21 @@ export class RdCreditCalculatorForNJ {
     */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
-        const qreSummary: Record<string, any> = {
+       let storeData : any[] = []
+        storeData.push({
+            year : metadata.currentYear,
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
             contract: currentYearQREs.contract
-        };
+        })
 
         prior3YearsQREs.forEach((item) => {
-            qreSummary[`${item.fiscalYear}`] = {
+            storeData.push({
+                year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
                 sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-            }
+            })
         });
 
 
@@ -144,7 +148,7 @@ export class RdCreditCalculatorForNJ {
                 "Description": "Research Tax Credit",
                 stateDetails : "NJ Research and Development Tax Credit"
             },
-            qreSummary
+            "Current & Prior years information" : storeData
         };
     }
 
