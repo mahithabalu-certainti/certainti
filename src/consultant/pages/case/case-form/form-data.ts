@@ -422,6 +422,126 @@ export const CaseFormData = (
               !permissionMap?.['export_sales_revenue']?.edit &&
               !permissionMap?.['export_sales_revenue']?.read,
           }),
+          createTextField(
+            'lease_costs_of_computers',
+            'Lease Costs of Computers',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Lease Costs of Computers: your estimated lease costs of computers due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read,
+              hide:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read,
+            }
+          ),
+          createTextField(
+            'illinois_rd_credit_partnership_corp',
+            'Illinois RD Credit Partnership (Corp)',
+            {
+              required: false,
+              placeholder: 'Enter Illinois RD Credit Partnership (Corp)',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Illinois RD Credit Partnership (Corp): your estimated illinois rd credit partnership (corp) due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read,
+              hide:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read,
+            }
+          ),
+          createTextField(
+            'illinois_research_payments_corp_only',
+            'Illinois Research Payments (Corp Only)',
+            {
+              required: false,
+              placeholder: 'Enter Illinois Research Payments (Corp Only)',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Illinois Research Payments (Corp Only): your estimated illinois research payments (corp only) due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read,
+              hide:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read,
+            }
+          ),
+          createTextField(
+            'basic_research_payments',
+            'Basic Research Payments',
+            {
+              required: false,
+              placeholder: 'Enter Basic Research Payments',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Basic Research Payments: your estimated basic research payments due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read,
+              hide:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read,
+            }
+          ),
+          createTextField(
+            'qualified_computer_rental_time_expenses',
+            'Qualified Computer Rental Time Expenses',
+            {
+              required: false,
+              placeholder: 'Enter Qualified Computer Rental Time Expenses',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Qualified Computer Rental Time Expenses: your estimated qualified computer rental time expenses.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read,
+              hide:
+                isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read,
+            }
+          ),
           createTextField('other', 'Other', {
             required: false,
             placeholder: 'Enter Other',
@@ -440,6 +560,13 @@ export const CaseFormData = (
               isEditView &&
               !permissionMap?.['other']?.edit &&
               !permissionMap?.['other']?.read,
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide: isEditView,
           }),
           createEmptyField('', '', {
             name: 'emptyData',

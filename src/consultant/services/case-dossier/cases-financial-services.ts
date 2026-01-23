@@ -41,6 +41,17 @@ export const useRDCreditPreview = (
   });
 };
 
+export const useRDCreditPreviewMutation = () => {
+  return useMutation<
+    RDCreditPreviewResponse,
+    Error,
+    { accountrid: string; caseId: string; stateRid: string }
+  >({
+    mutationFn: ({ accountrid, caseId, stateRid }) =>
+      fetchRDCreditPreview(accountrid, caseId, stateRid),
+  });
+};
+
 // 2. GET Status - Fetch RD credit status
 export const fetchRDCreditStatus = async (
   accountRid: string,
