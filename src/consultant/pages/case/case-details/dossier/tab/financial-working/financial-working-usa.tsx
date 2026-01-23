@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
+import ListTable from '../../../../../../../components/table/list-table';
+import { ListTableColumn } from '../../../../../../../components/table/types';
+import TruncateWithTooltip from '../../../../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 import {
   FinancialHighlightsResponse,
   USAComputedFields,
@@ -31,10 +34,32 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
   const inputParams = data?.data?.input_params as Record<string, any>;
   const qreSummary = inputParams?.qreSummary;
-  const currencyCode =
+  // const currencyCode =
+  //   (inputParams?.metadata?.currency as string) ||
+  //   (inputParams?.currency as string) ||
+  //   'USD';
+
+  const isValidCurrencyCode = (code: string): boolean => {
+    // Common ISO 4217 currency codes
+    const validCurrencyCodes = [
+      'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD',
+      'MXN', 'SGD', 'HKD', 'NOK', 'KRW', 'TRY', 'INR', 'RUB', 'BRL', 'ZAR'
+    ];
+    return validCurrencyCodes.includes(code.toUpperCase());
+  };
+ 
+  // Extract and validate currency code
+  const rawCurrencyCode =
     (inputParams?.metadata?.currency as string) ||
     (inputParams?.currency as string) ||
     'USD';
+ 
+  // Validate currency code - if invalid, default to USD
+  const currencyCode = isValidCurrencyCode(rawCurrencyCode)
+    ? rawCurrencyCode.toUpperCase()
+    : 'USD';
+
+
 
   const formatCurrency = (value: number | string | null | undefined) => {
     if (value === null || value === undefined) return '';
@@ -217,78 +242,175 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     );
   };
 
-  // New function to render table sections from Table array structure
-  const renderTableSection = (tableName: string, tableData: any) => {
+  // New function to render table sections from tables object structure using ListTable
+  const renderTableSection = (tableData: any) => {
     if (!tableData || typeof tableData !== 'object') return null;
 
     const { table_headers, table_rows } = tableData;
 
     if (!table_headers || !Array.isArray(table_headers)) return null;
 
-    return (
-      <div className='border-b border-[#CBD6E2] last:border-0'>
-        <div className='bg-[#F9FAFB] px-3 py-1 font-semibold text-[13px] text-[#2D3E4F] border-b border-[#CBD6E2]'>
-          {tableName}
-        </div>
-        <div className='overflow-x-auto'>
-          <table className='w-full border-collapse'>
-            <thead>
-              <tr className='bg-gray-50 border-b border-[#CBD6E2]'>
-                {table_headers.map((header: string, index: number) => (
-                  <th
-                    key={index}
-                    scope='col'
-                    className={`px-3 py-1.5 text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider ${
-                      index === 0 ? 'text-left' : 'text-right'
-                    }`}
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {table_rows && Array.isArray(table_rows) && table_rows.length > 0 ? (
-                table_rows.map((row: any[], rowIndex: number) => (
-                  <tr
-                    key={rowIndex}
-                    className='border-b border-[#CBD6E2] last:border-0'
-                  >
-                    {row.map((cell: any, cellIndex: number) => (
-                      <td
-                        key={cellIndex}
-                        className={`px-3 py-1.5 ${
-                          cellIndex === 0
-                            ? 'text-left text-sm text-[#425A76] font-medium'
-                            : 'text-right'
-                        }`}
-                      >
-                        {cellIndex === 0 ? (
-                          <span className='text-sm text-[#425A76] font-medium'>
-                            {cell}
-                          </span>
-                        ) : (
-                          renderValue(cell)
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={table_headers.length}
-                    className='px-3 py-2 text-center text-sm text-[#425A76] italic'
-                  >
-                    No data available
-                  </td>
-                </tr>
+    // Define interface for table row
+    interface TableRow {
+      id: string;
+      [key: string]: string | number | boolean | undefined;
+    }
+
+    // Create columns dynamically from table_headers
+    const columns: ListTableColumn<TableRow>[] = table_headers.map(
+      (headerItem: any, index: number) => {
+        const isFirstColumn = index === 0;
+        const headerId =
+          typeof headerItem === 'string' ? headerItem : headerItem.id;
+        const headerLabel =
+          typeof headerItem === 'string' ? headerItem : headerItem.label;
+        const subLabel =
+          typeof headerItem === 'object' ? headerItem.subLabel : null;
+
+        return {
+          id: headerId,
+          label: (
+            <div
+              className={`flex flex-col items-center w-full min-w-0 overflow-hidden ${isFirstColumn ? 'items-start' : 'items-center'}`}
+            >
+              <TruncateWithTooltip
+                text={headerLabel}
+                enableCopy={false}
+                className='font-bold'
+              />
+              {subLabel && (
+                <span className='text-[11px] font-normal text-[#425A76] mt-0.5 leading-tight'>
+                  {subLabel}
+                </span>
               )}
-            </tbody>
-          </table>
+            </div>
+          ) as React.ReactNode as string,
+          width: isFirstColumn ? 350 : 180,
+          sortId: headerId,
+          sticky: isFirstColumn,
+          sx: isFirstColumn
+            ? {
+                position: 'sticky',
+                left: 0,
+                background: '#fff',
+                padding: '0px 8px 0px 14px !important',
+                zIndex: 10,
+                borderRight: '1px solid #CBD6E2 !important',
+                borderBottom: '1px solid #CBD6E2 !important',
+              }
+            : undefined,
+          render: (row: TableRow) => {
+            const value = row[headerId];
+            // The value to check for bolding is the label in the first column
+            const firstColHeaderId =
+              typeof table_headers[0] === 'string'
+                ? table_headers[0]
+                : table_headers[0].id;
+            const rowLabel = row[firstColHeaderId] as string;
+            const isRowBold = rowLabel && boldRows.includes(rowLabel);
+            const isBold = isFirstColumn || isRowBold;
+
+            // FIX: Don't format currency for the first column (Description/Labels)
+            const formattedValue = isFirstColumn
+              ? value
+              : value === 0 || value === '0'
+                ? '-'
+                : formatCurrency(value as string | number | null | undefined);
+
+            return (
+              <TruncateWithTooltip
+                text={String(formattedValue || '')}
+                enableCopy={false}
+                className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+              />
+            );
+          },
+        };
+      }
+    );
+
+    // Transform table_rows into ListTable data format
+    const tableDataRows: TableRow[] =
+      table_rows && Array.isArray(table_rows)
+        ? table_rows.map((rowObj: any, index: number) => {
+            const row: TableRow = {
+              id: `row_${index}`,
+            };
+
+            // Map each header ID to its value from the row object
+            table_headers.forEach((headerItem: any) => {
+              const headerId =
+                typeof headerItem === 'string' ? headerItem : headerItem.id;
+              row[headerId] = rowObj[headerId];
+            });
+
+            return row;
+          })
+        : [];
+
+    const getRowId = (row: TableRow) => row.id;
+
+    // Always render the table with headers, even if there's no data
+    return (
+      <div className='w-full h-full overflow-hidden flex flex-col'>
+        <div className='flex-1 overflow-auto'>
+          <ListTable
+            data={tableDataRows}
+            columns={columns}
+            getRowId={getRowId}
+            showEmptyRow={true}
+            actionMenuItems={[]}
+            actionWidth={80}
+            stickyColumnsCount={1}
+            tableStyle={{
+              height: '100%',
+              maxHeight: '450px',
+              overflow: 'auto',
+            }}
+          />
         </div>
       </div>
     );
+  };
+
+  const renderIllinoisTable = (illinoisData: any[]) => {
+    if (!Array.isArray(illinoisData) || illinoisData.length === 0) return null;
+
+    // Build header objects
+    const table_headers = [
+      { id: 'Description', label: '' },
+      ...illinoisData.map((col) => ({
+        id: col['Column Name'] || '',
+        label: col['Column Name'] || '',
+        subLabel: col['SubColumn Name'] || '',
+      })),
+    ];
+
+    // Identify row keys (excluding header meta keys)
+    const metaKeys = ['Column Name', 'SubColumn Name'];
+    const rowKeysSet = new Set<string>();
+    illinoisData.forEach((colObj) => {
+      Object.keys(colObj).forEach((key) => {
+        if (!metaKeys.includes(key)) {
+          rowKeysSet.add(key);
+        }
+      });
+    });
+
+    // Create rows
+    const table_rows = Array.from(rowKeysSet).map((rowKey) => {
+      const rowItem: any = { Description: rowKey };
+      illinoisData.forEach((colObj) => {
+        const colId = colObj['Column Name'] || '';
+        rowItem[colId] = colObj[rowKey];
+      });
+      return rowItem;
+    });
+
+    return renderTableSection({
+      table_headers,
+      table_rows,
+    });
   };
 
   const renderCardContent = (value: any, key?: string) => {
@@ -316,26 +438,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
     if ((value as any).reduction280c) {
       return render280C('Reduction 280C', value);
-    }
-
-    // Check if value contains a "Table" key with an array structure
-    if ((value as any).Table && Array.isArray((value as any).Table)) {
-      const tableArray = (value as any).Table;
-      return (
-        <div className='w-full'>
-          {tableArray.map((tableObj: any, index: number) => {
-            // Each item in the Table array should be an object with a single key
-            // The key is the table name, and the value contains table_headers and table_rows
-            const tableName = Object.keys(tableObj)[0];
-            const tableData = tableObj[tableName];
-            return (
-              <React.Fragment key={index}>
-                {renderTableSection(tableName, tableData)}
-              </React.Fragment>
-            );
-          })}
-        </div>
-      );
     }
 
     const entries = Object.entries(value);
@@ -396,7 +498,43 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
           {/* Dynamic Computed Fields Section */}
           {Object.entries(computedFields).map(([key, value]) => {
-            if (key === 'computed_fields' || key === 'qreSummary') return null;
+            if (
+              key === 'computed_fields' ||
+              key === 'qreSummary' ||
+              key === 'BOLD'
+            )
+              return null;
+
+            // Special handling for "tables" - don't render it as a card
+            // Instead, render each table inside it directly
+            if (key === 'tables' && typeof value === 'object' && value !== null) {
+              return (
+                <React.Fragment key={key}>
+                  {Object.entries(value).map(([tableName, tableData], index) => (
+                    <div key={`${key}_${index}`} className='mb-4'>
+                      {renderCard(
+                        tableName,
+                        renderTableSection(tableData),
+                        false
+                      )}
+                    </div>
+                  ))}
+                </React.Fragment>
+              );
+            }
+
+            // Special handling for "illinois"
+            if (key === 'illinois' && Array.isArray(value)) {
+              return (
+                <div key={key} className='mb-4'>
+                  {renderCard(
+                    formatLabel(key),
+                    renderIllinoisTable(value),
+                    false
+                  )}
+                </div>
+              );
+            }
 
             return (
               <div key={key} className='mb-4'>

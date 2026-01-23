@@ -31,10 +31,10 @@ import {
   costDisplay,
 } from '../../../../../../../common-utils';
 import {
-  fetchRDCreditPreview,
   useFinancialHighlights,
   useInitiateRDCreditProcess,
   useRDCreditStatus,
+  useRDCreditPreviewMutation,
 } from '../../../../../../services/case-dossier/cases-financial-services';
 import SignOffModal from './sign-off-modal';
 import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
@@ -178,7 +178,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
-  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
@@ -224,6 +223,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     useInitiateRDCreditProcess();
   const { mutate: financialHighlights, isPending: isFinancialHighlights } =
     useFinancialHighlights();
+  const { mutate: previewRDCredit, isPending: isPreviewLoading } =
+    useRDCreditPreviewMutation();
 
   // Fetch Status
   const {
@@ -300,23 +301,30 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const responseCurrencySymbol = caseDetails?.currency_symbol || '$';
 
   const handleViewFinancialHighlightsForRegion = async () => {
-    try {
-      setIsPreviewLoading(true);
-      const response = await fetchRDCreditPreview(
-        accountid,
-        caseId ?? '',
-        selectedRegion
-      );
-      if (response) {
-        setFinancialData(response as unknown as FinancialHighlightsResponse);
-        setShowFinancialValues(true);
+    previewRDCredit(
+      {
+        accountrid: accountid,
+        caseId: caseId ?? '',
+        stateRid: selectedRegion,
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.data) {
+            setFinancialData(
+              response as unknown as FinancialHighlightsResponse
+            );
+            setShowFinancialValues(true);
+          } else {
+            errorToast('No data available');
+          }
+        },
+        onError: (error) => {
+          console.error(error);
+          setFinancialData(null);
+          errorToast('Failed to fetch financial highlights');
+        },
       }
-    } catch (error) {
-      console.error(error);
-      errorToast('Failed to initiate');
-    } finally {
-      setIsPreviewLoading(false);
-    }
+    );
   };
 
   const handleViewFinancialHighlights = async () => {
