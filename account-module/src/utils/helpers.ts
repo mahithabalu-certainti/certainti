@@ -343,7 +343,6 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'currency', data_type: 'String',required:false },
         { column_name: 'industry', data_type: 'String',required:false },
         { column_name: 'program_name', data_type: 'String',required:false },
-        { column_name: 'client_organization', data_type: 'String',required:false },
         { column_name: 'country', data_type: 'String',required:false },
         { column_name: 'city', data_type: 'String' ,required:false},
         { column_name: 'region', data_type: 'String' ,required:false},
