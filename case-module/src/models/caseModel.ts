@@ -44,8 +44,7 @@ interface CaseAttributes {
   total_expenses ? : number;
   taxable_income ? : number;
   export_sales_revenue? : number;
-  illinois_cost_of_supplies? : number;
-  illinois_lease_costs_of_computers? : number;
+  lease_costs_of_computers? : number;
   illinois_rd_credit_partnership_corp? : number;
   illinois_research_payments_corp_only? : number;
   basic_research_payments? : number
@@ -99,8 +98,7 @@ export class Case
   public total_expenses ? : number;
   public taxable_income ? : number;
   public export_sales_revenue? : number;
-  public illinois_cost_of_supplies? : number;
-  public illinois_lease_costs_of_computers? : number;
+  public lease_costs_of_computers? : number;
   public illinois_rd_credit_partnership_corp? : number;
   public llinois_research_payments_corp_only? : number;
   public basic_research_payments? : number
@@ -166,8 +164,7 @@ export class Case
         total_expenses : {type : DataTypes.DECIMAL, allowNull : true},
         taxable_income : {type : DataTypes.DECIMAL, allowNull : true},
         export_sales_revenue : {type : DataTypes.DECIMAL, allowNull : true},
-        illinois_cost_of_supplies : {type : DataTypes.DECIMAL, allowNull : true},
-        illinois_lease_costs_of_computers : {type : DataTypes.DECIMAL, allowNull : true},
+        lease_costs_of_computers : {type : DataTypes.DECIMAL, allowNull : true},
         illinois_rd_credit_partnership_corp : {type : DataTypes.DECIMAL, allowNull : true},
         illinois_research_payments_corp_only : {type : DataTypes.DECIMAL, allowNull : true},
         basic_research_payments : {type : DataTypes.DECIMAL, allowNull : true},
