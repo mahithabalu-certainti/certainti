@@ -126,9 +126,6 @@ export class RdCreditCalculatorForOH {
                 "Description": "Research Tax Credit",
                 stateDetails : "Ohio Credit Calculation"
             },
-            qreSummary : {
-                "Current & Prior years information" : qreSummary
-            }
         };
     }
 
