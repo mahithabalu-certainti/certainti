@@ -56,7 +56,8 @@ export class RdCreditCalculatorForOH {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-            fiscalYearEnded : fiscalYear
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
         });
 
         const computeFieldsResp = {
@@ -101,18 +102,21 @@ export class RdCreditCalculatorForOH {
     */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
-        const qreSummary: Record<string, any> = {
+        let storeData : any[] = []
+        storeData.push({
+            year : metadata.currentYear,
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
             contract: currentYearQREs.contract
-        };
+        })
 
         prior3YearsQREs.forEach((item) => {
-            qreSummary[`${item.fiscalYear}`] = {
-                "QRE Wages": item.wages,
-                "QRE Contractor": item.contract,
-                "TOTAL": new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-            }
+            storeData.push({
+                year : item.fiscalYear,
+                wages: item.wages,
+                contract: item.contract,
+                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+            })
         });
 
 
@@ -126,6 +130,7 @@ export class RdCreditCalculatorForOH {
                 "Description": "Research Tax Credit",
                 stateDetails : "Ohio Credit Calculation"
             },
+            "Current & Prior years information" : storeData
         };
     }
 
