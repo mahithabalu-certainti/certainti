@@ -666,6 +666,7 @@ export class ProjectTaskSchemaService {
     userId: string,
     activeStatusId: string,
     activeId: string,
+    checkTableExists: boolean,
     transaction: Transaction
   ) {
     // project resources
@@ -728,6 +729,7 @@ export class ProjectTaskSchemaService {
       projectTaskData,
       fiscalYear,
       activeStatusId,
+      checkTableExists,
       transaction
     );
     const newProjectFiscalRegion = await this.aggregateProjectFiscalRegion(
@@ -1338,6 +1340,7 @@ export class ProjectTaskSchemaService {
     projectTaskData: ICreateProjectTask | IUpdateProjectTask,
     fiscalYear: number,
     activeStatusId: string,
+    checkTableExists: boolean,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectFiscal, Resources, CaseProject } = await this.getModels(
@@ -1475,11 +1478,12 @@ export class ProjectTaskSchemaService {
           transaction,
         }
       );
-      await CaseProject.update(
-        {
-          total_cost_from_tasks: total_cost || null,
-          total_effort_from_tasks: total_effort || null,
-          total_cost_fte_from_tasks,
+      if (checkTableExists) {
+        await CaseProject.update(
+          {
+            total_cost_from_tasks: total_cost || null,
+            total_effort_from_tasks: total_effort || null,
+            total_cost_fte_from_tasks,
           total_cost_subcon_from_tasks,
           total_effort_fte_from_tasks,
           total_effort_subcon_from_tasks,
@@ -1495,7 +1499,7 @@ export class ProjectTaskSchemaService {
           },
           transaction,
         }
-      );
+      );}
     }
   }
 
@@ -2495,6 +2499,7 @@ export class ProjectTaskSchemaService {
     userId: string,
     activeStatusId: string,
     activeId: string,
+    checkTableExists: boolean,
     transaction: Transaction
   ) {
     // project resource
@@ -2516,6 +2521,7 @@ export class ProjectTaskSchemaService {
       resourceId,
       userId,
       activeStatusId,
+      checkTableExists,
       transaction
     );
     await this.aggregateProjectResourceFiscalRegionOnUpdate(
@@ -2560,6 +2566,7 @@ export class ProjectTaskSchemaService {
       projectTaskData,
       fiscalYear,
       activeStatusId,
+      checkTableExists,
       transaction,
     );
     await this.aggregateProjectFiscalRegionOnUpdate(
@@ -2603,11 +2610,14 @@ export class ProjectTaskSchemaService {
     resourceId: string,
     userId: string,
     activeStatusId: string,
+    checkCaseTableExists: boolean,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectResourceFiscal, CaseProjectResourceFiscal, CaseProjectTask } = await this.getModels(accountNumber);
-
-    const existingCaseProjectTask = await CaseProjectTask.findOne({
+    let existingCaseProjectTask: CaseProjectTask | null = null;
+    if(checkCaseTableExists) {
+    
+       existingCaseProjectTask = await CaseProjectTask.findOne({
       where : {
         project_task_rid : existingProjectTask.rid,
         account_rid : projectTaskData.account_rid,
@@ -2616,6 +2626,7 @@ export class ProjectTaskSchemaService {
         project_fiscal_rid : projectTaskData.project_fiscal_rid
       }, raw : true
     })
+  }
     const newGroupKey = {
       project_fiscal_rid: projectTaskData.project_fiscal_rid,
       account_rid: projectTaskData.account_rid,
@@ -2693,6 +2704,7 @@ export class ProjectTaskSchemaService {
               transaction
             }
           );
+          if(checkCaseTableExists){
           await CaseProjectResourceFiscal.update(
             {
               total_cost_from_tasks: oldCost,
@@ -2705,6 +2717,7 @@ export class ProjectTaskSchemaService {
               transaction
             }
           );
+        }
         }
       } else {
         // Non-zero aggregate → just update
@@ -2720,6 +2733,7 @@ export class ProjectTaskSchemaService {
             transaction
           }
         );
+        if(checkCaseTableExists){ 
         await CaseProjectResourceFiscal.update(
           {
             total_cost_from_tasks: oldCost,
@@ -2732,6 +2746,7 @@ export class ProjectTaskSchemaService {
             transaction
           }
         );
+      }
       }
     }
 
@@ -2795,6 +2810,7 @@ export class ProjectTaskSchemaService {
         transaction
       }
     );
+    if(checkCaseTableExists){
     await CaseProjectResourceFiscal.update(
       {
         total_hours_from_tasks: newEffort,
@@ -2807,6 +2823,7 @@ export class ProjectTaskSchemaService {
         transaction
       }
     );
+  }
   }
 
   async aggregateProjectResourceFiscalRegionOnUpdate(
