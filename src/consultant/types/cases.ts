@@ -187,6 +187,11 @@ export interface CaseFormFields {
   taxable_income: string | null;
   export_sales_revenue: string | null;
   other: string | null;
+  illinois_research_payments_corp_only: string | null;
+  lease_costs_of_computers: string | null;
+  qualified_computer_rental_time_expenses: string | null;
+  basic_research_payments: string | null;
+  illinois_rd_credit_partnership_corp: string | null;
 }
 
 export interface CaseFormPayload {
@@ -217,6 +222,11 @@ export interface CaseFormPayload {
   taxable_income: string | null;
   export_sales_revenue: string | null;
   other: string | null;
+  illinois_research_payments_corp_only: string | null;
+  lease_costs_of_computers: string | null;
+  qualified_computer_rental_time_expenses: string | null;
+  basic_research_payments: string | null;
+  illinois_rd_credit_partnership_corp: string | null;
 }
 
 export interface updateCaseJurisdictionPayload {
