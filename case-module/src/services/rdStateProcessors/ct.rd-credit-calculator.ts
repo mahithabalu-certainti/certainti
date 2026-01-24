@@ -165,10 +165,10 @@ export class RdCreditCalculatorForCT {
             current_year_ct_business_tax_liability: currentYearCTBusinessTaxLiability,
             half_tax_liability: halfTaxLiability,
             double_credit: doubleCredit,
-            tax_limit: taxLimit,
-            min_final: minFinal,
-            allowable_credit: allowableCredit,
-            final_credit: finalCredit
+            tax_limit: this.round2(taxLimit),
+            min_final: this.round2(minFinal),
+            allowable_credit: this.round2(allowableCredit),
+            final_credit: this.round2(finalCredit)
         };
     }
 
@@ -246,4 +246,19 @@ export class RdCreditCalculatorForCT {
             }
         }
     }
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
+    }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 }
