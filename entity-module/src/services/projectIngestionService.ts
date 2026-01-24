@@ -966,7 +966,7 @@ class ProjectIngestionService {
     } else {
       query = regionRid
     }
-
+     //commented out since statewise summary will account only from  project resources
     // if(projectData.region_rid === '') {
     //   await AccountFiscalRegion.destroy({
     //     where : {
