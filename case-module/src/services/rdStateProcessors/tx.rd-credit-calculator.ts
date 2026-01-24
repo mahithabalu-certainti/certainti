@@ -201,7 +201,13 @@ export class RdCreditCalculatorForTX {
     * @returns An object containing normalized metadata and the aggregated qreSummary. 
     */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
-
+        let storeData : any[] = []
+        storeData.push({
+            year : metadata.currentYear,
+            wages: currentYearQREs.wages,
+            supplies: currentYearQREs.supplies,
+            contract: currentYearQREs.contract
+        })
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
@@ -210,12 +216,14 @@ export class RdCreditCalculatorForTX {
 
         // Add prior 3 years QREs
         prior3YearsQREs.forEach((item) => {
-            qreSummary[`${item.fiscalYear}`] = {
+            storeData.push({
+                year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
                 sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-            }
+            })
         });
+
 
 
         return {
@@ -226,7 +234,8 @@ export class RdCreditCalculatorForTX {
                 "Fiscal Year Ended" : metadata.fiscalYearEnded,
                 "Description": "Research Tax Credit",
                 stateDetails : "Texas - Credit Calculation"
-            }
+            },
+            "Current & Prior years information" : storeData
         };
     }
 
