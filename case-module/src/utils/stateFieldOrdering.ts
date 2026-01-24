@@ -243,7 +243,7 @@ CA: {
             { pattern: "13 Subtract line 12 from line 9. If zero or less, enter -0-", order: 9 },
             { pattern: /^14 Multiply line 9 by \d+(\.\d+)?%?\. See instructions$/, order: 10 },
             { pattern: "15 Enter the smaller of line 13 or line 14", order: 11 },
-            { pattern: /^16 Multiply line 15 by \d+(\.\d+)?%?$/, order: 12 },
+            { pattern: /^16 Multiply line 15 by \d+(?:\.\d+)?%\s*\(\d+\.\d+\)$/, order: 12 },
             { pattern: "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach", order: 13 },
             { pattern: "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:", order: 14 },
             { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for individuals and estates or trusts$/, order: 15 },

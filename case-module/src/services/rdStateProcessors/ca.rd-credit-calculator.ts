@@ -186,7 +186,7 @@ export class RdCreditCalculatorForCA {
             "13 Subtract line 12 from line 9. If zero or less, enter -0-":creditRRC.excess_qre_over_base,
             [`14 Multiply line 9 by ${creditRRC.config.qre_cap_rate}. See instructions`]:creditRRC.half_total_qre,
             "15 Enter the smaller of line 13 or line 14":creditRRC.smaller_of_excess_or_half,
-            [`16 Multiply line 15 by ${creditRRC.config.credit_rate}`]:creditRRC.credit_before_280c,
+            [`16 Multiply line 15 by ${creditRRC.config.credit_rate}% (${creditRRC.config.credit_rate/100})`]:creditRRC.credit_before_280c,
             "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach":creditRRC.regular_credit,
             "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:":"",
             [`${creditRRC.config.individual}% (${(creditRRC.config.individual/100).toFixed(3)}) for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
