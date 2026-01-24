@@ -52,6 +52,8 @@ export class RdCreditCalculatorForTX {
      * @param config 
      */
     creditCalculationQRET(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson) {
+        console.log("currentYearQREs ====> ", currentYearQREs)
+        console.log("prior3YearsQREs ====> ", prior3YearsQREs)
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
@@ -91,6 +93,8 @@ export class RdCreditCalculatorForTX {
      * @returns 
      */
     precedingCalculationWithQRET(qretInfo: any, config: ConfigJson) {
+
+        console.log("qretInfo ====> ", qretInfo)
         const tot_prev_year_qre = new Decimal(qretInfo.prev1_qre).plus(qretInfo.prev2_qre).plus(qretInfo.prev3_qre);
         //----Line5: Average QRET for preceding periods.
         const average_prev_year_qre = tot_prev_year_qre.div(3);
@@ -126,6 +130,7 @@ export class RdCreditCalculatorForTX {
      * @returns 
      */
     precedingCalculationWithNoQRET(qretInfo: any, average_prev_year_qre: Decimal, config: ConfigJson) {
+        console.log("average_prev_year_qre ====> ", average_prev_year_qre)
         const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? average_prev_year_qre.mul(config.wages_rate_2_5pct/100) : "N/A";
         const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct/100) : "N/A";
         return {
@@ -170,9 +175,21 @@ export class RdCreditCalculatorForTX {
      * @param value Value to be rounded.
      * @returns The rounded value as a Decimal with two decimal places.
     */
-    round2(value: Decimal | number): Decimal {
-        return new Decimal(value).toDecimalPlaces(2);
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
     }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 
     /**
     * Builds a normalized input object for the RD credit calculation engine.
@@ -184,7 +201,13 @@ export class RdCreditCalculatorForTX {
     * @returns An object containing normalized metadata and the aggregated qreSummary. 
     */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
-
+        let storeData : any[] = []
+        storeData.push({
+            year : metadata.currentYear,
+            wages: currentYearQREs.wages,
+            supplies: currentYearQREs.supplies,
+            contract: currentYearQREs.contract
+        })
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
@@ -193,12 +216,14 @@ export class RdCreditCalculatorForTX {
 
         // Add prior 3 years QREs
         prior3YearsQREs.forEach((item) => {
-            qreSummary[`${item.fiscalYear}`] = {
+            storeData.push({
+                year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
                 sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-            }
+            })
         });
+
 
 
         return {
@@ -209,7 +234,8 @@ export class RdCreditCalculatorForTX {
                 "Fiscal Year Ended" : metadata.fiscalYearEnded,
                 "Description": "Research Tax Credit",
                 stateDetails : "Texas - Credit Calculation"
-            }
+            },
+            "Current & Prior years information" : storeData
         };
     }
 

@@ -26,26 +26,27 @@ export class RdCreditCalculatorForSC {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string,year : string,) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
 
-        const current_year_credit = total_current_year_qre.mul(config.credit_rate);
+        const current_year_credit = total_current_year_qre.mul(config.credit_rate).div(100);
         const tot_qre_credit = current_year_credit;
         const total_tax_liability = new Decimal(stateRdData.currentYearQREs.business_tax_liability || 0);
 
         const tot_all_credits_other_than_qre = 0;
         const net_base_amount = total_tax_liability.minus(tot_all_credits_other_than_qre);
 
-        const fifty_percent_credit = net_base_amount.mul(config.carry_forward_credit_rate);
+        const fifty_percent_credit = net_base_amount.mul(config.carry_forward_credit_rate).div(100);
         const final_credit = Decimal.min(tot_qre_credit, fifty_percent_credit);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-            fiscalYearEnded : fiscalYear
+            fiscalYearEnded : fiscalYear,
+            currentYear:year
         });
 
         const computeFieldsResp = {
@@ -73,9 +74,21 @@ export class RdCreditCalculatorForSC {
     * @param value 
     * @returns 
     */
-    round2(value: Decimal | number): Decimal {
-        return new Decimal(value).toDecimalPlaces(2);
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
     }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 
     /**
    * 
@@ -86,6 +99,22 @@ export class RdCreditCalculatorForSC {
    */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
+         let storeData : any[] = []
+        storeData.push({
+            year : metadata.currentYear,
+            wages: currentYearQREs.wages,
+            supplies: currentYearQREs.supplies,
+            contract: currentYearQREs.contract
+        })
+ 
+        prior3YearsQREs.forEach((item) => {
+            storeData.push({
+                year : item.fiscalYear,
+                wages: item.wages,
+                contract: item.contract,
+                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+            })
+        });
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
@@ -100,7 +129,6 @@ export class RdCreditCalculatorForSC {
             }
         });
 
-
         return {
             metadata: {
                 country: metadata.country || "US",
@@ -110,7 +138,7 @@ export class RdCreditCalculatorForSC {
                 "Description": "Research Tax Credit",
                 stateDetails : "South Carolina - Credit Calculation"
             },
-            qreSummary
+            "Current & Prior years information" : storeData
         };
     }
 

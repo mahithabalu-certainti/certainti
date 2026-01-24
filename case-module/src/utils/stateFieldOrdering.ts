@@ -123,20 +123,24 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "6 Total qualified research expenses for this aggregate group", order: 6 }
             ],
             "PART 2. CREDIT DETERMINED UNDER c. 63, s. 38M(b), (ALTERNATE SIMPLIFIED METHOD)": [
-                { pattern: "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10", order: 1 },
-                { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 2 },
-                { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 3 },
-                { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 4 },
-                { pattern: "10 Applicable rate for Alternative Simplified Method", order: 5 },
-                { pattern: "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10", order: 6 },
-                { pattern: "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6", order: 7 },
-                { pattern: "13 Amount of group credit for this corporation. Multiply line 11 by line 12", order: 8 }
+                { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 1 },
+                { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 2 },
+                { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 3 },
+                { pattern: "10 Applicable rate for Alternative Simplified Method", order: 4 },
+                { pattern: "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10", order: 5 },
+                { pattern: "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6", order: 6 },
+                { pattern: "13 Amount of group credit for this corporation. Multiply line 11 by line 12", order: 7 }
             ],
             "PART 3. CREDIT DETERMINED UNDER c. 63, A. 38M(a)": [
                 { pattern: "14 Fixed-base ratio (see instructions)", order: 1 },
                 { pattern: "15 Average annual gross receipts from the 4 most recent taxable years", order: 2 },
                 { pattern: /^16 Base amount\. Multiply line 14 by line 15\. Not less than \d+(\.\d+)?% of line 6$/, order: 3 },
-                { pattern: "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.", order: 4 }
+                { pattern: "17 Subtract line 16 from current year expenses on line 6. Not less than 0", order: 4 },
+                { pattern: /^18 Total group credit for qualified research expenses\. Multiply line 17 by \d+(\.\d+)?%$/, order: 5 },
+                { pattern: "19 Total group credit for basic research payments (see instructions)", order: 6 },
+                { pattern: "20 Total Research Credit for aggregate group. Combine line 18 and 19", order: 7 },
+                { pattern: "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.", order: 8 },
+                { pattern: "22 Amount of credit for this corporation. Multiply line 20 by line 21.", order: 9 }
             ]
         },
         BOLD: []
@@ -330,12 +334,14 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         sectionFieldOrders: {
             "CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)": [
                 { pattern: "16 Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)", order: 1 },
-                { pattern: "19 Enter the applicable percentage of contract research expenses (see instructions)", order: 2 },
-                { pattern: "20 Total qualified research expenses. Add lines 16 through 19", order: 3 },
-                { pattern: "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.", order: 4 },
-                { pattern: /^22 Divide line 21 by \d+(\.\d+)?$/, order: 5 },
-                { pattern: "23 Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.", order: 6 },
-                { pattern: "24 Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ", order: 7 }
+                { pattern : "17 Cost of Supplies", order : 2 },
+                { pattern : "18 Rental or lease costs of computers", order : 3 },
+                { pattern: "19 Enter the applicable percentage of contract research expenses (see instructions)", order: 4 },
+                { pattern: "20 Total qualified research expenses. Add lines 16 through 19", order: 5 },
+                { pattern: "21 Enter your total qualified research expenses for the prior 3 privilege periods or tax years. If you had no qualified research expenses in any one of those years, skip lines 22 and 23 and enter the amount from line 20 on line 24.", order: 6 },
+                { pattern: /^22 Divide line 21 by \d+(\.\d+)?$/, order: 7 },
+                { pattern: "23 Subtract line 22 from line 20. If zero or less, enter zero. Include here and on line 24.", order: 8 },
+                { pattern: "24 Enter amount from line 23 or if you skipped lines 22 and 23, enter amount from line 20. ", order: 9 }
             ],
             "TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT": [
                 { pattern: "26 Enter either line 15 or 24 (whichever method was used for federal purposes)", order: 1 },
@@ -354,42 +360,42 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         ],
         sectionFieldOrders: {
             "Basic Research Payments. Only corporations complete lines 1 through 3": [
-                { pattern: "Basic research payments paid or incurred during the tax year to qualiﬁed organizations", order: 1 },
-                { pattern: "Qualiﬁed organization base period amount", order: 2 },
-                { pattern: "Subtract line 2 from line 1. If less than zero, enter zero", order: 3 }
+                { pattern: "1 Basic research payments paid or incurred during the tax year to qualiﬁed organizations", order: 1 },
+                { pattern: "2 Qualiﬁed organization base period amount", order: 2 },
+                { pattern: "3 Subtract line 2 from line 1. If less than zero, enter zero", order: 3 }
             ],
             "Qualiﬁed Research Expenses Paid or Incurred for Research Conducted in Idaho": [
-                { pattern: "Wages for qualiﬁed services performed in Idaho", order: 1 },
-                { pattern: "Cost of supplies used in Idaho", order: 2 },
-                { pattern: "Rental or lease costs of computers in Idaho", order: 3 },
-                { pattern: "Enter the applicable percentage of contract research expenses", order: 4 },
-                { pattern: "Total qualiﬁed research expenses for research conducted in Idaho. Add lines 4 through 7 ", order: 5 },
-                { pattern: "Enter ﬁxed-base percentage, but not more than 16%, from page 2, Part A or B", order: 6 },
-                { pattern: "Enter average annual Idaho gross receipts from page 2, Part C", order: 7 },
-                { pattern: "Base amount. Multiply line 10 by the percentage on line 9", order: 8 },
-                { pattern: "Subtract line 11 from line 8. If zero or less, enter zero", order: 9 },
-                { pattern: "Multiply line 8 by 50%", order: 10 },
-                { pattern: "Enter the smaller amount from line 12 or line 13", order: 11 },
-                { pattern: "Add lines 3 and 14 ", order: 12 },
-                { pattern: "Credit earned. Multiply line 15 by 5% ", order: 13 },
-                { pattern: "Pass-through share of credit from an S corporation, partnership, trust, or estate", order: 14 },
-                { pattern: "Credit received through unitary sharing. Include a schedule", order: 15 },
-                { pattern: "Carryover of credit for Idaho research activities from prior years", order: 16 },
-                { pattern: "Credit distributed to shareholders, partners, or beneﬁciaries", order: 17 },
-                { pattern: "Credit shared with unitary aﬃliates", order: 18 },
-                { pattern: "Total credit available subject to limitations. Add lines 16 through 19,then subtract lines 20 and 21", order: 19 },
-                { pattern: "Enter the Idaho income tax from your tax return", order: 20 },
-                { pattern: "Credit for income tax paid to other states ", order: 21 },
-                { pattern: "Part-year resident grocery credit ", order: 22 },
-                { pattern: "Credit for contributions to Idaho educational entities", order: 23 },
-                { pattern: "Investment tax credit", order: 24 },
-                { pattern: "Credit for contributions to Idaho youth and rehabilitation facilities", order: 25 },
-                { pattern: "Credit for production equipment using post-consumer waste", order: 26 },
-                { pattern: "Promoter-sponsored event credit ", order: 27 },
-                { pattern: "Add lines 24a through 24g ", order: 28 },
-                { pattern: "Net income tax after allowance of other credits. Subtract line 24h from line 23", order: 29 },
-                { pattern: "Total credit available subject to limitations. Enter the amount from line 22", order: 30 },
-                { pattern: "Credit for Idaho research activities allowed. Enter the smaller amount from line 25 or line 26 here and on Form 44, Part I, line 4", order: 31 }
+                { pattern: "4 Wages for qualiﬁed services performed in Idaho", order: 1 },
+                { pattern: "5 Cost of supplies used in Idaho", order: 2 },
+                { pattern: "6 Rental or lease costs of computers in Idaho", order: 3 },
+                { pattern: "7 Enter the applicable percentage of contract research expenses", order: 4 },
+                { pattern: "8 Total qualiﬁed research expenses for research conducted in Idaho. Add lines 4 through 7 ", order: 5 },
+                { pattern: "9 Enter ﬁxed-base percentage, but not more than 16%, from page 2, Part A or B", order: 6 },
+                { pattern: "10 Enter average annual Idaho gross receipts from page 2, Part C", order: 7 },
+                { pattern: "11 Base amount. Multiply line 10 by the percentage on line 9", order: 8 },
+                { pattern: "12 Subtract line 11 from line 8. If zero or less, enter zero", order: 9 },
+                { pattern: /^13 Multiply line 8 by \$.*%$/, order: 10 },
+                { pattern: "14 Enter the smaller amount from line 12 or line 13", order: 11 },
+                { pattern: "15 Add lines 3 and 14 ", order: 12 },
+                { pattern: /^16 Credit earned\. Multiply line 15 by .* %/, order: 13 },
+                { pattern: "17 Pass-through share of credit from an S corporation, partnership, trust, or estate", order: 14 },
+                { pattern: "18 Credit received through unitary sharing. Include a schedule", order: 15 },
+                { pattern: "19 Carryover of credit for Idaho research activities from prior years", order: 16 },
+                { pattern: "20 Credit distributed to shareholders, partners, or beneﬁciaries", order: 17 },
+                { pattern: "21 Credit shared with unitary aﬃliates", order: 18 },
+                { pattern: "22 Total credit available subject to limitations. Add lines 16 through 19,then subtract lines 20 and 21", order: 19 },
+                { pattern: "23 Enter the Idaho income tax from your tax return", order: 20 },
+                { pattern: "24.a Credit for income tax paid to other states ", order: 21 },
+                { pattern: "24.b Part-year resident grocery credit ", order: 22 },
+                { pattern: "24.c Credit for contributions to Idaho educational entities", order: 23 },
+                { pattern: "24.d Investment tax credit", order: 24 },
+                { pattern: "24.e Credit for contributions to Idaho youth and rehabilitation facilities", order: 25 },
+                { pattern: "24.f Credit for production equipment using post-consumer waste", order: 26 },
+                { pattern: "24.g Promoter-sponsored event credit ", order: 27 },
+                { pattern: "24.h Add lines 24a through 24g ", order: 28 },
+                { pattern: "25 Net income tax after allowance of other credits. Subtract line 24h from line 23", order: 29 },
+                { pattern: "26 Total credit available subject to limitations. Enter the amount from line 22", order: 30 },
+                { pattern: "27 Credit for Idaho research activities allowed. Enter the smaller amount from line 25 or line 26 here and on Form 44, Part I, line 4", order: 31 }
             ]
         },
         BOLD: []
