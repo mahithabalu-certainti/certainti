@@ -1,5 +1,6 @@
 import { Decimal } from "decimal.js";
 import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
+import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
     sub_con_percent: number;
@@ -26,8 +27,8 @@ export class RdCreditCalculatorForID {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
-        const qreCalInfo = this.qreCreditCalculation(stateRdData.currentYearQREs, config);
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string,year: string,caseDetails? : Case) {
+        const qreCalInfo = this.qreCreditCalculation(stateRdData.currentYearQREs, config,caseDetails);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
@@ -49,14 +50,14 @@ export class RdCreditCalculatorForID {
      * @param currentYearQREs 
      * @param config 
      */
-    qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson) {
+    qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson, caseDetails?: Case) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
-        const supplies = 0;
-        const cost_to_rent = 0;
+        const supplies = new Decimal(currentYearQREs.supplies || 0);
+        const cost_to_rent = new Decimal(caseDetails?.lease_costs_of_computers || 0.00);
+        const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(cost_to_rent).plus(supplies);
 
-        const total_current_year_qre = current_year_wages.plus(current_year_contract);
         const fixed_base_percentage = config.fixed_base_percentage * 100;
         const average_annual_gross_receipts = 0;
         const base_amount = new Decimal(0);
@@ -70,6 +71,7 @@ export class RdCreditCalculatorForID {
 
         return {
             current_year_wages,
+            cost_to_rent,
             current_year_contract,
             total_current_year_qre,
             fixed_base_percentage,
@@ -79,7 +81,8 @@ export class RdCreditCalculatorForID {
             tot_base_amount,
             credit_earned,
             final_credit,
-            tot_credit_avail
+            tot_credit_avail,
+            supplies
         }
 
     }
@@ -119,7 +122,8 @@ export class RdCreditCalculatorForID {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract
+            contract: currentYearQREs.contract,
+            sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
         })
  
         prior3YearsQREs.forEach((item) => {
@@ -158,15 +162,15 @@ export class RdCreditCalculatorForID {
         }
         let part2 = {
             "4 Wages for qualiﬁed services performed in Idaho":qretInfo.current_year_wages,
-            "5 Cost of supplies used in Idaho"  :"",
-            "6 Rental or lease costs of computers in Idaho":"",
+            "5 Cost of supplies used in Idaho"  :qretInfo.supplies || "",
+            "6 Rental or lease costs of computers in Idaho":qretInfo.cost_to_rent,
             "7 Enter the applicable percentage of contract research expenses":qretInfo.current_year_contract,
             "8 Total qualiﬁed research expenses for research conducted in Idaho. Add lines 4 through 7 ":qretInfo.total_current_year_qre,
             "9 Enter ﬁxed-base percentage, but not more than 16%, from page 2, Part A or B":qretInfo.fixed_base_percentage,
             "10 Enter average annual Idaho gross receipts from page 2, Part C":"",
             "11 Base amount. Multiply line 10 by the percentage on line 9":"",
             "12 Subtract line 11 from line 8. If zero or less, enter zero":qretInfo.difference,
-            [`13 Multiply line 8 by ${config.credit_rate_percent || 0} %`]:qretInfo.credit_rate_percent,
+            [`13 Multiply line 8 by ${config.credit_rate || 0}%`]:qretInfo.credit_rate_percent,
             "14 Enter the smaller amount from line 12 or line 13":qretInfo.min_credit_rate,
             "15 Add lines 3 and 14 ":qretInfo.tot_base_amount,
             [`16 Credit earned. Multiply line 15 by ${config.credit_earned} % `]:qretInfo.credit_earned,

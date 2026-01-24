@@ -213,8 +213,9 @@ export class RdCreditCalculatorForMA {
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
+            sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0)),
             contract: currentYearQREs.contract
+
         })
 
         prior3YearsQREs.forEach((item) => {

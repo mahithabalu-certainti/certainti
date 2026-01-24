@@ -666,6 +666,7 @@ export class ProjectTaskSchemaService {
     userId: string,
     activeStatusId: string,
     activeId: string,
+    checkTableExists: boolean,
     transaction: Transaction
   ) {
     // project resources
@@ -728,6 +729,7 @@ export class ProjectTaskSchemaService {
       projectTaskData,
       fiscalYear,
       activeStatusId,
+      checkTableExists,
       transaction
     );
     const newProjectFiscalRegion = await this.aggregateProjectFiscalRegion(
@@ -1338,6 +1340,7 @@ export class ProjectTaskSchemaService {
     projectTaskData: ICreateProjectTask | IUpdateProjectTask,
     fiscalYear: number,
     activeStatusId: string,
+    checkTableExists: boolean,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectFiscal, Resources, CaseProject } = await this.getModels(
@@ -1475,11 +1478,12 @@ export class ProjectTaskSchemaService {
           transaction,
         }
       );
-      await CaseProject.update(
-        {
-          total_cost_from_tasks: total_cost || null,
-          total_effort_from_tasks: total_effort || null,
-          total_cost_fte_from_tasks,
+      if (checkTableExists) {
+        await CaseProject.update(
+          {
+            total_cost_from_tasks: total_cost || null,
+            total_effort_from_tasks: total_effort || null,
+            total_cost_fte_from_tasks,
           total_cost_subcon_from_tasks,
           total_effort_fte_from_tasks,
           total_effort_subcon_from_tasks,
@@ -1495,7 +1499,7 @@ export class ProjectTaskSchemaService {
           },
           transaction,
         }
-      );
+      );}
     }
   }
 
@@ -2495,6 +2499,7 @@ export class ProjectTaskSchemaService {
     userId: string,
     activeStatusId: string,
     activeId: string,
+    checkTableExists: boolean,
     transaction: Transaction
   ) {
     // project resource
@@ -2560,6 +2565,7 @@ export class ProjectTaskSchemaService {
       projectTaskData,
       fiscalYear,
       activeStatusId,
+      checkTableExists,
       transaction,
     );
     await this.aggregateProjectFiscalRegionOnUpdate(

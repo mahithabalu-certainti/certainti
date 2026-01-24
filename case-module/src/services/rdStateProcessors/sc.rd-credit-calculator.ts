@@ -106,7 +106,8 @@ export class RdCreditCalculatorForSC {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract
+            contract: currentYearQREs.contract,
+            sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
         })
  
         prior3YearsQREs.forEach((item) => {
