@@ -499,10 +499,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
           const isTotal =
             key.toLowerCase() === 'total' || key.toLowerCase() === 'sum';
           const isCurrency =
-            typeof val === 'number' ||
-            (typeof val === 'string' &&
-              !isNaN(parseFloat(val)) &&
-              val.trim() !== '');
+            typeof val === 'number'
+              ? !isNaN(val)
+              : typeof val === 'string' &&
+                val.trim() !== '' &&
+                !isNaN(Number(val));
 
           return (
             <div
@@ -617,8 +618,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
           {/* Dynamic Input Params Sections */}
           {inputParams &&
             Object.entries(inputParams).map(([key, value]) => {
-              console.log('key', key);
-              console.log('value', value);
               if (
                 key === 'metadata' ||
                 key === 'qreSummary' ||
