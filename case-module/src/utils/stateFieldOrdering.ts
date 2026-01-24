@@ -287,14 +287,14 @@ CA: {
             "Part I - Tentative Credit Computation": [
                 { pattern: "1 Enter the amount of Connecticut research and experimental expenditures for the current income year. ", order: 1 },
                 { pattern: "2 Enter the amount of excess Connecticut research and experimental expenditures for the current income year.   From Form CT - 1120RC Part I, Line 3.", order: 2 },
-                { pattern: "3 Balance: Subtract Line 2 from Line 1.  Net research and development expenses for 2023", order: 3 },
+                { pattern: /^3 Balance: Subtract Line 2 from Line 1\.  Net research and development expenses for \d{4}$/, order: 3 },
                 { pattern: "4c All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.", order: 4 },
                 { pattern: "4 Tentative credit: Enter the amount from Line 4a, 4b, or 4c.", order: 5 },
                 { pattern: "5 Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.", order: 6 },
                 { pattern: "6 Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4. ", order: 7 }
             ],
             "Part II - Credit Computation": [
-                { pattern: "1 Allowable Tentative Tax Credit for 2024 from Part 1, line 6", order: 1 },
+                { pattern: /^1 Allowable Tentative Tax Credit for \d{4} from Part 1, line 6$/, order: 1 },
                 { pattern: /^2 Multiply Line 1 by \d+(\.\d+)?%$/, order: 2 },
                 { pattern: "3 Current Year CT Business Tax Liability", order: 3 },
                 { pattern: /^4 Multiply Line 3 by \d+(\.\d+)?%\s*\.$/, order: 4 },
