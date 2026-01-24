@@ -226,34 +226,34 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
   ]
 },
 
-    CA: {
-        sectionOrder: [
-            "Qualified research expenses paid or incurred."
-        ],
-        sectionFieldOrders: {
-            "Qualified research expenses paid or incurred.": [
-                { pattern: "5 Wages for qualified services. See instructions", order: 1 },
-                { pattern: "6 Cost of supplies. See instructions", order: 2 },
-                { pattern: "7 Rental or lease costs of computers. See instructions", order: 3 },
-                { pattern: "8 Enter the applicable percentage of contract research expenses (see instructions)", order: 4 },
-                { pattern: "9 Total qualified research expenses. Add line 5 through line 8 ", order: 5 },
-                { pattern: "10 Enter fixed-base percentage, but not more than 16% (.16). See instructions ", order: 6 },
-                { pattern: "11 Enter average annual gross receipts. See instructions", order: 7 },
-                { pattern: "12 Base amount. Multiply line 11 by the percentage on line 10", order: 8 },
-                { pattern: "13 Subtract line 12 from line 9. If zero or less, enter -0-", order: 9 },
-                { pattern: /^14 Multiply line 9 by \d+(\.\d+)?%?\. See instructions$/, order: 10 },
-                { pattern: "15 Enter the smaller of line 13 or line 14", order: 11 },
-                { pattern: /^16 Multiply line 15 by \d+(\.\d+)?%?$/, order: 12 },
-                { pattern: "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach", order: 13 },
-                { pattern: "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:", order: 14 },
-                { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for individuals and estates or trusts$/, order: 15 },
-                { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for  corporations$/, order: 16 },
-                { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for S corporations$/, order: 17 },
-                { pattern: "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :", order: 18 }
-            ]
-        },
-        BOLD: []
+CA: {
+    sectionOrder: [
+        "Qualified research expenses paid or incurred."
+    ],
+    sectionFieldOrders: {
+        "Qualified research expenses paid or incurred.": [
+            { pattern: "5 Wages for qualified services. See instructions", order: 1 },
+            { pattern: "6 Cost of supplies. See instructions", order: 2 },
+            { pattern: "7 Rental or lease costs of computers. See instructions", order: 3 },
+            { pattern: "8 Enter the applicable percentage of contract research expenses (see instructions)", order: 4 },
+            { pattern: "9 Total qualified research expenses. Add line 5 through line 8 ", order: 5 },
+            { pattern: /^10 Enter fixed-base percentage, but not more than \d+% \((0?\.\d+)\)\. See instructions\s*$/, order: 6 },
+            { pattern: "11 Enter average annual gross receipts. See instructions", order: 7 },
+            { pattern: "12 Base amount. Multiply line 11 by the percentage on line 10", order: 8 },
+            { pattern: "13 Subtract line 12 from line 9. If zero or less, enter -0-", order: 9 },
+            { pattern: /^14 Multiply line 9 by \d+(\.\d+)?%?\. See instructions$/, order: 10 },
+            { pattern: "15 Enter the smaller of line 13 or line 14", order: 11 },
+            { pattern: /^16 Multiply line 15 by \d+(\.\d+)?%?$/, order: 12 },
+            { pattern: "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach", order: 13 },
+            { pattern: "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:", order: 14 },
+            { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for individuals and estates or trusts$/, order: 15 },
+            { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for  corporations$/, order: 16 },
+            { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for S corporations$/, order: 17 },
+            { pattern: "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :", order: 18 }
+        ]
     },
+    BOLD: []
+},
     CO: {
         sectionOrder: [
             "PART IV: Research and Experimental Activities Credit"
