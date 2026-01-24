@@ -192,6 +192,8 @@ export interface CaseFormFields {
   qualified_computer_rental_time_expenses: string | null;
   basic_research_payments: string | null;
   illinois_rd_credit_partnership_corp: string | null;
+  credit_carry_forward_py: string | null;
+  current_year_gross_receipts: string | null;
 }
 
 export interface CaseFormPayload {
@@ -227,6 +229,8 @@ export interface CaseFormPayload {
   qualified_computer_rental_time_expenses: string | null;
   basic_research_payments: string | null;
   illinois_rd_credit_partnership_corp: string | null;
+  credit_carry_forward_py: string | null;
+  current_year_gross_receipts: string | null;
 }
 
 export interface updateCaseJurisdictionPayload {

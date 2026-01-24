@@ -170,6 +170,11 @@ export const CaseFormData = (
             required: false,
             placeholder: 'Enter Heating & Lighting Cost',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Heating & Lighting Cost: your estimated Heating & Lighting Cost.',
+            },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
@@ -184,6 +189,11 @@ export const CaseFormData = (
           createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
             required: false,
             placeholder: 'Enter Total NonLabor Cost',
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Total NonLabor Cost: your estimated Total NonLabor Cost.',
+            },
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -438,12 +448,12 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['lease_costs_of_computers']?.edit &&
+                permissionMap?.['lease_costs_of_computers']?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                !permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['lease_costs_of_computers']?.edit &&
+                !permissionMap?.['lease_costs_of_computers']?.read,
             }
           ),
           createTextField(
@@ -462,12 +472,12 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['illinois_rd_credit_partnership_corp']?.edit &&
+                permissionMap?.['illinois_rd_credit_partnership_corp']?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                !permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['illinois_rd_credit_partnership_corp']?.edit &&
+                !permissionMap?.['illinois_rd_credit_partnership_corp']?.read,
             }
           ),
           createTextField(
@@ -486,12 +496,14 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['illinois_research_payments_corp_only']
+                  ?.edit &&
+                permissionMap?.['illinois_research_payments_corp_only']?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                !permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['illinois_research_payments_corp_only']
+                  ?.edit &&
+                !permissionMap?.['illinois_research_payments_corp_only']?.read,
             }
           ),
           createTextField(
@@ -510,12 +522,12 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['basic_research_payments']?.edit &&
+                permissionMap?.['basic_research_payments']?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                !permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['basic_research_payments']?.edit &&
+                !permissionMap?.['basic_research_payments']?.read,
             }
           ),
           createTextField(
@@ -534,12 +546,59 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.edit &&
+                permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                !permissionMap?.['export_sales_revenue']?.read,
+                !permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.edit &&
+                !permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.read,
+            }
+          ),
+          createTextField('current_year_gross_receipts', 'Gross Receipts', {
+            required: false,
+            placeholder: 'Enter Gross Receipts',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Gross Receipts: your estimated gross receipts.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['current_year_gross_receipts']?.edit &&
+              permissionMap?.['current_year_gross_receipts']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['current_year_gross_receipts']?.edit &&
+              !permissionMap?.['current_year_gross_receipts']?.read,
+          }),
+          createTextField(
+            'credit_carry_forward_py',
+            'Credit Carry Forward PY',
+            {
+              required: false,
+              placeholder: 'Enter Credit Carry Forward PY',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Credit Carry Forward PY: your estimated credit carry forward PY.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['credit_carry_forward_py']?.edit &&
+                permissionMap?.['credit_carry_forward_py']?.read,
+              hide:
+                isEditView &&
+                !permissionMap?.['credit_carry_forward_py']?.edit &&
+                !permissionMap?.['credit_carry_forward_py']?.read,
             }
           ),
           createTextField('other', 'Other', {
@@ -560,20 +619,6 @@ export const CaseFormData = (
               isEditView &&
               !permissionMap?.['other']?.edit &&
               !permissionMap?.['other']?.read,
-          }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
-            hide: isEditView,
-          }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
-            hide: isEditView,
           }),
           createDateField('case_startdate', 'Planned Start Date', {
             required: true,

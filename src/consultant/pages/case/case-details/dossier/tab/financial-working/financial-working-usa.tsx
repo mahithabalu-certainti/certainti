@@ -32,12 +32,14 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
   const boldRows = (computedFields as any)?.BOLD || [];
 
-  const inputParams = data?.data?.input_params as Record<string, any>;
+  // Extract and validate input_params safely
+  const rawInputParams = data?.data?.input_params;
+  const inputParams: Record<string, any> =
+    typeof rawInputParams === 'string'
+      ? JSON.parse(rawInputParams)
+      : (rawInputParams as Record<string, any>);
+
   const qreSummary = inputParams?.qreSummary;
-  // const currencyCode =
-  //   (inputParams?.metadata?.currency as string) ||
-  //   (inputParams?.currency as string) ||
-  //   'USD';
 
   const isValidCurrencyCode = (code: string): boolean => {
     // Common ISO 4217 currency codes
@@ -114,15 +116,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
           >
             {(() => {
-              const isPercentage =
-                typeof value === 'string' && value.endsWith('%');
-              const isNumeric =
-                !isPercentage &&
-                (typeof value === 'number' ||
-                  (typeof value === 'string' &&
-                    !isNaN(parseFloat(value.replace(/[^0-9.-]/g, ''))) &&
-                    isFinite(Number(value.replace(/[^0-9.-]/g, '')))));
-              return isNumeric ? formatCurrency(value) : value;
+              // Only format strict numbers as currency
+              const isStrictNumber = typeof value === 'number';
+              return isStrictNumber ? formatCurrency(value) : value;
             })()}
           </span>
         )}
@@ -429,6 +425,120 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     });
   };
 
+  const renderDynamicArrayTable = (data: any[]) => {
+    if (!Array.isArray(data) || data.length === 0) return null;
+
+    // Helper to check if a specific key has data in any of the rows
+    const hasDataForKey = (key: string) =>
+      data.some(
+        (row) => row[key] !== undefined && row[key] !== null && row[key] !== ''
+      );
+
+    // Identify all unique keys across all objects
+    const allKeys = Array.from(
+      new Set(data.flatMap((row) => (row ? Object.keys(row) : [])))
+    );
+
+    // Filter keys that have at least one non-empty value
+    // Exclude 'year' as we handle it specifically, and 'id' if present
+    const dataKeys = allKeys.filter(
+      (key) =>
+        key.toLowerCase() !== 'year' &&
+        key.toLowerCase() !== 'id' &&
+        hasDataForKey(key)
+    );
+
+    // Transform data to ensure it has ids
+    const tableDataRows = data.map((row, index) => ({
+      ...row,
+      id: `row_${index}`,
+    }));
+
+    const columns: ListTableColumn<any>[] = [];
+
+    // Always add Year column first if 'year' exists in keys (checked from raw data keys)
+    if (allKeys.some((k) => k.toLowerCase() === 'year')) {
+      columns.push({
+        id: 'year',
+        label: 'Year' as any,
+        sortId: 'year',
+        width: 120,
+        sticky: true,
+        render: (row: any) => {
+          // Find the actual key that matches 'year' case-insensitively
+          const yearKey = Object.keys(row).find(
+            (k) => k.toLowerCase() === 'year'
+          );
+          const val = yearKey ? row[yearKey] : '-';
+          return (
+            <div className='px-4 py-2 text-sm font-bold text-[#1A2733]'>
+              {val || '-'}
+            </div>
+          );
+        },
+      });
+    }
+
+    // Add other columns
+    dataKeys.forEach((key) => {
+      // Determine label
+      let label = formatLabel(key);
+      if (key === 'wages') label = 'QRE Wages';
+      if (key === 'contract') label = 'ORE Contract';
+      if (key === 'grossReceipts') label = 'Gross Receipts';
+      if (key === 'sum') label = 'Total';
+
+      columns.push({
+        id: key,
+        label: label as any,
+        sortId: key,
+        width: 180,
+        render: (row: any) => {
+          const val = row[key];
+          // Check if it looks like a "Total" column
+          const isTotal =
+            key.toLowerCase() === 'total' || key.toLowerCase() === 'sum';
+          const isCurrency =
+            typeof val === 'number'
+              ? !isNaN(val)
+              : typeof val === 'string' &&
+                val.trim() !== '' &&
+                !isNaN(Number(val));
+
+          return (
+            <div
+              className={`px-3 py-1.5 text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+            >
+              {val !== undefined && val !== null && val !== ''
+                ? isCurrency
+                  ? formatCurrency(val)
+                  : val
+                : '-'}
+            </div>
+          );
+        },
+      });
+    });
+
+    return (
+      <div className='w-full border border-[#CBD6E2] rounded-sm overflow-hidden'>
+        <ListTable
+          data={tableDataRows}
+          columns={columns}
+          getRowId={(row: any) => row.id}
+          showEmptyRow={false}
+          actionMenuItems={[]}
+          actionWidth={0}
+          stickyHeader={true}
+          tableStyle={{
+            maxHeight: '400px',
+            overflow: 'auto',
+          }}
+        />
+      </div>
+    );
+  };
+
   const renderCardContent = (value: any, key?: string) => {
     if (typeof value !== 'object' || value === null) {
       if (key) {
@@ -505,6 +615,26 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     <div className='p-4'>
       <div className='max-w-7xl mx-auto'>
         <div className='flex flex-col gap-0'>
+          {/* Dynamic Input Params Sections */}
+          {inputParams &&
+            Object.entries(inputParams).map(([key, value]) => {
+              if (
+                key === 'metadata' ||
+                key === 'qreSummary' ||
+                key === 'currency'
+              )
+                return null;
+
+              if (Array.isArray(value) && value.length > 0) {
+                return (
+                  <div key={key} className='mb-4'>
+                    {renderCard(key, renderDynamicArrayTable(value))}
+                  </div>
+                );
+              }
+              return null;
+            })}
+
           {/* QRE Summary Section */}
           {qreSummary && (
             <React.Fragment>

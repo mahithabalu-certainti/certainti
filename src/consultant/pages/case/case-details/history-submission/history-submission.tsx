@@ -74,12 +74,14 @@ interface CaseTeamProps {
 const generateYearOptions = () => {
   const currentYear = new Date().getFullYear();
   const years = [];
-  for (let year = 1950; year <= currentYear; year++) {
+
+  for (let year = 1950; year < currentYear; year++) {
     years.push({
       value: year,
       label: `FY-${year}`,
     });
   }
+
   return years.reverse();
 };
 
