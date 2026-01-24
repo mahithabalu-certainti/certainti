@@ -362,6 +362,8 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'total_sub_con_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_non_labor_count', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'project_delivery_head_name', data_type: 'String',required:false },
+        { column_name: 'project_delivery_head_email', data_type: 'email',required:false },
       ];
 
     case 'project_resource':
