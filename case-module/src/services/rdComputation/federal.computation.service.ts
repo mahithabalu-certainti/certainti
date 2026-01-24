@@ -52,11 +52,12 @@ export class FederalComputationService {
             let schemaName = rawQueries.fetchSchemaName(
                 fetchParentAccountRnumber[0][0].r_number
             );
-            const currentFiscalYear = this.getCurrentFiscalYear();
+            const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+            const currentFiscalYear = caseDetails.fiscal_year;
             const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
             logMessage(`Country Info: ${JSON.stringify(countryInfo)}`);
             if(countryInfo.countryCode == "USA") {
-                const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+                
                 let fetchEndDate : any = await orgDb.query(rawQueries.fetchFiscalEndDate(accountRid, schemaName));
                 let date = fetchEndDate[0][0].fiscal_end_date+`/${caseDetails.fiscal_year}`
                 const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb); //current yer QREs
