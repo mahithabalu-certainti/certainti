@@ -171,10 +171,10 @@ export const CaseFormData = (
             placeholder: 'Enter Heating & Lighting Cost',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Heating & Lighting Cost: your estimated Heating & Lighting Cost.',
-              },
+              showTooltip: true,
+              tooltipMessage:
+                'Heating & Lighting Cost: your estimated Heating & Lighting Cost.',
+            },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
@@ -190,10 +190,10 @@ export const CaseFormData = (
             required: false,
             placeholder: 'Enter Total NonLabor Cost',
             labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Total NonLabor Cost: your estimated Total NonLabor Cost.',
-              },
+              showTooltip: true,
+              tooltipMessage:
+                'Total NonLabor Cost: your estimated Total NonLabor Cost.',
+            },
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -496,11 +496,13 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['illinois_research_payments_corp_only']?.edit &&
+                !permissionMap?.['illinois_research_payments_corp_only']
+                  ?.edit &&
                 permissionMap?.['illinois_research_payments_corp_only']?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['illinois_research_payments_corp_only']?.edit &&
+                !permissionMap?.['illinois_research_payments_corp_only']
+                  ?.edit &&
                 !permissionMap?.['illinois_research_payments_corp_only']?.read,
             }
           ),
@@ -544,12 +546,16 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['qualified_computer_rental_time_expenses']?.edit &&
-                permissionMap?.['qualified_computer_rental_time_expenses']?.read,
+                !permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.edit &&
+                permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.read,
               hide:
                 isEditView &&
-                !permissionMap?.['qualified_computer_rental_time_expenses']?.edit &&
-                !permissionMap?.['qualified_computer_rental_time_expenses']?.read,
+                !permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.edit &&
+                !permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.read,
             }
           ),
           createTextField('current_year_gross_receipts', 'Gross Receipts', {
@@ -571,25 +577,30 @@ export const CaseFormData = (
               !permissionMap?.['current_year_gross_receipts']?.edit &&
               !permissionMap?.['current_year_gross_receipts']?.read,
           }),
-          createTextField('credit_carry_forward_py', 'Credit Carry Forward PY', {
-            required: false,
-            placeholder: 'Enter Credit Carry Forward PY',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Credit Carry Forward PY: your estimated credit carry forward PY.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isEditView &&
-              !permissionMap?.['credit_carry_forward_py']?.edit &&
-              permissionMap?.['credit_carry_forward_py']?.read,
-            hide:
-              isEditView &&
-              !permissionMap?.['credit_carry_forward_py']?.edit &&
-              !permissionMap?.['credit_carry_forward_py']?.read,
-          }),
+          createTextField(
+            'credit_carry_forward_py',
+            'Credit Carry Forward PY',
+            {
+              required: false,
+              placeholder: 'Enter Credit Carry Forward PY',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Credit Carry Forward PY: your estimated credit carry forward PY.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['credit_carry_forward_py']?.edit &&
+                permissionMap?.['credit_carry_forward_py']?.read,
+              hide:
+                isEditView &&
+                !permissionMap?.['credit_carry_forward_py']?.edit &&
+                !permissionMap?.['credit_carry_forward_py']?.read,
+            }
+          ),
           createTextField('other', 'Other', {
             required: false,
             placeholder: 'Enter Other',
