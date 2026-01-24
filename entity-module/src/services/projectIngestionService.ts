@@ -967,15 +967,15 @@ class ProjectIngestionService {
       query = regionRid
     }
 
-    if(projectData.region_rid === '') {
-      await AccountFiscalRegion.destroy({
-        where : {
-          account_rid,
-          fiscal_year,
-          region_rid: query,
-        }
-      })
-    }
+    // if(projectData.region_rid === '') {
+    //   await AccountFiscalRegion.destroy({
+    //     where : {
+    //       account_rid,
+    //       fiscal_year,
+    //       region_rid: query,
+    //     }
+    //   })
+    // }
     const existingFiscal = await AccountFiscalRegion.findOne({
       where: {
         account_rid,
