@@ -210,6 +210,7 @@ export class RdCreditCalculatorForMA {
     */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}) {
         let storeData : any[] = []
+        let annualGrossReceiptsData :any[] = []
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
@@ -217,6 +218,12 @@ export class RdCreditCalculatorForMA {
             contract: currentYearQREs.contract
 
         })
+        annualGrossReceipts.forEach((item) => {
+            annualGrossReceiptsData.push({
+                year : item.fiscalYear,
+                grossReceipts: item.grossReceipts
+            })
+        });
 
         prior3YearsQREs.forEach((item) => {
             storeData.push({
@@ -238,7 +245,8 @@ export class RdCreditCalculatorForMA {
                 "Description": "Research Tax Credit",
                 stateDetails : "MA Research Credit"
             },
-            "Current & Prior years information" : storeData
+            "Current & Prior years information" : storeData,
+            "Gross Receipts Information" : annualGrossReceiptsData
         };
     }
 
