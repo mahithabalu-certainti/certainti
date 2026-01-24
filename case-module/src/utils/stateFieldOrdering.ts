@@ -27,11 +27,11 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
         ],
         sectionFieldOrders: {
             "Input Information": [
-                { pattern: "Current Year Georgia Gross Receipts", order: 1 },
-                { pattern: "Current Year Research Expenses in Georgia", order: 2 },
-                { pattern: "Total of all other credits", order: 3 },
-                { pattern: "Credit carry-over from PY", order: 4 },
-                { pattern: "Current Tax Liability Without Credits", order: 5 }
+                { pattern: "Current Year Georgia Gross Receipts (A)", order: 1 },
+                { pattern: "Current Year Research Expenses in Georgia (B)", order: 2 },
+                { pattern: "Total of all other credits (C)", order: 3 },
+                { pattern: "Credit carry-over from PY (D)", order: 4 },
+                { pattern: "Current Tax Liability Without Credits (E)", order: 5 }
             ],
             tables: [
                 { pattern: "Ratio Calculation", order: 1 },
@@ -60,11 +60,11 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "1) Current Tax Liability w/o applied credits - E", order: 1 },
                 { pattern: "2) Value of all Other Credits Claimed - C", order: 2 },
                 { pattern: "3) Remaining Tax Liability (C-E)", order: 3 },
-                { pattern: "4) Maximum Credit Allowed", order: 4 },
+                { pattern: "4) Maximum Credit Allowed (Line 3 * 50%)", order: 4 },
                 { pattern: "5) Research Tax Credit - J", order: 5 },
                 { pattern: "5a)Tax Carryover from PY - D", order: 6 },
                 { pattern: "6) Total available Research Tax Credit (J+D)", order: 7 },
-                { pattern: "7) Credit to be claimed on return", order: 8 },
+                { pattern: "7) Credit to be claimed on return  (lesser of line 4 or 6)", order: 8 },
                 { pattern: "8) Unused Credit or Carry-Forward", order: 9 }
             ]
         },
