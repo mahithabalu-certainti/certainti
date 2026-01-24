@@ -127,7 +127,7 @@ export class RdCreditCalculatorForGA {
      * @param average_ratio 
      */
     taxBaseCalculation(curent_year_gross_receipts: number, average_ratio: Decimal, config: ConfigJson) {
-        const taxBaseRate = this.round2(Decimal.min(average_ratio, (config.tax_base_cap_percent * 100)));
+        const taxBaseRate = new Decimal(this.round2(Decimal.min(average_ratio, config.tax_base_cap_percent * 100)));
         const baseAmount = new Decimal(curent_year_gross_receipts).mul(taxBaseRate.div(100));
         return {
             current_year_gross_receipt: curent_year_gross_receipts,

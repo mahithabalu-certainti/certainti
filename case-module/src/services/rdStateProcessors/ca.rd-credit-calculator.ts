@@ -44,7 +44,7 @@ export class RdCreditCalculatorForCA {
             currency: this.currency,
             fiscalYearEnded : fiscalYear
         });
-        const computedFields = await this.buildComputedFields(ascResult, rrcResult);
+        const computedFields = await this.buildComputedFields(ascResult, rrcResult, config);
 
         return {
             inputFields,
@@ -89,42 +89,42 @@ export class RdCreditCalculatorForCA {
         const line12 = line11.mul(line10);
 
         //---- Line 13: Excess QREs
-        let line13 = Decimal.max(line9.minus(line12), 0);
+        let line13 = Decimal.max(line12.minus(line9), 0);
 
         //---- Line 14: 50% of current year QRE
-        let line14 = line13.mul(config.qre_cap_rate);
+        let line14 = line9.mul(config.qre_cap_rate/100);
 
         //----Line 15: Smaller of Line 13 or Line 14
         let line15 = Decimal.min(line13, line14);
 
         //---- Line 16: Credit before carryforward
-        let line16 = line15.mul(config.credit_rate);
+        let line16 = line15.mul(config.credit_rate/100);
 
         //---- Line 17a: 
         let line17a = line16;
 
         //---- Reduced credit amount by entity type
-        const s_corp_rate = line17a.mul(config.s_corp).toNumber();
-        const corporation_rate = line17a.mul(config.corporation).toNumber();
-        const individual_rate = line17a.mul(config.individual).toNumber();
-        const reducedCreditAmountPercentage = line17a.mul(config.reduced_credit_amount_percentage/100).toNumber()
+        const s_corp_rate = line17a.mul(config.s_corp/100);
+        const corporation_rate = line17a.mul(config.corporation/100);
+        const individual_rate = line17a.mul(config.individual/100);
+        const reducedCreditAmountPercentage = line17a.mul(config.reduced_credit_amount_percentage/100)
 
         return {
             wages: line5,
             supplies: line6,
             cost_to_rent: line7,
-            contract: line8.toNumber(),
-            total_qre: line9.toNumber(),
-            fixed_base_percentage: line10.toNumber(),
-            average_gross_receipts: line11.toNumber(),
-            base_amount: line12.toNumber(),
-            excess_qre_over_base: line13.toNumber(),
-            half_total_qre: line14.toNumber(),
-            smaller_of_excess_or_half: line15.toNumber(),
-            credit_before_280c: line16.toNumber(),
-            regular_credit: line17a.toNumber(),
-            reduced_credit_amount: { s_corp: s_corp_rate, corporation: corporation_rate, individual: individual_rate },
-            reducedCreditAmountPercentageValue : reducedCreditAmountPercentage,
+            contract: this.round2(line8),
+            total_qre: this.round2(line9),
+            fixed_base_percentage: this.round2(line10),
+            average_gross_receipts: this.round2(line11),
+            base_amount: this.round2(line12),
+            excess_qre_over_base: this.round2(line13),
+            half_total_qre: this.round2(line14),
+            smaller_of_excess_or_half: this.round2(line15),
+            credit_before_280c: this.round2(line16),
+            regular_credit: this.round2(line17a),
+            reduced_credit_amount: { s_corp: this.round2(s_corp_rate), corporation: this.round2(corporation_rate), individual: this.round2(individual_rate) },
+            reducedCreditAmountPercentageValue : this.round2(reducedCreditAmountPercentage),
             config: config
         }
 
@@ -172,14 +172,14 @@ export class RdCreditCalculatorForCA {
      * @param creditRRC 
      * @returns 
      */
-    async buildComputedFields(creditASC: any, creditRRC: any) {
+    async buildComputedFields(creditASC: any, creditRRC: any, config : ConfigJson) {
         let finalData = {
             "5 Wages for qualified services. See instructions":creditRRC.wages,
             "6 Cost of supplies. See instructions":creditRRC.supplies,
             "7 Rental or lease costs of computers. See instructions":creditRRC.cost_to_rent,
             "8 Enter the applicable percentage of contract research expenses (see instructions)":creditRRC.contract,
             "9 Total qualified research expenses. Add line 5 through line 8 ":creditRRC.total_qre,
-            "10 Enter fixed-base percentage, but not more than 16% (.16). See instructions ":creditRRC.fixed_base_percentage,
+            [`10 Enter fixed-base percentage, but not more than ${config.fixed_base_percentage}% (${config.fixed_base_percentage/100}). See instructions `]:creditRRC.fixed_base_percentage,
             "11 Enter average annual gross receipts. See instructions":creditRRC.average_gross_receipts,
             "12 Base amount. Multiply line 11 by the percentage on line 10":creditRRC.base_amount,
             "13 Subtract line 12 from line 9. If zero or less, enter -0-":creditRRC.excess_qre_over_base,
@@ -188,9 +188,9 @@ export class RdCreditCalculatorForCA {
             [`16 Multiply line 15 by ${creditRRC.config.credit_rate}`]:creditRRC.credit_before_280c,
             "17 a Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach":creditRRC.regular_credit,
             "b Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:":"",
-            [`${creditRRC.config.individual}% (${creditRRC.config.individual/100}) for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
-            [`${creditRRC.config.corporation}% (${creditRRC.config.corporation/100}) for  corporations`]:creditRRC.reduced_credit_amount.s_corp,
-            [`${creditRRC.config.s_corp}% (${creditRRC.config.s_corp/100}) for S corporations`]:creditRRC.reduced_credit_amount.corporation,
+            [`${creditRRC.config.individual}% (${(creditRRC.config.individual/100).toFixed(3)}) for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
+            [`${creditRRC.config.corporation}% (${(creditRRC.config.corporation/100).toFixed(3)}) for  corporations`]:creditRRC.reduced_credit_amount.s_corp,
+            [`${creditRRC.config.s_corp}% (${(creditRRC.config.s_corp/100).toFixed(3)}) for S corporations`]:creditRRC.reduced_credit_amount.corporation,
             "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :":creditRRC.reducedCreditAmountPercentageValue
 
         }
@@ -202,4 +202,24 @@ export class RdCreditCalculatorForCA {
             }
         }
     }
+    /**
+     * Rounds the given value to two decimal places using Decimal.js.
+     * @param value Value to be rounded.
+     * @returns The rounded value as a Decimal with two decimal places.
+    */
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
+    }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 }
