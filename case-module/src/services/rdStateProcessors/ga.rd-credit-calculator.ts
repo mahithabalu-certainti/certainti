@@ -1,5 +1,6 @@
 import { Decimal } from "decimal.js";
 import { AnnualGrossReceipt, QRE, StateRDData } from "../rdComputation/rdCreditTypes";
+import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
@@ -25,8 +26,8 @@ export class RdCreditCalculatorForGA {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
-        const inputInfo = this.computeInputInformation(stateRdData.currentYearQREs, stateRdData.annualGrossReceipts || []);
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : string, caseDetails : Case) {
+        const inputInfo = this.computeInputInformation(stateRdData.currentYearQREs, stateRdData.annualGrossReceipts || [],caseDetails);
         const ratioCalculationInfo = this.ratioCalculation(stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || []);
         const baseAmountInfo = this.taxBaseCalculation(inputInfo.curent_year_gross_receipts, ratioCalculationInfo.average_ratio, config);
         const taxCreditInfo = this.taxCreditCalculation(inputInfo.current_year_qre, baseAmountInfo.base_amount, config);
@@ -39,7 +40,7 @@ export class RdCreditCalculatorForGA {
             fiscalYearEnded : fiscalYear
         });
 
-        const computedFields = await this.buildComputedFields(inputInfo, ratioCalculationInfo, baseAmountInfo, taxCreditInfo, creditAndCarryForwardInfo);
+        const computedFields = await this.buildComputedFields(inputInfo, ratioCalculationInfo, baseAmountInfo, taxCreditInfo, creditAndCarryForwardInfo,config);
 
         return {
             inputFields,
@@ -53,18 +54,19 @@ export class RdCreditCalculatorForGA {
      * @param annualGrossReceipts 
      * @returns 
      */
-    computeInputInformation(currentYearQREs: QRE, annualGrossReceipts: AnnualGrossReceipt[]) {
+    computeInputInformation(currentYearQREs: QRE, annualGrossReceipts: AnnualGrossReceipt[], caseDetails : Case) {
         const wages = currentYearQREs.wages || 0;
         const supplies = currentYearQREs.supplies || 0;
         const contract = currentYearQREs.contract || 0;
         const tax_liability = currentYearQREs.business_tax_liability || 0;
+        const currentYearGrossReceipts = new Decimal(caseDetails.current_year_gross_receipts || 0.00)
 
         //Total current year QREs
         const totalCurrentYearQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
 
-        const currentYearGrossReceipts = annualGrossReceipts.find(
-            (item) => item.fiscalYear === this.getCurrentFiscalYear()
-        )?.grossReceipts || 0;
+        // const currentYearGrossReceipts = annualGrossReceipts.find(
+        //     (item) => item.fiscalYear === this.getCurrentFiscalYear()
+        // )?.grossReceipts || 0;
 
         //Enter current year - any other credit for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
@@ -72,7 +74,7 @@ export class RdCreditCalculatorForGA {
 
         //Enter any carry forward from prior years for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
-        const carryForwardPriorYear = new Decimal(0);
+        const carryForwardPriorYear = new Decimal(caseDetails.credit_carry_forward_py || 0.00);
 
         const currentYearTaxLiability = tax_liability;
 
@@ -126,7 +128,7 @@ export class RdCreditCalculatorForGA {
      * @param curent_year_gross_receipts 
      * @param average_ratio 
      */
-    taxBaseCalculation(curent_year_gross_receipts: number, average_ratio: Decimal, config: ConfigJson) {
+    taxBaseCalculation(curent_year_gross_receipts: Decimal, average_ratio: Decimal, config: ConfigJson) {
         const taxBaseRate = new Decimal(this.round2(Decimal.min(average_ratio, config.tax_base_cap_percent * 100)));
         const baseAmount = new Decimal(curent_year_gross_receipts).mul(taxBaseRate.div(100));
         return {
@@ -246,7 +248,7 @@ export class RdCreditCalculatorForGA {
      * @param creditAndCarryForwardInfo 
      * @returns 
      */
-    buildComputedFields(inputInfo: any, ratioCalculationInfo: any, baseAmountInfo: any, taxCreditInfo: any, creditAndCarryForwardInfo: any) {
+    buildComputedFields(inputInfo: any, ratioCalculationInfo: any, baseAmountInfo: any, taxCreditInfo: any, creditAndCarryForwardInfo: any,config:any) {
         // Prepare table rows for Ratio Calculation
         const ratioTableHeaders = [
             "3 Previous Years",
@@ -258,16 +260,16 @@ export class RdCreditCalculatorForGA {
             "3 Previous Years": item.fiscal_year,
             "Georgia Research Expenses": item.prior_qre,
             "Georgia Gross Receipts": item.prior_receipts,
-            "Equals Ratio (%)": item.ratio
+            "Equals Ratio (%)": `${item.ratio}%`
         }));
 
         return {
             "Input Information": {
-                "Current Year Georgia Gross Receipts" : inputInfo.curent_year_gross_receipts,
-                "Current Year Research Expenses in Georgia" : inputInfo.current_year_qre,
-                "Total of all other credits": inputInfo.total_of_all_other_credits,
-                "Credit carry-over from PY": inputInfo.carry_forward_prior_year,
-                "Current Tax Liability Without Credits" : inputInfo.current_year_tax_liability
+                "Current Year Georgia Gross Receipts (A)" : inputInfo.curent_year_gross_receipts,
+                "Current Year Research Expenses in Georgia (B)" : inputInfo.current_year_qre,
+                "Total of all other credits (C)": inputInfo.total_of_all_other_credits,
+                "Credit carry-over from PY (D)": inputInfo.carry_forward_prior_year,
+                "Current Tax Liability Without Credits (E)" : inputInfo.current_year_tax_liability
             },
             tables: {
                 "Ratio Calculation": {
@@ -279,29 +281,29 @@ export class RdCreditCalculatorForGA {
                     table_headers: ["Total - F", "Average Research Ratio (F/3) - G"],
                     table_rows: [
                         {
-                            "Total - F": ratioCalculationInfo.sum_ratio,
-                            "Average Research Ratio (F/3) - G": ratioCalculationInfo.average_ratio
+                            "Total - F": `${ratioCalculationInfo.sum_ratio}%`,
+                            "Average Research Ratio (F/3) - G": `${ratioCalculationInfo.average_ratio}%`
                         }
                     ]
                 },
                 "Calculation of Tax Base": {
-                    table_headers: ["Current Year Georgia Gross Receipts - A", "Lesser of G or 30%", "Base Amount"],
+                    table_headers: ["Current Year Georgia Gross Receipts - A", `Lesser of G or ${config.tax_credit_rate_percent}%`, "Base Amount (H)"],
                     table_rows: [
                         {
                             "Current Year Georgia Gross Receipts - A": baseAmountInfo.current_year_gross_receipt,
-                            "Lesser of G or 30%": baseAmountInfo.tax_base_rate,
-                            "Base Amount": baseAmountInfo.base_amount
+                            [`Lesser of G or ${config.tax_credit_rate_percent}%`]: `${baseAmountInfo.tax_base_rate}%`,
+                            "Base Amount (H)": baseAmountInfo.base_amount
                         }
                     ]
                 },
                 "Calculation of Tax Credit": {
-                    table_headers: ["Current Year Research Expense - B", "Base Amount From - H", "Difference - I", "Tax Credit (10% of I)"],
+                    table_headers: ["Current Year Research Expense - B", "Base Amount From - H", "Difference - I", `Tax Credit (${config.tax_base_cap_percent}% of I)`],
                     table_rows: [
                         {
                             "Current Year Research Expense - B": taxCreditInfo.current_year_qre,
                             "Base Amount From - H": baseAmountInfo.base_amount,
                             "Difference - I": taxCreditInfo.difference,
-                            "Tax Credit (10% of I)": taxCreditInfo.tax_credit
+                            [`Tax Credit (${config.tax_base_cap_percent}% of I)`]: taxCreditInfo.tax_credit
                         }
                     ]
                 }
@@ -310,11 +312,11 @@ export class RdCreditCalculatorForGA {
                 "1) Current Tax Liability w/o applied credits - E" : creditAndCarryForwardInfo.current_year_tax_liability,
                 "2) Value of all Other Credits Claimed - C" : creditAndCarryForwardInfo.value_of_other_credit_claimed,
                 "3) Remaining Tax Liability (C-E)" : creditAndCarryForwardInfo.remaining_tax_liability,
-                "4) Maximum Credit Allowed" : creditAndCarryForwardInfo.max_credits_allowed,
+                "4) Maximum Credit Allowed (Line 3 * 50%)" : creditAndCarryForwardInfo.max_credits_allowed,
                 "5) Research Tax Credit - J" : creditAndCarryForwardInfo.research_tax_credit,
                 "5a)Tax Carryover from PY - D": creditAndCarryForwardInfo.tax_carryover_py,
                 "6) Total available Research Tax Credit (J+D)" : creditAndCarryForwardInfo.total_tax_credit,
-                "7) Credit to be claimed on return" : creditAndCarryForwardInfo.credit_claimed_return,
+                "7) Credit to be claimed on return  (lesser of line 4 or 6)" : creditAndCarryForwardInfo.credit_claimed_return,
                 "8) Unused Credit or Carry-Forward" : creditAndCarryForwardInfo.unused_credit
             }
         }
