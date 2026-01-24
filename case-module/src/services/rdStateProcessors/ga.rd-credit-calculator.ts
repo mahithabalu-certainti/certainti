@@ -287,7 +287,7 @@ export class RdCreditCalculatorForGA {
                     ]
                 },
                 "Calculation of Tax Base": {
-                    table_headers: ["Current Year Georgia Gross Receipts - A", `Lesser of G or ${config.tax_credit_rate_percent}%`, "Base Amount"],
+                    table_headers: ["Current Year Georgia Gross Receipts - A", `Lesser of G or ${config.tax_credit_rate_percent}%`, "Base Amount (H)"],
                     table_rows: [
                         {
                             "Current Year Georgia Gross Receipts - A": baseAmountInfo.current_year_gross_receipt,
