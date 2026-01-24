@@ -233,7 +233,7 @@ const Projects: React.FC<ProjectsProps> = ({
               };
             }) || [];
 
-                    // Check if ANY fiscal in this project is disabled
+          // Check if ANY fiscal in this project is disabled
           const hasDisabledChild = updatedProjectFiscal.some(
             (fiscal) => fiscal.disableCheckBox
           );
@@ -243,12 +243,11 @@ const Projects: React.FC<ProjectsProps> = ({
             ? getProjectDisableReason(true) // Or use appropriate logic for parent
             : null;
 
-
           return {
             ...project,
             // Update the ProjectFiscal array with the new objects
             ProjectFiscal: updatedProjectFiscal,
-                // Set parent-level disable props based on child condition
+            // Set parent-level disable props based on child condition
             disableCheckBox: hasDisabledChild,
             checkBoxMessage: parentDisableMessage,
             hasDisabledFiscal: hasDisabledChild,

@@ -425,30 +425,27 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     });
   };
 
-
   const renderDynamicArrayTable = (data: any[]) => {
     if (!Array.isArray(data) || data.length === 0) return null;
 
     // Helper to check if a specific key has data in any of the rows
     const hasDataForKey = (key: string) =>
       data.some(
-        (row) =>
-          row[key] !== undefined && row[key] !== null && row[key] !== ''
+        (row) => row[key] !== undefined && row[key] !== null && row[key] !== ''
       );
 
     // Identify all unique keys across all objects
     const allKeys = Array.from(
-      new Set(
-        data.flatMap((row) => (row ? Object.keys(row) : []))
-      )
+      new Set(data.flatMap((row) => (row ? Object.keys(row) : [])))
     );
 
     // Filter keys that have at least one non-empty value
     // Exclude 'year' as we handle it specifically, and 'id' if present
-    const dataKeys = allKeys.filter(key => 
-      key.toLowerCase() !== 'year' && 
-      key.toLowerCase() !== 'id' &&
-      hasDataForKey(key)
+    const dataKeys = allKeys.filter(
+      (key) =>
+        key.toLowerCase() !== 'year' &&
+        key.toLowerCase() !== 'id' &&
+        hasDataForKey(key)
     );
 
     // Transform data to ensure it has ids
@@ -460,8 +457,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     const columns: ListTableColumn<any>[] = [];
 
     // Always add Year column first if 'year' exists in keys (checked from raw data keys)
-    if (allKeys.some(k => k.toLowerCase() === 'year')) {
-       columns.push({
+    if (allKeys.some((k) => k.toLowerCase() === 'year')) {
+      columns.push({
         id: 'year',
         label: 'Year' as any,
         sortId: 'year',
@@ -469,7 +466,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
         sticky: true,
         render: (row: any) => {
           // Find the actual key that matches 'year' case-insensitively
-          const yearKey = Object.keys(row).find(k => k.toLowerCase() === 'year');
+          const yearKey = Object.keys(row).find(
+            (k) => k.toLowerCase() === 'year'
+          );
           const val = yearKey ? row[yearKey] : '-';
           return (
             <div className='px-4 py-2 text-sm font-bold text-[#1A2733]'>
@@ -481,7 +480,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     }
 
     // Add other columns
-    dataKeys.forEach(key => {
+    dataKeys.forEach((key) => {
       // Determine label
       let label = formatLabel(key);
       if (key === 'wages') label = 'QRE Wages';
@@ -496,14 +495,23 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
         width: 180,
         render: (row: any) => {
           const val = row[key];
-           // Check if it looks like a "Total" column
-           const isTotal = key.toLowerCase() === 'total' || key.toLowerCase() === 'sum';
-           const isCurrency = typeof val === 'number' || (typeof val === 'string' && !isNaN(parseFloat(val)) && val.trim() !== '');
-           
-           return (
-            <div className={`px-3 py-1.5 text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}>
+          // Check if it looks like a "Total" column
+          const isTotal =
+            key.toLowerCase() === 'total' || key.toLowerCase() === 'sum';
+          const isCurrency =
+            typeof val === 'number' ||
+            (typeof val === 'string' &&
+              !isNaN(parseFloat(val)) &&
+              val.trim() !== '');
+
+          return (
+            <div
+              className={`px-3 py-1.5 text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+            >
               {val !== undefined && val !== null && val !== ''
-                ? (isCurrency ? formatCurrency(val) : val)
+                ? isCurrency
+                  ? formatCurrency(val)
+                  : val
                 : '-'}
             </div>
           );

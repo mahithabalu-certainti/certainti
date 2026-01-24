@@ -85,7 +85,6 @@ const generateYearOptions = () => {
   return years.reverse();
 };
 
-
 interface FormSubmission extends Omit<historySummary, 'fiscal_year'> {
   user_id: string; // Temporary ID for form management
   fiscal_year: string; // Keep as string for form handling, convert to number for API
