@@ -87,13 +87,13 @@ export class RdCreditCalculatorForAZ {
         const line16 = totalGrossReceipts.div(priorYearsCount);
 
         //---- Line 17: Fixed base percenatge
-        const line17 = (config.fixed_base_percentage)/100 || 0;
+        const line17 = (config.fixed_base_percentage) || 0;
 
         //---- Line 18: base amount
-        const line18 = line16.mul(new Decimal(line17));
+        const line18 = line16.mul(new Decimal(line17).div(100));
 
         //---- Line 19: excess QRE over base amount
-        const line19 = line15.minus(line18);
+        const line19 = line18.minus(line15);
 
         //---- Line 20: Multiply line 15 by 50%
         const line20 = line15.mul(config.qre_cap_rate / 100);
