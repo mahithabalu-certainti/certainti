@@ -314,7 +314,7 @@ export class ProjectInjestionTaskService {
           transaction
         );
       }
-
+      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(accountNumber);
       const { projectResourceFiscalCreated, newProjectFiscalRegion } = await this.projectTaskSchema.startAggregation(
         accountNumber,
         projectTaskData,
@@ -325,11 +325,12 @@ export class ProjectInjestionTaskService {
         userId,
         activeStatusId,
         activeId[0][0].rid,
+        checkTableExists,
         transaction
       );
 
 
-      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(accountNumber);
+     
       if (checkTableExists) {
 
         const projectCaseMapping =
@@ -656,7 +657,8 @@ export class ProjectInjestionTaskService {
           transaction
         );
       }
-
+      const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
       await this.projectTaskSchema.startUpdateAggregation(
         accountNumber,
         projectTaskData,
@@ -668,12 +670,12 @@ export class ProjectInjestionTaskService {
         userId,
         activeStatusId,
         activeId[0][0].rid,
+        checkTableExists,
         transaction
       );
 
       let projectCaseMapping: any = [];
-      const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
-      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
+      
       if (checkTableExists) {
         projectCaseMapping =
           await this.projectIngestion.fetchProjectFiscalCaseMapping(
@@ -899,7 +901,8 @@ export class ProjectInjestionTaskService {
       }
 
       const { resourceData, projectData, taskData } = validationResult;
-
+      const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
       await this.projectTaskSchema.startUpdateAggregation(
         accountNumber,
         mergedTaskData,
@@ -911,6 +914,7 @@ export class ProjectInjestionTaskService {
         userId,
         activeStatusId,
         activeId,
+        checkTableExists,
         transaction
       );
 
@@ -1444,6 +1448,9 @@ export class ProjectInjestionTaskService {
           modified_by: projectTask.modified_by,
           status_rid: projectTask.status_rid,
         };
+        const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+        const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
+        
         const aggreation = await this.projectTaskSchema.startUpdateAggregation(
           accountNumber,
           projectTaskData,
@@ -1455,6 +1462,7 @@ export class ProjectInjestionTaskService {
           userId,
           activeStatusId,
           activeId[0][0].rid,
+          checkTableExists,
           transaction
         );
 

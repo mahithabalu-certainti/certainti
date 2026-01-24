@@ -40,6 +40,7 @@ export class RdCreditCalculatorForSC {
 
         const fifty_percent_credit = net_base_amount.mul(config.carry_forward_credit_rate).div(100);
         const final_credit = Decimal.min(tot_qre_credit, fifty_percent_credit);
+        const unused_credit = tot_qre_credit.minus(final_credit);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
@@ -57,6 +58,7 @@ export class RdCreditCalculatorForSC {
             net_base_amount,
             fifty_percent_credit,
             final_credit,
+            unused_credit,
             config: config
 
         }
@@ -104,7 +106,8 @@ export class RdCreditCalculatorForSC {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract
+            contract: currentYearQREs.contract,
+            sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
         })
  
         prior3YearsQREs.forEach((item) => {
@@ -160,7 +163,7 @@ export class RdCreditCalculatorForSC {
         "7 Line 5 minus line 6 (If less than zero enter zero).":computeFieldsResp.net_base_amount,
         [`8 Multiply line 7 by ${computeFieldsResp.config.carry_forward_credit_rate} % (${computeFieldsResp.config.carry_forward_credit_rate / 100}).`]:computeFieldsResp.fifty_percent_credit,
         "9 Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)":computeFieldsResp.final_credit,
-        "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)":""
+        "10 Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)":computeFieldsResp.unused_credit
         }
         return {
             computed_fields: {
