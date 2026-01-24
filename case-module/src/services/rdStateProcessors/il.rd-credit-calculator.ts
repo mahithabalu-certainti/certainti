@@ -91,7 +91,7 @@ export class RdCreditCalculatorForIL {
      */
     columnBCurrentYearExpense(currentYearQREs: QRE, final_total_qres_column_a: number, config: ConfigJson, caseData : Case) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         const cost_of_supplies = new Decimal(currentYearQREs.supplies || 0)
         const lease_costs_of_computers = caseData.lease_costs_of_computers || 0.00
         const llinois_research_payments_corp_only = caseData.llinois_research_payments_corp_only || 0.00
