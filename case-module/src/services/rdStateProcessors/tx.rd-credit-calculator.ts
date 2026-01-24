@@ -97,7 +97,7 @@ export class RdCreditCalculatorForTX {
             .plus(qretInfo.prev3_qre);
 
         // Line 5
-        const average_prev_year_qre = tot_prev_year_qre.div(3);
+        const average_prev_year_qre = tot_prev_year_qre.div(3)
 
         // Line 6
         const average_qret_rate_50pct = average_prev_year_qre.mul(
@@ -120,13 +120,13 @@ export class RdCreditCalculatorForTX {
             : "N/A";
 
         return {
-            average_prev_year_qre: this.round2(average_prev_year_qre),
-            average_qret_rate_50pct: this.round2(average_qret_rate_50pct),
-            difference: this.round2(difference),
+            average_prev_year_qre: average_prev_year_qre,
+            average_qret_rate_50pct: average_qret_rate_50pct,
+            difference: difference,
             credit_eq_zero:
-            credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero) : credit_eq_zero,
+            credit_eq_zero instanceof Decimal ? credit_eq_zero : credit_eq_zero,
             credit_gt_zero:
-            credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero) : credit_gt_zero,
+            credit_gt_zero instanceof Decimal ? credit_gt_zero : credit_gt_zero,
             config
         };
     }
