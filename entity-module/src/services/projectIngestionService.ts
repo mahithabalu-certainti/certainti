@@ -966,16 +966,16 @@ class ProjectIngestionService {
     } else {
       query = regionRid
     }
-
-    if(projectData.region_rid === '') {
-      await AccountFiscalRegion.destroy({
-        where : {
-          account_rid,
-          fiscal_year,
-          region_rid: query,
-        }
-      })
-    }
+     //commented out since statewise summary will account only from  project resources
+    // if(projectData.region_rid === '') {
+    //   await AccountFiscalRegion.destroy({
+    //     where : {
+    //       account_rid,
+    //       fiscal_year,
+    //       region_rid: query,
+    //     }
+    //   })
+    // }
     const existingFiscal = await AccountFiscalRegion.findOne({
       where: {
         account_rid,
