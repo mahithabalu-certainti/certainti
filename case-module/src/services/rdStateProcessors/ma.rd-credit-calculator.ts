@@ -87,21 +87,16 @@ export class RdCreditCalculatorForMA {
      * @returns 
      */
     part2ASCCreditCalculation(prior3YearsQREs: QRE[], part1TotalQre: Decimal, part1TotalQreAgg: Decimal, config: ConfigJson) {
-
-        const qreSum = prior3YearsQREs.map(item => ({
-            fiscalYear: item.fiscalYear,
-            wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-        }));
-        const total_qre = new Decimal(qreSum.reduce((sum, item) => sum + Number(item.wagesContractSum), 0));
+        const total_qre = new Decimal(prior3YearsQREs.reduce((sum, item) => sum + Number(item.qre), 0));
         const average_qre = total_qre.div(3);
 
-        const fifty_percent_qre = average_qre.mul(config.qre_cap_rate);
+        const fifty_percent_qre = average_qre.mul(config.qre_cap_rate/100);
         const excess_qre = part1TotalQre.minus(fifty_percent_qre)
 
         const final_excess_qre = new Decimal(excess_qre.lt(0) ? 0 : excess_qre);
-        const applicable_credit_rate = config.credit_rate * 100;
+        const applicable_credit_rate = config.credit_rate;
 
-        const total_credit_group = final_excess_qre.mul(config.credit_rate);
+        const total_credit_group = final_excess_qre.mul(config.credit_rate/100);
 
         const aggregate_group_credit_percent = part1TotalQre.div(part1TotalQreAgg).mul(100);
 
@@ -153,8 +148,8 @@ export class RdCreditCalculatorForMA {
 
         return {
             fixed_base_ratio,
-            avg_total_previous_receipts,
-            base_amount,
+            avg_total_previous_receipts : this.round2(avg_total_previous_receipts),
+            base_amount : this.round2(base_amount),
             aggregate_group_credit_percent,
             line17 : this.round2(line17),
             line18 : this.round2(line18),
