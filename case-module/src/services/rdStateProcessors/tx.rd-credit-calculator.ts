@@ -52,8 +52,6 @@ export class RdCreditCalculatorForTX {
      * @param config 
      */
     creditCalculationQRET(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson) {
-        console.log("currentYearQREs ====> ", currentYearQREs)
-        console.log("prior3YearsQREs ====> ", prior3YearsQREs)
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
@@ -94,33 +92,45 @@ export class RdCreditCalculatorForTX {
      */
     precedingCalculationWithQRET(qretInfo: any, config: ConfigJson) {
 
-        console.log("qretInfo ====> ", qretInfo)
-        const tot_prev_year_qre = new Decimal(qretInfo.prev1_qre).plus(qretInfo.prev2_qre).plus(qretInfo.prev3_qre);
-        //----Line5: Average QRET for preceding periods.
+        const tot_prev_year_qre = new Decimal(qretInfo.prev1_qre)
+            .plus(qretInfo.prev2_qre)
+            .plus(qretInfo.prev3_qre);
+
+        // Line 5
         const average_prev_year_qre = tot_prev_year_qre.div(3);
 
-        //----Line6: Average QRET x 50%
-        const average_qret_rate_50pct = average_prev_year_qre.mul(config.average_qret_rate_50pct/100);
+        // Line 6
+        const average_qret_rate_50pct = average_prev_year_qre.mul(
+            new Decimal(config.average_qret_rate_50pct).div(100)
+        );
 
-        //----Line7: Difference
-        const difference = new Decimal(qretInfo.total_current_year_qre).minus(average_qret_rate_50pct);
+        // Line 7
+        const difference = new Decimal(qretInfo.total_current_year_qre)
+            .minus(average_qret_rate_50pct);
 
-        //----Line8: Credit.
-        //(If amount in Item 1b is zero, multiply Item 7 by 5% (0.05); 
-        //otherwise, leave Item 8 blank and calculate credit in Item 9)
-        const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? difference.mul(config.qre_rate_5pct/100) : "N/A";
-        const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? difference.mul(config.qre_rate_6_25pct/100) : "N/A";
+        // Line 8
+        const credit_eq_zero =
+            new Decimal(qretInfo.qret_high_edu_contract).eq(0)
+            ? difference.mul(new Decimal(config.qre_rate_5pct).div(100))
+            : "N/A";
+
+        const credit_gt_zero =
+            new Decimal(qretInfo.qret_high_edu_contract).gt(0)
+            ? difference.mul(new Decimal(config.qre_rate_6_25pct).div(100))
+            : "N/A";
+
         return {
             average_prev_year_qre: this.round2(average_prev_year_qre),
             average_qret_rate_50pct: this.round2(average_qret_rate_50pct),
             difference: this.round2(difference),
-            credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
-            config: config
-
-        }
-
+            credit_eq_zero:
+            credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero) : credit_eq_zero,
+            credit_gt_zero:
+            credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero) : credit_gt_zero,
+            config
+        };
     }
+
 
     /**
      * 
@@ -130,12 +140,11 @@ export class RdCreditCalculatorForTX {
      * @returns 
      */
     precedingCalculationWithNoQRET(qretInfo: any, average_prev_year_qre: Decimal, config: ConfigJson) {
-        console.log("average_prev_year_qre ====> ", average_prev_year_qre)
         const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? average_prev_year_qre.mul(config.wages_rate_2_5pct/100) : "N/A";
         const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct/100) : "N/A";
         return {
-            credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero,
+            credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero) : credit_eq_zero,
+            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero) : credit_gt_zero,
             config: config
         }
     }

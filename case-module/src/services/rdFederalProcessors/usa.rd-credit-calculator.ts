@@ -100,7 +100,7 @@ export class RdCreditCalculatorForUSA {
         const line22 = await this.round2(line21.div(6));
 
         // ---- Line 23: Subtract line 22 from line 20 ----
-        const line23 = await this.round2(totalQRE.minus(line22));
+        const line23 = new Decimal(await this.round2(totalQRE.minus(line22)));
 
         // ---- Line (14% or 6%) if any prior year QRE = zero ----
         const hadZeroYear = prior3YearsQREs.some(y => y.qre === 0);
