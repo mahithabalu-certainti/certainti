@@ -189,8 +189,8 @@ export class StateComputationService {
         );
         const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
         const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
-        let currentFiscalYear = parseInt(effectiveEnd.split('-')[0]!);
         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+        let currentFiscalYear = caseDetails.fiscal_year;
         for (const config of configStateLevel) {
             try {
                 const stateComputation = stateCalculators[config.state_code];
