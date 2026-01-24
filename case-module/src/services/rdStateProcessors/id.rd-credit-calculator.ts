@@ -166,7 +166,7 @@ export class RdCreditCalculatorForID {
             "10 Enter average annual Idaho gross receipts from page 2, Part C":"",
             "11 Base amount. Multiply line 10 by the percentage on line 9":"",
             "12 Subtract line 11 from line 8. If zero or less, enter zero":qretInfo.difference,
-            [`13 Multiply line 8 by $${config.credit_rate_percent} %`]:qretInfo.credit_rate_percent,
+            [`13 Multiply line 8 by ${config.credit_rate_percent || 0} %`]:qretInfo.credit_rate_percent,
             "14 Enter the smaller amount from line 12 or line 13":qretInfo.min_credit_rate,
             "15 Add lines 3 and 14 ":qretInfo.tot_base_amount,
             [`16 Credit earned. Multiply line 15 by ${config.credit_earned} % `]:qretInfo.credit_earned,
