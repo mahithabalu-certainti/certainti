@@ -977,7 +977,7 @@ export const rawQueries = {
     employers_pension_contribution,other, total_expenses, other, sub_contracts, cloud_software, unpaid_amounts_paid,
     unpaid_amounts, aggregated_turnover, taxable_income, export_sales_revenue,
     lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
-    basic_research_payments, qualified_computer_rental_time_expenses
+    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;

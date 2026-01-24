@@ -1,5 +1,6 @@
 import { Decimal } from "decimal.js";
 import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
+import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
@@ -26,16 +27,17 @@ export class RdCreditCalculatorForSC {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string,year : string,) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string,year : string,caseDetails : Case) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
+        const carry_forward_py = new Decimal(caseDetails.credit_carry_forward_py || 0);
 
         const current_year_credit = total_current_year_qre.mul(config.credit_rate).div(100);
-        const tot_qre_credit = current_year_credit;
+        const tot_qre_credit = current_year_credit.plus(carry_forward_py);
         const total_tax_liability = new Decimal(stateRdData.currentYearQREs.business_tax_liability || 0);
 
-        const tot_all_credits_other_than_qre = 0;
+        const tot_all_credits_other_than_qre = new Decimal(caseDetails.other_credits_total || 0);
         const net_base_amount = total_tax_liability.minus(tot_all_credits_other_than_qre);
 
         const fifty_percent_credit = net_base_amount.mul(config.carry_forward_credit_rate).div(100);

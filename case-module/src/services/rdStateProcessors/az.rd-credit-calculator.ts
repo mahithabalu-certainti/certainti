@@ -87,7 +87,7 @@ export class RdCreditCalculatorForAZ {
         const line16 = totalGrossReceipts.div(priorYearsCount);
 
         //---- Line 17: Fixed base percenatge
-        const line17 = config.fixed_base_percentage;
+        const line17 = (config.fixed_base_percentage)/100 || 0;
 
         //---- Line 18: base amount
         const line18 = line16.mul(new Decimal(line17));
@@ -96,7 +96,7 @@ export class RdCreditCalculatorForAZ {
         const line19 = line15.minus(line18);
 
         //---- Line 20: Multiply line 15 by 50%
-        const line20 = line15.mul(config.qre_cap_rate);
+        const line20 = line15.mul(config.qre_cap_rate / 100);
 
         //---- Line 21: Enter smaller of line 19 or line 20
         const line21 = Decimal.min(line19, line20);
@@ -303,7 +303,7 @@ export class RdCreditCalculatorForAZ {
             [`17 Fixed-base percentage [not more than ${creditRRC.fixed_base_percentage}%]: See instructions`]:creditRRC.fixed_base_percentage,
             "18 Base amount: Multiply line 16 by the percentage on line 17. Enter the result":creditRRC.base_amount,
             "19 Subtract line 18 from line 15. If less than zero, enter 0":creditRRC.excess_qre_over_base,
-            [`20 Multiply line 15 by ${creditRRC?.config?.qre_cap_rate} % (${(creditRRC?.config?.qre_cap_rate ) / 100}). Enter the result`]:creditRRC.half_total_qre,
+            [`20 Multiply line 15 by ${creditRRC?.config?.qre_cap_rate}% (${(creditRRC?.config?.qre_cap_rate ) / 100}). Enter the result`]:creditRRC.half_total_qre,
             [`Enter ${creditRRC?.config?.qre_cap_rate} of line 15`]:creditRRC.half_total_qre,
             
             "21 Enter the lesser of line 19 or line 20":creditRRC.total_section_b_credit,
@@ -312,7 +312,7 @@ export class RdCreditCalculatorForAZ {
             [`* If line 22 is more than $ ${creditRRC?.config?.threshold_amount}, skip line 23 and complete lines 24 through 26.`]:"",
             [`23 Multiply line 22 by ${creditRRC?.config?.credit_rate}% (${(creditRRC?.config?.credit_rate)/100}). Enter the result`]:creditRRC.credit_if_under_threshold,
             [`24 Subtract $ ${creditRRC?.config?.threshold_amount} from line 22. Enter the difference`]:creditRRC.excess_amount || '',
-            [`25 Multiply line 24 by ${creditRRC?.config?.tier2_rate}. Enter the result`]:creditRRC.credit_on_excess || '',
+            [`25 Multiply line 24 by ${creditRRC?.config?.tier2_rate}%. Enter the result`]:creditRRC.credit_on_excess || '',
             [`26 Add ${creditRRC?.config?.tier2_base_add} to line 25. Enter the total`] :creditRRC.credit_if_over_threshold || '',
             "27 a If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26 .":creditRRC.total_az_final_credit || '',
             "27 b If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page":""
@@ -337,7 +337,7 @@ export class RdCreditCalculatorForAZ {
             [`* If line 88 is more than ${creditASC?.config?.threshold_amount}, skip line 89. Complete lines 90 through 93.`]:"",
             [`89 If line 88 is ${creditASC?.config?.threshold_amount} or less, multiply line 88 by ${creditASC?.config?.tier1_rate}% (${creditASC?.config?.tier1_rate/100}). Enter the result.`]:creditASC.credit_if_under_threshold || '',
             [`90 If line 88 is more than ${creditASC?.config?.threshold_amount}, subtract ${creditASC?.config?.threshold_amount} from line 88. Enter the difference.`]:creditASC.excess_amount || '',
-            [`91 Multiply line 90 by  ${creditASC?.config?.tier2_rate}. Enter the result.`]:creditASC.credit_on_excess || '',
+            [`91 Multiply line 90 by  ${creditASC?.config?.tier2_rate}%. Enter the result.`]:creditASC.credit_on_excess || '',
             [`92 Add ${creditASC?.config?.tier2_base_add} to line 91. Enter the total. `]:creditASC.credit_if_over_threshold || '',
             "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.":creditASC.total_az_final_credit || ''
         }

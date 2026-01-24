@@ -33,6 +33,9 @@ export interface ICreateCases {
   illinois_research_payments_corp_only? : number
   basic_research_payments? : number
   qualified_computer_rental_time_expenses? : number
+  credit_carry_forward_py?: number
+  current_year_gross_receipts?: number
+  other_credits_total?: number
   parent_case_rid?: string;
 }
 
