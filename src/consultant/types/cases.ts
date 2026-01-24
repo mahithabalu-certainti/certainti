@@ -193,7 +193,7 @@ export interface CaseFormFields {
   basic_research_payments: string | null;
   illinois_rd_credit_partnership_corp: string | null;
   credit_carry_forward_py: string | null;
-  gross_receipts: string | null;
+  current_year_gross_receipts: string | null;
 }
 
 export interface CaseFormPayload {
@@ -230,7 +230,7 @@ export interface CaseFormPayload {
   basic_research_payments: string | null;
   illinois_rd_credit_partnership_corp: string | null;
   credit_carry_forward_py: string | null;
-  gross_receipts: string | null;
+  current_year_gross_receipts: string | null;
 }
 
 export interface updateCaseJurisdictionPayload {
