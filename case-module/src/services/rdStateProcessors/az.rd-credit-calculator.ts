@@ -1,6 +1,7 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
 import { AnnualGrossReceipt, QRE, StateRDData } from "../rdComputation/rdCreditTypes";
+import { Case } from "../../models/caseModel";
 
 /**
  * Arizona RD Credit Calculator
@@ -30,14 +31,14 @@ export class RdCreditCalculatorForAZ {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : number, caseData : Case) {
         
         const priorYearsCount = 4;
         const totalGrossReceipts = new Decimal((stateRdData.annualGrossReceipts || []).reduce(
             (sum, r) => sum + (r.grossReceipts || 0), 0));
 
-        const rrcResult = await this.rrc(config, stateRdData.currentYearQREs, totalGrossReceipts, priorYearsCount);
-        const ascResult = await this.asc(config, stateRdData.currentYearQREs, stateRdData.prior3YearsQREs);
+        const rrcResult = await this.rrc(config, stateRdData.currentYearQREs, totalGrossReceipts, priorYearsCount, caseData);
+        const ascResult = await this.asc(config, stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, caseData);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || [], {
             country: this.country,
@@ -62,7 +63,7 @@ export class RdCreditCalculatorForAZ {
      * @param priorYearsCount 
      * @returns 
      */
-    async rrc(config: ConfigJson, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async rrc(config: ConfigJson, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number,caseData : Case) {
         logMessage(`Computing AZ Credit with config: ${JSON.stringify(config)}`);
         //---- Line 10: Prior year credit carryforward
         const line10 = 0;
@@ -74,7 +75,7 @@ export class RdCreditCalculatorForAZ {
         const line12 = currentYearQREs.supplies || 0;
 
         //---- Line 13: cost to rent
-        const line13 = 0;
+        const line13 = caseData.lease_costs_of_computers || 0;
 
         //---- Line 14: contract
         const line14 = currentYearQREs.contract || 0;
@@ -90,13 +91,13 @@ export class RdCreditCalculatorForAZ {
         const line17 = (config.fixed_base_percentage) || 0;
 
         //---- Line 18: base amount
-        const line18 = line16.mul(new Decimal(line17).div(100));
+        const line18 = line16.mul(new Decimal(line17/100));
 
         //---- Line 19: excess QRE over base amount
         const line19 = line18.minus(line15);
 
         //---- Line 20: Multiply line 15 by 50%
-        const line20 = line15.mul(config.qre_cap_rate / 100);
+        const line20 = line15.mul(config.qre_cap_rate/100);
 
         //---- Line 21: Enter smaller of line 19 or line 20
         const line21 = Decimal.min(line19, line20);
@@ -114,11 +115,12 @@ export class RdCreditCalculatorForAZ {
         // If line 22 is more than $2,500,000, skip line 23 and complete lines 24 through 26.
         if (line22.lte(config.threshold_amount)) {
             //-- Line 23: Multiple line 22 by 24%
-            line23 = line22.mul(config.credit_rate).toNumber();
+            line23 = line22.mul(config.credit_rate/100);
             line27a = line23;
         } else {
+            line23 = 0
             line24 = line22.minus(config.threshold_amount);
-            line25 = line24.mul(config.tier2_rate);
+            line25 = line24.mul(config.tier2_rate/100);
             line26 = line25.plus(config.tier2_base_add);
             line27a = line26;
         }
@@ -153,24 +155,24 @@ export class RdCreditCalculatorForAZ {
      * @param prior3YearsQREs 
      * @returns 
      */
-    async asc(config: ConfigJson, currentYearQREs: any, prior3YearsQREs: QRE[]) {
+    async asc(config: ConfigJson, currentYearQREs: any, prior3YearsQREs: QRE[], caseData :Case) {
         //---- Line 77:  
-        const line77 = currentYearQREs.wages || 0;
+        const line77 = new Decimal(currentYearQREs.wages || 0);
 
         //---- Line 78: wages
-        const line78 = currentYearQREs.wages || 0;
+        const line78 = new Decimal(currentYearQREs.wages || 0);
 
         //---- Line 79: supplies
-        const line79 = currentYearQREs.supplies || 0;
+        const line79 = new Decimal(currentYearQREs.supplies || 0);
 
         //---- Line 80: cost to rent
-        const line80 = 0;
+        const line80 = new Decimal(caseData.lease_costs_of_computers || 0);
 
         //---- Line 81: contract
-        const line81 = currentYearQREs.contract || 0;
+        const line81 = new Decimal(currentYearQREs.contract || 0);
 
         //---- Line 82: total QRE
-        const line82 = new Decimal(line78 + line79 + line80 + line81)
+        const line82 = new Decimal(line78.plus(line79).plus(line80).plus(line81))
 
         if (await this.ascRuleValidation(prior3YearsQREs)) {
             //---- Line 83: prior 3 years QRE total
@@ -183,7 +185,7 @@ export class RdCreditCalculatorForAZ {
             const line85 = Decimal.max(new Decimal(line82).minus(line84), 0);
 
             //---- Line 86: 50% of current year QRE
-            const line86 = line82.mul(config.qre_cap_rate);
+            const line86 = line82.mul(config.qre_cap_rate/100);
 
             //---- Line 87: Enter the lesser of line 85 or line 86
             const line87 = Decimal.min(line85, line86);
@@ -201,13 +203,14 @@ export class RdCreditCalculatorForAZ {
                 line93 = line89;
             } else {
                 line90 = line88.minus(config.threshold_amount);
-                line91 = line90.mul(config.tier2_rate);
+                line91 = line90.mul(config.tier2_rate/100);
                 line92 = line91.plus(config.tier2_base_add);
                 line93 = line92;
             }
             return {
                 wages: line78,
                 supplies: line79,
+                lease_computers : line80,
                 contract: line81,
                 total_current_year_qre: parseFloat(Number(line82).toFixed(2)) || 0.00,
                 total_prior_3years_qre: parseFloat(Number(line83).toFixed(2)) || 0.00,
@@ -215,7 +218,7 @@ export class RdCreditCalculatorForAZ {
                 excess_qre: parseFloat(Number(line85).toFixed(2)) || 0.00,
                 half_total_qre: parseFloat(Number(line86).toFixed(2)) || 0.00,
                 total_section_b_credit: parseFloat(Number(line87).toFixed(2)) || 0.00,
-                prior_year_credit_carryforward: line77 === '' ? 0.00 : parseFloat(Number(line77).toFixed(2)),
+                prior_year_credit_carryforward: line77 === Decimal(0) ? 0.00 : parseFloat(Number(line77).toFixed(2)),
                 credit_if_under_threshold: parseFloat(Number(line89).toFixed(2)) || 0.00,
                 excess_amount: parseFloat(Number(line90).toFixed(2)) || 0.00,
                 credit_on_excess: parseFloat(Number(line91).toFixed(2)) || 0.00,
@@ -242,7 +245,7 @@ export class RdCreditCalculatorForAZ {
         const lessThan3Years = prior3YearsQREs.length < 3;
         const hasZeroQRE = prior3YearsQREs.some(y => y.qre === 0);
 
-        const ascEligible = (lessThan3Years || hasZeroQRE);
+        const ascEligible = !(lessThan3Years || hasZeroQRE);
         return ascEligible;
     }
 
@@ -282,7 +285,6 @@ export class RdCreditCalculatorForAZ {
                 "Description": "Research Tax Credit",
                 stateDetails : "Arizona - Credit Calculation"
             },
-            qreSummary
         };
     }
 
@@ -324,7 +326,7 @@ export class RdCreditCalculatorForAZ {
             "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.":"",
             "78 Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditASC.wages || '',
             "79 Current year cost of supplies":creditASC.supplies || '',
-            "80 Current year cost to rent or lease computers":"",
+            "80 Current year cost to rent or lease computers":creditASC.lease_computers || '',
             "81 Current contract research expenses: See instructions":creditASC.contract || '',
             "82 Total research expenses for the current year: Add lines 78 through 81. Enter the total":creditASC.total_current_year_qre || '',
             "83 Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC":creditASC.total_prior_3years_qre || '',
