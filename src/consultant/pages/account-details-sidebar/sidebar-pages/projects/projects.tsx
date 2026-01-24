@@ -201,9 +201,15 @@ const Projects: React.FC<ProjectsProps> = ({
     setRefreshProjectsTrigger(Date.now());
   };
 
-  const getProjectDisableReason = (isRdClaimQualified?: boolean): string => {
+  const getProjectDisableReason = (
+    isRdClaimQualified?: boolean,
+    isTriggerQualifiedDisabled?: boolean
+  ): string => {
     if (isRdClaimQualified) {
       return 'Project is signed off';
+    }
+    if (isTriggerQualifiedDisabled) {
+      return 'Project type not allowed due to Configuration setting';
     }
     return '';
   };
@@ -216,7 +222,8 @@ const Projects: React.FC<ProjectsProps> = ({
             project?.ProjectFiscal?.map((fiscal) => {
               // Get message for THIS specific fiscal object
               const checkBoxMessage = getProjectDisableReason(
-                !!fiscal?.is_rd_claim_qualified
+                !!fiscal?.is_rd_claim_qualified,
+                fiscal?.is_rd_trigger_qualified === false
               );
 
               return {
@@ -226,10 +233,25 @@ const Projects: React.FC<ProjectsProps> = ({
               };
             }) || [];
 
+                    // Check if ANY fiscal in this project is disabled
+          const hasDisabledChild = updatedProjectFiscal.some(
+            (fiscal) => fiscal.disableCheckBox
+          );
+
+          // Get the disable reason for the parent based on child condition
+          const parentDisableMessage = hasDisabledChild
+            ? getProjectDisableReason(true) // Or use appropriate logic for parent
+            : null;
+
+
           return {
             ...project,
             // Update the ProjectFiscal array with the new objects
             ProjectFiscal: updatedProjectFiscal,
+                // Set parent-level disable props based on child condition
+            disableCheckBox: hasDisabledChild,
+            checkBoxMessage: parentDisableMessage,
+            hasDisabledFiscal: hasDisabledChild,
           };
         }) || [];
 
