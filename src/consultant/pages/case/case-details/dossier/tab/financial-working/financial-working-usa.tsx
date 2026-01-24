@@ -116,15 +116,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
           >
             {(() => {
-              const isPercentage =
-                typeof value === 'string' && value.endsWith('%');
-              const isNumeric =
-                !isPercentage &&
-                (typeof value === 'number' ||
-                  (typeof value === 'string' &&
-                    !isNaN(parseFloat(value.replace(/[^0-9.-]/g, ''))) &&
-                    isFinite(Number(value.replace(/[^0-9.-]/g, '')))));
-              return isNumeric ? formatCurrency(value) : value;
+              // Only format strict numbers as currency
+              const isStrictNumber = typeof value === 'number';
+              return isStrictNumber ? formatCurrency(value) : value;
             })()}
           </span>
         )}
