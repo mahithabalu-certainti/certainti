@@ -49,6 +49,8 @@ export const transformCaseFormPayload = (
     basic_research_payments: formData.basic_research_payments || null,
     illinois_rd_credit_partnership_corp:
       formData.illinois_rd_credit_partnership_corp || null,
+    credit_carry_forward_py: formData.credit_carry_forward_py || null,
+    gross_receipts: formData.gross_receipts || null,
   };
 
   if (isEditView && originalData) {

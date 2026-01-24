@@ -49,6 +49,20 @@ export enum FinancialWorkingCountries {
   UK = 'United Kingdom',
   US = 'United States',
 }
+export enum FinancialWorkingStates {
+  Arizona = 'Arizona',
+  California = 'California',
+  Colorado = 'Colorado',
+  Connecticut = 'Connecticut',
+  Georgia = 'Georgia',
+  Idaho = 'Idaho',
+  Illinois = 'Illinois',
+  Massachusetts = 'Massachusetts',
+  NewJersey = 'New Jersey',
+  Ohio = 'Ohio',
+  SouthCarolina = 'South Carolina',
+  Texas = 'Texas',
+}
 
 export interface globalFiltersType {
   [key: string]: string[];
