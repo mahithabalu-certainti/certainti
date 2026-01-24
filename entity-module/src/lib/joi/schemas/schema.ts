@@ -1284,6 +1284,9 @@ const createProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+        if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+        }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1305,6 +1308,9 @@ const createProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1329,6 +1335,9 @@ const createProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1349,6 +1358,9 @@ const createProjectSchema = Joi.object({
     })
     .custom((value, helpers) => {
       try {
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         const num = new Decimal(value);
         if (num.lte(0)) {
           return helpers.error("any.invalid");
@@ -1371,6 +1383,9 @@ const createProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1391,6 +1406,9 @@ const createProjectSchema = Joi.object({
     })
     .custom((value, helpers) => {
       try {
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         const num = new Decimal(value);
         if (num.lte(0)) {
           return helpers.error("any.invalid");
@@ -1413,6 +1431,9 @@ const createProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1523,6 +1544,9 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1544,6 +1568,9 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1570,6 +1597,9 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1583,15 +1613,20 @@ const updateProjectSchema = Joi.object({
     })
     .optional()
     .allow(null),
-  total_effort_subcon: Joi.string()
+  total_effort_subcon: Joi.string().label("Total sub con Effort")
     .pattern(decimal18_2Regex)
     .messages({
       "string.pattern.base": "Total SUB Con Effort must have up to 16 digits before the decimal and up to 2 decimal places",
     })
     .custom((value, helpers) => {
+      // Allow empty, null, or "0" values since field is optional
+      if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
       try {
         const num = new Decimal(value);
-        if (num.lte(0)) {
+        console.log('Validating total_effort_subcon:', value, 'Parsed number:', num.toString(), 'Is negative:', num.lt(0));
+        if (num.lt(0)) {
           return helpers.error("any.invalid");
         }
         return value;
@@ -1600,7 +1635,7 @@ const updateProjectSchema = Joi.object({
       }
     })
     .messages({
-      "any.invalid": "Total Effort must be a valid positive number",
+      "any.invalid": "Total Sub Con Effort must be a valid  number",
     })
     .optional()
     .allow(null),
@@ -1612,6 +1647,9 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1633,9 +1671,13 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
+        
         return value;
       } catch (err) {
         return helpers.error("any.invalid");
@@ -1654,6 +1696,9 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
+         if (!value || value === "0" || value === "0.00" || value === "0.0") {
+        return value;
+      }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
