@@ -29,7 +29,7 @@ export class RdCreditCalculatorForSC {
      */
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string,year : string,caseDetails : Case) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
         const carry_forward_py = new Decimal(caseDetails.credit_carry_forward_py || 0);
 
