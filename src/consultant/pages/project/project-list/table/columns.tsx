@@ -657,8 +657,8 @@ export const getAllProjectListColumns = (
       !permissionMap?.['key_contacts']?.edit,
     render: (row: Project & { _level?: number }) => {
       const isClickable =
-        !permissionMap?.['key_contacts']?.read &&
-        !permissionMap?.['key_contacts']?.edit &&
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
         row._level !== undefined &&
         row._level === 1;
       return isClickable ? (
@@ -686,8 +686,8 @@ export const getAllProjectListColumns = (
       !permissionMap?.['key_contacts']?.edit,
     render: (row: Project & { _level?: number }) => {
       const isClickable =
-        !permissionMap?.['key_contacts']?.read &&
-        !permissionMap?.['key_contacts']?.edit &&
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
         row._level !== undefined &&
         row._level === 1;
       return isClickable ? (
