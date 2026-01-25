@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  FinancialWorkingCountries,
   FormType,
   ParentChildSelectOption,
   SelectOption,
@@ -42,7 +43,8 @@ export const CaseFormData = (
   globalType?: boolean,
   calculatedStatutoryDate?: string,
   statusOptions?: SelectOption[],
-  isAustralianCountry?: boolean
+  isAustralianCountry?: boolean,
+  CountryName?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -182,9 +184,13 @@ export const CaseFormData = (
               !permissionMap?.['heat_light_power']?.edit &&
               permissionMap?.['heat_light_power']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['heat_light_power']?.edit &&
-              !permissionMap?.['heat_light_power']?.read,
+              ![
+                FinancialWorkingCountries.Ireland,
+                FinancialWorkingCountries.UK,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              (isEditView &&
+                !permissionMap?.['heat_light_power']?.edit &&
+                !permissionMap?.['heat_light_power']?.read),
           }),
           createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
             required: false,
@@ -221,9 +227,10 @@ export const CaseFormData = (
               !permissionMap?.['tax_liability']?.edit &&
               permissionMap?.['tax_liability']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['tax_liability']?.edit &&
-              !permissionMap?.['tax_liability']?.read,
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                !permissionMap?.['tax_liability']?.read),
           }),
           createTextField(
             'employers_pension_contribution',
@@ -244,9 +251,10 @@ export const CaseFormData = (
                 !permissionMap?.['employers_pension_contribution']?.edit &&
                 permissionMap?.['employers_pension_contribution']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['employers_pension_contribution']?.edit &&
-                !permissionMap?.['employers_pension_contribution']?.read,
+                CountryName !== FinancialWorkingCountries.Australia ||
+                (isEditView &&
+                  !permissionMap?.['employers_pension_contribution']?.edit &&
+                  !permissionMap?.['employers_pension_contribution']?.read),
             }
           ),
           createTextField(
@@ -268,9 +276,10 @@ export const CaseFormData = (
                 !permissionMap?.['material_software_cost']?.edit &&
                 permissionMap?.['material_software_cost']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['material_software_cost']?.edit &&
-                !permissionMap?.['material_software_cost']?.read,
+                CountryName !== FinancialWorkingCountries.UK ||
+                (isEditView &&
+                  !permissionMap?.['material_software_cost']?.edit &&
+                  !permissionMap?.['material_software_cost']?.read),
             }
           ),
           createTextField('sub_contracts', 'Subcontracts', {
@@ -288,9 +297,10 @@ export const CaseFormData = (
               !permissionMap?.['sub_contracts']?.edit &&
               permissionMap?.['sub_contracts']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['sub_contracts']?.edit &&
-              !permissionMap?.['sub_contracts']?.read,
+              CountryName !== FinancialWorkingCountries.UK ||
+              (isEditView &&
+                !permissionMap?.['sub_contracts']?.edit &&
+                !permissionMap?.['sub_contracts']?.read),
           }),
           createTextField('cloud_software', 'Cloud Software', {
             required: false,
@@ -308,9 +318,10 @@ export const CaseFormData = (
               !permissionMap?.['cloud_software']?.edit &&
               permissionMap?.['cloud_software']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['cloud_software']?.edit &&
-              !permissionMap?.['cloud_software']?.read,
+              CountryName !== FinancialWorkingCountries.Ireland ||
+              (isEditView &&
+                !permissionMap?.['cloud_software']?.edit &&
+                !permissionMap?.['cloud_software']?.read),
           }),
           createTextField('unpaid_amounts_paid', 'Unpaid Amounts (+)', {
             required: false,
@@ -328,9 +339,12 @@ export const CaseFormData = (
               !permissionMap?.['unpaid_amounts_paid']?.edit &&
               permissionMap?.['unpaid_amounts_paid']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['unpaid_amounts_paid']?.edit &&
-              !permissionMap?.['unpaid_amounts_paid']?.read,
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts_paid']?.edit &&
+                !permissionMap?.['unpaid_amounts_paid']?.read),
           }),
           createTextField('unpaid_amounts', 'Unpaid Amounts (-)', {
             required: false,
@@ -348,9 +362,12 @@ export const CaseFormData = (
               !permissionMap?.['unpaid_amounts']?.edit &&
               permissionMap?.['unpaid_amounts']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['unpaid_amounts']?.edit &&
-              !permissionMap?.['unpaid_amounts']?.read,
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts']?.edit &&
+                !permissionMap?.['unpaid_amounts']?.read),
           }),
           createTextField('aggregated_turnover', 'Aggregated Turnover', {
             required: false,
@@ -368,9 +385,10 @@ export const CaseFormData = (
               !permissionMap?.['aggregated_turnover']?.edit &&
               permissionMap?.['aggregated_turnover']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['aggregated_turnover']?.edit &&
-              !permissionMap?.['aggregated_turnover']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['aggregated_turnover']?.edit &&
+                !permissionMap?.['aggregated_turnover']?.read),
           }),
           createTextField('total_expenses', 'Total Expenses', {
             required: isAustralianCountry,
@@ -388,9 +406,10 @@ export const CaseFormData = (
               !permissionMap?.['total_expenses']?.edit &&
               permissionMap?.['total_expenses']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['total_expenses']?.edit &&
-              !permissionMap?.['total_expenses']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['total_expenses']?.edit &&
+                !permissionMap?.['total_expenses']?.read),
           }),
           createTextField('taxable_income', 'Taxable Income', {
             required: false,
@@ -408,9 +427,10 @@ export const CaseFormData = (
               !permissionMap?.['taxable_income']?.edit &&
               permissionMap?.['taxable_income']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['taxable_income']?.edit &&
-              !permissionMap?.['taxable_income']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['taxable_income']?.edit &&
+                !permissionMap?.['taxable_income']?.read),
           }),
           createTextField('export_sales_revenue', 'Export Sales Revenue', {
             required: false,
@@ -428,9 +448,10 @@ export const CaseFormData = (
               !permissionMap?.['export_sales_revenue']?.edit &&
               permissionMap?.['export_sales_revenue']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['export_sales_revenue']?.edit &&
-              !permissionMap?.['export_sales_revenue']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read),
           }),
           createTextField(
             'lease_costs_of_computers',
@@ -451,9 +472,10 @@ export const CaseFormData = (
                 !permissionMap?.['lease_costs_of_computers']?.edit &&
                 permissionMap?.['lease_costs_of_computers']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['lease_costs_of_computers']?.edit &&
-                !permissionMap?.['lease_costs_of_computers']?.read,
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
             }
           ),
           createTextField(
@@ -475,9 +497,12 @@ export const CaseFormData = (
                 !permissionMap?.['illinois_rd_credit_partnership_corp']?.edit &&
                 permissionMap?.['illinois_rd_credit_partnership_corp']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['illinois_rd_credit_partnership_corp']?.edit &&
-                !permissionMap?.['illinois_rd_credit_partnership_corp']?.read,
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.edit &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.read),
             }
           ),
           createTextField(
@@ -500,10 +525,12 @@ export const CaseFormData = (
                   ?.edit &&
                 permissionMap?.['illinois_research_payments_corp_only']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['illinois_research_payments_corp_only']
-                  ?.edit &&
-                !permissionMap?.['illinois_research_payments_corp_only']?.read,
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.edit &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.read),
             }
           ),
           createTextField(
@@ -525,9 +552,10 @@ export const CaseFormData = (
                 !permissionMap?.['basic_research_payments']?.edit &&
                 permissionMap?.['basic_research_payments']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['basic_research_payments']?.edit &&
-                !permissionMap?.['basic_research_payments']?.read,
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  !permissionMap?.['basic_research_payments']?.read),
             }
           ),
           createTextField(
@@ -551,11 +579,12 @@ export const CaseFormData = (
                 permissionMap?.['qualified_computer_rental_time_expenses']
                   ?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['qualified_computer_rental_time_expenses']
-                  ?.edit &&
-                !permissionMap?.['qualified_computer_rental_time_expenses']
-                  ?.read,
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.edit &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.read),
             }
           ),
           createTextField('current_year_gross_receipts', 'Gross Receipts', {
@@ -573,9 +602,10 @@ export const CaseFormData = (
               !permissionMap?.['current_year_gross_receipts']?.edit &&
               permissionMap?.['current_year_gross_receipts']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['current_year_gross_receipts']?.edit &&
-              !permissionMap?.['current_year_gross_receipts']?.read,
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['current_year_gross_receipts']?.edit &&
+                !permissionMap?.['current_year_gross_receipts']?.read),
           }),
           createTextField(
             'credit_carry_forward_py',
@@ -596,9 +626,10 @@ export const CaseFormData = (
                 !permissionMap?.['credit_carry_forward_py']?.edit &&
                 permissionMap?.['credit_carry_forward_py']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['credit_carry_forward_py']?.edit &&
-                !permissionMap?.['credit_carry_forward_py']?.read,
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  !permissionMap?.['credit_carry_forward_py']?.read),
             }
           ),
           createTextField('other', 'Other', {
@@ -619,6 +650,32 @@ export const CaseFormData = (
               isEditView &&
               !permissionMap?.['other']?.edit &&
               !permissionMap?.['other']?.read,
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide:
+              ![
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.UK,
+                FinancialWorkingCountries.US,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide:
+              ![
+                FinancialWorkingCountries.Canada,
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.US,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
           }),
           createDateField('case_startdate', 'Planned Start Date', {
             required: true,
