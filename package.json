@@ -80,6 +80,7 @@
     "vite-plugin-svgr": "^4.3.0"
   },
   "overrides": {
+    "lodash": "4.17.23",
     "esbuild": "^0.25.0"
   }
 }
