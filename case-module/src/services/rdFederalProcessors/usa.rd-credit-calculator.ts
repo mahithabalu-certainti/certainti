@@ -116,13 +116,13 @@ export class RdCreditCalculatorForUSA {
         let dynamicPercentageKey = `Enter ${configAsc.credit_rate}%. If QREs in any of the 3 years is zero, enter ${configAsc.fixed_base_percentage}%`
 
         return {
-            "20 Total Qualified Research Expenses": Number(totalQRE),
-            "21 Total QREs for prior 3 tax years": Number(line21),
-            "22 Divide line 21 by 6.0": Number(line22),
-            "23 Subtract line 22 from line 20": Number(line23),
+            "20 Total Qualified Research Expenses": Number(await this.round2(totalQRE)),
+            "21 Total QREs for prior 3 tax years": Number(await this.round2(line21)),
+            "22 Divide line 21 by 6.0": Number(await this.round2(line22)),
+            "23 Subtract line 22 from line 20": Number(await this.round2(line23)),
             [dynamicPercentageKey]: `${percentage}%`,
-            "24 Multiply line 23 by the percentage above": Number(line24),
-            "25 Add lines 19 and 24": Number(line25),
+            "24 Multiply line 23 by the percentage above": Number(await this.round2(line24)),
+            "25 Add lines 19 and 24": Number(await this.round2(line25)),
             final_credit: line25,
         };
     }
@@ -158,13 +158,13 @@ export class RdCreditCalculatorForUSA {
         let dynamicLine5 = `10 Multiply line 5 by ${configRRC.qre_cap_rate}`
 
         return {
-            "5 Total Qualified Research Expenses": Number(currentYearQRE),
+            "5 Total Qualified Research Expenses": Number(await this.round2(currentYearQRE)),
             "6 Fixed-base percentage": `${configRRC.fixed_base_percentage}%`,
-            "7 Average Annual Gross Receipts": Number(line7),
-            "8 Multiply line 7 by percentage on line 6": Number(line8),
-            "9 Subtract line 8 from line 5": Number(line9),
-            [dynamicLine5]: Number(line10),
-            "11 Enter smaller of line 9 or line 10": Number(line11),
+            "7 Average Annual Gross Receipts": Number(await this.round2(line7)),
+            "8 Multiply line 7 by percentage on line 6": Number(await this.round2(line8)),
+            "9 Subtract line 8 from line 5": Number(await this.round2(line9)),
+            [dynamicLine5]: Number(await this.round2(line10)),
+            "11 Enter smaller of line 9 or line 10": Number(await this.round2(line11)),
             final_credit: line11
         };
     }
@@ -186,7 +186,7 @@ export class RdCreditCalculatorForUSA {
         return {
             reduction280c: {
                 no_elect280c: {
-                    "13 Electing reduced credit under 280C": configRRC.elect_280c_no,
+                    "13 Electing reduced credit under 280C": "NO",
                     [dynamicRRC280CKey]:  Number(await this.round2(creditNoElect))
                 }
             }
@@ -209,7 +209,7 @@ export class RdCreditCalculatorForUSA {
         return {
             reduction280c: {
                 no_elect280c: {
-                    "26 Electing reduced credit under 280C": configASC.elect_280c_no,
+                    "26 Electing reduced credit under 280C": "NO",
                     [dynamicRRC280CKey]: Number(await this.round2(creditNoElect))
                 }
             }
@@ -357,12 +357,15 @@ export class RdCreditCalculatorForUSA {
         };
     }
 
-    getMultiplyValue(noElect: Record<string, number>): number | undefined {
-        const key = Object.keys(noElect).find(
-            k => k.startsWith("Multiply line")
-        );
-        return noElect[key!];
+    getMultiplyValue(noElect: Record<string, string | number>): number | undefined {
+    const key = Object.keys(noElect).find(k =>
+        k.startsWith("Multiply line")
+    );
+
+    const value = key ? noElect[key] : undefined;
+    return typeof value === "number" ? value : undefined;
     }
+
 
 }
 
