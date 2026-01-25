@@ -29,7 +29,7 @@ export class RdCreditCalculatorForSC {
      */
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string,year : string,caseDetails : Case) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
         const carry_forward_py = new Decimal(caseDetails.credit_carry_forward_py || 0);
 
@@ -50,7 +50,7 @@ export class RdCreditCalculatorForSC {
             currency: this.currency,
             fiscalYearEnded : fiscalYear,
             currentYear:year
-        });
+        },config);
 
         const computeFieldsResp = {
             total_current_year_qre,
@@ -101,14 +101,13 @@ export class RdCreditCalculatorForSC {
    * @param metadata 
    * @returns 
    */
-    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson) {
 
          let storeData : any[] = []
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract,
+            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent / 100) || 0 ,
             sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
         })
  

@@ -38,7 +38,7 @@ export class RdCreditCalculatorForNJ {
             currency: this.currency,
             fiscalYearEnded : fiscalYear,
             currentYear : year
-        });
+        },config);
 
         const computedFields = await this.buildComputedFields(part4ASCCreditCalculationInfo, part5DevelopmentTaxCreditCalculationInfo, config);
 
@@ -59,7 +59,7 @@ export class RdCreditCalculatorForNJ {
     part4ASCCreditCalculation(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson, caseDetails : Case) {
 
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         const costOfSupplies = new Decimal(currentYearQREs.supplies || 0)
         const leaseComputerCost = new Decimal(caseDetails.lease_costs_of_computers || 0.00)
 
@@ -140,14 +140,13 @@ export class RdCreditCalculatorForNJ {
     * @param metadata 
     * @returns 
     */
-    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson) {
 
        let storeData : any[] = []
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract,
+            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent/100) || 0,
             sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
         })
 
