@@ -35,7 +35,7 @@ export class RdCreditCalculatorForTX {
             creditType: this.creditType,
             currency: this.currency,
             fiscalYearEnded : fiscalYear
-        });
+        },config);
 
         const computedFields = await this.buildComputedFields(qretInfo, precedingWithQretInfo, precedingWithNoQretInfo, qreActivitiesCreditInfo);
 
@@ -53,7 +53,7 @@ export class RdCreditCalculatorForTX {
      */
     creditCalculationQRET(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
 
         //-----Line1a: Enter Current year QRE for TX State
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
@@ -209,13 +209,12 @@ export class RdCreditCalculatorForTX {
     * @param metadata Optional metadata, including country, creditType, and currency.
     * @returns An object containing normalized metadata and the aggregated qreSummary. 
     */
-    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson) {
         let storeData : any[] = []
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract,
+            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent / 100) || 0,
             sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
         })
         const qreSummary: Record<string, any> = {

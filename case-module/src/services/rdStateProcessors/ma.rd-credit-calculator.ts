@@ -41,7 +41,7 @@ export class RdCreditCalculatorForMA {
             currency: this.currency,
             fiscalYearEnded : fiscalYear,
             currentYear : year
-        });
+        },config);
 
         const computedFields = await this.buildComputedFields(part1QualifiedResearchExpenseInfo, part2ASCCreditCalculationInfo, part3CreditCalInfo, config);
 
@@ -203,14 +203,14 @@ export class RdCreditCalculatorForMA {
     * @param metadata 
     * @returns 
     */
-    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}, config : ConfigJson) {
         let storeData : any[] = []
         let annualGrossReceiptsData :any[] = []
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0)),
-            contract: currentYearQREs.contract
+            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent/100) || 0
 
         })
         annualGrossReceipts.forEach((item) => {
