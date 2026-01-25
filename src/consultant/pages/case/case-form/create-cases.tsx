@@ -91,7 +91,7 @@ export const CreateCases: React.FC = () => {
   const countryRid = searchParams.get('country_rid') || '';
   const countryCode = searchParams.get('country_code') || '';
   const globalType = searchParams.get('sourceType') === 'global';
-  const COuntryName = searchParams.get('country_name');
+  const countryName = searchParams.get('country_name');
 
   const { data: caseData, isLoading } = useCaseDetails(caseId || '', accountId);
 
@@ -455,7 +455,7 @@ export const CreateCases: React.FC = () => {
       : calculatedStatutoryDate,
     caseStatusOptions,
     isAustralianCountry,
-    COuntryName ?? undefined
+    countryName ?? undefined
   );
 
   const formLoading =
