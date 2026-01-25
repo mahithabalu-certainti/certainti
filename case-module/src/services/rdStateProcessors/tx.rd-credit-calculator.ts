@@ -108,16 +108,17 @@ export class RdCreditCalculatorForTX {
         // Line 7
         const difference = new Decimal(qretInfo.total_current_year_qre)
             .minus(average_qret_rate_50pct);
+        const finalDifference = difference.lt(0) ? new Decimal(0) : difference
 
         // Line 8
         const credit_eq_zero =
             new Decimal(qretInfo.qret_high_edu_contract).eq(0)
-            ? difference.mul(new Decimal(config.qre_rate_5pct/100))
+            ? finalDifference.mul(new Decimal(config.qre_rate_5pct/100))
             : "N/A";
 
         const credit_gt_zero =
             new Decimal(qretInfo.qret_high_edu_contract).gt(0)
-            ? difference.mul(new Decimal(config.qre_rate_6_25pct/100))
+            ? finalDifference.mul(new Decimal(config.qre_rate_6_25pct/100))
             : "N/A";
         return {
             average_prev_year_qre: average_prev_year_qre,
