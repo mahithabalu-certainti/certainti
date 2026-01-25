@@ -69,11 +69,17 @@ export class RdCreditCalculatorForNJ {
             fiscalYear: item.fiscalYear,
             wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
         }));
+        const isPriorYearQreZero = prior3YearsQREs.some(q => q.qre === 0)
 
         const total_prev_qre = new Decimal(qreSum.reduce((sum, item) => sum + Number(item.wagesContractSum), 0));
+        let final_credit : Decimal;
         const average_tot_prev_qre = total_prev_qre.div(config.fixed_base_percent);
         const sub_credit = total_current_year_qre.minus(average_tot_prev_qre);
-        const final_credit = sub_credit.gt(0) ? sub_credit : 0;
+         if(isPriorYearQreZero) {
+            final_credit =  total_current_year_qre
+        } else {
+            final_credit = sub_credit
+        }
 
         return {
             current_year_wages,
