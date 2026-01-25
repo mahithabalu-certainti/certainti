@@ -38,7 +38,7 @@ export class RdCreditCalculatorForNJ {
             currency: this.currency,
             fiscalYearEnded : fiscalYear,
             currentYear : year
-        });
+        },config);
 
         const computedFields = await this.buildComputedFields(part4ASCCreditCalculationInfo, part5DevelopmentTaxCreditCalculationInfo, config);
 
@@ -59,7 +59,7 @@ export class RdCreditCalculatorForNJ {
     part4ASCCreditCalculation(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson, caseDetails : Case) {
 
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         const costOfSupplies = new Decimal(currentYearQREs.supplies || 0)
         const leaseComputerCost = new Decimal(caseDetails.lease_costs_of_computers || 0.00)
 
@@ -69,11 +69,17 @@ export class RdCreditCalculatorForNJ {
             fiscalYear: item.fiscalYear,
             wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
         }));
+        const isPriorYearQreZero = prior3YearsQREs.some(q => q.qre === 0)
 
         const total_prev_qre = new Decimal(qreSum.reduce((sum, item) => sum + Number(item.wagesContractSum), 0));
+        let final_credit : Decimal;
         const average_tot_prev_qre = total_prev_qre.div(config.fixed_base_percent);
         const sub_credit = total_current_year_qre.minus(average_tot_prev_qre);
-        const final_credit = sub_credit.gt(0) ? sub_credit : 0;
+         if(isPriorYearQreZero) {
+            final_credit =  total_current_year_qre
+        } else {
+            final_credit = sub_credit
+        }
 
         return {
             current_year_wages,
@@ -134,14 +140,13 @@ export class RdCreditCalculatorForNJ {
     * @param metadata 
     * @returns 
     */
-    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson) {
 
        let storeData : any[] = []
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract,
+            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent/100) || 0,
             sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
         })
 
