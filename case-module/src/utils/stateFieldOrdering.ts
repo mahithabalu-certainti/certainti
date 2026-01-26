@@ -183,7 +183,6 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
       { pattern: /^18 Base amount/, order: 18 },
       { pattern: /^19 Subtract line 18 from line 15/, order: 19 },
       { pattern: /^20 Multiply line 15/, order: 20 },
-      { pattern: /^Enter 20 of line 15/, order: 20.1 },
       { pattern: /^21 Enter the lesser of line 19 or line 20/, order: 21 },
       { pattern: /^22 Add lines 10 and 21/, order: 22 },
       { pattern: /^\* If line 22 is \$ .* less/, order: 22.1 },
