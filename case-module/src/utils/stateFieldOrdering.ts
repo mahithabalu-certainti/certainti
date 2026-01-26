@@ -92,8 +92,8 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "5. Average QRET for preceding periods", order: 1 },
                 { pattern: /^6\. Average QRET x/, order: 2 },
                 { pattern: "7. Difference", order: 3 },
-                { pattern: /^8\. Credit \(If amount in Item 1b is zero/, order: 4 },
-                { pattern: /^9\. Credit.*If amount in Item 1b is greater than zero/, order: 5 }
+                { pattern: /^8\. Credit\s*\(If amount in Item 1b is zero, multiply Item 7 by .*/i, order: 4 },
+                { pattern: /^9\. Credit\s*\(If amount in Item 1b is greater than zero, multiply Item 7 by .*/i, order: 5 }
             ],
             "Credit Calculation for Entities with no QRET in one or more of the 3 preceding periods": [
                 { pattern: /^10\. Credit \(If amount in Item 1b is zero/, order: 1 },
