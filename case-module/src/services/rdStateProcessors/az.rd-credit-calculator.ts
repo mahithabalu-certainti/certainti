@@ -302,12 +302,10 @@ export class RdCreditCalculatorForAZ {
             "14 Contract research expenses: See instructions":creditRRC.contract,
             "15 Total qualified research expenses. Add line 11 through line 14":creditRRC.total_current_year_qre,
             "16 Average annual Arizona gross receipts: See instructions":creditRRC.average_gross_receipts,
-            [`17 Fixed-base percentage [not more than ${creditRRC.fixed_base_percentage}%]: See instructions`]:creditRRC.fixed_base_percentage,
+            [`17 Fixed-base percentage [not more than ${creditRRC.fixed_base_percentage}%]: See instructions`]:`${creditRRC.fixed_base_percentage}%`,
             "18 Base amount: Multiply line 16 by the percentage on line 17. Enter the result":creditRRC.base_amount,
             "19 Subtract line 18 from line 15. If less than zero, enter 0":creditRRC.excess_qre_over_base,
             [`20 Multiply line 15 by ${creditRRC?.config?.qre_cap_rate}% (${(creditRRC?.config?.qre_cap_rate ) / 100}). Enter the result`]:creditRRC.half_total_qre,
-            [`Enter ${creditRRC?.config?.qre_cap_rate} of line 15`]:creditRRC.half_total_qre,
-            
             "21 Enter the lesser of line 19 or line 20":creditRRC.total_section_b_credit,
             "22 Add lines 10 and 21. Enter the total":creditRRC.total_az_credit_before_limits,
            [`* If line 22 is $ ${creditRRC?.config?.threshold_amount} or less, complete line 23 and skip lines 24 through 26.`]:"",
