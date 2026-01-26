@@ -60,7 +60,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "1) Current Tax Liability w/o applied credits - E", order: 1 },
                 { pattern: "2) Value of all Other Credits Claimed - C", order: 2 },
                 { pattern: "3) Remaining Tax Liability (C-E)", order: 3 },
-                { pattern: "4) Maximum Credit Allowed (Line 3 * 50%)", order: 4 },
+                { pattern: /^4\) Maximum Credit Allowed \(Line 3 \* \d+(\.\d+)?%\)$/, order: 4 },
                 { pattern: "5) Research Tax Credit - J", order: 5 },
                 { pattern: "5a)Tax Carryover from PY - D", order: 6 },
                 { pattern: "6) Total available Research Tax Credit (J+D)", order: 7 },
