@@ -232,7 +232,7 @@ export class FederalComputationService {
                             totalEpwCost = totalEpwCost + data.epw
                             totalNetEpw = totalNetEpw + data.net_epw
                         })
-                        totalReductionCost = totalEpwCost * extractConfig.reduction/100
+                        totalReductionCost = totalEpwCost * (extractConfig.reduction/100)
                         let totalLabour = totalEmployeesCost + totalNetEpw + calculatedPaidUnpaidAmount 
                         let totalQRE = totalLabour + cloudSoftwareCost + subContracts + heatLightPower + otherCost
                         let researchDevelopmentTaxCredit = Number((totalQRE * extractConfig.research_development_tax_credit)/100).toFixed(2);
