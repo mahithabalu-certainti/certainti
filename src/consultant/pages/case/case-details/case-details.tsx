@@ -60,7 +60,6 @@ import {
   DossierIcon,
   DraftEmailIcon,
   FinancialIcon,
-  HistorySubmissionIcon,
   InteractionsIcon,
   MeetingIcon,
   NotesSideIcon,
@@ -99,7 +98,6 @@ import { Checklist } from './checklist';
 import { CaseInteractions } from './case-interactions';
 import { ExportReviewProjectList } from '../../../services/cases-assign-projects/review-project-service';
 import { ReviewProjectListURLParams } from '../../../types/assign-projects';
-import HistorySubmission from './history-submission/history-submission';
 import {
   exportInteractions,
   exportInteractionsHistory,
@@ -800,15 +798,6 @@ export const CaseDetails = () => {
             />
           </div>
         );
-      case 'historical_submission':
-        return (
-          <div className='w-full pr-4 pl-2 py-2'>
-            <HistorySubmission
-              activityMenuItems={activityMenuItems}
-              caseDetails={caseData}
-            />
-          </div>
-        );
       case 'caseProjects':
         return (
           <div>
@@ -1014,13 +1003,6 @@ export const CaseDetails = () => {
         id: AllMenus.PROJECT_TASK,
         disabled: false,
         icon: ProjectTaskIcon,
-      },
-      {
-        name: 'Historical Submission',
-        key: 'historical_submission',
-        id: AllModules.HISTORICAL_SUBMISSION,
-        disabled: false,
-        icon: HistorySubmissionIcon,
       },
       {
         name: 'Interactions',
