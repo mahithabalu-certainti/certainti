@@ -116,7 +116,7 @@ export class RdCreditCalculatorForAZ {
         if (line22.lte(config.threshold_amount)) {
             //-- Line 23: Multiple line 22 by 24%
             line23 = Number(line22.mul(config.credit_rate/100));
-            line27a = line23;
+            line27a = Number(line23);
         } else {
             line23 = 0
             line24 = line22.minus(config.threshold_amount);
