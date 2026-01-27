@@ -566,8 +566,7 @@ export async function uploadToAzureBlob(
     }
 
     // Get connection string from secrets manager
-    const connectionString = "DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net"
-    //await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     const containerName = account_number.toLowerCase();
 
     if (!connectionString) {
@@ -673,7 +672,7 @@ export const getColumnsNamesForTaskCommentsUpdate = (data: UpdateCommentsType, d
 
 export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promise<string> {
   try {
-    const connectionString = "DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net"
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     // const connectionString = "storage-account-connection-string";
     // const connectionString = await getSecret("storage-account-connection-string");
     // const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING as string
