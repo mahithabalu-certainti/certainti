@@ -595,7 +595,7 @@ export async function uploadToAzureBlob(
       blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
     else if (flag === "data-mapper") {
-      blobName = `${account_id}/data-mapper/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+      blobName = `${account_id}/data-mapper/${task_number ? task_number + '/' : ''}${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
     else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;

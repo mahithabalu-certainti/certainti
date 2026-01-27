@@ -64,8 +64,7 @@ export class ColumnExtractor {
             const parts = targetFieldId.split(rowPart);
             if (parts.length < 2) return [];
 
-            const prefix = parts[0];
-            if (prefix === undefined) return [];
+            const prefix = parts[0] as string;
 
             // 2. Identify the specific page (if available) to limit scope
             const targetField = fieldsData.find(f => f.field_id === targetFieldId);
@@ -126,7 +125,7 @@ export class ColumnExtractor {
 
             for (const key of sortedRowKeys) {
                 const fields = rowGroups[key];
-                if (fields && fields[targetIndex]) {
+                if (fields && fields[targetIndex] && typeof fields[targetIndex].field_id === 'string') {
                     columnFields.push(fields[targetIndex].field_id);
                 }
             }

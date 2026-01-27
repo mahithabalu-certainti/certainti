@@ -210,7 +210,7 @@ def extract_form_fields(pdf_path: Path) -> List[Dict[str, Any]]:
                 x_center = (x1 + x2) / 2.0
                 y_center = (y1 + y2) / 2.0
             else:
-                bbox, x_center, y_center = None, None, None, None
+                bbox, x_center, y_center = None, None, None
 
             full_name = _build_full_name(annot)
             if not full_name:

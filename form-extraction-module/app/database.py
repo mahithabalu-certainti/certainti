@@ -124,7 +124,7 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
         with conn.cursor() as cur:
 
             # 2. Update status in main table
-            query = f"UPDATE {schema}.data_mapper_forms SET status_rid = %s,  error_message = %s WHERE rid = %s"
+            query = f"UPDATE {schema}.data_mapper_forms SET status_rid = %s, error_message = %s WHERE rid = %s"
             params = [status_rid, error_message, rid]
             cur.execute(query, tuple(params))
 

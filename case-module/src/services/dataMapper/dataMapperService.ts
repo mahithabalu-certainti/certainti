@@ -217,6 +217,8 @@ export class DataMapperService implements IDataMapperService {
                     "error_message"
                 ],
                 where: whereClause,
+                offset: 0,
+                limit: Number.MAX_SAFE_INTEGER,
             });
 
             // Enrich with Names

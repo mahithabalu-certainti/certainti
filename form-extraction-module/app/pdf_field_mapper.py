@@ -181,8 +181,6 @@ def _assign_line_item_ids(
                 li["value_field_id"] = chosen.field_id
                 li["page"] = chosen.page      # <-- NEW
                 used_ids.add(chosen.field_id)
-            else:
-                li["value_field_id"] = None
 
 
 def _assign_table_ids(
