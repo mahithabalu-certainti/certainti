@@ -476,7 +476,7 @@ export class DataMapperService implements IDataMapperService {
             if (data.effective_from_date) updatePayload.effective_from_date = data.effective_from_date;
             if (data.effective_to_date !== undefined) updatePayload.effective_to_date = data.effective_to_date || null;
             if (data.country_rid) updatePayload.country_rid = data.country_rid;
-            if (data.state_rid) updatePayload.state_rid = data.state_rid;
+            if (data.state_rid !== undefined) updatePayload.state_rid = data.state_rid;
             if (data.is_active !== undefined) updatePayload.is_active = data.is_active;
 
             let shouldTriggerKafka = false;
