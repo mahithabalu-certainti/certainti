@@ -115,14 +115,14 @@ export class RdCreditCalculatorForAZ {
         // If line 22 is more than $2,500,000, skip line 23 and complete lines 24 through 26.
         if (line22.lte(config.threshold_amount)) {
             //-- Line 23: Multiple line 22 by 24%
-            line23 = line22.mul(config.credit_rate/100);
-            line27a = line23;
+            line23 = Number(line22.mul(config.credit_rate/100));
+            line27a = Number(line23);
         } else {
             line23 = 0
             line24 = line22.minus(config.threshold_amount);
             line25 = line24.mul(config.tier2_rate/100);
             line26 = line25.plus(config.tier2_base_add);
-            line27a = line26;
+            line27a = line26.toNumber();
         }
 
         return {
