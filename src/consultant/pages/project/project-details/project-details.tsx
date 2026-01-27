@@ -1014,7 +1014,7 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive || projectInActive || !rdQualified,
+              disabled: accountInActive || projectInActive || !rdQualified || isProjectSignedOff,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
