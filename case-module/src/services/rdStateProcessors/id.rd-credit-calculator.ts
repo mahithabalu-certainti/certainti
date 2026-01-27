@@ -28,13 +28,17 @@ export class RdCreditCalculatorForID {
      * @param priorYearsCount 
      */
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string,year: string,caseDetails? : Case) {
-        const qreCalInfo = this.qreCreditCalculation(stateRdData.currentYearQREs, config,caseDetails);
-
+        const priorYearsCount = (stateRdData.annualGrossReceipts || []).length;
+        const totalGrossReceipts = new Decimal((stateRdData.annualGrossReceipts || []).reduce(
+            (sum, r) => sum + (r.grossReceipts || 0), 0));
+        const qreCalInfo = this.qreCreditCalculation(stateRdData.currentYearQREs, config,totalGrossReceipts, priorYearsCount,caseDetails);
+        
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-            fiscalYearEnded : fiscalYear
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
         },config);
 
         const computedFields = await this.buildComputedFields(qreCalInfo,config);
@@ -50,7 +54,7 @@ export class RdCreditCalculatorForID {
      * @param currentYearQREs 
      * @param config 
      */
-    qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson, caseDetails?: Case) {
+    qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson, totalGrossReceipts: Decimal, priorYearsCount: number,caseDetails: Case | undefined,) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
@@ -59,8 +63,8 @@ export class RdCreditCalculatorForID {
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(cost_to_rent).plus(supplies);
 
         const fixed_base_percentage = config.fixed_base_percentage * 100;
-        const average_annual_gross_receipts = 0;
-        const base_amount = new Decimal(0);
+        const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
+        const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage);
         const difference = total_current_year_qre.minus(base_amount);
         const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
@@ -75,6 +79,8 @@ export class RdCreditCalculatorForID {
             current_year_contract,
             total_current_year_qre,
             fixed_base_percentage,
+            average_annual_gross_receipts,
+            base_amount,
             difference,
             credit_rate_percent,
             min_credit_rate,
@@ -118,11 +124,12 @@ export class RdCreditCalculatorForID {
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson ) {
 
         let storeData : any[] = []
+        let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent/100) || 0,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
+            contract: currentYearContract,
+            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)
         })
  
         prior3YearsQREs.forEach((item) => {
@@ -165,14 +172,14 @@ export class RdCreditCalculatorForID {
             "6 Rental or lease costs of computers in Idaho":qretInfo.cost_to_rent,
             "7 Enter the applicable percentage of contract research expenses":qretInfo.current_year_contract,
             "8 Total qualiﬁed research expenses for research conducted in Idaho. Add lines 4 through 7 ":qretInfo.total_current_year_qre,
-            "9 Enter ﬁxed-base percentage, but not more than 16%, from page 2, Part A or B":qretInfo.fixed_base_percentage,
-            "10 Enter average annual Idaho gross receipts from page 2, Part C":"",
-            "11 Base amount. Multiply line 10 by the percentage on line 9":"",
+            "9 Enter ﬁxed-base percentage, but not more than 16%, from page 2, Part A or B":`${qretInfo.fixed_base_percentage}%`,
+            "10 Enter average annual Idaho gross receipts from page 2, Part C":qretInfo.average_annual_gross_receipts,
+            "11 Base amount. Multiply line 10 by the percentage on line 9":qretInfo.base_amount,
             "12 Subtract line 11 from line 8. If zero or less, enter zero":qretInfo.difference,
             [`13 Multiply line 8 by ${config.credit_rate || 0}%`]:qretInfo.credit_rate_percent,
             "14 Enter the smaller amount from line 12 or line 13":qretInfo.min_credit_rate,
             "15 Add lines 3 and 14 ":qretInfo.tot_base_amount,
-            [`16 Credit earned. Multiply line 15 by ${config.credit_earned} % `]:qretInfo.credit_earned,
+            [`16 Credit earned. Multiply line 15 by ${config.credit_earned}% `]:qretInfo.credit_earned,
             "17 Pass-through share of credit from an S corporation, partnership, trust, or estate":"",
             "18 Credit received through unitary sharing. Include a schedule":"",
             "19 Carryover of credit for Idaho research activities from prior years":"",
