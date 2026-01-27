@@ -381,7 +381,7 @@ CA: {
                 { pattern: /^13 Multiply line 8 by .*%$/, order: 10 },
                 { pattern: "14 Enter the smaller amount from line 12 or line 13", order: 11 },
                 { pattern: "15 Add lines 3 and 14 ", order: 12 },
-                { pattern: /^16 Credit earned\. Multiply line 15 by .* % $/, order: 13 },
+                { pattern: /^16 Credit earned\. Multiply line 15 by .*%\s*$/, order: 13 },
                 { pattern: "17 Pass-through share of credit from an S corporation, partnership, trust, or estate", order: 14 },
                 { pattern: "18 Credit received through unitary sharing. Include a schedule", order: 15 },
                 { pattern: "19 Carryover of credit for Idaho research activities from prior years", order: 16 },
