@@ -33,7 +33,9 @@ export class RdCreditCalculatorForAZ {
      */
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : number, caseData : Case) {
         
-        const priorYearsCount = 4;
+        const priorYearsCount = stateRdData.annualGrossReceipts?.length!;
+        console.log("StateData =======> ", stateRdData)
+         console.log("StateData.annualGrossReceipts =======> ", stateRdData.annualGrossReceipts)
         const totalGrossReceipts = new Decimal((stateRdData.annualGrossReceipts || []).reduce(
             (sum, r) => sum + (r.grossReceipts || 0), 0));
 
@@ -80,7 +82,7 @@ export class RdCreditCalculatorForAZ {
         //---- Line 14: contract
         const line14 = currentYearQREs.contract || 0;
 
-        const totalCurrentYearQRE = new Decimal(currentYearQREs.wages || 0).plus(currentYearQREs.supplies || 0).plus(currentYearQREs.contract || 0);
+        const totalCurrentYearQRE = new Decimal(line11 || 0).plus(line12 || 0).plus(line14 || 0).plus(line13 || 0);
         //---- Line 15: total QRE
         const line15 = totalCurrentYearQRE;
 
@@ -94,13 +96,14 @@ export class RdCreditCalculatorForAZ {
         const line18 = line16.mul(new Decimal(line17/100));
 
         //---- Line 19: excess QRE over base amount
-        const line19 = line18.minus(line15);
+        const line19 = line15.minus(line18);
+        const finalLine19 = line19.lt(0) ? new Decimal(0) : line19
 
         //---- Line 20: Multiply line 15 by 50%
         const line20 = line15.mul(config.qre_cap_rate/100);
 
         //---- Line 21: Enter smaller of line 19 or line 20
-        const line21 = Decimal.min(line19, line20);
+        const line21 = Decimal.min(finalLine19, line20);
 
         //---- Line 22: Add line 10 and 21
         const line22 = line21.plus(line10);
@@ -129,21 +132,21 @@ export class RdCreditCalculatorForAZ {
             prior_year_credit_carryforward: line10,
             wages: line11,
             supplies: line12,
-            cost_to_rent: line13,
+            cost_to_rent: this.round2(line13) || 0.00,
             contract: line14,
-            total_current_year_qre: line15.toNumber(),
-            average_gross_receipts: line16.toNumber(),
+            total_current_year_qre: this.round2(line15) || 0.00,
+            average_gross_receipts: this.round2(line16) || 0.00,
             fixed_base_percentage: line17,
-            base_amount: line18.toNumber(),
-            excess_qre_over_base: line19.toNumber(),
-            half_total_qre: line20.toNumber(),
-            total_section_b_credit: line21.toNumber(),
-            total_az_credit_before_limits: line22.toNumber(),
-            credit_if_under_threshold: line23,
-            excess_amount: line24,
-            credit_on_excess: line25,
-            credit_if_over_threshold: line26,
-            total_az_final_credit: line27a,
+            base_amount: this.round2(line18) || 0.00,
+            excess_qre_over_base: this.round2(line19) || 0.00,
+            half_total_qre: this.round2(line20) || 0.00,
+            total_section_b_credit: this.round2(line21) || 0.00,
+            total_az_credit_before_limits: this.round2(line22) || 0.00,
+            credit_if_under_threshold: this.round2(line23),
+            excess_amount: this.round2(line24),
+            credit_on_excess: this.round2(line25),
+            credit_if_over_threshold: this.round2(line26),
+            total_az_final_credit: this.round2(line27a),
             config: config
         }
     }
@@ -208,22 +211,22 @@ export class RdCreditCalculatorForAZ {
                 line93 = line92;
             }
             return {
-                wages: line78,
-                supplies: line79,
-                lease_computers : line80,
-                contract: line81,
-                total_current_year_qre: parseFloat(Number(line82).toFixed(2)) || 0.00,
-                total_prior_3years_qre: parseFloat(Number(line83).toFixed(2)) || 0.00,
-                adjusted_base_amount: parseFloat(Number(line84).toFixed(2)) || 0.00,
-                excess_qre: parseFloat(Number(line85).toFixed(2)) || 0.00,
-                half_total_qre: parseFloat(Number(line86).toFixed(2)) || 0.00,
-                total_section_b_credit: parseFloat(Number(line87).toFixed(2)) || 0.00,
-                prior_year_credit_carryforward: line77 === Decimal(0) ? 0.00 : parseFloat(Number(line77).toFixed(2)),
-                credit_if_under_threshold: parseFloat(Number(line89).toFixed(2)) || 0.00,
-                excess_amount: parseFloat(Number(line90).toFixed(2)) || 0.00,
-                credit_on_excess: parseFloat(Number(line91).toFixed(2)) || 0.00,
-                credit_if_over_threshold: parseFloat(Number(line92).toFixed(2)) || 0.00,
-                total_az_final_credit: parseFloat(Number(line93).toFixed(2)) || 0.00,
+                wages: this.round2(line78),
+                supplies: this.round2(line79),
+                lease_computers : this.round2(line80),
+                contract: this.round2(line81),
+                total_current_year_qre: this.round2(line82) || 0.00,
+                total_prior_3years_qre: this.round2(line83)|| 0.00,
+                adjusted_base_amount: this.round2(line84) || 0.00,
+                excess_qre: this.round2(line85) || 0.00,
+                half_total_qre: this.round2(line86) || 0.00,
+                total_section_b_credit: this.round2(line87)|| 0.00,
+                prior_year_credit_carryforward: line77 === Decimal(0) ? 0.00 : this.round2(line77).toFixed(2),
+                credit_if_under_threshold: this.round2(line89) || 0.00,
+                excess_amount: this.round2(line90)|| 0.00,
+                credit_on_excess: this.round2(line91) || 0.00,
+                credit_if_over_threshold: this.round2(line92)|| 0.00,
+                total_az_final_credit: this.round2(line93) || 0.00,
                 config: config
             }
 
@@ -351,4 +354,24 @@ export class RdCreditCalculatorForAZ {
             BOLD: ["15 Total qualified research expenses. Add line 11 through line 14"]
         }
     }
+        /**
+     * Rounds the given value to two decimal places using Decimal.js.
+     * @param value Value to be rounded.
+     * @returns The rounded value as a Decimal with two decimal places.
+    */
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
+    }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 }
