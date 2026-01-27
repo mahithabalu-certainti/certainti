@@ -161,10 +161,25 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 value !== null &&
                 !Array.isArray(value)) ||
               Array.isArray(value) ||
-              key === 'name' ||
-              key.toLowerCase().includes('280c')
+              key === 'name'
             )
               return null;
+
+            if (key === 'text') {
+              return (
+                <tr
+                  key={key}
+                  className='border-b border-[#CBD6E2] last:border-0'
+                >
+                  <td
+                    colSpan={2}
+                    className='px-3 py-1.5 text-sm text-[#425A76] font-medium'
+                  >
+                    {value}
+                  </td>
+                </tr>
+              );
+            }
 
             const isBold = boldRows.includes(key);
             return (
@@ -258,7 +273,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
   const renderTableSection = (tableData: any) => {
     if (!tableData || typeof tableData !== 'object') return null;
 
-    const { table_headers, table_rows } = tableData;
+    const { table_headers, table_rows, Total } = tableData;
 
     if (!table_headers || !Array.isArray(table_headers)) return null;
 
@@ -360,6 +375,24 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
           })
         : [];
 
+    if (Total !== undefined && Total !== null && table_headers.length > 0) {
+      const firstHeaderId =
+        typeof table_headers[0] === 'string'
+          ? table_headers[0]
+          : table_headers[0].id;
+      const lastHeader = table_headers[table_headers.length - 1];
+      const lastHeaderId =
+        typeof lastHeader === 'string' ? lastHeader : lastHeader.id;
+
+      const totalRow: TableRow = {
+        id: 'row_total',
+        [firstHeaderId]: 'Total',
+        [lastHeaderId]: Total,
+      };
+
+      tableDataRows.push(totalRow);
+    }
+
     const getRowId = (row: TableRow) => row.id;
 
     // Always render the table with headers, even if there's no data
@@ -441,12 +474,22 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
 
     // Filter keys that have at least one non-empty value
     // Exclude 'year' as we handle it specifically, and 'id' if present
-    const dataKeys = allKeys.filter(
-      (key) =>
-        key.toLowerCase() !== 'year' &&
-        key.toLowerCase() !== 'id' &&
-        hasDataForKey(key)
-    );
+    const dataKeys = allKeys
+      .filter(
+        (key) =>
+          key.toLowerCase() !== 'year' &&
+          key.toLowerCase() !== 'id' &&
+          hasDataForKey(key)
+      )
+      .sort((a, b) => {
+        const isATotal =
+          a.toLowerCase() === 'sum' || a.toLowerCase() === 'total';
+        const isBTotal =
+          b.toLowerCase() === 'sum' || b.toLowerCase() === 'total';
+        if (isATotal && !isBTotal) return 1;
+        if (!isATotal && isBTotal) return -1;
+        return 0;
+      });
 
     // Transform data to ensure it has ids
     const tableDataRows = data.map((row, index) => ({
@@ -484,7 +527,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
       // Determine label
       let label = formatLabel(key);
       if (key === 'wages') label = 'QRE Wages';
-      if (key === 'contract') label = 'ORE Contract';
+      if (key === 'contract') label = 'QRE Contract';
       if (key === 'grossReceipts') label = 'Gross Receipts';
       if (key === 'sum') label = 'Total';
 
@@ -579,6 +622,17 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
       <div className='w-full'>
         {entries.map(([k, v]) => {
           if (k === 'name') return null;
+
+          if (k === 'text') {
+            return (
+              <div
+                key={k}
+                className='px-3 py-1.5 text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
+              >
+                {v as string}
+              </div>
+            );
+          }
 
           if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
             if ((v as any).reduction280c) return render280C(k, v);
