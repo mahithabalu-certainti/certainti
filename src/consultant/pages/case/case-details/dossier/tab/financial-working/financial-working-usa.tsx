@@ -106,11 +106,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
         maximumFractionDigits: 20,
       }).format(value);
     }
-    
+
     // If it's a string, we usually just return it, UNLESS we know for sure it's meant to be a number.
     // The user said: "values comes number show $ symbol... string menas show text"
     // So we should NOT try to parse strings as numbers unless they are purely numeric strings.
-    
+
     return value;
   };
 

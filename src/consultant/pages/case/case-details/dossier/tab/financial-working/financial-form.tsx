@@ -431,7 +431,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             <TextButton
               label={'Sign off'}
               onClick={() => setIsSignOffModalOpen(true)}
-              disabled={dossierFinancialStatus !== 'COMPLETED' || isFinancialWorkingSignoff}
+              disabled={
+                dossierFinancialStatus !== 'COMPLETED' ||
+                isFinancialWorkingSignoff
+              }
               hide={!isSignoffVisible}
               sx={{
                 width: 'auto',

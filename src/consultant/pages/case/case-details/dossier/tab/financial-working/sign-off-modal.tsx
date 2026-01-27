@@ -178,8 +178,8 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
                 fileError
                   ? 'border-red-500 bg-red-50'
                   : isDragging
-                  ? 'border-[#0176D3] bg-[#F0F7FF]'
-                  : 'border-[#CBD6E2] bg-[#F9FAFB] hover:bg-[#F4F6F9]'
+                    ? 'border-[#0176D3] bg-[#F0F7FF]'
+                    : 'border-[#CBD6E2] bg-[#F9FAFB] hover:bg-[#F4F6F9]'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}

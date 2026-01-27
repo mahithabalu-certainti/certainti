@@ -328,7 +328,7 @@ export const ProjectTask = ({
       label: 'Edit',
       onClick: (row: ProjectTaskListType) => handleEditProjectTask(row),
       hide: !isProjectTaskFieldsEditable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
   ];
 
