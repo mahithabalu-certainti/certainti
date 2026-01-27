@@ -203,18 +203,11 @@ export const STATUS_MESSAGE = {
   rdCreditPreview: "RD credit calculation results retrieved",
   rdCreditProcessInitiatedSuccess: "RD credit calculation initiated successfully",
   rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
-<<<<<<< HEAD
   noProjectsAssignedToCase: "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff: "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed: "Failed to signoff financial working",
-  regionsFetchedSuccess: "Regions listed successfully"
-=======
-  noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
-  financialWorkingSignedOff : "Financial Working has been successfully signed off",
-  financialWorkingSignedOffFailed : "Failed to signoff financial working",
-  regionsFetchedSuccess : "Regions listed successfully",
-  financialWorkingInitiated:"Financial workings are being computed. Refresh the page to check the status"
->>>>>>> develop
+  regionsFetchedSuccess: "Regions listed successfully",
+  financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status"
 };
 
 export const caseStatuses = {
