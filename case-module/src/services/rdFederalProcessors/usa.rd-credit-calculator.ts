@@ -273,7 +273,7 @@ export class RdCreditCalculatorForUSA {
             priorYearGross.push({
                 "Preceding Year Wise" : `${i + 1}${mapNumbers.get(i + 1)} Preceding year`,
                 "Total" : item.grossReceipts || 0,
-                "Fiscal Year" : item.fiscalYear
+                "Fiscal Year" : JSON.stringify(item.fiscalYear)
             })
         });
        
