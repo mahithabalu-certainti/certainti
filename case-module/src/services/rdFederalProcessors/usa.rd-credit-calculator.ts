@@ -38,7 +38,9 @@ export class RdCreditCalculatorForUSA {
             const { asc, rrc } = this.splitAscRrcConfig(config);
             logMessage(`Extracted ASC Config: ${JSON.stringify(asc)}`);
             logMessage(`Extracted RRC Config: ${JSON.stringify(rrc)}`);
-            const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(federalRdData.currentYearQREs.contract || 0);
+            const contract = new Decimal(federalRdData.currentYearQREs.contract || 0).mul(config.rrc_sub_con_percent/100)
+            federalRdData.currentYearQREs.contract = contract.toNumber()
+            const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(contract || 0);
             logMessage(`CurrentYearQREs: ${JSON.stringify(federalRdData.currentYearQREs)}`);
 
             const totalGrossReceipts = new Decimal((federalRdData.annualGrossReceipts || []).reduce(
@@ -58,6 +60,7 @@ export class RdCreditCalculatorForUSA {
                 creditType: this.creditType,
                 currency: this.currency,
                 fiscalYearEnded : date,
+                subConPercent : config.rrc_sub_con_percent
             });
             logMessage(`Input Fields: ${JSON.stringify(inputFields)}`);
             let taxCredit;
@@ -248,21 +251,32 @@ export class RdCreditCalculatorForUSA {
      */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[], metadata: any = {}) {
 
-        const qreSummary: Record<string, any> = {
-            wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract_65: currentYearQREs.contract
-        };
+        const priorYearsQre: Record<string, any> = []
+        const priorYearGross : Record<string, any> = []
+        const mapNumbers = new Map();
+        mapNumbers.set(1, "st")
+        mapNumbers.set(2, "nd")
+        mapNumbers.set(3, "rd")
+        mapNumbers.set(4, "th")
 
         // Add prior 3 years QREs
         prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre || 0;
+            priorYearsQre.push({
+                "Preceding Year Wise" : `${i + 1}${mapNumbers.get(i + 1)} Preceding year`,
+                "Total" : item.qre || 0,
+                "Fiscal Year" : item.fiscalYear
+            })
         });
 
         // Add prior 4 years gross receipts
         annualGrossReceipts.forEach((item, i) => {
-            qreSummary[`prior_year_gross_receipts_${i + 1}`] = item.grossReceipts || 0;
+            priorYearGross.push({
+                "Preceding Year Wise" : `${i + 1}${mapNumbers.get(i + 1)} Preceding year`,
+                "Total" : item.grossReceipts || 0,
+                "Fiscal Year" : item.fiscalYear
+            })
         });
+       
 
 
         return {
@@ -270,12 +284,16 @@ export class RdCreditCalculatorForUSA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-                "For the Year Ended" : metadata.fiscalYearEnded,
                 "Descriptions" : "Research Tax Credit",
                 "Tax Year Ended:" : metadata.fiscalYearEnded
-
             },
-            qreSummary
+            "Average Annual Gross Receipts" : priorYearGross,
+            "Total Qualified Research Expenses" : priorYearsQre,
+            "qreSummary" : {
+                "Wages" : currentYearQREs.wages,
+                "Supplies" : currentYearQREs.supplies,
+                [`${metadata.subConPercent}% Contract Expenses`] : currentYearQREs.contract
+            }
         };
 
     }
