@@ -194,7 +194,7 @@ export class RdCreditCalculatorForAZ {
             const line87 = Decimal.min(line85, line86);
 
             //---- Line 88: Add Line 77 and 87
-            const line88 = line87.plus(line77);
+            const line88 = line87.plus(line78);
 
             let line93;
             let line89, line90, line91, line92;
@@ -221,7 +221,7 @@ export class RdCreditCalculatorForAZ {
                 excess_qre: this.round2(line85) || 0.00,
                 half_total_qre: this.round2(line86) || 0.00,
                 total_section_b_credit: this.round2(line87)|| 0.00,
-                prior_year_credit_carryforward: line77 === Decimal(0) ? 0.00 : this.round2(line77).toFixed(2),
+                prior_year_credit_carryforward: line88 === Decimal(0) ? 0.00 : this.round2(line88) || 0.00,
                 credit_if_under_threshold: this.round2(line89) || 0.00,
                 excess_amount: this.round2(line90)|| 0.00,
                 credit_on_excess: this.round2(line91) || 0.00,
