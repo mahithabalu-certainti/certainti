@@ -123,13 +123,14 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "6 Total qualified research expenses for this aggregate group", order: 6 }
             ],
             "PART 2. CREDIT DETERMINED UNDER c. 63, s. 38M(b), (ALTERNATE SIMPLIFIED METHOD)": [
-                { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 1 },
-                { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 2 },
-                { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 3 },
-                { pattern: "10 Applicable rate for Alternative Simplified Method", order: 4 },
-                { pattern: "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10", order: 5 },
-                { pattern: "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6", order: 6 },
-                { pattern: "13 Amount of group credit for this corporation. Multiply line 11 by line 12", order: 7 }
+                { pattern : "text", order : 1},
+                { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 2 },
+                { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 3 },
+                { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 4 },
+                { pattern: "10 Applicable rate for Alternative Simplified Method", order: 5 },
+                { pattern: "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10", order: 6 },
+                { pattern: "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6", order: 7 },
+                { pattern: "13 Amount of group credit for this corporation. Multiply line 11 by line 12", order: 8 }
             ],
             "PART 3. CREDIT DETERMINED UNDER c. 63, A. 38M(a)": [
                 { pattern: "14 Fixed-base ratio (see instructions)", order: 1 },
@@ -255,10 +256,14 @@ CA: {
 },
     CO: {
         sectionOrder: [
-            "PART IV: Research and Experimental Activities Credit"
+            "PART IV: Research and Experimental Activities Credit",
+            "Worksheet 3: Research and Experimental Activities Credit Do not send, keep for your records"
         ],
         sectionFieldOrders: {
-            "PART IV: Research and Experimental Activities Credit": [
+            "PART IV: Research and Experimental Activities Credit" : [
+                { pattern : "text", order : 1}
+            ],
+            "Worksheet 3: Research and Experimental Activities Credit Do not send, keep for your records": [
             { pattern : "A.Enter the current year qualified expenditures", order : 1 },
             { pattern : "B.Enter the first preceding year expenditures", order : 2 },
             { pattern : "C. Enter the second preceding year expenditures", order : 3 },
