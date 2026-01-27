@@ -62,9 +62,9 @@ export class FederalComputationService {
                 let date = fetchEndDate[0][0].fiscal_end_date+`/${caseDetails.fiscal_year}`
                 const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb); //current yer QREs
                 logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
-                const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
+                const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREsForFederal(accountRid, this.jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
                 logMessage(`Total Prior 3 Years QREs: ${JSON.stringify(prior3YearsQREs)}`);
-                const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, this.jurisdictionColumn, countryInfo.rid, 4, schemaName, orgDb); // prior 4 years gross receipts
+                const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceiptsForFederal(accountRid, this.jurisdictionColumn, countryInfo.rid, 4, schemaName, orgDb); // prior 4 years gross receipts
                 const federalRDData = await this.getFederalRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
                 const config = await this.rdCreditSchemaService.getRDCreditConfig(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
                 const extractConfig = this.extractConfigJson(config.config_json);
@@ -79,6 +79,7 @@ export class FederalComputationService {
                 };
             }
             } else if(countryInfo.countryCode === 'GBR') {
+                let fetchFiscalDate : any = await orgDb.query(rawQueries.fetchAccountStartEndDate(accountRid, schemaName));
                 const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
                 const config = await this.rdCreditSchemaService.getRDCreditConfig(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
                 const extractConfig = this.extractConfigJson(config.config_json);
@@ -138,7 +139,7 @@ export class FederalComputationService {
                             "Account ID" : accountRid,
                             "Account Name" : countryInfo.accountName,
                             "Description": "Summary of SR&ED Expenditures",
-                            "Fiscal Year" : `04/01/${caseDetails?.fiscal_year - 1} - 03/31/${caseDetails?.fiscal_year}`
+                            "Fiscal Year" : `${fetchFiscalDate[0][0].fiscal_start_date}/${caseDetails?.fiscal_year - 1} - ${fetchFiscalDate[0][0].fiscal_end_date}/${caseDetails?.fiscal_year}`
                         },
                         Columns : [
                             "Project Credit Summary","Employees","Total Projects","LABOUR", "EPW", reductionValue, 
@@ -231,7 +232,7 @@ export class FederalComputationService {
                             totalEpwCost = totalEpwCost + data.epw
                             totalNetEpw = totalNetEpw + data.net_epw
                         })
-                        totalReductionCost = totalEpwCost * extractConfig.reduction
+                        totalReductionCost = totalEpwCost * (extractConfig.reduction/100)
                         let totalLabour = totalEmployeesCost + totalNetEpw + calculatedPaidUnpaidAmount 
                         let totalQRE = totalLabour + cloudSoftwareCost + subContracts + heatLightPower + otherCost
                         let researchDevelopmentTaxCredit = Number((totalQRE * extractConfig.research_development_tax_credit)/100).toFixed(2);
@@ -308,7 +309,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
-                    const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails);
+                    const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
                     await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
