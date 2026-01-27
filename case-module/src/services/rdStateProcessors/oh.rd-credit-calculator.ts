@@ -115,11 +115,12 @@ export class RdCreditCalculatorForOH {
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson ) {
 
         let storeData : any[] = []
+        let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent/100) || 0,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0))
+            contract: currentYearContract,
+            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract) || 0
         })
 
         prior3YearsQREs.forEach((item) => {

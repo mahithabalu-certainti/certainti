@@ -206,11 +206,12 @@ export class RdCreditCalculatorForMA {
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}, config : ConfigJson) {
         let storeData : any[] = []
         let annualGrossReceiptsData :any[] = []
+        let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(Number(currentYearQREs.contract || 0)),
-            contract: (new Decimal(currentYearQREs.contract || 0)).mul(config.sub_con_percent/100) || 0
+            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract),
+            contract: currentYearContract
 
         })
         annualGrossReceipts.forEach((item) => {
