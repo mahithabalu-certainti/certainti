@@ -203,6 +203,39 @@ class RDCreditSchemaService {
         }
     }
 
+    async getAnnualGrossReceiptsForFederal(accountRid: string, jurisdictionColumn: string, jurisdictionRid: string, prior: number, schemaName: string, orgDbSequelize: Sequelize): Promise<AnnualGrossReceipt[]> {
+        try {
+            if (!this.orgDbSequelize) {
+                this.orgDbSequelize = await initOrgSequelize();
+            }
+
+            const result: any[] = await this.orgDbSequelize.query(
+                `
+                SELECT 
+                    fiscal_year,
+                    SUM(annual_gross_receipts) AS total_gross_receipts
+                FROM ${schemaName}.case_history_submission
+                WHERE account_rid = :accountRid AND ${jurisdictionColumn} = :jurisdictionRid AND (state_rid IS NULL OR state_rid = '')
+                GROUP BY fiscal_year
+                ORDER BY fiscal_year DESC
+                LIMIT :prior
+            `,
+                {
+                    replacements: { accountRid, prior, jurisdictionRid },
+                    type: QueryTypes.SELECT,
+                }
+            );
+
+            return result.map(r => ({
+                fiscalYear: r.fiscal_year,
+                grossReceipts: Number(r.total_gross_receipts || 0)
+            }));
+        } catch (err) {
+            logMessage(`Error fetching gross receipts: ${err}`);
+            throw new Error("Error fetching gross receipts: " + (err as Error).message);
+        }
+    }
+
 
     /**
      * Get prior 3 years QREs
@@ -227,6 +260,45 @@ class RDCreditSchemaService {
                     SUM(total_subcon_cost) AS total_contract
                 FROM ${schemaName}.case_history_submission
                 WHERE account_rid = :accountRid AND fiscal_year < :currentFiscalYear AND ${jurisdictionColumn} = :jurisdictionRid
+                GROUP BY fiscal_year
+                ORDER BY fiscal_year DESC
+                LIMIT :prior
+            `,
+                {
+                    replacements: { accountRid, prior: 3, currentFiscalYear, jurisdictionRid },
+                    type: QueryTypes.SELECT,
+                }
+            );
+
+            return result.map(r => ({
+                fiscalYear: r.fiscal_year,
+                qre: Number(r.total_qre || 0),
+                wages: Number(r.total_wages || 0),
+                supplies: Number(r.total_supplies || 0),
+                contract: Number(r.total_contract || 0)
+            }));
+        } catch (err) {
+            logMessage(`Error fetching gross receipts: ${err}`);
+            throw new Error("Error fetching gross receipts: " + (err as Error).message);
+        }
+    }
+
+    async getPrior3YearQREsForFederal(accountRid: string, jurisdictionColumn: string, jurisdictionRid: string, prior: number = 3, schemaName: string, currentFiscalYear: number, orgDbSequelize: Sequelize): Promise<QRE[]> {
+        try {
+            if (!this.orgDbSequelize) {
+                this.orgDbSequelize = await initOrgSequelize();
+            }
+            const result: any[] = await this.orgDbSequelize.query(
+                `
+                SELECT 
+                    fiscal_year,
+                    SUM(total_qre) AS total_qre,
+                    SUM(total_fte_cost) AS total_wages,
+                    SUM(total_nonlabor_cost) AS total_supplies,
+                    SUM(total_subcon_cost) AS total_contract
+                FROM ${schemaName}.case_history_submission
+                WHERE 
+                account_rid = :accountRid AND fiscal_year < :currentFiscalYear AND ${jurisdictionColumn} = :jurisdictionRid AND (state_rid IS NULL OR state_rid = '')
                 GROUP BY fiscal_year
                 ORDER BY fiscal_year DESC
                 LIMIT :prior

@@ -34,8 +34,6 @@ export class RdCreditCalculatorForAZ {
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : number, caseData : Case) {
         
         const priorYearsCount = stateRdData.annualGrossReceipts?.length!;
-        console.log("StateData =======> ", stateRdData)
-         console.log("StateData.annualGrossReceipts =======> ", stateRdData.annualGrossReceipts)
         const totalGrossReceipts = new Decimal((stateRdData.annualGrossReceipts || []).reduce(
             (sum, r) => sum + (r.grossReceipts || 0), 0));
 
