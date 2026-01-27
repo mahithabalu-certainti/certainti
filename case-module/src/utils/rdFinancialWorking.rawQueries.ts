@@ -15,10 +15,10 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     SELECT 
     CAST(SUM(COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS employees,
     CAST(SUM(COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS epw,
-    cp.project_name, cp.project_fiscal_rid, cp.currency_rid
+    cp.project_name, cp.rid, cp.currency_rid
     FROM
     ${schemaName}.project_fiscal cp
-    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal = cp.rid
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
     WHERE
     cp.rid = fpr.project_fiscal_rid
     GROUP BY
@@ -27,7 +27,7 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     )
     SELECT 
     array_agg(jsonb_build_object(
-    'project_fiscal_rid', project_fiscal_rid,
+    'project_fiscal_rid', rid,
     'project_name', project_name,
     'currency_rid', currency_rid,
     'employees', employees,
