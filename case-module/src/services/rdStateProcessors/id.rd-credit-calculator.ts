@@ -69,7 +69,7 @@ export class RdCreditCalculatorForID {
         const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
         const tot_base_amount = base_amount.plus(min_credit_rate);
-        const credit_earned = tot_base_amount.mul(config.credit_earned);
+        const credit_earned = tot_base_amount.mul(config.credit_earned /100);
         const final_credit = credit_earned;
         const tot_credit_avail = final_credit;
 
