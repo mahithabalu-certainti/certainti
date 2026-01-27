@@ -257,7 +257,7 @@ export class RdCreditCalculatorForGA {
             "Equals Ratio (%)"
         ];
         const ratioTableRows = ratioCalculationInfo.previous_years.map((item: any) => ({
-            "3 Previous Years": item.fiscal_year,
+            "3 Previous Years": item.fiscal_year.toString(),
             "Georgia Research Expenses": item.prior_qre,
             "Georgia Gross Receipts": item.prior_receipts,
             "Equals Ratio (%)": `${item.ratio}%`
@@ -275,7 +275,7 @@ export class RdCreditCalculatorForGA {
                 "Ratio Calculation": {
                     table_headers: ratioTableHeaders,
                     table_rows: ratioTableRows,
-                    Total: ratioCalculationInfo.sum_ratio
+                    Total: `${ratioCalculationInfo.sum_ratio}%`
                 },
                 "Calculation of Average": {
                     table_headers: ["Total - F", "Average Research Ratio (F/3) - G"],
