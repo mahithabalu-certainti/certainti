@@ -97,10 +97,10 @@ export class RdCreditCalculatorForUSA {
         const line21 = new Decimal(prior3YearsQREs.reduce((sum, y) => sum + (y.qre || 0), 0));
 
         // ---- Line 22: Divide line 21 by 6 ----
-        const line22 = await this.round2(line21.div(6));
+        const line22 = line21.div(6);
 
         // ---- Line 23: Subtract line 22 from line 20 ----
-        const line23 = new Decimal(await this.round2(totalQRE.minus(line22)));
+        const line23 = new Decimal(totalQRE.minus(line22));
 
         // ---- Line (14% or 6%) if any prior year QRE = zero ----
         const hadZeroYear = prior3YearsQREs.some(y => y.qre === 0);
@@ -109,7 +109,7 @@ export class RdCreditCalculatorForUSA {
         const percentage = hadZeroYear ? configAsc.fixed_base_percentage : configAsc.credit_rate;
 
         // ---- Line 24: Multiply line 23 by percentage ----
-        const line24 = await this.round2(line23.mul(percentage));
+        const line24 = line23.mul(percentage/100);
 
         // ---- Line 25: (ASC Base Credit) ----
         const line25 = line24; // because you don’t have line19 in ASC
@@ -149,22 +149,23 @@ export class RdCreditCalculatorForUSA {
 
         //---- Line 9: Subtract line 8 from line 5
         const line9 = currentYearQRE.minus(line8)
+        const maxLine9 = Decimal.max(line9, 0)
 
         //---- Line 10: Multiply line 5 by 50%
-        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate || 0.5);
+        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate/100 || 0.5);
 
         //---- Line 11: Enter smaller of line 9 or line 10
-        const line11 = Decimal.min(line10, line9);
+        const line11 = Decimal.min(line10, maxLine9);
         let dynamicLine5 = `10 Multiply line 5 by ${configRRC.qre_cap_rate}`
 
         return {
-            "5 Total Qualified Research Expenses": Number(await this.round2(currentYearQRE)),
+            "5 Total Qualified Research Expenses": await this.round2(currentYearQRE),
             "6 Fixed-base percentage": `${configRRC.fixed_base_percentage}%`,
-            "7 Average Annual Gross Receipts": Number(await this.round2(line7)),
-            "8 Multiply line 7 by percentage on line 6": Number(await this.round2(line8)),
-            "9 Subtract line 8 from line 5": Number(await this.round2(line9)),
-            [dynamicLine5]: Number(await this.round2(line10)),
-            "11 Enter smaller of line 9 or line 10": Number(await this.round2(line11)),
+            "7 Average Annual Gross Receipts": await this.round2(line7),
+            "8 Multiply line 7 by percentage on line 6": await this.round2(line8),
+            "9 Subtract line 8 from line 5": await this.round2(maxLine9),
+            [dynamicLine5]: await this.round2(line10),
+            "11 Enter smaller of line 9 or line 10": await this.round2(line11),
             final_credit: line11
         };
     }
