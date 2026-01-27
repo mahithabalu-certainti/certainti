@@ -82,10 +82,10 @@ export class RdCreditCalculatorForNJ {
         }
 
         return {
-            current_year_wages,
-            current_year_contract,
-            total_current_year_qre,
-            total_prev_qre,
+            current_year_wages : this.round2(current_year_wages),
+            current_year_contract : this.round2(current_year_contract),
+            total_current_year_qre : this.round2(total_current_year_qre),
+            total_prev_qre : this.round2(total_prev_qre),
             average_tot_prev_qre: this.round2(average_tot_prev_qre),
             sub_credit: this.round2(sub_credit),
             final_credit: this.round2(final_credit),
@@ -182,7 +182,7 @@ export class RdCreditCalculatorForNJ {
      */
     buildComputedFields(part4ASCCreditCalculationInfo: any, part5DevelopmentTaxCreditCalculationInfo: any, config : ConfigJson) {
         let part4ASCCreditCalculation ={
-            "16 Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)":part4ASCCreditCalculationInfo.current_year_wages,
+            "16 Wages for qualified services (do not include wages used to compute the Federal Jobs Credit)": this.round2(part4ASCCreditCalculationInfo.current_year_wages),
             "17 Cost of Supplies" : part4ASCCreditCalculationInfo.costOfSupplies,
             "18 Rental or lease costs of computers" : part4ASCCreditCalculationInfo.leaseComputerCost,
             "19 Enter the applicable percentage of contract research expenses (see instructions)":part4ASCCreditCalculationInfo.current_year_contract,
