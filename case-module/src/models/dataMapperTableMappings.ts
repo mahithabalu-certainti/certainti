@@ -2,9 +2,9 @@ import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
 /**
- * Table: trd365.data_mapper_form_mappings
+ * Table: trd365.data_mapper_table_mappings
  */
-interface DataMapperFormMappingsAttributes {
+interface DataMapperTableMappingsAttributes {
     rid: string;
     created_datetime: Date;
     created_by: string;
@@ -12,48 +12,36 @@ interface DataMapperFormMappingsAttributes {
     modified_by?: string | null;
 
     form_rid: string;
-    field_label: string;
-    field_id?: string | null;
-    calculation_config?: any | null;
-    field_type?: string | null;
-    column_id?: string | null;
+    column_id_list?: any | null;
 }
 
-export interface DataMapperFormMappingsCreationAttributes
+export interface DataMapperTableMappingsCreationAttributes
     extends Optional<
-        DataMapperFormMappingsAttributes,
+        DataMapperTableMappingsAttributes,
         | "rid"
         | "created_datetime"
         | "modified_datetime"
         | "modified_by"
-        | "field_id"
-        | "calculation_config"
-        | "field_type"
-        | "column_id"
+        | "column_id_list"
     > { }
 
-export class DataMapperFormMappings
-    extends Model<DataMapperFormMappingsAttributes, DataMapperFormMappingsCreationAttributes>
-    implements DataMapperFormMappingsAttributes {
+export class DataMapperTableMappings
+    extends Model<DataMapperTableMappingsAttributes, DataMapperTableMappingsCreationAttributes>
+    implements DataMapperTableMappingsAttributes {
     public rid!: string;
-
     public created_datetime!: Date;
     public created_by!: string;
     public modified_datetime?: Date | null;
     public modified_by?: string | null;
 
     public form_rid!: string;
-    public field_label!: string;
-    public field_id?: string | null;
-    public calculation_config?: any | null;
-    public field_type?: string | null;
-    public column_id?: string | null;
+    public column_id_list?: any | null;
 
     static initialize(
         sequelize: Sequelize,
         schemaName: string = MAIN_SCHEMA_NAME
     ) {
-        return DataMapperFormMappings.init(
+        return DataMapperTableMappings.init(
             {
                 rid: {
                     type: DataTypes.STRING(50),
@@ -82,31 +70,15 @@ export class DataMapperFormMappings
                     type: DataTypes.STRING(120),
                     allowNull: false,
                 },
-                field_label: {
-                    type: DataTypes.STRING(500),
-                    allowNull: false,
-                },
-                field_id: {
-                    type: DataTypes.STRING(500),
-                    allowNull: true,
-                },
-                calculation_config: {
+                column_id_list: {
                     type: DataTypes.JSONB,
                     allowNull: true,
-                },
-                field_type: {
-                    type: DataTypes.STRING(50),
-                    allowNull: true,
-                },
-                column_id: {
-                    type: DataTypes.STRING(120),
-                    allowNull: true,
-                },
+                }
             },
             {
                 sequelize,
                 schema: schemaName,
-                tableName: "data_mapper_form_mappings",
+                tableName: "data_mapper_table_mappings",
                 timestamps: false,
                 underscored: true,
             }
@@ -114,9 +86,6 @@ export class DataMapperFormMappings
     }
 
     static associate(models: any) {
-        DataMapperFormMappings.belongsTo(models.DataMapperForms, {
-            foreignKey: "form_rid",
-            as: "dataMapperForm",
-        });
+        // Associations can be added here
     }
 }

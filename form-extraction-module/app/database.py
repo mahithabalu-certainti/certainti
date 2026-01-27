@@ -1,9 +1,11 @@
 
 import json
+import uuid
 import psycopg2
 from psycopg2 import pool
 from contextlib import contextmanager
 from .config import get_settings
+from .pdf_form_reader import detect_mislabeled_table, split_by_keywords
 
 settings = get_settings()
 
@@ -44,16 +46,35 @@ class DBPool:
             cls.initialize_pool()
 
         conn = None
+        # Try to get a valid connection (retry logic for stale connections)
+        for attempt in range(cls._MAX_RETRIES):
+            try:
+                conn = cls._connection_pool.getconn()
+                # Verify connection is still alive
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+                break # Connection is good
+            except Exception as e:
+                print(f"Warning: Discarding dead connection (attempt {attempt+1}/{cls._MAX_RETRIES}): {e}")
+                if conn:
+                    # Close and remove from pool
+                    try:
+                        cls._connection_pool.putconn(conn, close=True)
+                    except:
+                        pass
+                conn = None
+        
+        if conn is None:
+            raise Exception("Failed to acquire valid database connection after retries")
+
+        should_close = False
         try:
-            conn = cls._connection_pool.getconn()
-            # Verify connection is still alive
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
             yield conn
             # No commit here, handled by caller or explicit commit
         except Exception as e:
             print(f"Database error: {str(e)}")
+            should_close = True
             if conn:
                 try:
                     conn.rollback()
@@ -62,7 +83,11 @@ class DBPool:
             raise
         finally:
             if conn:
-                cls._connection_pool.putconn(conn)
+                # Return to pool (close if marked bad)
+                try:
+                    cls._connection_pool.putconn(conn, close=should_close)
+                except:
+                    pass
 
 
 # Initialize pool when module is loaded
@@ -99,19 +124,16 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
         with conn.cursor() as cur:
 
             # 2. Update status in main table
-            query = f"UPDATE {schema}.data_mapper_forms SET status_rid = %s"
-            params = [status_rid]
-
-            if error_message:
-                query += ", error_message = %s"
-                params.append(error_message)
-            
-            query += " WHERE rid = %s"
-            params.append(rid)
+            query = f"UPDATE {schema}.data_mapper_forms SET status_rid = %s,  error_message = %s WHERE rid = %s"
+            params = [status_rid, error_message, rid]
             cur.execute(query, tuple(params))
 
             # 3. If we have extracted data, insert mappings
             if extracted_data:
+
+                # delete existing mappings for this form
+                cur.execute(f"DELETE FROM {schema}.data_mapper_form_mappings WHERE form_rid = %s", (rid,))
+                cur.execute(f"DELETE FROM {schema}.data_mapper_table_mappings WHERE form_rid = %s", (rid,))
 
                 # Parse extracted_data if it's a string
                 data_obj = extracted_data
@@ -121,23 +143,95 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                     except:
                         pass
                 
-                insert_sql = f"""
+                field_insert_sql = f"""
                                 INSERT INTO {schema}.data_mapper_form_mappings 
-                            (form_rid, field_label, created_by)
-                            VALUES (%s, %s, %s)
+                            (form_rid, field_label, created_by, field_type, column_id)
+                            VALUES (%s, %s, %s, %s, %s)
                             """
+
                 
-                # Check for pdf_form_fields
+                # insert labels
                 if isinstance(data_obj, dict):
+                    processed_labels = set()
+
+                    def insert_safe_label(label, f_type):
+                        if label and label not in processed_labels:
+                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None))
+                            processed_labels.add(label)
+
+                    header_fields = data_obj.get("header_fields", [])
+                    if header_fields and isinstance(header_fields, list):
+                        for header_field in header_fields:
+                            f_label = header_field.get("label", "")
+                            insert_safe_label(f_label, "line-item")
+
                     sections = data_obj.get("sections", [])
                     if sections and isinstance(sections, list):
                         for section in sections:
+                            #insert line items
                             line_items = section.get("line_items", [])
                             if line_items and isinstance(line_items, list):
                                 for line_item in line_items:
                                     f_label = line_item.get("label", "")
-                                    cur.execute(insert_sql, (rid, f_label, user_id))
+                                    insert_safe_label(f_label, "line-item")
+                            
+                            #insert tables
+                            tables = section.get("tables", [])
+                            if tables and isinstance(tables, list):
+                                for table in tables:
+                                    is_mislabeled, analysis = detect_mislabeled_table(table)
 
+                                    rows = table.get("rows")
+                                    if rows and isinstance(rows, list) and len(rows) == 1:
+                                        is_mislabeled = True
+
+                                    # if not mislabeled, insert as table
+                                    if not is_mislabeled:
+                                        column_headers = table.get("column_headers")
+                                        if column_headers and isinstance(column_headers, list):
+                                            for idx, header in enumerate(column_headers):
+                                                insert_safe_label(header, "table")
+
+                                        rows = table.get("rows")    
+                                        if rows and isinstance(rows, list):
+                                            for row_idx, row in enumerate(rows, 1):
+                                                if row and isinstance(row, dict):
+                                                    row_id = row.get("row_id")
+                                                    if isinstance(row_id, str) and any(word in row_id.lower() for word in ("total", "sum")):
+                                                        cells = row.get("cells")
+                                                        if cells and isinstance(cells, list):
+                                                            for cell in cells:
+                                                                header = cell.get("header")
+                                                                f_label = row_id + " -> " + header
+                                                                insert_safe_label(f_label, "line-item")
+
+                                    # if mislabeled, insert second cell as line-item for each row
+                                    else:
+                                        rows = table.get("rows")
+                                        if rows and isinstance(rows, list):
+                                            for row in rows:
+                                                cells = row.get("cells")
+                                                if cells and isinstance(cells, list):
+                                                    for cell in cells:
+                                                        if isinstance(cell, dict):
+
+                                                            f_label = cell.get("value") or cell.get("header")
+
+                                                            is_split, f_label = split_by_keywords(f_label)
+
+                                                            if is_split:
+                                                                for label in f_label:
+                                                                    insert_safe_label(label, "line-item")
+                                                            else:
+                                                                insert_safe_label(f_label, "line-item")
+
+                    pdf_form_fields = data_obj.get("pdf_form_fields", [])
+                    if pdf_form_fields and isinstance(pdf_form_fields, list):
+                        query = f"UPDATE {schema}.data_mapper_forms SET field_array = %s WHERE rid = %s"
+                        params = [json.dumps(pdf_form_fields), rid]
+                        
+                        cur.execute(query, tuple(params))
+                        
         conn.commit()
         print(f"Updated record {rid} to {status}")
 

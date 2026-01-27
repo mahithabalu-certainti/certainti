@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
-import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService } from "./interfaces/interface";
+import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService, IDataMapperService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
@@ -28,7 +28,7 @@ class Services {
   projectService: ProjectService
   caseTaskService: CaseTaskService
   checklistService: ChecklistService
-  dataMapperService: DataMapperService
+  dataMapperService: IDataMapperService
   stateComputationService: StateComputationService;
   federalComputationService: FederalComputationService;
   computationService: ComputationService;

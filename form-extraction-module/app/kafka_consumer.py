@@ -7,28 +7,11 @@ from confluent_kafka import Consumer, KafkaException
 from .config import get_settings
 from .ade_service import ADEForm6765Service
 from .database import DBPool, update_extraction_status
+import os
 
 settings = get_settings()
 ade_service = ADEForm6765Service()
 
-def ensure_columns_exist(conn):
-    """Ensure required columns exist in the table."""
-    try:
-        cur = conn.cursor()
-        schema = settings.MAIN_SCHEMA_NAME
-        
-        # Add columns if they don't exist
-        for col, dtype in [("extracted_data", "JSONB"), ("error_message", "TEXT")]:
-            cur.execute(f"""
-                ALTER TABLE {schema}.data_mapper_forms 
-                ADD COLUMN IF NOT EXISTS {col} {dtype};
-            """)
-        
-        conn.commit()
-        cur.close()
-    except Exception as e:
-        print(f"Error ensuring columns: {e}")
-        conn.rollback()
 
 def process_kafka_message(message):
     """
@@ -51,50 +34,49 @@ def process_kafka_message(message):
             print("Error: No file_url in message")
             return
 
-        # Use connection from pool
-        with DBPool.get_connection() as conn:
-            ensure_columns_exist(conn)
-
-            # Download file
-            try:
-                response = requests.get(file_url)
-                response.raise_for_status()
-                file_content = response.content
-                print(f"Downloaded file from {file_url}, size: {len(file_content)} bytes")
-            except Exception as e:
-                error_msg = f"Failed to download file: {e}"
-                print(error_msg)
-                if data_mapper_rid:
+        # Download file
+        try:
+            response = requests.get(file_url)
+            response.raise_for_status()
+            file_content = response.content
+            print(f"Downloaded file from {file_url}, size: {len(file_content)} bytes")
+        except Exception as e:
+            error_msg = f"Failed to download file: {e}"
+            print(error_msg)
+            if data_mapper_rid:
+                with DBPool.get_connection() as conn:
                     update_extraction_status(conn, data_mapper_rid, 'Failed', error_message=error_msg)
-                return
+            return
 
-            # Save to temp file for ADE
-            suffix = ".pdf" 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                tmp_path = Path(tmp.name)
-                tmp.write(file_content)
+        # Save to temp file for ADE
+        suffix = ".pdf" 
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp_path = Path(tmp.name)
+            tmp.write(file_content)
+        
+        try:
+            print(f"Starting extraction for {tmp_path}")
+            extracted = ade_service.extract_form(tmp_path)
+            print("Extraction successful")
             
-            try:
-                print(f"Starting extraction for {tmp_path}")
-                extracted = ade_service.extract_form(tmp_path)
-                print("Extraction successful")
-                
-                # Update DB on success
-                if data_mapper_rid:
+            # Update DB on success
+            if data_mapper_rid:
+                with DBPool.get_connection() as conn:
                     update_extraction_status(conn, data_mapper_rid, 'Completed', extracted_data=extracted.model_dump_json(), user_id=user_id)
-                
-            except Exception as e:
-                error_msg = f"Extraction failed: {e}"
-                print(error_msg)
-                # Update DB on failure
-                if data_mapper_rid:
-                     update_extraction_status(conn, data_mapper_rid, 'Failed', error_message=error_msg)
+            
+        except Exception as e:
+            error_msg = f"Extraction failed: {e}"
+            print(error_msg)
+            # Update DB on failure
+            if data_mapper_rid:
+                with DBPool.get_connection() as conn:
+                    update_extraction_status(conn, data_mapper_rid, 'Failed', error_message=error_msg)
 
-            finally:
-                try:
-                    tmp_path.unlink(missing_ok=True)
-                except:
-                    pass
+        finally:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except:
+                pass
 
     except Exception as e:
         print(f"Error processing message: {e}")

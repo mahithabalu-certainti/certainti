@@ -31,6 +31,7 @@ interface DataMapperFormsAttributes {
     is_active: boolean;
 
     error_message?: string | null;
+    field_array?: any | null;
 }
 
 export interface DataMapperFormsCreationAttributes
@@ -44,6 +45,7 @@ export interface DataMapperFormsCreationAttributes
         | "effective_to_date"
         | "is_active"
         | "error_message"
+        | "field_array"
     > { }
 
 export class DataMapperForms
@@ -158,6 +160,10 @@ export class DataMapperForms
                     type: DataTypes.TEXT,
                     allowNull: true,
                 },
+                field_array: {
+                    type: DataTypes.JSONB,
+                    allowNull: true,
+                }
             },
             {
                 sequelize,

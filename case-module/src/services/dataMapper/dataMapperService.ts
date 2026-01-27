@@ -7,9 +7,14 @@ import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants"
 import moment from "moment";
 import { DataMapperFormMappings } from "../../models/dataMapperFormMappings";
 import { DataMapperObjects } from "../../models/dataMapperObjects";
+import { DataMapperTableMappings } from "../../models/dataMapperTableMappings";
+import { applyFilters } from "../../utils/helpers";
+import { IDataMapperService } from "../interfaces/interface";
+import { ColumnExtractor } from "./columnExtractorService";
 
 
-export class DataMapperService {
+
+export class DataMapperService implements IDataMapperService {
     private producer!: Producer;
     private mainDbSequelize: Sequelize | null = null;
 
@@ -24,7 +29,7 @@ export class DataMapperService {
         if (!this.producer) {
             const kafka = new Kafka({
                 clientId: "case-module",
-                brokers: [process.env.KAFKA_BROKER || "kafka:9092"],
+                brokers: [process.env.KAFKA_BROKER || "localhost:9094"],
             });
             this.producer = kafka.producer();
             await this.producer.connect();
@@ -32,7 +37,7 @@ export class DataMapperService {
         return this.producer;
     }
 
-    async createDataMapper(data: any, file: Express.Multer.File, userId: string): Promise<any> {
+    async createDataMapper(data: any, file: Express.Multer.File, userId: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
 
@@ -62,8 +67,7 @@ export class DataMapperService {
                 throw new Error("File is required");
             }
 
-            const statusQuery = `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Initiated' LIMIT 1`;
-            const [statusResult]: any = await sequelize.query(statusQuery);
+            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
             const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
             if (!statusRid) {
@@ -136,8 +140,7 @@ export class DataMapperService {
             await setupDataMapperFormsSequence(sequelize, MAIN_SCHEMA_NAME);
 
             // Fetch status RID for 'Active'
-            const statusQuery = `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Failed' LIMIT 1`;
-            const [statusResult]: any = await sequelize.query(statusQuery);
+            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperFailedStatus);
             const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
             if (!statusRid) {
@@ -169,7 +172,7 @@ export class DataMapperService {
         filters: Record<string, any> = {},
         sortBy: string = 'created_datetime',
         sortOrder: string = 'DESC'
-    ): Promise<any> {
+    ): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { items: any[]; totalCount: number } }> {
         try {
             const sequelize = await this.getMainSequelize();
             const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
@@ -189,102 +192,30 @@ export class DataMapperService {
             }
 
             if (filters) {
-                Object.entries(filters).forEach(([field, filter]) => {
-                    if (!filter || typeof filter !== 'object') {
-                        console.log(`Skipping filter for field ${field} due to invalid structure`);
-                        return;
-                    }
-
-                    const operator = Object.keys(filter)[0];
-                    const value = filter[operator as string];
-
-                    if (!operator || value === undefined) {
-                        console.log(`Skipping filter for field ${field} due to missing operator or value`);
-                        return;
-                    }
-
-                    const condition: any = {};
-
-                    switch (field) {
-                        case 'r_number':
-                        case 'created_by':
-                        case 'modified_by':
-                        case 'form_name':
-                        case 'browse_file':
-                        case 'document_name':
-                        case 'country_rid':
-                        case 'state_rid':
-                        case 'format':
-                        case 'status_rid':
-                        case 'error_message':
-                            switch (operator.toLowerCase()) {
-                                case 'equals': condition[field] = { [Op.iLike]: value }; break;
-                                case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;
-                                case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
-                                case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
-                                case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
-                            }
-                            break;
-
-                        case 'is_active':
-                            if (operator.toLowerCase() === 'equals') {
-                                condition[field] = { [Op.eq]: value };
-                            }
-                            break;
-
-                        case 'size_in_mb':
-                            switch (operator.toLowerCase()) {
-                                case 'equals': condition[field] = { [Op.eq]: value }; break;
-                                case 'greater_than': condition[field] = { [Op.gt]: value }; break;
-                                case 'less_than': condition[field] = { [Op.lt]: value }; break;
-                            }
-                            break;
-
-                        case 'created_datetime':
-                        case 'modified_datetime':
-                        case 'effective_from_date':
-                        case 'effective_to_date':
-                            switch (operator.toLowerCase()) {
-                                case 'equals': {
-                                    const date = new Date(value);
-                                    condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
-                                    break;
-                                }
-                                case 'before': {
-                                    const date = new Date(value);
-                                    condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
-                                    break;
-                                }
-                                case 'after': {
-                                    const date = new Date(value);
-                                    condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
-                                    break;
-                                }
-                                case 'between': {
-                                    if (Array.isArray(value)) {
-                                        const startDate = new Date(value[0]);
-                                        const endDate = new Date(value[1]);
-                                        condition[field] = Sequelize.literal(
-                                            `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
-                                        );
-                                    }
-                                    break;
-                                }
-                                case 'is_empty': condition[field] = { [Op.is]: null }; break;
-                            }
-                            break;
-
-                        default:
-                            console.log(`Unhandled filter field: ${field}`);
-                    }
-
-                    if (Object.keys(condition).length > 0) {
-                        whereClause[Op.and].push(condition);
-                    }
-                });
+                applyFilters(filters, whereClause);
             }
 
             const { count, rows } = await DataMapperModel.findAndCountAll({
+                attributes: [
+                    "rid",
+                    "r_number",
+                    "created_datetime",
+                    "created_by",
+                    "modified_datetime",
+                    "modified_by",
+                    "form_name",
+                    "browse_file",
+                    "document_name",
+                    "effective_from_date",
+                    "effective_to_date",
+                    "country_rid",
+                    "state_rid",
+                    "format",
+                    "size_in_mb",
+                    "status_rid",
+                    "is_active",
+                    "error_message"
+                ],
                 where: whereClause,
             });
 
@@ -300,8 +231,8 @@ export class DataMapperService {
             const countryMap = new Map();
             if (countryRids.length > 0) {
                 const countries: any[] = await sequelize.query(
-                    `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:rids)`,
-                    { replacements: { rids: countryRids }, type: QueryTypes.SELECT }
+                    rawQueries.GET_COUNTRIES,
+                    { replacements: { countryRid: countryRids }, type: QueryTypes.SELECT }
                 );
                 countries.forEach(c => countryMap.set(c.rid, c.country_name));
             }
@@ -309,8 +240,8 @@ export class DataMapperService {
             const stateMap = new Map();
             if (stateRids.length > 0) {
                 const states: any[] = await sequelize.query(
-                    `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:rids)`,
-                    { replacements: { rids: stateRids }, type: QueryTypes.SELECT }
+                    rawQueries.fetchStatesByIds(),
+                    { replacements: { ids: stateRids }, type: QueryTypes.SELECT }
                 );
                 states.forEach(s => stateMap.set(s.rid, s.state_name));
             }
@@ -318,7 +249,7 @@ export class DataMapperService {
             const statusMap = new Map();
             if (statusRids.length > 0) {
                 const statuses: any[] = await sequelize.query(
-                    `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE rid IN (:rids)`,
+                    rawQueries.getDataMapperUploadStatuses,
                     { replacements: { rids: statusRids }, type: QueryTypes.SELECT }
                 );
                 statuses.forEach(s => statusMap.set(s.rid, s.status_name));
@@ -326,10 +257,10 @@ export class DataMapperService {
             const userMap = new Map();
             if (allUserIds.length > 0) {
                 const users: any[] = await sequelize.query(
-                    `SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid IN (:rids)`,
-                    { replacements: { rids: allUserIds }, type: QueryTypes.SELECT }
+                    rawQueries.GET_USERS,
+                    { replacements: { userIds: allUserIds }, type: QueryTypes.SELECT }
                 );
-                users.forEach(u => userMap.set(u.rid, `${u.first_name} ${u.last_name}`));
+                users.forEach(u => userMap.set(u.rid, u.full_name));
             }
 
             const enrichedRows = await Promise.all(rows.map(async r => {
@@ -418,7 +349,7 @@ export class DataMapperService {
         }
     }
 
-    async getDataMapperFormsDetail(userId: string, rid: string): Promise<any> {
+    async getDataMapperFormsDetail(userId: string, rid: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
 
@@ -449,7 +380,7 @@ export class DataMapperService {
         }
     }
 
-    async getDataMapperFormsMappingDetail(userId: string, rid: string): Promise<any> {
+    async getDataMapperFormsMappingDetail(userId: string, rid: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
 
@@ -518,7 +449,7 @@ export class DataMapperService {
         }
     }
 
-    async editDataMapper(data: any, file: Express.Multer.File | undefined, userId: string): Promise<any> {
+    async editDataMapper(data: any, file: Express.Multer.File | undefined, userId: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { rid: string } }> {
         try {
             const sequelize = await this.getMainSequelize();
             const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
@@ -530,7 +461,6 @@ export class DataMapperService {
                 return {
                     statusCode: HttpStatus.NOT_FOUND,
                     message: "Record not found",
-                    data: null
                 };
             }
 
@@ -569,8 +499,7 @@ export class DataMapperService {
                 updatePayload.format = uploadResult.extension.replace('.', '');
 
                 // Reset status to Initiated
-                const statusQuery = `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Initiated' LIMIT 1`;
-                const [statusResult]: any = await sequelize.query(statusQuery);
+                const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
                 const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
                 if (statusRid) {
@@ -614,18 +543,57 @@ export class DataMapperService {
         }
     }
 
-    async editDataMapperMapping(data: any, userId: string): Promise<any> {
+    async editDataMapperMapping(data: any, userId: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { rid: string } }> {
         try {
             const sequelize = await this.getMainSequelize();
             const DataMapperFormMappingsModel = DataMapperFormMappings.initialize(sequelize, MAIN_SCHEMA_NAME);
+            const DataMapperTableMappingsModel = DataMapperTableMappings.initialize(sequelize, MAIN_SCHEMA_NAME);
+
+            const [result] = await sequelize.query<any>(
+                rawQueries.getFieldArrayByFormRid(data.rid),
+                { type: QueryTypes.SELECT }
+            );
+
+            const fieldList = result ? result.field_array : [];
 
             if (data.mappings && data.mappings.length > 0) {
+
+                await DataMapperTableMappingsModel.destroy({
+                    where: {
+                        form_rid: data.rid
+                    }
+                });
+
                 for (const mapping of data.mappings) {
-                    DataMapperFormMappingsModel.update({
+
+                    let columnRid = null;
+
+                    if (mapping.field_type === "table") {
+                        if (mapping.field_id) {
+                            const columnFieldIds = ColumnExtractor.getColumnFieldIds(fieldList, mapping.field_id);
+
+                            const columnFieldIdsData: any = {};
+                            for (let idx = 1; idx < columnFieldIds.length + 1; idx++) {
+                                columnFieldIdsData[idx] = columnFieldIds[idx - 1];
+                            }
+
+                            const newTableMap = await DataMapperTableMappingsModel.create({
+                                form_rid: data.rid,
+                                column_id_list: columnFieldIdsData,
+                                created_by: userId,
+                                created_datetime: new Date()
+                            });
+                            columnRid = newTableMap.rid;
+
+                        }
+                    }
+
+                    await DataMapperFormMappingsModel.update({
                         modified_by: userId,
                         modified_datetime: new Date(),
                         field_id: mapping.field_id,
-                        calculation_config: mapping.calculation_config
+                        calculation_config: mapping.calculation_config,
+                        column_id: columnRid
                     }, {
                         where: {
                             rid: mapping.rid
@@ -646,7 +614,7 @@ export class DataMapperService {
         }
     }
 
-    async updateInlineGraphqlDetailsForDataMapper(data: any) {
+    async updateInlineGraphqlDetailsForDataMapper(data: any): Promise<{ statusCode: number; statusMessage?: string; message?: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
             const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
@@ -725,7 +693,7 @@ export class DataMapperService {
         }
     }
 
-    async getObjectsList(data: any): Promise<any> {
+    async getObjectsList(data: any): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
 

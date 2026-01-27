@@ -20,6 +20,8 @@ import {
 } from "@azure/storage-blob";
 import { parse } from "url";
 import { CaseProjectTask } from "../models/caseProjectTaskModel";
+import { Op, Sequelize } from "sequelize";
+
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -564,7 +566,8 @@ export async function uploadToAzureBlob(
     }
 
     // Get connection string from secrets manager
-    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    const connectionString = "DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net"
+    //await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     const containerName = account_number.toLowerCase();
 
     if (!connectionString) {
@@ -670,7 +673,7 @@ export const getColumnsNamesForTaskCommentsUpdate = (data: UpdateCommentsType, d
 
 export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promise<string> {
   try {
-    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    const connectionString = "DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net"
     // const connectionString = "storage-account-connection-string";
     // const connectionString = await getSecret("storage-account-connection-string");
     // const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING as string
@@ -750,3 +753,106 @@ export function getFiscalEndYear(fiscalStart: string, fiscalEnd: string, fiscalY
   if (isNaN(startMonth) || isNaN(endMonth)) return fiscalYear;
   return endMonth < startMonth ? fiscalYear + 1 : fiscalYear;
 }
+
+
+export const applyFilters = (filters: Record<string, any>, whereClause: any) => {
+  if (filters) {
+    Object.entries(filters).forEach(([field, filter]) => {
+      if (!filter || typeof filter !== 'object') {
+        console.log(`Skipping filter for field ${field} due to invalid structure`);
+        return;
+      }
+
+      const operator = Object.keys(filter)[0];
+      const value = filter[operator as string];
+
+      if (!operator || value === undefined) {
+        console.log(`Skipping filter for field ${field} due to missing operator or value`);
+        return;
+      }
+
+      const condition: any = {};
+
+      switch (field) {
+        case 'r_number':
+        case 'created_by':
+        case 'modified_by':
+        case 'form_name':
+        case 'browse_file':
+        case 'document_name':
+        case 'country_rid':
+        case 'state_rid':
+        case 'format':
+        case 'status_rid':
+        case 'error_message':
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.iLike]: value }; break;
+            case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;
+            case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
+            case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+            case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+          }
+          break;
+
+        case 'is_active':
+          if (operator.toLowerCase() === 'equals') {
+            condition[field] = { [Op.eq]: value };
+          }
+          break;
+
+        case 'size_in_mb':
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.eq]: value }; break;
+            case 'greater_than': condition[field] = { [Op.gt]: value }; break;
+            case 'less_than': condition[field] = { [Op.lt]: value }; break;
+          }
+          break;
+
+        case 'created_datetime':
+        case 'modified_datetime':
+        case 'effective_from_date':
+        case 'effective_to_date':
+          switch (operator.toLowerCase()) {
+            case 'equals': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'before': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'after': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'between': {
+              if (Array.isArray(value)) {
+                const startDate = new Date(value[0]);
+                const endDate = new Date(value[1]);
+                condition[field] = Sequelize.literal(
+                  `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                );
+              }
+              break;
+            }
+            case 'is_empty': condition[field] = { [Op.is]: null }; break;
+          }
+          break;
+
+        default:
+          console.log(`Unhandled filter field: ${field}`);
+      }
+
+      if (Object.keys(condition).length > 0) {
+        if (!whereClause[Op.and]) {
+          whereClause[Op.and] = [];
+        }
+        whereClause[Op.and].push(condition);
+      }
+    });
+  }
+  return whereClause;
+};

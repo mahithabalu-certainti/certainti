@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     MAIN_SCHEMA_NAME: str = "trd365"
 
     # Kafka
-    KAFKA_BROKER: str = os.getenv("KAFKA_BROKER", "kafka:9094")
+    KAFKA_BROKER: str = os.getenv("KAFKA_BROKER", "kafka:9092")
     KAFKA_DATA_MAPPER_TOPIC: str = os.getenv("KAFKA_DATA_MAPPER_TOPIC", "data_mapper_request")
     KAFKA_GROUP_ID: str = os.getenv("KAFKA_GROUP_ID", "form_extraction_group")
 

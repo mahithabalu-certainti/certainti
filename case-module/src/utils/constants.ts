@@ -1577,7 +1577,24 @@ export const rawQueries = {
   },
   getDataMapperFormsById(rid: string) {
     return `SELECT 
-    f.*,
+    f.rid,
+    f.r_number,
+    f.created_datetime,
+    f.created_by,
+    f.modified_datetime,
+    f.modified_by,
+    f.form_name,
+    f.browse_file,
+    f.document_name,
+    f.effective_from_date,
+    f.effective_to_date,
+    f.country_rid,
+    f.state_rid,
+    f.format,
+    f.size_in_mb,
+    f.status_rid,
+    f.is_active,
+    f.error_message,
     c.country_name,
     s.state_name,
     ds.status_name,
@@ -1596,6 +1613,12 @@ export const rawQueries = {
         ON f.modified_by = mu.rid
     WHERE f.rid = '${rid}'`;
   },
+  getFieldArrayByFormRid(form_rid: string) {
+    return `SELECT field_array FROM ${MAIN_SCHEMA_NAME}.data_mapper_forms WHERE rid = '${form_rid}'`
+  },
+  getDataMapperInitiatedStatus: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Initiated' LIMIT 1`,
+  getDataMapperFailedStatus: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Failed' LIMIT 1`,
+  getDataMapperUploadStatuses: `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE rid IN (:rids)`,
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

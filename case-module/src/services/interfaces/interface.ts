@@ -125,16 +125,16 @@ export interface ICaseService {
     data?: any;
   }>;
   sentReviewProjects(
-  data: any,
-  filters: Record<string, any>,
-  userId:string,
-  files? : Express.Multer.File[]
-): Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: any;
-}>
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    files?: Express.Multer.File[]
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>
   getCaseTeamRoles(): Promise<{
     statusCode: number;
     message: string;
@@ -182,7 +182,7 @@ export interface ICaseService {
     data?: { reviewProjects: any; count: number };
   }>;
 
-  exportAssignedProjects (data : any) : Promise<any>,
+  exportAssignedProjects(data: any): Promise<any>,
   getEmailTemplatePreview(
     data: any,
     userId: string
@@ -347,9 +347,9 @@ export interface ICaseManagementService {
   }>;
   deleteLinkTask(data: CaseTaskWorkFlowDelete): Promise<
     | {
-        statusCode: number;
-        statusMessage: string;
-      }
+      statusCode: number;
+      statusMessage: string;
+    }
     | undefined
   >;
   adminTaskListForDropdown(data: any): Promise<TaskTemplate[]>;
@@ -507,11 +507,11 @@ export interface IChildCaseService extends ICaseService {
     statusCode: number;
     statusMessage: string;
   }>;
-  stateWiseRegionList(data : any) : Promise<any[]>
+  stateWiseRegionList(data: any): Promise<any[]>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;
-  updateUserLevelTask(data: UpdateCaseTaskType, accessToken : string): Promise<{
+  updateUserLevelTask(data: UpdateCaseTaskType, accessToken: string): Promise<{
     statusCode: number;
     statusMessage: string | null;
   }>;
@@ -536,28 +536,28 @@ export interface ICaseTaskService {
     files?: Express.Multer.File[]
   ): Promise<
     | {
-        statusCode: number;
-        statusMessage: string;
-        data: TaskComments;
-      }
+      statusCode: number;
+      statusMessage: string;
+      data: TaskComments;
+    }
     | {
-        statusCode: number;
-        statusMessage: string;
-        data: null;
-      }
+      statusCode: number;
+      statusMessage: string;
+      data: null;
+    }
   >;
   exportTask(
     data: any,
     userId: string
   ): Promise<
     | {
-        statusCode: number;
-        data: string;
-      }
+      statusCode: number;
+      data: string;
+    }
     | {
-        statusCode: number;
-        data: null;
-      }
+      statusCode: number;
+      data: null;
+    }
   >;
   updateComments(
     data: UpdateCommentsType,
@@ -623,9 +623,9 @@ export interface ICaseTaskService {
   }>;
   deleteLinkTask(data: CaseTaskWorkFlowCreate): Promise<
     | {
-        statusCode: number;
-        statusMessage: string;
-      }
+      statusCode: number;
+      statusMessage: string;
+    }
     | undefined
   >;
   deleteTagsAccountLevel(data: any): Promise<{
@@ -634,22 +634,22 @@ export interface ICaseTaskService {
   }>;
   deleteCollaborators(data: any): Promise<
     | {
-        statusCode: number;
-        statusMessage: string;
-      }
+      statusCode: number;
+      statusMessage: string;
+    }
     | undefined
   >;
   getTaskDropDownForDependencyMapping(
     data: any
   ): Promise<CaseTaskDropdownType[]>;
-    updateChecklistItemsStatus(data: any): Promise<{
+  updateChecklistItemsStatus(data: any): Promise<{
     statusCode: number;
     statusMessage: string;
   }>;
 }
 
 export interface IChecklistService {
-    createCheckList(
+  createCheckList(
     checklistRequest: ICreateChecklist,
     userId: string
   ): Promise<{
@@ -695,5 +695,80 @@ export interface IChecklistService {
     message: string;
     errorMessage?: string;
     data?: { checklists: any[]; totalCount: number };
+  }>;
+}
+
+export interface IDataMapperService {
+  createDataMapper(
+    data: any,
+    file: Express.Multer.File,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
+  listDataMapperForms(
+    userId: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { items: any[]; totalCount: number };
+  }>;
+
+  getDataMapperFormsDetail(userId: string, rid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
+  getDataMapperFormsMappingDetail(userId: string, rid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
+  editDataMapper(
+    data: any,
+    file: Express.Multer.File | undefined,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { rid: string };
+  }>;
+
+  editDataMapperMapping(data: any, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { rid: string };
+  }>;
+
+  getObjectsList(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
+  updateInlineGraphqlDetailsForDataMapper(data: any): Promise<{
+    statusCode: number;
+    statusMessage?: string;
+    message?: string;
+    errorMessage?: string;
+    data?: any;
   }>;
 }

@@ -1168,7 +1168,7 @@ const createDataMapperSchema = Joi.object({
       'any.required': 'Country is required',
       'string.empty': 'Country cannot be empty'
     }),
-  state_rid: Joi.string().pattern(uuidRegex).required()
+  state_rid: Joi.string().pattern(uuidRegex).optional().allow(null, '')
     .messages({
       'any.required': 'State is required',
       'string.empty': 'State cannot be empty'
