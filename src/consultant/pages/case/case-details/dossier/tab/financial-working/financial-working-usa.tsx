@@ -161,7 +161,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 value !== null &&
                 !Array.isArray(value)) ||
               Array.isArray(value) ||
-           key === 'name'
+              key === 'name'
             )
               return null;
 
