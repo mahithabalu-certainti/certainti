@@ -8,6 +8,7 @@ import activitiesRoutes from "./activitiesRoutes";
 import projectResourceRoutes from "./projectResourceRoutes"
 import projectTaskRoutes from "./projectTaskRoutes"
 import projectRoutes from "./projectRoutes"
+import dataMapperRoutes from "./dataMapperRoutes"
 import financialRDCreditRoutes from "./financialRDCreditRoutes";
 
 const routes: Router = Router();
@@ -39,6 +40,7 @@ routes.use("/historicalSubmission", historicalSubmissionRoutes);
 routes.use("/caseProjectResource", projectResourceRoutes);
 routes.use("/caseProjectTask", projectTaskRoutes);
 routes.use("/caseProject", projectRoutes);
+routes.use("/dataMapper", dataMapperRoutes);
 routes.use("/rd-credit", financialRDCreditRoutes);
 
 

@@ -20,6 +20,8 @@ import {
 } from "@azure/storage-blob";
 import { parse } from "url";
 import { CaseProjectTask } from "../models/caseProjectTaskModel";
+import { Op, Sequelize } from "sequelize";
+
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -434,8 +436,8 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.case_team_member_role_rid) {
-    if(reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
+  if (reqData.case_team_member_role_rid) {
+    if (reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
       validUpdateConditions = `case_team_member_role_rid = '${reqData.case_team_member_role_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
@@ -458,31 +460,31 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.task_description != undefined) {
-    if(reqData.task_description !== dbData.task_description) {
+  if (reqData.task_description != undefined) {
+    if (reqData.task_description !== dbData.task_description) {
       validUpdateConditions = `task_description = '${reqData.task_description.replace(/'/g, "''")}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.task_category_rid) {
-    if(reqData.task_category_rid !== dbData.task_category_rid) {
+  if (reqData.task_category_rid) {
+    if (reqData.task_category_rid !== dbData.task_category_rid) {
       validUpdateConditions = `task_category_rid = '${reqData.task_category_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.weightage_rid) {
-    if(reqData.weightage_rid !== dbData.weightage_rid) {
+  if (reqData.weightage_rid) {
+    if (reqData.weightage_rid !== dbData.weightage_rid) {
       validUpdateConditions = `weightage_rid = '${reqData.weightage_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.status_rid) {
-    if(reqData.status_rid !== dbData.status_rid) {
+  if (reqData.status_rid) {
+    if (reqData.status_rid !== dbData.status_rid) {
       validUpdateConditions = `status_rid = '${reqData.status_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(validUpdateQuery.length > 0) {
+  if (validUpdateQuery.length > 0) {
     validUpdateConditions = `modified_by = '${userId}'`
     validUpdateQuery.push(validUpdateConditions)
     validUpdateConditions = `modified_datetime = NOW()`
@@ -490,10 +492,10 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
   }
   return validUpdateQuery
 }
-export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
-  let columns : string[] = [];
-  if(data.checklist_template_rid !== '') {
-    if(data.checklist_template_rid !== dbData.checklist_template_rid) {
+export const getColumnsNamesForTaskUpdate = (data: UpdateCaseTaskType, dbData: CaseTask) => {
+  let columns: string[] = [];
+  if (data.checklist_template_rid !== '') {
+    if (data.checklist_template_rid !== dbData.checklist_template_rid) {
       columns.push(`checklist_template_rid`)
     }
   }
@@ -591,7 +593,11 @@ export async function uploadToAzureBlob(
     let blobName;
     if (flag === "cases") {
       blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
-    } else {
+    }
+    else if (flag === "data-mapper") {
+      blobName = `${account_id}/data-mapper/${task_number ? task_number + '/' : ''}${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    }
+    else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
 
@@ -745,3 +751,106 @@ export function getFiscalEndYear(fiscalStart: string, fiscalEnd: string, fiscalY
   if (isNaN(startMonth) || isNaN(endMonth)) return fiscalYear;
   return endMonth < startMonth ? fiscalYear + 1 : fiscalYear;
 }
+
+
+export const applyFilters = (filters: Record<string, any>, whereClause: any) => {
+  if (filters) {
+    Object.entries(filters).forEach(([field, filter]) => {
+      if (!filter || typeof filter !== 'object') {
+        console.log(`Skipping filter for field ${field} due to invalid structure`);
+        return;
+      }
+
+      const operator = Object.keys(filter)[0];
+      const value = filter[operator as string];
+
+      if (!operator || value === undefined) {
+        console.log(`Skipping filter for field ${field} due to missing operator or value`);
+        return;
+      }
+
+      const condition: any = {};
+
+      switch (field) {
+        case 'r_number':
+        case 'created_by':
+        case 'modified_by':
+        case 'form_name':
+        case 'browse_file':
+        case 'document_name':
+        case 'country_rid':
+        case 'state_rid':
+        case 'format':
+        case 'status_rid':
+        case 'error_message':
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.iLike]: value }; break;
+            case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;
+            case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
+            case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+            case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+          }
+          break;
+
+        case 'is_active':
+          if (operator.toLowerCase() === 'equals') {
+            condition[field] = { [Op.eq]: value };
+          }
+          break;
+
+        case 'size_in_mb':
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.eq]: value }; break;
+            case 'greater_than': condition[field] = { [Op.gt]: value }; break;
+            case 'less_than': condition[field] = { [Op.lt]: value }; break;
+          }
+          break;
+
+        case 'created_datetime':
+        case 'modified_datetime':
+        case 'effective_from_date':
+        case 'effective_to_date':
+          switch (operator.toLowerCase()) {
+            case 'equals': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'before': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'after': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'between': {
+              if (Array.isArray(value)) {
+                const startDate = new Date(value[0]);
+                const endDate = new Date(value[1]);
+                condition[field] = Sequelize.literal(
+                  `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                );
+              }
+              break;
+            }
+            case 'is_empty': condition[field] = { [Op.is]: null }; break;
+          }
+          break;
+
+        default:
+          console.log(`Unhandled filter field: ${field}`);
+      }
+
+      if (Object.keys(condition).length > 0) {
+        if (!whereClause[Op.and]) {
+          whereClause[Op.and] = [];
+        }
+        whereClause[Op.and].push(condition);
+      }
+    });
+  }
+  return whereClause;
+};
