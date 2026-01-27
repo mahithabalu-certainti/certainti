@@ -99,6 +99,9 @@ export class RdCreditCalculatorForCO {
         return {
             computed_fields: {
                 "PART IV: Research and Experimental Activities Credit" : {
+                    "text" : "In order to calculate any current year Research and Experimental Activities Credit in Part III, please use worksheet 3 below. Complete the remainder of the form following the instructions to claim allowable credit you earned in prior periods."
+                },
+                "Worksheet 3: Research and Experimental Activities Credit Do not send, keep for your records" : {
                     "A.Enter the current year qualified expenditures": data.totalQREs.toNumber() || 0,
                     "B.Enter the first preceding year expenditures": data.priorYear1QREs.toNumber() || 0,
                     "C. Enter the second preceding year expenditures" : data.priorYear2QREs.toNumber() || 0,
