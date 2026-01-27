@@ -38,7 +38,9 @@ export class RdCreditCalculatorForUSA {
             const { asc, rrc } = this.splitAscRrcConfig(config);
             logMessage(`Extracted ASC Config: ${JSON.stringify(asc)}`);
             logMessage(`Extracted RRC Config: ${JSON.stringify(rrc)}`);
-            const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(federalRdData.currentYearQREs.contract || 0);
+            const contract = new Decimal(federalRdData.currentYearQREs.contract || 0).mul(config.rrc_sub_con_percent/100)
+            federalRdData.currentYearQREs.contract = contract.toNumber()
+            const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(contract || 0);
             logMessage(`CurrentYearQREs: ${JSON.stringify(federalRdData.currentYearQREs)}`);
 
             const totalGrossReceipts = new Decimal((federalRdData.annualGrossReceipts || []).reduce(
@@ -58,6 +60,7 @@ export class RdCreditCalculatorForUSA {
                 creditType: this.creditType,
                 currency: this.currency,
                 fiscalYearEnded : date,
+                subConPercent : config.rrc_sub_con_percent
             });
             logMessage(`Input Fields: ${JSON.stringify(inputFields)}`);
             let taxCredit;
@@ -97,10 +100,10 @@ export class RdCreditCalculatorForUSA {
         const line21 = new Decimal(prior3YearsQREs.reduce((sum, y) => sum + (y.qre || 0), 0));
 
         // ---- Line 22: Divide line 21 by 6 ----
-        const line22 = await this.round2(line21.div(6));
+        const line22 = line21.div(6);
 
         // ---- Line 23: Subtract line 22 from line 20 ----
-        const line23 = new Decimal(await this.round2(totalQRE.minus(line22)));
+        const line23 = new Decimal(totalQRE.minus(line22));
 
         // ---- Line (14% or 6%) if any prior year QRE = zero ----
         const hadZeroYear = prior3YearsQREs.some(y => y.qre === 0);
@@ -109,7 +112,7 @@ export class RdCreditCalculatorForUSA {
         const percentage = hadZeroYear ? configAsc.fixed_base_percentage : configAsc.credit_rate;
 
         // ---- Line 24: Multiply line 23 by percentage ----
-        const line24 = await this.round2(line23.mul(percentage));
+        const line24 = line23.mul(percentage/100);
 
         // ---- Line 25: (ASC Base Credit) ----
         const line25 = line24; // because you don’t have line19 in ASC
@@ -149,22 +152,23 @@ export class RdCreditCalculatorForUSA {
 
         //---- Line 9: Subtract line 8 from line 5
         const line9 = currentYearQRE.minus(line8)
+        const maxLine9 = Decimal.max(line9, 0)
 
         //---- Line 10: Multiply line 5 by 50%
-        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate || 0.5);
+        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate/100 || 0.5);
 
         //---- Line 11: Enter smaller of line 9 or line 10
-        const line11 = Decimal.min(line10, line9);
+        const line11 = Decimal.min(line10, maxLine9);
         let dynamicLine5 = `10 Multiply line 5 by ${configRRC.qre_cap_rate}`
 
         return {
-            "5 Total Qualified Research Expenses": Number(await this.round2(currentYearQRE)),
+            "5 Total Qualified Research Expenses": await this.round2(currentYearQRE),
             "6 Fixed-base percentage": `${configRRC.fixed_base_percentage}%`,
-            "7 Average Annual Gross Receipts": Number(await this.round2(line7)),
-            "8 Multiply line 7 by percentage on line 6": Number(await this.round2(line8)),
-            "9 Subtract line 8 from line 5": Number(await this.round2(line9)),
-            [dynamicLine5]: Number(await this.round2(line10)),
-            "11 Enter smaller of line 9 or line 10": Number(await this.round2(line11)),
+            "7 Average Annual Gross Receipts": await this.round2(line7),
+            "8 Multiply line 7 by percentage on line 6": await this.round2(line8),
+            "9 Subtract line 8 from line 5": await this.round2(maxLine9),
+            [dynamicLine5]: await this.round2(line10),
+            "11 Enter smaller of line 9 or line 10": await this.round2(line11),
             final_credit: line11
         };
     }
@@ -247,21 +251,32 @@ export class RdCreditCalculatorForUSA {
      */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[], metadata: any = {}) {
 
-        const qreSummary: Record<string, any> = {
-            wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract_65: currentYearQREs.contract
-        };
+        const priorYearsQre: Record<string, any> = []
+        const priorYearGross : Record<string, any> = []
+        const mapNumbers = new Map();
+        mapNumbers.set(1, "st")
+        mapNumbers.set(2, "nd")
+        mapNumbers.set(3, "rd")
+        mapNumbers.set(4, "th")
 
         // Add prior 3 years QREs
         prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre || 0;
+            priorYearsQre.push({
+                "Preceding Year Wise" : `${i + 1}${mapNumbers.get(i + 1)} Preceding year`,
+                "Total" : item.qre || 0,
+                "Fiscal Year" : item.fiscalYear
+            })
         });
 
         // Add prior 4 years gross receipts
         annualGrossReceipts.forEach((item, i) => {
-            qreSummary[`prior_year_gross_receipts_${i + 1}`] = item.grossReceipts || 0;
+            priorYearGross.push({
+                "Preceding Year Wise" : `${i + 1}${mapNumbers.get(i + 1)} Preceding year`,
+                "Total" : item.grossReceipts || 0,
+                "Fiscal Year" : item.fiscalYear
+            })
         });
+       
 
 
         return {
@@ -269,12 +284,16 @@ export class RdCreditCalculatorForUSA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
-                "For the Year Ended" : metadata.fiscalYearEnded,
                 "Descriptions" : "Research Tax Credit",
                 "Tax Year Ended:" : metadata.fiscalYearEnded
-
             },
-            qreSummary
+            "Average Annual Gross Receipts" : priorYearGross,
+            "Total Qualified Research Expenses" : priorYearsQre,
+            "qreSummary" : {
+                "Wages" : currentYearQREs.wages,
+                "Supplies" : currentYearQREs.supplies,
+                [`${metadata.subConPercent}% Contract Expenses`] : currentYearQREs.contract
+            }
         };
 
     }

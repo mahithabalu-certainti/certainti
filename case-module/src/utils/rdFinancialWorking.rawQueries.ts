@@ -79,16 +79,16 @@ export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accou
     FROM
     calculate_cost
     `
-    console.log("Query ===== > ", query)
     return query;
 }
 export const calculateRDExpenditureQuery = (schemaName : string, caseRid : string, accountRid : string) => {
     let query = `
     SELECT 
-    CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS fte_qre_amount,
-    CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount
+    CAST((COALESCE(pf.total_cost_fte_prj, 0.00) * COALESCE(pf.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS fte_qre_amount,
+    CAST((COALESCE(pf.total_cost_subcon_prj, 0.00) * COALESCE(pf.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount
     FROM
-    ${schemaName}.case_projects cp
+    ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
     cp.case_rid = '${caseRid}'
     AND

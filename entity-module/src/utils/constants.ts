@@ -1014,7 +1014,7 @@ export const rawQueries = {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
     return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state 
     WHERE 
-    rid IN (${formattedStateIds})`;
+    rid IN (${formattedStateIds}) order by state_name ASC`;
   },
   fetchStatesIds(schemaName: string, account_rid: string, fiscal_year: number) {
     return `
