@@ -123,7 +123,7 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "6 Total qualified research expenses for this aggregate group", order: 6 }
             ],
             "PART 2. CREDIT DETERMINED UNDER c. 63, s. 38M(b), (ALTERNATE SIMPLIFIED METHOD)": [
-                { pattern : "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10", order : 1},
+                { pattern : "text", order : 1},
                 { pattern: "7 Average qualified research expenses for the 3 most recent prior years", order: 2 },
                 { pattern: /^8 Enter \d+(\.\d+)?% of line 7$/, order: 3 },
                 { pattern: "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0", order: 4 },
@@ -257,10 +257,14 @@ CA: {
 },
     CO: {
         sectionOrder: [
-            "PART IV: Research and Experimental Activities Credit"
+            "PART IV: Research and Experimental Activities Credit",
+            "Worksheet 3: Research and Experimental Activities Credit Do not send, keep for your records"
         ],
         sectionFieldOrders: {
-            "PART IV: Research and Experimental Activities Credit": [
+            "PART IV: Research and Experimental Activities Credit" : [
+                { pattern : "text", order : 1}
+            ],
+            "Worksheet 3: Research and Experimental Activities Credit Do not send, keep for your records": [
             { pattern : "A.Enter the current year qualified expenditures", order : 1 },
             { pattern : "B.Enter the first preceding year expenditures", order : 2 },
             { pattern : "C. Enter the second preceding year expenditures", order : 3 },

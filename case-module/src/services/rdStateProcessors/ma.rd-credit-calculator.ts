@@ -262,7 +262,7 @@ export class RdCreditCalculatorForMA {
             "6 Total qualified research expenses for this aggregate group": this.round2(part1QualifiedResearchExpenseInfo.total_qre_aggregate)
         }
         let part2ASCCreditCalculation = {
-            "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10" : "",
+            "text" : "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10",
             "7 Average qualified research expenses for the 3 most recent prior years":part2ASCCreditCalculationInfo.average_qre,
             [`8 Enter ${extractConfig.qre_cap_rate}% of line 7`]:part2ASCCreditCalculationInfo.fifty_percent_qre,
             "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0":part2ASCCreditCalculationInfo.final_excess_qre,
