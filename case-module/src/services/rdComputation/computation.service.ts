@@ -6,6 +6,8 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import StateComputationService from "./state.computation.service";
 import FederalComputationService from "./federal.computation.service";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
+import { reorderComputedFieldsForState, hasFieldOrderingConfig, IL_LINE_ORDER } from "../../utils/stateFieldOrdering";
 
 enum ConfigType {
     NONE = "NONE",
@@ -53,9 +55,18 @@ export class ComputationService {
      * @param effectiveEnd 
      * @returns 
      */
-    async initiateRDCreditProcess(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
+    async initiateRDCreditProcess(accountRid: string, caseRid: string, fiscalYear : number) {
         try {
             const mainDb = await this.getMainDb();
+            const orgDb = await this.getOrgDb();
+            const fetchParentAccountRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(accountRid, mainDb));
+            let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number);
+            const fetchAccountFiscalStartEndDate : any= await orgDb.query(rawQueries.fetchAccountStartEndDate(accountRid, schemaName));
+            const [splitMonthStart, splitDateStart] = fetchAccountFiscalStartEndDate[0][0].fiscal_start_date.split("/");
+            const [splitMonthEnd, splitDateEnd] = fetchAccountFiscalStartEndDate[0][0].fiscal_end_date.split("/");
+            const fetchedStartEndDate = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
+            let effectiveStart = fetchedStartEndDate.startDate
+            let effectiveEnd = fetchedStartEndDate.endDate
             const fetchAccountCountryId : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(accountRid))
             const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
             const hasFederal = findAvailableConfigLevels.includes(true);
@@ -65,7 +76,6 @@ export class ComputationService {
                     hasFederal ? ConfigType.FEDERAL_ONLY :
                         hasState ? ConfigType.STATE_ONLY :
                             ConfigType.NONE;
-
 
             const executionConfigMap: Record<string, () => Promise<any>> = {
                 [ConfigType.BOTH]: async () => {
@@ -120,6 +130,64 @@ export class ComputationService {
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
             const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(fetchParentAccountRnumber[0][0].r_number, caseRid, stateRid);
+             //statecode
+            const [stateCode]:any[] = await mainDb.query(rawQueries.fetchStatesByIds(),
+            {
+                replacements: { ids: stateRid ? [stateRid] : [] },
+                type: "SELECT",
+            });
+            const findValueByPattern = (obj: any, pattern: RegExp) =>
+            Object.entries(obj).find(([key]) => pattern.test(key))?.[1];
+
+            if (stateCode && stateCode.state_code === "IL") {
+                const computedFields = (results as any).computed_fields;
+                return {
+                    statusCode: HttpStatus.SUCCESS,
+                    message: STATUS_MESSAGE.rdCreditPreview,
+                    data: {
+                        ...results,
+                        computed_fields: {
+                            illinois: computedFields.computed_fields.map((col: any) => {
+                                const orderedCol: any = {};
+                                if (col["Column Name"]) {
+                                    orderedCol["Column Name"] = col["Column Name"];
+                                }
+                                if (col["SubColumn Name"]) {
+                                    orderedCol["SubColumn Name"] = col["SubColumn Name"];
+                                }
+                                IL_LINE_ORDER.forEach(({ label, pattern }) => {
+                                const entry = Object.entries(col).find(([key]) => pattern.test(key));
+                                if (entry) {
+                                    const [actualKey, actualValue] = entry;
+                                    orderedCol[label ?? actualKey] = actualValue;
+                                }
+                            });
+                            return orderedCol;
+                            }),
+                            BOLD: [
+                                "Line 32. IL Research and Development Credit"
+                            ]
+                        }
+                    }
+                };
+            }
+            // Use utility function to reorder computed fields for any configured state
+            if (stateCode && stateCode.state_code && hasFieldOrderingConfig(stateCode.state_code)) {
+                if (results && (results as any).computed_fields) {
+                    if(stateCode.state_code === "GA"){
+                     const computedFields = (results as any).computed_fields;
+                     const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
+                     (results as any).computed_fields = reorderedFields;
+                    }
+                    else
+                    {
+                     const computedFields = (results as any).computed_fields.computed_fields;
+                     const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
+                     (results as any).computed_fields.computed_fields = reorderedFields;
+                    }                  
+                    logMessage(`Applied field ordering for state: ${stateCode.state_code}`);
+                }
+            }
 
             return {
                 statusCode: HttpStatus.SUCCESS,

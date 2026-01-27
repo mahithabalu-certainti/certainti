@@ -311,8 +311,7 @@ class ActivitySchemaService {
                   const checklistResult = await CheckList.findOne({
                   where : {
                     attach_to : taskRequest.task_rid,
-                    attachment_level : 'task',
-                    checklist_template_rid : existingTask?.checklist_rid
+                    attachment_level : 'task'
                   }, raw : true
                 })
 
@@ -332,6 +331,7 @@ class ActivitySchemaService {
                   }
                 }
                 const response  = await this.helperMethod.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
+                response.checklist_items = response.checklist_items.map((item:any) => item.get ? item.get({ plain: true }) : item);
                 response.checklist_items.map((item:any) => item.action_type  = 'add');
                 let caseRequest : any = {
                   account_rid: taskRequest.account_rid!,
@@ -806,6 +806,12 @@ class ActivitySchemaService {
           [entityId]
         );
         allActivities.push(...accountAttachments);
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+                  /\D/g,
+                  ""
+                )}`;
+         const tableExists = await this.helperMethod.checkTableExists(schemaName, "cases");
+      if (tableExists) {
          const cases = await this.helperMethod.getCasesByAccountId(
           accountNumber,
           entityId
@@ -813,7 +819,7 @@ class ActivitySchemaService {
          const caseIds = cases.map((r:any) => (r as { rid: string }).rid);
         const caseAttachments = await fetchAttachments(Activities, "case", caseIds);
         allActivities.push(...caseAttachments);
-
+      }
         const projects = await this.helperMethod.getProjectsByAccountId(
           accountNumber,
           entityId,accessibleIds

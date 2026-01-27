@@ -50,7 +50,7 @@ export class RdCreditCountryCalculations
                     allowNull: false,
                 },
                 country_rid: {
-                    type: DataTypes.STRING(20),
+                    type: DataTypes.STRING(50),
                     allowNull: false,
                 },
                 input_params: {

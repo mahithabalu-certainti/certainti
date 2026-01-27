@@ -2,6 +2,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import axios, { AxiosError } from "axios";
+import { v4 as uuidv4 } from 'uuid';
 import {
   col,
   fn,
@@ -14,7 +15,9 @@ import {
 import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
+  caseFilingTypes,
   entityNames,
+  ENV_PREFIX,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -76,18 +79,22 @@ import { CaseProjectTask } from "../../models/caseProjectTaskModel";
 import { CaseKeyContactDetails } from "../../models/caseKeyContactModel";
 import { setupCaseKeyContactSequence } from "../../models/caseKeyContactModel";
 import { HelperMethods } from "./helperMethods";
+import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } from "../../models/rdCreditCountryCalcModel";
+import { RdCreditProcess, setupRdCreditProcessSequence } from "../../models/rdCreditProcessModel";
+import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
-  private helperMethod : HelperMethods
+  private helperMethod: HelperMethods
 
   constructor() {
     this.caseModelService = new CaseModelService();
     this.helperMethod = new HelperMethods(
-          this.caseModelService
-        );
+      this.caseModelService
+    );
   }
 
   /**
@@ -179,6 +186,171 @@ class CaseSchemaService {
       throw new Error("Error fetching country: " + (err as Error).message);
     }
   }
+  async cloneCase(
+    accountNumber: string,
+    caseRequest: ICreateCases,
+    transaction: Transaction
+  )
+  {
+    const { Case } = await this.caseModelService.getModels(accountNumber);
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+      if (!tableExists) {
+        await this.createCaseTables(accountNumber);
+      }
+      const [amendmentType]: any[] = await this.mainDbSequelize!.query(
+        rawQueries.fetchFilingTypeByName(caseFilingTypes.amendment),
+        {
+          replacements: { rid: caseRequest.filing_type_rid },
+          type: "SELECT",
+        }
+      );
+      caseRequest.filing_type_rid = amendmentType?.rid;
+      caseRequest.case_rid = caseRequest.parent_case_rid;
+      const casecreationResponse = await Case.create(caseRequest, {
+        transaction,
+      });
+      // Clone case tasks
+      const { CaseTask,CaseTeam, CheckList, CheckListItem,CaseMilestone } = await this.caseModelService.getModels(accountNumber);
+      
+      // Clone case milestones
+      const originalCaseMilestones = await CaseMilestone.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const milestone of originalCaseMilestones) {
+        const {  case_rid, created_datetime,r_number, eid, ...rest } = milestone;
+        await CaseMilestone.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+      
+      const originalCaseTasks = await CaseTask.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const task of originalCaseTasks) {
+        const { rid, case_rid, created_datetime, checklist_template_rid,r_number, eid, ...rest } = task;
+        const newTaskRid = `${ENV_PREFIX}${uuidv4()}`;
+        await CaseTask.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by,
+          rid: newTaskRid,
+        }, { transaction });
+
+        // Clone checklists if checklist_template_rid is not null
+        if (checklist_template_rid) {
+          const originalChecklists = await CheckList.findAll({
+            where: { checklist_template_rid: checklist_template_rid },
+            raw: true
+          });
+          
+          for (const checklist of originalChecklists) {
+            const { rid: checklistRid, checklist_template_rid: templateRid, created_datetime: checklistCreatedDate, ...checklistRest } = checklist;
+            const newChecklistRid = `${ENV_PREFIX}${uuidv4()}`;
+            
+            await CheckList.create({
+              ...checklistRest,
+              case_rid: casecreationResponse.rid,
+              checklist_template_rid: templateRid,
+              created_datetime: new Date(),
+              created_by: caseRequest.created_by
+            }, { transaction });
+
+            // Clone checklist items
+            const originalChecklistItems = await CheckListItem.findAll({
+              where: { checklist_rid: checklistRid },
+              raw: true
+            });
+
+            for (const item of originalChecklistItems) {
+              const { rid: itemRid, checklist_rid: itemChecklistRid, created_datetime: itemCreatedDate, ...itemRest } = item;
+              await CheckListItem.create({
+                ...itemRest,
+                checklist_rid: newChecklistRid,
+                created_datetime: new Date(),
+                created_by: caseRequest.created_by
+              }, { transaction });
+            }
+          }
+        }
+      }
+
+        
+
+      //clone case team
+      const originalCaseTeams =  await CaseTeam.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const team of originalCaseTeams) {
+        const { rid, case_rid, created_datetime, ...rest } = team;
+        await CaseTeam.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by,
+        }, { transaction });
+      }
+      // Clone case projects
+      const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+      // Fetch all projects for the original case
+      const originalProjects = await CaseProject.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      // Clone each project to the new case
+      for (const project of originalProjects) {
+        const { rid, case_rid, created_datetime, ...rest } = project;
+        await CaseProject.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+      // Clone case project resources
+      const { CaseProjectResource } = await this.caseModelService.getModels(accountNumber);
+      const originalProjectResources = await CaseProjectResource.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const resource of originalProjectResources) {
+        const { rid, case_rid, created_datetime, ...rest } = resource;
+        await CaseProjectResource.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+      
+      // Clone case project tasks
+      const { CaseProjectTask } = await this.caseModelService.getModels(accountNumber);
+      const originalProjectTasks = await CaseProjectTask.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const task of originalProjectTasks) {
+        const { rid, case_rid, created_datetime, ...rest } = task;
+        await CaseProjectTask.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+      return casecreationResponse;
+
+  }
 
   async createCases(
     accountNumber: string,
@@ -195,6 +367,9 @@ class CaseSchemaService {
       const tableExists = await this.checkTableExists(schemaName, "cases");
       if (!tableExists) {
         await this.createCaseTables(accountNumber);
+      }
+      if (caseRequest.parent_case_rid) {
+        return this.cloneCase(accountNumber, caseRequest, transaction);
       }
       //  await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
@@ -392,9 +567,9 @@ class CaseSchemaService {
       );
 
       await CaseSummary.create({
-        case_rid: caseRid,
-        r_number: caseRnumber,
         ...caseData,
+        case_rid: caseRid,
+         r_number: caseRnumber
       });
     } catch (error) {
       logMessage(`Error creating case summary: ${error}`);
@@ -532,7 +707,7 @@ class CaseSchemaService {
       const { CaseHistory } = await this.caseModelService.getModels(
         accountNumber
       );
-      if(!this.mainDbSequelize) {
+      if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
 
@@ -585,23 +760,23 @@ class CaseSchemaService {
       if (historyChanges.length === 0) return;
 
       // Use individual create operations to avoid sequence conflicts
-       let baseRuleEnginePayload: any = {
-          eventName: ruleNames.caseCreated,
-          userId: newCaseData.modified_by,
-          accountRid: newCaseData.account_rid,
-          entityName: newCaseData.case_name,
-          entityId: caseId,
-          caseName: caseInfo ? caseInfo.case_name : "",
-          entity:entityNames.case,     
-        };
-        baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
+      let baseRuleEnginePayload: any = {
+        eventName: ruleNames.caseCreated,
+        userId: newCaseData.modified_by,
+        accountRid: newCaseData.account_rid,
+        entityName: newCaseData.case_name,
+        entityId: caseId,
+        caseName: caseInfo ? caseInfo.case_name : "",
+        entity: entityNames.case,
+      };
+      baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
       for (const historyChange of historyChanges) {
         await CaseHistory.create(historyChange);
         // If the attribute is 'case_owner_rid', fetch user names for old and new values
         if (historyChange.attribute_name === 'case_owner_rid') {
           const oldValue = historyChange.old_value;
           const newValue = historyChange.new_value;
-          const result:any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue));
+          const result: any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue));
           let nameMapping = new Map();
           if (result && Array.isArray(result[0])) {
             for (const r of result[0]) {
@@ -619,12 +794,12 @@ class CaseSchemaService {
           const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCaseStatusDetails(newCaseData.status_rid), { type: QueryTypes.SELECT });
           baseRuleEnginePayload.status = statusInfo?.status_name || '';
 
-         
+
         }
-          if (historyChange.attribute_name === 'status_rid') {
+        if (historyChange.attribute_name === 'status_rid') {
           const oldValue = historyChange.old_value;
           const newValue = historyChange.new_value;
-          const result:any = await this.mainDbSequelize.query(rawQueries.fetchCaseStatus(oldValue, newValue));
+          const result: any = await this.mainDbSequelize.query(rawQueries.fetchCaseStatus(oldValue, newValue));
           let nameMapping = new Map();
           if (result && Array.isArray(result[0])) {
             for (const r of result[0]) {
@@ -639,14 +814,14 @@ class CaseSchemaService {
           const newName = nameMapping.get(newValue) || '';
           baseRuleEnginePayload.status = newName
 
-         
+
         }
       }
-      
-      await this.helperMethod.triggerDynamicRuleEngine( baseRuleEnginePayload, {
-            newValue: "",
-            oldValue: ""
-          }, accessToken);
+
+      await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
+        newValue: "",
+        oldValue: ""
+      }, accessToken);
     } catch (err) {
       logMessage(`Error updating project history : ${JSON.stringify(err)}`);
       errorLog("Error updating project history : " + (err as Error).message);
@@ -749,6 +924,18 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const RdCreditCountryCalculationsModel = RdCreditCountryCalculations.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const RdCreditProcessModel = RdCreditProcess.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const RdCreditStateCalculationsModel = RdCreditStateCalculations.initialize(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -787,6 +974,12 @@ class CaseSchemaService {
       await CaseProjectTaskModel.sync({ force: false });
       await CaseKeyContactDetailsModel.sync({ force: false });
       await setupCaseKeyContactSequence(orgDbSequlize, schemaName)
+      await RdCreditCountryCalculationsModel.sync({ force: false })
+      await setupRdCreditCountryCalculationSequence(orgDbSequlize, schemaName);
+      await RdCreditProcessModel.sync({ force: false });
+      await setupRdCreditProcessSequence(orgDbSequlize, schemaName);
+      await RdCreditStateCalculationsModel.sync({ force: false });
+      await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName);
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
@@ -1623,27 +1816,27 @@ class CaseSchemaService {
     accessibleIds: string[],
     isExport: boolean
   ) {
-    if(!this.mainDbSequelize) {
+    if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
-    if(!this.orgDbSequelize) {
+    if (!this.orgDbSequelize) {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
     }
-   const [caseInfo]: any[] = await this.orgDbSequelize.query(
-           rawQueries.fetchCaseInfo(schemaName, data.case_rid),
-           {
-             type: "SELECT",
-           }
-         );
+    const [caseInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchCaseInfo(schemaName, data.case_rid),
+      {
+        type: "SELECT",
+      }
+    );
 
     const [accountInfo]: any[] = await this.mainDbSequelize.query(
-            rawQueries.fetchAccountInfo(
-              data.account_rid,
-            )
-          );
+      rawQueries.fetchAccountInfo(
+        data.account_rid,
+      )
+    );
     const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchAccountDetailsInfo(
-        schemaName,data.account_rid, 
+        schemaName, data.account_rid,
       ), { type: 'SELECT' }
     );
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
@@ -1655,14 +1848,14 @@ class CaseSchemaService {
     const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
     const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
     const [platFormConfig]: any[] = await this.mainDbSequelize.query(
-                rawQueries.fetchPlatformConfig(
-                 accountInfo[0].country_rid,formattedStartDate,formattedEndDate
-                ),{type: 'SELECT'}
-          );
-    let projectTypes :string[] = [];
+      rawQueries.fetchPlatformConfig(
+        accountInfo[0].country_rid, formattedStartDate, formattedEndDate
+      ), { type: 'SELECT' }
+    );
+    let projectTypes: string[] = [];
     if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
       // Support array or single value
-        projectTypes = platFormConfig.config_json.project_type;
+      projectTypes = platFormConfig.config_json.project_type;
     }
     const result = await orgDb.query(
       fetchProjectsForCases(
@@ -1855,9 +2048,6 @@ class CaseSchemaService {
     let projectTypeIds: any[] = [
       ...new Set(result.map((projectInfo: any) => projectInfo?.project_type_rid)),
     ];
-    let uniqueCurrencyIds : any = [...new Set(result.map((c : any) => c.currency_rid))];
-    let fetchCurrencies : any = await this.mainDbSequelize.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
-    let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
     let fetchCreatedByUsers = await this.mainDbSequelize.query(
       rawQueries.fetchUser(createdByIds)
     );
@@ -1900,6 +2090,9 @@ class CaseSchemaService {
     let projectTypeMap: Map<string, string> = new Map(
       fetchProjectTypeInfo[0].map((projectType: any) => [projectType.rid, projectType.name])
     );
+    let uniqueCurrencyIds : any = [...new Set(result.map((c : any) => c.currency_rid))];
+    let fetchCurrencies : any = await this.mainDbSequelize.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
+    let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
 
     let finalData =
       Array.isArray(result) && result.length > 0
@@ -2079,8 +2272,8 @@ class CaseSchemaService {
           project_rid: p.project_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           account_rid: data.account_rid,
-          fiscal_year : data.fiscal_year
-        }, raw : true
+          fiscal_year: data.fiscal_year
+        }, raw: true
       });
 
       if (projectFiscalRegionRecords.length > 0) {
@@ -2199,7 +2392,7 @@ class CaseSchemaService {
           project_rid: p.project_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           account_rid: data.account_rid
-        }, raw : true
+        }, raw: true
       });
 
       if (projectResourceRecords.length > 0) {
@@ -2238,7 +2431,7 @@ class CaseSchemaService {
           total_hours_from_tasks: resourceRecord.total_hours_from_tasks,
           total_cost_from_tasks: resourceRecord.total_cost_from_tasks,
           qre_final: resourceRecord.qre_final,
-          r_number : resourceRecord.r_number
+          r_number: resourceRecord.r_number
         }));
 
         await CaseProjectResource.bulkCreate(caseProjectResourceData);
@@ -2250,7 +2443,7 @@ class CaseSchemaService {
           project_rid: p.project_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           account_rid: data.account_rid
-        }, raw : true
+        }, raw: true
       });
       if (projectResourceFiscalRecords.length > 0) {
         const caseProjectResourceFiscalData = projectResourceFiscalRecords.map(fiscalRecord => ({
@@ -2297,7 +2490,7 @@ class CaseSchemaService {
           rd_credits_nonlabor_fed_level: fiscalRecord.rd_credits_nonlabor_fed_level,
           rd_credits_fed_level: fiscalRecord.rd_credits_fed_level,
           rd_credits_total: fiscalRecord.rd_credits_total,
-          r_number : fiscalRecord.r_number
+          r_number: fiscalRecord.r_number
         }));
 
         await CaseProjectResourceFiscal.bulkCreate(caseProjectResourceFiscalData);
@@ -2339,7 +2532,7 @@ class CaseSchemaService {
           comments: taskRecord.comments,
           status_rid: taskRecord.status_rid,
           project_resource_rid: taskRecord.project_resource_rid,
-          r_number : taskRecord.r_number
+          r_number: taskRecord.r_number
         }));
 
 
@@ -2400,6 +2593,8 @@ class CaseSchemaService {
 
       const projectFiscal = projectFiscalRecords.length > 0 ? projectFiscalRecords[0] : null;
 
+      console.log("yoki", projectFiscal);
+
       const createdCaseProject = await CaseProject.create({
         case_rid: data.case_rid,
         account_rid: data.account_rid,
@@ -2432,14 +2627,14 @@ class CaseSchemaService {
         total_subcon_prj: projectFiscal?.total_subcon_prj || 0,
         total_subcon_from_prj_res: projectFiscal?.total_subcon_from_prj_res || 0,
         total_subcon_from_tasks: projectFiscal?.total_subcon_from_tasks || 0,
-        total_nonlabor_prj: projectFiscal?.total_nonlabor_prj || 0,
+        total_nonlabor_prj: Number(projectFiscal?.total_nonlabor_prj || 0),
         total_nonlabor_from_prj_res: projectFiscal?.total_nonlabor_from_prj_res || 0,
         total_resources_prj: projectFiscal?.total_resources_prj || 0,
         total_resources_from_prj_res: projectFiscal?.total_resources_from_prj_res || 0,
         total_resources_from_tasks: projectFiscal?.total_resources_from_tasks || 0,
         total_effort_prj: projectFiscal?.total_effort_prj || 0,
-        total_effort_fte_prj: projectFiscal?.total_effort_fte_prj || 0,
-        total_effort_subcon_prj: projectFiscal?.total_effort_subcon_prj || 0,
+        total_effort_fte_prj: Number(projectFiscal?.total_effort_fte_prj || 0),
+        total_effort_subcon_prj: Number(projectFiscal?.total_effort_subcon_prj || 0),
         total_effort_from_prj_res: projectFiscal?.total_effort_from_prj_res || 0,
         total_effort_fte_from_prj_res: projectFiscal?.total_effort_fte_from_prj_res || 0,
         total_effort_subcon_from_prj_res: projectFiscal?.total_effort_subcon_from_prj_res || 0,
@@ -2447,16 +2642,16 @@ class CaseSchemaService {
         total_effort_fte_from_tasks: projectFiscal?.total_effort_fte_from_tasks || 0,
         total_effort_subcon_from_tasks: projectFiscal?.total_effort_subcon_from_tasks || 0,
         total_cost_prj: projectFiscal?.total_cost_prj || 0,
-        total_cost_fte_prj: projectFiscal?.total_cost_fte_prj || 0,
-        total_cost_subcon_prj: projectFiscal?.total_cost_subcon_prj || 0,
-        total_cost_nonlabor_prj: projectFiscal?.total_cost_nonlabor_prj || 0,
+        total_cost_fte_prj: Number(projectFiscal?.total_cost_fte_prj || 0),
+        total_cost_subcon_prj: Number(projectFiscal?.total_cost_subcon_prj || 0),
+        total_cost_nonlabor_prj: Number(projectFiscal?.total_cost_nonlabor_prj || 0),
         total_cost_from_prj_res: projectFiscal?.total_cost_from_prj_res || 0,
         total_cost_fte_from_prj_res: projectFiscal?.total_cost_fte_from_prj_res || 0,
         total_cost_subcon_from_prj_res: projectFiscal?.total_cost_subcon_from_prj_res || 0,
         total_cost_nonlabor_from_prj_res: projectFiscal?.total_cost_nonlabor_from_prj_res || 0,
         total_cost_from_tasks: projectFiscal?.total_cost_from_tasks || 0,
-        total_cost_fte_from_tasks: projectFiscal?.total_cost_fte_from_tasks || 0,
-        total_cost_subcon_from_tasks: projectFiscal?.total_cost_subcon_from_tasks || 0,
+        total_cost_fte_from_tasks: Number(projectFiscal?.total_cost_fte_from_tasks || 0),
+        total_cost_subcon_from_tasks: Number(projectFiscal?.total_cost_subcon_from_tasks || 0),
         total_cost_prj_blended: projectFiscal?.total_cost_prj_blended || 0,
         total_cost_fte_prj_blended: projectFiscal?.total_cost_fte_prj_blended || 0,
         total_cost_subcon_prj_blended: projectFiscal?.total_cost_subcon_prj_blended || 0,
@@ -3554,13 +3749,13 @@ class CaseSchemaService {
         raw: true,
       });
 
-      if(!this.mainDbSequelize) {
+      if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
-      } 
-       if(!this.orgDbSequelize) {
+      }
+      if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.caseModelService.getSequelize();
-      }   
-      
+      }
+
 
       // Fetch user names from mainDbSequelize using rawQueries
       const userRids = teamMembers.map((tm: any) => tm.user_rid);
@@ -3579,19 +3774,19 @@ class CaseSchemaService {
       }
       const [todoStatus]: any[] = await this.mainDbSequelize!.query(
         rawQueries.getSpecificTaskStatus(),
-        { type: "SELECT" }  
+        { type: "SELECT" }
       );
-       const [caseInfo]: any[] = await this.mainDbSequelize.query(
-                        rawQueries.fetchCasesInfo(caseReq.case_rid),
-                        {
-                          replacements: { case_rid: caseReq.case_rid },
-                          type: "SELECT"
-                        });
+      const [caseInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCasesInfo(caseReq.case_rid),
+        {
+          replacements: { case_rid: caseReq.case_rid },
+          type: "SELECT"
+        });
       const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
         /\D/g,
         ""
       )}`;
-     
+
 
       // Enrich teamMembers with user_name
       const enrichedTeamMembers = teamMembers.map((tm: any) => ({
@@ -3633,12 +3828,12 @@ class CaseSchemaService {
         // For each updated row, trigger rule engine payload with the updated rid
         if (response[0] > 0 && response[1] && Array.isArray(response[1])) {
           for (const updatedRow of response[1]) {
-             const [taskInfo]: any[] = await this.orgDbSequelize.query(
-                        rawQueries.getTaskInfo(updatedRow.rid,schemaName),
-                        {
-                          replacements: { case_rid: updatedRow.rid },
-                          type: "SELECT"
-                        });
+            const [taskInfo]: any[] = await this.orgDbSequelize.query(
+              rawQueries.getTaskInfo(updatedRow.rid, schemaName),
+              {
+                replacements: { case_rid: updatedRow.rid },
+                type: "SELECT"
+              });
             let ruleEnginePayload = {
               caseName: caseInfo?.case_name || "Case",
               taskName: taskInfo?.task_name || "Task",
@@ -3653,7 +3848,7 @@ class CaseSchemaService {
               task: "Assigned",
               status: caseInfo.case_name || '',
               triggerType: "validation",
-              entity:"Task"
+              entity: "Task"
             };
             this.triggerRuleEngine(ruleEnginePayload, accessToken);
           }
@@ -4052,13 +4247,13 @@ class CaseSchemaService {
       if (isDropdownList) {
         if (userIds.length > 0) {
           const getUserDetails = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
-          const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
+          const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, { name: d.name, profile_url: d.profile_url }]));
           const finalData = await Promise.all(caseTeamMembers.map(async (d: any) => {
             let profileUrl;
             let userName;
-            if(userMap.get(d.user_rid) !== undefined) {
+            if (userMap.get(d.user_rid) !== undefined) {
               userName = userMap.get(d.user_rid)?.name || null
-              if(userMap.get(d.user_rid)?.profile_url !== null) {
+              if (userMap.get(d.user_rid)?.profile_url !== null) {
                 profileUrl = await generateSasUrl(userMap.get(d.user_rid)?.profile_url);
               } else {
                 profileUrl = null
@@ -4070,14 +4265,14 @@ class CaseSchemaService {
             return {
               ...d,
               user_name: userName,
-              profile_url : profileUrl
+              profile_url: profileUrl
             }
           }))
           return finalData
         }
         return caseTeamMembers
       } else {
-          if (userIds.length > 0) {
+        if (userIds.length > 0) {
           let userAssignedCountMap = new Map();
           let schemaName = rawQueries.fetchSchemaName(accountNumber)
           let countResult: any = await this.orgDbSequelize.query(rawQueries.getUserAssignedCount(schemaName, userIds, data.case_rid))
@@ -4134,16 +4329,16 @@ class CaseSchemaService {
             type: "SELECT",
           }
         );
-        const finalData = await Promise.all(users.map(async(data : any) => {
+        const finalData = await Promise.all(users.map(async (data: any) => {
           let profileUrl;
-          if(data.profile_url !== null) {
+          if (data.profile_url !== null) {
             profileUrl = await generateSasUrl(data.profile_url)
           } else {
             profileUrl = null
           }
           return {
             ...data,
-            profile_url : profileUrl
+            profile_url: profileUrl
           }
         }))
         return finalData;
@@ -4155,16 +4350,16 @@ class CaseSchemaService {
             type: "SELECT",
           }
         );
-        const finalData = await Promise.all(users.map(async(data : any) => {
+        const finalData = await Promise.all(users.map(async (data: any) => {
           let profileUrl;
-          if(data.profile_url !== null) {
+          if (data.profile_url !== null) {
             profileUrl = await generateSasUrl(data.profile_url)
           } else {
             profileUrl = null
           }
           return {
             ...data,
-            profile_url : profileUrl
+            profile_url: profileUrl
           }
         }))
         return finalData;
@@ -4180,7 +4375,7 @@ class CaseSchemaService {
       return [];
     }
   }
-  async cloneDefaultMilestoneTaskTemplate(accountRid: string, caseRid: string, filing_type_rid: string, taskTypeRid: string, accountNumber: string, transaction: Transaction, caseStartDate: Date, taskStatusRid: string, createdBy : string, fiscalYear : number) {
+  async cloneDefaultMilestoneTaskTemplate(accountRid: string, caseRid: string, filing_type_rid: string, taskTypeRid: string, accountNumber: string, transaction: Transaction, caseStartDate: Date, taskStatusRid: string, createdBy: string, fiscalYear: number) {
     const { CaseTask, CaseMilestone, CaseTaskWorkflowConnector, TaskSummary } = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -4338,7 +4533,7 @@ class CaseSchemaService {
               case_rid: caseRid,
               task_status_rid: taskStatusRid,
               rid: d.task_rid,
-              created_by : createdBy
+              created_by: createdBy
             }
           })
           let finalWorkFlowData;
@@ -4348,13 +4543,13 @@ class CaseSchemaService {
                 ...d,
                 account_rid: accountRid,
                 case_rid: caseRid,
-                created_by : createdBy,
+                created_by: createdBy,
               }
             })
             await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, { transaction });
           }
-          const bulkCreateResult = await CaseTask.bulkCreate(finalTaskData, { returning : true, transaction })
-          let taskSummaryData = bulkCreateResult.map(d => d.get({plain : true}));
+          const bulkCreateResult = await CaseTask.bulkCreate(finalTaskData, { returning: true, transaction })
+          let taskSummaryData = bulkCreateResult.map(d => d.get({ plain: true }));
           let filteredDataForSummary = taskSummaryData.map((d) => {
             return {
               task_rid: d.rid,
@@ -4370,7 +4565,7 @@ class CaseSchemaService {
               priority_rid: d.priority_rid || "",
               effective_start_datetime: d.effective_start_datetime!,
               effective_end_datetime: d.effective_end_datetime!,
-              created_by:  createdBy || "",
+              created_by: createdBy || "",
               created_datetime: new Date(),
               task_type_rid: taskTypeRid || "",
             }
@@ -4482,37 +4677,38 @@ class CaseSchemaService {
     });
     return result;
   }
-  async getCaseSubmissionDate(data: any,accountNumber: string) {
+  async getCaseSubmissionDate(data: any, accountNumber: string) {
     if (!this.mainDbSequelize) this.mainDbSequelize = await this.caseModelService.getMainSequelize();
-    if(!this.orgDbSequelize){
+    if (!this.orgDbSequelize) {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
     }
     const schemaName = rawQueries.fetchSchemaName(accountNumber)
     const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchAccountDetailsInfo(
-        schemaName,data.account_rid, 
+        schemaName, data.account_rid,
       ), { type: 'SELECT' }
     );
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
     const fiscalYear = data.fiscal_year;
     if (!fiscalStart || !fiscalEnd) return "";
-    // Start date
-    const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
-    const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
-    const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
+    const [splitMonthStart, splitDateStart] = fiscalStart.split("/");
+    const [splitMonthEnd, splitDateEnd] = fiscalEnd.split("/");
+    const fiscalDateRange = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, fiscalYear, splitDateStart, splitDateEnd)
+    let effectiveStart = fiscalDateRange.startDate
+    let effectiveEnd = fiscalDateRange.endDate
 
     // Now send both to fetchPlatformConfig
     let [platFormConfig]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchPlatformConfig(
-        data.country_rid, formattedStartDate, formattedEndDate
+        data.country_rid, effectiveStart, effectiveEnd
       ), { type: 'SELECT' }
     );
-    if(!platFormConfig) return "";
+    if (!platFormConfig) return "";
     const submissionMonth = platFormConfig?.config_json?.submission_date;
     if (!submissionMonth) return "";
 
-  const submissionDate = new Date(formattedEndDate);
+  const submissionDate = new Date(effectiveEnd);
   submissionDate.setMonth((submissionDate.getMonth()) + parseInt(submissionMonth));
 
   
@@ -4521,27 +4717,27 @@ class CaseSchemaService {
   }
 
   async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
-      try {
-        console.log("Triggering rule engine with data:", data); 
-        const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
-        const response = await axios.post(
-                `${RULE_ENGINE_BASE_URL}/workflow/execute`,
-                {
-                  ...data
-                },
-                {
-                  headers: {
-                    "x-user-id": data.userId,
-                    Authorization: `${accessToken}`,
-                  },
-                }
-              );
-      } catch (err) {
-        console.log(err)
-        logMessage(`Error triggering rule engine: ${err}`);
-        throw this.throwServiceError(err as Error);
-      }
+    try {
+      logMessage(`Triggering rule engine with data: ${JSON.stringify(data)}`);
+      const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
+      const response = await axios.post(
+        `${RULE_ENGINE_BASE_URL}/workflow/execute`,
+        {
+          ...data
+        },
+        {
+          headers: {
+            "x-user-id": data.userId,
+            Authorization: `${accessToken}`,
+          },
+        }
+      );
+    } catch (err) {
+      console.log(err)
+      logMessage(`Error triggering rule engine: ${err}`);
+      throw this.throwServiceError(err as Error);
     }
+  }
 }
 
 // Utility function for optimized column sorting

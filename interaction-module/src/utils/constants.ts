@@ -345,6 +345,10 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
+  fetchProjectTypeNames(ids: string[]) {
+    console.log(ids);
+      return `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${ids})`;
+    },
   fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
   return `
     SELECT 
@@ -501,8 +505,7 @@ export const rawQueries = {
     AND credit_program_name = 'Platform Configuration'
     AND rg.is_federal = true 
     AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
-  ORDER BY rv.effective_start_date DESC
-  LIMIT 1`;
+  ORDER BY rv.effective_start_date DESC `;
   },
   fetchProjectTypeRid(projectType: string | string[]) {
     // Accepts either a string or array of strings
@@ -589,7 +592,7 @@ export const rawQueries = {
   },
   fetchInteractionCCRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and (interaction_cc_recipient is true or include_in_communication is true) and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
   fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
     return `
@@ -621,7 +624,7 @@ export const rawQueries = {
     SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
   },
   fetchAllParentRNumber() {
-    let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
+    let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}'
     ORDER BY r_number ASC`;
     return query;
   },

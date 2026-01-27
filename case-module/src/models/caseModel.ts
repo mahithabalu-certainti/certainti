@@ -44,7 +44,15 @@ interface CaseAttributes {
   total_expenses ? : number;
   taxable_income ? : number;
   export_sales_revenue? : number;
-  
+  lease_costs_of_computers? : number;
+  illinois_rd_credit_partnership_corp? : number;
+  illinois_research_payments_corp_only? : number;
+  basic_research_payments? : number
+  qualified_computer_rental_time_expenses? : number
+  credit_carry_forward_py?: number
+  current_year_gross_receipts?: number
+  other_credits_total?: number
+
 }
 
 export interface CaseCreationAttributes
@@ -94,6 +102,14 @@ export class Case
   public total_expenses ? : number;
   public taxable_income ? : number;
   public export_sales_revenue? : number;
+  public lease_costs_of_computers? : number;
+  public illinois_rd_credit_partnership_corp? : number;
+  public llinois_research_payments_corp_only? : number;
+  public basic_research_payments? : number
+  public qualified_computer_rental_time_expenses? : number;
+  public credit_carry_forward_py?: number
+  public current_year_gross_receipts?: number
+  public other_credits_total?: number
 
   static initialize(
     sequelize: Sequelize,
@@ -154,7 +170,15 @@ export class Case
         aggregated_turnover : {type : DataTypes.DECIMAL, allowNull : true},
         total_expenses : {type : DataTypes.DECIMAL, allowNull : true},
         taxable_income : {type : DataTypes.DECIMAL, allowNull : true},
-        export_sales_revenue : {type : DataTypes.DECIMAL, allowNull : true}
+        export_sales_revenue : {type : DataTypes.DECIMAL, allowNull : true},
+        lease_costs_of_computers : {type : DataTypes.DECIMAL, allowNull : true},
+        illinois_rd_credit_partnership_corp : {type : DataTypes.DECIMAL, allowNull : true},
+        illinois_research_payments_corp_only : {type : DataTypes.DECIMAL, allowNull : true},
+        basic_research_payments : {type : DataTypes.DECIMAL, allowNull : true},
+        qualified_computer_rental_time_expenses : {type : DataTypes.DECIMAL, allowNull : true},
+        credit_carry_forward_py : {type : DataTypes.DECIMAL, allowNull : true},
+        current_year_gross_receipts: {type : DataTypes.DECIMAL, allowNull : true},
+        other_credits_total : {type : DataTypes.DECIMAL, allowNull : true}
       },
       {
         sequelize,

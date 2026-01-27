@@ -35,8 +35,7 @@ export async function validateRequest(
   organization?: string
 ): Promise<any> {
   // const requestValidationType = type === "GET" ? req.query : req.body;
-  const requestValidationType = type === "GET"
-    ? { ...req.query, ...req.params } : { ...req.body, ...req.params };
+  const requestValidationType = type === "GET" ? req.query : req.body;
   const { error, value } = schema.validate(requestValidationType, {
     abortEarly: false,
   });

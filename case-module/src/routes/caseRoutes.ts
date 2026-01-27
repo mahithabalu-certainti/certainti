@@ -304,7 +304,13 @@ routes.put(
 routes.post(
   "/financialWorking/signOff",
   checkUserStatusMiddleware("NA"),
+  upload.single('file'),
   controller.childCaseController.signOffFinancialWorking
+)
+routes.get(
+  "/closedCases/list",
+  checkUserStatusMiddleware("NA"),
+  controller.childCaseController.getClosedCasesList
 )
 
 routes.get('/regions/:accountId/:caseId', controller.childCaseController.RegionListForFinancialHighlights)

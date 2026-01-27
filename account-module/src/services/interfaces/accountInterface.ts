@@ -125,7 +125,7 @@ export interface IGeoDataService {
       count: number;
     }>
   >;
-  states(countryIds?: string[]): Promise<
+  states(statusScope: string,countryIds?: string[]): Promise<
     GeoDataResponse<{
       states: any;
       count: number;

@@ -5,8 +5,32 @@ import Joi from "joi";
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
+const positiveDecimal18_2 = Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base":
+      "Must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value;
+    } catch {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Must be a valid positive number",
+  })
+  .optional()
+  .allow(null);
+
 const createCaseSchema = Joi.object({
   account_rid: Joi.string().required(),
+  parent_case_rid: Joi.string().optional().allow("", null),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().optional().allow(""),
   case_owner_rid: Joi.string().required(),
@@ -16,70 +40,33 @@ const createCaseSchema = Joi.object({
   case_startdate: Joi.string().required(),
   planned_submission_date: Joi.string().required(),
   statutory_submission_date: Joi.string().required(),
-  heat_light_power: Joi.string()
-    .pattern(decimal18_2Regex)
-    .messages({
-      "string.pattern.base": "Heat Light Power must have up to 16 digits before the decimal and up to 2 decimal places",
-    })
-    .custom((value, helpers) => {
-      try {
-        const num = new Decimal(value);
-        if (num.lte(0)) {
-          return helpers.error("any.invalid");
-        }
-        return value;
-      } catch (err) {
-        return helpers.error("any.invalid");
-      }
-    })
-    .messages({
-      "any.invalid": "Heat Light Power must be a valid positive number",
-    })
-    .optional()
-    .allow(null),
-  total_nonlabor_cost: Joi.string()
-    .pattern(decimal18_2Regex)
-    .messages({
-      "string.pattern.base": "Total Nonlabor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
-    })
-    .custom((value, helpers) => {
-      try {
-        const num = new Decimal(value);
-        if (num.lte(0)) {
-          return helpers.error("any.invalid");
-        }
-        return value;
-      } catch (err) {
-        return helpers.error("any.invalid");
-      }
-    })
-    .messages({
-      "any.invalid": "Total Nonlabor Cost must be a valid positive number",
-    })
-    .optional()
-    .allow(null),
-  tax_liability: Joi.string()
-    .pattern(decimal18_2Regex)
-    .messages({
-      "string.pattern.base": "Tax Liability must have up to 16 digits before the decimal and up to 2 decimal places",
-    })
-    .custom((value, helpers) => {
-      try {
-        const num = new Decimal(value);
-        if (num.lte(0)) {
-          return helpers.error("any.invalid");
-        }
-        return value;
-      } catch (err) {
-        return helpers.error("any.invalid");
-      }
-    })
-    .messages({
-      "any.invalid": "Tax Liability must be a valid positive number",
-    })
-    .optional()
-    .allow(null),
+
+  heat_light_power: positiveDecimal18_2,
+  total_nonlabor_cost: positiveDecimal18_2,
+  tax_liability: positiveDecimal18_2,
+
+  total_expenses: positiveDecimal18_2,
+  aggregated_turnover: positiveDecimal18_2,
+  unpaid_amounts_paid: positiveDecimal18_2,
+  unpaid_amounts: positiveDecimal18_2,
+  cloud_software: positiveDecimal18_2,
+  sub_contracts: positiveDecimal18_2,
+  public_sub_contracts: positiveDecimal18_2,
+  material_software_cost: positiveDecimal18_2,
+  employers_pension_contribution: positiveDecimal18_2,
+  taxable_income: positiveDecimal18_2,
+  export_sales_revenue: positiveDecimal18_2,
+  other: positiveDecimal18_2,
+  lease_costs_of_computers: positiveDecimal18_2,
+  illinois_rd_credit_partnership_corp: positiveDecimal18_2,
+  illinois_research_payments_corp_only: positiveDecimal18_2,
+  basic_research_payments: positiveDecimal18_2,
+  qualified_computer_rental_time_expenses: positiveDecimal18_2,
+  credit_carry_forward_py: positiveDecimal18_2,
+  current_year_gross_receipts: positiveDecimal18_2,
+  other_credits_total: positiveDecimal18_2
 });
+
 
 const updateCaseSchema = Joi.object({
   case_rid: Joi.string().required(),
@@ -94,69 +81,35 @@ const updateCaseSchema = Joi.object({
   planned_submission_date: Joi.string().required(),
   statutory_submission_date: Joi.string().required(),
   country_rid: Joi.string().optional(),
-  heat_light_power: Joi.string()
-    .pattern(decimal18_2Regex)
-    .messages({
-      "string.pattern.base": "Heat Light Power must have up to 16 digits before the decimal and up to 2 decimal places",
-    })
-    .custom((value, helpers) => {
-      try {
-        const num = new Decimal(value);
-        if (num.lte(0)) {
-          return helpers.error("any.invalid");
-        }
-        return value;
-      } catch (err) {
-        return helpers.error("any.invalid");
-      }
-    })
-    .messages({
-      "any.invalid": "Heat Light Power must be a valid positive number",
-    })
-    .optional()
-    .allow(null),
-  total_nonlabor_cost: Joi.string()
-    .pattern(decimal18_2Regex)
-    .messages({
-      "string.pattern.base": "Total Nonlabor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
-    })
-    .custom((value, helpers) => {
-      try {
-        const num = new Decimal(value);
-        if (num.lte(0)) {
-          return helpers.error("any.invalid");
-        }
-        return value;
-      } catch (err) {
-        return helpers.error("any.invalid");
-      }
-    })
-    .messages({
-      "any.invalid": "Total Nonlabor Cost must be a valid positive number",
-    })
-    .optional()
-    .allow(null),
-  tax_liability: Joi.string()
-    .pattern(decimal18_2Regex)
-    .messages({
-      "string.pattern.base": "Tax Liability must have up to 16 digits before the decimal and up to 2 decimal places",
-    })
-    .custom((value, helpers) => {
-      try {
-        const num = new Decimal(value);
-        if (num.lte(0)) {
-          return helpers.error("any.invalid");
-        }
-        return value;
-      } catch (err) {
-        return helpers.error("any.invalid");
-      }
-    })
-    .messages({
-      "any.invalid": "Tax Liability must be a valid positive number",
-    })
-    .optional()
-    .allow(null),
+
+  heat_light_power: positiveDecimal18_2,
+  total_nonlabor_cost: positiveDecimal18_2,
+  tax_liability: positiveDecimal18_2,
+
+  total_expenses: positiveDecimal18_2,
+  aggregated_turnover: positiveDecimal18_2,
+  unpaid_amounts_paid: positiveDecimal18_2,
+  unpaid_amounts: positiveDecimal18_2,
+  cloud_software: positiveDecimal18_2,
+  sub_contracts: positiveDecimal18_2,
+  public_sub_contracts: positiveDecimal18_2,
+  material_software_cost: positiveDecimal18_2,
+  employers_pension_contribution: positiveDecimal18_2,
+  taxable_income: positiveDecimal18_2,
+  export_sales_revenue: positiveDecimal18_2,
+  other: positiveDecimal18_2,
+  lease_costs_of_computers: positiveDecimal18_2,
+  illinois_rd_credit_partnership_corp: positiveDecimal18_2,
+  illinois_research_payments_corp_only: positiveDecimal18_2,
+  basic_research_payments: positiveDecimal18_2,
+  qualified_computer_rental_time_expenses: positiveDecimal18_2,
+  credit_carry_forward_py: positiveDecimal18_2,
+  current_year_gross_receipts: positiveDecimal18_2,
+  other_credits_total: positiveDecimal18_2
+});
+
+const caseClosedListSchema = Joi.object({
+  account_rid: Joi.string().required()
 });
 
 const exportCasesAccountSchema = Joi.object({
@@ -185,7 +138,7 @@ const listCaseSummarySchema = Joi.object({
   limit: Joi.number().optional(),
   filters: Joi.object().default({}),
   globalFilters: Joi.object().default({}),
-  fiscal_year: Joi.number().optional(),
+  fiscalYear: Joi.number().optional(),
   search: Joi.string().max(255).optional().allow("", null),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
@@ -256,8 +209,8 @@ const exportJurisdictionConfigSchema = Joi.object({
 const exportCaseSummarySchema = Joi.object({
   filters: Joi.object().default({}),
   globalFilters: Joi.object().default({}),
-  fiscal_year: Joi.number().optional(),
-  search: Joi.string().max(255).optional(),
+  fiscalYear: Joi.number().optional().allow("", null),
+  search: Joi.string().max(255).optional().allow("", null),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   timezone: Joi.string().optional()
@@ -1193,8 +1146,7 @@ const createDataMapperSchema = Joi.object({
 const rdCreditGenerationSchema = Joi.object({
   account_rid: Joi.string().max(255).required(),
   case_rid: Joi.string().max(255).required(),
-  effective_start: Joi.string().max(255).required(),
-  effective_end: Joi.string().max(255).required()
+  fiscal_year: Joi.number().required()
 });
 
 const rdCreditProcessSchema = Joi.object({
@@ -1344,5 +1296,6 @@ export {
   exportDataMapperSchema,
   updateDataMapperSchema,
   updateDataMapperMappingSchema,
-  getObjectsListSchema
+  getObjectsListSchema,
+  caseClosedListSchema
 };

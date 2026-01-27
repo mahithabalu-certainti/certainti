@@ -50,6 +50,7 @@ export class KeyContactService {
     let financialConsultant = "-";
     let projectPointOfContact = "-";
     let projectPointOfContactEmail = '-';
+    let technicalPointOfContactEmail = '-';
     let isEmailRecipient = false;
 
     if (keyContacts) {
@@ -130,6 +131,9 @@ export class KeyContactService {
       projectPointOfContactEmail = pointOfContact
         ? pointOfContact.key_contact_email
         : null;
+      technicalPointOfContactEmail = technicalContact
+        ? technicalContact.key_contact_email
+        : null;
       isEmailRecipient = isEmailRecipientInfo || false;
     } else {
       return {
@@ -137,11 +141,12 @@ export class KeyContactService {
         financialConsultant: null,
         projectPointOfContact: null,
         projectPointOfContactEmail: null,
+        technicalPointOfContactEmail: null,
         isEmailRecipient: false
       };
     }
 
-    return { technicalConsultant, financialConsultant, projectPointOfContact, projectPointOfContactEmail, isEmailRecipient };
+    return { technicalConsultant, financialConsultant, projectPointOfContact, projectPointOfContactEmail, technicalPointOfContactEmail, isEmailRecipient };
   }
 
   async deleteKeyContactDetails(
@@ -191,6 +196,7 @@ export class KeyContactService {
         await CaseKeyContactDetails.destroy({
           where: {
             key_contact_rid: key_contact_id,
+            case_rid: caseMapping.case_rid,
           },
         });
       }
@@ -318,6 +324,7 @@ export class KeyContactService {
             {
               where: {
                 key_contact_rid: keyContactDetails.rid,
+                case_rid: caseMapping.case_rid,
               },
             }
           );
@@ -457,6 +464,16 @@ export class KeyContactService {
           technical_point_of_contact: findPrimary(keyContactRoleMap["technical_point_of_contact"]),
           financial_consultant: findPrimary(keyContactRoleMap["financial_consultant"]),
           project_point_of_contact: findPrimary(keyContactRoleMap["project_point_of_contact"]),
+          project_point_of_contact_email: enriched.find(
+            (kc) =>
+              kc.role_name === keyContactRoleMap["project_point_of_contact"] &&
+              kc.is_primary_contact
+          )?.key_contact_email || null,
+          technical_point_of_contact_email: enriched.find(
+            (kc) =>
+              kc.role_name === keyContactRoleMap["technical_point_of_contact"] &&
+              kc.is_primary_contact
+          )?.key_contact_email || null,
         };
       };
 

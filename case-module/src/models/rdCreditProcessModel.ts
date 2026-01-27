@@ -1,5 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX } from "../utils/constants";
+import { logMessage } from "../utils/helpers";
 
 export interface RdCreditProcessAttributes {
     rid?: string;
@@ -37,7 +38,7 @@ export class RdCreditProcess
                     allowNull: true,
                 },
                 status: {
-                    type: DataTypes.STRING(50),
+                    type: DataTypes.STRING(1000),
                     allowNull: true,
                 },
                 created_datetime: {
@@ -60,4 +61,22 @@ export class RdCreditProcess
             }
         );
     }
+}
+
+export async function setupRdCreditProcessSequence(
+  sequelize: Sequelize,
+  schemaName: string
+) {
+  try {
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".rd_credit_processing_status_seq START 1`
+    );
+
+    await sequelize.query(`ALTER TABLE "${schemaName}".rd_credit_processing_status
+      ALTER COLUMN r_number SET DEFAULT 'RDPS-' || LPAD(nextval('"${schemaName}".rd_credit_processing_status_seq')::text, 10, '0')`);
+
+    logMessage("RDCredit Calculations sequence setup complete");
+  } catch (error) {
+    logMessage(`Error setting up RDCredit Calculations sequence: ${error}`);
+  }
 }

@@ -840,7 +840,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectFiscalSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact, isEmailRecipient } =
+    const { technicalConsultant, projectPointOfContact, isEmailRecipient, technicalPointOfContactEmail, projectPointOfContactEmail } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -861,6 +861,8 @@ class ProjectIngestionService {
       endDate,
       technicalConsultant,
       projectPointOfContact,
+      projectPointOfContactEmail,
+      technicalPointOfContactEmail,
       isEmailRecipient,
       projectFiscalId
     );
@@ -964,16 +966,16 @@ class ProjectIngestionService {
     } else {
       query = regionRid
     }
-
-    if(projectData.region_rid === '') {
-      await AccountFiscalRegion.destroy({
-        where : {
-          account_rid,
-          fiscal_year,
-          region_rid: query,
-        }
-      })
-    }
+     //commented out since statewise summary will account only from  project resources
+    // if(projectData.region_rid === '') {
+    //   await AccountFiscalRegion.destroy({
+    //     where : {
+    //       account_rid,
+    //       fiscal_year,
+    //       region_rid: query,
+    //     }
+    //   })
+    // }
     const existingFiscal = await AccountFiscalRegion.findOne({
       where: {
         account_rid,
@@ -2105,6 +2107,7 @@ class ProjectIngestionService {
       technicalConsultant,
       projectPointOfContact,
       projectPointOfContactEmail,
+      technicalPointOfContactEmail,
       isEmailRecipient,
     } = await this.keyContactService.calculateKeyContactDetails(
       projectData.key_contacts,
@@ -2125,6 +2128,7 @@ class ProjectIngestionService {
       technicalConsultant,
       projectPointOfContact,
       projectPointOfContactEmail,
+      technicalPointOfContactEmail,
       isEmailRecipient
     );
 
@@ -2245,6 +2249,8 @@ class ProjectIngestionService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "account_name",
       "project_code",
       "project_client_group",
@@ -2350,6 +2356,7 @@ class ProjectIngestionService {
                     required: true,
                     where: {
                       document_rid: documentRid,
+                      event_name: "insert"
                     },
                     attributes: [
                       "rid",
@@ -2371,6 +2378,14 @@ class ProjectIngestionService {
                 ["total_cost_fte_prj", "total_cost_fte"],
                 ["total_cost_subcon_prj", "total_cost_subcon"],
                 ["total_cost_nonlabor_prj", "total_cost_nonlabor"],
+                [
+                  Sequelize.literal(`EXISTS (
+                    SELECT 1
+                    FROM "${schemaName}"."project_resource" pr
+                    WHERE pr.project_fiscal_rid = "ProjectFiscal"."rid"
+                  )`),
+                  "is_project_exists",
+                ],
               ],
             },
           },
@@ -2514,6 +2529,7 @@ class ProjectIngestionService {
                   required: true,
                   where: {
                     document_rid: documentRid,
+                    event_name: "insert"
                   },
                   attributes: [
                     "rid",
@@ -2535,6 +2551,14 @@ class ProjectIngestionService {
                 [
                   Sequelize.col("total_cost_nonlabor_prj"),
                   "total_cost_nonlabor",
+                ],
+                [
+                  Sequelize.literal(`EXISTS (
+                    SELECT 1
+                    FROM "${schemaName}"."project_resource" pr
+                    WHERE pr.project_fiscal_rid = "ProjectFiscal"."rid"
+                  )`),
+                  "is_project_exists",
                 ],
                 ...(apiSource === "interaction"
                   ? [
@@ -2579,6 +2603,27 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
+           include: [
+              ...(documentRid
+                ? [
+                  {
+                    model: ProjectTimeline,
+                    as: "ProjectTimelines",
+                    required: true,
+                    where: {
+                      document_rid: documentRid,
+                      event_name:"insert"
+                    },
+                    attributes: [
+                      "rid",
+                      "entity_rid", // THIS IS CRUCIAL
+                      "document_rid",
+                      "event_name",
+                    ],
+                  },
+                ]
+                : []),
+            ],
           required: !!documentRid,
           where: {
             account_rid: accountData.rid,
@@ -2653,9 +2698,9 @@ class ProjectIngestionService {
       }
     }
 
-    if (projects.length > 0) {
-      projects = await this.addProjectResourceExistsFlags(projects);
-    }
+    // if (projects.length > 0) {
+    //   projects = await this.addProjectResourceExistsFlags(projects);
+    // }
 
     return {
       projects,
@@ -2691,6 +2736,8 @@ class ProjectIngestionService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "account_name",
       "project_code",
       "project_client_group",
@@ -2959,8 +3006,10 @@ class ProjectIngestionService {
       "QRE Percent Final": "QRE Percent Final",
       "QRE Final": "QRE Final",
       "Project Point of Contact": "Key Contacts List",
+      "Project Point of Contact Email": "Key Contacts List",
       "Technical Point of Contact": "Key Contacts List",
-      Comments: "Comments",
+      "Technical Point of Contact Email": "Key Contacts List",
+      "Comments": "Comments",
       "Last Modified": "Updated On",
       "Project ID": "Project ID",
     };
@@ -2998,7 +3047,9 @@ class ProjectIngestionService {
         "QRE Percent Final": project.rd_percent_final || "-",
         "QRE Final": project.qre_final || "-",
         "Project Point of Contact": "-",
+        "Project Point of Contact Email": "-",
         "Technical Point of Contact": "-",
+        "Technical Point of Contact Email": "-",
         "Comments": "-",
         "Last Modified": "-",
         "Project ID": project.r_number || "-",
@@ -3051,8 +3102,10 @@ class ProjectIngestionService {
             fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
             "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
+          "Project Point of Contact Email": fiscal.project_point_of_contact_email || "-",
           "Technical Point of Contact":
             fiscal.technical_point_of_contact || "-",
+          "Technical Point of Contact Email": fiscal.technical_point_of_contact_email || "-",
           Comments: fiscal.comments || "-",
           "Last Modified": modifiedDateTime
             ? timezone && isValidTimezone(timezone)
@@ -3129,6 +3182,7 @@ class ProjectIngestionService {
           ["country_rid", "country"],
           ["region_rid", "region"],
           ["currency_rid", "currency"],
+          ["is_rd_claim_qualified", "is_rd_claim_qualified"]
         ],
       },
     });
@@ -3497,6 +3551,8 @@ class ProjectIngestionService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "classification_name",
       "industry_name",
       "name",

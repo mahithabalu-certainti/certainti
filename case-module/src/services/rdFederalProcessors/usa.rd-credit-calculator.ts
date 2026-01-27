@@ -33,12 +33,14 @@ export class RdCreditCalculatorForUSA {
      * @param caseRid 
      * @returns 
      */
-    async compute(config: any, federalRdData: FederalRDData) {
+    async compute(config: any, federalRdData: FederalRDData, annualGrossReceiptsCount : number, date? : string) {
         try {
             const { asc, rrc } = this.splitAscRrcConfig(config);
             logMessage(`Extracted ASC Config: ${JSON.stringify(asc)}`);
             logMessage(`Extracted RRC Config: ${JSON.stringify(rrc)}`);
-            const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(federalRdData.currentYearQREs.contract || 0);
+            const contract = new Decimal(federalRdData.currentYearQREs.contract || 0).mul(config.rrc_sub_con_percent/100)
+            federalRdData.currentYearQREs.contract = contract.toNumber()
+            const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(contract || 0);
             logMessage(`CurrentYearQREs: ${JSON.stringify(federalRdData.currentYearQREs)}`);
 
             const totalGrossReceipts = new Decimal((federalRdData.annualGrossReceipts || []).reduce(
@@ -50,17 +52,24 @@ export class RdCreditCalculatorForUSA {
             const asc280C = await this.apply280C_ASC(creditASC, extractConfigAsc);
 
             const extractConfigRRC = rrc;
-            const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, extractConfigRRC, 4);
+            const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, extractConfigRRC, annualGrossReceiptsCount);
             const rrc280C = await this.apply280C_RRC(creditRRC, extractConfigRRC);
 
             const inputFields = await this.buildInputParams(federalRdData.currentYearQREs, federalRdData.prior3YearsQREs, federalRdData.annualGrossReceipts || [], {
                 country: this.country,
                 creditType: this.creditType,
                 currency: this.currency,
+                fiscalYearEnded : date,
+                subConPercent : config.rrc_sub_con_percent
             });
             logMessage(`Input Fields: ${JSON.stringify(inputFields)}`);
+            let taxCredit;
+            const rrcValue = this.getMultiplyValue(rrc280C.reduction280c.no_elect280c);
+            const ascValue = this.getMultiplyValue(asc280C.reduction280c.no_elect280c);
 
-            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C);
+            taxCredit = rrcValue! > ascValue! ? rrcValue : ascValue;
+
+            const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C, taxCredit);
 
             // Step 4: Return success response
             return {
@@ -91,10 +100,10 @@ export class RdCreditCalculatorForUSA {
         const line21 = new Decimal(prior3YearsQREs.reduce((sum, y) => sum + (y.qre || 0), 0));
 
         // ---- Line 22: Divide line 21 by 6 ----
-        const line22 = await this.round2(line21.div(6));
+        const line22 = line21.div(6);
 
         // ---- Line 23: Subtract line 22 from line 20 ----
-        const line23 = await this.round2(totalQRE.minus(line22));
+        const line23 = new Decimal(totalQRE.minus(line22));
 
         // ---- Line (14% or 6%) if any prior year QRE = zero ----
         const hadZeroYear = prior3YearsQREs.some(y => y.qre === 0);
@@ -103,20 +112,21 @@ export class RdCreditCalculatorForUSA {
         const percentage = hadZeroYear ? configAsc.fixed_base_percentage : configAsc.credit_rate;
 
         // ---- Line 24: Multiply line 23 by percentage ----
-        const line24 = await this.round2(line23.mul(percentage));
+        const line24 = line23.mul(percentage/100);
 
         // ---- Line 25: (ASC Base Credit) ----
         const line25 = line24; // because you don’t have line19 in ASC
+        let dynamicPercentageKey = `Enter ${configAsc.credit_rate}%. If QREs in any of the 3 years is zero, enter ${configAsc.fixed_base_percentage}%`
 
         return {
-            tot_current_year_qre: totalQRE,
-            total_prior_3years_qre: line21,
-            adjusted_base_amount: line22,
-            excess_qre: line23,
-            asc_credit_amount: line24,
-            total_section_b_credit: line25,
+            "20 Total Qualified Research Expenses": Number(await this.round2(totalQRE)),
+            "21 Total QREs for prior 3 tax years": Number(await this.round2(line21)),
+            "22 Divide line 21 by 6.0": Number(await this.round2(line22)),
+            "23 Subtract line 22 from line 20": Number(await this.round2(line23)),
+            [dynamicPercentageKey]: `${percentage}%`,
+            "24 Multiply line 23 by the percentage above": Number(await this.round2(line24)),
+            "25 Add lines 19 and 24": Number(await this.round2(line25)),
             final_credit: line25,
-            percentage_used: Math.round(percentage * 100)
         };
     }
 
@@ -138,25 +148,27 @@ export class RdCreditCalculatorForUSA {
         const line7 = prior4YearsGrossReceiptsTotal.div(priorYearsCount); // usually 4
 
         //---- Line 8: Multiply line 7 by percentage on line 6 (configRRC.fixedBasePercentage)
-        const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage));
+        const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage/100));
 
         //---- Line 9: Subtract line 8 from line 5
         const line9 = currentYearQRE.minus(line8)
+        const maxLine9 = Decimal.max(line9, 0)
 
         //---- Line 10: Multiply line 5 by 50%
-        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate || 0.5);
+        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate/100 || 0.5);
 
         //---- Line 11: Enter smaller of line 9 or line 10
-        const line11 = Decimal.min(line10, line9);
+        const line11 = Decimal.min(line10, maxLine9);
+        let dynamicLine5 = `10 Multiply line 5 by ${configRRC.qre_cap_rate}`
 
         return {
-            tot_current_year_qre: currentYearQRE,
-            fixed_base_percentage: Math.round(configRRC.fixed_base_percentage * 100),
-            average_annual_gross_receipts: line7,
-            base_amount: line8,
-            excess_qre_over_base_amount: line9,
-            half_total_qre: line10,
-            total_section_a_credit: line11,
+            "5 Total Qualified Research Expenses": await this.round2(currentYearQRE),
+            "6 Fixed-base percentage": `${configRRC.fixed_base_percentage}%`,
+            "7 Average Annual Gross Receipts": await this.round2(line7),
+            "8 Multiply line 7 by percentage on line 6": await this.round2(line8),
+            "9 Subtract line 8 from line 5": await this.round2(maxLine9),
+            [dynamicLine5]: await this.round2(line10),
+            "11 Enter smaller of line 9 or line 10": await this.round2(line11),
             final_credit: line11
         };
     }
@@ -169,21 +181,17 @@ export class RdCreditCalculatorForUSA {
      */
     async apply280C_RRC(creditRRC: any, configRRC: ConfigJson) {
         // ASC Federal 280C reduction rules
-        const rateWhenElect = configRRC.elect_280c_yes;  // elect 280C
-        const rateWhenNoElect = configRRC.elect_280c_no; // do not elect 280C
+        const rateWhenElect = configRRC.elect_280c_yes/100;
+        const rateWhenNoElect = configRRC.elect_280c_no/100; // do not elect 280C
 
-        const creditElect = creditRRC.final_credit.mul(rateWhenElect);
         const creditNoElect = creditRRC.final_credit.mul(rateWhenNoElect);
+        let dynamicRRC280CKey = `Multiply line 11 by ${configRRC.elect_280c_no}% (by ${configRRC.elect_280c_yes}% if line 13 is No)`;
 
         return {
             reduction280c: {
-                elect280c: {
-                    rate: rateWhenElect,
-                    credit: await this.round2(creditElect)
-                },
                 no_elect280c: {
-                    rate: rateWhenNoElect,
-                    credit: await this.round2(creditNoElect)
+                    "13 Electing reduced credit under 280C": "NO",
+                    [dynamicRRC280CKey]:  Number(await this.round2(creditNoElect))
                 }
             }
         };
@@ -197,20 +205,16 @@ export class RdCreditCalculatorForUSA {
      */
     async apply280C_ASC(creditASC: any, configASC: ConfigJson) {
         // Federal RRC 280C reduction factors
-        const factorElect = configASC.elect_280c_yes;   // elect 280C → reduced credit
+        const factorElect = configASC.elect_280c_yes/100;   // elect 280C → reduced credit
         const factorNoElect = configASC.elect_280c_no; // no election → full credit
 
-        const creditElect = creditASC.final_credit.mul(factorElect);
-        const creditNoElect = creditASC.final_credit.mul(factorNoElect);
+        const creditNoElect = creditASC.final_credit
+        let dynamicRRC280CKey = `Multiply line 20 by ${configASC.elect_280c_yes}% (equals line 25 if line 26 is No)`
         return {
             reduction280c: {
-                elect280c: {
-                    factor: factorElect,
-                    credit: await this.round2(creditElect)
-                },
                 no_elect280c: {
-                    factor: factorNoElect,
-                    credit: await this.round2(creditNoElect)
+                    "26 Electing reduced credit under 280C": "NO",
+                    [dynamicRRC280CKey]: Number(await this.round2(creditNoElect))
                 }
             }
         };
@@ -221,9 +225,21 @@ export class RdCreditCalculatorForUSA {
      * @param value 
      * @returns 
      */
-    async round2(value: Decimal | number): Promise<Decimal> {
-        return new Decimal(value).toDecimalPlaces(2);
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
     }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 
     /**
      * 
@@ -235,21 +251,32 @@ export class RdCreditCalculatorForUSA {
      */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[], metadata: any = {}) {
 
-        const qreSummary: Record<string, any> = {
-            wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract_65: currentYearQREs.contract
-        };
+        const priorYearsQre: Record<string, any> = []
+        const priorYearGross : Record<string, any> = []
+        const mapNumbers = new Map();
+        mapNumbers.set(1, "st")
+        mapNumbers.set(2, "nd")
+        mapNumbers.set(3, "rd")
+        mapNumbers.set(4, "th")
 
         // Add prior 3 years QREs
         prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre || 0;
+            priorYearsQre.push({
+                "Preceding Year Wise" : `${i + 1}${mapNumbers.get(i + 1)} Preceding year`,
+                "Total" : item.qre || 0,
+                "Fiscal Year" : item.fiscalYear
+            })
         });
 
         // Add prior 4 years gross receipts
         annualGrossReceipts.forEach((item, i) => {
-            qreSummary[`prior_year_gross_receipts_${i + 1}`] = item.grossReceipts || 0;
+            priorYearGross.push({
+                "Preceding Year Wise" : `${i + 1}${mapNumbers.get(i + 1)} Preceding year`,
+                "Total" : item.grossReceipts || 0,
+                "Fiscal Year" : item.fiscalYear
+            })
         });
+       
 
 
         return {
@@ -257,8 +284,16 @@ export class RdCreditCalculatorForUSA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Descriptions" : "Research Tax Credit",
+                "Tax Year Ended:" : metadata.fiscalYearEnded
             },
-            qreSummary
+            "Average Annual Gross Receipts" : priorYearGross,
+            "Total Qualified Research Expenses" : priorYearsQre,
+            "qreSummary" : {
+                "Wages" : currentYearQREs.wages,
+                "Supplies" : currentYearQREs.supplies,
+                [`${metadata.subConPercent}% Contract Expenses`] : currentYearQREs.contract
+            }
         };
 
     }
@@ -271,12 +306,11 @@ export class RdCreditCalculatorForUSA {
      * @param rrc280C 
      * @returns 
      */
-    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any) {
+    async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any, taxCredit: any) {
         return {
-            computed_fields: {
-                asc: { creditASC, asc280C },
-                rrc: { creditRRC, rrc280C }
-            }
+            "ASC Credit": { creditASC, asc280C },
+            "Regular Credit": { creditRRC, rrc280C },
+            "Research and Development Tax Credit" : taxCredit
         }
     }
 
@@ -341,6 +375,16 @@ export class RdCreditCalculatorForUSA {
             rrc: result.rrc as ConfigJson
         };
     }
+
+    getMultiplyValue(noElect: Record<string, string | number>): number | undefined {
+    const key = Object.keys(noElect).find(k =>
+        k.startsWith("Multiply line")
+    );
+
+    const value = key ? noElect[key] : undefined;
+    return typeof value === "number" ? value : undefined;
+    }
+
 
 }
 

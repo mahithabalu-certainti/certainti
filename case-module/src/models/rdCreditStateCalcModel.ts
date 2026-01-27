@@ -52,11 +52,11 @@ export class RdCreditStateCalculations
                     allowNull: false,
                 },
                 country_rid: {
-                    type: DataTypes.STRING(20),
+                    type: DataTypes.STRING(50),
                     allowNull: true,
                 },
                 state_rid: {
-                    type: DataTypes.STRING(20),
+                    type: DataTypes.STRING(50),
                     allowNull: false,
                 },
                 input_params: {

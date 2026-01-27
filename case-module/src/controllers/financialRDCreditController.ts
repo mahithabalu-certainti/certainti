@@ -30,11 +30,7 @@ async function financialRDCreditFederal(
     );
 
     // Step 2: Validate request body
-    const value = await validateRequest(req, rdCreditGenerationSchema, res);
-    if (!value) {
-      errorLog(methodName, "Invalid request body");
-      return;
-    }
+    const value = req.body;
 
     // Step 3: Validate userId
     const userId = req.headers["x-user-id"] as string;
@@ -74,7 +70,7 @@ async function financialRDCreditFederal(
 async function initiateRDCreditProcess(
   req: Request,
   res: Response
-): Promise<void> {
+): Promise<any> {
   const methodName = "initiateRDCreditProcess";
   try {
     // Step 1: Log request
@@ -105,13 +101,22 @@ async function initiateRDCreditProcess(
     }
 
     logMessage(JSON.stringify(value));
-    const resultState = await computationService.initiateRDCreditProcess(value.account_rid, value.case_rid, value.effective_start, value.effective_end)
-    // Step 5: Handle service response
-    handleCustomResponse(
-      res,
-      resultState.statusCode,
-      resultState.message
-    );
+    const resultState = await computationService.initiateRDCreditProcess(value.account_rid, value.case_rid, value.fiscal_year)
+    if(resultState.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : resultState.message,
+        data : {}
+      })
+    } else {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : resultState.errorMessage,
+        data : {}
+      })
+    }
   } catch (err) {
     // Step 6: Catch unexpected errors
     const error = err as Error;
@@ -143,14 +148,8 @@ async function findRdCreditComputedResults(
         req.body
       )}, userId: ${req.headers["x-user-id"]}`
     );
-
-    // Step 2: Validate request body
-    const value = await validateRequest(req, rdCreditDataSchema, res);
-    if (!value) {
-      errorLog(methodName, "Invalid request body");
-      return;
-    }
-
+    
+    const {accountRid, caseRid, stateCode} = req.params;
     // Step 3: Validate userId
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
@@ -164,9 +163,7 @@ async function findRdCreditComputedResults(
       return;
     }
 
-    logMessage(JSON.stringify(value));
-
-    const resultState = await computationService.getComputationResultsByIDAndState(value.accountRid, value.caseRid, value.stateCode);
+    const resultState = await computationService.getComputationResultsByIDAndState(accountRid!, caseRid!, stateCode!);
 
     // Step 5: Handle service response
     handleCustomResponse(
@@ -206,12 +203,7 @@ async function findProcessStatusByCaseRid(
       )}, userId: ${req.headers["x-user-id"]}`
     );
 
-    // Step 2: Validate request body
-    const value = await validateRequest(req, rdCreditProcessSchema, res);
-    if (!value) {
-      errorLog(methodName, "Invalid request body");
-      return;
-    }
+    const {accountRid, caseRid} = req.params
 
     // Step 3: Validate userId
     const userId = req.headers["x-user-id"] as string;
@@ -226,9 +218,7 @@ async function findProcessStatusByCaseRid(
       return;
     }
 
-    logMessage(JSON.stringify(value));
-
-    const resultState = await computationService.findProcessStatus(value.accountRid, value.caseRid);
+    const resultState = await computationService.findProcessStatus(accountRid!, caseRid!);
 
     // Step 5: Handle service response
     handleCustomResponse(

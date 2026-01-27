@@ -2895,7 +2895,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "notes",
           "is_mandatory",
         ],
-        order: [
+       order: [
           ["question_seq_num", "ASC"],
           ["created_datetime", "ASC"],
         ],
@@ -2929,7 +2929,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "notes",
           "is_mandatory",
         ],
-        order : [['created_datetime', 'DESC']],
+        order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"],
+        ],
         where: { interaction_rid: interactionRid },
       });
 
@@ -3822,6 +3825,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     response: any
   ) {
     try {
+      logMessage(`Updating AI processed flag for projectFiscalRid: ${projectFiscalRid}, accountNumber: ${accountNumber}`);
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
@@ -3877,15 +3881,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       ]);
 
       if (response?.data?.transaction_id) {
-        AiAssessmentAudit.update(updateData, {
+        logMessage(`Updating AiAssessmentAudit for transaction_id: ${response?.data?.transaction_id} ${schemaName}`);
+        await AiAssessmentAudit.update(updateData, {
           where: { transaction_id: response?.data?.transaction_id },
         });
       }
     } catch (err) {
       logMessage(`Error updating AI processed flag: ${err}`);
-      throw new Error(
-        "Error updating AI processed flag: " + (err as Error).message
-      );
     }
   }
 
@@ -4137,6 +4139,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     const { SchedulerExecution } = await this.interactionModelService.getModels("");
     const findSchedulerExists = await SchedulerExecution.findOne({
       where : {
+        scheduler_name : 'AITrigger',
         status : schedulerStatus.Running
       }
     })
@@ -4144,7 +4147,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const createSchedulerExecution = await SchedulerExecution.create({
         created_datetime : new Date(),
         started_at : new Date(),
-        status : schedulerStatus.Running
+        status : schedulerStatus.Running,
+        scheduler_name : 'AITrigger'
       })
       return createSchedulerExecution
     }
