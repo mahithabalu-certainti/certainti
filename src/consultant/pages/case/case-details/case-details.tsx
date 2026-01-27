@@ -1039,7 +1039,7 @@ export const CaseDetails = () => {
       {
         name: 'Dossier',
         key: 'dossier',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.DOSSIER,
         disabled: false,
         icon: DossierIcon,
       },

@@ -127,7 +127,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
   };
 
   const regionsOptions = useFetchState(
-    caseDetails?.country_rid || caseCountryDetails?.country_id || ''
+    caseDetails?.country_rid || caseCountryDetails?.country_id || '' , 'active'
   );
 
   const regionListOptions = useMemo(

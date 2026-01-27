@@ -180,6 +180,7 @@ export enum AllMenus {
   PROJECT_SETTINGS = 'manage_project_settings',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
+  DOSSIER = 'dossier',
   WORKBREAKDOWN = 'workbreakdown',
   FALLBACK = 'fallback',
   PROJECT_RESOURCES = 'project_resources',
