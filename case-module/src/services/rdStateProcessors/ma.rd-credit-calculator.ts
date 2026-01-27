@@ -254,12 +254,12 @@ export class RdCreditCalculatorForMA {
      */
     buildComputedFields(part1QualifiedResearchExpenseInfo: any, part2ASCCreditCalculationInfo: any, part3CreditCalInfo: any, extractConfig : ConfigJson) {
         let part1QualifiedResearchExpense = {
-            "1 Qualified wage expenses for this corporation":part1QualifiedResearchExpenseInfo.current_year_wages,
-            "2 Qualified supply expenses for this corporation":part1QualifiedResearchExpenseInfo.current_year_supply,
-            "3 Qualified computer rental time expenses for this corporation":part1QualifiedResearchExpenseInfo.qualified_computer_rental_time_expenses,
-            [`4 Enter ${extractConfig.sub_con_percent}% of qualified contract expenses for this corporation`]:part1QualifiedResearchExpenseInfo.current_year_contract,
-            "5 Total qualified research expenses for this corporation. Add lines 1 through 4":part1QualifiedResearchExpenseInfo.total_qre,
-            "6 Total qualified research expenses for this aggregate group":part1QualifiedResearchExpenseInfo.total_qre_aggregate
+            "1 Qualified wage expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
+            "2 Qualified supply expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.current_year_supply),
+            "3 Qualified computer rental time expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.qualified_computer_rental_time_expenses),
+            [`4 Enter ${extractConfig.sub_con_percent}% of qualified contract expenses for this corporation`]: this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
+            "5 Total qualified research expenses for this corporation. Add lines 1 through 4": this.round2(part1QualifiedResearchExpenseInfo.total_qre),
+            "6 Total qualified research expenses for this aggregate group": this.round2(part1QualifiedResearchExpenseInfo.total_qre_aggregate)
         }
         let part2ASCCreditCalculation = {
             "7 Average qualified research expenses for the 3 most recent prior years":part2ASCCreditCalculationInfo.average_qre,
