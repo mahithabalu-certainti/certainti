@@ -227,7 +227,8 @@ export class ActivityService {
         },
       };
     } catch (err) {
-      logMessage(`Error creating activity task, ${err}`);
+      const errorMessage = err instanceof Error ? err.message : err;
+      logMessage(`Error creating activity task: ${errorMessage}`);
       await transaction.rollback();
       return {
         statusCode: HttpStatus.FAILED,
