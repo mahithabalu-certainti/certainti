@@ -10,5 +10,6 @@ export const ENV = {
   KAFKA_BROKER: (process.env.KAFKA_BROKER || "localhost:9092").split(","),
   KAFKA_CLIENT_ID: process.env.KAFKA_CLIENT_ID || "rd-credit-service",
   KAFKA_GROUP_ID: process.env.KAFKA_GROUP_ID || "rd-credit-consumers",
-  KAFKA_TOPIC: process.env.KAFKA_TOPIC || "rd_credit_processing"
+  KAFKA_TOPIC: process.env.KAFKA_TOPIC || "rd_credit_processing",
+  KAFKA_DATA_MAPPER_TOPIC: process.env.KAFKA_DATA_MAPPER_TOPIC || "data_mapper_request",
 };
