@@ -227,10 +227,13 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
                     pdf_form_fields = data_obj.get("pdf_form_fields", [])
                     if pdf_form_fields and isinstance(pdf_form_fields, list):
-                        query = f"UPDATE {schema}.data_mapper_forms SET field_array = %s WHERE rid = %s"
-                        params = [json.dumps(pdf_form_fields), rid]
+                        query = f"UPDATE {schema}.data_mapper_forms SET field_array = %s, form_type = %s WHERE rid = %s"
+                        params = [json.dumps(pdf_form_fields), "fillable", rid]
+                    else:
+                        query = f"UPDATE {schema}.data_mapper_forms SET form_type = %s WHERE rid = %s"
+                        params = ["non-fillable", rid]
                         
-                        cur.execute(query, tuple(params))
+                    cur.execute(query, tuple(params))
                         
         conn.commit()
         print(f"Updated record {rid} to {status}")

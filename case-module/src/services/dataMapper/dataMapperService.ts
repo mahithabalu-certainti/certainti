@@ -3,6 +3,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { DataMapperForms, setupDataMapperFormsSequence } from "../../models/dataMapperForms";
 import { uploadToAzureBlob, logMessage, errorLog, generateSasUrl } from "../../utils/helpers";
 import { Kafka, Producer } from "kafkajs";
+import { ENV } from "../../config/kafka";
 import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants";
 import moment from "moment";
 import { DataMapperFormMappings } from "../../models/dataMapperFormMappings";
@@ -120,7 +121,7 @@ export class DataMapperService implements IDataMapperService {
 
     async sendKafkaMessage(payload: any) {
         try {
-            const topic = process.env.KAFKA_DATA_MAPPER_TOPIC || "data_mapper_request";
+            const topic = ENV.KAFKA_DATA_MAPPER_TOPIC;
             const producer = await this.getProducer();
 
             logMessage(`Sending Kafka message to ${topic}: ${JSON.stringify(payload)}`);
