@@ -57,19 +57,20 @@ export class RdCreditCalculatorForID {
     qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson, totalGrossReceipts: Decimal, priorYearsCount: number,caseDetails: Case | undefined,) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
-
+        const basic_research_payments = new Decimal(caseDetails?.basic_research_payments || 0);
+        const qualified_organization_base_period_amount = new Decimal(0);
+        const line_3 = Decimal.max(0, basic_research_payments.minus(qualified_organization_base_period_amount));
         const supplies = new Decimal(currentYearQREs.supplies || 0);
         const cost_to_rent = new Decimal(caseDetails?.lease_costs_of_computers || 0.00);
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(cost_to_rent).plus(supplies);
-
-        const fixed_base_percentage = config.fixed_base_percentage * 100;
+        const fixed_base_percentage = config.fixed_base_percentage;
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
-        const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage);
-        const difference = total_current_year_qre.minus(base_amount);
+        const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage /100);
+        const difference = Decimal.max(0, base_amount.minus(total_current_year_qre));
         const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
-        const tot_base_amount = base_amount.plus(min_credit_rate);
-        const credit_earned = tot_base_amount.mul(config.credit_earned);
+        const tot_base_amount = min_credit_rate.plus(line_3);
+        const credit_earned = tot_base_amount.mul(config.credit_earned /100);
         const final_credit = credit_earned;
         const tot_credit_avail = final_credit;
 
@@ -88,7 +89,9 @@ export class RdCreditCalculatorForID {
             credit_earned,
             final_credit,
             tot_credit_avail,
-            supplies
+            supplies,
+            basic_research_payments,
+            line_3
         }
 
     }
@@ -127,9 +130,9 @@ export class RdCreditCalculatorForID {
         let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         storeData.push({
             year : metadata.currentYear,
-            wages: currentYearQREs.wages,
-            contract: currentYearContract,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)
+            wages: this.round2(currentYearQREs.wages),
+            contract: this.round2(currentYearContract),
+            sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
         })
  
         prior3YearsQREs.forEach((item) => {
@@ -137,7 +140,7 @@ export class RdCreditCalculatorForID {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
             })
         });
 
@@ -162,9 +165,9 @@ export class RdCreditCalculatorForID {
      */
     buildComputedFields(qretInfo: any, config: any) {
         let part1 = {
-            "1 Basic research payments paid or incurred during the tax year to qualiﬁed organizations":"",
-            "2 Qualiﬁed organization base period amount":"",
-            "3 Subtract line 2 from line 1. If less than zero, enter zero":""
+            "1 Basic research payments paid or incurred during the tax year to qualiﬁed organizations":qretInfo.basic_research_payments,
+            "2 Qualiﬁed organization base period amount":"0",
+            "3 Subtract line 2 from line 1. If less than zero, enter zero":qretInfo.line_3
         }
         let part2 = {
             "4 Wages for qualiﬁed services performed in Idaho":qretInfo.current_year_wages,

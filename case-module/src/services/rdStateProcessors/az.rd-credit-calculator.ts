@@ -158,7 +158,7 @@ export class RdCreditCalculatorForAZ {
      */
     async asc(config: ConfigJson, currentYearQREs: any, prior3YearsQREs: QRE[], caseData :Case) {
         //---- Line 77:  
-        const line77 = new Decimal(currentYearQREs.wages || 0);
+        const line77 = new Decimal(0);
 
         //---- Line 78: wages
         const line78 = new Decimal(currentYearQREs.wages || 0);
@@ -192,7 +192,7 @@ export class RdCreditCalculatorForAZ {
             const line87 = Decimal.min(line85, line86);
 
             //---- Line 88: Add Line 77 and 87
-            const line88 = line87.plus(line78);
+            const line88 = line87.plus(line77);
 
             let line93;
             let line89, line90, line91, line92;
@@ -320,9 +320,9 @@ export class RdCreditCalculatorForAZ {
         }
 
         let asc = {
-            "75 Basic research payments paid or incurred to qualified organizations:":"",
-            "76 Qualified organization base period amount":"",
-            "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.":"",
+            "75 Basic research payments paid or incurred to qualified organizations:":0,
+            "76 Qualified organization base period amount":0,
+            "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.":0,
             "78 Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditASC.wages || '',
             "79 Current year cost of supplies":creditASC.supplies || '',
             "80 Current year cost to rent or lease computers":creditASC.lease_computers || '',
