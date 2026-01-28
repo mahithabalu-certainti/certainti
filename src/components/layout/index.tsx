@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Navbar, Sidebar } from '../';
-import { MAIN_ROUTE } from '../../routes';
+import { MAIN_ROUTE, ADMIN } from '../../routes';
 import { accountNavItems } from '../sidebar/accounts-menu';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -13,6 +13,8 @@ import Footer from '../Footer';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isManualToggleRef = useRef(false);
   const [mobileView, setMobileView] = useState<boolean>(false);
   const [sidebarExpand, setSidebarExpand] = useState<boolean>(() => {
     const saved = localStorage.getItem('sidebarExpand');
@@ -56,6 +58,24 @@ export const AppLayout: React.FC = () => {
     }
   }, []);
 
+  // This ensures sidebar/navbar menus are consistent when navigating via browser back/forward buttons
+  useEffect(() => {
+    // Skip synchronization if this was a manual toggle
+    if (isManualToggleRef.current) {
+      isManualToggleRef.current = false;
+      return;
+    }
+
+    const isAdminRoute = location.pathname.startsWith(ADMIN);
+
+    // Only update if there's a mismatch between the route and the sidebar state
+    if (isAdminRoute !== showAdminSidebar) {
+      setShowAdminSidebar(isAdminRoute);
+      localStorage.setItem('showAdminSidebar', JSON.stringify(isAdminRoute));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   useEffect(() => {
     const handleResize = () => {
       setMobileView(window.innerWidth < 768);
@@ -70,6 +90,8 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   const switchSideBarMenus = React.useCallback(() => {
+    isManualToggleRef.current = true;
+
     setShowAdminSidebar((prev) => !prev);
     localStorage.setItem('showAdminSidebar', JSON.stringify(!showAdminSidebar));
     const intendedRoute = showAdminSidebar
