@@ -1049,6 +1049,10 @@ jobs:
           KAFKA_CLIENT_ID=rd-credit-service
           KAFKA_TOPIC=rd_credit_processing
           KAFKA_GROUP_ID=rd-credit-consumers
+          KAFKA_CLIENT_ID_RD_FORM=rd-form-filler-service
+          KAFKA_TOPIC_RD_FORM=rd_form_processor
+          KAFKA_GROUP_ID_FORM=rd-form-filler-consumers
+          KAFKA_DATA_MAPPER_TOPIC = data_mapper_request
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
