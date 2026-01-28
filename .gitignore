@@ -52,9 +52,9 @@ Thumbs.db
 
 #env
 .env
-del.yml
-del1.md
-del2.md
+del-nginx.md
+del-vm.md
+del-workflow.md
 del3.md
 *.tfstate
 gitcommands.md
