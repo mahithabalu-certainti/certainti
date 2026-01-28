@@ -9,15 +9,22 @@ import RDCreditSchemaService from "../services/rdComputation/schemaService";
 export class KafkaConsumerService {
     private rdCreditSchemaService: RDCreditSchemaService;
     private stateComputationService: StateComputationService;
+    private rdFormMapperService: any;
 
     constructor() {
         this.rdCreditSchemaService = new RDCreditSchemaService();
         this.stateComputationService = new StateComputationService();
+        // Dynamically import the rdFormMapperService from Configurations
+        const Configurations = require("../config/config").default;
+        const Services = Configurations.getInstance().getServices();
+        this.rdFormMapperService = Services.rdFormMapperService;
     }
 
     private consumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID });
+    private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID + "-form" });
 
     async start() {
+        // Start original consumer
         await this.consumer.connect();
         await this.consumer.subscribe({ topic: ENV.KAFKA_TOPIC, fromBeginning: false });
 
@@ -45,6 +52,34 @@ export class KafkaConsumerService {
                 await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid);
 
                 console.log(`Computation complete for id=${payload.processRid}`);
+            }
+        });
+
+        // Start form consumer for another topic
+        const FORM_TOPIC = process.env.KAFKA_FORM_TOPIC || "rd_form_mapper_processing";
+        await this.formConsumer.connect();
+        await this.formConsumer.subscribe({ topic: FORM_TOPIC, fromBeginning: false });
+
+        logMessage("Kafka Form Consumer Ready");
+
+        await this.formConsumer.run({
+            eachMessage: async ({ message }) => {
+                const value = message.value!?.toString();
+                if (!value) return;
+                let payload;
+                try {
+                    payload = JSON.parse(value);
+                } catch (e) {
+                    console.error("Invalid JSON in form topic message", value);
+                    return;
+                }
+                console.log(`Processing form topic message: ${JSON.stringify(payload)}`);
+                try {
+                    await this.rdFormMapperService.processRdFormMapperRequests(payload);
+                    console.log("Form processing complete");
+                } catch (err) {
+                    console.error("Error processing form message", err);
+                }
             }
         });
     }

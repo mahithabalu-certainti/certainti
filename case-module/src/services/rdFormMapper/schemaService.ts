@@ -178,7 +178,6 @@ WHERE dmfm.form_rid = :formId`;
    * Get data mapper object by RID
    */
   async getDataMapperObjectByRid(rid: string): Promise<any> {
-    console.log(`getDataMapperObjectByRid called with RID: ${rid}`);
     const mainDb = await this.getMainDb();
     const query = `
       SELECT 
@@ -190,18 +189,22 @@ WHERE dmfm.form_rid = :formId`;
       WHERE dmo.rid = :rid
       LIMIT 1`;
     
-    console.log(`Executing query: ${query} with RID: ${rid}`);
     try {
       const [results] = await mainDb.query(query, { 
         replacements: { rid },
         raw: true 
       });
       
-      console.log(`Query results for RID ${rid}:`, results);
-      return results.length > 0 ? results[0] : null;
+      if (results.length > 0) {
+        logMessage(`Found data mapper object for RID: ${rid}`);
+        return results[0];
+      } else {
+        logMessage(`No data mapper object found for RID: ${rid}`);
+        return null;
+      }
     } catch (error) {
-      console.error(`Error querying data_mapper_objects for RID ${rid}:`, error);
-      // If table doesn't exist, let's try without schema prefix
+      logMessage(`Error querying data_mapper_objects for RID ${rid}: ${error}`);
+      // Fallback query
       try {
         const fallbackQuery = `
           SELECT 
@@ -212,16 +215,18 @@ WHERE dmfm.form_rid = :formId`;
           WHERE dmo.rid = :rid
           LIMIT 1`;
         
-        console.log(`Trying fallback query without schema: ${fallbackQuery}`);
         const [fallbackResults] = await mainDb.query(fallbackQuery, { 
           replacements: { rid },
           raw: true 
         });
         
-        console.log(`Fallback query results for RID ${rid}:`, fallbackResults);
-        return fallbackResults.length > 0 ? fallbackResults[0] : null;
+        if (fallbackResults.length > 0) {
+          logMessage(`Fallback query successful for RID: ${rid}`);
+          return fallbackResults[0];
+        }
+        return null;
       } catch (fallbackError) {
-        console.error(`Fallback query also failed:`, fallbackError);
+        logMessage(`Both queries failed for RID ${rid}: ${fallbackError}`);
         return null;
       }
     }
@@ -238,7 +243,7 @@ WHERE dmfm.form_rid = :formId`;
     case_rid: string
   ): Promise<any> {
     const orgDb = await this.getOrgDb();
-    console.log(`Fetching field value from ${refTable}.${fieldName}   is_json: ${is_json}`);
+    logMessage(`Fetching field: ${fieldName} from ${refTable} (JSON: ${is_json})`);
 
     const schemaName = 'trd365_00891';
     let query: string;
@@ -289,7 +294,6 @@ WHERE dmfm.form_rid = :formId`;
 
       // First, try direct value retrieval
       const quotedJsonPath = quoteJsonPath(jsonPath);
-      console.log(`Trying direct query first: ${quotedJsonPath}`);
       
       // Execute the direct query first
       try {
@@ -306,17 +310,20 @@ WHERE dmfm.form_rid = :formId`;
         const directResultsArray = directResults as any[];
         const directValue = directResultsArray.length > 0 ? directResultsArray[0].field_value : null;
         
-        console.log(`Direct query result: ${directValue}`);
-        
         // If direct value found and not null, return it
         if (directValue !== null && directValue !== 'null' && directValue !== undefined) {
-          logMessage(`Query results from ${refTable}.${fieldName}: ${JSON.stringify(directResultsArray)}`);
+          logMessage(`Direct field retrieval successful for ${refTable}.${fieldName}: ${directValue}`);
           return directValue;
         }
         
-        console.log(`Direct value not found, trying pattern matching...`);
+        // If direct value is null, return empty string instead of continuing to pattern matching
+        if (directValue === null || directValue === 'null') {
+          logMessage(`Field ${fieldName} has null value, returning empty string`);
+          return '';
+        }
+        
       } catch (error) {
-        console.log(`Direct query failed, trying pattern matching: ${error}`);
+        logMessage(`Direct query failed for ${fieldName}, attempting pattern matching: ${error}`);
       }
 
       // If direct query failed or returned null, try pattern matching
@@ -326,16 +333,11 @@ WHERE dmfm.form_rid = :formId`;
       
       if (regexMatch) {
         const regexPattern = regexMatch[1];
-        console.log(`Detected regex filter pattern: ${regexPattern}`);
-        console.log(`Original jsonPath: ${jsonPath}`);
+        logMessage(`Processing regex filter pattern: ${regexPattern} for ${fieldName}`);
         
-        // Extract the base path (everything before the filter) - be more careful
+        // Extract the base path (everything before the filter)
         const splitResult = jsonPath.split(' ?');
         const basePath = splitResult.length > 0 && splitResult[0] !== undefined ? splitResult[0].trim() : jsonPath;
-        console.log(`Extracted basePath: ${basePath}`);
-        
-        // Manually construct the proper JSON path for regex filter
-        let properJsonPath;
         
         // Remove the leading $. and handle the remaining path
         let pathWithoutDollar = basePath.replace(/^\$\./, '');
@@ -371,13 +373,11 @@ WHERE dmfm.form_rid = :formId`;
           parts.push(current);
         }
         
-        console.log(`Path parts: ${JSON.stringify(parts)}`);
-        
         // Process each part
         const processedParts = parts.map(part => {
           // If it ends with .*, handle it specially
           if (part.endsWith('.*')) {
-            const basePart = part.slice(0, -2); // Remove the .*
+            const basePart = part.slice(0, -2);
             if (/[^a-zA-Z0-9_]/.test(basePart)) {
               return `"${basePart}".*`;
             }
@@ -406,17 +406,8 @@ WHERE dmfm.form_rid = :formId`;
           return part;
         });
         
-        properJsonPath = '$.' + processedParts.join('.') + ` ? (@key like_regex "${regexPattern}")`;
-        
-        console.log(`Generated JSON path: ${properJsonPath}`);
-        
-        // The jsonb_path_query with key filter returns the value, but we need to handle it properly
-        // For a pattern like "^10 Multiply line 5 by" matching key "10 Multiply line 5 by 30" with value 150
-        // We want to return the value (150)
-        
         // Build the path to the object containing the keys we want to search
         const objectPath = '$.' + processedParts.slice(0, -1).join('.');
-        console.log(`Object path for jsonb_each: ${objectPath}`);
         
         query = `
           WITH matched_pairs AS (
@@ -482,8 +473,7 @@ WHERE dmfm.form_rid = :formId`;
             lineNumber = patternMatch[2];
           }
 
-          console.log(`Detected ${matchedPattern.operation} pattern: Expected=${expectedResult || 'N/A'}, Line=${lineNumber}`);
-          console.log(`Original path: ${jsonPath}`);
+          logMessage(`Processing ${matchedPattern.operation}: Line=${lineNumber}, Expected=${expectedResult || 'N/A'}`);
 
           // Get the value from the specified line/field
           const lineFieldPath = `$."Regular Credit"."creditRRC"."line_${lineNumber}"`;
@@ -491,22 +481,20 @@ WHERE dmfm.form_rid = :formId`;
           let multiplier;
           switch (matchedPattern.operation) {
             case 'multiplyByPercentageWithText':
-              multiplier = patternMatch[2] ? parseFloat(patternMatch[2]) / 100 : 0.25; // Convert percentage to decimal
-              console.log(`Multiplier: ${patternMatch[2] || '25'}% (${multiplier})`);
+              multiplier = patternMatch[2] ? parseFloat(patternMatch[2]) / 100 : 0.25;
               break;
             case 'multiplyByPercentage':
-              multiplier = patternMatch[3] ? parseFloat(patternMatch[3]) / 100 : 0.25; // Convert percentage to decimal or default to 25%
-              console.log(`Multiplier: ${patternMatch[3] || '25'}% (${multiplier})`);
+              multiplier = patternMatch[3] ? parseFloat(patternMatch[3]) / 100 : 0.25;
               break;
             case 'multiply':
               multiplier = patternMatch[3] ? parseFloat(patternMatch[3]) : 1;
-              console.log(`Multiplier: ${multiplier}`);
               break;
             case 'multiplyDynamic':
               multiplier = 30; // Default multiplier
-              console.log(`Multiplier: ${multiplier} (dynamic default)`);
               break;
           }
+          
+          logMessage(`Applying multiplication: line_${lineNumber} * ${multiplier}`);
 
           // Query to get the line value and perform multiplication
           query = `
