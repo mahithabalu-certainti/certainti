@@ -206,7 +206,12 @@ export const STATUS_MESSAGE = {
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
-  regionsFetchedSuccess : "Regions listed successfully"
+  regionsFetchedSuccess : "Regions listed successfully",
+  rdCreditFinancialSignOffPending:"Financial working sign-off is pending. Cannot initiate RD Form Filler process.",
+  rdFormProcessInitiatedSuccess : "RD form filler process initiated successfully",
+  rdFormPreview : "RD form retrieved successfully",
+
+
 };
 
 export const caseStatuses = {
@@ -1591,6 +1596,35 @@ export const rawQueries = {
   },
   fetchAccountStartEndDate (accountRid : string, schemaName : string) {
     return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  },
+  fetchFederalForms(countryRid: string, effectiveStart: string, effectiveEnd: string){
+    return `SELECT dmf.browse_file,dmf.rid
+FROM trd365.data_mapper_forms dmf
+WHERE dmf.country_rid = '${countryRid}'
+  AND (dmf.state_rid IS NULL OR dmf.state_rid = '')
+  AND (dmf.effective_from_date IS NULL 
+       OR dmf.effective_from_date <= DATE '${effectiveEnd}')
+  AND (dmf.effective_to_date IS NULL 
+       OR dmf.effective_to_date >= DATE '${effectiveStart}')
+  AND is_active = true`
+  },
+  fetchStateForms(countryRid: string,stateRid: string, effectiveStart: string, effectiveEnd: string){
+    return `SELECT dmf.browse_file,dmf.rid
+FROM trd365.data_mapper_forms dmf
+WHERE dmf.country_rid = '${countryRid}'
+  AND dmf.state_rid = '${stateRid}'
+  AND (dmf.effective_from_date IS NULL 
+       OR dmf.effective_from_date <= DATE '${effectiveEnd}')
+  AND (dmf.effective_to_date IS NULL 
+       OR dmf.effective_to_date >= DATE '${effectiveStart}')
+  AND is_active = true`
+  },
+  checkFinancialSignOffDone(schemaName: string, caseRid: string) {
+    return `
+    SELECT financial_working_signoff FROM ${schemaName}.cases 
+    WHERE
+    rid = '${caseRid}'
+    `
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

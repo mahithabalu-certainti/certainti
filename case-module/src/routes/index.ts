@@ -9,6 +9,9 @@ import projectResourceRoutes from "./projectResourceRoutes"
 import projectTaskRoutes from "./projectTaskRoutes"
 import projectRoutes from "./projectRoutes"
 import financialRDCreditRoutes from "./financialRDCreditRoutes";
+import rdFormMapperRoutes from "./rdFormMapperRoutes";
+import testBlobRoutes from "./testBlobRoutes";
+import uploadFileRoutes from "./uploadFileRoutes";
 
 const routes: Router = Router();
 
@@ -40,6 +43,13 @@ routes.use("/caseProjectResource", projectResourceRoutes);
 routes.use("/caseProjectTask", projectTaskRoutes);
 routes.use("/caseProject", projectRoutes);
 routes.use("/rd-credit", financialRDCreditRoutes);
+routes.use("/rdFormMapper", rdFormMapperRoutes);
+
+// Test route for uploading to Azure Blob
+routes.use("/test", testBlobRoutes);
+
+// Test route for uploading files to Azure Blob
+routes.use("/test", uploadFileRoutes);
 
 
 export default routes;
