@@ -19,7 +19,7 @@ import { ProjectTask } from "./projectTask";
 import { DataMapperForms } from "./dataMapperForms";
 import { DataMapperFormMappings } from "./dataMapperFormMappings";
 import { DataMapperObjects } from "./dataMapperObjects";
-
+import { SignoffDetails } from "./signoffDetails";
 
 export const models = {
   Case,
@@ -41,7 +41,7 @@ export const models = {
   DataMapperForms,
   DataMapperFormMappings,
   DataMapperObjects,
-
+  SignoffDetails
 };
 
 export async function initModels() {
