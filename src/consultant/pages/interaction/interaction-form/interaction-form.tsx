@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -416,7 +417,6 @@ const InteractionForm = () => {
       );
       goBack();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
   useEffect(() => {
     if (memoizedInteractionLevel.length > 0) {

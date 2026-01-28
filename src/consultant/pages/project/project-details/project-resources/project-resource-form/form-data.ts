@@ -53,7 +53,7 @@ export const ProjectResourceFormData = (
   // projectTypes: SelectOption[],
   // projectResourceSkillType: SelectOption[],
   // projectResourceRollSkill: SelectOption[],
-  resourceStatusOptions: SelectOption[],
+  _resourceStatusOptions: SelectOption[],
   country: SelectOption[],
   states: SelectOption[],
   // city: SelectOption[],
@@ -118,9 +118,14 @@ export const ProjectResourceFormData = (
                 errorMessage: 'Max length exceeded.',
               },
               {
-                regex: RESOURCE_REGEX.ROLE,
+                regex: RESOURCE_REGEX.NUMBER_ONLY,
                 errorMessage:
-                  'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+                  'Project Resource Role cannot contain only numbers.',
+              },
+              {
+                regex: RESOURCE_REGEX.ROLE_WITH_NUMBER,
+                errorMessage:
+                  'Allows only letters, numbers, apostrophes, spaces, hyphens, commas, and periods.',
               },
             ],
           }),
@@ -413,7 +418,6 @@ export const ProjectResourceFormData = (
       autoCalculatedValue,
       isEditView,
       permissionMap,
-      resourceStatusOptions,
       country,
       states,
       stateLoading,

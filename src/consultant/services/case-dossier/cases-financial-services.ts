@@ -5,12 +5,14 @@ import {
   RDCreditStatusResponse,
   RDCreditInitiatePayload,
   RDCreditInitiateResponse,
+  SignOffFinancialHighlightsPayload,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
   getRDCreditPreviewURL,
   getRDCreditStatusURL,
   getRDCreditInitiateURL,
+  getSignOffFinancialHighlightsURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -36,6 +38,17 @@ export const useRDCreditPreview = (
     retry: 0,
     gcTime: 0,
     enabled: !!accountRid && !!caseRid && !!stateRid && enabled,
+  });
+};
+
+export const useRDCreditPreviewMutation = () => {
+  return useMutation<
+    RDCreditPreviewResponse,
+    Error,
+    { accountrid: string; caseId: string; stateRid: string }
+  >({
+    mutationFn: ({ accountrid, caseId, stateRid }) =>
+      fetchRDCreditPreview(accountrid, caseId, stateRid),
   });
 };
 
@@ -91,5 +104,33 @@ export const useFinancialHighlights = () => {
   return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
     mutationFn: (payload: RDCreditInitiatePayload) =>
       financialHighlights(payload),
+  });
+};
+
+export const signOffFinancialHighlights = async (
+  payload: SignOffFinancialHighlightsPayload
+): Promise<RDCreditInitiateResponse> => {
+  const url = getSignOffFinancialHighlightsURL();
+  const formData = new FormData();
+  formData.append('case_rid', payload.case_rid);
+  formData.append('account_rid', payload.account_rid);
+  formData.append('sign_off', String(payload.sign_off));
+  if (payload.file) {
+    formData.append('file', payload.file);
+  }
+  formData.append('comments', payload.comments);
+
+  const response = await caseServiceApi.post(url, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const useSignOffFinancialHighlights = () => {
+  return useMutation({
+    mutationFn: (payload: SignOffFinancialHighlightsPayload) =>
+      signOffFinancialHighlights(payload),
   });
 };

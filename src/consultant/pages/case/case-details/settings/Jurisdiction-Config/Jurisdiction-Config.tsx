@@ -154,22 +154,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
 
   return (
     <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
-      <Box
-        className='bg-white'
-        sx={{
-          minHeight: '100px',
-          maxHeight: '100px',
-          overflowY: 'auto',
-          '& .grid': {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr) !important',
-            gap: '1rem',
-          },
-          '& .grid > div': {
-            gridColumn: 'span 1 !important',
-          },
-        }}
-      >
+      <Box className='bg-white min-h-[100px] max-h-[100px] overflow-y-auto'>
         {isLoading ? (
           <SkeletonForm />
         ) : (

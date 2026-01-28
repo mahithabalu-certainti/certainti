@@ -26,13 +26,18 @@ import {
 } from '../../../../../../types';
 import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
-import { costDisplay } from '../../../../../../../common-utils';
 import {
-  fetchRDCreditPreview,
+  checkPermission,
+  costDisplay,
+} from '../../../../../../../common-utils';
+import {
   useFinancialHighlights,
   useInitiateRDCreditProcess,
   useRDCreditStatus,
+  useRDCreditPreviewMutation,
 } from '../../../../../../services/case-dossier/cases-financial-services';
+import SignOffModal from './sign-off-modal';
+import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
 
 interface FinancialWorkingFormProps {
   caseDetails?: CaseDetails;
@@ -40,6 +45,7 @@ interface FinancialWorkingFormProps {
   dossierFinancialStatus: string;
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
+  refetchCaseDetails: () => void;
 }
 
 interface FormErrors {
@@ -85,7 +91,7 @@ const FinancialWorkingUKTable = ({
                 <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                   {costDisplay(
                     project['Total Project Value/Labor'] || 0,
-                    project['Currency Symbol'] || '£'
+                    currencySymbol || '$'
                   )}
                 </td>
               </tr>
@@ -106,7 +112,7 @@ const FinancialWorkingUKTable = ({
                 Total Project to be shared with HMRC
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F]'>
-                {costDisplay(hmrcTotal || 0, currencySymbol || '£')}
+                {costDisplay(hmrcTotal || 0, currencySymbol || '$')}
               </td>
             </tr>
           )}
@@ -149,7 +155,7 @@ const FinancialWorkingUKPercentageTable = ({
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                 {typeof value === 'number' && key !== 'Total Customer Groups'
-                  ? costDisplay(value as number, currencySymbol || '£')
+                  ? costDisplay(value as number, currencySymbol || '$')
                   : (value as React.ReactNode)}
               </td>
             </tr>
@@ -166,24 +172,31 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   dossierFinancialStatus,
   financialData,
   setFinancialData,
+  refetchCaseDetails,
 }) => {
   const [isFederal, setIsFederal] = useState<string>('yes');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
-  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
   const { successToast, errorToast } = useToast();
-  // const queryClient = useQueryClient();
+  const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
+
+  const { data } = useFetchCasesConfigFields(
+    accountid as string,
+    'case',
+    caseId as string
+  );
+  const configDetails = data?.data.states;
 
   // Restore showFinancialValues and form states if data exists
   React.useEffect(() => {
     if (financialData) {
       setShowFinancialValues(true);
-      
+
       // Restore region/federal state from payload if available
       const stateRid = (financialData.data as any)?.state_rid;
       if (stateRid) {
@@ -195,10 +208,23 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     }
   }, [financialData]);
 
+  const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
+
+  const isSignoffVisible = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_SIGNOFF
+  );
+  const isInitiateVisible = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_INITIATE
+  );
+
   const { mutate: initiateProcess, isPending: isInitiating } =
     useInitiateRDCreditProcess();
   const { mutate: financialHighlights, isPending: isFinancialHighlights } =
     useFinancialHighlights();
+  const { mutate: previewRDCredit, isPending: isPreviewLoading } =
+    useRDCreditPreviewMutation();
 
   // Fetch Status
   const {
@@ -219,14 +245,23 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     'active'
   );
 
-  const regionListOptions = useMemo(
-    () =>
-      region.data?.data.states.map((state) => ({
+  const regionListOptions = useMemo(() => {
+    const states = region.data?.data.states || [];
+    if (Array.isArray(configDetails) && configDetails.length > 0) {
+      return states
+        .filter((state) => configDetails.includes(state.rid))
+        .map((state) => ({
+          label: state.state_name,
+          value: state.rid,
+        }));
+    }
+    return (
+      states.map((state) => ({
         label: state.state_name,
         value: state.rid,
-      })) || [],
-    [region.data?.data.states]
-  );
+      })) || []
+    );
+  }, [region.data?.data.states, configDetails]);
 
   // Permission
   const accountViewEditFields = useMemo(
@@ -263,33 +298,33 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     }
   };
 
-  const responseCurrencySymbol = useMemo(() => {
-    const computedFields = financialData?.data?.computed_fields as any;
-    const projects = computedFields?.Projects || [];
-    if (projects.length > 0) {
-      return projects[0]['Currency Symbol'] || '$';
-    }
-    return '$';
-  }, [financialData]);
+  const responseCurrencySymbol = caseDetails?.currency_symbol || '$';
 
   const handleViewFinancialHighlightsForRegion = async () => {
-    try {
-      setIsPreviewLoading(true);
-      const response = await fetchRDCreditPreview(
-        accountid,
-        caseId ?? '',
-        selectedRegion
-      );
-      if (response) {
-        setFinancialData(response as unknown as FinancialHighlightsResponse);
-        setShowFinancialValues(true);
+    previewRDCredit(
+      {
+        accountrid: accountid,
+        caseId: caseId ?? '',
+        stateRid: selectedRegion,
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.data) {
+            setFinancialData(
+              response as unknown as FinancialHighlightsResponse
+            );
+            setShowFinancialValues(true);
+          } else {
+            errorToast('No data available');
+          }
+        },
+        onError: (error) => {
+          console.error(error);
+          setFinancialData(null);
+          errorToast('Failed to fetch financial highlights');
+        },
       }
-    } catch (error) {
-      console.error(error);
-      errorToast('Failed to initiate');
-    } finally {
-      setIsPreviewLoading(false);
-    }
+    );
   };
 
   const handleViewFinancialHighlights = async () => {
@@ -305,7 +340,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
     financialHighlights(payload, {
       onSuccess: (data) => {
-        console.log('Initiated successfully', data);
         setFinancialData(data as FinancialHighlightsResponse);
         setShowFinancialValues(true);
       },
@@ -324,17 +358,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     setDossierFinancialStatus(message);
 
     if (statusData?.data === 'COMPLETED') {
-      if (actionType === 'initiate') {
+      if (actionType === 'initiate' || actionType === 'refresh') {
         successToast('Initiated successfully');
       } else if (actionType === 'regenerate') {
         successToast('Re-Generated successfully');
-      } else {
-        successToast(message || 'Process Completed');
       }
-    } else if (message) {
-      // If there is a message but not completed, it might be an info or error
-      // depending on business logic. User used errorToast in useEffect.
-      errorToast(message);
     }
   };
 
@@ -361,29 +389,16 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           handleStatusUpdate(result.data, actionType);
         }
       },
-      onError: (error) => {
-        console.error('Error initiating', error);
-        errorToast('Failed to initiate');
+      onError: (error: any) => {
+        errorToast(error?.response.data.statusMessage || 'Failed to initiate');
       },
     });
   };
   const isViewButtonEnabled = () => {
     const isStatusCompleted = dossierFinancialStatus === 'COMPLETED';
-    if (!isStatusCompleted) return false;
+    if (isStatusCompleted) return true;
 
-    if (isFederal === 'yes') {
-      return true;
-    } else if (isFederal === 'no') {
-      return selectedRegion !== '';
-    }
     return false;
-  };
-
-  const handleRefreshStatus = async () => {
-    const result = await refetchRDCreditStatus();
-    if (result.data) {
-      handleStatusUpdate(result.data, 'refresh');
-    }
   };
 
   if (
@@ -413,18 +428,17 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
           <div>{caseDetails?.country_name} Financial Information</div>
           <div>
-            <TextButton // icon={<RefreshIcon />}
-              label={'Refresh'}
-              // loading={isRefetching}
-              onClick={handleRefreshStatus}
+            <TextButton
+              label={'Sign off'}
+              onClick={() => setIsSignOffModalOpen(true)}
               disabled={
-                !dossierFinancialStatus ||
-                dossierFinancialStatus === 'COMPLETED' ||
-                isRefetching
+                dossierFinancialStatus !== 'COMPLETED' ||
+                isFinancialWorkingSignoff
               }
+              hide={!isSignoffVisible}
               sx={{
                 width: 'auto',
-                minWidth: '55px',
+                minWidth: '65px',
                 fontSize: '13px',
                 fontWeight: 400,
                 marginRight: '10px',
@@ -447,6 +461,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 fontWeight: 400,
                 marginRight: '10px',
               }}
+              // hide={isInitiateVisible}
             />
             <TextButton
               label={
@@ -454,11 +469,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                   ? 'Re-Generate'
                   : 'Initiate'
               }
+              hide={!isInitiateVisible}
               loading={isInitiating}
               onClick={handleInitiateFinancialHighlights}
               disabled={
                 isInitiating ||
                 isRefetching ||
+                isFinancialWorkingSignoff ||
                 (!!dossierFinancialStatus &&
                   dossierFinancialStatus !== 'COMPLETED')
               }
@@ -672,6 +689,18 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 </div>
               );
             }
+            if (countryName === FinancialWorkingCountries.Australia) {
+              return (
+                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                  <div className='text-[14px] font-semibold'>
+                    {title['Account Name'] || ''}
+                  </div>
+                  <div className='text-[14px] font-semibold mt-1'>
+                    {title['Description'] || 'Summary of SR&ED Expenditures'}
+                  </div>
+                </div>
+              );
+            }
 
             if (countryName === FinancialWorkingCountries.Canada) {
               return (
@@ -680,6 +709,45 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                     Ref - {title['Fiscal Year'] || ''} -{' '}
                     {title['Descriptions'] || ''}
                   </div>
+                </div>
+              );
+            }
+
+            if (countryName === FinancialWorkingCountries.US) {
+              const metadata =
+                (financialData?.data?.input_params as any)?.metadata || {};
+              const description =
+                metadata['Description'] || metadata['Descriptions'];
+              const taxYearEnded =
+                metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
+              const fiscalYearEnded =
+                metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
+              const stateDetails = metadata['stateDetails'];
+
+              return (
+                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                  {description && (
+                    <div className='text-[14px] font-semibold mt-1'>
+                      {description}
+                    </div>
+                  )}
+                  {taxYearEnded && (
+                    <div className='text-[14px] mt-1'>
+                      <span className='font-semibold'>Tax Year Ended:</span>{' '}
+                      {taxYearEnded}
+                    </div>
+                  )}
+                  {fiscalYearEnded && (
+                    <div className='text-[14px] mt-1'>
+                      <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
+                      {fiscalYearEnded}
+                    </div>
+                  )}
+                  {stateDetails && (
+                    <div className='text-[14px] mt-1 font-semibold'>
+                      {stateDetails}
+                    </div>
+                  )}
                 </div>
               );
             }
@@ -723,6 +791,14 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           )}
         </div>
       )}
+
+      <SignOffModal
+        isOpen={isSignOffModalOpen}
+        onClose={() => setIsSignOffModalOpen(false)}
+        caseId={caseId ?? ''}
+        accountId={accountid}
+        refetchCaseDetails={refetchCaseDetails}
+      />
     </div>
   );
 };

@@ -586,6 +586,7 @@ const TabPanel: React.FC<TabProps> = ({
     skillSubTypeData,
     memoizedSkillLevels,
     resourceSkillpermissionMap,
+    permissionMapCaseProjectTableColumn,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =

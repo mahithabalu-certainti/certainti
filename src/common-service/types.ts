@@ -180,6 +180,7 @@ export enum AllMenus {
   PROJECT_SETTINGS = 'manage_project_settings',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
+  DOSSIER = 'dossier',
   WORKBREAKDOWN = 'workbreakdown',
   FALLBACK = 'fallback',
   PROJECT_RESOURCES = 'project_resources',
@@ -380,6 +381,9 @@ export enum AllPermissions {
   WORKFLOW_BUILDER_DELETE = 'workflow_rule_delete',
   DOSSIER_OVERVIEW = 'dossier_overview',
   DOSSIER_TIMELINE = 'dossier_timeline',
+  DOSSIER_FINANCIAL_VIEW_EDIT = 'financial_working_view',
+  DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
+  DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',
 }
 
 export interface Country {

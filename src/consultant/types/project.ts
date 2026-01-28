@@ -140,6 +140,7 @@ export interface NewProjectData {
   project_fiscal_rid?: string;
   attachment?: AttachmentList[];
   project_rid?: string;
+  is_rd_claim_qualified?: boolean;
 }
 
 export interface ProjectTypeItem {
@@ -191,6 +192,8 @@ export type Project = {
   project_status: string;
   project_point_of_contact: string | null;
   technical_point_of_contact: string | null;
+  project_point_of_contact_email: string | null;
+  technical_point_of_contact_email: string | null;
   r_number: string;
   program_name: string | null;
   project_startdate: string | null;
@@ -218,6 +221,7 @@ export type Project = {
   rd_percent_final?: string;
   is_project_exists: boolean;
   is_rd_trigger_qualified?: boolean;
+  is_rd_claim_qualified?: boolean;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;
@@ -249,6 +253,7 @@ export type ProjectFiscalSummary = {
   isKeyContactIncluded?: boolean;
   interactionKeyRecipients?: InteractionKeyRecipients[];
   is_rd_trigger_qualified: boolean;
+  is_rd_claim_qualified?: boolean;
 };
 
 interface InteractionKeyRecipients {

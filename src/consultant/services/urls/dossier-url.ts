@@ -59,3 +59,7 @@ export const getRDCreditInitiateURL = (): string => {
 export const getFinancialHighlightsURL = (): string => {
   return `/api/rd-credit/federal/calculate`;
 };
+
+export const getSignOffFinancialHighlightsURL = (): string => {
+  return `/api/cases/financialWorking/signoff`;
+};

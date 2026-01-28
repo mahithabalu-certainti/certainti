@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import ListTable from '../../../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../../../components/table/types';
-import { Tooltip } from '@mui/material';
+import TruncateWithTooltip from '../../../../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 import {
   FinancialHighlightsResponse,
   FinancialHighlightsComputedFields,
@@ -40,7 +40,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     () => projects.some((p) => p['Project Code']),
     [projects]
   );
-  
+
   const boldRows = useMemo(
     () => (computedFields as any)?.BOLD || [],
     [computedFields]
@@ -80,9 +80,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       {
         id: 'row_label',
         label: (
-          <Tooltip title={firstColumnHeader} placement='top'>
-            <span>{firstColumnHeader}</span>
-          </Tooltip>
+          <div className='flex items-center w-full min-w-0 overflow-hidden'>
+            <TruncateWithTooltip
+              text={firstColumnHeader}
+              enableCopy={false}
+              className='font-bold'
+            />
+          </div>
         ) as React.ReactNode as string,
         width: 200,
         sortId: 'row_label',
@@ -99,9 +103,11 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         render: (row: FinancialWorkingRow) => {
           const isBold = boldRows.includes(row.row_label);
           return (
-            <span className={`${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}>
-              {row.row_label}
-            </span>
+            <TruncateWithTooltip
+              text={row.row_label}
+              enableCopy={false}
+              className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
+            />
           );
         },
       },
@@ -119,13 +125,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       generatedColumns.push({
         id: projectId,
         label: (
-          <Tooltip title={name || topLabel} placement='top'>
-            <div className='flex flex-col items-center justify-center py-1 leading-tight'>
-              <span className='truncate block max-w-[200px] font-bold'>
-                {topLabel}
-              </span>
-            </div>
-          </Tooltip>
+          <div className='flex items-center justify-center w-full min-w-0 overflow-hidden py-1'>
+            <TruncateWithTooltip
+              text={topLabel}
+              enableCopy={false}
+              className='font-bold px-2 text-center'
+            />
+          </div>
         ) as React.ReactNode as string,
         width: 180,
         // sx: (row?: FinancialWorkingRow) => ({
@@ -135,10 +141,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         render: (row: FinancialWorkingRow) => {
           const value = row[projectId];
           const isBold = boldRows.includes(row.row_label);
+          const formattedValue = formatValue(value, symbol);
           return (
-            <span className={isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76]'}>
-              {formatValue(value, symbol)}
-            </span>
+            <TruncateWithTooltip
+              text={String(formattedValue)}
+              enableCopy={false}
+              className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76]'}`}
+            />
           );
         },
       });
@@ -148,7 +157,13 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     // User: "add total for the last column heading"
     generatedColumns.push({
       id: 'Total',
-      label: 'Total',
+      label: (
+        <TruncateWithTooltip
+          text='Total'
+          enableCopy={false}
+          className='font-bold'
+        />
+      ) as React.ReactNode as string,
       width: 150,
       sortId: 'Total',
       // sx: (row?: FinancialWorkingRow) => ({
@@ -156,15 +171,19 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       // }),
       render: (row: FinancialWorkingRow) => {
         const isBold = boldRows.includes(row.row_label);
+        const formattedValue = formatValue(row.Total, symbol);
         return (
-          <span className={isBold ? 'font-bold text-[#1A2733]' : 'font-bold text-[#2D3E4F]'}>
-            {formatValue(row.Total, symbol)}
-          </span>
+          <TruncateWithTooltip
+            text={String(formattedValue)}
+            enableCopy={false}
+            className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'font-bold text-[#2D3E4F]'}`}
+          />
         );
       },
     });
 
     return generatedColumns;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [computedFields, symbol, projects, hasProjectCode]);
 
   const tableData = useMemo(() => {
@@ -213,7 +232,9 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
 
   if (!data?.data || !computedFields || !('Columns' in computedFields)) {
     return (
-      <div className='p-8 text-center text-[#425A76] italic font-medium'>No data available</div>
+      <div className='p-8 text-center text-[#425A76] italic font-medium'>
+        No data available
+      </div>
     );
   }
 

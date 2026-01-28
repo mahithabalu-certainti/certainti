@@ -130,7 +130,6 @@ export interface CreateTemplateResponse extends CommonApiResponse {
     checklist?: {
       statusCode: number;
       message: string;
-      data: any;
     };
   };
 }

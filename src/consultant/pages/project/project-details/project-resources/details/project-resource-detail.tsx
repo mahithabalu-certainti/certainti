@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import { ProjectResourceDetailsType } from '../../../../../types/project-resources';

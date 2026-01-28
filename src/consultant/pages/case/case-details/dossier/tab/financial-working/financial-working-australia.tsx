@@ -14,9 +14,17 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
 }) => {
   // Check if data is present and has correct structure
   const computedFields = data?.data?.computed_fields as AustraliaComputedFields;
-  
-  if (!data?.data || !computedFields || !('R&D Expenditure' in computedFields)) {
-      return <div className="p-8 text-center text-[#425A76] italic font-medium">No data available</div>;
+
+  if (
+    !data?.data ||
+    !computedFields ||
+    !('R&D Expenditure' in computedFields)
+  ) {
+    return (
+      <div className='p-8 text-center text-[#425A76] italic font-medium'>
+        No data available
+      </div>
+    );
   }
 
   const boldRows = (computedFields as any)?.BOLD || [];
@@ -38,10 +46,15 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
     return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const renderValue = (value: number | string | null | undefined, isBold?: boolean) => {
+  const renderValue = (
+    value: number | string | null | undefined,
+    isBold?: boolean
+  ) => {
     return (
       <div className='min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block'>
-        <span className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}>
+        <span
+          className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
+        >
           {typeof value === 'number' ? formatCurrency(value) : (value ?? '--')}
         </span>
       </div>
@@ -83,17 +96,22 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
                 value !== null &&
                 !Array.isArray(value)) ||
               Array.isArray(value) ||
-              key === 'name'
+              key === 'name' ||
+              key === 'Title'
             )
               return null;
 
             const isBold = boldRows.includes(key);
             return (
               <tr key={key} className='border-b border-[#CBD6E2] last:border-0'>
-                <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}>
+                <td
+                  className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}
+                >
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>{renderValue(value, isBold)}</td>
+                <td className='px-3 py-1.5 text-right'>
+                  {renderValue(value, isBold)}
+                </td>
               </tr>
             );
           })}
@@ -152,7 +170,9 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
                   key={index}
                   className='border-b border-[#CBD6E2] last:border-0'
                 >
-                  <td className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}>
+                  <td
+                    className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+                  >
                     {rowName}
                   </td>
                   {columnKeys.map((key) => (
@@ -174,6 +194,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
       <div className='max-w-7xl mx-auto'>
         <div className='flex flex-col gap-0'>
           {Object.entries(computedFields).map(([key, value]) => {
+            if (key === 'Title') return null;
             const title = formatLabel(key);
 
             // Special handling for "Tier of intensity" array - render as table

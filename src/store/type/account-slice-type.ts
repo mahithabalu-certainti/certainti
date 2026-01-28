@@ -1,4 +1,8 @@
-import { AccountList, FilterState, FinancialHighlightsResponse } from '../../consultant/types';
+import {
+  AccountList,
+  FilterState,
+  FinancialHighlightsResponse,
+} from '../../consultant/types';
 
 export interface AccountState {
   userId: string;
