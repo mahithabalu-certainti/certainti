@@ -63,7 +63,6 @@ export class RdCreditCalculatorForID {
         const supplies = new Decimal(currentYearQREs.supplies || 0);
         const cost_to_rent = new Decimal(caseDetails?.lease_costs_of_computers || 0.00);
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(cost_to_rent).plus(supplies);
-
         const fixed_base_percentage = config.fixed_base_percentage;
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
         const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage /100);
