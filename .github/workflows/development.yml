@@ -1314,27 +1314,20 @@ jobs:
                     
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
-          SERVER_PORT=5011
+          SERVER_PORT=5012
           KEY_VAULT_URI=$KEY_VAULT_URI
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
           MAINDB_ENDPOINT=main-db-endpoint
-          ORGDB_NAME=org-database-name
-          ORGDB_PASSWORD=org-db-admin-password
-          ORGDB_USERNAME=org-db-admin-username
-          ORGDB_ENDPOINT=org-db-endpoint
-          STORAGE_ACCOUNT_NAME = "storage-account-name"
-          STORAGE_ACCOUNT_KEY = "storage-account-primary-key"
-          ETL_CONTAINER_NAME = "etl-container-name"
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
-          MAIL_TENANT_ID=$MAIL_TENANT_ID
-          MAIL_CLIENT_ID=$MAIL_CLIENT_ID
-          MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
-          EMAIL_FROM="ea-communications@certainti.ai"
-          UUID_PREFIX="D001"
           KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
           VISION_AGENT_API_KEY=vision-agent-api-key
+          MAIN_PG_DB_PORT=5432
+          MAIN_SCHEMA_NAME=trd365
+          KAFKA_DATA_MAPPER_TOPIC=data_mapper_request
+          KAFKA_GROUP_ID=form_extraction_group
+          ADE_PARSE_MODEL=dpt-2-latest
+          ADE_EXTRACT_MODEL=extract-latest
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
