@@ -259,7 +259,7 @@ const createResourcesSchema = Joi.object({
       "string.max": "Name must not exceed 64 characters"
     }),
   first_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
@@ -271,7 +271,7 @@ const createResourcesSchema = Joi.object({
       "string.max": "First name must not exceed 64 characters"
     }),
   last_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
@@ -454,7 +454,7 @@ const updateResourceSchema = Joi.object({
       "string.max": "Name must not exceed 64 characters"
     }),
   first_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+   .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
@@ -466,7 +466,7 @@ const updateResourceSchema = Joi.object({
       "string.max": "First name must not exceed 64 characters"
     }),
   last_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
