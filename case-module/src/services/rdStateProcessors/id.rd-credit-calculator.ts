@@ -131,9 +131,9 @@ export class RdCreditCalculatorForID {
         let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         storeData.push({
             year : metadata.currentYear,
-            wages: currentYearQREs.wages,
-            contract: currentYearContract,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)
+            wages: Number(currentYearQREs.wages),
+            contract: Number(currentYearContract),
+            sum: Number(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
         })
  
         prior3YearsQREs.forEach((item) => {
@@ -141,7 +141,7 @@ export class RdCreditCalculatorForID {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                sum: Number(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
             })
         });
 
