@@ -157,14 +157,14 @@ export class RdCreditCalculatorForOH {
         logMessage(`COMPUTE_FIELDS_RESP_${JSON.stringify(computeFieldsResp)}`)
         let finalData = {
             "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:":JSON.stringify(computeFieldsResp.year),
-            [`Tax Year ${computeFieldsResp.prev1_year} QREs`]:computeFieldsResp.prev1_qre,
-            [`Tax Year ${computeFieldsResp.prev2_year} QREs`] :computeFieldsResp.prev2_qre,
-            [`Tax Year ${computeFieldsResp.prev3_year} QREs`]: computeFieldsResp.prev3_qre,
-            "Average": computeFieldsResp.average_tot_prev_qre,
-            [`Total Investment in Qualifying Research Expense for Calendar Year ${computeFieldsResp.year}`]:computeFieldsResp.total_current_year_qre,
-            "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":computeFieldsResp.average_tot_prev_qre,
-            "Net Excess of Qualifying Research Expenses for the Taxable Year":computeFieldsResp.final_excess_qre,
-            [`${computeFieldsResp.year} Credit Earned (${config.credit_earned_percent}%)`] : computeFieldsResp.final_credits_earned
+            [`Tax Year ${computeFieldsResp.prev1_year} QREs`]:Number(computeFieldsResp.prev1_qre) || 0,
+            [`Tax Year ${computeFieldsResp.prev2_year} QREs`] :Number(computeFieldsResp.prev2_qre) || 0,
+            [`Tax Year ${computeFieldsResp.prev3_year} QREs`]: Number(computeFieldsResp.prev3_qre) || 0,
+            "Average": Number(computeFieldsResp.average_tot_prev_qre) || 0,
+            [`Total Investment in Qualifying Research Expense for Calendar Year ${computeFieldsResp.year}`]:Number(computeFieldsResp.total_current_year_qre) || 0,
+            "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":Number(computeFieldsResp.average_tot_prev_qre) || 0,
+            "Net Excess of Qualifying Research Expenses for the Taxable Year":Number(computeFieldsResp.final_excess_qre) || 0,
+            [`${computeFieldsResp.year} Credit Earned (${config.credit_earned_percent}%)`] : Number(computeFieldsResp.final_credits_earned) || 0
         }
         return {
             computed_fields: {

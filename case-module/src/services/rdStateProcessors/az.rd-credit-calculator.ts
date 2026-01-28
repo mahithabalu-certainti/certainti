@@ -158,7 +158,7 @@ export class RdCreditCalculatorForAZ {
      */
     async asc(config: ConfigJson, currentYearQREs: any, prior3YearsQREs: QRE[], caseData :Case) {
         //---- Line 77:  
-        const line77 = new Decimal(currentYearQREs.wages || 0);
+        const line77 = new Decimal(0);
 
         //---- Line 78: wages
         const line78 = new Decimal(currentYearQREs.wages || 0);
@@ -192,7 +192,7 @@ export class RdCreditCalculatorForAZ {
             const line87 = Decimal.min(line85, line86);
 
             //---- Line 88: Add Line 77 and 87
-            const line88 = line87.plus(line78);
+            const line88 = line87.plus(line77);
 
             let line93;
             let line89, line90, line91, line92;
@@ -320,9 +320,9 @@ export class RdCreditCalculatorForAZ {
         }
 
         let asc = {
-            "75 Basic research payments paid or incurred to qualified organizations:":"",
-            "76 Qualified organization base period amount":"",
-            "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.":"",
+            "75 Basic research payments paid or incurred to qualified organizations:":0,
+            "76 Qualified organization base period amount":0,
+            "77 Subtract line 76 from line 75. Enter the difference. If less than zero, enter 0.":0,
             "78 Current year wages for qualified services (do not include wages used in figuring the federal work opportunity credit)":creditASC.wages || '',
             "79 Current year cost of supplies":creditASC.supplies || '',
             "80 Current year cost to rent or lease computers":creditASC.lease_computers || '',
@@ -334,12 +334,12 @@ export class RdCreditCalculatorForAZ {
             [`86 Multiply line 82 by ${creditASC?.config?.qre_cap_rate}% (${creditASC?.config?.qre_cap_rate/100}). Enter the result.`]:creditASC.half_total_qre || '',
             "87 Enter the lesser of line 85 or line 86.":creditASC.total_section_b_credit   || '',
             "88 Add line 77 and line 87. Enter the total":creditASC.prior_year_credit_carryforward || '',
-            [`* If line 88 is ${creditASC?.config?.threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]:"",
-            [`* If line 88 is more than ${creditASC?.config?.threshold_amount}, skip line 89. Complete lines 90 through 93.`]:"",
-            [`89 If line 88 is ${creditASC?.config?.threshold_amount} or less, multiply line 88 by ${creditASC?.config?.tier1_rate}% (${creditASC?.config?.tier1_rate/100}). Enter the result.`]:creditASC.credit_if_under_threshold || '',
-            [`90 If line 88 is more than ${creditASC?.config?.threshold_amount}, subtract ${creditASC?.config?.threshold_amount} from line 88. Enter the difference.`]:creditASC.excess_amount || '',
+            [`* If line 88 is $ ${creditASC?.config?.threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]:"",
+            [`* If line 88 is more than $ ${creditASC?.config?.threshold_amount}, skip line 89. Complete lines 90 through 93.`]:"",
+            [`89 If line 88 is $ ${creditASC?.config?.threshold_amount} or less, multiply line 88 by ${creditASC?.config?.tier1_rate}% (${creditASC?.config?.tier1_rate/100}). Enter the result.`]:creditASC.credit_if_under_threshold || '',
+            [`90 If line 88 is more than $ ${creditASC?.config?.threshold_amount}, subtract ${creditASC?.config?.threshold_amount} from line 88. Enter the difference.`]:creditASC.excess_amount || '',
             [`91 Multiply line 90 by  ${creditASC?.config?.tier2_rate}%. Enter the result.`]:creditASC.credit_on_excess || '',
-            [`92 Add ${creditASC?.config?.tier2_base_add} to line 91. Enter the total. `]:creditASC.credit_if_over_threshold || '',
+            [`92 Add $ ${creditASC?.config?.tier2_base_add} to line 91. Enter the total. `]:creditASC.credit_if_over_threshold || '',
             "93 Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.":creditASC.total_az_final_credit || ''
         }
 
