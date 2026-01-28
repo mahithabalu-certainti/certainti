@@ -67,7 +67,7 @@ export class RdCreditCalculatorForID {
         const fixed_base_percentage = config.fixed_base_percentage;
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
         const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage /100);
-        const difference = base_amount.minus(total_current_year_qre);
+        const difference = Decimal.max(0, base_amount.minus(total_current_year_qre));
         const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
         const tot_base_amount = min_credit_rate.plus(line_3);
@@ -131,9 +131,9 @@ export class RdCreditCalculatorForID {
         let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         storeData.push({
             year : metadata.currentYear,
-            wages: Number(currentYearQREs.wages),
-            contract: Number(currentYearContract),
-            sum: Number(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
+            wages: this.round2(currentYearQREs.wages),
+            contract: this.round2(currentYearContract),
+            sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
         })
  
         prior3YearsQREs.forEach((item) => {
@@ -141,7 +141,7 @@ export class RdCreditCalculatorForID {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: Number(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
+                sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
             })
         });
 
