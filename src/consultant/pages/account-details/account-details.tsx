@@ -908,6 +908,7 @@ export const AccountDetails = () => {
           <div className='w-full pr-4 pl-2 py-2'>
             <HistorySubmission
               activityMenuItems={activityMenuItems}
+              isDetailLoading={isPending}
               accountDetails={{ ...data?.data } as accountDetailsProps}
             />
           </div>
