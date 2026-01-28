@@ -27,7 +27,9 @@ class Settings(BaseSettings):
     KAFKA_GROUP_ID: str = os.getenv("KAFKA_GROUP_ID", "form_extraction_group")
 
     # ADE
-    landing_api_key: str = "N3N4azdxbm5rdnhjZzJhazl6aDZoOkV6ZHdldUgwVkhwUHJwSXQyQkhtNkRkTkVrc0FQUG95" #os.getenv("VISION_AGENT_API_KEY", "")
+    landing_api_key: str = "N3N4azdxbm5rdnhjZzJhazl6aDZoOkV6ZHdldUgwVkhwUHJwSXQyQkhtNkRkTkVrc0FQUG95" 
+    landing_api_key_check = os.getenv("VISION_AGENT_API_KEY", "")
+    print("landing_api_key_check", landing_api_key_check)
     landing_environment: str | None = os.getenv("ADE_ENVIRONMENT")
     ade_parse_model: str = os.getenv("ADE_PARSE_MODEL", "dpt-2-latest")
     ade_extract_model: str = os.getenv("ADE_EXTRACT_MODEL", "extract-latest")
