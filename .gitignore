@@ -54,13 +54,14 @@ Thumbs.db
 .env
 del-nginx.md
 del-vm.md
-del-workflow.md
+del-worflow.md
 del3.md
 *.tfstate
 gitcommands.md
-del1.md
+del.md
 del2.md
 del3.md
+delworflow.md
 
 terraform.*
 .terraform*
