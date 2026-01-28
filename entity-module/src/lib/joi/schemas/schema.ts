@@ -254,7 +254,7 @@ const createResourcesSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Name must be at least 2 characters long",
       "string.max": "Name must not exceed 64 characters"
     }),
@@ -266,7 +266,7 @@ const createResourcesSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "First name must be at least 2 characters long",
       "string.max": "First name must not exceed 64 characters"
     }),
@@ -278,7 +278,7 @@ const createResourcesSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Last name must be at least 2 characters long",
       "string.max": "Last name must not exceed 64 characters"
     }),
@@ -449,7 +449,7 @@ const updateResourceSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Name must be at least 2 characters long",
       "string.max": "Name must not exceed 64 characters"
     }),
@@ -461,7 +461,7 @@ const updateResourceSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "First name must be at least 2 characters long",
       "string.max": "First name must not exceed 64 characters"
     }),
@@ -473,7 +473,7 @@ const updateResourceSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Last name must be at least 2 characters long",
       "string.max": "Last name must not exceed 64 characters"
     }),
