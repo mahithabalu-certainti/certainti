@@ -68,6 +68,7 @@ const ConfigTabs: ResourceTabs[] = [
 
 interface CaseTeamProps {
   activityMenuItems: ActivityMenuItem[];
+  isDetailLoading?: boolean;
   accountDetails?: accountDetailsProps;
 }
 
@@ -98,6 +99,7 @@ const removeCommas = (value: string): string => {
 
 const HistorySubmission: React.FC<CaseTeamProps> = ({
   activityMenuItems,
+  isDetailLoading,
   accountDetails,
 }) => {
   const { accountid } = useParams();
@@ -226,7 +228,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
   const {
     data,
     isLoading: isDataLoading,
-    isPending: isDataPending,
     refetch,
   } = useGetHistoricalSubmission(
     accountId,
@@ -235,7 +236,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
   );
 
   const updateHistorySubmissionMutation = useUpdateHistorySubmission();
-  const formLoading = isDataLoading;
+  const formLoading = isDataLoading || isDetailLoading;
   const yearOptions = generateYearOptions();
 
   // Handle region selection change
@@ -384,7 +385,54 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
 
         setOriginalSubmissions(apiData);
       } else if (apiData.length === 0) {
-        // Initialize with empty data if no API data
+        // Only initialize with empty row if country_rid is available
+        if (accountDetails?.accountById?.country_rid) {
+          const initialSubmissions: FormSubmission[] = [
+            {
+              user_id: 'MEM_1',
+              rid: '',
+              r_number: '',
+              eid: null,
+              created_by: '',
+              modified_by: null,
+              created_datetime: '',
+              modified_datetime: null,
+              account_rid: accountId,
+              fiscal_year: '',
+              total_project: 0,
+              total_qualified_project: 0,
+              total_project_cost: '',
+              total_qualified_project_cost: '',
+              total_qre: '',
+              total_rd_credits: '',
+              annual_gross_receipts: '',
+              total_nonlabor_cost: '', // Initialize new fields
+              total_subcon_cost: '',
+              total_fte_cost: '',
+              // Add fields from API response
+              country_rid: null,
+              state_rid: null,
+              currency_rid: '',
+              currency_symbol: '',
+            },
+          ];
+          setFormData({
+            historicalSubmissions: initialSubmissions,
+            region: selectedRegion, // Set the selected region
+          });
+        } else {
+          // If country_rid is not available, set empty array to show "No data available"
+          setFormData({
+            historicalSubmissions: [],
+            region: selectedRegion,
+          });
+        }
+        setOriginalSubmissions([]);
+      }
+      setIsDataLoaded(true);
+    } else if (!data && !formLoading && !isDataLoaded && accountId) {
+      // Only initialize with empty row if country_rid is available
+      if (accountDetails?.accountById?.country_rid) {
         const initialSubmissions: FormSubmission[] = [
           {
             user_id: 'MEM_1',
@@ -418,48 +466,24 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
           historicalSubmissions: initialSubmissions,
           region: selectedRegion, // Set the selected region
         });
-        setOriginalSubmissions([]);
+      } else {
+        // If country_rid is not available, set empty array to show "No data available"
+        setFormData({
+          historicalSubmissions: [],
+          region: selectedRegion,
+        });
       }
-      setIsDataLoaded(true);
-    } else if (!data && !formLoading && !isDataLoaded && accountId) {
-      // Initialize with empty data if no API data available
-      const initialSubmissions: FormSubmission[] = [
-        {
-          user_id: 'MEM_1',
-          rid: '',
-          r_number: '',
-          eid: null,
-          created_by: '',
-          modified_by: null,
-          created_datetime: '',
-          modified_datetime: null,
-          account_rid: accountId,
-          fiscal_year: '',
-          total_project: 0,
-          total_qualified_project: 0,
-          total_project_cost: '',
-          total_qualified_project_cost: '',
-          total_qre: '',
-          total_rd_credits: '',
-          annual_gross_receipts: '',
-          total_nonlabor_cost: '', // Initialize new fields
-          total_subcon_cost: '',
-          total_fte_cost: '',
-          // Add fields from API response
-          country_rid: null,
-          state_rid: null,
-          currency_rid: '',
-          currency_symbol: '',
-        },
-      ];
-      setFormData({
-        historicalSubmissions: initialSubmissions,
-        region: selectedRegion, // Set the selected region
-      });
       setOriginalSubmissions([]);
       setIsDataLoaded(true);
     }
-  }, [data, isDataLoaded, formLoading, accountId, selectedRegion]);
+  }, [
+    data,
+    isDataLoaded,
+    formLoading,
+    accountId,
+    selectedRegion,
+    accountDetails?.accountById?.country_rid,
+  ]);
 
   useLayoutEffect(() => {
     const calculateCellWidths = () => {
@@ -925,7 +949,10 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
       variant: 'contained' as const,
       onClick: handleSave,
       hide: !isHistoricalSubmissionCreate,
-      disabled: !isFormChanged || isLoading,
+      disabled:
+        !isFormChanged ||
+        isLoading ||
+        !accountDetails?.accountById?.country_rid,
       loading: isLoading,
     },
   ];
@@ -1219,9 +1246,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                     },
                   }}
                 >
-                  {formLoading ||
-                  isDataPending ||
-                  !accountDetails?.accountById?.country_rid ? (
+                  {formLoading ? (
                     <TableSkeleton
                       rowsPerPage={4}
                       columnsCount={visibleHistoricalFields.length + 1}
@@ -2144,7 +2169,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
               disabled={
                 formLoading ||
                 !isHistoricalSubmissionCreate ||
-                isDataPending ||
                 !accountDetails?.accountById?.country_rid
               }
             >
