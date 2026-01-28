@@ -96,7 +96,8 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
                 value !== null &&
                 !Array.isArray(value)) ||
               Array.isArray(value) ||
-              key === 'name'
+              key === 'name' ||
+              key === 'Title'
             )
               return null;
 
@@ -193,6 +194,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
       <div className='max-w-7xl mx-auto'>
         <div className='flex flex-col gap-0'>
           {Object.entries(computedFields).map(([key, value]) => {
+            if (key === 'Title') return null;
             const title = formatLabel(key);
 
             // Special handling for "Tier of intensity" array - render as table
