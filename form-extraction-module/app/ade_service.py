@@ -27,7 +27,7 @@ class ADEForm6765Service:
         #if settings.landing_environment:
             # Only set if explicitly configured
             #client_kwargs["environment"] = settings.landing_environment
-
+        print("client_kwargs test", client_kwargs)
         self.client = LandingAIADE(**client_kwargs)
         self.schema = pydantic_to_json_schema(ExtractionResponse)
         self.parse_model = settings.ade_parse_model
