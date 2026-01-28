@@ -412,6 +412,7 @@ export const rawQueries = {
   query += `
     WHERE pf.account_rid = '${accountRid}'
       AND pf.status_rid  = '${status_rid}'
+      AND (pf.is_rd_claim_qualified = false or pf.is_rd_claim_qualified is null)
   `;
 
   return query;
