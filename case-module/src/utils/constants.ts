@@ -207,7 +207,8 @@ export const STATUS_MESSAGE = {
   financialWorkingSignedOff: "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed: "Failed to signoff financial working",
   regionsFetchedSuccess: "Regions listed successfully",
-  financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status"
+  financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
+  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully"
 };
 
 export const caseStatuses = {
@@ -1660,7 +1661,9 @@ export const rawQueries = {
   insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string) {
     return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}')`
   },
-  
+  findSignOffTypes (rids : string[]) {
+    return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d : any) => `'${d}'`).join(',')})`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
