@@ -20,11 +20,15 @@ export const fetchTasksList = async (
     ? '/api/task/list/summaryMilestone'
     : '/api/task/list/summaryActivity';
 
-  let filtersToSend: Record<string, any> = params.filters
-    ? { ...params.filters }
-    : {};
+  const filtersToSend: Record<
+    string,
+    object | string | string[] | number | undefined | unknown
+  > = params.filters ? { ...params.filters } : {};
 
-  const payload: Record<string, any> = {
+  const payload: Record<
+    string,
+    object | string | string[] | number | undefined | unknown
+  > = {
     flag,
     page: params.page,
     limit: params.limit,
@@ -107,11 +111,15 @@ export const exportTasksData = async (
   }
 
   // Build the payload similar to fetchTasksList
-  let filtersToSend: Record<string, any> = params.filters
-    ? { ...params.filters }
-    : {};
+  const filtersToSend: Record<
+    string,
+    object | string | string[] | number | undefined | unknown
+  > = params.filters ? { ...params.filters } : {};
 
-  const payload: Record<string, any> = {
+  const payload: Record<
+    string,
+    object | string | string[] | number | undefined | unknown
+  > = {
     flag,
   };
 

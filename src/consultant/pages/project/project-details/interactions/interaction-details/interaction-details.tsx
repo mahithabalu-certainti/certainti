@@ -22,9 +22,12 @@ import {
 } from '../../../../../../common-utils';
 import { INTERACTIONS_EDIT } from '../../../../../../routes';
 import { NewProjectData } from '../../../../../types/project';
-import { InteractionQuestions } from '../../../../../../components/interaction';
+import {
+  InteractionQuestions,
+  SendInteractionModal,
+} from '../../../../../../components/interaction';
 import { getInteractionStatusColor } from '../helpers';
-import { StatusTypeEnum } from '../../../../../types';
+import { InteractionList, StatusTypeEnum } from '../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
@@ -35,6 +38,7 @@ interface InteractionDetailsProps {
   handleBackClick: () => void;
   projectDetails: NewProjectData | null;
   isSendInteraction: boolean;
+  isProjectSignedOff?: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
@@ -42,6 +46,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   handleBackClick,
   projectDetails,
   isSendInteraction,
+  isProjectSignedOff,
 }) => {
   const { projectid } = useParams();
   const navigate = useNavigate();
@@ -58,6 +63,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     interactionId,
     projectFiscalRid as string
   );
+
+  const [reInitiateModalOpen, setReInitiateModalOpen] = React.useState(false);
 
   const interactionFieldsEditable = useMemo(
     () =>
@@ -180,15 +187,31 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive || disableInteractionEditBtn,
+      disabled:
+        isProjectSignedOff || accountInActive || disableInteractionEditBtn,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
     },
     {
+      label: 'Re-Initiate Interaction',
+      variant: 'outlined' as const,
+      disabled:
+        isProjectSignedOff ||
+        accountInActive ||
+        !disableRemainderBtn ||
+        !isSendInteraction,
+      onClick: () => setReInitiateModalOpen(true),
+      sx: { width: '160px', minWidth: '160px' },
+    },
+    {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction,
+      disabled:
+        isProjectSignedOff ||
+        accountInActive ||
+        !disableRemainderBtn ||
+        !isSendInteraction,
       onClick: () => handleRemainder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
@@ -361,6 +384,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
               '',
             interaction_rid: data?.interaction_rid || interactionId || '',
           }}
+          isProjectSignedOff={Boolean(isProjectSignedOff)}
         />
       )}
       {!isLoading && !error && (
@@ -373,6 +397,26 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           />
         </div>
       )}
+      <SendInteractionModal
+        title='Re-Initiate Interaction'
+        isOpen={reInitiateModalOpen}
+        onClose={() => setReInitiateModalOpen(false)}
+        selectedRows={
+          data
+            ? [
+                {
+                  rid: data.interaction_rid || interactionId || '',
+                  interaction_level_name: data.interaction_level_name || '',
+                  project_fiscal_rid: data.project_fiscal_rid || '',
+                  recipient_name: data.recipient_name || '',
+                  recipient_email: data.recipient_email || '',
+                  status_name: data.status_name || '',
+                } as InteractionList,
+              ]
+            : []
+        }
+        onSuccessRefetch={refetch}
+      />
     </>
   );
 };

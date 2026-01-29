@@ -27,6 +27,7 @@ import {
   AccountDeatilsIcon,
   AccountsIcon,
   ManageGroupAccount,
+  HistorySubmissionIcon,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -111,6 +112,7 @@ import { ExportNotesList } from '../../services/notes/notes-service';
 import { ExportCaseList } from '../../services/cases/case-service';
 import { ExportChecklistList } from '../../services/checklist/checklist-service';
 import { ExportActivityList } from '../../services/activities/activities-service';
+import HistorySubmission from '../case/case-details/history-submission/history-submission';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -901,6 +903,16 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'historical_submission':
+        return (
+          <div className='w-full pr-4 pl-2 py-2'>
+            <HistorySubmission
+              activityMenuItems={activityMenuItems}
+              isDetailLoading={isPending}
+              accountDetails={{ ...data?.data } as accountDetailsProps}
+            />
+          </div>
+        );
       case 'activities':
         return (
           <Activities
@@ -1023,6 +1035,14 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: CasesIcon,
+      },
+      {
+        name: 'Historical Submission',
+        key: 'historical_submission',
+        id: AllModules.HISTORICAL_SUBMISSION,
+        disabled: disable,
+        hide: disable,
+        icon: HistorySubmissionIcon,
       },
       {
         name: 'Activities',

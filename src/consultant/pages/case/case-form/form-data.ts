@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  FinancialWorkingCountries,
   FormType,
   ParentChildSelectOption,
   SelectOption,
@@ -41,7 +42,9 @@ export const CaseFormData = (
   selectedFiscalYear?: string,
   globalType?: boolean,
   calculatedStatutoryDate?: string,
-  statusOptions?: SelectOption[]
+  statusOptions?: SelectOption[],
+  isAustralianCountry?: boolean,
+  CountryName?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -169,31 +172,45 @@ export const CaseFormData = (
             required: false,
             placeholder: 'Enter Heating & Lighting Cost',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Heating & Lighting Cost: your estimated Heating & Lighting Cost.',
+            },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['heat_light_power']?.edit &&
+              permissionMap?.['heat_light_power']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              ![
+                FinancialWorkingCountries.Ireland,
+                FinancialWorkingCountries.UK,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              (isEditView &&
+                !permissionMap?.['heat_light_power']?.edit &&
+                !permissionMap?.['heat_light_power']?.read),
           }),
           createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
             required: false,
             placeholder: 'Enter Total NonLabor Cost',
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Total NonLabor Cost: your estimated Total NonLabor Cost.',
+            },
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['total_nonlabor_cost']?.edit &&
+              permissionMap?.['total_nonlabor_cost']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['total_nonlabor_cost']?.edit &&
+              !permissionMap?.['total_nonlabor_cost']?.read,
           }),
           createTextField('tax_liability', 'Tax Liability', {
             required: false,
@@ -207,12 +224,13 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['tax_liability']?.edit &&
+              permissionMap?.['tax_liability']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                !permissionMap?.['tax_liability']?.read),
           }),
           createTextField(
             'employers_pension_contribution',
@@ -230,12 +248,13 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                permissionMap?.['case_name']?.read,
+                !permissionMap?.['employers_pension_contribution']?.edit &&
+                permissionMap?.['employers_pension_contribution']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                !permissionMap?.['case_name']?.read,
+                CountryName !== FinancialWorkingCountries.Australia ||
+                (isEditView &&
+                  !permissionMap?.['employers_pension_contribution']?.edit &&
+                  !permissionMap?.['employers_pension_contribution']?.read),
             }
           ),
           createTextField(
@@ -254,12 +273,13 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                permissionMap?.['case_name']?.read,
+                !permissionMap?.['material_software_cost']?.edit &&
+                permissionMap?.['material_software_cost']?.read,
               hide:
-                isEditView &&
-                !permissionMap?.['case_name']?.edit &&
-                !permissionMap?.['case_name']?.read,
+                CountryName !== FinancialWorkingCountries.UK ||
+                (isEditView &&
+                  !permissionMap?.['material_software_cost']?.edit &&
+                  !permissionMap?.['material_software_cost']?.read),
             }
           ),
           createTextField('sub_contracts', 'Subcontracts', {
@@ -274,12 +294,13 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['sub_contracts']?.edit &&
+              permissionMap?.['sub_contracts']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              CountryName !== FinancialWorkingCountries.UK ||
+              (isEditView &&
+                !permissionMap?.['sub_contracts']?.edit &&
+                !permissionMap?.['sub_contracts']?.read),
           }),
           createTextField('cloud_software', 'Cloud Software', {
             required: false,
@@ -294,12 +315,13 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['cloud_software']?.edit &&
+              permissionMap?.['cloud_software']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              CountryName !== FinancialWorkingCountries.Ireland ||
+              (isEditView &&
+                !permissionMap?.['cloud_software']?.edit &&
+                !permissionMap?.['cloud_software']?.read),
           }),
           createTextField('unpaid_amounts_paid', 'Unpaid Amounts (+)', {
             required: false,
@@ -314,12 +336,15 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['unpaid_amounts_paid']?.edit &&
+              permissionMap?.['unpaid_amounts_paid']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts_paid']?.edit &&
+                !permissionMap?.['unpaid_amounts_paid']?.read),
           }),
           createTextField('unpaid_amounts', 'Unpaid Amounts (-)', {
             required: false,
@@ -334,12 +359,15 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['unpaid_amounts']?.edit &&
+              permissionMap?.['unpaid_amounts']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts']?.edit &&
+                !permissionMap?.['unpaid_amounts']?.read),
           }),
           createTextField('aggregated_turnover', 'Aggregated Turnover', {
             required: false,
@@ -354,15 +382,16 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['aggregated_turnover']?.edit &&
+              permissionMap?.['aggregated_turnover']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['aggregated_turnover']?.edit &&
+                !permissionMap?.['aggregated_turnover']?.read),
           }),
           createTextField('total_expenses', 'Total Expenses', {
-            required: false,
+            required: isAustralianCountry,
             placeholder: 'Enter Total Expenses',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
@@ -374,12 +403,13 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['total_expenses']?.edit &&
+              permissionMap?.['total_expenses']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['total_expenses']?.edit &&
+                !permissionMap?.['total_expenses']?.read),
           }),
           createTextField('taxable_income', 'Taxable Income', {
             required: false,
@@ -394,12 +424,13 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['taxable_income']?.edit &&
+              permissionMap?.['taxable_income']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['taxable_income']?.edit &&
+                !permissionMap?.['taxable_income']?.read),
           }),
           createTextField('export_sales_revenue', 'Export Sales Revenue', {
             required: false,
@@ -414,13 +445,193 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['export_sales_revenue']?.edit &&
+              permissionMap?.['export_sales_revenue']?.read,
             hide:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read),
           }),
+          createTextField(
+            'lease_costs_of_computers',
+            'Lease Costs of Computers',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Lease Costs of Computers: your estimated lease costs of computers due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['lease_costs_of_computers']?.edit &&
+                permissionMap?.['lease_costs_of_computers']?.read,
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'illinois_rd_credit_partnership_corp',
+            'Illinois RD Credit Partnership (Corp)',
+            {
+              required: false,
+              placeholder: 'Enter Illinois RD Credit Partnership (Corp)',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Illinois RD Credit Partnership (Corp): your estimated illinois rd credit partnership (corp) due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['illinois_rd_credit_partnership_corp']?.edit &&
+                permissionMap?.['illinois_rd_credit_partnership_corp']?.read,
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.edit &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.read),
+            }
+          ),
+          createTextField(
+            'illinois_research_payments_corp_only',
+            'Illinois Research Payments (Corp Only)',
+            {
+              required: false,
+              placeholder: 'Enter Illinois Research Payments (Corp Only)',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Illinois Research Payments (Corp Only): your estimated illinois research payments (corp only) due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['illinois_research_payments_corp_only']
+                  ?.edit &&
+                permissionMap?.['illinois_research_payments_corp_only']?.read,
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.edit &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.read),
+            }
+          ),
+          createTextField(
+            'basic_research_payments',
+            'Basic Research Payments',
+            {
+              required: false,
+              placeholder: 'Enter Basic Research Payments',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Basic Research Payments: your estimated basic research payments due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['basic_research_payments']?.edit &&
+                permissionMap?.['basic_research_payments']?.read,
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  !permissionMap?.['basic_research_payments']?.read),
+            }
+          ),
+          createTextField(
+            'qualified_computer_rental_time_expenses',
+            'Qualified Computer Rental Time Expenses',
+            {
+              required: false,
+              placeholder: 'Enter Qualified Computer Rental Time Expenses',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Qualified Computer Rental Time Expenses: your estimated qualified computer rental time expenses.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.edit &&
+                permissionMap?.['qualified_computer_rental_time_expenses']
+                  ?.read,
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.edit &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.read),
+            }
+          ),
+          createTextField('current_year_gross_receipts', 'Gross Receipts', {
+            required: false,
+            placeholder: 'Enter Gross Receipts',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Gross Receipts: your estimated gross receipts.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['current_year_gross_receipts']?.edit &&
+              permissionMap?.['current_year_gross_receipts']?.read,
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['current_year_gross_receipts']?.edit &&
+                !permissionMap?.['current_year_gross_receipts']?.read),
+          }),
+          createTextField(
+            'credit_carry_forward_py',
+            'Credit Carry Forward PY',
+            {
+              required: false,
+              placeholder: 'Enter Credit Carry Forward PY',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Credit Carry Forward PY: your estimated credit carry forward PY.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isEditView &&
+                !permissionMap?.['credit_carry_forward_py']?.edit &&
+                permissionMap?.['credit_carry_forward_py']?.read,
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  !permissionMap?.['credit_carry_forward_py']?.read),
+            }
+          ),
           createTextField('other', 'Other', {
             required: false,
             placeholder: 'Enter Other',
@@ -433,19 +644,38 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              !permissionMap?.['other']?.edit &&
+              permissionMap?.['other']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              !permissionMap?.['case_name']?.read,
+              !permissionMap?.['other']?.edit &&
+              !permissionMap?.['other']?.read,
           }),
           createEmptyField('', '', {
             name: 'emptyData',
             label: '',
             type: '',
             required: false,
-            hide: isEditView,
+            hide:
+              ![
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.UK,
+                FinancialWorkingCountries.US,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide:
+              ![
+                FinancialWorkingCountries.Canada,
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.US,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
           }),
           createDateField('case_startdate', 'Planned Start Date', {
             required: true,
@@ -620,6 +850,9 @@ export const CaseFormData = (
       selectedFiscalYear,
       globalType,
       calculatedStatutoryDate,
+      isAustralianCountry,
+      statusOptions,
+      CountryName,
     ]
   );
 };

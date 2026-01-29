@@ -49,6 +49,20 @@ export enum FinancialWorkingCountries {
   UK = 'United Kingdom',
   US = 'United States',
 }
+export enum FinancialWorkingStates {
+  Arizona = 'Arizona',
+  California = 'California',
+  Colorado = 'Colorado',
+  Connecticut = 'Connecticut',
+  Georgia = 'Georgia',
+  Idaho = 'Idaho',
+  Illinois = 'Illinois',
+  Massachusetts = 'Massachusetts',
+  NewJersey = 'New Jersey',
+  Ohio = 'Ohio',
+  SouthCarolina = 'South Carolina',
+  Texas = 'Texas',
+}
 
 export interface globalFiltersType {
   [key: string]: string[];
@@ -198,6 +212,8 @@ export type InteractionList = {
   interaction_level_name?: string;
   project_code?: string;
   project_name?: string;
+  key_contact_name?: string | null;
+  key_contact_email?: string | null;
 };
 
 export type InteractionTemplateList = {

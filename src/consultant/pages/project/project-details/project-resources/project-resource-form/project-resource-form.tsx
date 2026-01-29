@@ -223,6 +223,7 @@ const ProjectResourceForm: React.FC = () => {
       );
       setCurrentResource(currentResourceCode);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectResource?.projectResource?.resource_code]);
 
   const memoizedProjectResourceSkillType: SelectOption[] = useMemo(

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CircularProgress, SxProps, Tooltip } from '@mui/material';
+import { Alert, CircularProgress, SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
 import ReactQuill, { Quill } from 'react-quill';
 import {
@@ -192,6 +192,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         ? true
         : false
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerData]);
   // const handleEditClick = () => {
   //   setIsEditing(true);
@@ -564,6 +565,15 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           })}
         </div>
       </div>
+
+      {headerData?.statusName?.toLowerCase() ===
+        StatusTypeEnum.response_received && (
+        <Alert severity='success' sx={{ mt: 2 }}>
+          Your earlier response is available for your review. If you wish to add
+          more information, Think R&D 365 will send you an updated set of
+          interaction questions for additional inputs.
+        </Alert>
+      )}
 
       <div
         className={`my-3 border border-[#CBD6E2] rounded-[2px] ${isUpdateLoading ? 'pointer-events-none' : ''}`}

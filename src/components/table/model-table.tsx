@@ -125,7 +125,7 @@ const TableModal: React.FC<TableModalProps> = ({
     >
       <div
         className='bg-white flex flex-col justify-between rounded-lg shadow-lg  w-[60%] p-5'
-        style={{ minHeight: 'calc(100vh - 200px)' }}
+        style={{ minHeight: 'calc(100vh - 250px)' }}
       >
         <div className='flex justify-between items-center pb-1 border-b border-[#CBD6E2]'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>{title}</h2>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { TasksListExportParams, TasksListURLParams } from '../../types/task';
 
 export const TasksListURL = ({

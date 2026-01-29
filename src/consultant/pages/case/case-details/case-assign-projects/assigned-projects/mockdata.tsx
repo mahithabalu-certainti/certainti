@@ -1,4 +1,4 @@
-export const mockAssignProjects: any[] = [
+export const mockAssignProjects = [
   {
     _level: 1,
     project_code: 'PRJ-001',

@@ -61,6 +61,7 @@ interface InteractionQuesProps {
   formData?: Record<string, string>;
   className?: string;
   responseDate?: string;
+  isProjectSignedOff?: boolean;
 }
 
 const Font = Quill.import('formats/font');
@@ -81,6 +82,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
   responseDate,
+  isProjectSignedOff = false,
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -449,7 +451,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         {
           label: 'Edit Response',
           variant: 'outlined' as const,
-          disabled: !isEditEnable,
+          disabled: !isEditEnable || isProjectSignedOff,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
           hide: !actionButtonEnable,

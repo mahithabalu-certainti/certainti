@@ -15,6 +15,7 @@ import {
   CaseFormFields,
   CaseFormPayload,
   ColorCode,
+  FinancialWorkingCountries,
   ParentChildSelectOption,
 } from '../../../types';
 import {
@@ -90,6 +91,7 @@ export const CreateCases: React.FC = () => {
   const countryRid = searchParams.get('country_rid') || '';
   const countryCode = searchParams.get('country_code') || '';
   const globalType = searchParams.get('sourceType') === 'global';
+  const countryName = searchParams.get('country_name');
 
   const { data: caseData, isLoading } = useCaseDetails(caseId || '', accountId);
 
@@ -316,6 +318,18 @@ export const CreateCases: React.FC = () => {
     return map;
   }, [accountViewEditFields]);
 
+  const isAustralianCountry = useMemo(() => {
+    if (globalType) {
+      const selectedCountry = countryOptions.find(
+        (country) => country.value === effectiveCountryRid
+      );
+      return selectedCountry?.label === FinancialWorkingCountries.Australia;
+    } else {
+      const countryNameFromUrl = searchParams.get('country_name');
+      return countryNameFromUrl === FinancialWorkingCountries.Australia;
+    }
+  }, [globalType, countryOptions, effectiveCountryRid, searchParams]);
+
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'case_startdate') {
       const startDate = fieldValue as string;
@@ -439,7 +453,9 @@ export const CreateCases: React.FC = () => {
     isEditView
       ? caseData?.statutory_submission_date || undefined
       : calculatedStatutoryDate,
-    caseStatusOptions
+    caseStatusOptions,
+    isAustralianCountry,
+    countryName ?? undefined
   );
 
   const formLoading =
