@@ -220,8 +220,9 @@ export class HelperMethods {
         return null;
       }
     } catch (error) {
-      logMessage(`Error creating checklist: ${error}`);
-      throw new Error("Error creating checklist: " + error);
+      const errorMessage = error instanceof Error ? error.message : error;
+      logMessage(`Error creating checklist: ${errorMessage}`);
+      throw new Error("Error creating checklist: " + errorMessage);
     }
   }
   async manageCheckListItems(

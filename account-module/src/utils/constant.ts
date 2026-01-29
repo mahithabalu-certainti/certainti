@@ -2326,6 +2326,32 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_history_seq START 1;
     `;
   },
+   getCreateTaskTagsSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_tags_seq START 1;
+    `;
+  },
+  getCreateTaskAttachmentsSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_attachments_seq START 1;
+    `;
+  },
+  getCreateTaskCollaboratorsSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_collaborators_seq START 1;
+    `;
+  },
+  getCreateTaskCommentsSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_comments_seq START 1;
+    `;
+  },
+  getCreateCommentAttachmentsSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".comments_attachments_seq START 1;
+    `;
+  },
+
   getCreateActivityHistoryTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".activity_history (
@@ -2358,6 +2384,97 @@ export const rawQueries = {
         attribute_name VARCHAR(100) NOT NULL,
         old_value VARCHAR(2000),
         new_value VARCHAR(2000)
+      );
+    `;
+  },
+  getCreateTaskTagsTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".task_tags (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'TTG-' || LPAD(nextval('"${schemaName}".task_tags_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_by varchar(50),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        case_rid character varying(50),
+        account_rid character varying(50),
+        task_rid character varying(50),
+        tag_rid character varying(50)
+      );
+    `;
+  },
+  getCreateTaskAttachmentsTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".task_attachments (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'TATT-' || LPAD(nextval('"${schemaName}".task_attachments_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_by varchar(50),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        account_rid character varying(50),
+        case_rid character varying(50),
+        task_rid character varying(50),
+        browse_file character varying(2000),
+        size character varying(50),
+        document_name character varying(64),
+        format character varying(50),
+        is_file_deleted boolean DEFAULT false,
+        comments_rid character varying(50)
+      );
+    `;
+  },
+  getCreateTaskCollaboratorsTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".task_collaborators (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'TCO-' || LPAD(nextval('"${schemaName}".task_collaborators_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_by varchar(50),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        account_rid character varying(50),
+        case_rid character varying(50),
+        task_rid character varying(50),
+        assigned_to character varying(50)
+      );
+    `;
+  },
+  getCreateTaskCommentsTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".task_comments (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'TKCM-' || LPAD(nextval('"${schemaName}".task_comments_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_by varchar(50),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        account_rid character varying(50),
+        case_rid character varying(50),
+        task_rid character varying(50),
+        comments text,
+        is_file_deleted boolean
+      );
+    `;
+  },
+  getCreateCommentAttachmentsTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".comments_attachments (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'CATT-' || LPAD(nextval('"${schemaName}".comments_attachments_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_by varchar(50),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        account_rid character varying(50),
+        case_rid character varying(50),
+        task_rid character varying(50),
+        comments_rid character varying(50),
+        browse_file character varying(2000),
+        size character varying(50),
+        document_name character varying(2000),
+        format character varying(50),
+        is_file_deleted boolean DEFAULT false
       );
     `;
   },

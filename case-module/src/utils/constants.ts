@@ -1014,7 +1014,7 @@ export const rawQueries = {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
   },
   getActiveStatusId() {
-    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status where status_name = 'Active' limit 1`
   },
   getTaskTypeRid(rid: string) {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid = '${rid}'`
