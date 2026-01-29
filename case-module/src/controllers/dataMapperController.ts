@@ -176,6 +176,28 @@ async function getObjectsList(req: Request, res: Response): Promise<void> {
     }
 }
 
+
+async function listDataMapperUploadStatus(req: Request, res: Response): Promise<void> {
+    const methodName = "listDataMapperUploadStatus";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+
+        if (!userId) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required");
+            return;
+        }
+
+        const result = await dataMapperService.listDataMapperUploadStatus();
+
+        handleCustomResponse(res, result.data, result.message);
+
+    } catch (error) {
+        const err = error as Error;
+        errorLog(methodName, err.message);
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, err.message);
+    }
+}
+
 async function exportDataMapperForms(req: Request, res: Response): Promise<void> {
     const methodName = "exportDataMapperForms";
     try {
@@ -355,5 +377,6 @@ export default {
     editDataMapper,
     getDataMapperFormsMappingDetail,
     editDataMapperMapping,
-    getObjectsList
+    getObjectsList,
+    listDataMapperUploadStatus
 };

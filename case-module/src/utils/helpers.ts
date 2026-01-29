@@ -773,8 +773,6 @@ export const applyFilters = (filters: Record<string, any>, whereClause: any) => 
 
       switch (field) {
         case 'r_number':
-        case 'created_by':
-        case 'modified_by':
         case 'form_name':
         case 'browse_file':
         case 'document_name':
@@ -803,6 +801,8 @@ export const applyFilters = (filters: Record<string, any>, whereClause: any) => 
             case 'equals': condition[field] = { [Op.eq]: value }; break;
             case 'greater_than': condition[field] = { [Op.gt]: value }; break;
             case 'less_than': condition[field] = { [Op.lt]: value }; break;
+            case 'not_equals': condition[field] = { [Op.ne]: value }; break;
+            case 'between': condition[field] = { [Op.between]: [value.from, value.to] }; break;
           }
           break;
 
@@ -827,9 +827,9 @@ export const applyFilters = (filters: Record<string, any>, whereClause: any) => 
               break;
             }
             case 'between': {
-              if (Array.isArray(value)) {
-                const startDate = new Date(value[0]);
-                const endDate = new Date(value[1]);
+              if (value) {
+                const startDate = new Date(value.from);
+                const endDate = new Date(value.to);
                 condition[field] = Sequelize.literal(
                   `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
                 );

@@ -1625,6 +1625,7 @@ export const rawQueries = {
     f.status_rid,
     f.is_active,
     f.error_message,
+    f.form_type,
     c.country_name,
     s.state_name,
     ds.status_name,
