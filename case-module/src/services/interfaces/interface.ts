@@ -770,6 +770,13 @@ export interface IDataMapperService {
     data?: any;
   }>;
 
+  listDataMapperUploadStatus(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
   updateInlineGraphqlDetailsForDataMapper(data: any): Promise<{
     statusCode: number;
     statusMessage?: string;

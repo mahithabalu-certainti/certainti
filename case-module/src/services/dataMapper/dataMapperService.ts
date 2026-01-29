@@ -9,6 +9,7 @@ import moment from "moment";
 import { DataMapperFormMappings } from "../../models/dataMapperFormMappings";
 import { DataMapperObjects } from "../../models/dataMapperObjects";
 import { DataMapperTableMappings } from "../../models/dataMapperTableMappings";
+import { DataMapperUploadStatus } from "../../models/dataMapperUploadStatus";
 import { applyFilters } from "../../utils/helpers";
 import { IDataMapperService } from "../interfaces/interface";
 import { ColumnExtractor } from "./columnExtractorService";
@@ -215,7 +216,8 @@ export class DataMapperService implements IDataMapperService {
                     "size_in_mb",
                     "status_rid",
                     "is_active",
-                    "error_message"
+                    "error_message",
+                    "form_type"
                 ],
                 where: whereClause,
                 offset: 0,
@@ -266,7 +268,7 @@ export class DataMapperService implements IDataMapperService {
                 users.forEach(u => userMap.set(u.rid, u.full_name));
             }
 
-            const enrichedRows = await Promise.all(rows.map(async r => {
+            let enrichedRows = await Promise.all(rows.map(async r => {
                 const row = r.get({ plain: true });
                 return {
                     ...row,
@@ -279,11 +281,47 @@ export class DataMapperService implements IDataMapperService {
                 };
             }));
 
+            // Filter logic for name fields
+            if (filters) {
+                for (const [field, filter] of Object.entries(filters)) {
+                    if (['created_by_name', 'modified_by_name'].includes(field)) {
+                        if (filter && typeof filter === 'object') {
+                            const operator = Object.keys(filter)[0];
+                            if (!operator) continue;
+                            let value = filter[operator as string];
+
+                            enrichedRows = enrichedRows.filter((item: any) => {
+                                const itemValue = item[field]?.toString().toLowerCase() || '';
+                                let filterValue = (typeof value === 'string') ? value.toLowerCase() : value;
+
+                                switch (operator.toLowerCase()) {
+                                    case 'equals':
+                                        return itemValue === filterValue;
+                                    case 'not_equals':
+                                        return itemValue !== filterValue;
+                                    case 'contains':
+                                        return itemValue.includes(filterValue);
+                                    case 'is_empty':
+                                        return !itemValue;
+                                    case 'in':
+                                        if (Array.isArray(value)) {
+                                            return value.some((v: any) => v.toString().toLowerCase() === itemValue);
+                                        }
+                                        return false;
+                                    default:
+                                        return true;
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
             // Sorting logic
             const validSortFields = [
-                'r_number', 'created_datetime', 'created_by', 'modified_datetime', 'modified_by',
+                'r_number', 'created_datetime', 'created_by_name', 'modified_datetime', 'modified_by_name',
                 'form_name', 'browse_file', 'document_name', 'effective_from_date', 'effective_to_date',
-                'country_rid', 'state_rid', 'format', 'size_in_mb', 'status_rid', 'is_active', 'error_message'
+                'country_name', 'state_name', 'format', 'size_in_mb', 'status_name', 'is_active', 'error_message'
             ];
 
             const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
@@ -342,7 +380,7 @@ export class DataMapperService implements IDataMapperService {
                 message: "Success",
                 data: {
                     items: enrichedRows.slice(offset, offset + limit),
-                    totalCount: count
+                    totalCount: enrichedRows.length
                 }
             };
 
@@ -643,14 +681,20 @@ export class DataMapperService implements IDataMapperService {
             // Update fields if provided
             if (data.form_name !== undefined) updatePayload.form_name = data.form_name;
             if (data.effective_from_date !== undefined) updatePayload.effective_from_date = data.effective_from_date;
-            if (data.effective_to_date !== undefined) updatePayload.effective_to_date = data.effective_to_date;
+            if (data.effective_to_date !== undefined) updatePayload.effective_to_date = data.effective_to_date || null;
             if (data.country_rid !== undefined) updatePayload.country_rid = data.country_rid;
             if (data.state_rid !== undefined) updatePayload.state_rid = data.state_rid;
             if (data.is_active !== undefined) updatePayload.is_active = data.is_active;
 
             // Validate dates
             const newStartDate = data.effective_from_date ? new Date(data.effective_from_date) : (record.effective_from_date ? new Date(record.effective_from_date) : null);
-            const newEndDate = data.effective_to_date ? new Date(data.effective_to_date) : (record.effective_to_date ? new Date(record.effective_to_date) : null);
+            let newEndDate: Date | null = null;
+            if (data.effective_to_date !== undefined) {
+                const val = data.effective_to_date || null;
+                newEndDate = val ? new Date(val) : null;
+            } else {
+                newEndDate = record.effective_to_date ? new Date(record.effective_to_date) : null;
+            }
 
             if (newStartDate && newEndDate && newStartDate > newEndDate) {
                 return {
@@ -756,6 +800,25 @@ export class DataMapperService implements IDataMapperService {
 
         } catch (error) {
             errorLog("getDataMapperFormsDetail", (error as Error).message);
+            throw error;
+        }
+    }
+
+    async listDataMapperUploadStatus(): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+            const DataMapperUploadStatusModel = DataMapperUploadStatus.initialize(sequelize, MAIN_SCHEMA_NAME);
+
+            const statusList = await DataMapperUploadStatusModel.findAll();
+
+            return {
+                statusCode: 200,
+                message: "Success",
+                data: statusList
+            };
+
+        } catch (error) {
+            errorLog("listDataMapperUploadStatus", (error as Error).message);
             throw error;
         }
     }

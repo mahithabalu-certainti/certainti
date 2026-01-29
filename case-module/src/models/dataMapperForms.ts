@@ -32,6 +32,7 @@ interface DataMapperFormsAttributes {
 
     error_message?: string | null;
     field_array?: any | null;
+    form_type?: string | null;
 }
 
 export interface DataMapperFormsCreationAttributes
@@ -46,6 +47,7 @@ export interface DataMapperFormsCreationAttributes
         | "is_active"
         | "error_message"
         | "field_array"
+        | "form_type"
     > { }
 
 export class DataMapperForms
@@ -77,6 +79,7 @@ export class DataMapperForms
     public is_active!: boolean;
 
     public error_message?: string | null;
+    public form_type?: string | null;
 
     static initialize(
         sequelize: Sequelize,
@@ -162,6 +165,10 @@ export class DataMapperForms
                 },
                 field_array: {
                     type: DataTypes.JSONB,
+                    allowNull: true,
+                },
+                form_type: {
+                    type: DataTypes.STRING(120),
                     allowNull: true,
                 }
             },

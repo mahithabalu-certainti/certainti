@@ -19,6 +19,7 @@ import { ProjectTask } from "./projectTask";
 import { DataMapperForms } from "./dataMapperForms";
 import { DataMapperFormMappings } from "./dataMapperFormMappings";
 import { DataMapperObjects } from "./dataMapperObjects";
+import { DataMapperUploadStatus } from "./dataMapperUploadStatus";
 
 
 export const models = {
@@ -41,6 +42,7 @@ export const models = {
   DataMapperForms,
   DataMapperFormMappings,
   DataMapperObjects,
+  DataMapperUploadStatus,
 
 };
 
