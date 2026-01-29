@@ -120,6 +120,7 @@ export const caseProjectResourceFilterFields = (
     value: 'country_rid',
     type: 'enum',
     options: memoizedCountry,
+    onChange: true,
     filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !permissionMap?.['country_rid']?.read &&

@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AllPermissions } from '../../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../../../common-service';
 import {
   ActivityDropdownItem,
   CaseDetails,
@@ -24,7 +27,6 @@ import {
   getProjectDocumentsFilterFields,
   getProjectSummaryFilterFields,
   getQualifiedProjectsFilterFields,
-  getResourceSummaryFilterFields,
 } from './helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
@@ -32,6 +34,13 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { useToast } from '../../../../../hooks';
 import { useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
+import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
+import { useFetchState } from '../../../../services/account';
+import {
+  useGetResourceStatus,
+  useGetResourceType,
+} from '../../../../services/resource-list';
+import { FilterValue } from '../../../../types/account-filter';
 
 const DossierTabs = [
   {
@@ -82,6 +91,7 @@ const Dossier: React.FC<DossierProps> = ({
   const [searchText, setSearchText] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -95,6 +105,38 @@ const Dossier: React.FC<DossierProps> = ({
     permission,
     AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
   );
+
+  // Permission Management
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
 
   const initialTab = useMemo(() => {
     if (isFinancialView) return 'financial_workings';
@@ -136,7 +178,6 @@ const Dossier: React.FC<DossierProps> = ({
   ) => {
     const message = statusData?.data ?? statusData?.statusMessage ?? '';
     setDossierFinancialStatus(message);
-    setRefreshTrigger(Date.now());
     if (statusData?.data === 'COMPLETED') {
       if (actionType === 'initiate' || actionType === 'refresh') {
         successToast('Initiated successfully');
@@ -147,12 +188,63 @@ const Dossier: React.FC<DossierProps> = ({
   };
 
   const handleRefresh = async () => {
-    const result = await refetchRDCreditStatus();
-    if (result.data) {
-      handleStatusUpdate(result.data, 'refresh');
+    if (tabParam === 'financial_workings') {
+      const result = await refetchRDCreditStatus();
+      if (result.data) {
+        handleStatusUpdate(result.data, 'refresh');
+      }
+    } else {
+      setRefreshTrigger(Date.now());
     }
   };
   const handleFilter = () => setShowFilter(!showFilter);
+
+  const handleFilterChange = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'country_rid' && value) {
+      setCurrentCountry(String(value));
+    }
+  };
+
+  const allCountries = useGetAllCountries();
+  const regions = useFetchState(currentCountry?.toString() || '');
+  const resourceTypeOptions = useGetResourceType();
+  const resourceStatusOptions = useGetResourceStatus();
+
+  const countryOptions = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        option: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
+
+  const regionOptions = useMemo(
+    () =>
+      regions.data?.data.states.map((state) => ({
+        option: state.state_name,
+        value: state.rid,
+      })) || [],
+    [regions.data?.data.states]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedResourceStatus = useMemo(
+    () =>
+      resourceStatusOptions?.data?.data?.resourceStatus.map((item) => ({
+        option: item.resource_status_name,
+        value: item.rid,
+      })) || [],
+    [resourceStatusOptions?.data?.data?.resourceStatus]
+  );
 
   const filterFields = useMemo(() => {
     switch (tabParam) {
@@ -163,11 +255,26 @@ const Dossier: React.FC<DossierProps> = ({
       case 'project_summary':
         return getProjectSummaryFilterFields();
       case 'resource_summary':
-        return getResourceSummaryFilterFields();
+        return caseProjectResourceFilterFields(
+          permissionMap,
+          projectPermissionMap,
+          countryOptions,
+          regionOptions,
+          memoizedResourceType,
+          memoizedResourceStatus
+        );
       default:
         return [];
     }
-  }, [tabParam]);
+  }, [
+    countryOptions,
+    memoizedResourceStatus,
+    memoizedResourceType,
+    permissionMap,
+    projectPermissionMap,
+    regionOptions,
+    tabParam,
+  ]);
 
   const tabs = [
     {
@@ -253,6 +360,7 @@ const Dossier: React.FC<DossierProps> = ({
         onSearchReset={handleSearchReset}
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
+        onFilterChange={handleFilterChange}
       />
 
       <SectionHeader
