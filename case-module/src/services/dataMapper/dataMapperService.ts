@@ -31,7 +31,7 @@ export class DataMapperService implements IDataMapperService {
         if (!this.producer) {
             const kafka = new Kafka({
                 clientId: "case-module",
-                brokers: [process.env.KAFKA_BROKER || "localhost:9094"],
+                brokers: [process.env.KAFKA_BROKER || "localhost:9092"],
             });
             this.producer = kafka.producer();
             await this.producer.connect();
