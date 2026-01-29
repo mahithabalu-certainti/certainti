@@ -207,7 +207,6 @@ export class ActivityService {
           );
         }
       }
-
       /*  if (response) {
           logMessage(`Case created with RID: ${response.rid}`);
           await this.activitySchemaService.addTaskSummary(
