@@ -3931,6 +3931,35 @@ export class ProjectTaskSchemaService {
     return existingCost;
   }
 
+  async findDuplicateTaskForUpdate(accountNumber: string,
+    resource_rid: string | undefined, start_date: Date | null, end_date: Date | null,
+    statusMap: Map<string, string> | null,
+    comments: string | null | undefined, account_rid: string, project_fiscal_rid: string, costValues: any, rid : string) {
+    const { ProjectTask } = await this.getModels(accountNumber);
+    const existingCost = await ProjectTask.findOne({
+      where: {
+        resource_rid: resource_rid,
+        start_date: start_date,
+        end_date: end_date,
+        ...costValues,
+        status_rid: {
+          [Op.in]: [
+            statusMap?.get('Active'),
+            statusMap?.get('Anomaly'),
+            statusMap?.get('Duplicate')
+          ].filter(Boolean) as string[]
+        },
+        comments: comments,
+        account_rid: account_rid,
+        project_fiscal_rid: project_fiscal_rid,
+        rid : {
+          [Op.notIn] : [rid]
+        }
+      },
+    });
+    return existingCost;
+  }
+
   async fetchProjectTaskById(
     accountNumber: string,
     projectTaskId: string
