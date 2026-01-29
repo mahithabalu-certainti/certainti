@@ -589,7 +589,7 @@ export class ProjectInjestionTaskService {
       const startDate = this.formatDateForDb(start_date as string);
       const endDate = this.formatDateForDb(end_date as string);
 
-      const existingTask = await this.projectTaskSchema.findDuplicateTask(
+      const existingTask = await this.projectTaskSchema.findDuplicateTaskForUpdate(
         accountNumber,
         resourceData.rid,
         startDate,
@@ -598,7 +598,8 @@ export class ProjectInjestionTaskService {
         comments,
         account_rid,
         project_fiscal_rid,
-        costValues
+        costValues,
+        projectTaskData.project_task_rid
       );
 
       if (existingTask && (userPreference === null || userPreference === "")) {
