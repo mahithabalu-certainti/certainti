@@ -59,6 +59,7 @@ export class RdFormMapperService {
     accountNumber: string,
     mainDb: Sequelize,
     orgDb: Sequelize,
+    schemaName: string
   ): Promise<void> {
     logMessage("Processing Federal form computation.");
 
@@ -103,6 +104,7 @@ export class RdFormMapperService {
         accountRid,
         effectiveStart,
         caseRid,
+        schemaName
       );
 
     const filledFormUrl = await pdfFiller(
@@ -142,6 +144,7 @@ export class RdFormMapperService {
     mainDb: Sequelize,
     orgDb: Sequelize,
     states: string[],
+    schemaName: string
   ): Promise<void> {
     logMessage(
       `Processing State form computation for states: ${states.join(", ")}`,
@@ -194,6 +197,7 @@ export class RdFormMapperService {
           accountRid,
           effectiveStart,
           caseRid,
+          schemaName
         );
 
       const filledFormUrl = await pdfFiller(
@@ -216,7 +220,7 @@ export class RdFormMapperService {
       );
 
       logMessage(`Successfully saved state form URL for state: ${state}`);
-    }
+    } 
 
     logMessage(
       `Successfully completed state form processing for case: ${caseRid}`,
@@ -231,6 +235,7 @@ export class RdFormMapperService {
     accountRid: string,
     effectiveStart: string,
     caseRid: string,
+    schemaName: string
   ): Promise<any[]> {
     return Promise.all(
       mapperConfig.map(async (configItem: any) => {
@@ -253,6 +258,7 @@ export class RdFormMapperService {
                     mapperObject.is_json,
                     accountRid,
                     caseRid,
+                    schemaName
                   );
 
                 if (dynamicValue !== null) {
@@ -285,7 +291,6 @@ export class RdFormMapperService {
     try {
       // TODO: Remove hardcoded test data before production
       message = {
-        country_rid: "D001-5f058151-3b57-4f75-9f45-243a1f7aeb19",
         caseRid: "D001-a761961f-4890-4c22-a585-3e74a8b98770",
         accountRid: "D001-30cae4e8-b8c1-41fc-967a-6a6fb0a47597",
         effectiveStart: "2025-04-01",
@@ -342,6 +347,7 @@ export class RdFormMapperService {
             accountNumber,
             mainDb,
             orgDb,
+            schemaName
           );
           /*   await this.processStateForms(
             accountRid,
@@ -366,6 +372,7 @@ export class RdFormMapperService {
             accountNumber,
             mainDb,
             orgDb,
+            schemaName
           );
         },
         [ConfigType.STATE_ONLY]: async () => {
@@ -380,6 +387,7 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             availableConfig.states || [],
+            schemaName
           );
         },
         [ConfigType.NONE]: async () => {

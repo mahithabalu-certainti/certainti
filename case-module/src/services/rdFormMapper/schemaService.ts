@@ -240,12 +240,12 @@ WHERE dmfm.form_rid = :formId`;
     fieldName: string,
     is_json: boolean,
     account_rid: string,
-    case_rid: string
+    case_rid: string,
+    schemaName: string
   ): Promise<any> {
     const orgDb = await this.getOrgDb();
     logMessage(`Fetching field: ${fieldName} from ${refTable} (JSON: ${is_json})`);
 
-    const schemaName = 'trd365_00891';
     let query: string;
 
     if (is_json) {

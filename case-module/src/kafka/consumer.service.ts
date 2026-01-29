@@ -21,7 +21,7 @@ export class KafkaConsumerService {
     }
 
     private consumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID });
-    private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID + "-form" });
+    private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_FORM_GROUP_ID  });
 
     async start() {
         // Start original consumer
@@ -55,8 +55,8 @@ export class KafkaConsumerService {
             }
         });
 
-        // Start form consumer for another topic
-        const FORM_TOPIC = process.env.KAFKA_FORM_TOPIC || "rd_form_mapper_processing";
+        // Start form consumer for rd form filler
+        const FORM_TOPIC = ENV.KAFKA_FORM_TOPIC || "rd_form_mapper_processing";
         await this.formConsumer.connect();
         await this.formConsumer.subscribe({ topic: FORM_TOPIC, fromBeginning: false });
 
