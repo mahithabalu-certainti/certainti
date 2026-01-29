@@ -188,6 +188,7 @@ export class ActivityService {
             transaction
           );
       }
+      await transaction.commit();
       if (taskRequest?.tags.length > 0) {
         const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
           rawQueries.getActiveStatusId()
@@ -217,7 +218,7 @@ export class ActivityService {
           );
         } */
 
-      await transaction.commit();
+      
 
       return {
         statusCode: HttpStatus.SUCCESS,
