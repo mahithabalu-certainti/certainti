@@ -207,7 +207,8 @@ export const STATUS_MESSAGE = {
   financialWorkingSignedOff: "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed: "Failed to signoff financial working",
   regionsFetchedSuccess: "Regions listed successfully",
-  financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status"
+  financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
+  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully"
 };
 
 export const caseStatuses = {
@@ -1013,7 +1014,7 @@ export const rawQueries = {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
   },
   getActiveStatusId() {
-    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status where status_name = 'Active' limit 1`
   },
   getTaskTypeRid(rid: string) {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid = '${rid}'`
@@ -1580,6 +1581,9 @@ export const rawQueries = {
   updateClaimQualifiedInProjectFiscalSummary(projectFiscalRids: string[], accountRid: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = true WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
+  getFinancialWorkingId () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%financial_working%'`
+  },
   updateClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
     let ids = ProjectRegionIds.filter((d: any) => d.region_rid !== null)
     let validIds;
@@ -1654,6 +1658,12 @@ export const rawQueries = {
   },
   fetchFiscalEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  },
+  insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string) {
+    return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}')`
+  },
+  findSignOffTypes (rids : string[]) {
+    return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d : any) => `'${d}'`).join(',')})`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

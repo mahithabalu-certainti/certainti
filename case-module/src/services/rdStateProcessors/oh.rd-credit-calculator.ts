@@ -26,7 +26,7 @@ export class RdCreditCalculatorForOH {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year? : string) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year? : number) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
@@ -74,7 +74,7 @@ export class RdCreditCalculatorForOH {
             prev3_year,
             year
         }
-        const computedFields = await this.buildComputedFields(computeFieldsResp, config);
+        const computedFields = await this.buildComputedFields(computeFieldsResp, config, year!);
 
         return {
             inputFields,
@@ -153,13 +153,13 @@ export class RdCreditCalculatorForOH {
      * @param part5DevelopmentTaxCreditCalculationInfo 
      * @returns 
      */
-    buildComputedFields(computeFieldsResp: any, config : ConfigJson) {
+    buildComputedFields(computeFieldsResp: any, config : ConfigJson, year : number) {
         logMessage(`COMPUTE_FIELDS_RESP_${JSON.stringify(computeFieldsResp)}`)
         let finalData = {
             "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:":JSON.stringify(computeFieldsResp.year),
-            [`Tax Year ${computeFieldsResp.prev1_year} QREs`]:Number(computeFieldsResp.prev1_qre) || 0,
-            [`Tax Year ${computeFieldsResp.prev2_year} QREs`] :Number(computeFieldsResp.prev2_qre) || 0,
-            [`Tax Year ${computeFieldsResp.prev3_year} QREs`]: Number(computeFieldsResp.prev3_qre) || 0,
+            [`Tax Year ${year - 1} QREs`]:Number(computeFieldsResp.prev1_qre) || 0,
+            [`Tax Year ${year - 2} QREs`] :Number(computeFieldsResp.prev2_qre) || 0,
+            [`Tax Year ${year - 3} QREs`]: Number(computeFieldsResp.prev3_qre) || 0,
             "Average": Number(computeFieldsResp.average_tot_prev_qre) || 0,
             [`Total Investment in Qualifying Research Expense for Calendar Year ${computeFieldsResp.year}`]:Number(computeFieldsResp.total_current_year_qre) || 0,
             "Average Investment in Qualifying Research Expenses for Three Preceding Calendar Years":Number(computeFieldsResp.average_tot_prev_qre) || 0,

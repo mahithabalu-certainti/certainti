@@ -169,7 +169,8 @@ async function getAllAttachments(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       value.fiscalYear,
-      {}
+      {},
+      value.type
     );
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {

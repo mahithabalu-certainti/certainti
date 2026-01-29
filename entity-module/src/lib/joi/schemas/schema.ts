@@ -254,31 +254,31 @@ const createResourcesSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Name must be at least 2 characters long",
       "string.max": "Name must not exceed 64 characters"
     }),
   first_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "First name must be at least 2 characters long",
       "string.max": "First name must not exceed 64 characters"
     }),
   last_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Last name must be at least 2 characters long",
       "string.max": "Last name must not exceed 64 characters"
     }),
@@ -449,31 +449,31 @@ const updateResourceSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Name must be at least 2 characters long",
       "string.max": "Name must not exceed 64 characters"
     }),
   first_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+   .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "First name must be at least 2 characters long",
       "string.max": "First name must not exceed 64 characters"
     }),
   last_name: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, commas, hyphens and apostrophes",
       "string.min": "Last name must be at least 2 characters long",
       "string.max": "Last name must not exceed 64 characters"
     }),
@@ -1958,6 +1958,7 @@ const listAttachmentsSchema = Joi.object({
     }),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+  type: Joi.string().optional().allow(null),
 })
 
 const exportListAttachmentsSchema = Joi.object({
@@ -2007,7 +2008,8 @@ const exportListAttachmentsSchema = Joi.object({
     }),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
-  timezone: Joi.string().optional()
+  timezone: Joi.string().optional(),
+  type: Joi.string().optional().allow(null),
 })
 
 const listAttachmentSummarySchema = Joi.object({

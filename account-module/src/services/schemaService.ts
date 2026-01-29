@@ -131,6 +131,12 @@ class SchemaService {
       await this.createActivityAttachmentsTable(schemaName, sequelize);
       await this.createActivityHistoryTable(schemaName, sequelize);
       await this.createTaskHistoryTable(schemaName, sequelize);
+      await this.createTaskTagsTable(schemaName, sequelize);
+      await this.createTaskAttachmentsTable(schemaName, sequelize);
+      await this.createTaskCollaboratorsTable(schemaName, sequelize);
+      await this.createTaskCommentsTable(schemaName, sequelize);
+      await this.createCommentsAttachmentsTable(schemaName, sequelize);
+
 
       
       await transaction.commit();
@@ -1564,7 +1570,7 @@ class SchemaService {
     }
   }
 
-   private async createTaskHistoryTable(
+  private async createTaskHistoryTable(
     schemaName: string,
     sequelize: any
   ) {
@@ -1590,6 +1596,74 @@ class SchemaService {
       );
     }
   }
+
+  
+  private async createTaskTagsTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateTaskTagsSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateTaskTagsTableQuery(schemaName)
+    );
+  }
+
+  private async createTaskAttachmentsTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateTaskAttachmentsSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateTaskAttachmentsTableQuery(schemaName)
+    );
+  }
+
+  private async createTaskCollaboratorsTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateTaskCollaboratorsSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateTaskCollaboratorsTableQuery(schemaName)
+    );
+  }
+
+  private async createTaskCommentsTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateTaskCommentsSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateTaskCommentsTableQuery(schemaName)
+    );
+  }
+
+  private async createCommentsAttachmentsTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateCommentAttachmentsSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateCommentAttachmentsTableQuery(schemaName)
+    );
+  }
+
+
 
 
   async insertAccountDetails(

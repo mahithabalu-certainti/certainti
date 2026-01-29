@@ -83,6 +83,7 @@ import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } 
 import { RdCreditProcess, setupRdCreditProcessSequence } from "../../models/rdCreditProcessModel";
 import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
+import { setupSignoffDetailsSequence, SignoffDetails } from "../../models/signoffDetails";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -879,27 +880,7 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
-      const TaskCollaboratorsModel = TaskCollaborators.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-      const TaskTagsModel = TaskTag.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-
-      const TaskCommentsModel = TaskComments.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-      const CommentsAttachmentsModel = CommentsAttachments.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-      const TaskAttachmentsModel = TaskAttachments.initialise(
-        orgDbSequlize,
-        schemaName
-      )
+    
       const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(
         orgDbSequlize,
         schemaName
@@ -936,6 +917,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const SignoffDetailsModel = SignoffDetails.initialize(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -953,16 +938,6 @@ class CaseSchemaService {
       await setupCaseMilestoneSequence(orgDbSequlize, schemaName);
       await CaseTaskModel.sync({ force: false });
       await setupCaseTaskSequence(orgDbSequlize, schemaName);
-      await TaskCollaboratorsModel.sync({ force: false });
-      await setupTaskCollaboratorsSequence(orgDbSequlize, schemaName)
-      await TaskTagsModel.sync({ force: false })
-      await setupTaskTagSequence(orgDbSequlize, schemaName)
-      await TaskCommentsModel.sync({ force: false })
-      await setupTaskCommentsSequence(orgDbSequlize, schemaName)
-      await CommentsAttachmentsModel.sync({ force: false })
-      await setupCommentsAttachmentsSequence(orgDbSequlize, schemaName)
-      await TaskAttachmentsModel.sync({ force: false })
-      await setupTaskAttachmentsSequence(orgDbSequlize, schemaName)
       await caseHistorySubmissionModel.sync({ force: false });
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
       await CaseTaskWorkflowConnectorModel.sync({ force: false });
@@ -980,6 +955,8 @@ class CaseSchemaService {
       await setupRdCreditProcessSequence(orgDbSequlize, schemaName);
       await RdCreditStateCalculationsModel.sync({ force: false });
       await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName);
+      await SignoffDetailsModel.sync({force : false});
+      await setupSignoffDetailsSequence(orgDbSequlize, schemaName)
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);

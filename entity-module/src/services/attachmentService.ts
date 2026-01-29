@@ -2,9 +2,9 @@ import moment, { Moment } from "moment";
 import "moment-timezone";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Attachment, setupAttachmentSeq } from "../models/attachments";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { DOSSIER_NAME, HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import { ICreateAttachment } from "../utils/types";
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import SchemaService from "./schemaService";
 import { Logger } from "winston";
@@ -286,7 +286,8 @@ export class AttachmentService {
     sortBy: string = "created_datetime",
     sortOrder: string = "DESC",
     fiscalYear: number = 0,
-    graphqlData?: any
+    graphqlData?: any,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -321,6 +322,8 @@ export class AttachmentService {
       // Handle attached_to and uploaded_by filters separately
       let attachedToFilter;
       let uploadedByFilter;
+      let projectNameFilter;
+      let projectCodeFilter;
       if (filters.attached_to) {
         attachedToFilter = filters.attached_to;
         delete filters.attached_to;
@@ -328,6 +331,14 @@ export class AttachmentService {
       if (filters.uploaded_by) {
         uploadedByFilter = filters.uploaded_by;
         delete filters.uploaded_by;
+      }
+      if (filters.project_name) {
+        projectNameFilter = filters.project_name;
+        delete filters.project_name;
+      }
+      if (filters.project_code) {
+        projectCodeFilter = filters.project_code;
+        delete filters.project_code;
       }
 
       const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -510,18 +521,25 @@ export class AttachmentService {
 
       // 🔷 Project logic
       else if (attachmentLevel === "project" && entityId) {
+        let entityIds : string[]
+        if(type === DOSSIER_NAME) {
+          let orgSchemaName = rawQueries.fetchSchemaName(schemaNumber)
+          const caseProjectIds = await orgDbSequelize.query<string[]>(rawQueries.fetchAssignedProjectIds(entityId, orgSchemaName), {type : QueryTypes.SELECT})
+          entityIds = caseProjectIds.map((d : any) => d.project_fiscal_rid)
+        } else entityIds = [entityId]
         const projectAttachments = await fetchAttachments(
           AttachmentModel,
           "project",
-          [entityId]
+          entityIds
         );
         allAttachments.push(...projectAttachments);
-
-        const projectChildAttachments =
-          await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
-            entityId,
-          ]);
-        allAttachments.push(...projectChildAttachments);
+        if(type !== DOSSIER_NAME) {
+           const projectChildAttachments =
+            await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
+              entityId,
+            ]);
+          allAttachments.push(...projectChildAttachments);
+        }
       }
 
       // 🔷 Project_resource logic
@@ -607,7 +625,8 @@ export class AttachmentService {
       }
       const attachmentDisplayNames = await this.getAttachmentDisplayNames(
         allAttachments,
-        schemaNumber
+        schemaNumber,
+        type
       );
 
       // 🔷 Apply attached_to filter if present
@@ -633,6 +652,58 @@ export class AttachmentService {
         });
       }
 
+      if (uploadedByFilter) {
+        allAttachments = allAttachments.filter((attachment) => {
+          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
+          const operator = Object.keys(uploadedByFilter)[0];
+          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return uploadedBy.includes(filterValue);
+            case "equals":
+              return uploadedBy === filterValue;
+            case "not_equals":
+              return uploadedBy !== filterValue || uploadedBy === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectCodeFilter) {
+        allAttachments = allAttachments.filter((attachment) => {
+          const projectCode = attachment.project_code?.toLowerCase() || "";
+          const operator = Object.keys(projectCodeFilter)[0];
+          const filterValue = (projectCodeFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectCode.includes(filterValue);
+            case "equals":
+              return projectCode === filterValue;
+            case "not_equals":
+              return projectCode !== filterValue || projectCode === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectNameFilter) {
+        allAttachments = allAttachments.filter((attachment) => {
+          const projectName = attachment.project_name?.toLowerCase() || "";
+          const operator = Object.keys(projectNameFilter)[0];
+          const filterValue = (projectNameFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectName.includes(filterValue);
+            case "equals":
+              return projectName === filterValue;
+            case "not_equals":
+              return projectName !== filterValue || projectName === null;
+            default:
+              return false;
+          }
+        });
+      }
+
       // 🔷 Sort
       const validSortFields = [
         "document_name",
@@ -647,6 +718,8 @@ export class AttachmentService {
         "comments",
         "uploaded_by",
         "fiscal_year",
+        "project_name",
+        "project_code"
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -808,23 +881,36 @@ export class AttachmentService {
             : bType.localeCompare(aType);
         });
       }
+      if (sortBy === "project_code") {
+        attachments.sort((a, b) => {
+          const aType = a.project_code || "";
+          const bType = b.project_code || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
 
-      // Apply uploaded_by filter if present
-      if (uploadedByFilter) {
-        attachments = attachments.filter((attachment) => {
-          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
-          const operator = Object.keys(uploadedByFilter)[0];
-          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
-          switch (operator) {
-            case "contains":
-              return uploadedBy.includes(filterValue);
-            case "equals":
-              return uploadedBy === filterValue;
-            case "not_equals":
-              return uploadedBy !== filterValue || uploadedBy === null;
-            default:
-              return false;
-          }
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+      if (sortBy === "project_name") {
+        attachments.sort((a, b) => {
+          const aType = a.project_name || "";
+          const bType = b.project_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
         });
       }
 
@@ -904,7 +990,8 @@ export class AttachmentService {
     sortOrder: string = "DESC",
     fiscalYear: number = 0,
     graphqlData?: any,
-    timezone : string = ``
+    timezone : string = ``,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -939,6 +1026,8 @@ export class AttachmentService {
       // Handle attached_to and uploaded_by filters separately
       let attachedToFilter;
       let uploadedByFilter;
+      let projectCodeFilter;
+      let projectNameFilter;
       if (filters.attached_to) {
         attachedToFilter = filters.attached_to;
         delete filters.attached_to;
@@ -946,6 +1035,14 @@ export class AttachmentService {
       if (filters.uploaded_by) {
         uploadedByFilter = filters.uploaded_by;
         delete filters.uploaded_by;
+      }
+      if (filters.project_code) {
+        projectCodeFilter = filters.project_code;
+        delete filters.project_code;
+      }
+      if (filters.project_name) {
+        projectNameFilter = filters.project_name;
+        delete filters.project_name;
       }
 
       const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1127,18 +1224,25 @@ export class AttachmentService {
 
       // 🔷 Project logic
       else if (attachmentLevel === "project" && entityId) {
+        let entityIds : string[]
+        if(type === DOSSIER_NAME) {
+          let orgSchemaName = rawQueries.fetchSchemaName(schemaNumber)
+          const caseProjectIds = await orgDbSequelize.query<string[]>(rawQueries.fetchAssignedProjectIds(entityId, orgSchemaName), {type : QueryTypes.SELECT})
+          entityIds = caseProjectIds.map((d : any) => d.project_fiscal_rid)
+        } else entityIds = [entityId]
         const projectAttachments = await fetchAttachments(
           AttachmentModel,
           "project",
-          [entityId]
+          entityIds
         );
         allAttachments.push(...projectAttachments);
-
-        const projectChildAttachments =
-          await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
-            entityId,
-          ]);
-        allAttachments.push(...projectChildAttachments);
+        if(type !== DOSSIER_NAME) {
+           const projectChildAttachments =
+            await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
+              entityId,
+            ]);
+          allAttachments.push(...projectChildAttachments);
+        }
       }
 
       // 🔷 Project_resource logic
@@ -1233,6 +1337,58 @@ export class AttachmentService {
               return displayValue === filterValue;
             case "not_equals":
               return displayValue !== filterValue || displayValue === null;
+            default:
+              return false;
+          }
+        });
+      }
+
+      if (uploadedByFilter) {
+        allAttachments = allAttachments.filter((attachment) => {
+          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
+          const operator = Object.keys(uploadedByFilter)[0];
+          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return uploadedBy.includes(filterValue);
+            case "equals":
+              return uploadedBy === filterValue;
+            case "not_equals":
+              return uploadedBy !== filterValue || uploadedBy === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectCodeFilter) {
+        allAttachments = allAttachments.filter((attachment) => {
+          const projectCode = attachment.project_code?.toLowerCase() || "";
+          const operator = Object.keys(projectCodeFilter)[0];
+          const filterValue = (projectCodeFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectCode.includes(filterValue);
+            case "equals":
+              return projectCode === filterValue;
+            case "not_equals":
+              return projectCode !== filterValue || projectCode === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectNameFilter) {
+        allAttachments = allAttachments.filter((attachment) => {
+          const projectName = attachment.project_name?.toLowerCase() || "";
+          const operator = Object.keys(projectNameFilter)[0];
+          const filterValue = (projectNameFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectName.includes(filterValue);
+            case "equals":
+              return projectName === filterValue;
+            case "not_equals":
+              return projectName !== filterValue || projectName === null;
             default:
               return false;
           }
@@ -1367,6 +1523,38 @@ export class AttachmentService {
             : bType.localeCompare(aType);
         });
       }
+      if (sortBy === "project_code") {
+        attachments.sort((a, b) => {
+          const aType = a.project_code || "";
+          const bType = b.project_code || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+      if (sortBy === "project_name") {
+        attachments.sort((a, b) => {
+          const aType = a.project_name || "";
+          const bType = b.project_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
 
       // Handle document_type sorting
       if (sortBy === "document_type") {
@@ -1416,6 +1604,8 @@ export class AttachmentService {
         }
       }
       const labelMap: Record<string, string> = {
+        "Project ID": "Project ID",
+        "Project Name": "Project Name",
         "Document Name": "Document Name",
         Format: "Format",
         Size: "Size",
@@ -1429,25 +1619,6 @@ export class AttachmentService {
         "Attached On": "Attached On",
         "Attachment ID": "Attachment ID",
       };
-      // Apply uploaded_by filter if present
-      if (uploadedByFilter) {
-        attachments = attachments.filter((attachment) => {
-          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
-          const operator = Object.keys(uploadedByFilter)[0];
-          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
-          switch (operator) {
-            case "contains":
-              return uploadedBy.includes(filterValue);
-            case "equals":
-              return uploadedBy === filterValue;
-            case "not_equals":
-              return uploadedBy !== filterValue || uploadedBy === null;
-            default:
-              return false;
-          }
-        });
-      }
-
       // Add "mb" suffix to size values for attachments
       attachments = attachments.map((attachment) => ({
         ...attachment,
@@ -1488,6 +1659,8 @@ export class AttachmentService {
   // Helper function to map attachment data to common format
   private mapAttachmentToCommonFormat(at: any, timezone : string) {
     return {
+      "Project ID": at.project_code || "-",
+      "Project Name": at.project_name || "-",
       "Document Name": at.document_name || "-",
       Format: at.format || "-",
       Size: at.size_in_mb || "-",
@@ -2309,6 +2482,8 @@ export class AttachmentService {
         "Attached By": "Attached By",
         "Attached On": "Attached On",
         "Attachment ID": "Attachment ID",
+        "Project ID" : "Project ID",
+        "Project Name": "Project Name"
       };
 
       attachments = attachments.map((at) => {
@@ -2345,7 +2520,7 @@ export class AttachmentService {
 
 
 // Helper method to get display names for attachments
-private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<Record<string, string>> {
+private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string, type? : string): Promise<Record<string, string>> {
   const displayNames: Record<string, string> = {};
   for (const attachment of attachments) {
     try {
@@ -2357,6 +2532,10 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
         case 'project':
           const project = await this.projectIngestionService.fetchProjectInfoById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = project?.project_code || attachment.attach_to;
+          if(type === DOSSIER_NAME) {
+            attachment.dataValues.project_code = project?.project_code || ''
+            attachment.dataValues.project_name = project?.project_name || ''
+          }
           break;
         case 'project_resource':
           const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, attachment.attach_to);

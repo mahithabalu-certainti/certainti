@@ -20,7 +20,7 @@ import { DataMapperForms } from "./dataMapperForms";
 import { DataMapperFormMappings } from "./dataMapperFormMappings";
 import { DataMapperObjects } from "./dataMapperObjects";
 import { DataMapperUploadStatus } from "./dataMapperUploadStatus";
-
+import { SignoffDetails } from "./signoffDetails";
 
 export const models = {
   Case,
@@ -43,7 +43,7 @@ export const models = {
   DataMapperFormMappings,
   DataMapperObjects,
   DataMapperUploadStatus,
-
+  SignoffDetails
 };
 
 export async function initModels() {
