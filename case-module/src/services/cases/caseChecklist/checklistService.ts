@@ -129,6 +129,7 @@ export class ChecklistService {
               },
             };
           } catch (err) {
+            console.log(err);
              const errorMessage = err instanceof Error ? err.message : err;
             logMessage(`Error creating checklist: ${errorMessage}`);
             await transaction.rollback();
