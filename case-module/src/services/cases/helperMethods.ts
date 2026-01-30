@@ -220,6 +220,7 @@ export class HelperMethods {
         return null;
       }
     } catch (error) {
+      console.log(error);
       const errorMessage = error instanceof Error ? error.message : error;
       logMessage(`Error creating checklist: ${errorMessage}`);
       throw new Error("Error creating checklist: " + errorMessage);
