@@ -114,44 +114,44 @@ export interface BasePayload {
 export const getChecklistTableColumns = (
   isEditView: boolean
 ): ChecklistFormTableColumn[] => [
-  {
-    name: 'checklist_seq_num',
-    label: 'S.No',
-    width: '60px',
-    align: 'center',
-    required: false,
-    hide: true,
-  },
-  {
-    name: 'checklist_item_name',
-    label: 'Checklist Item Name',
-    width: isEditView ? '40%' : '44%',
-    required: true,
-    hide: false,
-  },
-  {
-    name: 'description',
-    label: 'Comments',
-    width: isEditView ? '40%' : '50%',
-    required: false,
-    hide: false,
-  },
-  {
-    name: 'status',
-    label: 'Status',
-    width: '14%',
-    required: true,
-    hide: !isEditView,
-  },
-  {
-    name: 'action',
-    label: 'Action',
-    width: '6%',
-    align: 'center',
-    required: false,
-    hide: false,
-  },
-];
+    {
+      name: 'checklist_seq_num',
+      label: 'S.No',
+      width: '60px',
+      align: 'center',
+      required: false,
+      hide: true,
+    },
+    {
+      name: 'checklist_item_name',
+      label: 'Checklist Item Name',
+      width: isEditView ? '40%' : '44%',
+      required: true,
+      hide: false,
+    },
+    {
+      name: 'description',
+      label: 'Comments',
+      width: isEditView ? '40%' : '50%',
+      required: false,
+      hide: false,
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      width: '14%',
+      required: true,
+      hide: !isEditView,
+    },
+    {
+      name: 'action',
+      label: 'Action',
+      width: '6%',
+      align: 'center',
+      required: false,
+      hide: false,
+    },
+  ];
 
 export const shouldHideField = (
   fieldName: string,
@@ -275,12 +275,25 @@ export const checklistItemsTransformPayload = (
   formItems.forEach((item) => {
     if (isEdit && item.rid) {
       retainedRids.add(item.rid);
+
+      // Find the corresponding existing item to compare
+      const existingItem = existingItems.find(
+        (existing) => existing.rid === item.rid
+      );
+
+      // Check if any field has changed
+      const hasChanged = existingItem
+        ? existingItem.checklist_item_name !== item.checklist_item_name ||
+        existingItem.checklist_item_description !== item.description ||
+        existingItem.status_rid !== (item.status || '')
+        : false;
+
       transformedItems.push({
         checklist_item_rid: item.rid,
         checklist_item_name: item.checklist_item_name,
         checklist_item_description: item.description,
         status_rid: item.status || '',
-        action_type: ItemActionType.Edit,
+        action_type: hasChanged ? ItemActionType.Edit : '',
       });
     } else if (!item.rid && item.checklist_item_name.trim()) {
       transformedItems.push({

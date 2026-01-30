@@ -600,6 +600,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return combined;
   }, [collaboratorUsers, assigneeUsers]);
 
+  // Use ref to track previous rawTask to detect when it actually changes
+  const prevRawTaskRef = useRef<typeof rawTask>(null);
+
   useEffect(() => {
     if (rawTask) {
       const enriched = enrichTask(rawTask);
@@ -640,6 +643,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         });
       }
 
+      // Preserve checklist state if rawTask hasn't changed (effect triggered by collaborator/user changes only)
+      // This prevents checklist from being reset when adding/removing collaborators
+      const isRawTaskSame = prevRawTaskRef.current === rawTask;
+      if (isRawTaskSame && editedTask?.checklist && editedTask.checklist.length > 0) {
+        enriched.checklist = editedTask.checklist;
+      }
+      prevRawTaskRef.current = rawTask;
+
       setTask(enriched);
       setEditedTask(enriched);
       setOriginalTask(enriched);
@@ -660,7 +671,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setLinkTaskTypes(enriched.linkTaskTypes || []);
       setIsLoadingTaskDetails(false);
     }
-  }, [rawTask, assigneeUsers, allEnrichedUsers]);
+  }, [rawTask, assigneeUsers, allEnrichedUsers, editedTask?.checklist]);
 
   useEffect(() => {
     if (!editedTask) return;

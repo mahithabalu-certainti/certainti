@@ -231,7 +231,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     if (openTaskId !== null && isCaseTeamViewEnable) {
       caseTeamMembersQuery.refetch();
     }
-  }, [openTaskId, isCaseTeamViewEnable, caseTeamMembersQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openTaskId, isCaseTeamViewEnable]);
 
   const handleTaskSaved = useCallback(() => {
     queryClient.invalidateQueries({
