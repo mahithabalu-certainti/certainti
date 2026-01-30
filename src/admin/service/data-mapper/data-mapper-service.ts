@@ -10,13 +10,12 @@ import {
   DataMapperConfigPayload,
   DataMapperConfigResponse,
   ObjectItem,
+  DataMapperListResponse,
+  DataMapperDetailsResponse,
+  MappingDetailsResponse,
+  ObjectsListResponse,
+  DataMapperStatusApiResponse,
 } from '../../types/data-mapper';
-import {
-  DataMapperDetailsMockData,
-  DataMapperListMockData,
-  MappingDetailsMockData,
-  ObjectsListMockData,
-} from '../../mockdata/data-mapper';
 
 const useApiMutationService = <T, V = void>(
   endpoint: string,
@@ -52,7 +51,7 @@ export const useCreateDataMapper = () => {
 export const useUpdateDataMapper = () => {
   return useApiMutationService<DataMapperCreateResponse, FormData>(
     '/api/dataMapper/update',
-    'put'
+    'post'
   );
 };
 
@@ -60,17 +59,11 @@ export const useUpdateDataMapper = () => {
 export const fetchDataMapperDetails = async (
   formId: string
 ): Promise<DataMapperDetails> => {
-  // const response = await caseServiceApi.get<DataMapperDetailsResponse>(
-  //   `/api/dataMapper/detail/${formId}`
-  // );
+  const response = await caseServiceApi.get<DataMapperDetailsResponse>(
+    `/api/dataMapper/detail/${formId}`
+  );
 
-  // return response.data.data;
-
-  console.log('data-mapper-details', formId);
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return DataMapperDetailsMockData.data;
+  return response.data.data;
 };
 
 export const useDataMapperDetails = (
@@ -90,22 +83,13 @@ export const useDataMapperDetails = (
 const fetchDataMapperList = async (
   params: DataMapperListParams
 ): Promise<{ items: DataMapperListItem[]; count: number }> => {
-  // const response = await caseServiceApi.post<DataMapperListResponse>(
-  //   '/api/dataMapper/list',
-  //   params
-  // );
-  // return {
-  //   items: response.data.data.items,
-  //   count: response.data.data.totalCount,
-  // };
-
-  console.log('data-mapper-list', params);
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
+  const response = await caseServiceApi.post<DataMapperListResponse>(
+    '/api/dataMapper/list',
+    params
+  );
   return {
-    items: DataMapperListMockData.data.items,
-    count: DataMapperListMockData.data.totalCount,
+    items: response.data.data.items,
+    count: response.data.data.totalCount,
   };
 };
 
@@ -166,16 +150,10 @@ export const ExportDataMapperList = async (
 export const fetchMappingDetails = async (
   rid: string
 ): Promise<MappingDetailsData> => {
-  // const response = await caseServiceApi.get<MappingDetailsResponse>(
-  //   `/api/dataMapper/mappingDetail/${rid}`
-  // );
-  // return response.data.data;
-
-  console.log('mapping-details', rid);
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return MappingDetailsMockData.data;
+  const response = await caseServiceApi.get<MappingDetailsResponse>(
+    `/api/dataMapper/mappingDetail/${rid}`
+  );
+  return response.data.data;
 };
 
 export const useMappingDetails = (
@@ -196,16 +174,10 @@ export const fetchObjectsList = async (
   country_rid: string,
   state_rid: string
 ): Promise<ObjectItem[]> => {
-  // const response = await caseServiceApi.get<ObjectsListResponse>(
-  //   `/api/dataMapper/objectsList?country_rid=${country_rid}&state_rid=${state_rid}`
-  // );
-  // return response.data.data;
-
-  console.log('objects-list', country_rid, state_rid);
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return ObjectsListMockData.data;
+  const response = await caseServiceApi.get<ObjectsListResponse>(
+    `/api/dataMapper/objectsList?country_rid=${country_rid}&state_rid=${state_rid}`
+  );
+  return response.data.data;
 };
 
 export const useObjectsList = (
@@ -235,5 +207,33 @@ export const updateDataMapperConfig = async (
 export const useUpdateDataMapperConfig = () => {
   return useMutation<DataMapperConfigResponse, Error, DataMapperConfigPayload>({
     mutationFn: (body) => updateDataMapperConfig(body),
+  });
+};
+
+
+//----- Data Mapper Status --------
+export const fetchDataMapperStatus = async (
+): Promise<DataMapperStatusApiResponse> => {
+  try {
+    const { data } =
+      await caseServiceApi.get<DataMapperStatusApiResponse>(
+        `/api/dataMapper/uploadStatus/list`
+      );
+    return data;
+  } catch (error) {
+    console.error('Error fetching data mapper status:', error);
+    throw error;
+  }
+};
+
+export const useGetDataMapperStatus = () => {
+  return useQuery<DataMapperStatusApiResponse, Error>({
+    queryKey: ['data-mapper-status'],
+    queryFn: () => fetchDataMapperStatus(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };

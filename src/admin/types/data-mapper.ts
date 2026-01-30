@@ -149,6 +149,7 @@ export interface FormDetail {
   status_name: string;
   created_by_name: string;
   modified_by_name: string | null;
+  form_type: 'fillable' | 'non-fillable';
 }
 
 export interface FieldMapping {
@@ -161,6 +162,8 @@ export interface FieldMapping {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
+  field_type: 'line-item' | 'table';
+  column_id: string | null;
 }
 
 export interface MappingDetailsData {
@@ -190,6 +193,7 @@ export interface ObjectItem {
   parent_object: string;
   object_name: string;
   is_json: boolean;
+  field_type: 'line-item' | 'table';
 }
 
 export interface ObjectsListResponse {
@@ -224,4 +228,24 @@ export interface DataMapperConfigResponse {
   data: {
     rid: string;
   };
+}
+
+
+//------ Data Mapper status --------
+export interface DataMapperStatus {
+  rid: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string | null;
+  modified_by: string | null;
+  status_name: string;
+  status_description: string;
+  status: 'active' | 'inactive' | string;
+}
+
+export interface DataMapperStatusApiResponse {
+   statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: DataMapperStatus[];
 }

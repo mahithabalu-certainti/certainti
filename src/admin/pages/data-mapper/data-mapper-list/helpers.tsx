@@ -49,6 +49,12 @@ export const getDataMapperFilterFields = (
 ): FieldConfig[] => {
   return [
     {
+      label: 'Form ID',
+      name: 'r_number',
+      type: 'text',
+      operatorOption: textfieldOptions,
+    },
+    {
       label: 'Name',
       name: 'form_name',
       type: 'text',
@@ -110,7 +116,7 @@ export const getDataMapperFilterFields = (
     },
     {
       label: 'Created By',
-      name: 'created_user_name',
+      name: 'created_by_name',
       type: 'text',
       operatorOption: textfieldOptions,
     },
@@ -122,7 +128,7 @@ export const getDataMapperFilterFields = (
     },
     {
       label: 'Updated By',
-      name: 'modified_user_name',
+      name: 'modified_by_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
     },

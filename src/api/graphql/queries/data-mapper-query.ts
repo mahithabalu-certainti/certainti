@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 
 export const UPDATE_DATA_MAPPER = gql`
-  mutation UpdateDataMapperInline($data: UpdateDataMapperInline!) {
+  mutation UpdateDataMapperInline($data: dataMapperInlineInput!) {
     updateDataMapperInline(data: $data) {
       statusCode
       statusCodeValue

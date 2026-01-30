@@ -187,7 +187,8 @@ interface ValidationErrors {
 }
 
 export function validateMappingItem(
-  mapping: MappingItemForValidation
+  mapping: MappingItemForValidation,
+  isNonFillable = false
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
@@ -202,8 +203,8 @@ export function validateMappingItem(
     hasCalculationConfig || hasFieldExpressions || hasInputValue;
   const hasFieldId = mapping.field_id && mapping.field_id.trim() !== '';
 
-  // Validate Field ID requirement
-  if (hasTarget && !hasFieldId) {
+  // Validate Field ID requirement (skip for non-fillable forms)
+  if (hasTarget && !hasFieldId && !isNonFillable) {
     errors.fieldIdError = 'Field ID is required when Target is specified';
   }
 

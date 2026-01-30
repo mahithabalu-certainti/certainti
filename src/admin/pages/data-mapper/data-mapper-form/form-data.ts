@@ -43,7 +43,7 @@ export const DataMapperFormData = (
           onChange: true,
         }),
         createDateField('effective_to_date', 'Effective To Date', {
-          required: true,
+          required: false,
           allowFutureDates: true,
           minDate: effectiveFromDate
             ? dayjs(effectiveFromDate).add(1, 'day').toDate()
@@ -58,7 +58,7 @@ export const DataMapperFormData = (
         createSelectField('state_rid', 'Region', {
           options: stateOptions,
           placeholder: 'Choose Region',
-          required: true,
+          required: false,
           disabled: statesLoading,
           isLoading: statesLoading,
         }),

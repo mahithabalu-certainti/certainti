@@ -115,6 +115,8 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     const link = document.createElement('a');
     link.href = documentUrl;
     link.download = '';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -160,6 +162,7 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
   const actionButtons: ActionItem<DataMapperListItem>[] = [
     {
       label: 'Edit',
+      disabled: (row) => row?.status_name?.toLowerCase() === 'initiated',
       onClick: (row) => handleEdit(row),
     },
   ];

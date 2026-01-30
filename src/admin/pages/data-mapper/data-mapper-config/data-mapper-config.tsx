@@ -34,6 +34,7 @@ interface MappingItem {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
+  field_type: 'line-item' | 'table';
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
@@ -137,8 +138,10 @@ const DataMapperConfig: React.FC = () => {
   const handleSubmit = async () => {
     // Validate all mappings and set errors
     let hasErrors = false;
+    const isNonFillable =
+      mappingData?.formDetail?.form_type?.toLowerCase() === 'non-fillable';
     const validatedMappings = mappings.map((mapping) => {
-      const errors = validateMappingItem(mapping);
+      const errors = validateMappingItem(mapping, isNonFillable);
       if (errors.fieldIdError || errors.targetError) {
         hasErrors = true;
       }
@@ -283,7 +286,7 @@ const DataMapperConfig: React.FC = () => {
             </div>
             {/* Section 2 */}
             <div className='flex items-center align-middle px-10 h-[30px] border border-b-0 border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Data Mapping
+              Data Mapping - {fields.length}
             </div>
             <SectionHeaderTab
               key={activeTab}
@@ -320,6 +323,7 @@ const DataMapperConfig: React.FC = () => {
                   mappings={mappings}
                   objectsList={objectsList || []}
                   onMappingsChange={handleMappingsChange}
+                  formType={mappingData?.formDetail?.form_type}
                 />
               </div>
             </div>

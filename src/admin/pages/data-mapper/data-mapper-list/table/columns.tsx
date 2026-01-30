@@ -86,14 +86,14 @@ export const getDataMapperColumns = (
     sortId: 'format',
     label: 'Format',
     width: 90,
-    sortable: true,
+    sortable: false,
     // hide: !permissionMap?.['format']?.read && !permissionMap?.['format']?.edit,
   },
   {
     id: 'size_in_mb',
     sortId: 'size_in_mb',
-    label: 'Size',
-    width: 100,
+    label: 'Size (MB)',
+    width: 105,
     sortable: true,
     // hide:
     //   !permissionMap?.['size_in_mb']?.read &&
@@ -144,7 +144,7 @@ export const getDataMapperColumns = (
     //   !permissionMap?.['state_name']?.edit,
     field: {
       type: 'select',
-      required: true,
+      required: false,
       placeholder: 'Choose Region',
       options: regionOptions,
       loading: regionLoading,
@@ -185,6 +185,7 @@ export const getDataMapperColumns = (
         endFieldId: 'effective_to_date',
         startFieldLabel: 'Effective From Date',
         endFieldLabel: 'Effective To Date',
+        bothStartEndRequireValidate: false,
       },
       getFieldData: (rowData: DependencyRowData) => {
         handleDateRange?.(String(rowData.effective_from_date) || '');
@@ -216,7 +217,7 @@ export const getDataMapperColumns = (
       row.effective_to_date ? getDateFormat(row.effective_to_date) : '-',
     field: {
       type: 'date',
-      required: true,
+      required: false,
       placeholder: 'YYYY-MM-DD',
       dateConfig: {
         disableFutureDates: false,
@@ -225,6 +226,7 @@ export const getDataMapperColumns = (
         startFieldLabel: 'Effective From Date',
         endFieldLabel: 'Effective To Date',
         minDate: dateRange.endMin || '',
+        bothStartEndRequireValidate: false,
       },
       getFieldData: (rowData: DependencyRowData) => {
         handleDateRange?.(String(rowData.effective_from_date) || '');
@@ -304,16 +306,25 @@ export const getDataMapperColumns = (
     label: 'Config',
     width: 90,
     sortable: false,
-    render: (row) => (
-      <span
-        onClick={() => {
-          handleConfig(row);
-        }}
-        className='cursor-pointer !text-[#1755E7] underline hover:text-[#1755E7]'
-      >
-        Config
-      </span>
-    ),
+    render: (row) => {
+      const enableConfig = row?.status_name?.toLowerCase() !== 'initiated';
+      return (
+        <span
+          onClick={() => {
+            if (enableConfig) {
+              handleConfig(row);
+            }
+          }}
+          className={`${
+            enableConfig
+              ? 'cursor-pointer !text-[#1755E7] underline hover:text-[#1755E7]'
+              : 'cursor-default text-gray-500 underline'
+          }`}
+        >
+          Config
+        </span>
+      );
+    },
   },
   {
     id: 'attachment',

@@ -8,8 +8,11 @@ import { DataMapperListParams } from '../../../types';
 import { DATA_MAPPER_CREATE } from '../../../../routes';
 import { DataMapperTable } from './table/data-mapper-table';
 import { getDataMapperFilterFields } from './helpers';
-import { ExportDataMapperList } from '../../../service/data-mapper/data-mapper-service';
-import { useGetAllCountries, useGetStatus } from '../../../../common-service';
+import {
+  ExportDataMapperList,
+  useGetDataMapperStatus,
+} from '../../../service/data-mapper/data-mapper-service';
+import { useGetAllCountries } from '../../../../common-service';
 import { useFetchState } from '../../../../consultant/services/account';
 import { FilterValue } from '../../../../consultant/types/account-filter';
 import SearchBar from '../../../../components/search/search-bar';
@@ -38,17 +41,17 @@ const DataMapper: React.FC = () => {
     setAnchorEl(event.currentTarget);
   };
 
-  const dataMapperStatus = useGetStatus();
+  const dataMapperStatus = useGetDataMapperStatus();
   const allCountries = useGetAllCountries();
   const regions = useFetchState(currentCountry?.toString() || '');
 
   const statusOptions = useMemo(
     () =>
-      dataMapperStatus.data?.data?.status.map((status) => ({
+      dataMapperStatus.data?.data?.map((status) => ({
         label: status.status_name,
         value: status.rid,
       })) || [],
-    [dataMapperStatus.data?.data?.status]
+    [dataMapperStatus.data?.data]
   );
 
   const countryOptions = useMemo(
@@ -155,7 +158,7 @@ const DataMapper: React.FC = () => {
             </React.Suspense>
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
-                Admin
+                Configure Settings
               </div>
               <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
                 Data Mapper

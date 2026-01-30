@@ -224,15 +224,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                   className={`w-3 h-3 ${currentPage === 1 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
                 />
               </IconButton>
-              <FormControl size='small'>
-                <Select
-                  value={currentPage}
-                  onChange={handlePageChange}
-                  MenuProps={COMMON_MENU_PROPS}
-                  sx={getSelectStyles(false, false)}
-                >
-                  {pdfDoc &&
-                    Array.from({ length: pdfDoc.numPages }, (_, i) => (
+              {pdfDoc && (
+                <FormControl size='small'>
+                  <Select
+                    value={currentPage}
+                    onChange={handlePageChange}
+                    MenuProps={COMMON_MENU_PROPS}
+                    sx={getSelectStyles(false, false)}
+                  >
+                    {Array.from({ length: pdfDoc.numPages }, (_, i) => (
                       <MenuItem
                         key={i + 1}
                         value={i + 1}
@@ -241,8 +241,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                         Page {i + 1}
                       </MenuItem>
                     ))}
-                </Select>
-              </FormControl>
+                  </Select>
+                </FormControl>
+              )}
               <IconButton
                 onClick={handleNextPage}
                 size='small'
@@ -272,9 +273,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           <Box ref={containerRef} className='relative inline-block'>
             <canvas ref={canvasRef} className='shadow-lg bg-white' />
 
-            {currentPageFields.map((field) => (
+            {currentPageFields.map((field, index) => (
               <Box
-                key={field.id}
+                key={`${field.id}_${field.page}_${index}`}
                 onClick={() => onFieldClick(field)}
                 className='absolute cursor-pointer border-2 transition-all hover:bg-blue-500 hover:bg-opacity-30'
                 style={{

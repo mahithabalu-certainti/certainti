@@ -99,6 +99,7 @@ export interface DateFieldConfig {
   endFieldId?: string;
   startFieldLabel?: string;
   endFieldLabel?: string;
+  bothStartEndRequireValidate?: boolean;
 }
 
 export interface TableField {

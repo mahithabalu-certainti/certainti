@@ -17,6 +17,7 @@ interface ObjectItem {
   object_name: string;
   ref_table: string;
   field_name: string | null;
+  field_type: 'line-item' | 'table';
 }
 
 interface FieldExpression {
@@ -33,6 +34,7 @@ interface MappingItem {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
+  field_type: 'line-item' | 'table';
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
@@ -43,12 +45,14 @@ interface MappingTableProps {
   mappings: MappingItem[];
   objectsList: ObjectItem[];
   onMappingsChange: (mappings: MappingItem[]) => void;
+  formType?: 'fillable' | 'non-fillable';
 }
 
 const MappingTable: React.FC<MappingTableProps> = ({
   mappings,
   objectsList,
   onMappingsChange,
+  formType,
 }) => {
   const [localMappings, setLocalMappings] = useState<MappingItem[]>([]);
   const [showAutocomplete, setShowAutocomplete] = useState<
@@ -545,8 +549,22 @@ const MappingTable: React.FC<MappingTableProps> = ({
 
     const searchText = currentInput.substring(atIndex + 1).toLowerCase();
 
+    // Filter objectsList by field_type to match the mapping's field_type
+    const filteredObjectsList = objectsList.filter(
+      (obj) => obj.field_type === mapping.field_type
+    );
+
+    // Build targetOptions from filtered objects
+    const filteredTargetOptions: Record<string, Record<string, string>> = {};
+    filteredObjectsList.forEach((item) => {
+      if (!filteredTargetOptions[item.parent_object]) {
+        filteredTargetOptions[item.parent_object] = {};
+      }
+      filteredTargetOptions[item.parent_object][item.object_name] = item.rid;
+    });
+
     if (searchText === '') {
-      const parents = Object.keys(targetOptions);
+      const parents = Object.keys(filteredTargetOptions);
       return parents;
     }
 
@@ -556,12 +574,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
       const [parentKeyLower, childKeyLower = ''] = searchText.split('.');
 
       // Find the actual parent key (case-insensitive match)
-      const actualParentKey = Object.keys(targetOptions).find(
+      const actualParentKey = Object.keys(filteredTargetOptions).find(
         (key) => key.toLowerCase() === parentKeyLower
       );
 
-      if (actualParentKey && targetOptions[actualParentKey]) {
-        const children = targetOptions[actualParentKey];
+      if (actualParentKey && filteredTargetOptions[actualParentKey]) {
+        const children = filteredTargetOptions[actualParentKey];
 
         // If childKey is empty (e.g., "Case."), show all children
         if (childKeyLower === '') {
@@ -586,22 +604,39 @@ const MappingTable: React.FC<MappingTableProps> = ({
     }
 
     // Filter parent objects (case-insensitive)
-    const filteredKeys = Object.keys(targetOptions).filter((key) =>
+    const filteredKeys = Object.keys(filteredTargetOptions).filter((key) =>
       key.toLowerCase().includes(searchText)
     );
 
     return filteredKeys;
   };
 
-  const getDisplayName = (optionValue: string): string => {
+  const getDisplayName = (optionValue: string, rid: string): string => {
     const dotCount = (optionValue.match(/\./g) || []).length;
 
     if (dotCount === 1) {
       // parent.child format - show as is
       return optionValue;
     } else {
-      // parent only - show count of children
-      const parentData = targetOptions[optionValue];
+      // parent only - show count of children filtered by field_type
+      const mapping = localMappings.find((m) => m.rid === rid);
+      if (!mapping) return optionValue;
+
+      // Filter objectsList by field_type to match the mapping's field_type
+      const filteredObjectsList = objectsList.filter(
+        (obj) => obj.field_type === mapping.field_type
+      );
+
+      // Build targetOptions from filtered objects
+      const filteredTargetOptions: Record<string, Record<string, string>> = {};
+      filteredObjectsList.forEach((item) => {
+        if (!filteredTargetOptions[item.parent_object]) {
+          filteredTargetOptions[item.parent_object] = {};
+        }
+        filteredTargetOptions[item.parent_object][item.object_name] = item.rid;
+      });
+
+      const parentData = filteredTargetOptions[optionValue];
       if (parentData) {
         const childCount = Object.keys(parentData).length;
         return `${optionValue} (${childCount})`;
@@ -666,21 +701,30 @@ const MappingTable: React.FC<MappingTableProps> = ({
           <TableRow>
             <TableCell
               sx={{
-                width: '30%',
+                width: formType === 'non-fillable' ? '35%' : '30%',
               }}
             >
               Field Label
             </TableCell>
+            {formType !== 'non-fillable' && (
+              <TableCell
+                sx={{
+                  width: '20%',
+                }}
+              >
+                Field ID
+              </TableCell>
+            )}
             <TableCell
               sx={{
-                width: '20%',
+                width: formType === 'non-fillable' ? '15%' : '10%',
               }}
             >
-              Field ID
+              Field Type
             </TableCell>
             <TableCell
               sx={{
-                width: '50%',
+                width: formType === 'non-fillable' ? '50%' : '40%',
               }}
             >
               Target
@@ -707,44 +751,53 @@ const MappingTable: React.FC<MappingTableProps> = ({
           {localMappings.map((mapping) => (
             <TableRow key={mapping.rid}>
               <TableCell sx={{ p: '8px' }}>{mapping.field_label}</TableCell>
-              <TableCell sx={{ p: '8px' }}>
-                <div
-                  className={`flex relative h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
-                >
-                  <textarea
-                    value={mapping.field_id || ''}
-                    onChange={(e) =>
-                      handleFieldIdChange(mapping.rid, e.target.value)
-                    }
-                    placeholder='Enter Field ID'
-                    rows={1}
-                    className={`w-full h-full px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none ${
-                      mapping.fieldIdError
-                        ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
-                        : 'border-gray-300 focus:border-blue-400'
-                    }`}
-                  />
-                  {mapping.fieldIdError && (
-                    <Tooltip
-                      title={mapping.fieldIdError}
-                      arrow
-                      placement='top'
-                      slotProps={{
-                        tooltip: {
-                          sx: {
-                            backgroundColor: '#FEF2F2',
-                            mr: 1,
+              {formType !== 'non-fillable' && (
+                <TableCell sx={{ p: '8px' }}>
+                  <div
+                    className={`flex relative h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                  >
+                    <textarea
+                      value={mapping.field_id || ''}
+                      onChange={(e) =>
+                        handleFieldIdChange(mapping.rid, e.target.value)
+                      }
+                      placeholder='Enter Field ID'
+                      rows={1}
+                      className={`w-full h-full px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none ${
+                        mapping.fieldIdError
+                          ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
+                          : 'border-gray-300 focus:border-blue-400'
+                      }`}
+                    />
+                    {mapping.fieldIdError && (
+                      <Tooltip
+                        title={mapping.fieldIdError}
+                        arrow
+                        placement='top'
+                        slotProps={{
+                          tooltip: {
+                            sx: {
+                              backgroundColor: '#FEF2F2',
+                              mr: 1,
+                            },
                           },
-                        },
-                      }}
-                    >
-                      <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
-                        <React.Suspense fallback={null}>
-                          <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
-                        </React.Suspense>
-                      </span>
-                    </Tooltip>
-                  )}
+                        }}
+                      >
+                        <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
+                          <React.Suspense fallback={null}>
+                            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+                          </React.Suspense>
+                        </span>
+                      </Tooltip>
+                    )}
+                  </div>
+                </TableCell>
+              )}
+              <TableCell sx={{ p: '8px' }}>
+                <div className='flex items-center justify-start h-full'>
+                  <span className='text-[13px] font-medium text-[#425A76] capitalize'>
+                    {mapping.field_type}
+                  </span>
                 </div>
               </TableCell>
               <TableCell
@@ -770,7 +823,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         <div key={idx} className='flex items-center'>
                           {item.type === 'chip' ? (
                             <Chip
-                              label={getDisplayName(item.value)}
+                              label={getDisplayName(item.value, mapping.rid)}
                               size='small'
                               variant='outlined'
                               onDelete={() => removeChip(mapping.rid, idx)}
@@ -901,7 +954,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                 handleAutocompleteSelect(mapping.rid, option)
                               }
                             >
-                              {getDisplayName(option)}
+                              {getDisplayName(option, mapping.rid)}
                             </div>
                           );
                         })}
