@@ -12,6 +12,12 @@ import RDCreditSchemaService from "../rdComputation/schemaService";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 import { kafkaProducerService } from "../../kafka/producer.service";
 import { Kafka, Producer } from "kafkajs";
+import { BlobServiceClient } from "@azure/storage-blob";
+import * as fs from "fs";
+import * as path from "path";
+import { v4 as uuidv4 } from "uuid";
+import { promisify } from "util";
+const PDFDocument = require('pdfkit');
 
 enum ConfigType {
   NONE = "NONE",
@@ -71,7 +77,7 @@ export class RdFormMapperService {
       effectiveEnd,
     );
 
-    if (!formInfo?.browse_file) {
+    if (!formInfo?.browse_file && formInfo?.form_type === "fillable") {
        await this.rdFormMapperSchemaService.updateFederalFormError(
       caseRid,
       countryRid,
@@ -81,6 +87,7 @@ export class RdFormMapperService {
        
     }
 
+   
     logMessage(
       `Retrieved federal form. Browse file URL: ${formInfo.browse_file}`,
     );
@@ -106,13 +113,35 @@ export class RdFormMapperService {
         caseRid,
         schemaName
       );
+    
+    // Add debugging for form type
+    logMessage(`Form type detected: "${formInfo?.form_type}"`);
+    logMessage(`Form info: ${JSON.stringify(formInfo)}`);
+    
+    let filledFormUrl: string;
 
-    const filledFormUrl = await pdfFiller(
+    if(formInfo?.form_type === "non-fillable" || formInfo?.form_type === "non_fillable" || formInfo?.form_type === "nonfillable")
+    {
+      logMessage("Federal form is non-fillable. Generate PDF.");
+      filledFormUrl  = await this.generatePDFNonFillable(enhancedMapperConfig,
+      accountRid,
+      formInfo.browse_file,
+      accountNumber); 
+    
+    }
+    else
+    {
+        logMessage("Federal form is fillable. Using PDF filler.");
+        filledFormUrl = await pdfFiller(
       enhancedMapperConfig,
       accountRid,
       formInfo.browse_file,
       accountNumber,
     );
+
+    }
+
+   
 
     logMessage(
       `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
@@ -228,6 +257,165 @@ export class RdFormMapperService {
   }
 
   /**
+   * Generate PDF for non-fillable forms
+   */
+  private async generatePDFNonFillable(
+    enhancedMapperConfig: any[],
+    accountRid: string,
+    browseFile: string,
+    accountNumber: string
+  ): Promise<string> {
+    try {
+      logMessage("Starting PDF generation for non-fillable form");
+
+      // Transform mapper config to extract data for PDF generation
+      const formData = enhancedMapperConfig.reduce((acc: any, config: any) => {
+        acc[config.field_name || config.field_label] = config.value;
+        return acc;
+      }, {});
+
+      logMessage(`Prepared form data with ${Object.keys(formData).length} fields for PDF generation`);
+
+      // Generate unique filename
+      const fileName = `rd_form_${accountNumber}_${Date.now()}_${uuidv4().slice(0, 8)}.pdf`;
+      const tempFilePath = path.join(process.cwd(), 'temp', fileName);
+      
+      // Ensure temp directory exists
+      const tempDir = path.dirname(tempFilePath);
+      try {
+        await fs.promises.mkdir(tempDir, { recursive: true });
+      } catch (err) {
+        logMessage(`Warning: Could not create temp directory: ${err}`);
+      }
+
+      // Create PDF document
+      const doc = new PDFDocument({ margin: 50 });
+      const writeStream = fs.createWriteStream(tempFilePath);
+      doc.pipe(writeStream);
+
+      try {
+        // Add header
+        doc.fontSize(16)
+           .text('R&D Tax Credit Form', { align: 'center' });
+        
+        doc.moveDown(1);
+        
+        // Add account information
+        doc.fontSize(12)
+           .text(`Account: ${accountNumber}`);
+        doc.text(`Account RID: ${accountRid}`);
+        doc.moveDown(1);
+
+        // Add form data
+        doc.fontSize(10)
+           .text('Form Data:', { underline: true });
+        doc.moveDown(0.5);
+
+        // Add each field with its value
+        Object.entries(formData).forEach(([fieldName, value]) => {
+          doc.text(`${fieldName}: ${value || 'N/A'}`);
+          doc.moveDown(0.3);
+        });
+
+        // Add footer
+        doc.moveDown(2);
+        doc.fontSize(8)
+           .text(`Generated on: ${new Date().toISOString()}`, { align: 'center' });
+
+        // Finalize the PDF
+        doc.end();
+      } catch (pdfError) {
+        logMessage(`Error creating PDF content: ${pdfError}`);
+        throw new Error(`PDF content creation failed: ${pdfError}`);
+      }
+
+      // Wait for PDF to be written
+      await new Promise<void>((resolve, reject) => {
+        writeStream.on('finish', () => resolve());
+        writeStream.on('error', reject);
+        setTimeout(() => reject(new Error('PDF generation timeout')), 30000);
+      });
+
+      logMessage(`PDF generated successfully at: ${tempFilePath}`);
+
+      // Upload to blob storage
+     // const blobUrl = await this.uploadPdfToBlob(tempFilePath, fileName);
+      
+      // Clean up temp file
+      try {
+      //  await fs.promises.unlink(tempFilePath);
+      } catch (cleanupError) {
+        logMessage(`Warning: Could not clean up temp file: ${cleanupError}`);
+      }
+      
+      logMessage(`Non-fillable PDF generation completed. URL: ${tempFilePath}`);
+      //return blobUrl;
+      return ''
+
+    } catch (error) {
+      this.logger.error("Error generating non-fillable PDF:", error);
+      throw new Error(`Failed to generate non-fillable PDF: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+
+  /**
+   * Upload PDF to blob storage
+   */
+  private async uploadPdfToBlob(filePath: string, fileName: string): Promise<string> {
+    try {
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`PDF file not found at path: ${filePath}`);
+      }
+
+      const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+      if (!connectionString) {
+        logMessage('Azure Storage connection string not configured, returning local file path');
+        return `file://${filePath}`;
+      }
+
+      const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+      const containerName = process.env.AZURE_BLOB_CONTAINER || 'rd-forms';
+      const containerClient = blobServiceClient.getContainerClient(containerName);
+
+      // Ensure container exists
+      try {
+        await containerClient.createIfNotExists({ access: 'blob' });
+      } catch (containerError) {
+        logMessage(`Warning: Could not create container: ${containerError}`);
+      }
+
+      const blockBlobClient = containerClient.getBlockBlobClient(fileName);
+      
+      // Upload file with retry logic
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          await blockBlobClient.uploadFile(filePath, {
+            blobHTTPHeaders: {
+              blobContentType: 'application/pdf'
+            }
+          });
+          break;
+        } catch (uploadError) {
+          retries--;
+          if (retries === 0) throw uploadError;
+          logMessage(`Upload failed, retrying... (${retries} attempts left)`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      logMessage(`PDF uploaded to blob storage: ${fileName}`);
+      return blockBlobClient.url;
+
+    } catch (error) {
+      this.logger.error('Error uploading PDF to blob storage:', error);
+      logMessage(`Blob upload failed, returning local file path: ${filePath}`);
+      return `file://${filePath}`;
+    }
+  }
+
+  /**
    * Enhance mapper configuration with dynamic values from reference tables
    */
   private async enhanceMapperConfigWithDynamicValues(
@@ -296,7 +484,8 @@ export class RdFormMapperService {
         effectiveStart: "2025-04-01",
         effectiveEnd: "2026-03-31",
         accountNumber: "ACC-00891",
-        schemaName:"trd365_00890"
+        schemaName:"trd365_00891",
+        processRid: "D001-5f4e1f3e-8e2b-4c3d-9f7a-2b1c3d4e5f6a"
       };
 
       const parsedMessage =
@@ -323,7 +512,6 @@ export class RdFormMapperService {
         );
       const hasFederal = availableConfig.hasFederal;
       const hasState = availableConfig.hasState;
-
       const configLevelKey =
         hasFederal && hasState
           ? ConfigType.BOTH
@@ -518,7 +706,7 @@ export class RdFormMapperService {
         processRid: processRid,
         caseRid: caseRid,
         effectiveStart: effectiveStart,
-        effectiveEnd: effectiveEnd,
+        effectiveEnd: effectiveEnd
       };
       const message = {
         value: JSON.stringify(payload),

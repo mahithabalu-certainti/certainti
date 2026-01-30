@@ -76,6 +76,7 @@ export class KafkaConsumerService {
                 console.log(`Processing form topic message: ${JSON.stringify(payload)}`);
                 try {
                     await this.rdFormMapperService.processRdFormMapperRequests(payload);
+                    await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid);
                     console.log("Form processing complete");
                 } catch (err) {
                     console.error("Error processing form message", err);

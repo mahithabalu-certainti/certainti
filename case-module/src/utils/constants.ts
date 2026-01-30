@@ -1598,9 +1598,9 @@ export const rawQueries = {
     return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   },
   fetchFederalForms(countryRid: string, effectiveStart: string, effectiveEnd: string){
-    return `SELECT dmf.browse_file,dmf.rid
-FROM trd365.data_mapper_forms dmf
-WHERE dmf.country_rid = '${countryRid}'
+    return `SELECT dmf.browse_file,dmf.rid,dmf.form_type
+    FROM trd365.data_mapper_forms dmf
+  WHERE dmf.country_rid = '${countryRid}'
   AND (dmf.state_rid IS NULL OR dmf.state_rid = '')
   AND (dmf.effective_from_date IS NULL 
        OR dmf.effective_from_date <= DATE '${effectiveEnd}')
@@ -1625,6 +1625,104 @@ WHERE dmf.country_rid = '${countryRid}'
     WHERE
     rid = '${caseRid}'
     `
+  },
+  fetchRdFormMapperConfigurations(formId: string){
+    return `
+     SELECT DISTINCT
+       dmfm.field_label,
+       dmfm.field_id,
+       dmfm.calculation_config,
+       dmfm.created_datetime
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_form_mappings dmfm
+      WHERE dmfm.form_rid = :formId
+      ORDER BY dmfm.created_datetime ASC`
+  },
+  saveFederalFilledFormUrl(schemaName: string)
+  {
+    return `
+          UPDATE ${schemaName}.rd_credit_country_calculations
+          SET rd_form_url = :filledFormUrl
+          WHERE case_rid = :caseRid
+          and country_rid  =:countryRid`
+  },
+  saveStateFilledFormUrl(schemaName: string)
+  {
+    return `
+           UPDATE ${schemaName}.rd_credit_state_calculations
+      SET rd_form_url = :filledFormUrl
+      WHERE case_rid = :caseRid
+      and state_rid  =:stateRid`
+  },
+  updateFederalFormError(schemaName: string)
+    {
+      return `UPDATE ${schemaName}.rd_credit_country_calculations
+      SET form_error_message = 'Federal form file not found'
+      WHERE case_rid = :caseRid
+      and country_rid  =:countryRid`
+    },
+  updateStateFormError(schemaName: string)
+    {
+      return `UPDATE ${schemaName}.rd_credit_state_calculations
+            SET form_error_message = 'State form file not found'
+            WHERE case_rid = :caseRid
+            and country_rid  =:countryRid
+            and state_rid = :stateRid`
+    },
+  fetchFederalFormUrl(schemaName: string){
+    return `
+      SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_country_calculations
+      WHERE case_rid = :caseRid
+      and country_rid  =:countryRid
+      LIMIT 1`
+  },
+   fetchStateFormUrl(schemaName: string){
+    return `
+     SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_state_calculations
+      WHERE case_rid = :caseRid
+      and state_rid  =:stateRid
+      LIMIT 1`
+  },
+  getDataMapperObjects() {
+    return `
+       SELECT 
+        dmo.id,
+        dmo.field_label,
+        dmo.field_id,
+        dmo.ref_table,
+        dmo.field_name,
+        dmo.where_condition,
+        dmo.default_value,
+        creditASC as parentObject,
+        dmo.is_json
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+      WHERE dmo.country_rid = :country_rid
+      ORDER BY dmo.field_label
+    `;
+  },
+  getDatamapperObjectById() {
+    return `
+      SELECT 
+        dmo.rid,
+        dmo.ref_table,
+        dmo.field_name,
+        dmo.is_json
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+      WHERE dmo.rid = :rid
+      LIMIT 1`
+  },
+  fetchConfiguration(schemaName:string)
+  {
+    return `
+      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = 'D001-a761961f-4890-4c22-a585-3e74a8b98770';
+    `
+  },
+  fetchDynamicFieldValues(schemaName:string, refTable:string, quotedJsonPath:string)
+  {
+    return `
+          SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
+          FROM ${schemaName}.${refTable}
+          WHERE case_rid = :case_rid
+          LIMIT 1`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

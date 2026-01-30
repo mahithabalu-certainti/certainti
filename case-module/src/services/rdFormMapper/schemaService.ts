@@ -33,10 +33,7 @@ class RdFormMapperSchemaService {
 
     async getRdFormMapperConfigurations(formId: string): Promise<any> {
     const mainDb = await this.getMainDb();
-    const query = `
-      SELECT distinct dmfm.field_label,field_id,calculation_config
-FROM trd365.data_mapper_form_mappings dmfm
-WHERE dmfm.form_rid = :formId`;
+    const query = rawQueries.fetchRdFormMapperConfigurations(formId);
     const [results] = await mainDb.query(query, { 
       replacements: { formId },
       raw: true 
@@ -46,12 +43,7 @@ WHERE dmfm.form_rid = :formId`;
 
   async saveFederalFilledFormUrl(caseRid: string,countryRid: string, filledFormUrl: string, orgDb: Sequelize, accountNumber: string): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const query = `
-      UPDATE ${schemaName}.rd_credit_country_calculations
-      SET rd_form_url = :filledFormUrl
-      WHERE case_rid = :caseRid
-      and country_rid  =:countryRid`;
-    await orgDb.query(query, { 
+    await orgDb.query(rawQueries.saveFederalFilledFormUrl(schemaName), { 
       replacements: { filledFormUrl, caseRid, countryRid },
       raw: true 
     });
@@ -60,12 +52,7 @@ WHERE dmfm.form_rid = :formId`;
 
   async updateFederalFormError(caseRid: string,countryRid: string, orgDb: Sequelize, accountNumber: string): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const query = `
-      UPDATE ${schemaName}.rd_credit_country_calculations
-      SET form_error_message = 'Federal form file not found'
-      WHERE case_rid = :caseRid
-      and country_rid  =:countryRid`;
-    await orgDb.query(query, {
+    await orgDb.query(rawQueries.updateFederalFormError(schemaName), {
       replacements: { caseRid, countryRid },
       raw: true
     });
@@ -74,13 +61,7 @@ WHERE dmfm.form_rid = :formId`;
 
   async updateStateFormError(caseRid: string,countryRid: string,stateRid: string, orgDb: Sequelize, accountNumber: string): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const query = `
-      UPDATE ${schemaName}.rd_credit_state_calculations
-      SET form_error_message = 'State form file not found'
-      WHERE case_rid = :caseRid
-      and country_rid  =:countryRid
-      and state_rid = :stateRid`;
-    await orgDb.query(query, {
+    await orgDb.query(rawQueries.updateStateFormError(schemaName), {
       replacements: { caseRid, countryRid, stateRid },
       raw: true
     });
@@ -89,12 +70,8 @@ WHERE dmfm.form_rid = :formId`;
 
   async getFederalFormUrl(caseRid: string,countryRid: string, orgDb: Sequelize, accountNumber: string): Promise<{filled_form_url: string | null, form_error_message: string | null}> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const query = `
-      SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_country_calculations
-      WHERE case_rid = :caseRid
-      and country_rid  =:countryRid
-      LIMIT 1`;
-    const [results]: any = await orgDb.query(query, {
+
+    const [results]: any = await orgDb.query(rawQueries.fetchFederalFormUrl(schemaName), {
       replacements: { caseRid, countryRid },
       raw: true
     });
@@ -111,12 +88,7 @@ WHERE dmfm.form_rid = :formId`;
   }
   async getStateFormUrl(caseRid: string,stateRid: string, orgDb: Sequelize, accountNumber: string): Promise<{filled_form_url: string | null, form_error_message: string | null} | null> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const query = `
-      SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_state_calculations
-      WHERE case_rid = :caseRid
-      and state_rid  =:stateRid
-      LIMIT 1`;
-    const [results]: any = await orgDb.query(query, {
+    const [results]: any = await orgDb.query(rawQueries.fetchStateFormUrl(schemaName), {
       replacements: { caseRid, stateRid },
       raw: true
     });
@@ -133,12 +105,7 @@ WHERE dmfm.form_rid = :formId`;
   }
   async saveStateFilledFormUrl(caseRid: string,stateRid: string, filledFormUrl: string, orgDb: Sequelize, accountNumber: string): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const query = `
-      UPDATE ${schemaName}.rd_credit_state_calculations
-      SET rd_form_url = :filledFormUrl
-      WHERE case_rid = :caseRid
-      and state_rid  =:stateRid`;
-    await orgDb.query(query, { 
+    await orgDb.query(rawQueries.saveStateFilledFormUrl(schemaName), { 
       replacements: { filledFormUrl, caseRid,stateRid },
       raw: true 
     });
@@ -151,23 +118,7 @@ WHERE dmfm.form_rid = :formId`;
    */
   async getDataMapperObjects(country_rid: string, form_rid?: string): Promise<any> {
     const mainDb = await this.getMainDb();
-    const query = `
-      SELECT 
-        dmo.id,
-        dmo.field_label,
-        dmo.field_id,
-        dmo.ref_table,
-        dmo.field_name,
-        dmo.where_condition,
-        dmo.default_value,
-        creditASC as parentObject,
-        dmo.is_json
-      FROM trd365.data_mapper_objects dmo
-      WHERE dmo.country_rid = :country_rid
-      ${form_rid ? 'AND dmo.form_rid = :form_rid' : ''}
-      ORDER BY dmo.field_label`;
-    
-    const [results] = await mainDb.query(query, { 
+    const [results] = await mainDb.query(rawQueries.getDataMapperObjects(), { 
       replacements: { country_rid, form_rid },
       raw: true 
     });
@@ -179,24 +130,12 @@ WHERE dmfm.form_rid = :formId`;
    */
   async getDataMapperObjectByRid(rid: string): Promise<any> {
     const mainDb = await this.getMainDb();
-    const query = `
-      SELECT 
-        dmo.rid,
-        dmo.ref_table,
-        dmo.field_name,
-        dmo.is_json
-      FROM trd365.data_mapper_objects dmo
-      WHERE dmo.rid = :rid
-      LIMIT 1`;
-    
     try {
-      const [results] = await mainDb.query(query, { 
+      const [results] = await mainDb.query(rawQueries.getDatamapperObjectById(), { 
         replacements: { rid },
         raw: true 
       });
-      
       if (results.length > 0) {
-        logMessage(`Found data mapper object for RID: ${rid}`);
         return results[0];
       } else {
         logMessage(`No data mapper object found for RID: ${rid}`);
@@ -204,31 +143,7 @@ WHERE dmfm.form_rid = :formId`;
       }
     } catch (error) {
       logMessage(`Error querying data_mapper_objects for RID ${rid}: ${error}`);
-      // Fallback query
-      try {
-        const fallbackQuery = `
-          SELECT 
-            dmo.rid,
-            dmo.field_name,
-            dmo.ref_table
-          FROM trd365.data_mapper_objects dmo
-          WHERE dmo.rid = :rid
-          LIMIT 1`;
-        
-        const [fallbackResults] = await mainDb.query(fallbackQuery, { 
-          replacements: { rid },
-          raw: true 
-        });
-        
-        if (fallbackResults.length > 0) {
-          logMessage(`Fallback query successful for RID: ${rid}`);
-          return fallbackResults[0];
-        }
-        return null;
-      } catch (fallbackError) {
-        logMessage(`Both queries failed for RID ${rid}: ${fallbackError}`);
-        return null;
-      }
+      return null;
     }
   }
 
@@ -297,13 +212,7 @@ WHERE dmfm.form_rid = :formId`;
       
       // Execute the direct query first
       try {
-        const directQuery = `
-          SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
-          FROM ${schemaName}.${refTable}
-          WHERE case_rid = :case_rid
-          LIMIT 1`;
-          
-        const [directResults] = await orgDb.query(directQuery, {
+        const [directResults] = await orgDb.query(rawQueries.fetchDynamicFieldValues(schemaName,refTable,quotedJsonPath), {
           replacements: { case_rid },
           raw: true,
         });
@@ -475,31 +384,15 @@ WHERE dmfm.form_rid = :formId`;
 
           logMessage(`Processing ${matchedPattern.operation}: Line=${lineNumber}, Expected=${expectedResult || 'N/A'}`);
 
-          // Get the value from the specified line/field
+          // Get the value from the specified line/field - just extract without multiplication
           const lineFieldPath = `$."Regular Credit"."creditRRC"."line_${lineNumber}"`;
-
-          let multiplier;
-          switch (matchedPattern.operation) {
-            case 'multiplyByPercentageWithText':
-              multiplier = patternMatch[2] ? parseFloat(patternMatch[2]) / 100 : 0.25;
-              break;
-            case 'multiplyByPercentage':
-              multiplier = patternMatch[3] ? parseFloat(patternMatch[3]) / 100 : 0.25;
-              break;
-            case 'multiply':
-              multiplier = patternMatch[3] ? parseFloat(patternMatch[3]) : 1;
-              break;
-            case 'multiplyDynamic':
-              multiplier = 30; // Default multiplier
-              break;
-          }
           
-          logMessage(`Applying multiplication: line_${lineNumber} * ${multiplier}`);
+          logMessage(`Extracting field value from: line_${lineNumber} (no multiplication applied)`);
 
-          // Query to get the line value and perform multiplication
+          // Query to get the line value without performing multiplication
           query = `
             SELECT 
-              (jsonb_path_query_first(computed_fields, '${lineFieldPath}')::text::numeric * ${multiplier}) as field_value 
+              jsonb_path_query_first(computed_fields, '${lineFieldPath}')::text as field_value 
             FROM ${schemaName}.${refTable} 
             WHERE case_rid = :case_rid
             LIMIT 1`;
@@ -538,11 +431,7 @@ WHERE dmfm.form_rid = :formId`;
 
   async findAvailableCountryAndState(accountNumber: string, orgDb: Sequelize, caseRid: string):Promise<{ hasFederal: boolean; hasState: boolean; states?: string[]; }> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const query = `
-      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = 'D001-a761961f-4890-4c22-a585-3e74a8b98770';
-    `;
-
-    const [results]: any = await orgDb.query(query, { raw: true });
+    const [results]: any = await orgDb.query(rawQueries.fetchConfiguration(schemaName), { raw: true });
     const result = Array.isArray(results) && results.length > 0 ? results[0] : {};
     return {
       hasFederal: result.is_federal_level || false,
