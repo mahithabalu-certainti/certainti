@@ -321,9 +321,6 @@ export class HelperMethods {
         logMessage(
           `Warning: Unknown action type '${item.action_type}' for checklist item: ${item.checklist_item_name}`
         );
-        throw new Error(
-          `Invalid action type: ${item.action_type}. Supported types are: add, edit, delete`
-        );
     }
   }
 
