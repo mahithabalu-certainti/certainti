@@ -316,7 +316,6 @@ export class HelperMethods {
           item,
           transaction
         );
-
       default:
         logMessage(
           `Warning: Unknown action type '${item.action_type}' for checklist item: ${item.checklist_item_name}`
