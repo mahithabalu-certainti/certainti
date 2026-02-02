@@ -429,7 +429,7 @@ export class RdFormMapperService {
       mapperConfig.map(async (configItem: any) => {
         let value = configItem.value;
 
-        if (configItem.calculation_config) {
+        if (configItem.calculation_config && configItem.field_type == "line-item") {
           for (const key in configItem.calculation_config) {
             const rid = configItem.calculation_config[key];
 
@@ -477,16 +477,6 @@ export class RdFormMapperService {
 
   async processRdFormMapperRequests(message: any): Promise<any[]> {
     try {
-      // TODO: Remove hardcoded test data before production
-      message = {
-        caseRid: "D001-a761961f-4890-4c22-a585-3e74a8b98770",
-        accountRid: "D001-30cae4e8-b8c1-41fc-967a-6a6fb0a47597",
-        effectiveStart: "2025-04-01",
-        effectiveEnd: "2026-03-31",
-        accountNumber: "ACC-00891",
-        schemaName:"trd365_00891",
-        processRid: "D001-5f4e1f3e-8e2b-4c3d-9f7a-2b1c3d4e5f6a"
-      };
 
       const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
@@ -537,7 +527,7 @@ export class RdFormMapperService {
             orgDb,
             schemaName
           );
-          /*   await this.processStateForms(
+            await this.processStateForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -547,7 +537,8 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             availableConfig.states || [],
-          ); */
+            schemaName
+          ); 
         },
         [ConfigType.FEDERAL_ONLY]: async () => {
           logMessage("Processing Federal forms only.");
