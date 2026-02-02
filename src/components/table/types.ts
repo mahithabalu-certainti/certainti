@@ -223,6 +223,7 @@ export interface ListTableProps<T extends RowData> {
   // Actions
   actionWidth: string | number;
   actionDisplayMode?: 'dropdown' | 'icon' | 'toggle';
+  actionAlignHorizontal?: 'left' | 'center' | 'right';
   actionMenuItems?: ActionItem<T>[];
   // condition
   conditionMenuItems?: (row: T) => ConditionMenuItem<T>[];

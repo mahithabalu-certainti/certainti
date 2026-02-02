@@ -214,6 +214,8 @@ export interface DataMapperFieldMapping {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
+  field_type: 'line-item' | 'table';
+  column_id: string | null;
 }
 
 export interface DataMapperConfigPayload {

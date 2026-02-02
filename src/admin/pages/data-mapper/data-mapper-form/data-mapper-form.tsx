@@ -160,8 +160,8 @@ const DataMapperForm: React.FC = () => {
     if (commonSuccess) {
       successToast(
         isEditView
-          ? 'Data mapper updated successfully'
-          : 'Data mapper created successfully'
+          ? 'RD Form Configuration updated successfully'
+          : 'RD Form Configuration created successfully'
       );
       goBack();
     }
@@ -263,7 +263,9 @@ const DataMapperForm: React.FC = () => {
     );
     formDataPayload.append('effective_to_date', data.effective_to_date || '');
     formDataPayload.append('country_rid', data.country_rid || '');
-    formDataPayload.append('state_rid', data.state_rid || '');
+    if (data.state_rid) {
+      formDataPayload.append('state_rid', data.state_rid || '');
+    }
 
     if (selectedFiles.length > 0) {
       formDataPayload.append('file', selectedFiles[0]);
@@ -322,12 +324,12 @@ const DataMapperForm: React.FC = () => {
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
                 {isEditView
-                  ? `Data Mapper > ${mapperData?.r_number}`
-                  : 'Data Mapper'}
+                  ? `RD Form Configuration > ${mapperData?.r_number}`
+                  : 'RD Form Configuration'}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Data Mapper' : 'Create Data Mapper'}
+              {isEditView ? 'Edit Configuration' : 'Create Configuration'}
             </h5>
           </div>
         </div>

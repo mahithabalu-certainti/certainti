@@ -39,6 +39,7 @@ interface MappingItem {
   inputValue?: string;
   fieldIdError?: string;
   targetError?: string;
+  column_id?: string | null;
 }
 
 const DataMapperConfig: React.FC = () => {
@@ -106,7 +107,7 @@ const DataMapperConfig: React.FC = () => {
 
   const tabs = [
     {
-      label: 'PDF',
+      label: 'Original Form',
       value: 'pdf_view',
       hide: false,
     },
@@ -173,12 +174,14 @@ const DataMapperConfig: React.FC = () => {
         field_label: mapping.field_label,
         field_id: mapping.field_id,
         calculation_config: mapping.calculation_config,
+        field_type: mapping.field_type,
+        column_id: mapping.column_id || null,
       })),
     };
 
     updateDataMapperConfig.mutate(payload, {
       onSuccess: () => {
-        successToast('Data Mapper Config saved successfully');
+        successToast('RD Form Configuration saved successfully');
         goBack();
       },
     });
@@ -203,11 +206,11 @@ const DataMapperConfig: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {`Data Mapper ${mappingData?.formDetail?.r_number ? `> ${mappingData?.formDetail?.r_number || ''}` : ''}`}
+                {`RD Form Configuration ${mappingData?.formDetail?.r_number ? `> ${mappingData?.formDetail?.r_number || ''}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-              {'Data Mapper Config'}
+              {'Configuration'}
             </h5>
           </div>
         </div>
@@ -249,7 +252,7 @@ const DataMapperConfig: React.FC = () => {
             <div className='grid grid-cols-8 gap-4 px-10 py-2'>
               {[
                 {
-                  label: 'Name',
+                  label: 'Form Name',
                   value: mappingData?.formDetail?.form_name || '',
                 },
                 {

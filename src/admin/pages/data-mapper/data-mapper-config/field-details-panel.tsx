@@ -96,14 +96,7 @@ const FieldDetailsPanel = ({ field }: FieldDetailsPanelProps) => {
           onCopy={() => copyToClipboard(field.id)}
         />
 
-        <DetailItem
-          label='Field Name'
-          value={field.name}
-          onCopy={() => copyToClipboard(field.name)}
-        />
-
         <div className='grid grid-cols-1 gap-4'>
-          {/* <DetailItem label='Field Type' value={field.type} /> */}
           <DetailItem label='Page' value={String(field.page + 1)} />
           <DetailItem
             label='Position'
@@ -119,22 +112,6 @@ const FieldDetailsPanel = ({ field }: FieldDetailsPanelProps) => {
             multiline
           />
         </div>
-
-        {/* {field.possibleValues && field.possibleValues.length > 0 && (
-          <DetailItem
-            label='Possible Values'
-            value={field.possibleValues.join(', ') || '-'}
-            multiline
-          />
-        )}
-
-        {field.defaultValue && (
-          <DetailItem
-            label='Default Value'
-            value={field.defaultValue}
-            multiline
-          />
-        )} */}
       </div>
     </div>
   );

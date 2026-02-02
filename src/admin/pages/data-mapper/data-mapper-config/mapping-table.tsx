@@ -711,8 +711,34 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 sx={{
                   width: '20%',
                 }}
+                className='flex items-center justify-between'
               >
-                Field ID
+                <span>Field ID</span>
+                <span>
+                  <Tooltip
+                    title={
+                      'Go to "Original Form" tab, select a field to copy its Field ID, then paste it here to map the field.'
+                    }
+                    arrow
+                    placement='top'
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          mr: 1,
+                        },
+                      },
+                    }}
+                  >
+                    <span className='h-[21px] w-5 flex items-center justify-center absolute top-1 right-[4px] cursor-pointer'>
+                      <React.Suspense fallback={null}>
+                        <ErrorInfoIcon
+                          alt='error'
+                          className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]'
+                        />
+                      </React.Suspense>
+                    </span>
+                  </Tooltip>
+                </span>
               </TableCell>
             )}
             <TableCell

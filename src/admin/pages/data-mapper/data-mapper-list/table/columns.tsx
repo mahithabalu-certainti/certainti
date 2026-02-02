@@ -13,7 +13,6 @@ import { DataMapperListItem } from '../../../../types';
 import React from 'react';
 
 export const getDataMapperColumns = (
-  handleConfig: (row: DataMapperListItem) => void,
   handleDownload: (documentUrl: string) => void,
   countryOptions: { label: string; value: string }[],
   regionOptions: { label: string; value: string }[],
@@ -45,7 +44,7 @@ export const getDataMapperColumns = (
     id: 'form_name',
     editId: 'form_name',
     sortId: 'form_name',
-    label: 'Name',
+    label: 'Form Name',
     width: 200,
     sortable: true,
     editable: true,
@@ -55,51 +54,23 @@ export const getDataMapperColumns = (
     field: {
       type: 'text',
       required: true,
-      placeholder: 'Enter Name',
+      placeholder: 'Enter Form Name',
       validation: [
         {
           regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Name must be more than 2 characters long',
+          errorMessage: 'Form Name must be more than 2 characters long',
         },
         {
           regex: REGEX_PATTERNS.MAX_64,
-          errorMessage: 'Name must not exceed 64 characters',
+          errorMessage: 'Form Name must not exceed 64 characters',
         },
         {
           regex: REGEX_PATTERNS.TEMPLATE_NAME_REGEX,
           errorMessage:
-            "Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
+            "Form Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
         },
       ],
     },
-  },
-  {
-    id: 'document_name',
-    sortId: 'document_name',
-    label: 'Document Name',
-    width: 180,
-    sortable: true,
-    // hide:
-    //   !permissionMap?.['document_name']?.read &&
-    //   !permissionMap?.['document_name']?.edit,
-  },
-  {
-    id: 'format',
-    sortId: 'format',
-    label: 'Format',
-    width: 90,
-    sortable: false,
-    // hide: !permissionMap?.['format']?.read && !permissionMap?.['format']?.edit,
-  },
-  {
-    id: 'size_in_mb',
-    sortId: 'size_in_mb',
-    label: 'Size (MB)',
-    width: 105,
-    sortable: true,
-    // hide:
-    //   !permissionMap?.['size_in_mb']?.read &&
-    //   !permissionMap?.['size_in_mb']?.edit,
   },
   {
     id: 'country_name',
@@ -272,7 +243,7 @@ export const getDataMapperColumns = (
                 },
               }}
             >
-              <span className='h-[20px] w-5 flex items-center justify-center absolute -top-1 -right-1 cursor-pointer'>
+              <span className='h-[23px] w-5 flex items-center justify-center absolute top-0 -right-1 cursor-pointer'>
                 <React.Suspense fallback={null}>
                   <ErrorInfoIcon alt='error' className='w-4 h-3' />
                 </React.Suspense>
@@ -286,6 +257,16 @@ export const getDataMapperColumns = (
     // hide:
     //   !permissionMap?.['status_name']?.read &&
     //   !permissionMap?.['status_name']?.edit,
+  },
+  {
+    id: 'document_name',
+    sortId: 'document_name',
+    label: 'Document Name',
+    width: 180,
+    sortable: true,
+    // hide:
+    //   !permissionMap?.['document_name']?.read &&
+    //   !permissionMap?.['document_name']?.edit,
   },
   {
     id: 'created_by_name',
@@ -331,32 +312,6 @@ export const getDataMapperColumns = (
     // hide:
     //   !permissionMap?.['modified_datetime']?.read &&
     //   !permissionMap?.['modified_datetime']?.edit,
-  },
-  {
-    id: 'config',
-    sortId: 'config',
-    label: 'Config',
-    width: 90,
-    sortable: false,
-    render: (row) => {
-      const enableConfig = row?.status_name?.toLowerCase() === 'completed';
-      return (
-        <span
-          onClick={() => {
-            if (enableConfig) {
-              handleConfig(row);
-            }
-          }}
-          className={`${
-            enableConfig
-              ? 'cursor-pointer !text-[#1755E7] underline hover:text-[#1755E7]'
-              : 'cursor-default text-gray-500 underline'
-          }`}
-        >
-          Config
-        </span>
-      );
-    },
   },
   {
     id: 'attachment',

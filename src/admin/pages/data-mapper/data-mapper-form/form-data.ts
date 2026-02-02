@@ -18,22 +18,22 @@ export const DataMapperFormData = (
       sectionName: 'Basic Information',
       fillType: 'half',
       fields: [
-        createTextField('form_name', 'Name', {
+        createTextField('form_name', 'Form Name', {
           required: true,
-          placeholder: 'Enter Name',
+          placeholder: 'Enter Form Name',
           errorHandling: [
             {
               regex: REGEX_PATTERNS.MIN_3,
-              errorMessage: 'Name must be more than 2 characters long',
+              errorMessage: 'Form Name must be more than 2 characters long',
             },
             {
               regex: REGEX_PATTERNS.MAX_64,
-              errorMessage: 'Name must not exceed 64 characters',
+              errorMessage: 'Form Name must not exceed 64 characters',
             },
             {
               regex: REGEX_PATTERNS.TEMPLATE_NAME_REGEX,
               errorMessage:
-                "Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
+                "Form Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
             },
           ],
         }),

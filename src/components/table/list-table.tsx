@@ -74,6 +74,7 @@ const ListTable = <T extends RowData>({
   // Actions
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
+  actionAlignHorizontal = 'center',
   actionMenuItems = [],
   conditionMenuItems,
   // State
@@ -1386,6 +1387,7 @@ const ListTable = <T extends RowData>({
                                             : item.disabled,
                                       onClick: () => item.onClick(row),
                                     }))}
+                                    alignHorizontal={actionAlignHorizontal}
                                   />
                                 )}
                               </>

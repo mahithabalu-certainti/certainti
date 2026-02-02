@@ -137,7 +137,7 @@ export const ExportDataMapperList = async (
 
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'data_mapper_records.xlsx';
+    link.download = 'rd_form_configuration_records.xlsx';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

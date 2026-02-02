@@ -20,14 +20,6 @@ const dateOptions: { label: string; value: string }[] = [
   { label: 'Is Empty', value: 'is_empty' },
 ];
 
-const numberOptions: { label: string; value: string }[] = [
-  { label: 'Equals', value: 'equals' },
-  { label: 'Not Equals', value: 'not_equals' },
-  { label: 'Less Than', value: 'less_than' },
-  { label: 'Greater Than', value: 'greater_than' },
-  { label: 'Between', value: 'between' },
-];
-
 const requiredDateOptions: { label: string; value: string }[] = [
   { label: 'Equals', value: 'equals' },
   { label: 'Before', value: 'before' },
@@ -55,28 +47,10 @@ export const getDataMapperFilterFields = (
       operatorOption: textfieldOptions,
     },
     {
-      label: 'Name',
+      label: 'Form Name',
       name: 'form_name',
       type: 'text',
       operatorOption: textfieldOptions,
-    },
-    {
-      name: 'document_name',
-      label: 'Document Name',
-      type: 'text',
-      operatorOption: textfieldOptions,
-    },
-    {
-      label: 'Format',
-      name: 'format',
-      type: 'text',
-      operatorOption: textfieldOptions,
-    },
-    {
-      label: 'Size',
-      name: 'size_in_mb',
-      type: 'number',
-      operatorOption: numberOptions,
     },
     {
       label: 'Country',
@@ -114,6 +88,12 @@ export const getDataMapperFilterFields = (
       type: 'enumSelect',
       options: statusOptions,
       operatorOption: enumOperator,
+    },
+    {
+      name: 'document_name',
+      label: 'Document Name',
+      type: 'text',
+      operatorOption: textfieldOptions,
     },
     {
       label: 'Created By',

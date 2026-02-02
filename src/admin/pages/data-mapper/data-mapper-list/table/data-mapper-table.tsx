@@ -149,7 +149,6 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
   };
 
   const dataMapperColumns = getDataMapperColumns(
-    handleConfig,
     handleDownload,
     countryOptions,
     regionOptions,
@@ -164,6 +163,11 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
       label: 'Edit',
       disabled: (row) => row?.status_name?.toLowerCase() === 'initiated',
       onClick: (row) => handleEdit(row),
+    },
+    {
+      label: 'Configuration',
+      disabled: (row) => row?.status_name?.toLowerCase() !== 'completed',
+      onClick: (row) => handleConfig(row),
     },
   ];
 
@@ -272,9 +276,10 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
+        actionAlignHorizontal='left'
         // State
         loading={isLoading}
-        error={isError ? 'Failed to load data mappers' : undefined}
+        error={isError ? 'Failed to load RD Form Configurations' : undefined}
         // Pagination
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
