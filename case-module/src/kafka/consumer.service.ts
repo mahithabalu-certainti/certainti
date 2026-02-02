@@ -21,7 +21,7 @@ export class KafkaConsumerService {
     }
 
     private consumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID });
-    private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_FORM_GROUP_ID  });
+    private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_FORM_GROUP_ID });
 
     async start() {
         // Start original consumer

@@ -64,9 +64,9 @@ export async function pdfFiller(
     logMessage("Starting PDF form filling process...");
     // Download input PDF from Azure Blob Storage
     let inputContainer = "d001-e66380cd-d24c-4581-8e29-07ada063acdb";
-    let burl = new URL(blobUrl);
+    const parsedBlobUrl = new URL(blobUrl);
     const blobName = decodeURIComponent(
-      burl.pathname.split("/").slice(2).join("/"),
+      parsedBlobUrl.pathname.split("/").slice(2).join("/"),
     );
     logMessage(
       `Attempting to download PDF from container: ${inputContainer}, blob: ${blobName}`,
