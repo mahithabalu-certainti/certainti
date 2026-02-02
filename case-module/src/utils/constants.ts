@@ -212,7 +212,6 @@ export const STATUS_MESSAGE = {
   rdFormPreview : "RD form retrieved successfully",
   financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
   caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully"
-
 };
 
 export const caseStatuses = {
