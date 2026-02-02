@@ -9,6 +9,7 @@ import projectController from "./projectController"
 import childCaseController from "./childCaseController";
 import caseTaskController from "./caseTaskController";
 import caseChecklistController from "./caseChecklistController";
+import dataMapperController from "./dataMapperController";
 import financialRDCreditController from "./financialRDCreditController";
 import rdFormMapperController from "./rdFormMapperController";
 
@@ -24,6 +25,7 @@ const controller = {
   childCaseController,
   caseTaskController,
   caseChecklistController,
+  dataMapperController,
   financialRDCreditController,
   rdFormMapperController
 };

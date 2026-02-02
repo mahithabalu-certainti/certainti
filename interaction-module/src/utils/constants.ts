@@ -412,6 +412,7 @@ export const rawQueries = {
   query += `
     WHERE pf.account_rid = '${accountRid}'
       AND pf.status_rid  = '${status_rid}'
+      AND (pf.is_rd_claim_qualified = false or pf.is_rd_claim_qualified is null)
   `;
 
   return query;
@@ -592,7 +593,7 @@ export const rawQueries = {
   },
   fetchInteractionCCRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and (interaction_cc_recipient is true or include_in_communication is true) and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
   fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
     return `

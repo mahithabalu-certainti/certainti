@@ -1,9 +1,9 @@
 import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
-import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService } from "./interfaces/interface";
+import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService, IDataMapperService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
-import { JurisdictionService }  from "./jurisdiction/jurisdictionServices";
-import { HistoricalSubmissionService }  from "./historicalSubmission/historicalSubmissionServices";
+import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
+import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
 import { ActivityService } from "./activities/activityService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
@@ -14,6 +14,7 @@ import { ComputationService } from "./rdComputation/computation.service";
 import { ChildCaseService } from "./cases/childCaseService";
 import { CaseTaskService } from "./cases/caseTask/caseTaskService";
 import { ChecklistService } from "./cases/caseChecklist/checklistService";
+import { DataMapperService } from "./dataMapper/dataMapperService";
 import { RdFormMapperService } from "./rdFormMapper/rdFormMapperService";
 
 class Services {
@@ -26,11 +27,12 @@ class Services {
   projectTaskInjestionServices: ProjectInjestionTaskService;
   activityService: IActivityService;
   projectService: ProjectService
+  caseTaskService: CaseTaskService
+  checklistService: ChecklistService
+  dataMapperService: IDataMapperService
   stateComputationService: StateComputationService;
   federalComputationService: FederalComputationService;
   computationService: ComputationService;
-  caseTaskService : CaseTaskService
-  checklistService : ChecklistService
   rdFormMapperService : RdFormMapperService
 
   constructor(logger: Logger) {
@@ -48,6 +50,7 @@ class Services {
     this.computationService = new ComputationService();
     this.caseTaskService = new CaseTaskService()
     this.checklistService = new ChecklistService()
+    this.dataMapperService = new DataMapperService()
     this.rdFormMapperService = new RdFormMapperService(logger);
   }
 }

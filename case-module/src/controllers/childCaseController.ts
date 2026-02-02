@@ -17,7 +17,8 @@ async function signOffFinancialWorking (req : Request, res : Response) {
             return;
         }
         const data = req.body;
-        const result = await childCaseService.signOffFinancialWorking(data);
+        data.userId = userId;
+        const result = await childCaseService.signOffFinancialWorking(data, req.file);
         if(result.statusCode === HttpStatus.SUCCESS) {
             return res.status(HttpStatus.SUCCESS).json({
                 statusCode : HttpStatus.SUCCESS,
@@ -129,8 +130,68 @@ async function getClosedCasesList(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Controller function to fetch closing remarks for a specific case.
+ *
+ * This async function handles HTTP requests to retrieve case closure remarks by:
+ * - Validating the presence of a user ID in the request headers
+ * - Extracting account and case identifiers from route parameters
+ * - Preparing the request payload and delegating data retrieval to the `childCaseService.getCaseClosureRemarks` method
+ * - Returning appropriate HTTP responses based on data availability (success or not found)
+ *
+ * Error handling:
+ * - Logs and returns a `BAD_REQUEST` response if required headers are missing or if any runtime error occurs
+ *
+ * @param {Request} req - Express request object containing headers and route parameters
+ * @param {Response} res - Express response object used to send the API response
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and handles any service or runtime errors
+ */
+async function fetchCaseClosingRemarks (req : Request, res : Response) {
+  const methodName = "fetchCaseClosingRemarks";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+        if (!userId) {
+            errorLog(methodName, "User ID is required in headers");
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+            return;
+        }
+        const { accountId, caseId } = req.params;
+        const data: any = {};
+        data.account_rid = accountId;
+        data.case_rid = caseId;
+        const result = await childCaseService.getCaseClosureRemarks(data);
+        if(result?.closing_remarks.length! > 0) {
+          return res.status(HttpStatus.SUCCESS).json({
+                statusCode : HttpStatus.SUCCESS,
+                statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+                statusMessage : STATUS_MESSAGE.caseClosureRemarksSuccess,
+                data : result
+            })
+        } else {
+          return res.status(HttpStatus.NOT_FOUND).json({
+                statusCode : HttpStatus.NOT_FOUND,
+                statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+                statusMessage : STATUS_MESSAGE.dataNotAvailable,
+                data : result
+            })
+        }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
     signOffFinancialWorking,
     RegionListForFinancialHighlights,
-    getClosedCasesList
+    getClosedCasesList,
+    fetchCaseClosingRemarks
 }

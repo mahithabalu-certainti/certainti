@@ -52,21 +52,25 @@ export class FederalComputationService {
             let schemaName = rawQueries.fetchSchemaName(
                 fetchParentAccountRnumber[0][0].r_number
             );
-            const currentFiscalYear = this.getCurrentFiscalYear();
+            const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+            const currentFiscalYear = caseDetails.fiscal_year;
             const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
             logMessage(`Country Info: ${JSON.stringify(countryInfo)}`);
             if(countryInfo.countryCode == "USA") {
+                
+                let fetchEndDate : any = await orgDb.query(rawQueries.fetchFiscalEndDate(accountRid, schemaName));
+                let date = fetchEndDate[0][0].fiscal_end_date+`/${caseDetails.fiscal_year}`
                 const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb); //current yer QREs
                 logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
-                const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
+                const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREsForFederal(accountRid, this.jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
                 logMessage(`Total Prior 3 Years QREs: ${JSON.stringify(prior3YearsQREs)}`);
-                const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, this.jurisdictionColumn, countryInfo.rid, 4, schemaName, orgDb); // prior 4 years gross receipts
+                const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceiptsForFederal(accountRid, this.jurisdictionColumn, countryInfo.rid, 4, schemaName, orgDb); // prior 4 years gross receipts
                 const federalRDData = await this.getFederalRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
                 const config = await this.rdCreditSchemaService.getRDCreditConfig(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if (federalComputation) {
-                const result = await federalComputation.compute(extractConfig, federalRDData);
+                const result = await federalComputation.compute(extractConfig, federalRDData, annualGrossReceipts.length, date);
                 await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields);
                 return {
                     statusCode: HttpStatus.SUCCESS,
@@ -75,6 +79,7 @@ export class FederalComputationService {
                 };
             }
             } else if(countryInfo.countryCode === 'GBR') {
+                let fetchFiscalDate : any = await orgDb.query(rawQueries.fetchAccountStartEndDate(accountRid, schemaName));
                 const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
                 const config = await this.rdCreditSchemaService.getRDCreditConfig(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
                 const extractConfig = this.extractConfigJson(config.config_json);
@@ -107,13 +112,11 @@ export class FederalComputationService {
                         let projectsMoreOfQre50Percent;
                         let totalProjectSharedWithHmrc = 0.00;
                         let finalPercentage = parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2)) === Infinity ? '0.00%' : `${parseFloat(Number((minProjectResult.selectedSum/qualifyingRdc) * 100).toFixed(2))}%`
-                        let dynamicKeyNameForTotalCount : string;
                         
                         if(result.computedFields[0].projects.length === 7) {
-                            dynamicKeyNameForTotalCount = `Total Projects`
                             projectsMoreOfQre50Percent = result.computedFields[0].projects.map((p : any) => {
                                 return {
-                                    "Project Client Group Name": p.project_name,
+                                    "Project Name": p.project_name,
                                     "Total Project Value/Labor" : p.total_project_value_labor,
                                 }
                             })
@@ -121,10 +124,9 @@ export class FederalComputationService {
                                 totalProjectSharedWithHmrc += f["Total Project Value/Labor"]
                             })
                         } else {
-                            dynamicKeyNameForTotalCount = `Total Customer Groups`
                             projectsMoreOfQre50Percent = minProjectResult.selectedProjects.map((p : any, index : number) => {
                                 return {
-                                    "Project Client Group Name": p.project_name,
+                                    "Project Name": p.project_name,
                                     "Total Project Value/Labor" : p.total_project_value_labor
                                 }
                             })
@@ -137,10 +139,10 @@ export class FederalComputationService {
                             "Account ID" : accountRid,
                             "Account Name" : countryInfo.accountName,
                             "Description": "Summary of SR&ED Expenditures",
-                            "Fiscal Year" : `04/01/${caseDetails?.fiscal_year - 1} - 03/31/${caseDetails?.fiscal_year}`
+                            "Fiscal Year" : `${fetchFiscalDate[0][0].fiscal_start_date}/${caseDetails?.fiscal_year - 1} - ${fetchFiscalDate[0][0].fiscal_end_date}/${caseDetails?.fiscal_year}`
                         },
                         Columns : [
-                            "Project Credit Summary","Employees","LABOUR", "EPW", reductionValue, 
+                            "Project Credit Summary","Employees","Total Projects","LABOUR", "EPW", reductionValue, 
                             "Net EPW", "Total Project Value/Labor", "Materials/Software", "Subcontracts",
                             "Heat Light Power", "Other", "Total Salary + EPW Expenses", "Total Employers Pension Contribution NIC",
                             "Total Qualifying RDEC", grossReductionValue, "Total Final R&D Claim Credit"
@@ -164,8 +166,8 @@ export class FederalComputationService {
                         },
                         Projects : result.computedFields[0].projects.map((d: any) => {
                             return {
-                                "Project Client Group Name": d.project_client_group || d.project_name,
-                                "Total Projects" : d.total_projects_count || 0,
+                                "Project Name": d.project_client_group || d.project_name,
+                                "Total Projects" : JSON.stringify(d.total_projects_count) || '0',
                                 "Employees" : d.employees,
                                 "EPW" : d.epw,
                                 [reductionValue] : d.reductions,
@@ -175,7 +177,7 @@ export class FederalComputationService {
                             }
                         }),
                         "Percentage Calculation": {
-                            [dynamicKeyNameForTotalCount] : result.computedFields[0].projects.length || 0,
+                            [result.dynamicKeyNameForTotalCount] : result.computedFields[0].projects.length || 0,
                             "Total QRE" : qualifyingRdc,
                             "Total value of customer groups Greater than 50%" : minProjectResult.selectedSum == Infinity ? 0.00 : minProjectResult.selectedSum,
                             "%" : finalPercentage
@@ -230,7 +232,7 @@ export class FederalComputationService {
                             totalEpwCost = totalEpwCost + data.epw
                             totalNetEpw = totalNetEpw + data.net_epw
                         })
-                        totalReductionCost = totalEpwCost * extractConfig.reduction
+                        totalReductionCost = totalEpwCost * (extractConfig.reduction/100)
                         let totalLabour = totalEmployeesCost + totalNetEpw + calculatedPaidUnpaidAmount 
                         let totalQRE = totalLabour + cloudSoftwareCost + subContracts + heatLightPower + otherCost
                         let researchDevelopmentTaxCredit = Number((totalQRE * extractConfig.research_development_tax_credit)/100).toFixed(2);
@@ -307,7 +309,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
-                    const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails);
+                    const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
                     await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
@@ -399,6 +401,12 @@ export class FederalComputationService {
                     return {
                     ...d,
                     computed_fields : {
+                        "Title" : {
+                            "Account ID" : d.computed_fields["Title"]["Account ID"],
+                            "Account Name": d.computed_fields["Title"]["Account Name"],
+                            "Description" : d.computed_fields["Title"]["Description"],
+                            "Fiscal Year" : d.computed_fields["Title"]["Fiscal Year"]
+                        },
                         "Preliminary Calculation" : d.computed_fields["Preliminary Calculation"],
                         "R&D Expenditure" : {
                             'R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
@@ -420,6 +428,11 @@ export class FederalComputationService {
                 return finalAusData[0]
             } else if(fetchCountryDetails[0][0].country_code === "GBR") {
                 const finalUkData = result.map((u : any) => {
+                    let dynamicGroupName : string;
+                    dynamicGroupName = Object.keys(u.computed_fields["Percentage Calculation"]).find((d : any) => d.startsWith('Total Projects'))!
+                    if(dynamicGroupName == undefined) {
+                        dynamicGroupName = Object.keys(u.computed_fields["Percentage Calculation"]).find((d : any) => d.startsWith('Total Customer Groups'))!
+                    }
                     return {
                         ...u,
                         computed_fields : {
@@ -430,7 +443,7 @@ export class FederalComputationService {
                             "Technical Submissions by Cost that are 50% or more of Total QRE":u.computed_fields["Technical Submissions by Cost that are 50% or more of Total QRE"],
                             "Total Project to be shared with HMRC" : u.computed_fields["Total Project to be shared with HMRC"],
                             "Percentage Calculation": {
-                                "Total Customer Groups" : u.computed_fields["Percentage Calculation"]["Total Customer Groups"],
+                                [dynamicGroupName!] : u.computed_fields["Percentage Calculation"][dynamicGroupName!],
                                 "Total QRE" : u.computed_fields["Percentage Calculation"]["Total QRE"],
                                 "Total value of customer groups Greater than 50%" : u.computed_fields["Percentage Calculation"]["Total value of customer groups Greater than 50%"],
                                 "%" : u.computed_fields["Percentage Calculation"]["%"]
@@ -439,7 +452,48 @@ export class FederalComputationService {
                     }
                 })
                 return finalUkData[0];
-            } else {
+            } else if(fetchCountryDetails[0][0].country_code === "USA") {
+                
+                const finalUSAData = result.map((u : any) => {
+                    let creditRRC = u["computed_fields"]["Regular Credit"]["creditRRC"]
+                    let creditASC = u["computed_fields"]["ASC Credit"]["creditASC"]
+                    let creditASCKey = Object.keys(creditASC).find((v : string) => v.startsWith("Enter"))
+                    let creditRRCKey = Object.keys(creditRRC).find((d : string) => d.startsWith("10 Multiply line 5"))
+                    let refinedRRCKey = creditRRCKey + "%"
+                    return {
+                        ...u,
+                        "computed_fields" : {
+                            "Regular Credit" : {
+                                "creditRRC" : {
+                                    "5 Total Qualified Research Expenses" : creditRRC["5 Total Qualified Research Expenses"],
+                                    "6 Fixed-base percentage" : creditRRC["6 Fixed-base percentage"],
+                                    "7 Average Annual Gross Receipts" : creditRRC["7 Average Annual Gross Receipts"],
+                                    "8 Multiply line 7 by percentage on line 6" : creditRRC["8 Multiply line 7 by percentage on line 6"],
+                                    "9 Subtract line 8 from line 5" : creditRRC["9 Subtract line 8 from line 5"],
+                                    [refinedRRCKey!] : creditRRC[creditRRCKey!],
+                                    "11 Enter smaller of line 9 or line 10" : creditRRC["11 Enter smaller of line 9 or line 10"]
+                                },
+                                "rrc280C" : u["computed_fields"]["Regular Credit"]["rrc280C"]
+                            },
+                            "ASC Credit" : {
+                                "creditASC": {
+                                    "20 Total Qualified Research Expenses" : creditASC["20 Total Qualified Research Expenses"],
+                                    "21 Total QREs for prior 3 tax years" : creditASC["21 Total QREs for prior 3 tax years"],
+                                    "22 Divide line 21 by 6.0" : creditASC["22 Divide line 21 by 6.0"],
+                                    "23 Subtract line 22 from line 20" : creditASC["23 Subtract line 22 from line 20"],
+                                    [creditASCKey!] : creditASC[creditASCKey!],
+                                    "24 Multiply line 23 by the percentage above" : creditASC["24 Multiply line 23 by the percentage above"],
+                                    "25 Add lines 19 and 24": creditASC["25 Add lines 19 and 24"],
+                                },
+                                "asc280C": u["computed_fields"]["ASC Credit"]["asc280C"]
+                            },
+                            "Research and Development Tax Credit": u["computed_fields"]['Research and Development Tax Credit']
+                        }
+                    }
+                })
+                return finalUSAData[0];
+            }
+            else {
                 return result[0]
             }
         }

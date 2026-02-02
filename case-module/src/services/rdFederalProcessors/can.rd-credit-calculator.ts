@@ -1,7 +1,7 @@
 import { QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorking.rawQueries";
-import { ProjectCalculatedDataCanada, ProjectComputeValue } from "../../utils/types";
+import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorking.rawQueries";
+import { ProjectCalculatedDataCanada, ProjectComputeValue, ProjectFiscalIds } from "../../utils/types";
 import { Case } from "../../models/caseModel";
 
 type extractConfig = {
@@ -29,9 +29,10 @@ export class RdCreditCalculatorForCAN {
         return this.orgDbSequelize;
     }
 
-    async computeForCanada(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
+    async computeForCanada(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any) {
         const orgDb = await this.getOrgDb();
-        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, caseRid, accountRid), {type : QueryTypes.SELECT})
+        const fetchIds = await orgDb.query<ProjectFiscalIds>(fetchAssignedProjectIds(caseRid, schemaName), {type : QueryTypes.SELECT})
+        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, fetchIds, accountRid), {type : QueryTypes.SELECT})
         let fteQreAdjustment = extractConfig.fte_qre_adjustment;
         let subconQreAdjustment = extractConfig.subcon_qre_adjustment;
         let fteProxyPercent = `FTE Proxy (${extractConfig.fte_proxy}%)`
@@ -110,7 +111,7 @@ export class RdCreditCalculatorForCAN {
 
         const finalData = {
             Title : {
-                "Fiscal Year" : `FY-${caseDetails.fiscal_year - 1}-${caseDetails.fiscal_year}`,
+                "Fiscal Year" : `${countryInfo.accountName}-FY-${caseDetails.fiscal_year - 1}-${caseDetails.fiscal_year}`,
                 "Descriptions" : "R&D Assessment Workbook"
             },
             Columns : [
@@ -154,8 +155,8 @@ export class RdCreditCalculatorForCAN {
                 "Other Cost" : Math.round(totalOtherCost),
                 "Total Cost" : Math.round(totalCost),
                 "Net QRE %" : `${totalNetQrePercent}%`,
-                "FTE QRE Adjustment" : `${extractConfig.fte_qre_adjustment}%`,
-                "Subcon QRE Adjustment" : `${extractConfig.subcon_qre_adjustment}%`,
+                "FTE QRE Adjustment" : "-",
+                "Subcon QRE Adjustment" : "-",
                 "FTE QRE" : Math.round(totalFteQre),
                 [fteProxyPercent] : Math.round(totalfteProxy),
                 "Subcon QRE" : Math.round(totalSubconQre),

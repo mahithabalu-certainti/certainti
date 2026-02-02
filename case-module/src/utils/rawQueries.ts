@@ -28,7 +28,8 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
     c.employers_pension_contribution, c.other, c.material_software_cost, 
     c.sub_contracts, c.cloud_software,c.unpaid_amounts_paid, c.unpaid_amounts,
-    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,
+    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,
+    c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
     ELSE FALSE END AS is_case_team_created
     FROM
@@ -293,7 +294,7 @@ export const fetchProjectsForCases = (
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid
+    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid

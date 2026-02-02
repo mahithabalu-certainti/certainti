@@ -4,8 +4,10 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { caseFilingTypes, caseStatuses, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
-import { ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
+import { CaseClosureRemarks, ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
+import { uploadToAzureBlob } from "../../utils/helpers";
+import { fetchCaseClosingRemarks } from "../../utils/dossier-rawquery";
 
 export class ChildCaseService extends CaseService {
 
@@ -18,7 +20,7 @@ export class ChildCaseService extends CaseService {
         return orgDb;
     }
 
-    async signOffFinancialWorking (data : any) {
+    async signOffFinancialWorking (data : any, file : any) {
         const mainDb = await this.mainDbConfiguration();
         const orgDb = await this.orgDbConfiguration();
         const parentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -36,16 +38,27 @@ export class ChildCaseService extends CaseService {
                     statusMessage : STATUS_MESSAGE.noProjectsAssignedToCase
                 }
             }
+            const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+            if(file !== undefined) {
+                const fileUploadedResult = await uploadToAzureBlob(file, data.account_rid, '', parentAccount[0][0].r_number, 'signoff')
+                await orgDb.query(rawQueries.insertDataIntoAttachments(schemaName, data.case_rid, data.userId, data.account_rid, fileUploadedResult.url, fileUploadedResult.name, caseDetails?.fiscal_year, fileUploadedResult.extension, fileUploadedResult.size, data.comments))
+            }
             const caseResult : any = await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, data.sign_off));
             if(caseResult[1].rowCount) {
+                const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId());
+                await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findFinancialWorkingId[0][0].rid, data.case_rid, data.account_rid, schemaName))
                 await orgDb.query(rawQueries.updateClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName));
                 await orgDb.query(rawQueries.updateClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName));
+                await mainDb.query(rawQueries.updateClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid))
                 let mapIdsForCaseProjectregions : any[] = []
                 let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
                 caseProjectIds.forEach((d) => {
                     mapIdsForCaseProjectregions.push(mappedValuesForCasesRegions.get(d))
                 })
-                await orgDb.query(rawQueries.updateClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName))
+                let query = rawQueries.updateClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName)
+                if(query) {
+                    await orgDb.query(query)
+                }
                 return {
                     statusCode : HttpStatus.SUCCESS,
                     statusMessage : STATUS_MESSAGE.financialWorkingSignedOff
@@ -122,6 +135,7 @@ export class ChildCaseService extends CaseService {
             }
           const { Case } = await this.caseModelService.getModels(accountNumber);
             const closedCases = await Case.findAll({
+                attributes: ['rid', 'case_name'],
                 where: {
                     account_rid: data.account_rid,
                     status_rid: caseStatus[0].rid,
@@ -140,5 +154,45 @@ export class ChildCaseService extends CaseService {
             errorMessage: (error as Error).message,
           };
         }
+}
+async getCaseClosureRemarks (data : any) {
+    const orgDb = await this.getOrgDb();
+    const mainDb = await this.getMainDb();
+
+    const getParentAccountNumber : any= await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const schemaName = rawQueries.fetchSchemaName(getParentAccountNumber[0][0].r_number);
+    const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+    const result = await orgDb.query<CaseClosureRemarks>(fetchCaseClosingRemarks(schemaName, data.case_rid), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+        const getUserIds = [...new Set(result.flatMap((d : any) => d.signoff_details.map((s : any) => s.created_by)))]
+        const getSignoffTypeIds = [... new Set(result.flatMap((d : any) => d.signoff_details.map((s : any) => s.signoff_type_rid)))];
+        const findUserDetails = await mainDb.query(rawQueries.getOwnerDetails(getUserIds));
+        const findSignOffTypes = await mainDb.query(rawQueries.findSignOffTypes(getSignoffTypeIds));
+
+        const mapUsersWithName = new Map(findUserDetails[0].map((d : any) => [d.rid, d.name]));
+        const mapSignOffTypesWithName = new Map(findSignOffTypes[0].map((d : any) => [d.rid, d.signoff_type_name]));
+        const finalData = result.map((d : CaseClosureRemarks) => {
+            return {
+                case_rid : d.case_rid,
+                case_name : caseDetails.case_name,
+                closing_remarks : d.signoff_details.map((s : any) => {
+                    return {
+                        created_by : s.created_by,
+                        created_by_name : mapUsersWithName.get(s.created_by) || null,
+                        signoff_type_rid : s.signoff_type_rid,
+                        signoff_type_name : mapSignOffTypesWithName.get(s.signoff_type_rid) || null,
+                        signoff_at : s.created_datetime
+                    }
+                })
+            }
+        })
+        return finalData[0];
+    } else {
+        return {
+            case_rid : caseDetails.rid,
+            case_name : caseDetails.case_name,
+            closing_remarks : []
+        };
+    }
 }
 }

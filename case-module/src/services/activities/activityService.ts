@@ -188,6 +188,7 @@ export class ActivityService {
             transaction
           );
       }
+      await transaction.commit();
       if (taskRequest?.tags.length > 0) {
         const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
           rawQueries.getActiveStatusId()
@@ -201,12 +202,11 @@ export class ActivityService {
             d.is_new_tag,
             accountNumber,
             taskRequest.created_by,
-            activeStatusRid,
+            activeStatusRid.rid,
             "activity"
           );
         }
       }
-
       /*  if (response) {
           logMessage(`Case created with RID: ${response.rid}`);
           await this.activitySchemaService.addTaskSummary(
@@ -217,7 +217,7 @@ export class ActivityService {
           );
         } */
 
-      await transaction.commit();
+      
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -227,7 +227,8 @@ export class ActivityService {
         },
       };
     } catch (err) {
-      logMessage(`Error creating activity task, ${err}`);
+      const errorMessage = err instanceof Error ? err.message : err;
+      logMessage(`Error creating activity task: ${errorMessage}`);
       await transaction.rollback();
       return {
         statusCode: HttpStatus.FAILED,

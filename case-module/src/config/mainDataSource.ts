@@ -26,13 +26,13 @@ const env = process.env.NODE_ENV || NODE_ENV.DEV;
 const sslOptions =
   env === NODE_ENV.PROD
     ? {
-        dialectOptions: {
-          ssl: {
-            require: true,
-            rejectUnauthorized: false,
-          },
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
         },
-      }
+      },
+    }
     : {};
 
 async function getAzureSecrets() {

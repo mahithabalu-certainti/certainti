@@ -1,3 +1,5 @@
+import { ProjectFiscalIds } from "./types";
+
 export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number) => {
     let query = 
     `
@@ -13,19 +15,19 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     SELECT 
     CAST(SUM(COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS employees,
     CAST(SUM(COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS epw,
-    cp.project_name, cp.project_fiscal_rid, cp.currency_rid
+    cp.project_name, cp.rid, cp.currency_rid
     FROM
-    ${schemaName}.case_projects cp
-    LEFT JOIN fetch_project_ids fpr ON fpr.rid = cp.rid
+    ${schemaName}.project_fiscal cp
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
     WHERE
-    cp.project_fiscal_rid = fpr.project_fiscal_rid
+    cp.rid = fpr.project_fiscal_rid
     GROUP BY
-    cp.project_name, cp.project_fiscal_rid, cp.currency_rid
+    cp.project_name, cp.rid, cp.currency_rid
     ORDER BY cp.project_name ASC
     )
     SELECT 
     array_agg(jsonb_build_object(
-    'project_fiscal_rid', project_fiscal_rid,
+    'project_fiscal_rid', rid,
     'project_name', project_name,
     'currency_rid', currency_rid,
     'employees', employees,
@@ -56,10 +58,10 @@ export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accou
     CAST(SUM(COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS epw,
     cp.project_client_group, COUNT(cp.rid) AS total_projects
     FROM
-    ${schemaName}.case_projects cp
-    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.project_fiscal_rid AND fpr.project_client_group = cp.project_client_group
+    ${schemaName}.project_fiscal cp
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid AND fpr.project_client_group = cp.project_client_group
     WHERE
-    cp.project_fiscal_rid = fpr.project_fiscal_rid
+    cp.rid = fpr.project_fiscal_rid
     GROUP BY
     cp.project_client_group
     ORDER BY cp.project_client_group ASC
@@ -77,16 +79,16 @@ export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accou
     FROM
     calculate_cost
     `
-    console.log("Query ===== > ", query)
     return query;
 }
 export const calculateRDExpenditureQuery = (schemaName : string, caseRid : string, accountRid : string) => {
     let query = `
     SELECT 
-    CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS fte_qre_amount,
-    CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * COALESCE(cp.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount
+    CAST((COALESCE(pf.total_cost_fte_prj, 0.00) * COALESCE(pf.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS fte_qre_amount,
+    CAST((COALESCE(pf.total_cost_subcon_prj, 0.00) * COALESCE(pf.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount
     FROM
-    ${schemaName}.case_projects cp
+    ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
     cp.case_rid = '${caseRid}'
     AND
@@ -97,7 +99,7 @@ export const calculateRDExpenditureQuery = (schemaName : string, caseRid : strin
 export const fetchCountryData = (schemaName : string, caseRid : string) => {
     return `SELECT rid, created_datetime, modified_datetime, case_rid, country_rid, input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = '${caseRid}'`
 }
-export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : string, accountRid : string) => {
+export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string) => {
     let query = 
     `SELECT
         cp.project_code,
@@ -109,9 +111,9 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : str
         COALESCE(cp.total_cost_nonlabor_prj, 0.00) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
     FROM
-        ${schemaName}.case_projects cp
+        ${schemaName}.project_fiscal cp
     WHERE
-        cp.case_rid = '${caseRid}'
+        cp.rid IN (${caseRid.map((d : any) => `'${d.project_fiscal_rid}'`).join(',')})
         AND
         cp.account_rid = '${accountRid}'
     `
@@ -119,4 +121,8 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : str
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
     return `SELECT COALESCE(COUNT(rid), 0) AS total FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+}
+
+export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) => {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
 }

@@ -1,5 +1,6 @@
 import { Decimal } from "decimal.js";
 import { AnnualGrossReceipt, QRE, StateRDData } from "../rdComputation/rdCreditTypes";
+import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
@@ -7,6 +8,7 @@ export interface ConfigJson {
     sub_con_percent: number;
     qre_cap_rate: number;
     fixed_base_ratio: number;
+    total_group_qre_percent : number;
 }
 
 /**
@@ -28,18 +30,20 @@ export class RdCreditCalculatorForMA {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData) {
-        const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(stateRdData.currentYearQREs, config);
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : string, caseDetails : Case) {
+        const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(stateRdData.currentYearQREs, config, caseDetails);
         const part2ASCCreditCalculationInfo = this.part2ASCCreditCalculation(stateRdData.prior3YearsQREs, part1QualifiedResearchExpenseInfo.total_qre, part1QualifiedResearchExpenseInfo.total_qre_aggregate, config);
-        const part3CreditCalInfo = this.part3CreditCalculation(stateRdData.annualGrossReceipts || [], part2ASCCreditCalculationInfo.aggregate_group_credit_percent, config);
+        const part3CreditCalInfo = this.part3CreditCalculation(stateRdData.annualGrossReceipts || [], part2ASCCreditCalculationInfo.aggregate_group_credit_percent, config, part1QualifiedResearchExpenseInfo.total_qre_aggregate, part1QualifiedResearchExpenseInfo.total_qre, caseDetails);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || [], {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
-        });
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
+        },config);
 
-        const computedFields = await this.buildComputedFields(part1QualifiedResearchExpenseInfo, part2ASCCreditCalculationInfo, part3CreditCalInfo);
+        const computedFields = await this.buildComputedFields(part1QualifiedResearchExpenseInfo, part2ASCCreditCalculationInfo, part3CreditCalInfo, config);
 
         return {
             inputFields,
@@ -54,17 +58,21 @@ export class RdCreditCalculatorForMA {
      * @param config 
      * @returns 
      */
-    part1QualifiedResearchExpense(currentYearQREs: QRE, config: ConfigJson) {
+    part1QualifiedResearchExpense(currentYearQREs: QRE, config: ConfigJson, caseData : Case) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+        const current_year_supply = new Decimal(currentYearQREs.supplies || 0.00)
+        const qualified_computer_rental_time_expenses = new Decimal(caseData.qualified_computer_rental_time_expenses || 0.00)
 
-        const total_qre = current_year_wages.plus(current_year_contract);
+        const total_qre = current_year_wages.plus(current_year_contract).plus(current_year_supply).plus(qualified_computer_rental_time_expenses);
 
         const total_qre_aggregate = total_qre;
 
         return {
             current_year_wages,
             current_year_contract,
+            current_year_supply,
+            qualified_computer_rental_time_expenses,
             total_qre,
             total_qre_aggregate
         }
@@ -79,21 +87,16 @@ export class RdCreditCalculatorForMA {
      * @returns 
      */
     part2ASCCreditCalculation(prior3YearsQREs: QRE[], part1TotalQre: Decimal, part1TotalQreAgg: Decimal, config: ConfigJson) {
-
-        const qreSum = prior3YearsQREs.map(item => ({
-            fiscalYear: item.fiscalYear,
-            wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-        }));
-        const total_qre = new Decimal(qreSum.reduce((sum, item) => sum + Number(item.wagesContractSum), 0));
+        const total_qre = new Decimal(prior3YearsQREs.reduce((sum, item) => sum + Number(item.qre), 0));
         const average_qre = total_qre.div(3);
 
-        const fifty_percent_qre = average_qre.mul(config.qre_cap_rate);
+        const fifty_percent_qre = average_qre.mul(config.qre_cap_rate/100);
         const excess_qre = part1TotalQre.minus(fifty_percent_qre)
 
         const final_excess_qre = new Decimal(excess_qre.lt(0) ? 0 : excess_qre);
-        const applicable_credit_rate = config.credit_rate * 100;
+        const applicable_credit_rate = config.credit_rate;
 
-        const total_credit_group = final_excess_qre.mul(config.credit_rate);
+        const total_credit_group = final_excess_qre.mul(config.credit_rate/100);
 
         const aggregate_group_credit_percent = part1TotalQre.div(part1TotalQreAgg).mul(100);
 
@@ -118,9 +121,9 @@ export class RdCreditCalculatorForMA {
      * @param config 
      * @returns 
      */
-    part3CreditCalculation(annualGrossReceipts: AnnualGrossReceipt[], aggregate_group_credit_percent: Decimal, config: ConfigJson) {
+    part3CreditCalculation(annualGrossReceipts: AnnualGrossReceipt[], aggregate_group_credit_percent: Decimal, config: ConfigJson, part1TotalAggregate : Decimal, part1TotalQre : Decimal,  caseDetails : Case) {
 
-        const currentFiscalYear = this.getCurrentFiscalYear();
+        const currentFiscalYear = caseDetails.fiscal_year;
         // Filter out current year
         const previousYearsGrossReceipts = annualGrossReceipts.filter(
             (item) => item.fiscalYear !== currentFiscalYear
@@ -131,15 +134,29 @@ export class RdCreditCalculatorForMA {
             (sum, item) => sum + Number(item.grossReceipts || 0), 0));
         const avg_total_previous_receipts = totalPreviousGrossReceipts.div(previousYearsGrossReceipts.length);
 
-        const fixed_base_ratio = new Decimal(config.fixed_base_ratio).mul(100);
+        const fixed_base_ratio = config.fixed_base_ratio;
 
-        const base_amount = avg_total_previous_receipts.mul(config.fixed_base_ratio);
+        const base_amount = avg_total_previous_receipts.mul(config.fixed_base_ratio/100);
+        const calculateDifference = part1TotalAggregate.minus(base_amount)
+        const line17 = new Decimal(calculateDifference.lessThan(0) ? 0.00 : calculateDifference);
+        const line18 = line17.mul(config.total_group_qre_percent/100)
+        const line19 = caseDetails.basic_research_payments || 0.00
+        const line20 = new Decimal(line18.add(line19))
+        const line21 = part1TotalQre.div(part1TotalAggregate)
+        const line21Final = line21.mul(100)
+        const line22 = line20.mul(line21)
 
         return {
             fixed_base_ratio,
-            avg_total_previous_receipts,
-            base_amount,
-            aggregate_group_credit_percent
+            avg_total_previous_receipts : this.round2(avg_total_previous_receipts),
+            base_amount : this.round2(base_amount),
+            aggregate_group_credit_percent,
+            line17 : this.round2(line17),
+            line18 : this.round2(line18),
+            line19 : this.round2(line19),
+            line20 : this.round2(line20),
+            line21Final,
+            line22 : this.round2(line22)
         }
 
     }
@@ -149,9 +166,21 @@ export class RdCreditCalculatorForMA {
     * @param value 
     * @returns 
     */
-    round2(value: Decimal | number): Decimal {
-        return new Decimal(value).toDecimalPlaces(2);
+    round2(value: any) {
+    if (value === null || value === undefined) return value;
+
+    // ✅ Handle Decimal.js instances
+    if (Decimal.isDecimal(value)) {
+        return value.toDecimalPlaces(2).toNumber();
     }
+
+    // Handle numbers / numeric strings
+    if (typeof value === "number" || typeof value === "string") {
+        return new Decimal(value).toDecimalPlaces(2).toNumber();
+    }
+
+    return value;
+}
 
     /**
      * 
@@ -174,25 +203,31 @@ export class RdCreditCalculatorForMA {
     * @param metadata 
     * @returns 
     */
-    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}) {
-
-        const qreSummary: Record<string, any> = {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}, config : ConfigJson) {
+        let storeData : any[] = []
+        let annualGrossReceiptsData :any[] = []
+        let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
+        storeData.push({
+            year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            supplies: currentYearQREs.supplies,
-            contract: currentYearQREs.contract
-        };
+            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract),
+            contract: currentYearContract
 
-        // Add prior 4 years gross receipts
-        annualGrossReceipts.forEach((item, i) => {
-            qreSummary[`prior_year_gross_receipts_${i + 1}`] = item.grossReceipts || 0;
+        })
+        annualGrossReceipts.forEach((item) => {
+            annualGrossReceiptsData.push({
+                year : item.fiscalYear,
+                grossReceipts: item.grossReceipts
+            })
         });
 
         prior3YearsQREs.forEach((item) => {
-            qreSummary[`${item.fiscalYear}`] = {
+            storeData.push({
+                year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
                 sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-            }
+            })
         });
 
 
@@ -202,8 +237,12 @@ export class RdCreditCalculatorForMA {
                 country: metadata.country || "US",
                 credit_type: metadata.creditType || "FEDERAL_RRC_ASC",
                 currency: metadata.currency || "USD",
+                "Fiscal Year Ended" : metadata.fiscalYearEnded,
+                "Description": "Research Tax Credit",
+                stateDetails : "MA Research Credit"
             },
-            qreSummary
+            "Current & Prior years information" : storeData,
+            "Gross Receipts Information" : annualGrossReceiptsData
         };
     }
 
@@ -214,36 +253,35 @@ export class RdCreditCalculatorForMA {
      * @param part3CreditCalInfo 
      * @returns 
      */
-    buildComputedFields(part1QualifiedResearchExpenseInfo: any, part2ASCCreditCalculationInfo: any, part3CreditCalInfo: any) {
+    buildComputedFields(part1QualifiedResearchExpenseInfo: any, part2ASCCreditCalculationInfo: any, part3CreditCalInfo: any, extractConfig : ConfigJson) {
         let part1QualifiedResearchExpense = {
-            "Qualified wage expenses for this corporation":part1QualifiedResearchExpenseInfo.current_year_wages,
-            "Qualified supply expenses for this corporation":"",
-            "Qualified computer rental time expenses for this corporation":"",
-            "Enter 65% of qualified contract expenses for this corporation":part1QualifiedResearchExpenseInfo.current_year_contract,
-            "Total qualified research expenses for this corporation. Add lines 1 through 4":part1QualifiedResearchExpenseInfo.total_qre,
-            "Total qualified research expenses for this aggregate group":part1QualifiedResearchExpenseInfo.total_qre_aggregate
+            "1 Qualified wage expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
+            "2 Qualified supply expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.current_year_supply),
+            "3 Qualified computer rental time expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.qualified_computer_rental_time_expenses),
+            [`4 Enter ${extractConfig.sub_con_percent}% of qualified contract expenses for this corporation`]: this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
+            "5 Total qualified research expenses for this corporation. Add lines 1 through 4": this.round2(part1QualifiedResearchExpenseInfo.total_qre),
+            "6 Total qualified research expenses for this aggregate group": this.round2(part1QualifiedResearchExpenseInfo.total_qre_aggregate)
         }
         let part2ASCCreditCalculation = {
-            "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10":"",
-            "Average qualified research expenses for the 3 most recent prior years":part2ASCCreditCalculationInfo.average_qre,
-            "Enter 50% of line 7":part2ASCCreditCalculationInfo.fifty_percent_qre,
-            "Subtract the amount on line 8 from current year expenses on line 6. Not less than 0":part2ASCCreditCalculationInfo.final_excess_qre,
-            "Applicable rate for Alternative Simplified Method":part2ASCCreditCalculationInfo.applicable_credit_rate,   
-            "Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10":part2ASCCreditCalculationInfo.total_credit_group,
-            "Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6":part2ASCCreditCalculationInfo.aggregate_group_credit_percent,
-            "Amount of group credit for this corporation. Multiply line 11 by line 12":part2ASCCreditCalculationInfo.amount_group_credit
+            "text" : "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10",
+            "7 Average qualified research expenses for the 3 most recent prior years":part2ASCCreditCalculationInfo.average_qre,
+            [`8 Enter ${extractConfig.qre_cap_rate}% of line 7`]:part2ASCCreditCalculationInfo.fifty_percent_qre,
+            "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0":part2ASCCreditCalculationInfo.final_excess_qre,
+            "10 Applicable rate for Alternative Simplified Method":`${part2ASCCreditCalculationInfo.applicable_credit_rate}%`,   
+            "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10":part2ASCCreditCalculationInfo.total_credit_group,
+            "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6":`${part2ASCCreditCalculationInfo.aggregate_group_credit_percent}%`,
+            "13 Amount of group credit for this corporation. Multiply line 11 by line 12":part2ASCCreditCalculationInfo.amount_group_credit
         }
         let part3CreditCal = {
-            "Fixed-base ratio (see instructions)":part3CreditCalInfo.fixed_base_ratio,
-            "Average annual gross receipts from the 4 most recent taxable years":part3CreditCalInfo.avg_total_previous_receipts,
-            "Base amount. Multiply line 14 by line 15. Not less than 50% of line 6":part3CreditCalInfo.base_amount,
-            "Subtract line 16 from current year expenses on line 6. Not less than 0":"",
-            "Total group credit for qualified research expenses. Multiply line 17 by 10%":"",
-            "Total group credit for basic research payments (see instructions)":"",
-            "Total Research Credit for aggregate group. Combine line 18 and 19":"",
-            "Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.": part3CreditCalInfo.aggregate_group_credit_percent,
-            "Amount of credit for this corporation. Multiply line 20 by line 21. ":"",
-
+            "14 Fixed-base ratio (see instructions)":`${part3CreditCalInfo.fixed_base_ratio}%`,
+            "15 Average annual gross receipts from the 4 most recent taxable years":part3CreditCalInfo.avg_total_previous_receipts,
+            [`16 Base amount. Multiply line 14 by line 15. Not less than ${extractConfig.fixed_base_ratio}% of line 6`]:part3CreditCalInfo.base_amount,
+            "17 Subtract line 16 from current year expenses on line 6. Not less than 0" : part3CreditCalInfo.line17,
+            [`18 Total group credit for qualified research expenses. Multiply line 17 by ${extractConfig.total_group_qre_percent}%`]: part3CreditCalInfo.line18,
+            "19 Total group credit for basic research payments (see instructions)" : part3CreditCalInfo.line19,
+            "20 Total Research Credit for aggregate group. Combine line 18 and 19" : part3CreditCalInfo.line20,
+            "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.": `${part3CreditCalInfo.line21Final}%`,
+            "22 Amount of credit for this corporation. Multiply line 20 by line 21." : part3CreditCalInfo.line22
         }
 
         return {

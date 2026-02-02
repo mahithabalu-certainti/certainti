@@ -13,5 +13,6 @@ export const ENV = {
   KAFKA_TOPIC: process.env.KAFKA_TOPIC || "rd_credit_processing",
   KAFKA_FORM_TOPIC: process.env.KAFKA_FORM_TOPIC || "rd_form_mapper_processing",
   KAFKA_FORM_GROUP_ID: process.env.KAFKA_FORM_GROUP_ID || "rd-form-mapper-consumers",
-  KAFKA_FORM_CLIENT_ID: process.env.KAFKA_FORM_CLIENT_ID || "rd-form-mapper-service"
+  KAFKA_FORM_CLIENT_ID: process.env.KAFKA_FORM_CLIENT_ID || "rd-form-mapper-service",
+  KAFKA_DATA_MAPPER_TOPIC: process.env.KAFKA_DATA_MAPPER_TOPIC || "data_mapper_request",
 };

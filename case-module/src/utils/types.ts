@@ -28,7 +28,14 @@ export interface ICreateCases {
   total_expenses ? : number;
   taxable_income ? : number;
   export_sales_revenue? : number;
-
+  lease_costs_of_computers? : number;
+  illinois_rd_credit_partnership_corp? : number
+  illinois_research_payments_corp_only? : number
+  basic_research_payments? : number
+  qualified_computer_rental_time_expenses? : number
+  credit_carry_forward_py?: number
+  current_year_gross_receipts?: number
+  other_credits_total?: number
   parent_case_rid?: string;
 }
 
@@ -72,6 +79,7 @@ export type CaseHeadersColumns = {
   is_state_available : boolean
   state_rid : string | null,
   state_name : string | null
+  financial_working_signoff : boolean
 }
 
 export type FilingType = {
@@ -978,6 +986,17 @@ export type ProjectCalculatedDataCanada = {
   total_cost_subcon_prj : number
   total_cost_nonlabor_prj : number
   rd_percent_final : number
+}
+
+export type SignOffDetailsResponse = {
+  signoff_type_rid : string
+  created_by : string
+  created_datetime : string
+}
+
+export type CaseClosureRemarks = {
+  case_rid : string
+  signoff_details : SignOffDetailsResponse[]
 }
 
 // Flat array structure interface
