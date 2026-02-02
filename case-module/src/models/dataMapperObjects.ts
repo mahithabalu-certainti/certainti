@@ -18,6 +18,7 @@ interface DataMapperObjectsAttributes {
     parent_object?: string | null;
     object_name?: string | null;
     is_json?: boolean | null;
+    field_type?: string | null;
 }
 
 export interface DataMapperObjectsCreationAttributes
@@ -35,6 +36,7 @@ export interface DataMapperObjectsCreationAttributes
         | "parent_object"
         | "object_name"
         | "is_json"
+        | "field_type"
     > { }
 
 export class DataMapperObjects
@@ -52,6 +54,7 @@ export class DataMapperObjects
     public parent_object?: string | null;
     public object_name?: string | null;
     public is_json?: boolean | null;
+    public field_type?: string | null;
 
     static initialize(
         sequelize: Sequelize,
@@ -108,6 +111,10 @@ export class DataMapperObjects
                 is_json: {
                     type: DataTypes.BOOLEAN,
                     defaultValue: false,
+                    allowNull: true,
+                },
+                field_type: {
+                    type: DataTypes.STRING(50),
                     allowNull: true,
                 },
             },

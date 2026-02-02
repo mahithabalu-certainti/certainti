@@ -15,6 +15,7 @@ import { ChildCaseService } from "./cases/childCaseService";
 import { CaseTaskService } from "./cases/caseTask/caseTaskService";
 import { ChecklistService } from "./cases/caseChecklist/checklistService";
 import { DataMapperService } from "./dataMapper/dataMapperService";
+import { RdFormMapperService } from "./rdFormMapper/rdFormMapperService";
 
 class Services {
   private logger: Logger;
@@ -32,6 +33,7 @@ class Services {
   stateComputationService: StateComputationService;
   federalComputationService: FederalComputationService;
   computationService: ComputationService;
+  rdFormMapperService : RdFormMapperService
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -49,6 +51,7 @@ class Services {
     this.caseTaskService = new CaseTaskService()
     this.checklistService = new ChecklistService()
     this.dataMapperService = new DataMapperService()
+    this.rdFormMapperService = new RdFormMapperService(logger);
   }
 }
 
