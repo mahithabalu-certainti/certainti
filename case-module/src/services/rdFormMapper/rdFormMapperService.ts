@@ -469,7 +469,7 @@ export class RdFormMapperService {
                       const rowValue = tableValues[rowIndex]?.value || "";
                       enhancedConfigs.push({
                         ...configItem,
-                        label: `${configItem.field_label}_row_${rowNumber}`,
+                        label: `${configItem.field_label}[row_${rowNumber}]`,
                         field_name: configItem.field_name, // Keep original field_name
                         value_field_id: fieldPath, // Use PDF field path as value_field_id
                         value: rowValue,
