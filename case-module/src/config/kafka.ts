@@ -15,4 +15,6 @@ export const ENV = {
   KAFKA_FORM_GROUP_ID: process.env.KAFKA_FORM_GROUP_ID || "rd-form-mapper-consumers",
   KAFKA_FORM_CLIENT_ID: process.env.KAFKA_FORM_CLIENT_ID || "rd-form-mapper-service",
   KAFKA_DATA_MAPPER_TOPIC: process.env.KAFKA_DATA_MAPPER_TOPIC || "data_mapper_request",
+  DOSSIER_KAFKA_TOPIC: process.env.DOSSIER_KAFKA_TOPIC || "create-dossier-form",
+  DOSSIER_CLIENT_ID : process.env.DOSSIER_CLIENT_ID || "dossier-form"
 };

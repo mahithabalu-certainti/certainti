@@ -27,6 +27,14 @@ export class KafkaProducerService {
                     }]
                 });
                 console.log(`Topic ${ENV.KAFKA_DATA_MAPPER_TOPIC} created`);
+            } else if(!topics.includes(ENV.DOSSIER_KAFKA_TOPIC)) {
+                await this.admin.createTopics({
+                    topics: [{
+                        topic: ENV.DOSSIER_KAFKA_TOPIC,
+                        numPartitions: 1,
+                        replicationFactor: 1
+                    }]
+                });
             }
             await this.admin.disconnect();
         } catch (error) {

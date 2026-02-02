@@ -8,8 +8,11 @@ import { CaseClosureRemarks, ProjectFiscalIds, RegionDetails, RegionIds } from "
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks } from "../../utils/dossier-rawquery";
+import { ENV, kafka } from "../../config/kafka";
+import { Kafka, Producer } from "kafkajs";
 
 export class ChildCaseService extends CaseService {
+    private producer! : Producer;
 
     protected async mainDbConfiguration() {
         const mainDb = await super.getMainDb();
@@ -18,6 +21,18 @@ export class ChildCaseService extends CaseService {
     protected async orgDbConfiguration() {
         const orgDb = await super.getOrgDb();
         return orgDb;
+    }
+
+    private async getProducer () {
+        if(!this.producer) {
+            const kafka = new Kafka({
+                clientId : ENV.DOSSIER_CLIENT_ID,
+                brokers : ENV.KAFKA_BROKER || "localhost:9092"
+            })
+            this.producer = kafka.producer();
+            await this.producer.connect();
+        }
+        return this.producer;
     }
 
     async signOffFinancialWorking (data : any, file : any) {
@@ -194,5 +209,9 @@ async getCaseClosureRemarks (data : any) {
             closing_remarks : []
         };
     }
+}
+async initiateCreateDossierForm (data : any) {
+    const mainDb = this.getMainDb();
+    const orgDb = this.getOrgDb();
 }
 }
