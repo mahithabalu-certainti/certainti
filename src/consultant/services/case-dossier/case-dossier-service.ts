@@ -1,60 +1,20 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
-  ProjectDocumentItem,
-  ProjectDocumentsListURLParams,
   ResourceSummaryItem,
   ResourceSummaryListURLParams,
-  ProjectSummaryItem,
-  ProjectSummaryListURLParams,
-  QualifiedProjectItem,
-  QualifiedProjectsListURLParams,
   DossierSummary,
   RDFormResponse,
+  ResourceSummaryListResponse,
 } from '../../types';
 import {
-  ProjectDocumentListMockData,
   ResourceSummaryMockData,
-  ProjectSummaryMockData,
-  QualifiedProjectsMockData,
   DossierSummaryMockData,
   mockRDFormResponse,
 } from '../../mockdata/dossier';
+import { caseServiceApi } from '../../../api/api';
+import { getClosingRemarksListURL } from '../urls/dossier-url';
 
-export const fetchProjectDocumentList = async (
-  params?: ProjectDocumentsListURLParams
-): Promise<{ projectDocuments: ProjectDocumentItem[]; count: number }> => {
-  // const response = await caseServiceApi.get<ProjectDocumentListResponse>(
-  //   ProjectDocumentListURL(params)
-  // );
 
-  // Mock usage
-  console.log('project-documents-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return {
-    projectDocuments: ProjectDocumentListMockData.data.projectDocuments,
-    count: ProjectDocumentListMockData.data.count,
-  };
-};
-
-export const useProjectDocumentList = (
-  params: ProjectDocumentsListURLParams,
-  refreshList?: number
-): UseQueryResult<
-  { projectDocuments: ProjectDocumentItem[]; count: number },
-  Error
-> => {
-  return useQuery<
-    { projectDocuments: ProjectDocumentItem[]; count: number },
-    Error
-  >({
-    queryKey: ['project-document-list', params, refreshList],
-    queryFn: () => fetchProjectDocumentList(params),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!params.accountRid && !!params.caseRid,
-  });
-};
 
 // Resource Summary
 export const fetchResourceSummaryList = async (
@@ -87,80 +47,6 @@ export const useResourceSummaryList = (
   >({
     queryKey: ['resource-summary-list', params, refreshList],
     queryFn: () => fetchResourceSummaryList(params),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!params.accountRid && !!params.caseRid,
-  });
-};
-
-// Project Summary
-export const fetchProjectSummaryList = async (
-  params?: ProjectSummaryListURLParams
-): Promise<{ projectSummary: ProjectSummaryItem[]; count: number }> => {
-  // const response = await caseServiceApi.get<ProjectSummaryListResponse>(
-  //   ProjectSummaryListURL(params)
-  // );
-
-  // Mock usage
-  console.log('project-summary-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return {
-    projectSummary: ProjectSummaryMockData.data.projectSummary,
-    count: ProjectSummaryMockData.data.count,
-  };
-};
-
-export const useProjectSummaryList = (
-  params: ProjectSummaryListURLParams,
-  refreshList?: number
-): UseQueryResult<
-  { projectSummary: ProjectSummaryItem[]; count: number },
-  Error
-> => {
-  return useQuery<
-    { projectSummary: ProjectSummaryItem[]; count: number },
-    Error
-  >({
-    queryKey: ['project-summary-list', params, refreshList],
-    queryFn: () => fetchProjectSummaryList(params),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!params.accountRid && !!params.caseRid,
-  });
-};
-
-// Qualified Projects
-export const fetchQualifiedProjectsList = async (
-  params?: QualifiedProjectsListURLParams
-): Promise<{ qualifiedProjects: QualifiedProjectItem[]; count: number }> => {
-  // const response = await caseServiceApi.get<QualifiedProjectListResponse>(
-  //   QualifiedProjectsListURL(params)
-  // );
-
-  // Mock usage
-  console.log('qualified-projects-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return {
-    qualifiedProjects: QualifiedProjectsMockData.data.qualifiedProjects,
-    count: QualifiedProjectsMockData.data.count,
-  };
-};
-
-export const useQualifiedProjectsList = (
-  params: QualifiedProjectsListURLParams,
-  refreshList?: number
-): UseQueryResult<
-  { qualifiedProjects: QualifiedProjectItem[]; count: number },
-  Error
-> => {
-  return useQuery<
-    { qualifiedProjects: QualifiedProjectItem[]; count: number },
-    Error
-  >({
-    queryKey: ['qualified-projects-list', params, refreshList],
-    queryFn: () => fetchQualifiedProjectsList(params),
     retry: 0,
     gcTime: 0,
     enabled: !!params.accountRid && !!params.caseRid,
@@ -263,4 +149,44 @@ export const downloadPdfFromBase64 = (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+
+// closing remarks list
+export const fetchClosingRemarksList = async (
+  accountid: string,
+  caseid: string
+): Promise<{ resourceSummary: ResourceSummaryItem[]; count: number }> => {
+  const response = await caseServiceApi.get<ResourceSummaryListResponse>(
+    getClosingRemarksListURL(accountid, caseid)
+  );
+
+  // Mock usage
+  // console.log('resource-summary-list-params', params);
+  // await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  return {
+    resourceSummary: response.data.resourceSummary,
+    count: response.data.count,
+  };
+};
+
+export const useClosingRemarksList = (
+  accountId: string,
+  caseId: string,
+  refreshList?: number
+): UseQueryResult<
+  { resourceSummary: ResourceSummaryItem[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { resourceSummary: ResourceSummaryItem[]; count: number },
+    Error
+  >({
+    queryKey: ['closing-remarks-list', accountId, caseId, refreshList],
+    queryFn: () => fetchClosingRemarksList(accountId, caseId),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountId && !!caseId,
+  });
 };

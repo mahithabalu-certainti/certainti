@@ -41,6 +41,7 @@ import {
   useGetResourceType,
 } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
+import ClosingRemarks from './tab/close-remarks/closing-remarks';
 
 const DossierTabs = [
   {
@@ -312,6 +313,11 @@ const Dossier: React.FC<DossierProps> = ({
       value: 'resource_summary',
       hide: false,
     },
+    {
+      label: 'Closing Remarks',
+      value: 'closing_remarks',
+      hide: false,
+    },
   ];
 
   const showTableControls =
@@ -345,12 +351,12 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
           tabParam === 'financial_workings'
             ? Boolean(
-                dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
-              )
+              dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
+            )
             : showTableControls
         }
         onRefreshClick={handleRefresh}
@@ -393,8 +399,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -423,8 +429,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -437,8 +443,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -451,8 +457,22 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
+        )}
+
+        {tabParam === 'closing_remarks' && (
+          <ClosingRemarks
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}

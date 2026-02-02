@@ -63,3 +63,8 @@ export const getFinancialHighlightsURL = (): string => {
 export const getSignOffFinancialHighlightsURL = (): string => {
   return `/api/cases/financialWorking/signoff`;
 };
+
+export const getClosingRemarksListURL = (accountRid: string, caseRid: string): string => {
+  return `/api/cases/closureRemarks/${accountRid}/${caseRid}`;
+};
+

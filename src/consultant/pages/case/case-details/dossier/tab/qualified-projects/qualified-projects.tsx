@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExportType,
   QualifiedProjectItem,
@@ -6,13 +6,18 @@ import {
   QualifiedProjectsListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useQualifiedProjectsList } from '../../../../../../services/case-dossier/case-dossier-service';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
-import { getQualifiedProjectsColumns } from './columns';
+// import { getQualifiedProjectsColumns } from './columns';
+import { AssignProject } from '../../../../../../types/assign-projects';
+import { useAssignProjectsList } from '../../../../../../services/cases-assign-projects/assign-project-service';
+import { getAssignedProjectColumns } from '../../../case-assign-projects/assigned-projects/column';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
 
 interface QualifiedProjectsProps {
   refreshTrigger: number;
@@ -43,7 +48,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const [qualifiedProjects, setQualifiedProjects] = useState<
-    QualifiedProjectItem[]
+    AssignProject[]
   >([]);
   const [tableParams, setTableParams] = useState<QualifiedProjectsListURLParams>(
     {
@@ -54,22 +59,37 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
     }
   );
 
-  const { data, isLoading, isError } = useQualifiedProjectsList(
+  // const { data, isLoading, isError } = useQualifiedProjectsList(
+  //   {
+  //     ...tableParams,
+  //     search: searchValue,
+  //     filters: appliedFilters,
+  //     accountRid: accountId || '',
+  //     caseRid: caseId || '',
+  //   },
+  //   refreshTrigger
+  // );
+
+
+
+  const { data, isLoading, isError } = useAssignProjectsList(
     {
-      ...tableParams,
+      page: currentPage + 1,
+      limit: tableParams.limit,
+      sort: tableParams.sortBy,
+      sort_by: tableParams.sortOrder,
       search: searchValue,
-      filters: appliedFilters,
-      accountRid: accountId || '',
-      caseRid: caseId || '',
+      filter: appliedFilters,
+      case_rid: caseId,
+      account_rid: accountId,
+      fiscal_year: 2024,
     },
     refreshTrigger
   );
-
   const totalItems = data?.count || 0;
-
   useEffect(() => {
     if (data) {
-      setQualifiedProjects(data.qualifiedProjects || []);
+      setQualifiedProjects(data.projects || []);
       setCount(data.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,8 +143,22 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   const RestrictedColumns = [
     { id: 'project_code', canHide: false, canDrag: false },
   ];
-
-  const qualifiedProjectsColumns = getQualifiedProjectsColumns();
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const projectViewEditlistFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditlistFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditlistFields]);
+  // const qualifiedProjectsColumns = getQualifiedProjectsColumns();
+  const qualifiedProjectsColumns = getAssignedProjectColumns(permissionMap);
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
