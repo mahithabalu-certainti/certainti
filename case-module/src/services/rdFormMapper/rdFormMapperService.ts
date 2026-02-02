@@ -2,22 +2,17 @@ import { or, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
-import { CaseModelService } from "../caseModelsService";
 import RdFormMapperSchemaService from "./schemaService";
-import axios from "axios";
-import { generateSasUrl, logMessage } from "../../utils/helpers";
+import { generateSasUrl, logMessage, uploadBufferToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
-import { kafkaProducerService } from "../../kafka/producer.service";
 import { Kafka, Producer } from "kafkajs";
-import { BlobServiceClient } from "@azure/storage-blob";
 import * as fs from "fs";
 import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { promisify } from "util";
-const PDFDocument = require('pdfkit');
+const PDFDocument = require("pdfkit");
 
 enum ConfigType {
   NONE = "NONE",
@@ -65,7 +60,7 @@ export class RdFormMapperService {
     accountNumber: string,
     mainDb: Sequelize,
     orgDb: Sequelize,
-    schemaName: string
+    schemaName: string,
   ): Promise<void> {
     logMessage("Processing Federal form computation.");
 
@@ -78,16 +73,14 @@ export class RdFormMapperService {
     );
 
     if (!formInfo?.browse_file && formInfo?.form_type === "fillable") {
-       await this.rdFormMapperSchemaService.updateFederalFormError(
-      caseRid,
-      countryRid,
-      orgDb,
-      accountNumber,
-    );
-       
+      await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        countryRid,
+        orgDb,
+        accountNumber,
+      );
     }
 
-   
     logMessage(
       `Retrieved federal form. Browse file URL: ${formInfo.browse_file}`,
     );
@@ -111,37 +104,36 @@ export class RdFormMapperService {
         accountRid,
         effectiveStart,
         caseRid,
-        schemaName
+        schemaName,
       );
-    
+
     // Add debugging for form type
     logMessage(`Form type detected: "${formInfo?.form_type}"`);
     logMessage(`Form info: ${JSON.stringify(formInfo)}`);
-    
+
     let filledFormUrl: string;
 
-    if(formInfo?.form_type === "non-fillable" || formInfo?.form_type === "non_fillable" || formInfo?.form_type === "nonfillable")
-    {
+    if (
+      formInfo?.form_type === "non-fillable" ||
+      formInfo?.form_type === "non_fillable" ||
+      formInfo?.form_type === "nonfillable"
+    ) {
       logMessage("Federal form is non-fillable. Generate PDF.");
-      filledFormUrl  = await this.generatePDFNonFillable(enhancedMapperConfig,
-      accountRid,
-      formInfo.browse_file,
-      accountNumber); 
-    
+      filledFormUrl = await this.generatePDFNonFillable(
+        enhancedMapperConfig,
+        accountRid,
+        formInfo.browse_file,
+        accountNumber,
+      );
+    } else {
+      logMessage("Federal form is fillable. Using PDF filler.");
+      filledFormUrl = await pdfFiller(
+        enhancedMapperConfig,
+        accountRid,
+        formInfo.browse_file,
+        accountNumber,
+      );
     }
-    else
-    {
-        logMessage("Federal form is fillable. Using PDF filler.");
-        filledFormUrl = await pdfFiller(
-      enhancedMapperConfig,
-      accountRid,
-      formInfo.browse_file,
-      accountNumber,
-    );
-
-    }
-
-   
 
     logMessage(
       `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
@@ -173,7 +165,7 @@ export class RdFormMapperService {
     mainDb: Sequelize,
     orgDb: Sequelize,
     states: string[],
-    schemaName: string
+    schemaName: string,
   ): Promise<void> {
     logMessage(
       `Processing State form computation for states: ${states.join(", ")}`,
@@ -192,13 +184,13 @@ export class RdFormMapperService {
       );
 
       if (!formInfo?.browse_file) {
-         await this.rdFormMapperSchemaService.updateStateFormError(
-      caseRid,
-      countryRid,
-      state,
-      orgDb,
-      accountNumber,
-    );
+        await this.rdFormMapperSchemaService.updateStateFormError(
+          caseRid,
+          countryRid,
+          state,
+          orgDb,
+          accountNumber,
+        );
       }
 
       logMessage(
@@ -226,7 +218,7 @@ export class RdFormMapperService {
           accountRid,
           effectiveStart,
           caseRid,
-          schemaName
+          schemaName,
         );
 
       const filledFormUrl = await pdfFiller(
@@ -247,9 +239,8 @@ export class RdFormMapperService {
         orgDb,
         accountNumber,
       );
-
       logMessage(`Successfully saved state form URL for state: ${state}`);
-    } 
+    }
 
     logMessage(
       `Successfully completed state form processing for case: ${caseRid}`,
@@ -263,64 +254,67 @@ export class RdFormMapperService {
     enhancedMapperConfig: any[],
     accountRid: string,
     browseFile: string,
-    accountNumber: string
+    accountNumber: string,
   ): Promise<string> {
     try {
-      logMessage("Starting PDF generation for non-fillable form");
-
       // Transform mapper config to extract data for PDF generation
       const formData = enhancedMapperConfig.reduce((acc: any, config: any) => {
         acc[config.field_name || config.field_label] = config.value;
         return acc;
       }, {});
 
-      logMessage(`Prepared form data with ${Object.keys(formData).length} fields for PDF generation`);
+      logMessage(
+        `Prepared form data with ${Object.keys(formData).length} fields for PDF generation`,
+      );
 
       // Generate unique filename
       const fileName = `rd_form_${accountNumber}_${Date.now()}_${uuidv4().slice(0, 8)}.pdf`;
-      const tempFilePath = path.join(process.cwd(), 'temp', fileName);
-      
-      // Ensure temp directory exists
-      const tempDir = path.dirname(tempFilePath);
-      try {
-        await fs.promises.mkdir(tempDir, { recursive: true });
-      } catch (err) {
-        logMessage(`Warning: Could not create temp directory: ${err}`);
-      }
 
-      // Create PDF document
+      // Create PDF document in memory
       const doc = new PDFDocument({ margin: 50 });
-      const writeStream = fs.createWriteStream(tempFilePath);
-      doc.pipe(writeStream);
+      const buffers: Buffer[] = [];
+
+      // Set up event handlers FIRST before any operations
+      doc.on('data', buffers.push.bind(buffers));
+      
+      // Set up promise for completion before starting content generation
+      const pdfBufferPromise = new Promise<Buffer>((resolve, reject) => {
+        doc.on('end', () => {
+          const finalBuffer = Buffer.concat(buffers);
+          resolve(finalBuffer);
+        });
+        doc.on('error', reject);
+        setTimeout(() => reject(new Error("PDF generation timeout")), 30000);
+      });
 
       try {
         // Add header
-        doc.fontSize(16)
-           .text('R&D Tax Credit Form', { align: 'center' });
-        
+        doc.fontSize(16).text("R&D Tax Credit Form", { align: "center" });
+
         doc.moveDown(1);
-        
+
         // Add account information
-        doc.fontSize(12)
-           .text(`Account: ${accountNumber}`);
+        doc.fontSize(12).text(`Account: ${accountNumber}`);
         doc.text(`Account RID: ${accountRid}`);
         doc.moveDown(1);
 
         // Add form data
-        doc.fontSize(10)
-           .text('Form Data:', { underline: true });
+        doc.fontSize(10).text("Form Data:", { underline: true });
         doc.moveDown(0.5);
 
         // Add each field with its value
         Object.entries(formData).forEach(([fieldName, value]) => {
-          doc.text(`${fieldName}: ${value || 'N/A'}`);
+          doc.text(`${fieldName}: ${value || "N/A"}`);
           doc.moveDown(0.3);
         });
 
         // Add footer
         doc.moveDown(2);
-        doc.fontSize(8)
-           .text(`Generated on: ${new Date().toISOString()}`, { align: 'center' });
+        doc
+          .fontSize(8)
+          .text(`Generated on: ${new Date().toISOString()}`, {
+            align: "center",
+          });
 
         // Finalize the PDF
         doc.end();
@@ -329,91 +323,23 @@ export class RdFormMapperService {
         throw new Error(`PDF content creation failed: ${pdfError}`);
       }
 
-      // Wait for PDF to be written
-      await new Promise<void>((resolve, reject) => {
-        writeStream.on('finish', () => resolve());
-        writeStream.on('error', reject);
-        setTimeout(() => reject(new Error('PDF generation timeout')), 30000);
-      });
+      // Wait for PDF generation to complete and get buffer
+      const pdfBuffer = await pdfBufferPromise;
+      // Upload directly to blob storage from buffer
+      const blobUrl = await uploadBufferToAzureBlob(pdfBuffer, fileName, accountNumber);
 
-      logMessage(`PDF generated successfully at: ${tempFilePath}`);
-
-      // Upload to blob storage
-     // const blobUrl = await this.uploadPdfToBlob(tempFilePath, fileName);
-      
-      // Clean up temp file
-      try {
-      //  await fs.promises.unlink(tempFilePath);
-      } catch (cleanupError) {
-        logMessage(`Warning: Could not clean up temp file: ${cleanupError}`);
-      }
-      
-      logMessage(`Non-fillable PDF generation completed. URL: ${tempFilePath}`);
-      //return blobUrl;
-      return ''
-
+      logMessage(`Non-fillable PDF generation completed. URL: ${blobUrl}`);
+      return blobUrl;
     } catch (error) {
       this.logger.error("Error generating non-fillable PDF:", error);
-      throw new Error(`Failed to generate non-fillable PDF: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to generate non-fillable PDF: ${error instanceof Error ? error.message : error}`,
+      );
     }
   }
 
-  /**
-   * Upload PDF to blob storage
-   */
-  private async uploadPdfToBlob(filePath: string, fileName: string): Promise<string> {
-    try {
-      // Check if file exists
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`PDF file not found at path: ${filePath}`);
-      }
 
-      const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-      if (!connectionString) {
-        logMessage('Azure Storage connection string not configured, returning local file path');
-        return `file://${filePath}`;
-      }
 
-      const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-      const containerName = process.env.AZURE_BLOB_CONTAINER || 'rd-forms';
-      const containerClient = blobServiceClient.getContainerClient(containerName);
-
-      // Ensure container exists
-      try {
-        await containerClient.createIfNotExists({ access: 'blob' });
-      } catch (containerError) {
-        logMessage(`Warning: Could not create container: ${containerError}`);
-      }
-
-      const blockBlobClient = containerClient.getBlockBlobClient(fileName);
-      
-      // Upload file with retry logic
-      let retries = 3;
-      while (retries > 0) {
-        try {
-          await blockBlobClient.uploadFile(filePath, {
-            blobHTTPHeaders: {
-              blobContentType: 'application/pdf'
-            }
-          });
-          break;
-        } catch (uploadError) {
-          retries--;
-          if (retries === 0) throw uploadError;
-          logMessage(`Upload failed, retrying... (${retries} attempts left)`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-
-      logMessage(`PDF uploaded to blob storage: ${fileName}`);
-      return blockBlobClient.url;
-
-    } catch (error) {
-      this.logger.error('Error uploading PDF to blob storage:', error);
-      logMessage(`Blob upload failed, returning local file path: ${filePath}`);
-      return `file://${filePath}`;
-    }
-  }
 
   /**
    * Enhance mapper configuration with dynamic values from reference tables
@@ -423,61 +349,193 @@ export class RdFormMapperService {
     accountRid: string,
     effectiveStart: string,
     caseRid: string,
-    schemaName: string
+    schemaName: string,
+    fiscalYear?: string,
   ): Promise<any[]> {
-    return Promise.all(
-      mapperConfig.map(async (configItem: any) => {
-        let value = configItem.value;
+    const enhancedConfigs: any[] = [];
 
-        if (configItem.calculation_config && configItem.field_type == "line-item") {
-          for (const key in configItem.calculation_config) {
-            const rid = configItem.calculation_config[key];
+    for (const configItem of mapperConfig) {
+      let value = configItem.value;
+      if (
+        configItem.calculation_config &&
+        configItem.field_type == "line-item"
+      ) {
+        for (const key in configItem.calculation_config) {
+          const rid = configItem.calculation_config[key];
 
-            try {
-              const mapperObject =
-                await this.rdFormMapperSchemaService.getDataMapperObjectByRid(
-                  rid,
-                );
-              if (mapperObject?.ref_table && mapperObject?.field_name) {
-                const dynamicValue =
-                  await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
-                    mapperObject.ref_table,
-                    mapperObject.field_name,
-                    mapperObject.is_json,
-                    accountRid,
-                    caseRid,
-                    schemaName
-                  );
-
-                if (dynamicValue !== null) {
-                  value = dynamicValue;
-                  logMessage(
-                    `Fetched dynamic value for field ${configItem.field_label}: ${dynamicValue}`,
-                  );
-                }
-              }
-            } catch (error) {
-              this.logger.error(
-                `Error fetching dynamic value for ${configItem.field_label}:`,
-                error,
+          try {
+            const mapperObject =
+              await this.rdFormMapperSchemaService.getDataMapperObjectByRid(
+                rid,
               );
+            if (mapperObject?.ref_table && mapperObject?.field_name) {
+              const dynamicValue =
+                await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
+                  mapperObject.ref_table,
+                  mapperObject.field_name,
+                  mapperObject.is_json,
+                  accountRid,
+                  caseRid,
+                  schemaName,
+                );
+
+              if (dynamicValue !== null) {
+                value = dynamicValue;
+                logMessage(
+                  `Fetched dynamic value for field ${configItem.field_label}: ${dynamicValue}`,
+                );
+              }
             }
+          } catch (error) {
+            this.logger.error(
+              `Error fetching dynamic value for ${configItem.field_label}:`,
+              error,
+            );
           }
         }
 
-        return {
+        // Add the single enhanced config item
+        enhancedConfigs.push({
           ...configItem,
           label: configItem.field_label,
           value_field_id: configItem.field_id,
           value,
-        };
-      }),
-    );
+        });
+      } else if (configItem.field_type == "table") {
+        // Fetch column ID list from data_mapper_table_mappings for table field types
+        if (configItem.column_id && configItem.calculation_config) {
+          try {
+            // Get mapper object from calculation config (same as line-item)
+            let mapperObject: any = null;
+            for (const key in configItem.calculation_config) {
+              const rid = configItem.calculation_config[key];
+              mapperObject =
+                await this.rdFormMapperSchemaService.getDataMapperObjectByRid(
+                  rid,
+                );
+              break; // Use first calculation config entry
+            }
+
+            // Get column ID list from data_mapper_table_mappings using the column_id
+            const columnIdList =
+              await this.rdFormMapperSchemaService.getColumnIdListFromTableMappings(
+                configItem.column_id,
+              );
+
+            if (
+              columnIdList &&
+              mapperObject?.ref_table &&
+              mapperObject?.field_name
+            ) {
+              // Check if columnIdList is a JSON object with row mappings
+              let fieldMappings: any = {};
+
+              try {
+                // If it's a string, try to parse it as JSON
+                if (typeof columnIdList === "string") {
+                  fieldMappings = JSON.parse(columnIdList);
+                } else if (
+                  typeof columnIdList === "object" &&
+                  !Array.isArray(columnIdList)
+                ) {
+                  fieldMappings = columnIdList;
+                }
+              } catch (parseError) {
+                logMessage(
+                  `Error parsing column ID list as JSON: ${parseError}`,
+                );
+                fieldMappings = {};
+              }
+
+              // Handle JSON object field mappings (new format)
+              if (Object.keys(fieldMappings).length > 0) {
+                // Fetch table data
+                const tableValues =
+                  await this.rdFormMapperSchemaService.fetchTableValues(
+                    mapperObject.ref_table,
+                    mapperObject.field_name,
+                    mapperObject.is_json || false,
+                    mapperObject.data_order_by,
+                    accountRid,
+                    caseRid,
+                    schemaName,
+                    fiscalYear,
+                  );
+
+                // Create individual field entries for each table row
+                Object.entries(fieldMappings).forEach(
+                  ([rowNumber, fieldPath]) => {
+                    if (typeof fieldPath === "string") {
+                      const rowIndex = parseInt(rowNumber, 10) - 1; // Convert 1-based to 0-based
+                      const rowValue = tableValues[rowIndex]?.value || "";
+                      enhancedConfigs.push({
+                        ...configItem,
+                        label: `${configItem.field_label}[row_${rowNumber}]`,
+                        field_name: configItem.field_name, // Keep original field_name
+                        value_field_id: fieldPath, // Use PDF field path as value_field_id
+                        value: rowValue,
+                      });
+                    }
+                  },
+                );
+
+                logMessage(
+                  `Created ${Object.keys(fieldMappings).length} table row mappings for field ${configItem.field_label}`,
+                );
+              } else {
+                // Fallback for legacy or empty mappings
+                enhancedConfigs.push({
+                  ...configItem,
+                  label: configItem.field_label,
+                  value_field_id: configItem.field_id,
+                  value: "",
+                });
+              }
+            } else {
+              // No valid mappings found
+              enhancedConfigs.push({
+                ...configItem,
+                label: configItem.field_label,
+                value_field_id: configItem.field_id,
+                value: "",
+              });
+            }
+          } catch (error) {
+            this.logger.error(
+              `Error fetching table values for ${configItem.field_label}:`,
+              error,
+            );
+            enhancedConfigs.push({
+              ...configItem,
+              label: configItem.field_label,
+              value_field_id: configItem.field_id,
+              value: "",
+            });
+          }
+        } else {
+          // No column_id or calculation_config
+          enhancedConfigs.push({
+            ...configItem,
+            label: configItem.field_label,
+            value_field_id: configItem.field_id,
+            value: configItem.value,
+          });
+        }
+      } else {
+        // Default case for other field types
+        enhancedConfigs.push({
+          ...configItem,
+          label: configItem.field_label,
+          value_field_id: configItem.field_id,
+          value,
+        });
+      }
+    }
+    return enhancedConfigs;
   }
 
   async processRdFormMapperRequests(message: any): Promise<any[]> {
     try {
-
       const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
 
@@ -487,7 +545,7 @@ export class RdFormMapperService {
         effectiveStart,
         effectiveEnd,
         accountNumber,
-        schemaName
+        schemaName,
       } = parsedMessage;
       const mainDb = await this.getMainDb();
       const orgDb = await this.getOrgDb();
@@ -525,9 +583,9 @@ export class RdFormMapperService {
             accountNumber,
             mainDb,
             orgDb,
-            schemaName
+            schemaName,
           );
-            await this.processStateForms(
+          await this.processStateForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -537,8 +595,8 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             availableConfig.states || [],
-            schemaName
-          ); 
+            schemaName,
+          );
         },
         [ConfigType.FEDERAL_ONLY]: async () => {
           logMessage("Processing Federal forms only.");
@@ -551,7 +609,7 @@ export class RdFormMapperService {
             accountNumber,
             mainDb,
             orgDb,
-            schemaName
+            schemaName,
           );
         },
         [ConfigType.STATE_ONLY]: async () => {
@@ -566,7 +624,7 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             availableConfig.states || [],
-            schemaName
+            schemaName,
           );
         },
         [ConfigType.NONE]: async () => {
@@ -642,7 +700,7 @@ export class RdFormMapperService {
         effectiveStart,
         effectiveEnd,
         schemaName,
-        fetchParentAccountRnumber[0][0].r_number
+        fetchParentAccountRnumber[0][0].r_number,
       );
     } catch (error) {
       logMessage(`Error initiating RD Credit Process: ${error}`);
@@ -660,7 +718,8 @@ export class RdFormMapperService {
   private async getProducer(): Promise<Producer> {
     if (!this.producer) {
       const kafka = new Kafka({
-        clientId: process.env.KAFKA_CLIENT_ID_RD_FORM || "rd-form-filler-service",
+        clientId:
+          process.env.KAFKA_CLIENT_ID_RD_FORM || "rd-form-filler-service",
         brokers: [process.env.KAFKA_BROKER || "kafka:9092"],
       });
       this.producer = kafka.producer();
@@ -683,13 +742,13 @@ export class RdFormMapperService {
     effectiveStart: string,
     effectiveEnd: string,
     schemaName: string,
-    accountNumber: string
+    accountNumber: string,
   ) {
     try {
       const processRid = await this.rdCreditSchemaService.markAsInitiated(
         schemaName,
         caseRid,
-        'rd_form'
+        "rd_form",
       );
       const topic = process.env.KAFKA_TOPIC_RD_FORM || "rd_form_processor";
       let payload = {
@@ -698,18 +757,20 @@ export class RdFormMapperService {
         processRid: processRid,
         caseRid: caseRid,
         effectiveStart: effectiveStart,
-        effectiveEnd: effectiveEnd
+        effectiveEnd: effectiveEnd,
       };
       const message = {
         value: JSON.stringify(payload),
       };
-    
+
       const producer = await this.getProducer();
       const sendResult = await producer.send({
         topic,
         messages: [message],
       });
-      logMessage(`RD Form Filler process initiated. Kafka send result: ${JSON.stringify(sendResult)}`);
+      logMessage(
+        `RD Form Filler process initiated. Kafka send result: ${JSON.stringify(sendResult)}`,
+      );
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.rdFormProcessInitiatedSuccess,
@@ -727,69 +788,70 @@ export class RdFormMapperService {
     }
   }
 
-  async getRdFormUrl(
-    value: {
-      account_rid: string;
-      case_rid: string;
-      fiscal_year: number;
-      is_federal: boolean;
-      country_rid: string;
-      state_rid?: string;
-    }
-  ) {
+  async getRdFormUrl(value: {
+    account_rid: string;
+    case_rid: string;
+    fiscal_year: number;
+    is_federal: boolean;
+    country_rid: string;
+    state_rid?: string;
+  }) {
     try {
       // Validate input parameters
       if (!value.is_federal && !value.state_rid) {
         return this.createErrorResponse(
           STATUS_MESSAGE.detailFetchedFailed,
-          'State RID is required for non-federal forms'
+          "State RID is required for non-federal forms",
         );
       }
 
       const [mainDb, orgDb] = await Promise.all([
         this.getMainDb(),
-        this.getOrgDb()
+        this.getOrgDb(),
       ]);
 
       const fetchParentAccountRnumber: any = await mainDb.query(
-        await rawQueries.fetchParentAccount(value.account_rid, mainDb)
+        await rawQueries.fetchParentAccount(value.account_rid, mainDb),
       );
 
       const accountNumber = fetchParentAccountRnumber[0]?.[0]?.r_number;
       if (!accountNumber) {
         return this.createErrorResponse(
           STATUS_MESSAGE.detailFetchedFailed,
-          'Parent account not found'
+          "Parent account not found",
         );
       }
 
-      const results: { filled_form_url?: string | null; form_error_message?: string | null } | null = value.is_federal
+      const results: {
+        filled_form_url?: string | null;
+        form_error_message?: string | null;
+      } | null = value.is_federal
         ? await this.rdFormMapperSchemaService.getFederalFormUrl(
             value.case_rid,
             value.country_rid,
             orgDb,
-            accountNumber
+            accountNumber,
           )
         : await this.rdFormMapperSchemaService.getStateFormUrl(
             value.case_rid,
             value.state_rid!,
             orgDb,
-            accountNumber
+            accountNumber,
           );
-        if(results?.filled_form_url != null){
-         results.filled_form_url =  await generateSasUrl(results.filled_form_url,300) || null;
-        }
+      if (results?.filled_form_url != null) {
+        results.filled_form_url =
+          (await generateSasUrl(results.filled_form_url, 300)) || null;
+      }
 
       return this.createSuccessResponse({
         rdformUrl: results?.filled_form_url || null,
-        rdErrorMessage: results?.form_error_message || null
+        rdErrorMessage: results?.form_error_message || null,
       });
-
     } catch (error) {
       logMessage(`Error fetching RD Form URL: ${error}`);
       return this.createErrorResponse(
         STATUS_MESSAGE.jurisdictionFetchedFailed,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
     }
   }

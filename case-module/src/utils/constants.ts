@@ -1702,11 +1702,15 @@ WHERE dmf.country_rid = '${countryRid}'
      SELECT DISTINCT
        dmfm.field_label,
        dmfm.field_id,
+       dmfm.field_type,
        dmfm.calculation_config,
-       dmfm.created_datetime
+       dmfm.created_datetime,
+       dmfm.column_id,
+       dmfm.extraction_order,
+       dmfm.data_order_by
       FROM ${MAIN_SCHEMA_NAME}.data_mapper_form_mappings dmfm
       WHERE dmfm.form_rid = :formId
-      ORDER BY dmfm.created_datetime ASC`
+      ORDER BY dmfm.extraction_order ASC`
   },
   saveFederalFilledFormUrl(schemaName: string)
   {
@@ -1794,7 +1798,15 @@ WHERE dmf.country_rid = '${countryRid}'
           FROM ${schemaName}.${refTable}
           WHERE case_rid = :case_rid
           LIMIT 1`
+  },
+  getTableMappings() {
+    return `
+        SELECT column_id_list 
+        FROM trd365.data_mapper_table_mappings 
+        WHERE rid = :columnId
+        LIMIT 1`;
   }
+
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
