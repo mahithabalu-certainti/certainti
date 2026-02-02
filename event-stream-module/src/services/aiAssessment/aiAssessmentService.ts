@@ -74,8 +74,8 @@ export class AIAssessmentService {
         value: JSON.stringify(aiResponse),
       };
 
-       const { company_id, project_id,transaction_id } = aiResponse.data || aiResponse;
-       console.log("AI Response Type:", aiResponse.data.type);
+       const { company_id, project_id, transaction_id } = aiResponse.data || aiResponse;
+       logMessage(`AI Response Type: ${aiResponse?.data?.type}`);
     
       // Check if message type is refine_summary and send via WebSocket
       if (aiResponse?.data?.type === "refine_summary") {

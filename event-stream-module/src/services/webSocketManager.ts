@@ -47,19 +47,19 @@ class WebSocketManager {
     });
   }
 
-  // Send message to specific room based on company_id and project_id
-  sendToAssessmentRoom(transaction_id: string, message: any): void {
+  // Send message to a specific assessment room based on transaction_id
+  sendToTransactionRoom(transaction_id: string, message: any): void {
     if (!this.io) {
       logMessage("WebSocket server not initialized");
       return;
     }
-   const rawSummary = message.data.updated_summary;
+    const rawSummary = message.data.updated_summary;
 
-  // ✅ Ensure project_summary is stringified ONCE
-  const project_summary =
-    typeof rawSummary === "string"
-      ? rawSummary
-      : JSON.stringify(rawSummary);
+    // ✅ Ensure project_summary is stringified ONCE
+    const project_summary =
+      typeof rawSummary === "string"
+        ? rawSummary
+        : JSON.stringify(rawSummary);
 
     const roomName = `assessment_${transaction_id}`;
     this.io.to(roomName).emit("ai-response", project_summary);
