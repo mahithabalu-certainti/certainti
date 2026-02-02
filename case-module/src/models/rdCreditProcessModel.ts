@@ -8,6 +8,7 @@ export interface RdCreditProcessAttributes {
     status?: string;
     created_datetime?: Date;
     modified_datetime?: Date;
+    request_type?: string;
 }
 
 export interface RdCreditProcessCreationAttributes
@@ -24,6 +25,7 @@ export class RdCreditProcess
     public status?: string;
     public created_datetime?: Date;
     public modified_datetime?: Date;
+    public request_type?: string;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditProcess.init(
@@ -50,6 +52,10 @@ export class RdCreditProcess
                     type: DataTypes.DATE,
                     allowNull: true,
                     defaultValue: DataTypes.NOW,
+                },
+                request_type: {
+                    type: DataTypes.STRING(1000),
+                    allowNull: true,
                 },
             },
             {

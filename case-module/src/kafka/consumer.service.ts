@@ -40,7 +40,7 @@ export class KafkaConsumerService {
 
                 console.log(`Processing consumer message for id=${JSON.stringify(payload)}`);
 
-                await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, payload.processRid);
+                await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, payload.processRid, 'financial_computation');
 
                 await this.stateComputationService.runComputation(
                     payload.accountRid,
@@ -49,7 +49,7 @@ export class KafkaConsumerService {
                     payload.effectiveEnd
                 );
 
-                await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid);
+                await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid, 'financial_computation');
 
                 console.log(`Computation complete for id=${payload.processRid}`);
             }
@@ -59,7 +59,6 @@ export class KafkaConsumerService {
         const FORM_TOPIC = ENV.KAFKA_FORM_TOPIC || "rd_form_mapper_processing";
         await this.formConsumer.connect();
         await this.formConsumer.subscribe({ topic: FORM_TOPIC, fromBeginning: false });
-
         logMessage("Kafka Form Consumer Ready");
 
         await this.formConsumer.run({
@@ -75,8 +74,9 @@ export class KafkaConsumerService {
                 }
                 console.log(`Processing form topic message: ${JSON.stringify(payload)}`);
                 try {
+                    await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, payload.processRid, 'rd_form');
                     await this.rdFormMapperService.processRdFormMapperRequests(payload);
-                    await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid);
+                    await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid,'rd_form');
                     console.log("Form processing complete");
                 } catch (err) {
                     console.error("Error processing form message", err);

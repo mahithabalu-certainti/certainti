@@ -698,6 +698,7 @@ export class RdFormMapperService {
       const processRid = await this.rdCreditSchemaService.markAsInitiated(
         schemaName,
         caseRid,
+        'rd_form'
       );
       const topic = process.env.KAFKA_TOPIC_RD_FORM || "rd_form_processor";
       let payload = {
