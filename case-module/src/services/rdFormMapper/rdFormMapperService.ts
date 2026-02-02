@@ -462,7 +462,7 @@ export class RdFormMapperService {
                 Object.entries(fieldMappings).forEach(
                   ([rowNumber, fieldPath]) => {
                     if (typeof fieldPath === "string") {
-                      const rowIndex = parseInt(rowNumber) - 1; // Convert 1-based to 0-based
+                      const rowIndex = parseInt(rowNumber, 10) - 1; // Convert 1-based to 0-based
                       const rowValue = tableValues[rowIndex]?.value || "";
                       enhancedConfigs.push({
                         ...configItem,
