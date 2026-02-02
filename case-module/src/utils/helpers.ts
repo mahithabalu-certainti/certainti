@@ -643,7 +643,7 @@ export async function uploadToAzureBlob(
  */
 export async function uploadBufferToAzureBlob(buffer: Buffer, blobName: string,accountNumber: string): Promise<string> {
      // Get connection string from secrets manager
-    const connectionString = `DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net`;
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     const containerName = accountNumber.toLowerCase();
 
     if (!connectionString) {
@@ -665,7 +665,7 @@ export async function uploadBufferToAzureBlob(buffer: Buffer, blobName: string,a
  * @returns Buffer containing the blob's data
  */
 export async function downloadBufferFromAzureBlob(containerName: string, blobName: string): Promise<Buffer> {
-    const connectionString = `DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net`;
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     if (!connectionString) {
       throw new Error("Azure storage connection string is required");
     }
