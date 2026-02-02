@@ -131,6 +131,7 @@ class SchemaService {
       await this.createActivityAttachmentsTable(schemaName, sequelize);
       await this.createActivityHistoryTable(schemaName, sequelize);
       await this.createTaskHistoryTable(schemaName, sequelize);
+      await this.createCaseHistoryTables(schemaName, sequelize);
       await this.createTaskTagsTable(schemaName, sequelize);
       await this.createTaskAttachmentsTable(schemaName, sequelize);
       await this.createTaskCollaboratorsTable(schemaName, sequelize);
@@ -138,7 +139,6 @@ class SchemaService {
       await this.createCommentsAttachmentsTable(schemaName, sequelize);
 
 
-      
       await transaction.commit();
     } catch (Err) {
       errorLog("Error creating account tables:", (Err as Error).message);
@@ -286,6 +286,15 @@ class SchemaService {
         rawQueries.getAttachmentTimelineIndexQuery(schemaName, field)
       );
     }
+  }
+
+  private async createCaseHistoryTables (schemaName : string, sequelize : Sequelize) {
+    await sequelize.query(
+      rawQueries.getCreateCaseHistorySubmissionSequenceQuery(schemaName)
+    );
+    await sequelize.query(
+      rawQueries.getCreateCaseHistorySubmissionTableQuery(schemaName)
+    );
   }
 
   private async createAttachmentTable(
