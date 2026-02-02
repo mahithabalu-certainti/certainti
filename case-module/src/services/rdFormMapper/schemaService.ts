@@ -6,7 +6,6 @@ import { CaseModelService } from "../caseModelsService";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
-import { stat } from "fs";
 
 class RdFormMapperSchemaService {
   private orgDbSequelize: Sequelize | null = null;
