@@ -319,4 +319,5 @@ routes.get(
 )
 
 routes.get('/regions/:accountId/:caseId', controller.childCaseController.RegionListForFinancialHighlights)
+routes.post('/dossier/create', checkUserStatusMiddleware("NA"), controller.childCaseController.initiateCreateDossierForm)
 export default routes;

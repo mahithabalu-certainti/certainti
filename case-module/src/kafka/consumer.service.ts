@@ -22,6 +22,7 @@ export class KafkaConsumerService {
 
     private consumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID });
     private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_FORM_GROUP_ID });
+    private dossierConsumer = kafka.consumer({groupId : ENV.DOSSIER_GROUP_ID})
 
     async start() {
         // Start original consumer
@@ -83,6 +84,36 @@ export class KafkaConsumerService {
                 }
             }
         });
+
+        const dossierTopic = ENV.DOSSIER_KAFKA_TOPIC || "create-dossier-form";
+        await this.dossierConsumer.connect();
+        await this.dossierConsumer.subscribe({topic : dossierTopic, fromBeginning : false});
+
+        await this.dossierConsumer.run({
+            eachMessage : async ({message}) => {
+                const key = message.key?.toString();
+                const value = message.value?.toString();
+                if(!key) return;
+                if(!value) return;
+
+                let payload;
+                try {
+                    payload = JSON.parse(value);
+
+                } catch (e) {
+                    console.error("Invalid JSON in form topic message", value);
+                    return;
+                }
+                console.log(`Processing form topic message: ${JSON.stringify(payload)}`);
+                try {
+
+                    const markInProgress = await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, key, 'dossier-form');
+                    
+                } catch (error) {
+                    
+                }
+            }
+        })
     }
 }
 

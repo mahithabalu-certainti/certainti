@@ -4,15 +4,24 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { caseFilingTypes, caseStatuses, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
-import { CaseClosureRemarks, ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
+import { CaseClosureRemarks, CaseData, ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks } from "../../utils/dossier-rawquery";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
+import RDCreditSchemaService from "../rdComputation/schemaService";
+import { ProjectResourceService } from "../projectResource/projectResourceService";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
+    private rdCreditSchemaService = new RDCreditSchemaService()
+    private projectResourceService : ProjectResourceService;
+
+    constructor(logger : Logger) {
+        super(logger)
+        this.projectResourceService = new ProjectResourceService(this.logger)
+    }
 
     protected async mainDbConfiguration() {
         const mainDb = await super.getMainDb();
@@ -211,7 +220,36 @@ async getCaseClosureRemarks (data : any) {
     }
 }
 async initiateCreateDossierForm (data : any) {
-    const mainDb = this.getMainDb();
-    const orgDb = this.getOrgDb();
+    const mainDb = await this.getMainDb();
+    const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const producer = await this.getProducer();
+    const accountRid = data.account_rid;
+    const caseRid = data.case_rid;
+    const userId = data.userId;
+    const accountNumber = fetchParentNumber[0][0].r_number;
+    const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
+    const result = await producer.send({
+        topic : ENV.DOSSIER_KAFKA_TOPIC,
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId})}]
+    })
+    console.log(`Message : ${JSON.stringify(result)}`)
+    console.log(`Message published to ID : ${processingRid}`);
+    return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
+}
+async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string) {
+    const orgDb = await this.getOrgDb()
+    let schemaName = rawQueries.fetchSchemaName(accountNumber)
+    const [caseDetails] = await orgDb.query<CaseData>(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+    let caseProjectsPayload : any;
+    caseProjectsPayload.account_rid = accountRid;
+    caseProjectsPayload.case_rid = caseRid;
+    caseProjectsPayload.sort = "project_code";
+    caseProjectsPayload.sort_by = "ASC"
+    caseProjectsPayload.filter = {};
+    caseProjectsPayload.search = "";
+    caseProjectsPayload.fiscal_year = caseDetails!.fiscal_year
+    const getProjectQualifiedData = await this.exportAssignedProjects(caseProjectsPayload);
+    const getProjectResourceSummary = await this.projectResourceService.exportProjectResources(accountRid, caseRid,caseDetails!.fiscal_year, {}, "resource_code", "ASC", userId, "");
+    
 }
 }

@@ -211,7 +211,8 @@ export const STATUS_MESSAGE = {
   rdFormProcessInitiatedSuccess : "RD form filler process initiated successfully",
   rdFormPreview : "RD form retrieved successfully",
   financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
-  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully"
+  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully",
+  dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully"
 };
 
 export const caseStatuses = {

@@ -188,10 +188,42 @@ async function fetchCaseClosingRemarks (req : Request, res : Response) {
     return;
   }
 }
+  async function initiateCreateDossierForm (req : Request, res : Response) {
+    const methodName = "initiateCreateDossierForm"
+    try {
+       const userId = req.headers["x-user-id"] as string;
+        if (!userId) {
+            errorLog(methodName, "User ID is required in headers");
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+            return;
+        }
+        const data = req.body;
+        data.userId = userId;
+        const result = await childCaseService.initiateCreateDossierForm(data);
+        if(result) {
+          return res.status(HttpStatus.SUCCESS).send({
+            statusCode : HttpStatus.SUCCESS,
+            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+            statusMessage : result
+          })
+        }
+    }catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 
 export default {
     signOffFinancialWorking,
     RegionListForFinancialHighlights,
     getClosedCasesList,
-    fetchCaseClosingRemarks
+    fetchCaseClosingRemarks,
+    initiateCreateDossierForm
 }

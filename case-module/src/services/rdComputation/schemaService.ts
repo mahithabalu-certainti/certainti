@@ -559,7 +559,10 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         const result = await RdCreditProcess.findOne({
-            where: { case_rid },
+            where: { 
+                case_rid, 
+                request_type : "financial_computation" 
+            },
             order: [['created_datetime', 'DESC']],
             attributes: ['status'],
         });
