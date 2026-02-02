@@ -22,12 +22,11 @@ class ADEForm6765Service:
         settings = get_settings()
 
         client_kwargs: Dict[str, Any] = {}
-        if settings.landing_api_key:
-            client_kwargs["apikey"] = settings.landing_api_key
+        if settings.LANDING_API_KEY:
+            client_kwargs["apikey"] = settings.LANDING_API_KEY
         #if settings.landing_environment:
             # Only set if explicitly configured
             #client_kwargs["environment"] = settings.landing_environment
-        print("client_kwargs test", client_kwargs)
         self.client = LandingAIADE(**client_kwargs)
         self.schema = pydantic_to_json_schema(ExtractionResponse)
         self.parse_model = settings.ade_parse_model

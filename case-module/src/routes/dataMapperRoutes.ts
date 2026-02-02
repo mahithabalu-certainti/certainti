@@ -57,5 +57,11 @@ routes.get(
   controller.dataMapperController.getObjectsList
 );
 
+routes.get(
+  "/uploadStatus/list",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  controller.dataMapperController.listDataMapperUploadStatus
+);
+
 
 export default routes

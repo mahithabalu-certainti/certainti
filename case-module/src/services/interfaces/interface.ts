@@ -35,6 +35,7 @@ import {
   WeightageType,
   TaskCategoryType,
   CaseTaskDropdownType,
+  CaseClosureRemarks,
 } from "../../utils/types";
 
 export interface ICaseService {
@@ -514,6 +515,21 @@ export interface IChildCaseService extends ICaseService {
     errorMessage?: string;
     data?: { cases: any };
   }>;
+  getCaseClosureRemarks(data : any): Promise<{
+    case_rid: string;
+    case_name: any;
+    closing_remarks: {
+        created_by: any;
+        created_by_name: any;
+        signoff_type_rid: any;
+        signoff_type_name: any;
+        signoff_at: any;
+    }[];
+} | {
+    case_rid: any;
+    case_name: any;
+    closing_remarks: never[];
+} | undefined>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;
@@ -764,6 +780,13 @@ export interface IDataMapperService {
   }>;
 
   getObjectsList(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
+  listDataMapperUploadStatus(): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

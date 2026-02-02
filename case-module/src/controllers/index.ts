@@ -11,6 +11,7 @@ import caseTaskController from "./caseTaskController";
 import caseChecklistController from "./caseChecklistController";
 import dataMapperController from "./dataMapperController";
 import financialRDCreditController from "./financialRDCreditController";
+import rdFormMapperController from "./rdFormMapperController";
 
 const controller = {
   caseController,
@@ -25,7 +26,8 @@ const controller = {
   caseTaskController,
   caseChecklistController,
   dataMapperController,
-  financialRDCreditController
+  financialRDCreditController,
+  rdFormMapperController
 };
 
 export default controller;

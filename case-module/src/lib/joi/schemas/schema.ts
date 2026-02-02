@@ -427,7 +427,7 @@ const updateChecklistSchema = Joi.object({
         checklist_item_rid: Joi.string().optional(),
         status_rid: Joi.string().required(),
         checklist_item_description: Joi.string().max(2000).optional().allow(""),
-        action_type: Joi.string().valid("add", "edit", "delete").required(),
+        action_type: Joi.string().optional().allow("", null),
       })
     )
     .min(1)
@@ -1232,6 +1232,20 @@ const updateDataMapperSchema = Joi.object({
   });
 
 
+const rdFormGenerationSchema = Joi.object({
+  account_rid : Joi.string().max(255).required(),
+  case_rid : Joi.string().max(255).required(),
+  fiscal_year : Joi.number().required()
+});
+
+const rdFormPreviewSchema = Joi.object({
+  account_rid : Joi.string().max(255).required(),
+  case_rid : Joi.string().max(255).required(),
+  is_federal : Joi.boolean().required(),
+  country_rid : Joi.string().max(255).required(),
+  state_rid : Joi.string().max(255).optional().allow("", null)
+});
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -1297,5 +1311,7 @@ export {
   updateDataMapperSchema,
   updateDataMapperMappingSchema,
   getObjectsListSchema,
-  caseClosedListSchema
+  caseClosedListSchema,
+  rdFormGenerationSchema,
+  rdFormPreviewSchema
 };

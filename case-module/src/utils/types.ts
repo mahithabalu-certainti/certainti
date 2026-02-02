@@ -987,3 +987,24 @@ export type ProjectCalculatedDataCanada = {
   total_cost_nonlabor_prj : number
   rd_percent_final : number
 }
+
+export type SignOffDetailsResponse = {
+  signoff_type_rid : string
+  created_by : string
+  created_datetime : string
+}
+
+export type CaseClosureRemarks = {
+  case_rid : string
+  signoff_details : SignOffDetailsResponse[]
+}
+
+// Flat array structure interface
+export interface FieldData {
+    label: string;
+    field_type: string;
+    value: string | number;
+    value_field_id: string;
+    section_id?: string;
+    id?: string;
+}
