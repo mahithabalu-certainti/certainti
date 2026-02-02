@@ -880,27 +880,7 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
-      const TaskCollaboratorsModel = TaskCollaborators.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-      const TaskTagsModel = TaskTag.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-
-      const TaskCommentsModel = TaskComments.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-      const CommentsAttachmentsModel = CommentsAttachments.initialise(
-        orgDbSequlize,
-        schemaName
-      )
-      const TaskAttachmentsModel = TaskAttachments.initialise(
-        orgDbSequlize,
-        schemaName
-      )
+    
       const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(
         orgDbSequlize,
         schemaName
@@ -958,16 +938,6 @@ class CaseSchemaService {
       await setupCaseMilestoneSequence(orgDbSequlize, schemaName);
       await CaseTaskModel.sync({ force: false });
       await setupCaseTaskSequence(orgDbSequlize, schemaName);
-      await TaskCollaboratorsModel.sync({ force: false });
-      await setupTaskCollaboratorsSequence(orgDbSequlize, schemaName)
-      await TaskTagsModel.sync({ force: false })
-      await setupTaskTagSequence(orgDbSequlize, schemaName)
-      await TaskCommentsModel.sync({ force: false })
-      await setupTaskCommentsSequence(orgDbSequlize, schemaName)
-      await CommentsAttachmentsModel.sync({ force: false })
-      await setupCommentsAttachmentsSequence(orgDbSequlize, schemaName)
-      await TaskAttachmentsModel.sync({ force: false })
-      await setupTaskAttachmentsSequence(orgDbSequlize, schemaName)
       await caseHistorySubmissionModel.sync({ force: false });
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
       await CaseTaskWorkflowConnectorModel.sync({ force: false });
