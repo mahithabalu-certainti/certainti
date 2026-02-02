@@ -632,6 +632,54 @@ export async function uploadToAzureBlob(
     );
   }
 }
+
+/**
+ * Upload a Buffer to Azure Blob Storage
+ * @param buffer - Buffer containing file data
+ * @param containerName - Azure Blob container name
+ * @param blobName - Name for the blob in Azure
+ * @param connectionString - Azure Storage connection string
+ * @returns URL of the uploaded blob
+ */
+export async function uploadBufferToAzureBlob(buffer: Buffer, blobName: string,accountNumber: string): Promise<string> {
+     // Get connection string from secrets manager
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    const containerName = accountNumber.toLowerCase();
+
+    if (!connectionString) {
+      throw new Error("Azure storage connection string is required");
+    }
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    await containerClient.createIfNotExists();
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.uploadData(buffer, { blobHTTPHeaders: { blobContentType: 'application/pdf' } });
+    return blockBlobClient.url;
+}
+
+/**
+ * Download a blob from Azure Blob Storage and return its contents as a Buffer
+ * @param containerName - Azure Blob container name
+ * @param blobName - Name of the blob in Azure
+ * @param connectionString - Azure Storage connection string
+ * @returns Buffer containing the blob's data
+ */
+export async function downloadBufferFromAzureBlob(containerName: string, blobName: string): Promise<Buffer> {
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    if (!connectionString) {
+      throw new Error("Azure storage connection string is required");
+    }
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    const downloadResponse = await blockBlobClient.download();
+    const chunks: Buffer[] = [];
+    for await (const chunk of downloadResponse.readableStreamBody!) {
+        chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+}
+
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 

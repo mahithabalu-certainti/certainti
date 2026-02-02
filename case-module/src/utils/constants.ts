@@ -203,10 +203,13 @@ export const STATUS_MESSAGE = {
   rdCreditPreview: "RD credit calculation results retrieved",
   rdCreditProcessInitiatedSuccess: "RD credit calculation initiated successfully",
   rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
-  noProjectsAssignedToCase: "No Assigned Projects found. Kindly assign a project to case and try again",
-  financialWorkingSignedOff: "Financial Working has been successfully signed off",
-  financialWorkingSignedOffFailed: "Failed to signoff financial working",
-  regionsFetchedSuccess: "Regions listed successfully",
+  noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
+  financialWorkingSignedOff : "Financial Working has been successfully signed off",
+  financialWorkingSignedOffFailed : "Failed to signoff financial working",
+  regionsFetchedSuccess : "Regions listed successfully",
+  rdCreditFinancialSignOffPending:"Financial working sign-off is pending. Cannot initiate RD Form Filler process.",
+  rdFormProcessInitiatedSuccess : "RD form filler process initiated successfully",
+  rdFormPreview : "RD form retrieved successfully",
   financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
   caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully"
 };
@@ -1664,6 +1667,133 @@ export const rawQueries = {
   },
   findSignOffTypes (rids : string[]) {
     return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d : any) => `'${d}'`).join(',')})`
+  },
+  fetchFederalForms(countryRid: string, effectiveStart: string, effectiveEnd: string){
+    return `SELECT dmf.browse_file,dmf.rid,dmf.form_type
+    FROM trd365.data_mapper_forms dmf
+  WHERE dmf.country_rid = '${countryRid}'
+  AND (dmf.state_rid IS NULL OR dmf.state_rid = '')
+  AND (dmf.effective_from_date IS NULL 
+       OR dmf.effective_from_date <= DATE '${effectiveEnd}')
+  AND (dmf.effective_to_date IS NULL 
+       OR dmf.effective_to_date >= DATE '${effectiveStart}')
+  AND is_active = true`
+  },
+  fetchStateForms(countryRid: string,stateRid: string, effectiveStart: string, effectiveEnd: string){
+    return `SELECT dmf.browse_file,dmf.rid
+FROM trd365.data_mapper_forms dmf
+WHERE dmf.country_rid = '${countryRid}'
+  AND dmf.state_rid = '${stateRid}'
+  AND (dmf.effective_from_date IS NULL 
+       OR dmf.effective_from_date <= DATE '${effectiveEnd}')
+  AND (dmf.effective_to_date IS NULL 
+       OR dmf.effective_to_date >= DATE '${effectiveStart}')
+  AND is_active = true`
+  },
+  checkFinancialSignOffDone(schemaName: string, caseRid: string) {
+    return `
+    SELECT financial_working_signoff FROM ${schemaName}.cases 
+    WHERE
+    rid = '${caseRid}'
+    `
+  },
+  fetchRdFormMapperConfigurations(formId: string){
+    return `
+     SELECT DISTINCT
+       dmfm.field_label,
+       dmfm.field_id,
+       dmfm.calculation_config,
+       dmfm.created_datetime
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_form_mappings dmfm
+      WHERE dmfm.form_rid = :formId
+      ORDER BY dmfm.created_datetime ASC`
+  },
+  saveFederalFilledFormUrl(schemaName: string)
+  {
+    return `
+          UPDATE ${schemaName}.rd_credit_country_calculations
+          SET rd_form_url = :filledFormUrl
+          WHERE case_rid = :caseRid
+          and country_rid  =:countryRid`
+  },
+  saveStateFilledFormUrl(schemaName: string)
+  {
+    return `
+           UPDATE ${schemaName}.rd_credit_state_calculations
+      SET rd_form_url = :filledFormUrl
+      WHERE case_rid = :caseRid
+      and state_rid  =:stateRid`
+  },
+  updateFederalFormError(schemaName: string)
+    {
+      return `UPDATE ${schemaName}.rd_credit_country_calculations
+      SET form_error_message = 'Federal form file not found'
+      WHERE case_rid = :caseRid
+      and country_rid  =:countryRid`
+    },
+  updateStateFormError(schemaName: string)
+    {
+      return `UPDATE ${schemaName}.rd_credit_state_calculations
+            SET form_error_message = 'State form file not found'
+            WHERE case_rid = :caseRid
+            and country_rid  =:countryRid
+            and state_rid = :stateRid`
+    },
+  fetchFederalFormUrl(schemaName: string){
+    return `
+      SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_country_calculations
+      WHERE case_rid = :caseRid
+      and country_rid  =:countryRid
+      LIMIT 1`
+  },
+   fetchStateFormUrl(schemaName: string){
+    return `
+     SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_state_calculations
+      WHERE case_rid = :caseRid
+      and state_rid  =:stateRid
+      LIMIT 1`
+  },
+  getDataMapperObjects() {
+    return `
+       SELECT 
+        dmo.id,
+        dmo.field_label,
+        dmo.field_id,
+        dmo.ref_table,
+        dmo.field_name,
+        dmo.where_condition,
+        dmo.default_value,
+        creditASC as parentObject,
+        dmo.is_json
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+      WHERE dmo.country_rid = :country_rid
+      ORDER BY dmo.field_label
+    `;
+  },
+  getDatamapperObjectById() {
+    return `
+      SELECT 
+        dmo.rid,
+        dmo.ref_table,
+        dmo.field_name,
+        dmo.is_json
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+      WHERE dmo.rid = :rid
+      LIMIT 1`
+  },
+  fetchConfiguration(schemaName:string,caseRid:string)
+  {
+    return `
+      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
+    `
+  },
+  fetchDynamicFieldValues(schemaName:string, refTable:string, quotedJsonPath:string)
+  {
+    return `
+          SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
+          FROM ${schemaName}.${refTable}
+          WHERE case_rid = :case_rid
+          LIMIT 1`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

@@ -998,3 +998,13 @@ export type CaseClosureRemarks = {
   case_rid : string
   signoff_details : SignOffDetailsResponse[]
 }
+
+// Flat array structure interface
+export interface FieldData {
+    label: string;
+    field_type: string;
+    value: string | number;
+    value_field_id: string;
+    section_id?: string;
+    id?: string;
+}

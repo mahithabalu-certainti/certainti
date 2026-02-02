@@ -10,6 +10,7 @@ import projectTaskRoutes from "./projectTaskRoutes"
 import projectRoutes from "./projectRoutes"
 import dataMapperRoutes from "./dataMapperRoutes"
 import financialRDCreditRoutes from "./financialRDCreditRoutes";
+import rdFormMapperRoutes from "./rdFormMapperRoutes";
 
 const routes: Router = Router();
 
@@ -42,6 +43,6 @@ routes.use("/caseProjectTask", projectTaskRoutes);
 routes.use("/caseProject", projectRoutes);
 routes.use("/dataMapper", dataMapperRoutes);
 routes.use("/rd-credit", financialRDCreditRoutes);
-
+routes.use("/rdFormMapper", rdFormMapperRoutes);
 
 export default routes;
