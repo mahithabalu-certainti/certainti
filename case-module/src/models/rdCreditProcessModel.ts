@@ -54,7 +54,7 @@ export class RdCreditProcess
                     defaultValue: DataTypes.NOW,
                 },
                 request_type: {
-                    type: DataTypes.STRING(1000),
+                    type: DataTypes.STRING(255),
                     allowNull: true,
                 },
             },
