@@ -584,6 +584,7 @@ class RdFormMapperSchemaService {
     refTable: string,
     fieldName: string,
     is_json: boolean,
+    data_order_by: string,
     account_rid: string,
     case_rid: string,
     schemaName: string,
@@ -656,13 +657,15 @@ class RdFormMapperSchemaService {
           replacements.fiscalYear = fiscalYear;
         }
 
+        const orderByField = data_order_by || 'created_datetime';
+        
         query = `
           SELECT 
             jsonb_path_query(computed_fields, '${quotedJsonPath}')::text as field_value,
-            ROW_NUMBER() OVER () as row_index
+            ROW_NUMBER() OVER (ORDER BY ${orderByField} ASC) as row_index
           FROM ${schemaName}.${refTable}
           ${whereClause}
-          ORDER BY COALESCE(qre_final, 0) ASC, row_index ASC`;
+          ORDER BY ${orderByField} ASC`;
 
         const [queryResults] = await orgDb.query(query, {
           replacements,
@@ -684,13 +687,15 @@ class RdFormMapperSchemaService {
           replacements.fiscalYear = fiscalYear;
         }
 
+        const orderByField = data_order_by || 'created_datetime';
+        
         query = `
           SELECT 
             ${fieldName} AS field_value,
-            ROW_NUMBER() OVER (ORDER BY COALESCE(qre_final, 0) ASC, ${fieldName} ASC) as row_index
+            ROW_NUMBER() OVER (ORDER BY ${orderByField} ASC) as row_index
           FROM ${schemaName}.${refTable}
           ${whereClause}
-          ORDER BY COALESCE(qre_final, 0) ASC, ${fieldName} ASC`;
+          ORDER BY ${orderByField} ASC`;
 
         const [queryResults] = await orgDb.query(query, {
           replacements,

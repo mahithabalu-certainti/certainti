@@ -455,6 +455,7 @@ export class RdFormMapperService {
                     mapperObject.ref_table,
                     mapperObject.field_name,
                     mapperObject.is_json || false,
+                    mapperObject.data_order_by,
                     accountRid,
                     caseRid,
                     schemaName,

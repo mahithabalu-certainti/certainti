@@ -1705,10 +1705,12 @@ WHERE dmf.country_rid = '${countryRid}'
        dmfm.field_type,
        dmfm.calculation_config,
        dmfm.created_datetime,
-       dmfm.column_id
+       dmfm.column_id,
+       dmfm.extraction_order,
+       dmfm.data_order_by
       FROM ${MAIN_SCHEMA_NAME}.data_mapper_form_mappings dmfm
       WHERE dmfm.form_rid = :formId
-      ORDER BY dmfm.created_datetime ASC`
+      ORDER BY dmfm.extraction_order ASC`
   },
   saveFederalFilledFormUrl(schemaName: string)
   {
