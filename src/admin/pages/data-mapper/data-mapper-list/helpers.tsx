@@ -113,6 +113,7 @@ export const getDataMapperFilterFields = (
       label: 'Status',
       type: 'enumSelect',
       options: statusOptions,
+      operatorOption: enumOperator,
     },
     {
       label: 'Created By',
@@ -137,6 +138,12 @@ export const getDataMapperFilterFields = (
       name: 'modified_datetime',
       type: 'date',
       operatorOption: dateOptions,
+    },
+    {
+      label: 'Sort Options',
+      name: 'sort_options',
+      type: 'system-sort',
+      options: [{ value: 'createdAt_desc', label: 'Recently Created' }],
     },
   ];
 };

@@ -748,222 +748,278 @@ const MappingTable: React.FC<MappingTableProps> = ({
             },
           }}
         >
-          {localMappings.map((mapping) => (
-            <TableRow key={mapping.rid}>
-              <TableCell sx={{ p: '8px' }}>{mapping.field_label}</TableCell>
-              {formType !== 'non-fillable' && (
-                <TableCell sx={{ p: '8px' }}>
-                  <div
-                    className={`flex relative h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+          {localMappings.length > 0 &&
+            localMappings.map((mapping) => (
+              <TableRow key={mapping.rid}>
+                <TableCell
+                  sx={{ p: '8px', maxHeight: '90px', verticalAlign: 'top' }}
+                >
+                  <Tooltip
+                    title={
+                      <div className='flex items-center gap-1'>
+                        <span className='break-all'>{mapping.field_label}</span>
+                      </div>
+                    }
+                    arrow
+                    placement='top'
                   >
-                    <textarea
-                      value={mapping.field_id || ''}
-                      onChange={(e) =>
-                        handleFieldIdChange(mapping.rid, e.target.value)
+                    <div
+                      style={
+                        {
+                          maxHeight: '90px',
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: 'vertical',
+                          wordBreak: 'break-word',
+                          cursor: 'pointer',
+                        } as React.CSSProperties
                       }
-                      placeholder='Enter Field ID'
-                      rows={1}
-                      className={`w-full h-full px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none ${
-                        mapping.fieldIdError
-                          ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
-                          : 'border-gray-300 focus:border-blue-400'
-                      }`}
-                    />
-                    {mapping.fieldIdError && (
-                      <Tooltip
-                        title={mapping.fieldIdError}
-                        arrow
-                        placement='top'
-                        slotProps={{
-                          tooltip: {
-                            sx: {
-                              backgroundColor: '#FEF2F2',
-                              mr: 1,
-                            },
-                          },
-                        }}
-                      >
-                        <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
-                          <React.Suspense fallback={null}>
-                            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
-                          </React.Suspense>
-                        </span>
-                      </Tooltip>
-                    )}
-                  </div>
+                    >
+                      {mapping.field_label}
+                    </div>
+                  </Tooltip>
                 </TableCell>
-              )}
-              <TableCell sx={{ p: '8px' }}>
-                <div className='flex items-center justify-start h-full'>
+                {formType !== 'non-fillable' && (
+                  <TableCell sx={{ p: '8px' }}>
+                    <div
+                      className={`flex relative ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                    >
+                      <textarea
+                        value={mapping.field_id || ''}
+                        onChange={(e) => {
+                          handleFieldIdChange(mapping.rid, e.target.value);
+                          // auto-grow height
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                        }}
+                        placeholder='Enter Field ID'
+                        className={`w-full px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none ${
+                          mapping.fieldIdError
+                            ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
+                            : 'border-gray-300 focus:border-blue-400'
+                        }`}
+                        style={
+                          {
+                            minHeight: '32px',
+                            maxHeight: '90px',
+                            overflowY: 'auto',
+                          } as React.CSSProperties
+                        }
+                      />
+                      {mapping.fieldIdError && (
+                        <Tooltip
+                          title={mapping.fieldIdError}
+                          arrow
+                          placement='top'
+                          slotProps={{
+                            tooltip: {
+                              sx: {
+                                backgroundColor: '#FEF2F2',
+                                mr: 1,
+                              },
+                            },
+                          }}
+                        >
+                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
+                            <React.Suspense fallback={null}>
+                              <ErrorInfoIcon
+                                alt='error'
+                                className='w-5 h-3.5'
+                              />
+                            </React.Suspense>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
+                <TableCell sx={{ p: '8px' }}>
                   <span className='text-[13px] font-medium text-[#425A76] capitalize'>
                     {mapping.field_type}
                   </span>
-                </div>
-              </TableCell>
-              <TableCell
-                sx={{
-                  position: 'relative',
-                  overflow: 'visible',
-                  p: '8px',
-                }}
-              >
-                <div className='relative h-full'>
-                  <div className='relative w-full h-full'>
-                    <div
-                      className={`h-full w-full px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${
-                        mapping.targetError
-                          ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500 pr-8'
-                          : 'border-gray-300 bg-white focus-within:border-blue-400'
-                      }`}
-                      onClick={() => {
-                        inputRefs.current[mapping.rid]?.focus();
-                      }}
-                    >
-                      {(mapping.fieldExpressions || []).map((item, idx) => (
-                        <div key={idx} className='flex items-center'>
-                          {item.type === 'chip' ? (
-                            <Chip
-                              label={getDisplayName(item.value, mapping.rid)}
-                              size='small'
-                              variant='outlined'
-                              onDelete={() => removeChip(mapping.rid, idx)}
-                              sx={{
-                                fontSize: '11px',
-                                height: '20px',
-                                backgroundColor: '#f0f9ff',
-                                borderColor: '#0176D3',
-                                color: '#0176D3',
-                                margin: '1px',
-                                '& .MuiChip-deleteIcon': {
-                                  fontSize: '14px',
+                </TableCell>
+                <TableCell
+                  sx={{
+                    position: 'relative',
+                    overflow: 'visible',
+                    p: '8px',
+                  }}
+                >
+                  <div className='relative h-full'>
+                    <div className='relative w-full h-full'>
+                      <div
+                        className={`w-full h-full max-h-[90px] overflow-y-auto px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${
+                          mapping.targetError
+                            ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500 pr-8'
+                            : 'border-gray-300 bg-white focus-within:border-blue-400'
+                        }`}
+                        onClick={() => {
+                          inputRefs.current[mapping.rid]?.focus();
+                        }}
+                      >
+                        {(mapping.fieldExpressions || []).map((item, idx) => (
+                          <div key={idx} className='flex items-center'>
+                            {item.type === 'chip' ? (
+                              <Chip
+                                label={getDisplayName(item.value, mapping.rid)}
+                                size='small'
+                                variant='outlined'
+                                onDelete={() => removeChip(mapping.rid, idx)}
+                                sx={{
+                                  fontSize: '11px',
+                                  height: '20px',
+                                  backgroundColor: '#f0f9ff',
+                                  borderColor: '#0176D3',
                                   color: '#0176D3',
-                                  '&:hover': {
-                                    color: '#ef4444',
+                                  margin: '1px',
+                                  '& .MuiChip-deleteIcon': {
+                                    fontSize: '14px',
+                                    color: '#0176D3',
+                                    '&:hover': {
+                                      color: '#ef4444',
+                                    },
                                   },
-                                },
-                                '& .MuiChip-label': {
-                                  paddingLeft: '6px',
-                                  paddingRight: '6px',
-                                },
-                              }}
-                            />
-                          ) : (
-                            <Chip
-                              label={item.value}
-                              size='small'
-                              variant='outlined'
-                              onDelete={() => removeOperator(mapping.rid, idx)}
-                              sx={{
-                                fontSize: '14px',
-                                height: '20px',
-                                backgroundColor: '#f7fa3245',
-                                borderColor: '#b9bb3dff',
-                                color: '#000',
-                                margin: '1px',
-                                '& .MuiChip-deleteIcon': {
+                                  '& .MuiChip-label': {
+                                    paddingLeft: '6px',
+                                    paddingRight: '6px',
+                                  },
+                                }}
+                              />
+                            ) : (
+                              <Chip
+                                label={item.value}
+                                size='small'
+                                variant='outlined'
+                                onDelete={() =>
+                                  removeOperator(mapping.rid, idx)
+                                }
+                                sx={{
                                   fontSize: '14px',
-                                  color: '#616220ff',
-                                  '&:hover': {
-                                    color: '#ef4444',
+                                  height: '20px',
+                                  backgroundColor: '#f7fa3245',
+                                  borderColor: '#b9bb3dff',
+                                  color: '#000',
+                                  margin: '1px',
+                                  '& .MuiChip-deleteIcon': {
+                                    fontSize: '14px',
+                                    color: '#616220ff',
+                                    '&:hover': {
+                                      color: '#ef4444',
+                                    },
                                   },
-                                },
-                                '& .MuiChip-label': {
-                                  paddingLeft: '6px',
-                                  paddingRight: '6px',
-                                  paddingBottom:
-                                    item.value === '*' ? '0px' : '2px',
-                                  paddingTop:
-                                    item.value === '*' ? '6px' : '0px',
-                                },
-                              }}
-                            />
-                          )}
-                        </div>
-                      ))}
+                                  '& .MuiChip-label': {
+                                    paddingLeft: '6px',
+                                    paddingRight: '6px',
+                                    paddingBottom:
+                                      item.value === '*' ? '0px' : '2px',
+                                    paddingTop:
+                                      item.value === '*' ? '6px' : '0px',
+                                  },
+                                }}
+                              />
+                            )}
+                          </div>
+                        ))}
 
-                      <input
-                        ref={(el) => (inputRefs.current[mapping.rid] = el)}
-                        type='text'
-                        value={mapping.inputValue || ''}
-                        onChange={(e) =>
-                          handleInputChange(mapping.rid, e.target.value)
-                        }
-                        onKeyDown={(e) => handleKeyDown(mapping.rid, e)}
-                        onBlur={() => handleInputBlur(mapping.rid)}
-                        placeholder={
-                          (mapping.fieldExpressions || []).length === 0
-                            ? 'Type @ to add fields or +, -, *, / for operators'
-                            : 'Add more...'
-                        }
-                        className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
-                        style={{ minWidth: '80px' }}
-                      />
+                        <input
+                          ref={(el) => (inputRefs.current[mapping.rid] = el)}
+                          type='text'
+                          value={mapping.inputValue || ''}
+                          onChange={(e) =>
+                            handleInputChange(mapping.rid, e.target.value)
+                          }
+                          onKeyDown={(e) => handleKeyDown(mapping.rid, e)}
+                          onBlur={() => handleInputBlur(mapping.rid)}
+                          placeholder={
+                            (mapping.fieldExpressions || []).length === 0
+                              ? 'Type @ to add fields or +, -, *, / for operators'
+                              : 'Add more...'
+                          }
+                          className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
+                          style={{ minWidth: '80px' }}
+                        />
+                      </div>
+
+                      {mapping.targetError && (
+                        <Tooltip
+                          title={mapping.targetError}
+                          arrow
+                          placement='top'
+                          slotProps={{
+                            tooltip: {
+                              sx: {
+                                backgroundColor: '#FEF2F2',
+                                mr: 1,
+                              },
+                            },
+                          }}
+                        >
+                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] right-[4px] bg-[#FEF2F2] cursor-pointer'>
+                            <React.Suspense fallback={null}>
+                              <ErrorInfoIcon
+                                alt='error'
+                                className='w-5 h-3.5'
+                              />
+                            </React.Suspense>
+                          </span>
+                        </Tooltip>
+                      )}
                     </div>
 
-                    {mapping.targetError && (
-                      <Tooltip
-                        title={mapping.targetError}
-                        arrow
-                        placement='top'
-                        slotProps={{
-                          tooltip: {
-                            sx: {
-                              backgroundColor: '#FEF2F2',
-                              mr: 1,
-                            },
-                          },
-                        }}
-                      >
-                        <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] right-[4px] bg-[#FEF2F2] cursor-pointer'>
-                          <React.Suspense fallback={null}>
-                            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
-                          </React.Suspense>
-                        </span>
-                      </Tooltip>
-                    )}
+                    {showAutocomplete[mapping.rid] &&
+                      getFilteredOptions(mapping.rid).length > 0 && (
+                        <div
+                          className='absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto'
+                          style={{
+                            zIndex: 9999,
+                            maxHeight: '200px',
+                          }}
+                        >
+                          {getFilteredOptions(mapping.rid).map(
+                            (option, idx) => {
+                              const isSelected =
+                                idx === (selectedOptionIndex[mapping.rid] || 0);
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`px-3 py-2 text-sm cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'hover:bg-gray-100'
+                                  }`}
+                                  onMouseEnter={() =>
+                                    setSelectedOptionIndex((prev) => ({
+                                      ...prev,
+                                      [mapping.rid]: idx,
+                                    }))
+                                  }
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() =>
+                                    handleAutocompleteSelect(
+                                      mapping.rid,
+                                      option
+                                    )
+                                  }
+                                >
+                                  {getDisplayName(option, mapping.rid)}
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      )}
                   </div>
-
-                  {showAutocomplete[mapping.rid] &&
-                    getFilteredOptions(mapping.rid).length > 0 && (
-                      <div
-                        className='absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto'
-                        style={{
-                          zIndex: 9999,
-                          maxHeight: '200px',
-                        }}
-                      >
-                        {getFilteredOptions(mapping.rid).map((option, idx) => {
-                          const isSelected =
-                            idx === (selectedOptionIndex[mapping.rid] || 0);
-                          return (
-                            <div
-                              key={idx}
-                              className={`px-3 py-2 text-sm cursor-pointer ${
-                                isSelected
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'hover:bg-gray-100'
-                              }`}
-                              onMouseEnter={() =>
-                                setSelectedOptionIndex((prev) => ({
-                                  ...prev,
-                                  [mapping.rid]: idx,
-                                }))
-                              }
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() =>
-                                handleAutocompleteSelect(mapping.rid, option)
-                              }
-                            >
-                              {getDisplayName(option, mapping.rid)}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          {localMappings.length === 0 && (
+            <TableRow sx={{ height: '32px' }}>
+              <TableCell colSpan={4} align='center'>
+                <span>No data available</span>
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </MuiTable>
     </TableContainer>

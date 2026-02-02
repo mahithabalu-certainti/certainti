@@ -162,7 +162,7 @@ const DataMapperConfig: React.FC = () => {
     }
 
     const payload = {
-      form_rid: mapperId || '',
+      rid: mapperId || '',
       mappings: mappings.map((mapping) => ({
         rid: mapping.rid,
         created_datetime: mapping.created_datetime || '',
@@ -286,7 +286,7 @@ const DataMapperConfig: React.FC = () => {
             </div>
             {/* Section 2 */}
             <div className='flex items-center align-middle px-10 h-[30px] border border-b-0 border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Data Mapping - {fields.length}
+              Data Mapping
             </div>
             <SectionHeaderTab
               key={activeTab}

@@ -217,7 +217,7 @@ export interface DataMapperFieldMapping {
 }
 
 export interface DataMapperConfigPayload {
-  form_rid: string;
+  rid: string;
   mappings: DataMapperFieldMapping[];
 }
 
@@ -229,7 +229,6 @@ export interface DataMapperConfigResponse {
     rid: string;
   };
 }
-
 
 //------ Data Mapper status --------
 export interface DataMapperStatus {
@@ -244,7 +243,7 @@ export interface DataMapperStatus {
 }
 
 export interface DataMapperStatusApiResponse {
-   statusCode: number;
+  statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
   data: DataMapperStatus[];

@@ -1,4 +1,5 @@
-import { DownloadIcon } from '../../../../../assets';
+import { Tooltip } from '@mui/material';
+import { DownloadIcon, ErrorInfoIcon } from '../../../../../assets';
 import {
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
@@ -9,6 +10,7 @@ import {
   ListTableColumn,
 } from '../../../../../components/table/types';
 import { DataMapperListItem } from '../../../../types';
+import React from 'react';
 
 export const getDataMapperColumns = (
   handleConfig: (row: DataMapperListItem) => void,
@@ -251,6 +253,36 @@ export const getDataMapperColumns = (
     label: 'Status',
     width: 120,
     sortable: true,
+    render: (row) => {
+      const failedStatus = row?.status_name?.toLowerCase() === 'failed';
+      return (
+        <div>
+          {failedStatus && (
+            <Tooltip
+              title={row.error_message || ''}
+              disableHoverListener={!failedStatus}
+              arrow
+              placement='top'
+              slotProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: '#FEF2F2',
+                    mr: 1,
+                  },
+                },
+              }}
+            >
+              <span className='h-[20px] w-5 flex items-center justify-center absolute -top-1 -right-1 cursor-pointer'>
+                <React.Suspense fallback={null}>
+                  <ErrorInfoIcon alt='error' className='w-4 h-3' />
+                </React.Suspense>
+              </span>
+            </Tooltip>
+          )}
+          {row.status_name || '-'}
+        </div>
+      );
+    },
     // hide:
     //   !permissionMap?.['status_name']?.read &&
     //   !permissionMap?.['status_name']?.edit,
@@ -307,7 +339,7 @@ export const getDataMapperColumns = (
     width: 90,
     sortable: false,
     render: (row) => {
-      const enableConfig = row?.status_name?.toLowerCase() !== 'initiated';
+      const enableConfig = row?.status_name?.toLowerCase() === 'completed';
       return (
         <span
           onClick={() => {

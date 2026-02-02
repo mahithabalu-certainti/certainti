@@ -103,7 +103,7 @@ const FieldDetailsPanel = ({ field }: FieldDetailsPanelProps) => {
         />
 
         <div className='grid grid-cols-1 gap-4'>
-          <DetailItem label='Field Type' value={field.type} />
+          {/* <DetailItem label='Field Type' value={field.type} /> */}
           <DetailItem label='Page' value={String(field.page + 1)} />
           <DetailItem
             label='Position'

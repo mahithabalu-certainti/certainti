@@ -174,9 +174,11 @@ export const fetchObjectsList = async (
   country_rid: string,
   state_rid: string
 ): Promise<ObjectItem[]> => {
-  const response = await caseServiceApi.get<ObjectsListResponse>(
-    `/api/dataMapper/objectsList?country_rid=${country_rid}&state_rid=${state_rid}`
-  );
+  let url = `/api/dataMapper/objectsList?country_rid=${country_rid}`;
+  if (state_rid) {
+    url += `&state_rid=${state_rid}`;
+  }
+  const response = await caseServiceApi.get<ObjectsListResponse>(url);
   return response.data.data;
 };
 
@@ -189,7 +191,7 @@ export const useObjectsList = (
     queryFn: () => fetchObjectsList(country_rid, state_rid),
     retry: 0,
     gcTime: 0,
-    enabled: !!country_rid && !!state_rid,
+    enabled: !!country_rid,
   });
 };
 
@@ -210,21 +212,19 @@ export const useUpdateDataMapperConfig = () => {
   });
 };
 
-
 //----- Data Mapper Status --------
-export const fetchDataMapperStatus = async (
-): Promise<DataMapperStatusApiResponse> => {
-  try {
-    const { data } =
-      await caseServiceApi.get<DataMapperStatusApiResponse>(
+export const fetchDataMapperStatus =
+  async (): Promise<DataMapperStatusApiResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<DataMapperStatusApiResponse>(
         `/api/dataMapper/uploadStatus/list`
       );
-    return data;
-  } catch (error) {
-    console.error('Error fetching data mapper status:', error);
-    throw error;
-  }
-};
+      return data;
+    } catch (error) {
+      console.error('Error fetching data mapper status:', error);
+      throw error;
+    }
+  };
 
 export const useGetDataMapperStatus = () => {
   return useQuery<DataMapperStatusApiResponse, Error>({

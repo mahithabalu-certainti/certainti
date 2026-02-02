@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PDFDocument } from 'pdf-lib';
 import { PDFField } from '../../../types';
@@ -47,112 +48,342 @@ export const getSelectStyles = (hasError: boolean, isEmpty: boolean) => ({
 
 export async function extractPDFFields(file: File): Promise<PDFField[]> {
   const arrayBuffer = await file.arrayBuffer();
-  const pdfDoc = await PDFDocument.load(arrayBuffer);
-  const form = pdfDoc.getForm();
-  const fields = form.getFields();
-  const pages = pdfDoc.getPages();
-
+  
   const extractedFields: PDFField[] = [];
+  const fieldIds = new Set<string>();
+  
+  try {
+    const pdfjsDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-  for (const field of fields) {
-    try {
-      const name = field.getName();
-      const widgets = (field as any).acroField.getWidgets();
+    // ==========================================
+    // STEP 1: Extract Widget Annotations (AcroForm & Fillable PDFs)
+    // This is what Chrome uses - most reliable method
+    // ==========================================
+    let annotationFieldCount = 0;
 
-      widgets.forEach((widget: any) => {
-        const rect = widget.getRectangle();
-        let pageNumber = 0;
+    for (let pageNum = 1; pageNum <= pdfjsDoc.numPages; pageNum++) {
+      const page = await pdfjsDoc.getPage(pageNum);
+      const annotations = await page.getAnnotations();
+      const viewport = page.getViewport({ scale: 1.0 });
 
-        for (let i = 0; i < pages.length; i++) {
-          const page = pages[i];
-          const pageRef = (page as any).ref;
-          const widgetPage = widget.P();
+      if (annotations && annotations.length > 0) {
+        annotations.forEach((annotation: any, index: number) => {
+          try {
+            // Check if this is a widget annotation (form field)
+            if (annotation.subtype === 'Widget') {
+              const fieldName =
+                annotation.fieldName || 
+                annotation.id || 
+                `field_${pageNum}_${index}`;
 
-          if (
-            widgetPage &&
-            pageRef &&
-            widgetPage.toString() === pageRef.toString()
-          ) {
-            pageNumber = i;
-            break;
+              // Skip duplicates
+              if (fieldIds.has(fieldName)) {
+                return;
+              }
+
+              // Get rectangle coordinates
+              const rect = annotation.rect;
+              if (!rect || rect.length !== 4) {
+                // Skip field with invalid rect
+                return;
+              }
+
+              const [x1, y1, x2, y2] = rect;
+              const width = Math.abs(x2 - x1);
+              const height = Math.abs(y2 - y1);
+
+              // Include zero-sized fields (Chrome does this)
+              // Don't skip even if width/height is 0
+
+              fieldIds.add(fieldName);
+              annotationFieldCount++;
+
+              // Determine field type from annotation properties
+              let fieldType = 'Text Field';
+              if (annotation.checkBox) {
+                fieldType = 'Checkbox';
+              } else if (annotation.radioButton) {
+                fieldType = 'Radio Button';
+              } else if (annotation.combo) {
+                fieldType = 'Dropdown';
+              } else if (annotation.listBox) {
+                fieldType = 'List Box';
+              } else if (annotation.pushButton) {
+                fieldType = 'Button';
+              } else if (annotation.fieldType) {
+                // Use the fieldType if available
+                switch (annotation.fieldType) {
+                  case 'Tx':
+                    fieldType = 'Text Field';
+                    break;
+                  case 'Btn':
+                    fieldType = annotation.checkBox ? 'Checkbox' : 
+                               annotation.radioButton ? 'Radio Button' : 'Button';
+                    break;
+                  case 'Ch':
+                    fieldType = annotation.combo ? 'Dropdown' : 'List Box';
+                    break;
+                  case 'Sig':
+                    fieldType = 'Signature';
+                    break;
+                }
+              }
+
+              // Get field value
+              let defaultValue: string | undefined;
+              if (annotation.fieldValue !== undefined && annotation.fieldValue !== null) {
+                defaultValue = String(annotation.fieldValue);
+              } else if (annotation.buttonValue !== undefined) {
+                defaultValue = String(annotation.buttonValue);
+              } else if (annotation.checkBox) {
+                defaultValue = annotation.checkBox ? 'Checked' : 'Unchecked';
+              }
+
+              // Get possible values for dropdowns/lists
+              let possibleValues: string[] | undefined;
+              if (annotation.options && Array.isArray(annotation.options)) {
+                possibleValues = annotation.options.map(
+                  (opt: any) => opt.displayValue || opt.exportValue || String(opt)
+                );
+              }
+
+              const field: PDFField = {
+                id: fieldName,
+                name: fieldName,
+                type: fieldType,
+                page: pageNum - 1, // Convert to 0-based index
+                rect: [x1, y1, width, height],
+                defaultValue,
+                possibleValues,
+                x: Math.min(x1, x2),
+                y: viewport.height - Math.max(y1, y2),
+                width: Math.max(width, 1), // Ensure minimum width
+                height: Math.max(height, 1), // Ensure minimum height
+              };
+
+              extractedFields.push(field);
+            }
+          } catch (annotError) {
+            console.error(
+              `❌ Error processing annotation on page ${pageNum}:`,
+              annotError
+            );
           }
-        }
-
-        const page = pages[pageNumber];
-        const pageHeight = page.getHeight();
-
-        let fieldType = 'Unknown';
-        try {
-          const fieldObj = field as any;
-          if (fieldObj.constructor.name.includes('TextField')) {
-            fieldType = 'Text Field';
-          } else if (fieldObj.constructor.name.includes('CheckBox')) {
-            fieldType = 'Checkbox';
-          } else if (fieldObj.constructor.name.includes('RadioGroup')) {
-            fieldType = 'Radio Button';
-          } else if (fieldObj.constructor.name.includes('Dropdown')) {
-            fieldType = 'Dropdown';
-          } else if (fieldObj.constructor.name.includes('OptionList')) {
-            fieldType = 'List Box';
-          } else if (fieldObj.constructor.name.includes('Button')) {
-            fieldType = 'Button';
-          }
-        } catch {
-          fieldType = 'Unknown';
-        }
-
-        let defaultValue: string | undefined;
-        let possibleValues: string[] | undefined;
-
-        try {
-          if (
-            'getText' in field &&
-            typeof (field as any).getText === 'function'
-          ) {
-            defaultValue = (field as any).getText();
-          } else if (
-            'isChecked' in field &&
-            typeof (field as any).isChecked === 'function'
-          ) {
-            defaultValue = (field as any).isChecked() ? 'Checked' : 'Unchecked';
-          } else if (
-            'getSelected' in field &&
-            typeof (field as any).getSelected === 'function'
-          ) {
-            defaultValue = (field as any).getSelected().join(', ');
-          }
-        } catch {
-          defaultValue = undefined;
-        }
-
-        try {
-          if (
-            'getOptions' in field &&
-            typeof (field as any).getOptions === 'function'
-          ) {
-            possibleValues = (field as any).getOptions();
-          }
-        } catch {
-          possibleValues = undefined;
-        }
-
-        extractedFields.push({
-          id: name,
-          name,
-          type: fieldType,
-          page: pageNumber,
-          rect: [rect.x, rect.y, rect.width, rect.height],
-          defaultValue,
-          possibleValues,
-          x: rect.x,
-          y: pageHeight - rect.y - rect.height,
-          width: rect.width,
-          height: rect.height,
         });
-      });
-    } catch (error) {
-      console.error('Error processing field:', error);
+      }
     }
+
+    // ==========================================
+    // STEP 2: Check for XFA Forms
+    // XFA forms store data in XML format
+    // ==========================================
+    let xfaFieldCount = 0;
+
+    try {
+      // Note: getXfa() is not in TypeScript definitions but exists in runtime
+      const xfaData = await (pdfjsDoc as any).getXfa?.();
+      
+      if (xfaData) {
+        
+        // XFA forms store data in XML format
+        const xfaHtml = xfaData.html;
+        if (xfaHtml) {
+          // Parse XFA HTML to extract fields
+          const parser = new DOMParser();
+          const xfaDoc = parser.parseFromString(xfaHtml, 'text/html');
+          const inputElements = xfaDoc.querySelectorAll(
+            'input, textarea, select'
+          );
+
+          inputElements.forEach((element, index) => {
+            const fieldName =
+              element.getAttribute('name') ||
+              element.getAttribute('id') ||
+              `xfa_field_${index}`;
+
+            // Skip if we already have this field
+            if (fieldIds.has(fieldName)) {
+              return;
+            }
+
+            fieldIds.add(fieldName);
+            xfaFieldCount++;
+
+            let fieldType = 'Text Field';
+            const tagName = element.tagName.toLowerCase();
+            const inputType = element.getAttribute('type')?.toLowerCase();
+
+            if (tagName === 'textarea') {
+              fieldType = 'Text Field';
+            } else if (tagName === 'select') {
+              fieldType = 'Dropdown';
+            } else if (inputType === 'checkbox') {
+              fieldType = 'Checkbox';
+            } else if (inputType === 'radio') {
+              fieldType = 'Radio Button';
+            }
+
+            // XFA fields don't have explicit coordinates in the same way
+            // We'll use placeholder coordinates - they'll be positioned by XFA rendering
+            extractedFields.push({
+              id: fieldName,
+              name: fieldName,
+              type: fieldType,
+              page: 0, // XFA forms are typically single-page or dynamically rendered
+              rect: [0, 0, 100, 20],
+              defaultValue: element.getAttribute('value') || undefined,
+              possibleValues:
+                tagName === 'select'
+                  ? Array.from(element.querySelectorAll('option')).map(
+                      (opt) => opt.textContent || ''
+                    )
+                  : undefined,
+              x: 0,
+              y: 0,
+              width: 100,
+              height: 20,
+            });
+          });
+        }
+      }
+    } catch (xfaError) {
+      console.error('Error extracting XFA fields:', xfaError);
+    }
+
+    // ==========================================
+    // STEP 3: Use pdf-lib as fallback for AcroForm fields
+    // This catches fields that pdfjs might miss
+    // ==========================================
+    let pdfLibFieldCount = 0;
+
+    try {
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const form = pdfDoc.getForm();
+      const fields = form.getFields();
+      const pages = pdfDoc.getPages();
+
+      for (const field of fields) {
+        try {
+          const name = field.getName();
+          
+          // Skip if we already have this field
+          if (fieldIds.has(name)) {
+            continue;
+          }
+
+          const widgets = (field as any).acroField.getWidgets();
+
+          if (!widgets || widgets.length === 0) {
+            // Skip field without widgets
+            continue;
+          }
+
+          widgets.forEach((widget: any) => {
+            try {
+              const rect = widget.getRectangle();
+
+              if (!rect) {
+                // Skip widget without rectangle
+                return;
+              }
+
+              // Don't skip zero-sized fields
+
+              // Find the page this widget belongs to
+              let pageNumber = 0;
+              const widgetPage = widget.P();
+
+              if (widgetPage) {
+                for (let i = 0; i < pages.length; i++) {
+                  const page = pages[i];
+                  const pageRef = (page as any).ref;
+
+                  if (pageRef && widgetPage.toString() === pageRef.toString()) {
+                    pageNumber = i;
+                    break;
+                  }
+                }
+              }
+
+              const page = pages[pageNumber];
+              const pageHeight = page.getHeight();
+
+              // Determine field type
+              let fieldType = 'Text Field';
+              const fieldObj = field as any;
+              const constructorName = fieldObj.constructor.name;
+              
+              if (constructorName.includes('TextField')) {
+                fieldType = 'Text Field';
+              } else if (constructorName.includes('CheckBox')) {
+                fieldType = 'Checkbox';
+              } else if (constructorName.includes('RadioGroup')) {
+                fieldType = 'Radio Button';
+              } else if (constructorName.includes('Dropdown')) {
+                fieldType = 'Dropdown';
+              } else if (constructorName.includes('OptionList')) {
+                fieldType = 'List Box';
+              } else if (constructorName.includes('Button')) {
+                fieldType = 'Button';
+              }
+
+              // Get default value
+              let defaultValue: string | undefined;
+              try {
+                if ('getText' in field && typeof fieldObj.getText === 'function') {
+                  defaultValue = fieldObj.getText();
+                } else if ('isChecked' in field && typeof fieldObj.isChecked === 'function') {
+                  defaultValue = fieldObj.isChecked() ? 'Checked' : 'Unchecked';
+                } else if ('getSelected' in field && typeof fieldObj.getSelected === 'function') {
+                  defaultValue = fieldObj.getSelected().join(', ');
+                }
+              } catch {
+                // Ignore
+              }
+
+              // Get possible values
+              let possibleValues: string[] | undefined;
+              try {
+                if ('getOptions' in field && typeof fieldObj.getOptions === 'function') {
+                  possibleValues = fieldObj.getOptions();
+                }
+              } catch {
+                // Ignore
+              }
+
+              const pdfLibField: PDFField = {
+                id: name,
+                name,
+                type: fieldType,
+                page: pageNumber,
+                rect: [rect.x, rect.y, rect.width, rect.height],
+                defaultValue,
+                possibleValues,
+                x: rect.x,
+                y: pageHeight - rect.y - rect.height,
+                width: Math.max(rect.width, 1),
+                height: Math.max(rect.height, 1),
+              };
+
+              extractedFields.push(pdfLibField);
+              fieldIds.add(name);
+              pdfLibFieldCount++;
+              console.log(`✅ pdf-lib field: "${name}" (${fieldType})`);
+            } catch (widgetError) {
+              console.error(`❌ Error processing widget for field "${name}":`, widgetError);
+            }
+          });
+        } catch (fieldError) {
+          console.error('❌ Error processing field:', fieldError);
+        }
+      }
+    } catch (pdfLibError) {
+      console.error('Error in pdf-lib extraction:', pdfLibError);
+    }
+
+  } catch (error) {
+    console.error('Fatal error during PDF field extraction:', error);
+    throw error;
   }
 
   return extractedFields;
