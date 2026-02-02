@@ -80,13 +80,9 @@ export class AIAssessmentService {
       // Check if message type is refine_summary and send via WebSocket
       if (aiResponse?.data?.type === "refine_summary") {
         logMessage(`Detected refine_summary message type, sending via WebSocket`);
-        
-        // Extract company_id and project_id from aiResponse
-       
-        
         if (company_id && project_id) {
           // Send to specific assessment room
-          this.wsManager.sendToAssessmentRoom(transaction_id, aiResponse);
+          this.wsManager.sendRefinementPrompt(transaction_id, aiResponse);
           logMessage(`AI response sent to WebSocket room: assessment_${company_id}_${project_id}`);
         } else {
           logMessage(`Missing company_id or project_id in refine_summary message: ${JSON.stringify(aiResponse)}`);

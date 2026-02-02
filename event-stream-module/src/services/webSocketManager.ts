@@ -48,7 +48,7 @@ class WebSocketManager {
   }
 
   // Send message to a specific assessment room based on transaction_id
-  sendToTransactionRoom(transaction_id: string, message: any): void {
+  sendRefinementPrompt(transaction_id: string, message: any): void {
     if (!this.io) {
       logMessage("WebSocket server not initialized");
       return;
