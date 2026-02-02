@@ -274,9 +274,19 @@ export class RdFormMapperService {
       const doc = new PDFDocument({ margin: 50 });
       const buffers: Buffer[] = [];
 
-      // Collect PDF data in memory
+      // Set up event handlers FIRST before any operations
       doc.on('data', buffers.push.bind(buffers));
       
+      // Set up promise for completion before starting content generation
+      const pdfBufferPromise = new Promise<Buffer>((resolve, reject) => {
+        doc.on('end', () => {
+          const finalBuffer = Buffer.concat(buffers);
+          resolve(finalBuffer);
+        });
+        doc.on('error', reject);
+        setTimeout(() => reject(new Error("PDF generation timeout")), 30000);
+      });
+
       try {
         // Add header
         doc.fontSize(16).text("R&D Tax Credit Form", { align: "center" });
@@ -314,14 +324,7 @@ export class RdFormMapperService {
       }
 
       // Wait for PDF generation to complete and get buffer
-      const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
-        doc.on('end', () => {
-          const finalBuffer = Buffer.concat(buffers);
-          resolve(finalBuffer);
-        });
-        doc.on('error', reject);
-        setTimeout(() => reject(new Error("PDF generation timeout")), 30000);
-      });
+      const pdfBuffer = await pdfBufferPromise;
       // Upload directly to blob storage from buffer
       const blobUrl = await uploadBufferToAzureBlob(pdfBuffer, fileName, accountNumber);
 
