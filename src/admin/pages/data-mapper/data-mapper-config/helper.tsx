@@ -48,10 +48,10 @@ export const getSelectStyles = (hasError: boolean, isEmpty: boolean) => ({
 
 export async function extractPDFFields(file: File): Promise<PDFField[]> {
   const arrayBuffer = await file.arrayBuffer();
-  
+
   const extractedFields: PDFField[] = [];
   const fieldIds = new Set<string>();
-  
+
   try {
     const pdfjsDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
@@ -72,8 +72,8 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
             // Check if this is a widget annotation (form field)
             if (annotation.subtype === 'Widget') {
               const fieldName =
-                annotation.fieldName || 
-                annotation.id || 
+                annotation.fieldName ||
+                annotation.id ||
                 `field_${pageNum}_${index}`;
 
               // Skip duplicates
@@ -117,8 +117,11 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
                     fieldType = 'Text Field';
                     break;
                   case 'Btn':
-                    fieldType = annotation.checkBox ? 'Checkbox' : 
-                               annotation.radioButton ? 'Radio Button' : 'Button';
+                    fieldType = annotation.checkBox
+                      ? 'Checkbox'
+                      : annotation.radioButton
+                        ? 'Radio Button'
+                        : 'Button';
                     break;
                   case 'Ch':
                     fieldType = annotation.combo ? 'Dropdown' : 'List Box';
@@ -131,7 +134,10 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
 
               // Get field value
               let defaultValue: string | undefined;
-              if (annotation.fieldValue !== undefined && annotation.fieldValue !== null) {
+              if (
+                annotation.fieldValue !== undefined &&
+                annotation.fieldValue !== null
+              ) {
                 defaultValue = String(annotation.fieldValue);
               } else if (annotation.buttonValue !== undefined) {
                 defaultValue = String(annotation.buttonValue);
@@ -143,7 +149,8 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
               let possibleValues: string[] | undefined;
               if (annotation.options && Array.isArray(annotation.options)) {
                 possibleValues = annotation.options.map(
-                  (opt: any) => opt.displayValue || opt.exportValue || String(opt)
+                  (opt: any) =>
+                    opt.displayValue || opt.exportValue || String(opt)
                 );
               }
 
@@ -182,9 +189,8 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
     try {
       // Note: getXfa() is not in TypeScript definitions but exists in runtime
       const xfaData = await (pdfjsDoc as any).getXfa?.();
-      
+
       if (xfaData) {
-        
         // XFA forms store data in XML format
         const xfaHtml = xfaData.html;
         if (xfaHtml) {
@@ -265,7 +271,7 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
       for (const field of fields) {
         try {
           const name = field.getName();
-          
+
           // Skip if we already have this field
           if (fieldIds.has(name)) {
             continue;
@@ -312,7 +318,7 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
               let fieldType = 'Text Field';
               const fieldObj = field as any;
               const constructorName = fieldObj.constructor.name;
-              
+
               if (constructorName.includes('TextField')) {
                 fieldType = 'Text Field';
               } else if (constructorName.includes('CheckBox')) {
@@ -330,11 +336,20 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
               // Get default value
               let defaultValue: string | undefined;
               try {
-                if ('getText' in field && typeof fieldObj.getText === 'function') {
+                if (
+                  'getText' in field &&
+                  typeof fieldObj.getText === 'function'
+                ) {
                   defaultValue = fieldObj.getText();
-                } else if ('isChecked' in field && typeof fieldObj.isChecked === 'function') {
+                } else if (
+                  'isChecked' in field &&
+                  typeof fieldObj.isChecked === 'function'
+                ) {
                   defaultValue = fieldObj.isChecked() ? 'Checked' : 'Unchecked';
-                } else if ('getSelected' in field && typeof fieldObj.getSelected === 'function') {
+                } else if (
+                  'getSelected' in field &&
+                  typeof fieldObj.getSelected === 'function'
+                ) {
                   defaultValue = fieldObj.getSelected().join(', ');
                 }
               } catch {
@@ -344,7 +359,10 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
               // Get possible values
               let possibleValues: string[] | undefined;
               try {
-                if ('getOptions' in field && typeof fieldObj.getOptions === 'function') {
+                if (
+                  'getOptions' in field &&
+                  typeof fieldObj.getOptions === 'function'
+                ) {
                   possibleValues = fieldObj.getOptions();
                 }
               } catch {
@@ -368,9 +386,11 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
               extractedFields.push(pdfLibField);
               fieldIds.add(name);
               pdfLibFieldCount++;
-              console.log(`✅ pdf-lib field: "${name}" (${fieldType})`);
             } catch (widgetError) {
-              console.error(`❌ Error processing widget for field "${name}":`, widgetError);
+              console.error(
+                `❌ Error processing widget for field "${name}":`,
+                widgetError
+              );
             }
           });
         } catch (fieldError) {
@@ -380,7 +400,6 @@ export async function extractPDFFields(file: File): Promise<PDFField[]> {
     } catch (pdfLibError) {
       console.error('Error in pdf-lib extraction:', pdfLibError);
     }
-
   } catch (error) {
     console.error('Fatal error during PDF field extraction:', error);
     throw error;
