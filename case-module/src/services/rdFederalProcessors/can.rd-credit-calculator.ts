@@ -148,7 +148,7 @@ export class RdCreditCalculatorForCAN {
             "Total" : {
                "Project Code" : "-",
                 "Project Name" : "-",
-                "Total Hours" : Math.round(totalHours),
+                "Total Hours" : JSON.stringify(totalHours),
                 "Project Total Cost" : Math.round(totalCost),
                 "FTE Cost" : Math.round(totalFteCost),
                 "SubCon Cost" : Math.round(totalSubconCost),

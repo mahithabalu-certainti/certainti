@@ -177,7 +177,7 @@ export class FederalComputationService {
                             }
                         }),
                         "Percentage Calculation": {
-                            [result.dynamicKeyNameForTotalCount] : result.computedFields[0].projects.length || 0,
+                            [result.dynamicKeyNameForTotalCount] : JSON.stringify(result.computedFields[0].projects.length) || '0',
                             "Total QRE" : qualifyingRdc,
                             "Total value of customer groups Greater than 50%" : minProjectResult.selectedSum == Infinity ? 0.00 : minProjectResult.selectedSum,
                             "%" : finalPercentage
