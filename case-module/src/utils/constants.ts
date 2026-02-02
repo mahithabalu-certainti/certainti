@@ -1782,10 +1782,10 @@ WHERE dmf.country_rid = '${countryRid}'
       WHERE dmo.rid = :rid
       LIMIT 1`
   },
-  fetchConfiguration(schemaName:string)
+  fetchConfiguration(schemaName:string,caseRid:string)
   {
     return `
-      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = 'D001-a761961f-4890-4c22-a585-3e74a8b98770';
+      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
     `
   },
   fetchDynamicFieldValues(schemaName:string, refTable:string, quotedJsonPath:string)

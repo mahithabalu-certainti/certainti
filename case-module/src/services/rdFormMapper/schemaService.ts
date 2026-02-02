@@ -431,7 +431,7 @@ class RdFormMapperSchemaService {
 
   async findAvailableCountryAndState(accountNumber: string, orgDb: Sequelize, caseRid: string):Promise<{ hasFederal: boolean; hasState: boolean; states?: string[]; }> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
-    const [results]: any = await orgDb.query(rawQueries.fetchConfiguration(schemaName), { raw: true });
+    const [results]: any = await orgDb.query(rawQueries.fetchConfiguration(schemaName,caseRid), { raw: true });
     const result = Array.isArray(results) && results.length > 0 ? results[0] : {};
     return {
       hasFederal: result.is_federal_level || false,
@@ -442,7 +442,7 @@ class RdFormMapperSchemaService {
 
   async getFederalForms(accountRid: string, countryRid: string, mainDb: Sequelize,  effectiveStart: string, effectiveEnd: string) {
     try {
-        console.log("Fetching Federal Forms for Country RID:", countryRid);
+        logMessage(`Fetching Federal Forms for Country RID: ${countryRid}`);
         const [fetchFederalForms] = await mainDb.query(rawQueries.fetchFederalForms(countryRid, effectiveStart, effectiveEnd));
         const results = fetchFederalForms as any[];
         return results.length > 0 && results[0] ? results[0] : [];
@@ -454,12 +454,12 @@ class RdFormMapperSchemaService {
 
   async getStateForms(accountRid: string, countryRid: string, stateRid:string, mainDb: Sequelize,  effectiveStart: string, effectiveEnd: string) {
     try {
-        console.log("Fetching Federal Forms for Country RID:", countryRid);
+        logMessage(`Fetching State Forms for Country RID: ${countryRid}`);
         const [fetchStateForms] = await mainDb.query(rawQueries.fetchStateForms(countryRid, stateRid, effectiveStart, effectiveEnd));
         const results = fetchStateForms as any[];
         return results.length > 0 && results[0] ? results[0] : [];
     } catch (error) {
-        logMessage(`Error fetching Federal Forms : ${error}`);
+        logMessage(`Error fetching State Forms : ${error}`);
         return [];
     }
   }
