@@ -61,8 +61,8 @@ const DataMapperForm: React.FC = () => {
   });
 
   // API Hooks
-  const allCountries = useGetAllCountries();
-  const states = useFetchState(currentCountry);
+  const allCountries = useGetAllCountries('Active');
+  const states = useFetchState(currentCountry, 'active');
   const createDataMapper = useCreateDataMapper();
   const updateDataMapper = useUpdateDataMapper();
   const { data: mapperData, isLoading } = useDataMapperDetails(

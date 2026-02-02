@@ -42,8 +42,8 @@ const DataMapper: React.FC = () => {
   };
 
   const dataMapperStatus = useGetDataMapperStatus();
-  const allCountries = useGetAllCountries();
-  const regions = useFetchState(currentCountry?.toString() || '');
+  const allCountries = useGetAllCountries('Active');
+  const regions = useFetchState(currentCountry?.toString() || '', 'active');
 
   const statusOptions = useMemo(
     () =>
