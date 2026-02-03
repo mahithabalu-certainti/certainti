@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+    ClosingRemarksItems,
     ExportType,
     ResourceSummaryListExportParams,
     ResourceSummaryListURLParams,
@@ -13,9 +14,6 @@ import { ShowHideTableColumn } from '../../../../../../../components/table/types
 import { RootState } from '../../../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../../../../common-service';
-import {
-    CaseProjectResourceRowType,
-} from '../../../case-project-resource/columns';
 import { getClosingRemarksColumns } from './column';
 import { useClosingRemarksList } from '../../../../../../services/case-dossier/case-dossier-service';
 
@@ -48,7 +46,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
     const [searchParams] = useSearchParams();
     const accountId = searchParams.get('accountID') || '';
     const [resourceSummary, setResourceSummary] = useState<
-        CaseProjectResourceRowType[]
+        ClosingRemarksItems[]
     >([]);
     const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
         page: currentPage + 1,
@@ -64,12 +62,12 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
         refreshTrigger
     );
 
-    const totalItems = data?.data.count || 0;
+    const totalItems = data?.count || 0;
 
     useEffect(() => {
         if (data) {
-            setResourceSummary(data?.data?.projectResources || []);
-            setCount(data?.data?.count || 0);
+            setResourceSummary(data.closingRemarks || []);
+            setCount(data.count || 0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data]);
@@ -141,7 +139,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
         setTableParams((prev) => ({ ...prev, limit: newLimit, page: 1 }));
     };
 
-    const getRowId = (row: CaseProjectResourceRowType) => row.rid;
+    const getRowId = (row: ClosingRemarksItems) => row.rid;
 
     // Column visibility states
     const isModalOpen = Boolean(columnAnchorEl);

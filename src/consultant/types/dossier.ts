@@ -257,6 +257,25 @@ export interface ResourceSummaryListResponse {
   };
 }
 
+export type ClosingRemarksItems = {
+  created_by: string;
+  created_by_name: string;
+  signoff_type_rid: string;
+  signoff_type_name: string;
+  signoff_at: string;
+  rid: string;
+}
+export interface ClosingRemarksResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    case_name: string;
+    case_rid: string;
+    closing_remarks: ClosingRemarksItems[];
+  };
+}
+
 //-------- Project Summary ----------
 export interface ProjectSummaryListURLParams {
   page: number;
@@ -432,9 +451,9 @@ export interface FinancialHighlightsData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-    | FinancialHighlightsComputedFields
-    | AustraliaComputedFields
-    | USAComputedFields;
+  | FinancialHighlightsComputedFields
+  | AustraliaComputedFields
+  | USAComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -445,9 +464,9 @@ export interface CaseSummaryData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-    | FinancialHighlightsComputedFields
-    | AustraliaComputedFields
-    | USAComputedFields;
+  | FinancialHighlightsComputedFields
+  | AustraliaComputedFields
+  | USAComputedFields;
 }
 
 export interface AustraliaRdExpenditure {

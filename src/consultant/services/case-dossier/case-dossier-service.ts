@@ -4,7 +4,8 @@ import {
   ResourceSummaryListURLParams,
   DossierSummary,
   RDFormResponse,
-  ResourceSummaryListResponse,
+  ClosingRemarksItems,
+  ClosingRemarksResponse,
 } from '../../types';
 import {
   ResourceSummaryMockData,
@@ -156,18 +157,13 @@ export const downloadPdfFromBase64 = (
 export const fetchClosingRemarksList = async (
   accountid: string,
   caseid: string
-): Promise<{ resourceSummary: ResourceSummaryItem[]; count: number }> => {
-  const response = await caseServiceApi.get<ResourceSummaryListResponse>(
+): Promise<{ closingRemarks: ClosingRemarksItems[]; count: number }> => {
+  const response = await caseServiceApi.get<ClosingRemarksResponse>(
     getClosingRemarksListURL(accountid, caseid)
   );
-
-  // Mock usage
-  // console.log('resource-summary-list-params', params);
-  // await new Promise((resolve) => setTimeout(resolve, 1500));
-
   return {
-    resourceSummary: response.data.resourceSummary,
-    count: response.data.count,
+    closingRemarks: response.data.data.closing_remarks,
+    count: response.data.data.closing_remarks.length,
   };
 };
 
@@ -176,11 +172,11 @@ export const useClosingRemarksList = (
   caseId: string,
   refreshList?: number
 ): UseQueryResult<
-  { resourceSummary: ResourceSummaryItem[]; count: number },
+  { closingRemarks: ClosingRemarksItems[]; count: number },
   Error
 > => {
   return useQuery<
-    { resourceSummary: ResourceSummaryItem[]; count: number },
+    { closingRemarks: ClosingRemarksItems[]; count: number },
     Error
   >({
     queryKey: ['closing-remarks-list', accountId, caseId, refreshList],

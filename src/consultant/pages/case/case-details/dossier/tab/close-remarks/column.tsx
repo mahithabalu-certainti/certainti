@@ -1,13 +1,15 @@
 
+import { formatDateToYYYYMMDDWithTime } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
-import { CaseProjectResourceRowType } from '../../../case-project-resource/columns';
+import { ClosingRemarksItems } from '../../../../../../types';
+
 
 export const getClosingRemarksColumns = (
-): ListTableColumn<CaseProjectResourceRowType>[] => [
+): ListTableColumn<ClosingRemarksItems>[] => [
         {
-            id: 'resource_name',
-            sortId: 'resource_name',
-            label: 'Resource Name',
+            id: 'signoff_type_name',
+            sortId: 'signoff_type_name',
+            label: 'Signoff Type',
             width: 180,
             sortable: true,
             // hide:
@@ -15,9 +17,9 @@ export const getClosingRemarksColumns = (
             //   !permissionMap?.['resource_name']?.edit,
         },
         {
-            id: 'project_code',
-            sortId: 'project_code',
-            label: 'Project Code',
+            id: 'created_by_name',
+            sortId: 'created_by_name',
+            label: 'Created By',
             width: 180,
             sortable: true,
             // hide:
@@ -25,32 +27,16 @@ export const getClosingRemarksColumns = (
             //   !projectPermissionMap?.['project_code']?.edit,
         },
         {
-            id: 'project_name',
-            sortId: 'project_name',
-            label: 'Project Name',
+            id: 'signoff_at',
+            sortId: 'signoff_at',
+            label: 'Signoff Date',
             width: 200,
             sortable: true,
             // hide:
             //   !projectPermissionMap?.['project_name']?.read &&
             //   !projectPermissionMap?.['project_name']?.edit,
-        },
-        {
-            id: 'description',
-            sortId: 'description',
-            label: 'Comments',
-            width: 200,
-            sortable: true,
-            // hide:
-            //   !permissionMap?.['  description']?.read &&
-            //   !permissionMap?.['description']?.edit,
-        },
-        {
-            id: 'r_number',
-            sortId: 'r_number',
-            label: 'Project Resource ID',
-            width: 200,
-            sortable: true,
-            // hide:
-            //   !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
+            render: (row: ClosingRemarksItems) => {
+                return formatDateToYYYYMMDDWithTime(row.signoff_at);
+            },
         },
     ];

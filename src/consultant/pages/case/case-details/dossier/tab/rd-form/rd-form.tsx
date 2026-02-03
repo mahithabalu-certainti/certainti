@@ -11,11 +11,13 @@ import { CaseDetails } from '../../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { useFetchState } from '../../../../../../services/account';
-import { useGetRDFormData } from '../../../../../../services/case-dossier/case-dossier-service';
 import { AllPermissions } from '../../../../../../../common-service';
 import TextButton from '../../../../../../../components/button/text-button';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
 import PdfViewer from './pdf-viewer';
+import { useParams, useSearchParams } from 'react-router';
+import { useToast } from '../../../../../../../hooks';
+import { useRDFormMapper, useRDFormMapperPreviewMutation } from '../../../../../../services/case-dossier/cases-financial-services';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
@@ -31,8 +33,16 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPdfViewer, setShowPdfViewer] = useState<boolean>(false);
-
+  const [rdFormData, setRdFormData] = useState<string>('');
+  const { caseId } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
+  const { successToast, errorToast } = useToast();
+  const { mutate: rdFormInitiate, isPending: isRDFormInitiate } =
+    useRDFormMapper();
+  const { mutate: previewRDCredit, isPending: isPreviewLoading, isError: isPreviewError } =
+    useRDFormMapperPreviewMutation();
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -51,16 +61,16 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     [region.data?.data.states]
   );
 
-  const {
-    data: rdFormData,
-    isLoading: isLoadingPdf,
-    isError: isPdfError,
-  } = useGetRDFormData(
-    caseDetails?.account_rid || '',
-    caseCountryDetails.country_id,
-    isFederal === 'no' ? selectedRegion : undefined,
-    showPdfViewer // Only fetch when viewer is shown
-  );
+  // const {
+  //   data: rdFormData,
+  //   isLoading: isLoadingPdf,
+  //   isError: isPdfError,
+  // } = useGetRDFormData(
+  //   caseDetails?.account_rid || '',
+  //   caseCountryDetails.country_id,
+  //   isFederal === 'no' ? selectedRegion : undefined,
+  //   showPdfViewer // Only fetch when viewer is shown
+  // );
 
   // Permission
   const accountViewEditFields = useMemo(
@@ -95,6 +105,64 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     }
   };
 
+  const handleViewFinancialHighlightsForRegion = async () => {
+    if (isFederal === 'no' && !selectedRegion) {
+      setErrors((prev) => ({ ...prev, region: 'Please select a region' }));
+      return;
+    }
+    previewRDCredit(
+      {
+        accountrid: accountid,
+        caseId: caseId ?? '',
+        stateRid: selectedRegion,
+        isFederal: isFederal === 'yes',
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.data) {
+            setRdFormData(response?.data);
+            setShowPdfViewer(true);
+          } else {
+            errorToast('No data available');
+          }
+        },
+        onError: (error) => {
+          console.error(error);
+          setRdFormData(null);
+          errorToast('Failed to fetch financial highlights');
+        },
+      }
+    );
+  };
+
+  const handleViewRdFormsData = async () => {
+    // if (isFederal === 'no' && !selectedRegion) {
+    //   setErrors((prev) => ({ ...prev, region: 'Please select a region' }));
+    //   return;
+    // }
+    // if (isFederal === 'no' && selectedRegion) {
+    //   await handleViewFinancialHighlightsForRegion();
+    //   return;
+    // }
+
+    const payload = {
+      account_rid: accountid,
+      case_rid: caseId ?? '',
+      fiscal_year: Number(caseDetails?.fiscal_year || 0),
+    };
+
+    rdFormInitiate(payload, {
+      onSuccess: (data) => {
+        setRdFormData(data as FinancialHighlightsResponse);
+        setShowPdfViewer(true);
+      },
+      onError: (error) => {
+        console.error('Error initiating', error);
+        errorToast('Failed to initiate');
+      },
+    });
+  };
+
   const handleViewPdf = () => {
     // Validate region if federal is "No"
     if (isFederal === 'no' && !selectedRegion) {
@@ -123,9 +191,21 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
           <div>Jurisdiction Information</div>
           <TextButton
             label={'View'}
-            loading={isLoadingPdf}
-            onClick={handleViewPdf}
-            disabled={!isViewButtonEnabled() || isLoadingPdf}
+            loading={isPreviewLoading}
+            onClick={handleViewFinancialHighlightsForRegion}
+            disabled={!isViewButtonEnabled() || isPreviewLoading}
+            sx={{
+              width: '55px',
+              minWidth: '55px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label={'Initiate'}
+            loading={isRDFormInitiate}
+            onClick={handleViewRdFormsData}
+            disabled={!isViewButtonEnabled() || isRDFormInitiate}
             sx={{
               width: '55px',
               minWidth: '55px',
@@ -194,7 +274,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                !accountPermissionMap?.['country_rid']?.edit
+                  !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -210,10 +290,9 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
-                errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-              }`}
+                }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -229,7 +308,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
+                    !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -248,9 +327,8 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
@@ -302,9 +380,9 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
           </div>
           <div className='max-h-[600px] overflow-auto p-3'>
             <PdfViewer
-              pdfUrl={rdFormData?.data || ''}
-              isLoadingPdf={isLoadingPdf}
-              isPdfError={isPdfError}
+              pdfUrl={rdFormData || ''}
+              isLoadingPdf={isPreviewLoading}
+              isPdfError={isPreviewError}
             />
           </div>
         </div>
