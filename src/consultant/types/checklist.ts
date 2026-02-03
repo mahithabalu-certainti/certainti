@@ -123,7 +123,7 @@ export type ChecklistItem = {
   checklist_item_name: string;
   checklist_item_description: string;
   status_rid?: string;
-  action_type: ItemActionType;
+  action_type: ItemActionType | string;
 };
 
 export type ChecklistFormPayload = {
