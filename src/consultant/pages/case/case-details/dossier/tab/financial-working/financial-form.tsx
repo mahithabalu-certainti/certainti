@@ -5,12 +5,11 @@ import FinancialWorkingAustralia from './financial-working-australia';
 import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
 import {
-  FormControl,
-  FormControlLabel,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
+  Tab,
+  Tabs,
+  Box,
 } from '@mui/material';
 import { useParams, useSearchParams } from 'react-router-dom';
 // import { useQueryClient } from '@tanstack/react-query';
@@ -22,7 +21,6 @@ import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import {
   CaseDetails,
   FinancialHighlightsResponse,
-  RDCreditStatusResponse,
 } from '../../../../../../types';
 import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
@@ -33,11 +31,11 @@ import {
 import {
   useFinancialHighlights,
   useInitiateRDCreditProcess,
-  useRDCreditStatus,
   useRDCreditPreviewMutation,
 } from '../../../../../../services/case-dossier/cases-financial-services';
 import SignOffModal from './sign-off-modal';
 import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
+import DetailsSectionSkeleton from '../../../../../../../components/skeleton-component/detailsskeleton';
 
 interface FinancialWorkingFormProps {
   caseDetails?: CaseDetails;
@@ -63,7 +61,7 @@ const FinancialWorkingUKTable = ({
   const computedFields = data?.data?.computed_fields as any;
   const submissions =
     computedFields?.[
-      'Technical Submissions by Cost that are 50% or more of Total QRE'
+    'Technical Submissions by Cost that are 50% or more of Total QRE'
     ] || [];
   const hmrcTotal =
     computedFields?.['Total Project to be shared with HMRC']?.Total;
@@ -168,21 +166,20 @@ const FinancialWorkingUKPercentageTable = ({
 
 const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   caseDetails,
-  setDossierFinancialStatus,
-  dossierFinancialStatus,
   financialData,
   setFinancialData,
   refetchCaseDetails,
 }) => {
-  const [isFederal, setIsFederal] = useState<string>('yes');
+  const [activeTab, setActiveTab] = useState<number>(0); // 0 for Federal, 1 for Non-Federal
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
+  const [hasInitiated, setHasInitiated] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
-  const { successToast, errorToast } = useToast();
+  const { errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
 
   const { data } = useFetchCasesConfigFields(
@@ -200,23 +197,60 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       // Restore region/federal state from payload if available
       const stateRid = (financialData.data as any)?.state_rid;
       if (stateRid) {
-        setIsFederal('no');
+        setActiveTab(1); // Non-Federal tab
         setSelectedRegion(stateRid);
       } else if (financialData.data) {
-        setIsFederal('yes');
+        setActiveTab(0); // Federal tab
       }
     }
   }, [financialData]);
 
   const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
 
+  // Auto-initiate on component mount (only once)
+  React.useEffect(() => {
+    if (
+      !hasInitiated &&
+      caseDetails?.case_total_projects &&
+      caseDetails?.case_total_projects !== 0 &&
+      caseDetails?.case_total_projects !== '0' &&
+      !caseDetails?.financial_working_signoff
+    ) {
+      setHasInitiated(true);
+      handleInitiateFinancialHighlights();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseDetails, hasInitiated]);
+
+  // Call appropriate API when federal tab changes
+  React.useEffect(() => {
+    if (!hasInitiated) return; // Wait for initiate to complete first
+
+    if (activeTab === 0) {
+      // Federal Yes: Call handleViewFinancialHighlights
+      handleViewFinancialHighlights();
+    } else if (activeTab === 1) {
+      // Federal No: Set first region as default and call API
+      if (regionListOptions.length > 0 && !selectedRegion) {
+        const firstRegion = regionListOptions[0].value;
+        setSelectedRegion(firstRegion);
+        // API will be called by the region change effect
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, hasInitiated]);
+
+  // Call region API when region changes in Federal No mode (activeTab === 1)
+  React.useEffect(() => {
+    if (activeTab === 1 && selectedRegion && hasInitiated) {
+      handleViewFinancialHighlightsForRegion();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRegion, activeTab, hasInitiated]);
+
   const isSignoffVisible = checkPermission(
     permission,
     AllPermissions.DOSSIER_FINANCIAL_SIGNOFF
-  );
-  const isInitiateVisible = checkPermission(
-    permission,
-    AllPermissions.DOSSIER_FINANCIAL_INITIATE
   );
 
   const { mutate: initiateProcess, isPending: isInitiating } =
@@ -225,13 +259,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     useFinancialHighlights();
   const { mutate: previewRDCredit, isPending: isPreviewLoading } =
     useRDCreditPreviewMutation();
-
-  // Fetch Status
-  const {
-    data: statusData,
-    refetch: refetchRDCreditStatus,
-    isRefetching,
-  } = useRDCreditStatus(accountid, caseId ?? '', false);
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -278,9 +305,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     return map;
   }, [accountViewEditFields]);
 
-  const handleFederalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setIsFederal(value);
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
     setShowFinancialValues(false);
     setFinancialData(null);
     setSelectedRegion('');
@@ -291,16 +317,15 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     setSelectedRegion(value);
     setErrors((prev) => ({ ...prev, region: '' }));
     setFinancialData(null);
-
-    // Reset PDF when region changes (but not shown yet)
-    if (showFinancialValue) {
-      setShowFinancialValues(false);
-    }
+    setShowFinancialValues(false);
+    // API will be called by the useEffect watching selectedRegion
   };
 
   const responseCurrencySymbol = caseDetails?.currency_symbol || '$';
 
   const handleViewFinancialHighlightsForRegion = async () => {
+    if (!selectedRegion) return;
+
     previewRDCredit(
       {
         accountrid: accountid,
@@ -328,7 +353,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   };
 
   const handleViewFinancialHighlights = async () => {
-    if (isFederal === 'no' && selectedRegion) {
+    if (activeTab === 1 && selectedRegion) {
       await handleViewFinancialHighlightsForRegion();
       return;
     }
@@ -350,55 +375,23 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     });
   };
 
-  const handleStatusUpdate = (
-    statusData: RDCreditStatusResponse,
-    actionType?: 'initiate' | 'regenerate' | 'refresh'
-  ) => {
-    const message = statusData?.data ?? statusData?.statusMessage ?? '';
-    setDossierFinancialStatus(message);
-
-    if (statusData?.data === 'COMPLETED') {
-      if (actionType === 'initiate' || actionType === 'refresh') {
-        successToast('Initiated successfully');
-      } else if (actionType === 'regenerate') {
-        successToast('Re-Generated successfully');
-      }
-    }
-  };
-
   const handleInitiateFinancialHighlights = async () => {
-    setDossierFinancialStatus('');
-    const actionType =
-      statusData?.data === 'COMPLETED' ? 'regenerate' : 'initiate';
     const payload = {
       account_rid: accountid,
       case_rid: caseId ?? '',
       fiscal_year: Number(caseDetails?.fiscal_year || 0),
     };
-    if (dossierFinancialStatus === 'COMPLETED') {
-      setShowFinancialValues(false);
-      setFinancialData(null);
-    }
+
     initiateProcess(payload, {
       onSuccess: async (data) => {
         console.log('Initiated successfully', data);
         // successToast('Initiated successfully');
-        // Refetch and handle status
-        const result = await refetchRDCreditStatus();
-        if (result.data) {
-          handleStatusUpdate(result.data, actionType);
-        }
+        // Don't auto-call view here - let the federal tab useEffect handle it
       },
       onError: (error: any) => {
-        errorToast(error?.response.data.statusMessage || 'Failed to initiate');
+        errorToast(error?.response?.data?.statusMessage || 'Failed to initiate');
       },
     });
-  };
-  const isViewButtonEnabled = () => {
-    const isStatusCompleted = dossierFinancialStatus === 'COMPLETED';
-    if (isStatusCompleted) return true;
-
-    return false;
   };
 
   if (
@@ -432,7 +425,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               label={'Sign off'}
               onClick={() => setIsSignOffModalOpen(true)}
               disabled={
-                dossierFinancialStatus !== 'COMPLETED' ||
+                !financialData ||
                 isFinancialWorkingSignoff
               }
               hide={!isSignoffVisible}
@@ -441,110 +434,45 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 minWidth: '65px',
                 fontSize: '13px',
                 fontWeight: 400,
-                marginRight: '10px',
-              }}
-            />
-            <TextButton
-              label={'View'}
-              loading={isFinancialHighlights || isPreviewLoading}
-              onClick={handleViewFinancialHighlights}
-              disabled={
-                !isViewButtonEnabled() ||
-                isFinancialHighlights ||
-                isPreviewLoading ||
-                showFinancialValue
-              }
-              sx={{
-                width: '55px',
-                minWidth: '55px',
-                fontSize: '13px',
-                fontWeight: 400,
-                marginRight: '10px',
-              }}
-              // hide={isInitiateVisible}
-            />
-            <TextButton
-              label={
-                dossierFinancialStatus === 'COMPLETED'
-                  ? 'Re-Generate'
-                  : 'Initiate'
-              }
-              hide={!isInitiateVisible}
-              loading={isInitiating}
-              onClick={handleInitiateFinancialHighlights}
-              disabled={
-                isInitiating ||
-                isRefetching ||
-                isFinancialWorkingSignoff ||
-                (!!dossierFinancialStatus &&
-                  dossierFinancialStatus !== 'COMPLETED')
-              }
-              sx={{
-                width: dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
-                minWidth:
-                  dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
-                fontSize: '13px',
-                fontWeight: 400,
               }}
             />
           </div>
         </div>
         <div className='px-4 pt-3'>
-          <FormControl
-            component='fieldset'
-            disabled={!caseDetails?.is_state_available}
-          >
-            <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-2 block'>
-              Federal Level
-            </label>
-            <RadioGroup
-              row
-              value={isFederal}
-              onChange={handleFederalChange}
-              className='gap-6'
+          <Box>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              TabIndicatorProps={{
+                style: {
+                  backgroundColor: '#1565C0',
+                  height: '2px',
+                },
+              }}
+              sx={{
+                minHeight: '38px',
+                borderBottom: '1px solid #CBD6E2',
+                '& .MuiTab-root': {
+                  minHeight: '38px',
+                  textTransform: 'none',
+                  fontWeight: 'normal',
+                  color: '#5F6B7C',
+                  fontSize: '14px',
+                  paddingX: '16px',
+                },
+                '& .Mui-selected': {
+                  color: '#172B4D',
+                  fontWeight: 600,
+                },
+                '& .Mui-disabled': {
+                  opacity: 0.5,
+                },
+              }}
             >
-              <FormControlLabel
-                value='yes'
-                control={
-                  <Radio
-                    disableRipple
-                    sx={{
-                      color: '#CBD6E2',
-                      '&.Mui-checked': {
-                        color: '#3B82F6',
-                      },
-                      padding: '4px 8px',
-                    }}
-                  />
-                }
-                label={
-                  <span className='text-[13px] text-[#2D3E4F] font-medium'>
-                    Yes
-                  </span>
-                }
-              />
-              <FormControlLabel
-                value='no'
-                control={
-                  <Radio
-                    disableRipple
-                    sx={{
-                      color: '#CBD6E2',
-                      '&.Mui-checked': {
-                        color: '#3B82F6',
-                      },
-                      padding: '4px 8px',
-                    }}
-                  />
-                }
-                label={
-                  <span className='text-[13px] text-[#2D3E4F] font-medium'>
-                    No
-                  </span>
-                }
-              />
-            </RadioGroup>
-          </FormControl>
+              <Tab label='Federal' disabled={!caseDetails?.is_state_available} />
+              <Tab label='State-wise' disabled={!caseDetails?.is_state_available} />
+            </Tabs>
+          </Box>
         </div>
         {/* Country and Region Fields */}
         <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
@@ -552,7 +480,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                !accountPermissionMap?.['country_rid']?.edit
+                  !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -568,10 +496,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
-                errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-              }`}
+                }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -582,12 +509,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             )}
           </div>
 
-          {isFederal === 'no' && (
+          {activeTab === 1 && (
             <div
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
+                    !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -606,9 +533,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
@@ -651,6 +577,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           )}
         </div>
       </div>
+
+      {/* Loading State */}
+      {(isInitiating || isFinancialHighlights || isPreviewLoading) && !showFinancialValue && (
+        <DetailsSectionSkeleton />
+      )}
 
       {showFinancialValue && (
         <div className=''>
@@ -755,14 +686,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             // Default fallback or no title
             return null;
           })()}
-
-          <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-            {(financialData?.data?.input_params?.credit_type as string) ||
-              'Federal R&D Credit'}
-          </div>
           <div>
             {caseDetails?.country_name ===
-            FinancialWorkingCountries.Australia ? (
+              FinancialWorkingCountries.Australia ? (
               <FinancialWorkingAustralia data={financialData} />
             ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
               <FinancialWorkingUSA data={financialData} />
