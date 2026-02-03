@@ -4,13 +4,7 @@ import FinancialWorking from './financial-working';
 import FinancialWorkingAustralia from './financial-working-australia';
 import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
-import {
-  MenuItem,
-  Select,
-  Tab,
-  Tabs,
-  Box,
-} from '@mui/material';
+import { MenuItem, Select, Tab, Tabs } from '@mui/material';
 import { useParams, useSearchParams } from 'react-router-dom';
 // import { useQueryClient } from '@tanstack/react-query';
 import { RootState } from '../../../../../../../store/store';
@@ -61,7 +55,7 @@ const FinancialWorkingUKTable = ({
   const computedFields = data?.data?.computed_fields as any;
   const submissions =
     computedFields?.[
-    'Technical Submissions by Cost that are 50% or more of Total QRE'
+      'Technical Submissions by Cost that are 50% or more of Total QRE'
     ] || [];
   const hmrcTotal =
     computedFields?.['Total Project to be shared with HMRC']?.Total;
@@ -389,7 +383,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         // Don't auto-call view here - let the federal tab useEffect handle it
       },
       onError: (error: any) => {
-        errorToast(error?.response?.data?.statusMessage || 'Failed to initiate');
+        errorToast(
+          error?.response?.data?.statusMessage || 'Failed to initiate'
+        );
       },
     });
   };
@@ -424,10 +420,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             <TextButton
               label={'Sign off'}
               onClick={() => setIsSignOffModalOpen(true)}
-              disabled={
-                !financialData ||
-                isFinancialWorkingSignoff
-              }
+              disabled={!financialData || isFinancialWorkingSignoff}
               hide={!isSignoffVisible}
               sx={{
                 width: 'auto',
@@ -438,41 +431,42 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             />
           </div>
         </div>
-        <div className='px-4 pt-3'>
-          <Box>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              TabIndicatorProps={{
-                style: {
-                  backgroundColor: '#1565C0',
-                  height: '2px',
-                },
-              }}
-              sx={{
+        <div className='px-4 border-b border-[#CBD6E2]'>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            TabIndicatorProps={{
+              style: {
+                backgroundColor: '#1565C0',
+                height: '2px',
+              },
+            }}
+            sx={{
+              minHeight: '38px',
+              borderBottom: '1px solid #CBD6E2',
+              '& .MuiTab-root': {
                 minHeight: '38px',
-                borderBottom: '1px solid #CBD6E2',
-                '& .MuiTab-root': {
-                  minHeight: '38px',
-                  textTransform: 'none',
-                  fontWeight: 'normal',
-                  color: '#5F6B7C',
-                  fontSize: '14px',
-                  paddingX: '16px',
-                },
-                '& .Mui-selected': {
-                  color: '#172B4D',
-                  fontWeight: 600,
-                },
-                '& .Mui-disabled': {
-                  opacity: 0.5,
-                },
-              }}
-            >
-              <Tab label='Federal' disabled={!caseDetails?.is_state_available} />
-              <Tab label='State-wise' disabled={!caseDetails?.is_state_available} />
-            </Tabs>
-          </Box>
+                textTransform: 'none',
+                fontWeight: 'normal',
+                color: '#5F6B7C',
+                fontSize: '14px',
+                paddingX: '16px',
+              },
+              '& .Mui-selected': {
+                color: '#172B4D',
+                fontWeight: 600,
+              },
+              '& .Mui-disabled': {
+                opacity: 0.5,
+              },
+            }}
+          >
+            <Tab label='Federal' disabled={!caseDetails?.is_state_available} />
+            <Tab
+              label='State-wise'
+              disabled={!caseDetails?.is_state_available}
+            />
+          </Tabs>
         </div>
         {/* Country and Region Fields */}
         <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
@@ -480,7 +474,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                  !accountPermissionMap?.['country_rid']?.edit
+                !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -496,9 +490,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
+                errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-                }`}
+              }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -514,7 +509,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                    !accountPermissionMap?.['region_rid']?.edit
+                  !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -533,8 +528,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${
+                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
@@ -579,9 +575,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       </div>
 
       {/* Loading State */}
-      {(isInitiating || isFinancialHighlights || isPreviewLoading) && !showFinancialValue && (
-        <DetailsSectionSkeleton />
-      )}
+      {(isInitiating || isFinancialHighlights || isPreviewLoading) &&
+        !showFinancialValue && <DetailsSectionSkeleton />}
 
       {showFinancialValue && (
         <div className=''>
@@ -688,7 +683,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           })()}
           <div>
             {caseDetails?.country_name ===
-              FinancialWorkingCountries.Australia ? (
+            FinancialWorkingCountries.Australia ? (
               <FinancialWorkingAustralia data={financialData} />
             ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
               <FinancialWorkingUSA data={financialData} />
