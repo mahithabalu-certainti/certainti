@@ -107,7 +107,7 @@ async function initiateRDCreditProcess(
         statusCode : HttpStatus.SUCCESS,
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : resultState.message,
-        data : {}
+        data : resultState.data
       })
     } else {
       return res.status(HttpStatus.NOT_FOUND).json({
