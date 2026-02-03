@@ -6,6 +6,7 @@ import {
   RDCreditInitiatePayload,
   RDCreditInitiateResponse,
   SignOffFinancialHighlightsPayload,
+  RDFormResponse,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -158,7 +159,7 @@ export const fetchRDFormMapperPreview = async (
   caseRid: string,
   stateRid?: string,
   isFederal?: boolean
-): Promise<RDCreditPreviewResponse> => {
+): Promise<RDFormResponse> => {
   const url = getRDFormMapperPreviewURL(accountRid, caseRid, stateRid ?? '', isFederal);
   const response = await caseServiceApi.get(url);
   return response.data;
@@ -166,7 +167,7 @@ export const fetchRDFormMapperPreview = async (
 
 export const useRDFormMapperPreviewMutation = () => {
   return useMutation<
-    RDCreditPreviewResponse,
+    RDFormResponse,
     Error,
     { accountrid: string; caseId: string; stateRid: string; isFederal: boolean }
   >({

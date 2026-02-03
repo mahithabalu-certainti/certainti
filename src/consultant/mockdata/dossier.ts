@@ -4,7 +4,6 @@ import {
   ProjectSummaryListResponse,
   QualifiedProjectListResponse,
   DossierSummaryResponse,
-  RDFormResponse,
 } from '../types';
 
 export const ProjectDocumentListMockData: ProjectDocumentListResponse = {
@@ -887,8 +886,4 @@ export const ResourceSummaryMockData: ResourceSummaryListResponse = {
   },
 };
 
-export const mockRDFormResponse: RDFormResponse = {
-  status: 200,
-  message: 'RD form generated successfully',
-  data: 'JVBERi0xLjQKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA1OTUgODQyXS9Db250ZW50cyA0IDAgUi9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNSAwIFI+Pj4+Pj4+CmVuZG9iago0IDAgb2JqCjw8L0xlbmd0aCA0ND4+CnN0cmVhbQpCVAovRjEgMTIgVGYKMTAwIDcwMCBUZAooSGVsbG8gUkQgUERGIFdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8L1R5cGUvRm9udC9TdWJ0eXBlL1R5cGUxL05hbWUvRjEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZgowMDAwMDAwMDEwIDAwMDAwIG4KMDAwMDAwMDA2MSAwMDAwMCBuCjAwMDAwMDAxMjEgMDAwMDAgbgowMDAwMDAwMjQ5IDAwMDAwIG4KMDAwMDAwMDM1NCAwMDAwMCBuCnRyYWlsZXIKPDwvUm9vdCAxIDAgUi9TaXplIDY+PgpzdGFydHhyZWYKNDQ5CiUlRU9G',
-};
+

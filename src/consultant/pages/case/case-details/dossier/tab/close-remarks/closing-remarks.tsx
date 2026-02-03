@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ClosingRemarksItems,
     ExportType,
@@ -11,9 +11,6 @@ import {
     ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
-import { RootState } from '../../../../../../../store/store';
-import { useSelector } from 'react-redux';
-import { AllPermissions } from '../../../../../../../common-service';
 import { getClosingRemarksColumns } from './column';
 import { useClosingRemarksList } from '../../../../../../services/case-dossier/case-dossier-service';
 
@@ -54,7 +51,6 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
         sortBy: 'resource_code',
         sortOrder: 'ASC',
     });
-    const { permission } = useSelector((state: RootState) => state.permission);
 
     const { data, isLoading, isError } = useClosingRemarksList(
         accountId,
@@ -95,36 +91,36 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
     }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
 
     // Permission Management
-    const projectViewEditFields = useMemo(
-        () =>
-            permission.find(
-                (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
-            )?.fields ?? [],
-        [permission]
-    );
+    // const projectViewEditFields = useMemo(
+    //     () =>
+    //         permission.find(
+    //             (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+    //         )?.fields ?? [],
+    //     [permission]
+    // );
 
-    const permissionMap = useMemo(() => {
-        const map: Record<string, { read: boolean; edit: boolean }> = {};
-        projectViewEditFields.forEach((item) => {
-            map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-        });
-        return map;
-    }, [projectViewEditFields]);
+    // const permissionMap = useMemo(() => {
+    //     const map: Record<string, { read: boolean; edit: boolean }> = {};
+    //     projectViewEditFields.forEach((item) => {
+    //         map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    //     });
+    //     return map;
+    // }, [projectViewEditFields]);
 
-    const projectListViewEditFields = useMemo(
-        () =>
-            permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
-                ?.fields ?? [],
-        [permission]
-    );
+    // const projectListViewEditFields = useMemo(
+    //     () =>
+    //         permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+    //             ?.fields ?? [],
+    //     [permission]
+    // );
 
-    const projectPermissionMap = useMemo(() => {
-        const map: Record<string, { read: boolean; edit: boolean }> = {};
-        projectListViewEditFields.forEach((item) => {
-            map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-        });
-        return map;
-    }, [projectListViewEditFields]);
+    // const projectPermissionMap = useMemo(() => {
+    //     const map: Record<string, { read: boolean; edit: boolean }> = {};
+    //     projectListViewEditFields.forEach((item) => {
+    //         map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    //     });
+    //     return map;
+    // }, [projectListViewEditFields]);
 
     const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
         const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -206,7 +202,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
                 actionDisplayMode='dropdown'
                 actionMenuItems={[]}
                 loading={isLoading}
-                error={isError ? 'Failed to load resource summary data' : undefined}
+                error={isError ? 'Failed to load closing remarks data' : undefined}
                 rowsPerPageOptions={[25, 50, 100]}
                 rowsPerPage={tableParams.limit}
                 currentPage={(tableParams.page ?? 1) - 1}

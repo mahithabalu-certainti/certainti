@@ -3,14 +3,12 @@ import {
   ResourceSummaryItem,
   ResourceSummaryListURLParams,
   DossierSummary,
-  RDFormResponse,
   ClosingRemarksItems,
   ClosingRemarksResponse,
 } from '../../types';
 import {
   ResourceSummaryMockData,
   DossierSummaryMockData,
-  mockRDFormResponse,
 } from '../../mockdata/dossier';
 import { caseServiceApi } from '../../../api/api';
 import { getClosingRemarksListURL } from '../urls/dossier-url';
@@ -85,41 +83,9 @@ export const useDossierSummary = (
 };
 
 
-// RD Form
-const fetchRDFormData = async (
-  accountId: string,
-  countryId: string,
-  regionId?: string
-): Promise<RDFormResponse> => {
-  // let url = `/api/rd-form?account_rid=${accountId}&country_rid=${countryId}`;
 
-  // // Add region parameter if provided
-  // if (regionId) {
-  //   url += `&state_rid=${regionId}`;
-  // }
 
-  // const response = await caseServiceApi.get<RDFormResponse>(url);
-  // return response.data;
-  console.log(accountId, countryId, regionId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  return mockRDFormResponse;
-};
-
-export const useGetRDFormData = (
-  accountId: string,
-  countryId: string,
-  regionId?: string,
-  enabled?: boolean
-): UseQueryResult<RDFormResponse | undefined, Error> => {
-  return useQuery<RDFormResponse | undefined, Error>({
-    queryKey: ['rd-credit-forms', accountId, countryId, regionId],
-    queryFn: () => fetchRDFormData(accountId, countryId, regionId),
-    retry: 0,
-    gcTime: 0,
-    enabled: enabled && !!accountId && !!countryId,
-  });
-};
 
 export const downloadPdfFromBase64 = (
   base64Data: string,

@@ -341,12 +341,6 @@ export interface ProjectSummaryListResponse {
   };
 }
 
-// RD form
-export interface RDFormResponse {
-  status: number;
-  message: string;
-  data: string; // Base64 encoded PDF data
-}
 
 export interface RDFormPayload {
   country_rid: string;
@@ -388,6 +382,15 @@ export interface RDCreditPreviewResponse {
     created_datetime: string;
     modified_datetime: string;
   };
+}
+
+export interface RDFormResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data:{
+    rdformUrl: string;
+  }
 }
 
 export interface RDCreditStatusResponse {

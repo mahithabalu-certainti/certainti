@@ -17,7 +17,7 @@ import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
 import PdfViewer from './pdf-viewer';
 import { useParams, useSearchParams } from 'react-router';
 import { useToast } from '../../../../../../../hooks';
-import { useRDFormMapper, useRDFormMapperPreviewMutation } from '../../../../../../services/case-dossier/cases-financial-services';
+import { useRDFormMapperPreviewMutation } from '../../../../../../services/case-dossier/cases-financial-services';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
@@ -33,14 +33,12 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPdfViewer, setShowPdfViewer] = useState<boolean>(false);
-  const [rdFormData, setRdFormData] = useState<string>('');
+  const [rdFormData, setRdFormData] = useState<string | null>('');
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
-  const { successToast, errorToast } = useToast();
-  const { mutate: rdFormInitiate, isPending: isRDFormInitiate } =
-    useRDFormMapper();
+  const { errorToast } = useToast();
   const { mutate: previewRDCredit, isPending: isPreviewLoading, isError: isPreviewError } =
     useRDFormMapperPreviewMutation();
 
@@ -61,16 +59,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     [region.data?.data.states]
   );
 
-  // const {
-  //   data: rdFormData,
-  //   isLoading: isLoadingPdf,
-  //   isError: isPdfError,
-  // } = useGetRDFormData(
-  //   caseDetails?.account_rid || '',
-  //   caseCountryDetails.country_id,
-  //   isFederal === 'no' ? selectedRegion : undefined,
-  //   showPdfViewer // Only fetch when viewer is shown
-  // );
+
 
   // Permission
   const accountViewEditFields = useMemo(
@@ -120,7 +109,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
       {
         onSuccess: (response) => {
           if (response?.data) {
-            setRdFormData(response?.data);
+            setRdFormData(response?.data?.rdformUrl);
             setShowPdfViewer(true);
           } else {
             errorToast('No data available');
@@ -135,44 +124,6 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     );
   };
 
-  const handleViewRdFormsData = async () => {
-    // if (isFederal === 'no' && !selectedRegion) {
-    //   setErrors((prev) => ({ ...prev, region: 'Please select a region' }));
-    //   return;
-    // }
-    // if (isFederal === 'no' && selectedRegion) {
-    //   await handleViewFinancialHighlightsForRegion();
-    //   return;
-    // }
-
-    const payload = {
-      account_rid: accountid,
-      case_rid: caseId ?? '',
-      fiscal_year: Number(caseDetails?.fiscal_year || 0),
-    };
-
-    rdFormInitiate(payload, {
-      onSuccess: (data) => {
-        setRdFormData(data as FinancialHighlightsResponse);
-        setShowPdfViewer(true);
-      },
-      onError: (error) => {
-        console.error('Error initiating', error);
-        errorToast('Failed to initiate');
-      },
-    });
-  };
-
-  const handleViewPdf = () => {
-    // Validate region if federal is "No"
-    if (isFederal === 'no' && !selectedRegion) {
-      setErrors((prev) => ({ ...prev, region: 'Please select a region' }));
-      return;
-    }
-
-    // Show PDF viewer - React Query hook will automatically fetch the data
-    setShowPdfViewer(true);
-  };
 
   const isViewButtonEnabled = () => {
     if (isFederal === 'yes') {
@@ -194,18 +145,6 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
             loading={isPreviewLoading}
             onClick={handleViewFinancialHighlightsForRegion}
             disabled={!isViewButtonEnabled() || isPreviewLoading}
-            sx={{
-              width: '55px',
-              minWidth: '55px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-          />
-          <TextButton
-            label={'Initiate'}
-            loading={isRDFormInitiate}
-            onClick={handleViewRdFormsData}
-            disabled={!isViewButtonEnabled() || isRDFormInitiate}
             sx={{
               width: '55px',
               minWidth: '55px',
