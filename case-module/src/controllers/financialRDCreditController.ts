@@ -150,6 +150,7 @@ async function findRdCreditComputedResults(
     );
     
     const {accountRid, caseRid, stateCode} = req.params;
+    const type = req.query.type as string || 'summary'
     // Step 3: Validate userId
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
@@ -163,7 +164,7 @@ async function findRdCreditComputedResults(
       return;
     }
 
-    const resultState = await computationService.getComputationResultsByIDAndState(accountRid!, caseRid!, stateCode!);
+    const resultState = await computationService.getComputationResultsByIDAndState(accountRid!, caseRid!, stateCode!,type);
 
     // Step 5: Handle service response
     handleCustomResponse(

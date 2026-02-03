@@ -595,7 +595,7 @@ class RDCreditSchemaService {
         const stateData: any[] = await this.mainDbSequelize.query(
             rawQueries.fetchStatesByIds(),
             {
-                replacements: { stateRids },
+                replacements: { ids: stateRids },
                 type: QueryTypes.SELECT,
             }
         );
