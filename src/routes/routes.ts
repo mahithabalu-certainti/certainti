@@ -6,8 +6,6 @@ export const EMAIL_INTERACTION = '/ext/interaction';
 
 export const MANAGE_USER = '/manage-user';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
-export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
-export const MANAGE_SETTINGS = '/manage-settings';
 export const SURVEY_TEMPLATES = '/survey-templates';
 
 /** ADMIN ROUTES */
@@ -17,6 +15,8 @@ export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
 export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
 export const USER_EXTENDED_PERMISSION = `${ADMIN_MANAGE_USER}/extended-permission/:userid`;
+export const MANAGE_SETTINGS = `${ADMIN}/manage-settings`;
+export const MANAGE_ACCOUNT_ACCESS = `${ADMIN}/manage-account-access`;
 /** PROFILE ROUTES */
 export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
 export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
@@ -60,6 +60,12 @@ export const MANAGE_GEO_BASED_RULE_EDIT = `${MANAGE_GEO_BASED_RULE}/edit/:ruleId
 export const WORKFLOW_BUILDER = `${ADMIN}/workflow-builder`;
 export const WORKFLOW_BUILDER_CREATE = `${WORKFLOW_BUILDER}/create`;
 export const WORKFLOW_BUILDER_EDIT = `${WORKFLOW_BUILDER}/edit/:ruleId`;
+
+/** ADMIN DATA MAPPER ROUTES */
+export const DATA_MAPPER = `${ADMIN}/data-mapper`;
+export const DATA_MAPPER_CREATE = `${DATA_MAPPER}/create`;
+export const DATA_MAPPER_EDIT = `${DATA_MAPPER}/edit/:mapperId`;
+export const DATA_MAPPER_CONFIG = `${DATA_MAPPER}/config/:mapperId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

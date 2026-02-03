@@ -1,0 +1,129 @@
+import { FieldConfig } from '../../../../consultant/types/account-filter';
+
+const textfieldOptions: { label: string; value: string }[] = [
+  { label: 'Contains', value: 'contains' },
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+];
+
+export const enumOperator: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'In', value: 'in' },
+];
+
+const dateOptions: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Before', value: 'before' },
+  { label: 'After', value: 'after' },
+  { label: 'Between', value: 'between' },
+  { label: 'Is Empty', value: 'is_empty' },
+];
+
+const requiredDateOptions: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Before', value: 'before' },
+  { label: 'After', value: 'after' },
+  { label: 'Between', value: 'between' },
+];
+
+const nonReqTextfieldOptions: { label: string; value: string }[] = [
+  { label: 'Contains', value: 'contains' },
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'Is Empty', value: 'is_empty' },
+];
+
+export const getDataMapperFilterFields = (
+  statusOptions: { label: string; value: string }[],
+  countryOptions: { label: string; value: string }[],
+  regionOptions: { label: string; value: string }[]
+): FieldConfig[] => {
+  return [
+    {
+      label: 'Form ID',
+      name: 'r_number',
+      type: 'text',
+      operatorOption: textfieldOptions,
+    },
+    {
+      label: 'Form Name',
+      name: 'form_name',
+      type: 'text',
+      operatorOption: textfieldOptions,
+    },
+    {
+      label: 'Country',
+      name: 'country_rid',
+      onChange: true,
+      type: 'enumSelect',
+      options: countryOptions,
+      operatorOption: enumOperator,
+    },
+    {
+      label: 'Region',
+      name: 'state_rid',
+      type: 'enumSelect',
+      dependsOn: 'country_rid',
+      options: regionOptions,
+      operatorOption: enumOperator,
+    },
+    {
+      label: 'Effective From Date',
+      name: 'effective_from_date',
+      type: 'date',
+      operatorOption: requiredDateOptions,
+      isFutureDateEnabled: true,
+    },
+    {
+      label: 'Effective To Date',
+      name: 'effective_to_date',
+      type: 'date',
+      operatorOption: requiredDateOptions,
+      isFutureDateEnabled: true,
+    },
+    {
+      name: 'status_rid',
+      label: 'Status',
+      type: 'enumSelect',
+      options: statusOptions,
+      operatorOption: enumOperator,
+    },
+    {
+      name: 'document_name',
+      label: 'Document Name',
+      type: 'text',
+      operatorOption: textfieldOptions,
+    },
+    {
+      label: 'Created By',
+      name: 'created_by_name',
+      type: 'text',
+      operatorOption: textfieldOptions,
+    },
+    {
+      label: 'Created On',
+      name: 'created_datetime',
+      type: 'date',
+      operatorOption: requiredDateOptions,
+    },
+    {
+      label: 'Updated By',
+      name: 'modified_by_name',
+      type: 'text',
+      operatorOption: nonReqTextfieldOptions,
+    },
+    {
+      label: 'Updated On',
+      name: 'modified_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+    },
+    {
+      label: 'Sort Options',
+      name: 'sort_options',
+      type: 'system-sort',
+      options: [{ value: 'createdAt_desc', label: 'Recently Created' }],
+    },
+  ];
+};

@@ -412,10 +412,14 @@ export const renderFields = <T extends RowData>({
               }}
               slots={{
                 openPickerIcon: () => (
-                  <CalendarIcon alt='calendar' className='w-3 h-3' />
+                  <React.Suspense fallback={null}>
+                    <CalendarIcon alt='calendar' className='w-3 h-3' />
+                  </React.Suspense>
                 ),
                 clearIcon: () => (
-                  <CloseIcon alt='calendar' className='w-[9px] h-[9px]' />
+                  <React.Suspense fallback={null}>
+                    <CloseIcon alt='calendar' className='w-[9px] h-[9px]' />
+                  </React.Suspense>
                 ),
               }}
             />
