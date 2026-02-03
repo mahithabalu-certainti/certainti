@@ -1,12 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import {
-  AcceptIcon,
-  CreateResourceIcon,
-  RejectIcon,
-  ResourcesIcon,
-} from '../../../../../assets';
+import { AcceptIcon, ProjectTaskIcon, RejectIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import {
   useProjectTaskDetail,
@@ -14,6 +9,7 @@ import {
   useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
 import {
+  CHECKLIST_CREATE,
   NOTES_CREATE,
   PROJECT_TASK,
   PROJECT_TASK_EDIT,
@@ -38,7 +34,10 @@ import {
 import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from './project-task-details';
 import {
+  ActivityDropdownItem,
+  ColorCode,
   ExportType,
+  FilterType,
   FormFiscalDateType,
   ProjectResourcesListType,
   SelectOption,
@@ -95,6 +94,9 @@ export const ProjectTask = ({
   setProjectTaskParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
+  activityMenuItems,
+  isProjectSignedOff,
 }: {
   projectID?: string;
   accountData?: {
@@ -109,13 +111,16 @@ export const ProjectTask = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
+  activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [projectsTabs] = useState(projectTabs);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, string | number | boolean>
+    Record<string, string | number | boolean | string[]>
   >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
@@ -140,6 +145,8 @@ export const ProjectTask = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -152,6 +159,9 @@ export const ProjectTask = ({
   const [updateProjectTaskMutation] = useMutation(UPDATE_PROJECT_TASK, {
     client: taskClient,
   });
+  const [loadingRows, setLoadingRows] = useState<
+    Record<string, 'accept' | 'reject' | null>
+  >({});
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
@@ -176,6 +186,11 @@ export const ProjectTask = ({
   const isNoteCreateEnable = checkPermission(
     permission,
     AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
   );
 
   const projectViewEditFields = useMemo(
@@ -313,23 +328,42 @@ export const ProjectTask = ({
       label: 'Edit',
       onClick: (row: ProjectTaskListType) => handleEditProjectTask(row),
       hide: !isProjectTaskFieldsEditable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
   ];
 
   const handleCreateNote = (row?: ProjectTaskListType) => {
     const projectTaskId = row?.rid || searchParams.get('pro_task_id');
     const path = generatePath(NOTES_CREATE, {
-      module: 'account',
+      module: 'project',
     });
     const queryParams = new URLSearchParams({
       accountId: accountID,
       entityLevel: 'project_task',
       entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
+
+  const handleCreateChecklist = (row?: ProjectTaskListType) => {
+    const projectTaskId = row?.rid || searchParams.get('pro_task_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_task',
+      entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const handleAttachmentClick = (rowId: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_task');
@@ -357,6 +391,14 @@ export const ProjectTask = ({
       hide: !viewDetails || !isNoteCreateEnable,
     },
     {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !viewDetails || !isChecklistCreateEnable,
+    },
+    {
       label: viewDetails ? 'Edit' : 'New',
       variant: 'outlined' as const,
       onClick: () =>
@@ -365,7 +407,7 @@ export const ProjectTask = ({
           : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: viewDetails ? !isProjectTaskFieldsEditable : !isTaskCreateEnable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
     {
       label: 'Show/Hide Fields',
@@ -397,6 +439,8 @@ export const ProjectTask = ({
         PFY: PFY ? JSON.stringify(PFY) : '',
         source: 'editProjectTask',
         projectCode: projectCode ?? '',
+        account_name: accountData?.accountName || '',
+        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -466,6 +510,8 @@ export const ProjectTask = ({
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectTask',
+      account_number: accountData?.accountNumber || '',
+      account_name: accountData?.accountName || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -511,6 +557,7 @@ export const ProjectTask = ({
     handleProjectTaskClick,
     handleAttachmentClick,
     handleCreateNote,
+    handleCreateChecklist,
     memoizedProjectResourceCode,
     memoizedProjectResourceType,
     memoizedProjectResourceClassification,
@@ -518,7 +565,9 @@ export const ProjectTask = ({
     accountOrProjectInActive,
     fiscalDatesArg,
     isAttachmentCreateEnable,
-    isNoteCreateEnable
+    isNoteCreateEnable,
+    isChecklistCreateEnable,
+    isProjectSignedOff
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -607,6 +656,9 @@ export const ProjectTask = ({
     .filter((col) => columnVisibility[col.id]);
   if (!projectTaskIsEnable) return <AccessRestricted />;
   const handleAccept = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row as 'accept'
+    setLoadingRows((prev) => ({ ...prev, [row.rid as string]: 'accept' }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -614,15 +666,26 @@ export const ProjectTask = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
 
+  // Update handleReject function
   const handleReject = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row as 'reject'
+    setLoadingRows((prev) => ({ ...prev, [row.rid as string]: 'reject' }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -630,10 +693,17 @@ export const ProjectTask = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
@@ -655,20 +725,31 @@ export const ProjectTask = ({
         return [];
     }
 
+    // Get the specific action that's loading for this row
+    const rowAction = loadingRows[row.rid as string];
+    const isAcceptLoading = rowAction === 'accept';
+    const isRejectLoading = rowAction === 'reject';
+
     return [
       {
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
-        onClick: handleAccept,
+        onClick: () => handleAccept(row),
         icon: AcceptIcon,
+        loading: isAcceptLoading,
+        disabled:
+          isAcceptLoading || isRejectLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded min-[140px] max-[140px] text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
-        onClick: handleReject,
+        onClick: () => handleReject(row),
         icon: RejectIcon,
+        loading: isRejectLoading,
+        disabled:
+          isAcceptLoading || isRejectLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded min-[140px] max-[140px] text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
       },
     ];
   };
@@ -677,7 +758,7 @@ export const ProjectTask = ({
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
       <TabPanel
         value={'project-task'}
-        appliedFilters={appliedFilters}
+        appliedFilters={appliedFilters as Record<string, FilterType>}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
         filterVisibility={filterShow && !showUploads}
@@ -695,32 +776,32 @@ export const ProjectTask = ({
         fiscalDatesArg={fiscalDatesArg}
         showSearch={viewDetails ? false : !showUploads}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : !showUploads}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads
           accountId={accountID}
           attachID={taskId || selectedRowId}
           onUploadSuccess={taskDetailPageRefresh}
+          projectFiscalYear={projectFiscalYear}
         />
       ) : (
         <>
           <SectionHeader
             title={viewDetails ? 'Project Task' : 'Project Tasks'}
             titleIcon={
-              viewDetails ? (
-                <ResourcesIcon
-                  alt='resource header icon'
-                  className='[&>path]:stroke-white w-[14px] h-[14px]'
-                />
-              ) : (
-                <CreateResourceIcon />
-              )
+              <ProjectTaskIcon
+                alt='resource header icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
             }
             count={totalItems}
             showItemCount={!viewDetails}
             buttons={headerButtons}
             subValue={resourceData?.r_number}
-            iconBg={viewDetails ? '#7785ff' : ''}
+            iconBg={ColorCode.projectBgColor}
+            bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             {showProjectTaskDetails ? (

@@ -125,7 +125,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       key: 'status_action',
-      label: 'Status Name',
+      label: 'Status',
       value: projectTaskData.status_name,
     },
   ];

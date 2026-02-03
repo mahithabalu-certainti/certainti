@@ -19,6 +19,8 @@ import {
 import { useGetResourceType } from '../../../../services/resource-list';
 import { clearFilters } from '../../components/filter/utils';
 import {
+  ActivityDropdownItem,
+  ColorCode,
   ExportType,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
@@ -52,6 +54,7 @@ interface ProjectFinancialProps {
     params: ProjectFinancialProjectExportParams
   ) => void;
   setExportType: (type: ExportType) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const FinancialSummary: React.FC<ProjectFinancialProps> = ({
@@ -60,7 +63,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   setFinancialProjectCostParams,
   setExportType,
   countryId,
-  stateId,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -251,13 +254,15 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title='Financial Summary'
         titleIcon={
           <FinancialIcon
             alt='financial-header-icon'
-            className='[&>path]:stroke-[#f16840]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}
@@ -265,7 +270,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         showItemCount={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
-        iconBg='#ffeae5'
+        iconBg={ColorCode.accountBgColor}
         bgType='circle'
       />
       <SectionHeaderTab
@@ -290,7 +295,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
           <StateWiseSummary
             fiscalYear={fiscalYearValue}
             countryId={countryId}
-            stateId={stateId}
             accountDetails={accountDetails}
           />
         )}

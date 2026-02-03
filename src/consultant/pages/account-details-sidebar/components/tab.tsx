@@ -26,7 +26,7 @@ import {
   useGetAllCountries,
   useGetStatus,
 } from '../../../../common-service';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   useGetResourceStatus,
   useGetResourceType,
@@ -44,15 +44,19 @@ import {
   FieldOptionType,
   getAttachmentsFilterFields,
 } from '../../../../components/Attachments/helpers';
-import ActionImportDropdown from '../../../../components/actions-dropdown/import-dropdown';
 import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
-import { FormFiscalDateType } from '../../../types';
+import { ActivityDropdownItem, FormFiscalDateType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { getNotesFilterFields } from '../../notes/helpers';
-import { useManageUserList } from '../../../../admin/service';
+import { getChecklistFilterFields } from '../../checklist/helpers';
+import { useGetUserOptions } from '../../../services/case-team';
+import { caseProjectTaskFilterFields } from '../../case/case-details/case-project-task/utils';
+import { caseProjectResourceFilterFields } from '../../case/case-details/case-project-resource/utils';
+import { ActivityDropdown } from '../../../../components';
 interface TabProps {
   resourceTab?: ResourceTabs[];
+  onTabChange?: (tabId: string) => void;
   filterVisibility: boolean;
   handleFilter: () => void;
   value: string;
@@ -77,6 +81,10 @@ interface TabProps {
     string,
     { read: boolean; edit: boolean }
   >;
+  permissionMapCaseProjectTableColumn?: Record<
+    string,
+    { read: boolean; edit: boolean }
+  >;
   fiscalDatesArg?: FormFiscalDateType;
   showSearch?: boolean;
   searchDisabled?: boolean;
@@ -86,9 +94,12 @@ interface TabProps {
   onSearch?: (text: string) => void;
   resetSearch?: boolean;
   onSearchReset?: () => void;
+  showAddActivity?: boolean;
+  activityMenuItems?: ActivityDropdownItem[];
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
+  onTabChange,
   appliedFilters,
   handleFilter,
   setAppliedFilters,
@@ -110,6 +121,7 @@ const TabPanel: React.FC<TabProps> = ({
   fieldOptions,
   handleFilterChange,
   permissionMapTaskTableColumn,
+  permissionMapCaseProjectTableColumn,
   fiscalDatesArg,
   showSearch,
   searchDisabled = false,
@@ -119,7 +131,12 @@ const TabPanel: React.FC<TabProps> = ({
   onSearch,
   resetSearch,
   onSearchReset,
+  showAddActivity = false,
+  activityMenuItems = [],
 }) => {
+  const { accountid } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -148,7 +165,11 @@ const TabPanel: React.FC<TabProps> = ({
     // assign default tab value
     const activeTab = resourceTab?.find((tab) => !tab.hide)?.id;
     setTabValue(activeTab as string);
-  }, [resourceTab]);
+    // inform parent about initial tab
+    if (activeTab && onTabChange) {
+      onTabChange(activeTab);
+    }
+  }, [resourceTab, onTabChange]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue);
@@ -156,6 +177,7 @@ const TabPanel: React.FC<TabProps> = ({
     setAppliedFilters({});
     clearFilters(value || 'resource');
     setSortFilterCount(0);
+    onTabChange?.(newValue);
   };
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
@@ -173,18 +195,13 @@ const TabPanel: React.FC<TabProps> = ({
   );
 
   // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
+  const userListData = useGetUserOptions(accountid || accountId);
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);
@@ -297,6 +314,22 @@ const TabPanel: React.FC<TabProps> = ({
     });
     return map;
   }, [resourceNotesEditFields]);
+
+  const resourceChecklistsEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const resourceChecklistsPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceChecklistsEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceChecklistsEditFields]);
 
   const resourcepermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -421,25 +454,6 @@ const TabPanel: React.FC<TabProps> = ({
     handleSortClose();
   };
 
-  const menuActivity = [
-    {
-      label: 'Create Task',
-      onClick: () => console.log('manage user clicked'),
-    },
-    {
-      label: 'Draft Email',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: 'Schedule Meeting',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: 'Log a call',
-      onClick: () => console.log('Export clicked'),
-    },
-  ];
-
   const memoizedCurrency: { option: string; value: string }[] = useMemo(
     () =>
       currency.data?.data.currency.map(
@@ -496,6 +510,16 @@ const TabPanel: React.FC<TabProps> = ({
         permissionProjectResourcesMap,
         memoizedResourceStatus
       );
+    if (value === 'case-project-resource') {
+      return caseProjectResourceFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedCountry,
+        regionData,
+        memoizedResourceType,
+        memoizedResourceStatus
+      );
+    }
     if (value === 'project-task')
       return projectTaskFilterFields(
         memoizedResourceCode,
@@ -506,10 +530,22 @@ const TabPanel: React.FC<TabProps> = ({
         fiscalDatesArg,
         memoizedResourceStatus
       );
+    if (value === 'case-project-task') {
+      return caseProjectTaskFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedResourceType,
+        memoizedProjectResourceType,
+        memoizedProjectResourceClassification,
+        memoizedResourceStatus
+      );
+    }
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')
       return getNotesFilterFields(resourceNotesPermissionMap, userListOptions);
+    if (value === 'checklists')
+      return getChecklistFilterFields(resourceChecklistsPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -543,12 +579,14 @@ const TabPanel: React.FC<TabProps> = ({
     attachmentPermissionMap,
     resourceNotesPermissionMap,
     userListOptions,
+    resourceChecklistsPermissionMap,
     memoizedCurrency,
     resourceCostpermissionMap,
     memoizedSkillType,
     skillSubTypeData,
     memoizedSkillLevels,
     resourceSkillpermissionMap,
+    permissionMapCaseProjectTableColumn,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =
@@ -583,6 +621,10 @@ const TabPanel: React.FC<TabProps> = ({
       setToggleEnabled(event.target.checked);
     }
   };
+
+  const visibleActivityMenuItems = activityMenuItems.filter(
+    (item) => !item.hide
+  );
 
   return (
     <Box>
@@ -636,9 +678,9 @@ const TabPanel: React.FC<TabProps> = ({
             })}
           </Tabs>
         )}
-        <Box className='flex items-center'>
+        <Box className='flex items-center gap-2'>
           {showSearch && (
-            <Box className='mr-2'>
+            <Box>
               <SearchBar
                 initialSearchText={searchText}
                 onSearch={(value) => {
@@ -651,6 +693,7 @@ const TabPanel: React.FC<TabProps> = ({
                 hide={searchHidden}
                 reset={resetSearch}
                 onReset={onSearchReset}
+                setCurrentPage={setCurrentPage}
               />
             </Box>
           )}
@@ -712,7 +755,7 @@ const TabPanel: React.FC<TabProps> = ({
 
               {showRefresh && (
                 <button
-                  className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                  className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
                   onClick={onRefreshClick}
                 >
                   <RefreshIcon alt='refresh-icon' className='h-4' />
@@ -720,18 +763,20 @@ const TabPanel: React.FC<TabProps> = ({
               )}
             </>
           )}
-          <ActionImportDropdown
-            variant='filled'
-            actions={menuActivity}
-            label='Add Activity'
-            sx={{
-              fontWeight: 600,
-              fontSize: '13px',
-              width: '143px',
-              height: '24px',
-              display: 'none',
-            }}
-          />
+          <React.Suspense fallback={null}>
+            {showAddActivity && visibleActivityMenuItems?.length > 0 && (
+              <ActivityDropdown
+                menuItems={activityMenuItems || []}
+                label='Add Activity'
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  width: '143px',
+                  height: '24px',
+                }}
+              />
+            )}
+          </React.Suspense>
 
           {/* <ActionImportDropdown
             actions={menuAccounts}

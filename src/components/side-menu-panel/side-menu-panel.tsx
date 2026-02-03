@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
 import { Skeleton, Tooltip } from '@mui/material';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface SideMenuPanelProps {
   menuItems: MenuItem[];
@@ -16,6 +17,8 @@ interface SideMenuPanelProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   isLoading?: boolean;
+  enableScrollbar?: boolean;
+  maxHeight?: number;
 }
 
 const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
@@ -27,6 +30,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   isCollapsed,
   onToggleCollapse,
   isLoading = false,
+  maxHeight = 220,
+  // enableScrollbar = false,
 }) => {
   const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -83,22 +88,44 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   }, [modules, menus, menuItems]);
 
   useEffect(() => {
-    if (!localActiveKey) {
-      const findFirstAvailableItem = (items: MenuItem[]): MenuItem | null => {
-        for (const item of items) {
-          if (!item.hide) {
-            if (item.subMenu && item.subMenu.length > 0) {
-              const submenuItem = findFirstAvailableItem(item.subMenu);
-              if (submenuItem) return submenuItem;
-            } else {
-              return item;
-            }
+    const findFirstAvailableItem = (items: MenuItem[]): MenuItem | null => {
+      for (const item of items) {
+        if (!item.hide) {
+          if (item.subMenu && item.subMenu.length > 0) {
+            const submenuItem = findFirstAvailableItem(item.subMenu);
+            if (submenuItem) return submenuItem;
+          } else {
+            return item;
           }
         }
-        return null;
-      };
+      }
+      return null;
+    };
+
+    // Check if active key doesn't have permission (is hidden)
+    const isActiveKeyHidden = (items: MenuItem[], key: string): boolean => {
+      for (const item of items) {
+        if (item.key === key) {
+          return item.hide || false;
+        }
+        if (item.subMenu && item.subMenu.length > 0) {
+          const foundInSubmenu = isActiveKeyHidden(item.subMenu, key);
+          if (foundInSubmenu !== null) return foundInSubmenu;
+        }
+      }
+      return false;
+    };
+
+    if (!localActiveKey) {
+      // No active key set, find first available
       const activeItem = findFirstAvailableItem(accountMenus);
       if (activeItem) handleSelect(activeItem.key as string);
+    } else if (isActiveKeyHidden(accountMenus, localActiveKey)) {
+      // Active key has no permission, find next available
+      const nextAvailableItem = findFirstAvailableItem(accountMenus);
+      if (nextAvailableItem && nextAvailableItem.key !== localActiveKey) {
+        handleSelect(nextAvailableItem.key as string);
+      }
     }
   }, [accountMenus, localActiveKey]);
 
@@ -115,6 +142,9 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('attachment_entity');
     searchParams.delete('file_id');
     searchParams.delete('note_id');
+    searchParams.delete('activity_id');
+    searchParams.delete('activity_type');
+    searchParams.delete('checklist_id');
     searchParams.delete('timesheet_id');
     searchParams.delete('interaction_id');
     searchParams.delete('interaction_rid');
@@ -124,10 +154,15 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('history');
     searchParams.delete('upload');
     searchParams.delete('technical_summary_id');
+    searchParams.delete('caseProjectTask');
+    searchParams.delete('resourceId');
+    searchParams.delete('detailstab');
+    searchParams.delete('assignProject');
     //For project resource and task
     searchParams.delete('page');
     searchParams.delete('pro_res_id');
     searchParams.delete('pro_task_id');
+    searchParams.delete('origin');
 
     if (parentKey) {
       // Submenu item - check if navigation is actually needed
@@ -282,7 +317,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
               <span className='flex items-center justify-center w-[22px] h-[22px] flex-shrink-0'>
                 {item.icon ? (
                   <span className='flex items-center justify-center w-4 h-4'>
-                    <item.icon className='w-4 h-4 text-black' />
+                    <item.icon className='h-4 w-4 [&>path]:stroke-[#2d3e4f] ' />
                   </span>
                 ) : (
                   <span className='uppercase text-[12px]'>
@@ -306,7 +341,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 } ease-in-out`,
               }}
             >
-              {item.name}
+              <TruncateWithTooltip text={item.name} enableCopy={false} />
             </span>
             {!isCollapsed && (
               <AdminSubmenuActiveIcon
@@ -402,7 +437,10 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                       } ease-in-out`,
                     }}
                   >
-                    {submenu.name}
+                    <TruncateWithTooltip
+                      text={submenu.name}
+                      enableCopy={false}
+                    />
                   </span>
                   {!isCollapsed && (
                     <AdminSubmenuActiveIcon
@@ -492,7 +530,13 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         renderSkeletonItem()
       ) : (
         <React.Suspense fallback={null}>
-          <ul className='overflow-y-auto'>
+          <ul
+            className='side-menu-scrollbar'
+            style={{
+              maxHeight: `calc(100vh - ${maxHeight + 25}px)`,
+              overflow: 'auto',
+            }}
+          >
             {accountMenus.map((item) => renderMenuItem(item))}
           </ul>
         </React.Suspense>

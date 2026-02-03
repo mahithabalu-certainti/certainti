@@ -13,6 +13,7 @@ import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import {
   Project,
+  ProjectFiscalSummary,
   ProjectListParams,
   ProjectTriggerAIPayload,
 } from '../../../../types/project';
@@ -31,7 +32,12 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
-import { AccountDetailsResponse, ExportType } from '../../../../types';
+import {
+  AccountDetailsResponse,
+  ActivityDropdownItem,
+  ColorCode,
+  ExportType,
+} from '../../../../types';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -53,6 +59,7 @@ interface ProjectsProps {
   setExportType?: (type: ExportType) => void;
   toggleEnabled: boolean;
   setToggleEnabled: (val: boolean) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const projectTabs: ResourceTabs[] = [
@@ -75,6 +82,7 @@ const Projects: React.FC<ProjectsProps> = ({
   setProjectParams,
   toggleEnabled,
   setToggleEnabled,
+  activityMenuItems,
 }) => {
   const { accountid } = useParams();
   const navigate = useNavigate();
@@ -193,9 +201,67 @@ const Projects: React.FC<ProjectsProps> = ({
     setRefreshProjectsTrigger(Date.now());
   };
 
+  const getProjectDisableReason = (
+    isRdClaimQualified?: boolean,
+    isTriggerQualifiedDisabled?: boolean
+  ): string => {
+    if (isRdClaimQualified) {
+      return 'Project is signed off';
+    }
+    if (isTriggerQualifiedDisabled) {
+      return 'Project type not allowed due to Configuration setting';
+    }
+    return '';
+  };
   useEffect(() => {
     if (data?.projects) {
-      setProjectList(data.projects || []);
+      const updatedProjects =
+        data.projects.map((project) => {
+          // 🔹 Map over each ProjectFiscal to add disable logic
+          const updatedProjectFiscal =
+            project?.ProjectFiscal?.map((fiscal) => {
+              // Get message for THIS specific fiscal object
+              const checkBoxMessage = getProjectDisableReason(
+                !!fiscal?.is_rd_claim_qualified,
+                fiscal?.is_rd_trigger_qualified === false
+              );
+
+              return {
+                ...fiscal,
+                disableCheckBox: !!checkBoxMessage,
+                checkBoxMessage,
+              };
+            }) || [];
+
+          // Check if the parent project itself has its own reason to be disabled
+          const parentOwnReason = getProjectDisableReason(
+            !!project?.is_rd_claim_qualified,
+            project?.is_rd_trigger_qualified === false
+          );
+
+          // Check if ANY fiscal (child) in this project is disabled
+          const hasDisabledChild = updatedProjectFiscal.some(
+            (fiscal) => fiscal.disableCheckBox
+          );
+
+          // The parent is disabled if it has its own reason OR any of its children are disabled.
+          // This prevents bulk selection of items where one or more are invalid.
+          const isParentDisabled = !!parentOwnReason || hasDisabledChild;
+
+          return {
+            ...project,
+            // Update the ProjectFiscal array with the new objects
+            ProjectFiscal: updatedProjectFiscal,
+            // Parent level selection logic:
+            // Disable parent row if it has its own reason or any disabled child.
+            // No error message is shown for the parent row as requested.
+            disableCheckBox: isParentDisabled,
+            checkBoxMessage: null,
+            hasDisabledFiscal: hasDisabledChild,
+          };
+        }) || [];
+
+      setProjectList(updatedProjects);
     }
   }, [data?.projects]);
 
@@ -223,7 +289,8 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.accountDetails?.account_rid || '',
+      accountNumber:
+        accountid || accountDetails?.accountDetails?.account_rid || '',
       search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -278,7 +345,6 @@ const Projects: React.FC<ProjectsProps> = ({
   );
 
   const handleselectedList = (id: string[]) => {
-    console.log(id);
     const childIds = id.filter((_, index) => index % 2 === 0);
     setSelectedTableIds(childIds);
   };
@@ -307,7 +373,8 @@ const Projects: React.FC<ProjectsProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
-      disabled: accountInActive,
+      disabled: (row: Project) =>
+        accountInActive || !!row.is_rd_claim_qualified,
       onClick: (row: Project) => handleEdit(row),
       hide: !isProjectFieldsEditable,
     },
@@ -566,7 +633,17 @@ const Projects: React.FC<ProjectsProps> = ({
 
         const newProjects = projectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            return updatedParentData;
+            return {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                const updatedFiscal = updatedParentData.ProjectFiscal?.find(
+                  (data: ProjectFiscalSummary) =>
+                    data.project_fiscal_rid === fiscal.project_fiscal_rid
+                );
+                return updatedFiscal ? { ...fiscal, ...updatedFiscal } : fiscal;
+              }),
+            };
           }
           return project;
         });
@@ -635,6 +712,8 @@ const Projects: React.FC<ProjectsProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>
@@ -645,11 +724,12 @@ const Projects: React.FC<ProjectsProps> = ({
             titleIcon={
               <ProjectsSideIcon
                 alt='project-header-icon'
-                className='[&>path]:stroke-[#E54787] w-[14px] h-[14px]'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
             headerButtons={headerButtons}
-            iconBg='#FFE7F1'
+            iconBg={ColorCode.accountBgColor}
+            bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             <ManageColumnsPopover

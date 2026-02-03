@@ -7,6 +7,8 @@ import {
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
 import {
+  ActivityDropdownItem,
+  ColorCode,
   ExportType,
   TimeSheetList,
   TimeSheetListURLParams,
@@ -48,6 +50,7 @@ interface TimeSheetProps {
   setTimesheetTaskParams: React.Dispatch<
     React.SetStateAction<TimesheetProjectExportListURLParams>
   >;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const TimesheetTabs: ResourceTabs[] = [
@@ -64,6 +67,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   setTimesheetProjectParams,
   setTimesheetResourceParams,
   setTimesheetTaskParams,
+  activityMenuItems,
 }) => {
   // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
@@ -393,6 +397,8 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
         <TimesheetDetails
@@ -414,11 +420,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
             buttons={headerButtons}
             titleIcon={
               <TimeSheetIcon
-                className='[&>path]:stroke-white w-[14px] h-[14px]'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Timesheet-header-icon'
               />
             }
-            iconBg='#34CFCA'
+            iconBg={ColorCode.accountBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

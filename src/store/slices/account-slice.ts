@@ -4,7 +4,10 @@ import {
   saveFiltersToStorage,
 } from '../../common-utils';
 import { fetchGlobalAccounts } from '../../consultant/services/account';
-import { FilterState } from '../../consultant/types';
+import {
+  FilterState,
+  FinancialHighlightsResponse,
+} from '../../consultant/types';
 import { AccountState } from '../type';
 
 const initialState: AccountState = {
@@ -16,6 +19,8 @@ const initialState: AccountState = {
   error: null,
   fiscalYear: 'FY-All',
   refetchGlobalAccounts: false,
+  dossierFinancialStatus: '',
+  financialData: null,
 };
 
 export const fetchAccountsThunk = createAsyncThunk(
@@ -56,6 +61,18 @@ export const accountSlice = createSlice({
     setRefetchGlobalAccounts: (state, action: PayloadAction<boolean>) => {
       state.refetchGlobalAccounts = action.payload;
     },
+    setTemporaryFiscalYear(state, action: PayloadAction<string>) {
+      state.fiscalYear = action.payload;
+    },
+    setDossierFinancialStatus(state, action: PayloadAction<string>) {
+      state.dossierFinancialStatus = action.payload;
+    },
+    setFinancialData(
+      state,
+      action: PayloadAction<FinancialHighlightsResponse | null>
+    ) {
+      state.financialData = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -81,4 +98,7 @@ export const {
   setFiscalYear,
   resetFilters,
   setRefetchGlobalAccounts,
+  setTemporaryFiscalYear,
+  setDossierFinancialStatus,
+  setFinancialData,
 } = accountSlice.actions;

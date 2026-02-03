@@ -71,8 +71,8 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
     return map;
   }, [userGroupViewEditFields]);
 
-  const { data, isPending, isError } = useManageUserGroupList(
-    tableParams,
+  const { data, isLoading, isError } = useManageUserGroupList(
+    { ...tableParams, filters: appliedFilters, search: searchValue },
     refreshUserGroupTrigger
   );
 
@@ -89,16 +89,6 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
       }) || [];
     setUserGroupList(reShape);
   }, [data?.data.usergroup]);
-
-  useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-      search: searchValue,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, searchValue]);
 
   const totalItems = data?.data?.count || 0;
   const prefixGroupName = 'G-';
@@ -254,7 +244,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
-        loading={isPending}
+        loading={isLoading}
         error={isError ? 'Failed to load User Groups' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}

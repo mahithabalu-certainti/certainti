@@ -16,7 +16,13 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ColorCode,
+  ExportType,
+  InteractionList,
+  StatusTypeEnum,
+} from '../../../../types';
 import {
   useInteractionList,
   useInteractionListModel,
@@ -33,7 +39,7 @@ import {
 import {
   DetailsKeyContactErrorIcon,
   EditIcon,
-  InteractionDetailIcon,
+  InteractionsIcon,
 } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import {
@@ -41,6 +47,7 @@ import {
   getInteractionModelFilterFields,
 } from './helpers';
 import {
+  ReInitiateModal,
   SectionTabPanel,
   SendInteractionModal,
 } from '../../../../../components';
@@ -95,6 +102,7 @@ interface InteractionsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   loading: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -103,6 +111,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   setExportType,
   setInteractionsParams,
   loading,
+  activityMenuItems,
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -139,6 +148,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     sort_by: 'ASC',
     filter: {},
   });
+  const [reInitiateModalOpen, setReInitiateModalOpen] = useState(false);
+
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -202,21 +213,23 @@ const Interactions: React.FC<InteractionsProps> = ({
       flag: 'account',
       reminder_specific_list: true,
     },
-    reminderModalOpen,
+    reminderModalOpen || reInitiateModalOpen,
     refreshModelInteractions
   );
 
   useEffect(() => {
-    if (reminderModalOpen) {
+    if (reminderModalOpen || reInitiateModalOpen) {
       console.log('modelTableData', isModelDataError);
     }
   }, [
     reminderModalOpen,
+    reInitiateModalOpen,
     modelTableData,
     isModelDataLoading,
     isModelDataError,
     modelTableParms,
   ]);
+
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
   const interactionStatus = useGetInteractionStatus();
@@ -516,17 +529,42 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
+  const handleReInitiateBtn = (
+    data: InteractionList[],
+    recipient?: { name: string; email: string }
+  ) => {
+    const interactions = data.map((item) => ({
+      interaction_rid: item.rid || '',
+      interaction_level: item.interaction_level_name || '',
+      project_fiscal_rid: item.project_fiscal_rid || '',
+    }));
+
+    const payload = {
+      account_rid: accountid || '',
+      interactions,
+      email_info: {
+        email: recipient?.email.trim() || '',
+        name: recipient?.name.trim() || recipient?.email.split('@')[0] || '',
+      },
+    };
+
+    sendInteraction.mutate(payload, {
+      onSuccess: (response) => {
+        successToast(response?.statusMessage);
+        handleCloseReInitiate();
+        refetch();
+      },
+    });
+  };
+
   const headerButtons = [
     {
-      label: 'Reminder',
+      label: 'New',
       variant: 'outlined' as const,
-      disabled:
-        accountInActive ||
-        interactionList.length === 0 ||
-        !accountDetails?.accountDetails?.is_send_interaction,
-      onClick: () => setReminderModalOpen(true),
-      sx: { width: '80px', minWidth: '80px' },
-      hide: viewResponseHistory,
+      disabled: accountInActive,
+      onClick: () => handleCreate(),
+      sx: { width: '48px', minWidth: '48px' },
+      hide: !createInteractionsEnable || viewResponseHistory,
     },
     {
       label: 'Send Interaction',
@@ -540,12 +578,26 @@ const Interactions: React.FC<InteractionsProps> = ({
       hide: !sendInteractionsEnable || viewResponseHistory,
     },
     {
-      label: 'New',
+      label: 'Re-Initiate Interaction',
       variant: 'outlined' as const,
-      disabled: accountInActive,
-      onClick: () => handleCreate(),
-      sx: { width: '48px', minWidth: '48px' },
-      hide: !createInteractionsEnable || viewResponseHistory,
+      disabled:
+        accountInActive ||
+        interactionList.length === 0 ||
+        !accountDetails?.accountDetails?.is_send_interaction,
+      onClick: () => setReInitiateModalOpen(true),
+      sx: { width: '160px', minWidth: '160px' },
+      hide: viewResponseHistory,
+    },
+    {
+      label: 'Reminder',
+      variant: 'outlined' as const,
+      disabled:
+        accountInActive ||
+        interactionList.length === 0 ||
+        !accountDetails?.accountDetails?.is_send_interaction,
+      onClick: () => setReminderModalOpen(true),
+      sx: { width: '80px', minWidth: '80px' },
+      hide: viewResponseHistory,
     },
     {
       label: 'Show/Hide Fields',
@@ -666,6 +718,18 @@ const Interactions: React.FC<InteractionsProps> = ({
       filter: {},
     });
   };
+
+  const handleCloseReInitiate = () => {
+    setReInitiateModalOpen(false);
+    setModdelTableParms({
+      page: 0,
+      limit: 100,
+      sort: 'r_number',
+      sort_by: 'ASC',
+      filter: {},
+    });
+  };
+
   const modalId = isModalOpen
     ? 'account-interaction-list-column-visibility-popover'
     : undefined;
@@ -710,6 +774,12 @@ const Interactions: React.FC<InteractionsProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory
+          }
+          activityMenuItems={activityMenuItems}
         />
         {viewDetails && !viewResponseHistory ? (
           <InteractionDetails
@@ -739,9 +809,9 @@ const Interactions: React.FC<InteractionsProps> = ({
                   : 'Interaction'
               }
               titleIcon={
-                <InteractionDetailIcon
-                  alt='financial-header-icon'
-                  className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
+                <InteractionsIcon
+                  alt='interaction-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               count={viewResponseHistory ? count : totalItems}
@@ -749,6 +819,8 @@ const Interactions: React.FC<InteractionsProps> = ({
               showBackArrow={viewResponseHistory}
               onBackClick={handleBackFromResponse}
               buttons={headerButtons}
+              iconBg={ColorCode.accountBgColor}
+              bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {viewResponseHistory ? (
@@ -807,7 +879,6 @@ const Interactions: React.FC<InteractionsProps> = ({
                 onClose={() => setSendModalOpen(false)}
                 selectedRows={selectedRows}
                 onSuccessRefetch={handleRefresh}
-                interaction_level='Account'
               />
               <TableModal
                 title='Reminder Interaction'
@@ -830,6 +901,28 @@ const Interactions: React.FC<InteractionsProps> = ({
                 showFilter={true}
                 filterMenu={modelFIlterFields}
                 emptyMessage='No interaction available to send reminder'
+              />
+              <ReInitiateModal
+                title='Re-Initiate Interaction'
+                contextKey='Account-reinitiate-interactions'
+                isOpen={reInitiateModalOpen}
+                onClose={handleCloseReInitiate}
+                data={modelTableData?.interactions}
+                loading={isModelDataLoading}
+                isError={isModelDataError}
+                visibleColumns={interactionModelColumn}
+                totalCount={modelTableData?.count || 0}
+                tableParms={modelTableParms}
+                setTableParms={setModdelTableParms}
+                handleSend={handleReInitiateBtn}
+                handleFilter={handleModelFilter}
+                onRefreshClick={handleRefreshModel}
+                saveBtnLoading={sendInteraction.isPending}
+                showRefresh={true}
+                filterVisibility={modelShowFilter}
+                showFilter={true}
+                filterMenu={modelFIlterFields}
+                emptyMessage='No interaction available to re-initiate'
               />
             </div>
           </>

@@ -1,5 +1,7 @@
 export interface FormType {
+  gridMode?: string;
   sectionName: string;
+  subSection?: boolean; // Means this is a secondary level block → no header + half width
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
   from?: string;
@@ -21,6 +23,7 @@ export interface FormTypeFields {
   width?: string;
   error?: string;
   placeholder?: string;
+  requiredErrorMessage?: string;
   regex?: string | RegExp;
   regexErrorMessage?: string;
   disabled?: boolean;
@@ -29,7 +32,13 @@ export interface FormTypeFields {
   clearValue?: Record<string, string>;
   defaultSelect?: Record<string, string>;
   resetDependsFields?: string[];
+  prefixValue?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -56,12 +65,18 @@ export interface FormTypeFields {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
-  clearDate?: string
+  clearDate?: string;
+  customDateOpen?: Date;
+  disableDatesBefore?: Date;
+  dateFormat?: string;
+  views?: ('day' | 'month' | 'year')[];
+  maxLength?: number;
 }
 
 export type InputType =
   | 'text'
   | 'select'
+  | 'multiSelect'
   | 'expandselect'
   | 'autocomplete'
   | 'textarea'
@@ -74,11 +89,19 @@ export type InputType =
   | 'emptyFeild'
   | 'website'
   | 'iconButton'
-  | 'file';
+  | 'file'
+  | 'custom';
 
 export interface SelectOption {
   label: string;
   value: string;
+  desc?: string;
+  isCreate?: boolean;
+  code?: string;
+}
+export interface SelectNumberOption {
+  label: string;
+  value: number;
   desc?: string;
   isCreate?: boolean;
 }
@@ -89,7 +112,7 @@ export interface SelectResourceOption {
   resource_type_rid?: string;
   resource_type_name?: string;
   start_date?: string;
-  end_date?: string
+  end_date?: string;
 }
 export interface ErrorHandling {
   regex: RegExp;
@@ -111,7 +134,9 @@ export interface FieldType {
   regex?: RegExp;
   regexErrorMessage?: string;
   placeholder?: string;
+  requiredErrorMessage?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;
@@ -123,9 +148,14 @@ export interface FieldType {
   startValue?: boolean;
   endDateValue?: boolean;
   errorMessage?: string;
+  prefixValue?: string;
   startDateLabel?: string;
   endDateLabel?: string;
   hide?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -144,7 +174,12 @@ export interface FieldType {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
-  clearDate?: string
+  clearDate?: string;
+  customDateOpen?: Date;
+  disableDatesBefore?: Date;
+  dateFormat?: string;
+  views?: ('day' | 'month' | 'year')[];
+  maxLength?: number;
 }
 
 export type AllowedCountry =
@@ -168,6 +203,9 @@ export interface ChildList {
   child_value: string;
   child_label: string;
   currency_rid?: string;
+  country_rid?: string;
+  country_code?: string;
+  r_number?: string;
 }
 export interface ParentChildSelectOption {
   parent_value: string;

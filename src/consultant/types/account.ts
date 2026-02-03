@@ -186,7 +186,10 @@ export enum OthersEnum {
   Other = 'other',
   Others = 'others',
 }
-
+export enum TaskType {
+  Action = 'action',
+  Milestone = 'milestone',
+}
 export enum ResourceType {
   full_time = 'full-time',
 }
@@ -277,6 +280,7 @@ export interface AccountFieldsTypes {
   tenant_id: string;
   support_email: string;
   is_send_interaction: boolean;
+  is_case_exists: boolean;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -398,6 +402,7 @@ export type AccountList = {
   parent_account_rid: string | null;
   database_connection_rid: string | null;
   country_rid: string;
+  country_code?: string;
   currency_rid: string;
   industry_rid: string;
   industry_name_other: string | null;
@@ -520,7 +525,17 @@ export type ExportType =
   | 'timesheet_project_task'
   | 'technical_summary'
   | 'resource_notes'
-  | 'notes';
+  | 'notes'
+  | 'cases'
+  | 'checklist'
+  | 'resource_checklist'
+  | 'cases_projects'
+  | 'case_task'
+  | 'review_projects'
+  | 'activities'
+  | 'dossier-project-summary'
+  | 'dossier-resource-summary'
+  | 'dossier-project-documents';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
@@ -530,6 +545,7 @@ export interface FinancialSummaryBody {
   flag: FinancialSummaryFlag;
   summaryType: string;
   region_rid: string;
+  case_rid?: string;
 }
 
 export type FormFiscalDateType = {
@@ -546,6 +562,22 @@ export type FiscalDates = {
 
 export interface FinancialStateProps {
   accountId: string;
-  countryId: string;
-  fiscalYear: string;
+  countryId?: string;
+  fiscalYear?: string;
+  caseId?: string;
+}
+
+export interface ActivityMenuItem {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  hide?: boolean;
+}
+
+export interface ActivityDropdownItem {
+  label: string;
+  hide?: boolean;
+  disabled?: boolean;
+  icon?: React.ElementType;
+  onClick: () => void;
 }

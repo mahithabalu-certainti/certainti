@@ -1,6 +1,7 @@
 import { DownloadIcon } from '../../../assets';
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   getFiscalYears,
   REGEX_PATTERNS,
 } from '../../../common-utils';
@@ -51,8 +52,11 @@ const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
 export const getNotesFilterFields = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  userListOptions: { value: string; label: string }[]
+  userListOptions: { value: string; label: string }[],
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): FieldConfig[] => {
+  const hideFiscalYear = module === 'case' || module === 'project';
+
   return [
     {
       name: 'Note ID',
@@ -117,8 +121,9 @@ export const getNotesFilterFields = (
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
       operatorOption: enumOptions,
       hide:
-        !permissionMap?.['fiscal_year']?.edit &&
-        !permissionMap?.['fiscal_year']?.read,
+        hideFiscalYear ||
+        (!permissionMap?.['fiscal_year']?.edit &&
+          !permissionMap?.['fiscal_year']?.read),
     },
     {
       name: 'Document Name',
@@ -197,7 +202,10 @@ export const getNotesTableColumns = (
   handleDownload?: (documentUrl: string) => void,
   isNotesExportEnable?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  userListOptions?: { value: string; label: string }[]
+  userListOptions?: { value: string; label: string }[],
+  handleViewGlobalNoteDetails?: (row: NotesList) => void,
+  isFromGlobal?: boolean,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): ListTableColumn<NotesList>[] => [
   {
     id: 'r_number',
@@ -220,6 +228,13 @@ export const getNotesTableColumns = (
       handleNoteView ? (
         <span
           onClick={() => handleNoteView(row.rid)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.r_number}
+        </span>
+      ) : handleViewGlobalNoteDetails ? (
+        <span
+          onClick={() => handleViewGlobalNoteDetails(row)}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.r_number}
@@ -259,6 +274,9 @@ export const getNotesTableColumns = (
         },
       ],
     },
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     hide: !permissionMap?.['title']?.edit && !permissionMap?.['title']?.read,
   },
   {
@@ -269,6 +287,7 @@ export const getNotesTableColumns = (
     width: 180,
     sortable: true,
     editable:
+      !isFromGlobal &&
       permissionMap?.['notes_owner']?.edit &&
       permissionMap?.['notes_owner']?.read &&
       !inActiveEntity,
@@ -281,6 +300,9 @@ export const getNotesTableColumns = (
         return String(rowData?.notes_owner || '');
       },
     },
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     hide:
       !permissionMap?.['notes_owner']?.edit &&
       !permissionMap?.['notes_owner']?.read,
@@ -294,6 +316,7 @@ export const getNotesTableColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attach_to',
@@ -321,7 +344,7 @@ export const getNotesTableColumns = (
     sortId: 'fiscal_year',
     label: 'Fiscal Year',
     width: 110,
-    sortable: true,
+    sortable: module !== 'case' && module !== 'project',
     editable:
       permissionMap?.['fiscal_year']?.edit &&
       permissionMap?.['fiscal_year']?.read &&
@@ -329,15 +352,11 @@ export const getNotesTableColumns = (
     conditionallyEdit: [
       {
         key: 'attachment_level',
-        matchValue: [
-          'account',
-          'project_resource',
-          'project_task',
-          'resource',
-          'resource_cost',
-          'resource_skill',
-        ],
+        matchValue: ['account', 'resource', 'resource_cost', 'resource_skill'],
       },
+      ...(isFromGlobal
+        ? [{ key: 'status_name' as keyof NotesList, matchValue: ['Active'] }]
+        : []),
     ],
     field: {
       type: 'select',
@@ -347,8 +366,9 @@ export const getNotesTableColumns = (
     },
     render: (row) => `FY-${row.fiscal_year}`,
     hide:
-      !permissionMap?.['fiscal_year']?.edit &&
-      !permissionMap?.['fiscal_year']?.read,
+      module === 'case' ||
+      (!permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read),
   },
   {
     id: 'document_name',
@@ -422,18 +442,21 @@ export const getNotesTableColumns = (
       !permissionMap?.['modified_datetime']?.read,
   },
   {
-    id: 'download',
-    sortId: 'download',
-    label: 'Download',
-    width: 80,
+    id: 'attachment',
+    sortId: 'attachment',
+    label: 'Attachment',
+    width: 90,
     hide: !isNotesExportEnable,
-    render: (row) => (
-      <button
-        className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
-        onClick={() => handleDownload?.(row.browse_file)}
-      >
-        <DownloadIcon alt='download-icon' className='h-4' />
-      </button>
-    ),
+    render: (row) =>
+      row?.browse_file ? (
+        <button
+          className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
+          onClick={() => handleDownload?.(row.browse_file)}
+        >
+          <DownloadIcon alt='download-icon' className='h-4' />
+        </button>
+      ) : (
+        <div className='text-center'>-</div>
+      ),
   },
 ];

@@ -57,6 +57,28 @@ export const fetchNotesList = async (
   };
 };
 
+export const fetchAllNotesList = async (
+  params: NotesListURLParams
+): Promise<{ notes: NotesList[]; count: number }> => {
+  const response = await resourceServiceApi.post<NotesListResponse>(
+    'api/notes/list/summary',
+    {
+      page: params.page,
+      limit: params.limit,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+      fiscalYear: params.fiscalYear,
+      filters: params.filters,
+      globalFilters: params.globalFilters,
+      search: params.search,
+    }
+  );
+  return {
+    notes: response.data.data.notes,
+    count: response.data.data.totalCount,
+  };
+};
+
 export const useNotesList = (
   params: NotesListURLParams,
   shouldFetchList: boolean,
@@ -81,7 +103,7 @@ export const useAllNotesList = (
 ): UseQueryResult<{ notes: NotesList[]; count: number }, Error> => {
   return useQuery<{ notes: NotesList[]; count: number }, Error>({
     queryKey: ['allNotesList', params, refreshTrigger],
-    queryFn: () => fetchNotesList(params),
+    queryFn: () => fetchAllNotesList(params),
     retry: 0,
     gcTime: 0,
   });
@@ -126,14 +148,30 @@ export const ExportNotesList = async (
   params: NotesListExportParams
 ) => {
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const isGlobalNotes = type === 'all_notes';
-  const url = NoteExportListURL({ ...params, timezone: systemTimezone });
+  const { isGlobal, ...restParams } = params;
+  const isGlobalNotes = type === 'all_notes' || isGlobal;
+
   const filename = isGlobalNotes
     ? 'all_notes_records.xlsx'
     : `${params.attachmentLevel}_notes_records.xlsx`;
 
   try {
-    const response = await resourceServiceApi.get(url);
+    let response;
+
+    if (isGlobalNotes) {
+      // Use POST API for global export
+      const url = `/api/notes/list/summaryExport`;
+      const body = {
+        ...restParams,
+        timezone: systemTimezone,
+      };
+      response = await resourceServiceApi.post(url, body);
+    } else {
+      // Use GET API for normal export
+      const url = NoteExportListURL({ ...params, timezone: systemTimezone });
+      response = await resourceServiceApi.get(url);
+    }
+
     const base64Data = response.data?.data;
 
     if (!base64Data) {

@@ -27,6 +27,62 @@ export enum StatusTypeEnum {
   inqueue = 'in-queue',
 }
 
+export enum ColorCode {
+  manageTemplateBgcolor = '#9747FF',
+  manageAccountBgcolor = '#BE3EB5',
+  manageAccountTextColor = '#FFFFFF',
+  accountBgColor = '#3992ec',
+  accountTextColor = '#fff',
+  projectBgColor = '#ba60eb',
+  projectTextColor = accountTextColor,
+  caseBgColor = '#3EBEB5',
+  caseTextColor = accountTextColor,
+  notesBgColor = '#7F81F4',
+  attachmentBgColor = '#d16dd3',
+  taskBgColor = '#e64c94',
+}
+
+export enum FinancialWorkingCountries {
+  Australia = 'Australia',
+  Canada = 'Canada',
+  Ireland = 'Ireland',
+  UK = 'United Kingdom',
+  US = 'United States',
+}
+export enum FinancialWorkingStates {
+  Arizona = 'Arizona',
+  California = 'California',
+  Colorado = 'Colorado',
+  Connecticut = 'Connecticut',
+  Georgia = 'Georgia',
+  Idaho = 'Idaho',
+  Illinois = 'Illinois',
+  Massachusetts = 'Massachusetts',
+  NewJersey = 'New Jersey',
+  Ohio = 'Ohio',
+  SouthCarolina = 'South Carolina',
+  Texas = 'Texas',
+}
+
+export interface globalFiltersType {
+  [key: string]: string[];
+}
+
+export interface InteractionListExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  globalFilters?: globalFiltersType;
+  timezone?: string;
+  attachmentLevel?: string;
+  entityId?: string;
+  accountRid?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
 export interface InteractionFormTableColumn {
   name: string;
   label: string;
@@ -154,6 +210,10 @@ export type InteractionList = {
   project_count?: string;
   modified_user_name?: string;
   interaction_level_name?: string;
+  project_code?: string;
+  project_name?: string;
+  key_contact_name?: string | null;
+  key_contact_email?: string | null;
 };
 
 export type InteractionTemplateList = {
@@ -210,6 +270,7 @@ export interface InteractionListURLParams {
   attachment_count?: number | string | null;
   search?: string;
   reminder_specific_list?: boolean;
+  case_rid?: string;
 }
 
 export interface InteractionTemplatePayload {
@@ -325,6 +386,22 @@ export interface InteractionDetailsResponse {
     interactionDetails: InteractionDetails;
   };
 }
+export interface InteractionProjectKeyContacts {
+  project_rid: string;
+  project_fiscal_rid: string;
+  project_code: string;
+  project_name: string | null;
+  key_contact_name: string;
+  key_contact_email: string;
+}
+export interface InteractionKeyContactResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    keyContacts: InteractionProjectKeyContacts[];
+  };
+}
 
 export interface InteractionHistoryResponse {
   interaction_response_rid: string;
@@ -335,7 +412,7 @@ export interface InteractionHistoryResponse {
   response: string;
   response_on: string;
   attachments: Attachment[];
-  is_mandatory?: boolean
+  is_mandatory?: boolean;
 }
 export interface InteractionDetailsHistoryResponse {
   statusCode: number;

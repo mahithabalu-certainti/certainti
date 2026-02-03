@@ -71,6 +71,20 @@ export const useGetFinancialSummary = (isStateWise?: boolean) => {
   });
 };
 
+export const useFetchFinancialSummaryQuery = (
+  body: FinancialSummaryBody,
+  isStateWise?: boolean,
+  enabled: boolean = true
+) => {
+  return useQuery<FinancialSummaryApiResponse, Error>({
+    queryKey: ['financialSummary', body, isStateWise],
+    queryFn: () => getFinancialSummary(body, isStateWise),
+    enabled,
+    retry: 0,
+    gcTime: 0,
+  });
+};
+
 export const fetchProjectFinancialResourceCost = async (
   params: ProjectFinancialResourceListParams
 ): Promise<{
@@ -86,10 +100,9 @@ export const fetchProjectFinancialResourceCost = async (
     count: response.data.data.count,
   };
 };
-
 export const useProjectFinancialResourceCost = (
   params: ProjectFinancialResourceListParams,
-  refresTrigger?: number
+  refreshTrigger?: number
 ): UseQueryResult<
   {
     projectResourceFiscal: ProjectFinancialResourceCostList[];
@@ -104,7 +117,7 @@ export const useProjectFinancialResourceCost = (
     },
     Error
   >({
-    queryKey: ['projectFinancialResource', params, refresTrigger],
+    queryKey: ['projectFinancialResource', params, refreshTrigger],
     queryFn: () => fetchProjectFinancialResourceCost(params),
     retry: 0,
     gcTime: 0,

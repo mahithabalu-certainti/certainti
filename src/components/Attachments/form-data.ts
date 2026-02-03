@@ -117,6 +117,7 @@ export const AttachmentFormData = (
       showCategoryOthersField,
       showTypeOthersField,
       docTypeOptions,
+      projectFiscalYear,
     ]
   );
 };

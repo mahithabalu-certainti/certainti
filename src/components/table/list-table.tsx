@@ -70,6 +70,7 @@ const ListTable = <T extends RowData>({
   hideHeaderSelect = false,
   selectable = false,
   onSelectionChange,
+  initialSelectedIds,
   // Actions
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
@@ -77,7 +78,7 @@ const ListTable = <T extends RowData>({
   conditionMenuItems,
   // State
   loading = false,
-  loadindRowCount,
+  loadingRowCount,
   error,
   // Pagination
   rowsPerPageOptions = [5, 10, 25, 50, 100],
@@ -125,6 +126,61 @@ const ListTable = <T extends RowData>({
     () => columns.filter((column) => !column.hide),
     [columns]
   );
+
+  // Initialize selected rows from initialSelectedIds
+  useEffect(() => {
+    if (
+      initialSelectedIds &&
+      initialSelectedIds.length > 0 &&
+      data &&
+      data.length > 0
+    ) {
+      const initialSet = new Set(initialSelectedIds);
+
+      // Auto-select parents if their children are in initialSelectedIds
+      // This ensures proper hierarchical selection
+      data.forEach((parent) => {
+        const parentId = getRowId(parent);
+        const children = parent[childrenKey] as T[] | undefined;
+
+        if (children && children.length > 0) {
+          // Check if any child is in initialSelectedIds
+          const hasSelectedChild = children.some((child) =>
+            initialSet.has(getRowId(child))
+          );
+
+          // If any child is selected, also select the parent
+          if (hasSelectedChild) {
+            initialSet.add(parentId);
+          }
+
+          // Also check grandchildren for accounts/projects
+          if (grandchildrenKey) {
+            children.forEach((child) => {
+              const childId = getRowId(child);
+              const grandchildren = child[grandchildrenKey] as T[] | undefined;
+
+              if (grandchildren && grandchildren.length > 0) {
+                const hasSelectedGrandchild = grandchildren.some((_, index) =>
+                  initialSet.has(`${childId}-gc-${index}`)
+                );
+
+                // If any grandchild is selected, select both child and parent
+                if (hasSelectedGrandchild) {
+                  initialSet.add(childId);
+                  initialSet.add(parentId);
+                }
+              }
+            });
+          }
+        }
+      });
+
+      setSelectedRows(initialSet);
+      onSelectionChange?.(Array.from(initialSet));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSelectedIds, data]); // Run when initialSelectedIds or data changes
 
   // handle initial expansion
   useEffect(() => {
@@ -860,7 +916,12 @@ const ListTable = <T extends RowData>({
       <TableContainer
         sx={{
           ...tableStyle,
+          maxHeight: tableStyle?.maxHeight
+            ? `calc(${tableStyle.maxHeight} - 42px)`
+            : 'calc(100vh - 42px)',
           overflow: isEditingAnyCell ? 'hidden' : 'auto',
+          minHeight: 'auto',
+          height: 'fit-content',
         }}
       >
         <MuiTable
@@ -981,24 +1042,32 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
+                      textAlign: 'left',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : selectable &&
+                                        actionMenuItems.length === 0 &&
+                                        !isAvailableAction
+                                      ? '32px'
+                                      : '0px',
+                          }
+                        : {}),
                     }}
                   />
                 ) : (
@@ -1008,24 +1077,32 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
+                      textAlign: 'left',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : selectable &&
+                                        actionMenuItems.length === 0 &&
+                                        !isAvailableAction
+                                      ? '32px'
+                                      : '0px',
+                          }
+                        : {}),
                     }}
                   >
                     {column.label}
@@ -1069,7 +1146,7 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={
-                  loadindRowCount ||
+                  loadingRowCount ||
                   (component === 'account'
                     ? 20
                     : rowsPerPage > 20
@@ -1420,23 +1497,34 @@ const ListTable = <T extends RowData>({
                                 ? column.sx(row)
                                 : column.sx || {}),
                               zIndex: column.sticky ? 6 : 'auto',
-                              left:
-                                selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                                  ? '82px'
-                                  : selectable &&
-                                      actionMenuItems?.length &&
-                                      !isAvailableAction
-                                    ? '32px'
-                                    : !selectable &&
-                                        actionMenuItems?.length > 0 &&
-                                        isAvailableAction
-                                      ? '50px'
-                                      : '0px',
+                              ...(column.sticky
+                                ? {
+                                    left:
+                                      selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                        ? '82px'
+                                        : selectable &&
+                                            actionMenuItems?.length &&
+                                            !isAvailableAction
+                                          ? '32px'
+                                          : !selectable &&
+                                              actionMenuItems?.length > 0 &&
+                                              isAvailableAction
+                                            ? '50px'
+                                            : selectable &&
+                                                actionMenuItems.length === 0 &&
+                                                !isAvailableAction
+                                              ? '32px'
+                                              : '0px',
+                                  }
+                                : {}),
                               padding: isEditing
                                 ? '0px 0px !important'
-                                : '0px 8px !important',
+                                : (typeof column.sx === 'function'
+                                    ? column.sx(row)?.padding
+                                    : (column.sx as React.CSSProperties)
+                                        ?.padding) || '0px 8px !important',
                               outline:
                                 isEditing && column.field?.type !== 'textarea'
                                   ? `1px solid ${
@@ -1650,20 +1738,28 @@ const ListTable = <T extends RowData>({
                                   <button
                                     key={index}
                                     onClick={() => item.onClick(row)}
-                                    disabled={item.disabled}
+                                    disabled={item.disabled || item.loading}
                                     className={item.className}
                                   >
-                                    {item.icon && (
-                                      <item.icon
-                                        alt='actionIcon'
-                                        style={{
-                                          width: '14px',
-                                          height: '14px',
-                                          ...item.iconStyle,
-                                        }}
-                                      />
+                                    {item.loading ? (
+                                      <span className='w-full  flex items-center justify-center'>
+                                        <CircularProgress size='14px' />
+                                      </span>
+                                    ) : (
+                                      <>
+                                        {item.icon && (
+                                          <item.icon
+                                            alt='actionIcon'
+                                            style={{
+                                              width: '14px',
+                                              height: '14px',
+                                              ...item.iconStyle,
+                                            }}
+                                          />
+                                        )}
+                                        {item.label}
+                                      </>
                                     )}
-                                    {item.label}
                                   </button>
                                 );
                               })}

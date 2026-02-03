@@ -47,6 +47,17 @@ const exInteractionServiceApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const caseServiceApi = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_CASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+const ruleBuilderServiceApi = axios.create({
+  baseURL:
+    import.meta.env.VITE_BASE_URL + import.meta.env.VITE_RULE_BUILDER_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
@@ -61,6 +72,8 @@ const api = axios.create({
   resourceServiceApi,
   interactionServiceApi,
   exInteractionServiceApi,
+  caseServiceApi,
+  ruleBuilderServiceApi,
   api,
 ].forEach((api) => {
   api.interceptors.request.use(
@@ -103,6 +116,8 @@ const processQueue = (error: unknown, token: string | null = null) => {
   resourceServiceApi,
   interactionServiceApi,
   exInteractionServiceApi,
+  caseServiceApi,
+  ruleBuilderServiceApi,
   api,
 ].forEach((api) => {
   api.interceptors.response.use(
@@ -221,5 +236,7 @@ export {
   resourceServiceApi,
   interactionServiceApi,
   exInteractionServiceApi,
+  caseServiceApi,
+  ruleBuilderServiceApi,
   api,
 };

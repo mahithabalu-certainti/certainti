@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ManageUserIcon } from '../../../../assets/icons';
+import { ManagerUserIcon } from '../../../../assets/icons';
 import {
   AllPermissions,
   Layout,
@@ -14,7 +14,7 @@ import {
   useFetchCity,
   useFetchState,
 } from '../../../../consultant/services/account';
-import { SelectOption, YesNo } from '../../../../consultant/types';
+import { ColorCode, SelectOption, YesNo } from '../../../../consultant/types';
 import { useToast } from '../../../../hooks';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import {
@@ -326,7 +326,10 @@ export const CreateUser: React.FC = () => {
       {/* Header Section */}
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
-          <ManageUserIcon alt='manage user' className='h-6 w-6 rounded' />
+          <ManagerUserIcon
+            alt='manage user'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
+          />
           <div className='w-[90%]'>
             <div className={HEADER_STYLES.adminPermission}>
               {isEditView

@@ -22,8 +22,11 @@ import DetailsSectionSkeleton from '../../../../../../components/skeleton-compon
 import { Typography } from '@mui/material';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { accountDetailsProps } from '../../../../account-details/utils';
-import { InteractionQuestions } from '../../../../../../components';
-import { StatusTypeEnum } from '../../../../../types';
+import {
+  InteractionQuestions,
+  SendInteractionModal,
+} from '../../../../../../components';
+import { InteractionList, StatusTypeEnum } from '../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
@@ -55,6 +58,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     true
   );
 
+  const [reInitiateModalOpen, setReInitiateModalOpen] = React.useState(false);
+
   const interactionFieldsEditable = useMemo(
     () =>
       permission
@@ -82,6 +87,22 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   //permission
+  const projectViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const interactionsViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -154,6 +175,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       hide: !interactionFieldsEditable,
     },
     {
+      label: 'Re-Initiate Interaction',
+      variant: 'outlined' as const,
+      disabled:
+        accountInActive ||
+        !disableRemainderBtn ||
+        !accountDetails?.accountDetails?.is_send_interaction,
+      onClick: () => setReInitiateModalOpen(true),
+      sx: { width: '160px', minWidth: '160px' },
+    },
+    {
       label: 'Reminder',
       variant: 'outlined' as const,
       disabled:
@@ -173,6 +204,11 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   ];
 
   const InteractionInfo: DetailItem[] = [
+    {
+      label: 'Fiscal Year',
+      value: data?.fiscal_year,
+      key: 'fiscal_year',
+    },
     {
       label: 'Interaction Type',
       value: data?.interaction_type_name,
@@ -255,14 +291,9 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: data?.project_name,
       key: 'project_name',
     },
-    {
-      label: 'Fiscal Year',
-      value: data?.fiscal_year,
-      key: 'fiscal_year',
-    },
   ];
 
-  const basicDetails = applyHidePermission(basicInfo, permissionMap);
+  const basicDetails = applyHidePermission(basicInfo, projectPermissionMap);
   const interactionDetails = applyHidePermission(
     InteractionInfo,
     permissionMap
@@ -342,6 +373,26 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           />
         </div>
       )}
+      <SendInteractionModal
+        title='Re-Initiate Interaction'
+        isOpen={reInitiateModalOpen}
+        onClose={() => setReInitiateModalOpen(false)}
+        selectedRows={
+          data
+            ? [
+                {
+                  rid: data.interaction_rid || interactionId || '',
+                  interaction_level_name: data.interaction_level_name || '',
+                  project_fiscal_rid: data.project_fiscal_rid || '',
+                  recipient_name: data.recipient_name || '',
+                  recipient_email: data.recipient_email || '',
+                  status_name: data.status_name || '',
+                } as InteractionList,
+              ]
+            : []
+        }
+        onSuccessRefetch={refetch}
+      />
     </>
   );
 };

@@ -6,13 +6,7 @@ export const EMAIL_INTERACTION = '/ext/interaction';
 
 export const MANAGE_USER = '/manage-user';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
-export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
-export const MANAGE_SETTINGS = '/manage-settings';
-export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
-export const EMAIL_TEMPLATES = '/email-templates';
 export const SURVEY_TEMPLATES = '/survey-templates';
-export const TASK_TEMPLATES = '/task-templates';
-export const CHECKLIST_TEMPLATES = '/checklist-templates';
 
 /** ADMIN ROUTES */
 export const ADMIN = '/admin';
@@ -21,6 +15,8 @@ export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
 export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
 export const USER_EXTENDED_PERMISSION = `${ADMIN_MANAGE_USER}/extended-permission/:userid`;
+export const MANAGE_SETTINGS = `${ADMIN}/manage-settings`;
+export const MANAGE_ACCOUNT_ACCESS = `${ADMIN}/manage-account-access`;
 /** PROFILE ROUTES */
 export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
 export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
@@ -38,6 +34,33 @@ export const INTERACTION_TEMPLATES_EDIT = `${INTERACTION_TEMPLATES}/edit/:templa
 
 /** ADMIN IMPORT TEMPLATES ROUTES */
 export const IMPORT_TEMPLATES = `${ADMIN}/import-templates`;
+
+/** ADMIN EMAIL TEMPLATES ROUTES */
+export const EMAIL_TEMPLATES = `${ADMIN}/email-templates`;
+export const EMAIL_TEMPLATES_CREATE = `${EMAIL_TEMPLATES}/create`;
+export const EMAIL_TEMPLATES_EDIT = `${EMAIL_TEMPLATES}/edit/:templateId`;
+
+/** ADMIN TASK TEMPLATES ROUTES */
+export const TASK_TEMPLATES = `${ADMIN}/task-templates`;
+export const TASK_TEMPLATES_CREATE = `${TASK_TEMPLATES}/create`;
+export const TASK_TEMPLATES_EDIT = `${TASK_TEMPLATES}/edit/:templateId`;
+export const TASK_TEMPLATES_DETAILS = `${TASK_TEMPLATES}/details/:templateId`;
+
+/** ADMIN CHECKLIST TEMPLATES ROUTES */
+export const CHECKLIST_TEMPLATES = `${ADMIN}/checklist-templates`;
+export const CHECKLIST_TEMPLATES_CREATE = `${CHECKLIST_TEMPLATES}/create`;
+export const CHECKLIST_TEMPLATES_EDIT = `${CHECKLIST_TEMPLATES}/edit/:caseId`;
+
+// ADMIN GEO BASED RULE ROUTES
+export const MANAGE_GEO_BASED_RULE = `${ADMIN}/manage-jurisdiction-rule`;
+export const MANAGE_GEO_BASED_RULE_CREATE = `${MANAGE_GEO_BASED_RULE}/create`;
+export const MANAGE_GEO_BASED_RULE_EDIT = `${MANAGE_GEO_BASED_RULE}/edit/:ruleId/:config_rid`;
+
+/** ADMIN WORKFLOW BUILDER ROUTES */
+export const WORKFLOW_BUILDER = `${ADMIN}/workflow-builder`;
+export const WORKFLOW_BUILDER_CREATE = `${WORKFLOW_BUILDER}/create`;
+export const WORKFLOW_BUILDER_EDIT = `${WORKFLOW_BUILDER}/edit/:ruleId`;
+
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
@@ -83,7 +106,8 @@ export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
 export const GLOBAL_INTERACTIONS_CREATE = `${INTERACTIONS}/create`;
 export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
 export const ACCOUNT_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/account-create`;
-
+export const CASE_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/case-create`;
+export const CASE_INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/case/edit/:interactionId`;
 // Notes routes
 export const NOTES = '/notes';
 export const NOTES_BASE = `/:module/notes`;
@@ -91,7 +115,28 @@ export const NOTES_CREATE = `${NOTES_BASE}/create`;
 export const NOTES_EDIT = `${NOTES_BASE}/edit/:noteId`;
 export const GLOBAL_NOTES_EDIT = `${NOTES}/edit/:noteId`;
 
+// Checklist routes
+export const CHECKLIST = '/checklist';
+export const CHECKLIST_BASE = `/:module/checklist`;
+export const CHECKLIST_CREATE = `${CHECKLIST_BASE}/create`;
+export const CHECKLIST_EDIT = `${CHECKLIST_BASE}/edit/:checklistId`;
+
+// Activities routes
+export const ACTIVITY_BASE = '/:module/activity';
+export const ACTIVITY_CREATE = `${ACTIVITY_BASE}/create/:type`;
+export const ACTIVITY_EDIT = `${ACTIVITY_BASE}/edit/:type/:activityId`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
+
+// TASKS ROUTES
+export const TASKS = '/tasks';
+
+//CASES ROUTES
+export const CASE = '/case';
+export const CASE_DETAILS = `${CASE}/details/:caseId`;
+export const CASE_EDIT = `${CASE}/edit/:caseId`;
+export const CASE_CREATE = `${CASE}/create`;
+
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

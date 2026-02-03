@@ -36,6 +36,8 @@ import { accountNavItems } from './accounts-menu';
 import LogoSmall from '../../assets/icons/logo-small.svg?react';
 import Logo from '../../assets/icons/logo.svg?react';
 import { sideNavAdminItems } from './admin-menus';
+import { AllModules, MenuOption } from '../../common-service';
+import { checkPermission } from '../../common-utils';
 
 const matchCheck = (subItem: SubItemTitle, pathname: string): boolean => {
   return subItem.matchLink === pathname;
@@ -47,7 +49,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
   sidebarExpand,
 }) => {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   // Get only few segments of the path
   const trimmedPathname = useCallback(
     (count: number) =>
@@ -57,16 +59,32 @@ export const Sidebar: React.FC<SideBarProps> = ({
   const { logout } = useAuthHook();
 
   // Permission Mangement
-  const { menus } = useSelector((state: RootState) => state.permission);
+  const { menus, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const isWorkBreakdownEnable = checkPermission(
+    modules,
+    AllModules.WORKBREAKDOWN
+  );
+  const isActivityTaskEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_TASK
+  );
+
   const accountMenus = useMemo(() => {
     return accountNavItems.map((item) => {
       const menu = menus.find((menu) => menu.name === item.id);
+      const isTaskMenu = item.id === MenuOption.TASKS;
       return {
         ...item,
-        hide: menu && !menu.is_enabled,
+        hide:
+          (menu && !menu.is_enabled) ||
+          (isTaskMenu && !isWorkBreakdownEnable && !isActivityTaskEnable),
       };
     });
-  }, [menus]);
+  }, [isActivityTaskEnable, isWorkBreakdownEnable, menus]);
+
   const memoizedAdminNavItems = useMemo(() => {
     return sideNavAdminItems
       .map((item) => ({
@@ -111,6 +129,16 @@ export const Sidebar: React.FC<SideBarProps> = ({
   }, [logout]);
 
   const noItemsOpen = adminNavItems.every((item) => !item.openStatus);
+
+  const searchParams = new URLSearchParams(search);
+  const activePathParam = searchParams.get('activeMenu');
+
+  const accountMenusWithActive = accountMenus.map((item) => {
+    const isActive =
+      item.activePath === activePathParam ||
+      (!activePathParam && item.matchLink === trimmedPathname(1));
+    return { ...item, isActive };
+  });
 
   return (
     <Drawer
@@ -171,7 +199,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
           }}
         >
           {!showAdminSidebar &&
-            accountMenus.map((item, i) => {
+            accountMenusWithActive.map((item, i) => {
               if (item.hide) return null;
               if (item.type === 'divider') {
                 return <Fragment key={i} />;
@@ -199,10 +227,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       mt: '4px',
                       gap: '4px',
                       borderRadius: '2px',
-                      backgroundColor:
-                        item.matchLink === trimmedPathname(1)
-                          ? 'rgba(255, 255, 255, 0.2)'
-                          : 'transparent',
+                      backgroundColor: item.isActive
+                        ? 'rgba(255, 255, 255, 0.2)'
+                        : 'transparent',
                       '&:hover': {
                         backgroundColor: 'rgba(255, 255, 255, 0.2)',
                       },

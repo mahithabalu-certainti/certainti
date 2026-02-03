@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SxProps } from '@mui/material';
 import React from 'react';
 import TextButton from '../../../../../components/button/text-button';
@@ -69,7 +68,8 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                   value === 'cost' ||
                   value === 'skill' ||
                   value === 'attachments' ||
-                  value === 'notes') &&
+                  value === 'notes' ||
+                  value === 'checklists') &&
                   resourceNumber}
               </div>
             </div>

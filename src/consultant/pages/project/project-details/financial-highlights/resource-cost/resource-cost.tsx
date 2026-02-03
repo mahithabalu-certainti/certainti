@@ -27,7 +27,7 @@ interface FinancialResourceCostProps {
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setResCostExportParams: (
+  setResCostExportParams?: (
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType?: (type: ExportType) => void;
@@ -51,11 +51,12 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   searchValue,
 }) => {
   const { projectid: projectId } = useParams();
+
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
+  const projectID = searchParams.get('projectID') || '';
   const fiscalYear = projectDetails?.fiscal_year;
   const currencySymbol = projectDetails?.currency_symbol;
-
   const [resourceCostList, setResourceCostList] = useState<
     ProjectFinancialResourceCostList[]
   >([]);
@@ -77,7 +78,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: tableParams.filters,
-      projectRid: projectId,
+      projectRid: projectId || projectID,
       accountRid: accountId,
       fiscalYear: fiscalYear,
       accountNumber: projectDetails?.account_number,
@@ -87,14 +88,16 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   );
 
   const totalItems = data?.count;
+
   useEffect(() => {
-    if (data) {
+    if (isLoading) {
+      setCount(0);
+    } else if (data?.count !== undefined) {
       setResourceCostList(data.projectResourceFiscal || []);
       setCount(data.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
-
+  }, [isLoading, data?.count, setCount]);
   useEffect(() => {
     setTableParams((prev) => ({
       ...prev,
@@ -109,7 +112,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       setExportType('financial');
     }
 
-    setResCostExportParams({
+    setResCostExportParams?.({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
@@ -161,10 +164,10 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   };
 
   const getRowId = (row: ProjectFinancialResourceCostList) => row.resource_rid;
-  const financialResourceCostColumns = getFinancialResourceCostColumns(
-    permissionMap,
-    currencySymbol
-  );
+
+  const financialResourceCostColumns = useMemo(() => {
+    return getFinancialResourceCostColumns(permissionMap, currencySymbol);
+  }, [permissionMap, currencySymbol]);
 
   const RestrictedColumns = [
     {
@@ -177,7 +180,12 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<ProjectFinancialResourceCostList>[]
   >(financialResourceCostColumns.filter((col) => !col.hide));
-
+  useEffect(() => {
+    const updatedColumns = financialResourceCostColumns.filter(
+      (col) => !col.hide
+    );
+    setVisibleColumns(updatedColumns);
+  }, [currencySymbol, financialResourceCostColumns]);
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
       updatedColumns.filter(

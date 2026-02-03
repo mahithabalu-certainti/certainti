@@ -16,7 +16,12 @@ import {
 } from '../../../../../common-service';
 import Uploads from '../../../../../components/Attachments/upload';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ColorCode,
+  ExportType,
+  SelectOption,
+} from '../../../../types';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import {
   AttachmentList,
@@ -66,6 +71,7 @@ interface AttachmentsProps {
   >;
   accountInActive: boolean;
   refetchAccountDetails: () => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
@@ -73,6 +79,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   setAttachmentParams,
   accountInActive,
   refetchAccountDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -453,8 +460,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
         showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCategory}
-        showSearch={true}
+        showSearch={showUploads ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={showUploads ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads
@@ -471,11 +480,11 @@ const Attachments: React.FC<AttachmentsProps> = ({
             titleIcon={
               <AttachmentsSideIcon
                 alt='attachment-header-icon'
-                className='[&>path]:stroke-[#4B9BFF]'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
             headerButtons={headerButtons}
-            iconBg='#D8E9FF'
+            iconBg={ColorCode.accountBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

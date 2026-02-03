@@ -3,7 +3,7 @@ import { FieldConfig } from '../../account-details-sidebar/components/filter/fil
 import {
   // dateOptions,
   enumOptions,
-  fiscalYearOption,
+  fiscalYearOptions,
   numberOptions,
   textOptions,
   fiscalOptions,
@@ -14,7 +14,8 @@ export const getAllProjectFilterFields = (
   classificationOption: FilterSelectOption[],
   projectTypeOptions: { option: string; value: string }[],
   statusOptions: { option: string; value: string }[],
-  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>
+  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   // Text fields
 
@@ -52,14 +53,14 @@ export const getAllProjectFilterFields = (
     type: 'text',
     operatorOption: textOptions,
     hide:
-      !projectPermissionMap?.['account_name']?.read &&
-      !projectPermissionMap?.['account_name']?.edit,
+      !accountPermissionMap?.['account_name']?.read &&
+      !accountPermissionMap?.['account_name']?.edit,
   },
   {
     name: 'Fiscal Year',
     value: 'fiscal_year',
     type: 'enum',
-    options: fiscalYearOption,
+    options: fiscalYearOptions,
     operatorOption: fiscalOptions,
     hide:
       !projectPermissionMap?.['fiscal_year']?.read &&

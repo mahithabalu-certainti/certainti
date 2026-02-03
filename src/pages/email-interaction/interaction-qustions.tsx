@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CircularProgress, SxProps, Tooltip } from '@mui/material';
+import { Alert, CircularProgress, SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
 import ReactQuill, { Quill } from 'react-quill';
 import {
@@ -15,7 +15,7 @@ import {
   EditTextIcon,
   KeyContactRemoveIcon,
 } from '../../assets';
-import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
+import { formatDateToYYYYMMDDWithTime, sanitizeUrl } from '../../common-utils';
 import {
   InteractionQuestionUpdateRequest,
   useDeleteAttachment,
@@ -74,7 +74,7 @@ interface InteractionQuesProps {
   };
   isEditEnable?: boolean;
   headerData?: HeaderData;
-  isAccountlevel?: boolean
+  isAccountlevel?: boolean;
 }
 enum FlagTypeEnum {
   draft = 'draft',
@@ -99,7 +99,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   parseToken,
   // isEditEnable,
   headerData,
-  isAccountlevel
+  isAccountlevel,
 }) => {
   const { successToast, errorToast } = useToast();
   const [isEditing, setIsEditing] = useState<boolean>(true);
@@ -192,6 +192,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         ? true
         : false
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerData]);
   // const handleEditClick = () => {
   //   setIsEditing(true);
@@ -468,8 +469,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const handleDownload = (documentUrl: string) => {
     if (!documentUrl) return;
 
+    const safeUrl = sanitizeUrl(documentUrl);
+    if (!safeUrl) {
+      console.error('Invalid or unsafe URL provided for download');
+      return;
+    }
+
     const link = document.createElement('a');
-    link.href = documentUrl;
+    link.href = safeUrl;
     link.download = '';
     document.body.appendChild(link);
     link.click();
@@ -559,6 +566,15 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         </div>
       </div>
 
+      {headerData?.statusName?.toLowerCase() ===
+        StatusTypeEnum.response_received && (
+        <Alert severity='success' sx={{ mt: 2 }}>
+          Your earlier response is available for your review. If you wish to add
+          more information, Think R&D 365 will send you an updated set of
+          interaction questions for additional inputs.
+        </Alert>
+      )}
+
       <div
         className={`my-3 border border-[#CBD6E2] rounded-[2px] ${isUpdateLoading ? 'pointer-events-none' : ''}`}
       >
@@ -588,7 +604,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             <div key={q.rid} className='p-3'>
               <div className='font-medium text-[14px] text-[#2D3E4F]'>
                 <span className='font-bold'>
-                  {q.question_seq_num || `Q00${index + 1}`}
+                  {`Q${index + 1}`}
                   {q.is_mandatory && (
                     <span className='text-red-500 ml-1'>*</span>
                   )}

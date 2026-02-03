@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { useNoteDetails } from '../../../../services/notes/notes-service';
-import { NOTES_EDIT } from '../../../../../routes';
+import { NOTES, NOTES_EDIT } from '../../../../../routes';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../components/details-section/details';
@@ -31,6 +31,8 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const noteId = searchParams.get('note_id') || '';
+  const originPath = searchParams.get('origin') || '';
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const { data, isLoading, error } = useNoteDetails(accountId, noteId, true);
 
@@ -70,13 +72,18 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       entityLevel: data?.attachment_level || 'project',
       entityId: data?.attach_to || '',
       source: `Project > ${projectCode}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleBackClick = () => {
     searchParams.delete('note_id');
-    navigate({ search: searchParams.toString() }, { replace: true });
+    if (originPath === 'notes') {
+      navigate(NOTES);
+    } else {
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
   };
 
   const headerButtons = [

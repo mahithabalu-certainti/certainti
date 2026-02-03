@@ -32,7 +32,8 @@ export const getProjectResourcesColumns = (
   handleCountry: (country: string) => void,
   regionLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  accountOrProjectInActive?: boolean
+  accountOrProjectInActive?: boolean,
+  isProjectSignedOff?: boolean
 ): ListTableColumn<ProjectResourcesListType>[] => [
   {
     id: 'resource_code',
@@ -42,10 +43,10 @@ export const getProjectResourcesColumns = (
     sortId: 'resource_code',
     width: '160px',
     sticky: true,
-    editable:
-      permissionMap?.['resource_code']?.read &&
-      permissionMap?.['resource_code']?.edit &&
-      !accountOrProjectInActive,
+    // editable:
+    //   permissionMap?.['resource_code']?.read &&
+    //   permissionMap?.['resource_code']?.edit &&
+    //   !accountOrProjectInActive,
     hide:
       !permissionMap?.['resource_code']?.read &&
       !permissionMap?.['resource_code']?.edit,
@@ -91,7 +92,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['country_rid']?.read &&
       permissionMap?.['country_rid']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['country_rid']?.read &&
       !permissionMap?.['country_rid']?.edit,
@@ -126,7 +128,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['region_rid']?.read &&
       permissionMap?.['region_rid']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['region_rid']?.read &&
       !permissionMap?.['region_rid']?.edit,
@@ -183,7 +186,9 @@ export const getProjectResourcesColumns = (
     width: '200px',
     editable:
       permissionMap?.['project_resource_role']?.read &&
-      permissionMap?.['project_resource_role']?.edit,
+      permissionMap?.['project_resource_role']?.edit &&
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['project_resource_role']?.read &&
       !permissionMap?.['project_resource_role']?.edit,
@@ -201,9 +206,13 @@ export const getProjectResourcesColumns = (
           errorMessage: 'Max length exceeded.',
         },
         {
-          regex: RESOURCE_REGEX.ROLE,
+          regex: RESOURCE_REGEX.NUMBER_ONLY,
+          errorMessage: 'Resource Role cannot contain only numbers.',
+        },
+        {
+          regex: RESOURCE_REGEX.ROLE_WITH_NUMBER,
           errorMessage:
-            'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+            'Allows only letters, numbers, apostrophes, spaces, hyphens, commas, and periods.',
         },
       ],
     },
@@ -223,7 +232,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['total_hours_pro_res']?.read &&
       permissionMap?.['total_hours_pro_res']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['total_hours_pro_res']?.read &&
       !permissionMap?.['total_hours_pro_res']?.edit,
@@ -311,7 +321,8 @@ export const getProjectResourcesColumns = (
     editable:
       permissionMap?.['description']?.read &&
       permissionMap?.['description']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMap?.['description']?.read &&
       !permissionMap?.['description']?.edit,

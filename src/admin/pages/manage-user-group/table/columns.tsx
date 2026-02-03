@@ -1,4 +1,8 @@
-import { costDisplay, formatDateToYYYYMMDDWithTime, valueDisplay } from '../../../../common-utils';
+import {
+  costDisplay,
+  formatDateToYYYYMMDDWithTime,
+  valueDisplay,
+} from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { Project } from '../../../../consultant/types/project';
 import { UserGroupList } from '../../../types';
@@ -389,30 +393,31 @@ export const getProjectColumns = (
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'qre_final',
-    label: 'QRE %',
+    id: 'rd_percent_final',
+    label: 'QRE Percent Final',
     sortable: true,
-    sortId: 'qre_final',
-    width: 130,
+    sortId: 'rd_percent_final',
+    width: 150,
     sx: {
       textAlign: 'right',
     },
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
+    render: (row: Project) =>
+      row.rd_percent_final ? row.rd_percent_final : '-',
   },
   {
-    id: 'qre',
-    label: 'QRE',
+    id: 'qre_final',
+    label: 'QRE Final',
     sortable: true,
-    sortId: 'qre',
+    sortId: 'qre_final',
     width: 130,
     sx: {
       textAlign: 'right',
     },
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: Project) => (row.qre ? row.qre : '-'),
+    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
   },
   {
     id: 'comments',

@@ -14,9 +14,12 @@ import {
   setUserId,
   UpdateOrgLogo,
   updatePermissions,
+  UpdateProfileURL,
+  setWebSocketUrl,
 } from '../../store/slices';
 import { AllModules, fetchCurrentUserRole } from '../../common-service';
 import { NOT_FOUND } from '../../routes';
+import Footer from '../../components/Footer';
 
 /**
  * Login component handles the user authentication process.
@@ -74,6 +77,15 @@ export const Login: React.FC = () => {
             logoUrl: userRole.data.logo_url,
           })
         );
+
+        // Construct WebSocket URL from env base URL + access token
+        if (userRole?.data?.web_socket_url) {
+          const websocketBaseUrl = import.meta.env.VITE_WEBSOCKET_URL;
+          const websocketUrl = `${websocketBaseUrl}?access_token=${userRole.data.web_socket_url}`;
+          dispatch(setWebSocketUrl(websocketUrl));
+        }
+
+        dispatch(UpdateProfileURL(userRole.data.profile_url));
         const currentActiveRoute = accountNavItems.find(
           (menu) =>
             !menu.noRedirect &&
@@ -103,7 +115,7 @@ export const Login: React.FC = () => {
     });
   };
   return (
-    <Box className='min-h-screen flex'>
+    <Box className='min-h-screen flex flex-col'>
       <Box className='flex-1 grid md:grid-cols-2'>
         <LeftPane
           handleLogin={handleLogin}
@@ -113,6 +125,7 @@ export const Login: React.FC = () => {
         />
         <RightPane />
       </Box>
+      <Footer />
     </Box>
   );
 };

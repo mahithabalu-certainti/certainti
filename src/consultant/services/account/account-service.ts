@@ -1,5 +1,9 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import { accountServiceApi, resourceServiceApi } from '../../../api/api';
+import {
+  accountServiceApi,
+  caseServiceApi,
+  resourceServiceApi,
+} from '../../../api/api';
 import {
   AccountFieldsApiResponse,
   AccountList,
@@ -20,7 +24,6 @@ import {
 } from '../../types';
 import {
   AccountDetailUrl,
-  AccountListURL,
   CityUrl,
   ClassificationUrl,
   ColorCodeUrl,
@@ -61,8 +64,9 @@ export const fetchGlobalAccounts = async (): Promise<{
 export const fetchAccounts = async (
   params: AccountListURLParams = {}
 ): Promise<{ accounts: AccountList[]; count: number; totalResult: number }> => {
-  const response = await accountServiceApi.get<AccountListResponse>(
-    AccountListURL(params)
+  const response = await accountServiceApi.post<AccountListResponse>(
+    '/api/accounts/list',
+    params
   );
   return {
     accounts: response.data.data.account.data,
@@ -127,10 +131,11 @@ export const fetchClassification =
   };
 
 export const fetchState = async (
-  countryId: string | string[] | null
+  countryId: string | string[] | null,
+  status?: string
 ): Promise<StatesApiResponse> => {
   const { data } = await accountServiceApi.get<StatesApiResponse>(
-    StateUrl(countryId)
+    StateUrl(countryId, status)
   );
   return data;
 };
@@ -138,6 +143,12 @@ export const fetchState = async (
 export const fetchFinancialState = async (
   params: FinancialStateProps
 ): Promise<FinancialStatesApiResponse> => {
+  if (params.caseId) {
+    const { data } = await caseServiceApi.get<FinancialStatesApiResponse>(
+      `/api/cases/regions/${params.accountId}/${params.caseId}`
+    );
+    return data;
+  }
   const { data } = await resourceServiceApi.get<FinancialStatesApiResponse>(
     `/api/financialHighlight/regions/${params.accountId}/${params.countryId}/${params.fiscalYear}`
   );

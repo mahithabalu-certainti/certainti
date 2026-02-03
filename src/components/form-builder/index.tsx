@@ -66,6 +66,7 @@ interface FormBuilderProps {
   keyContactHeaders?: KeyContactHeader[];
   highlight?: { field: string; section: string };
   isFrom?: string;
+  customFields?: Record<string, React.ReactNode>;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -84,6 +85,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   newContactLength,
   highlight,
   isFrom = '',
+  customFields,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -169,13 +171,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // updated default value into constuctFormData
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
-        if (
-          field.assignDefaultValue &&
-          field.defaultValue &&
-          field.clearValue
-        ) {
-          const { key, matchedValue } = field.clearValue;
-          if (constructFormData[key] === matchedValue) {
+        if (field.assignDefaultValue && field.defaultValue) {
+          if (field.clearValue) {
+            const { key, matchedValue } = field.clearValue;
+            if (constructFormData[key] === matchedValue) {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [field.name]: field.defaultValue || '',
+              }));
+            }
+          } else if (
+            field.defaultValue &&
+            field.assignDefaultValue &&
+            !field.clearValue
+          ) {
             setConstructFormData((prev) => ({
               ...prev,
               [field.name]: field.defaultValue || '',
@@ -186,12 +195,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               [field.name]: '',
             }));
           }
+        } else if (
+          field.assignDefaultValue &&
+          !field.defaultValue &&
+          !field.clearValue
+        ) {
+          setConstructFormData((prev) => ({
+            ...prev,
+            [field.name]: '',
+          }));
         }
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData]);
-
   useEffect(() => {
     if (Object.keys(constructFormData).length === 0) return;
     const keyContactSection = formData?.find(
@@ -979,61 +996,92 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     switch (field.type) {
       case 'text':
         return (
-          <input
-            type={field.type}
-            name={field.name}
-            placeholder={field.placeholder}
-            autoComplete='off'
-            className={
-              'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
-              isError +
-              fieldDisabled +
-              (field.disabled
-                ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
-                : '')
-            }
-            disabled={field.disabled}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-              if (field.formatCostValue) {
-                const cleanValue = removeFormatCostValue(inputValue);
-                // Only format if it's a valid number
-                if (/^\d*\.?\d*$/.test(cleanValue)) {
-                  const formattedValue = formatCostValue(cleanValue);
-                  // Update the input display value
-                  e.target.value = formattedValue;
-                  // Store the clean value in form data for processing
-                  handleChange(cleanValue);
+          <div
+            className={`flex items-center w-full rounded-xs 
+    ${field.prefixValue ? 'focus-within:border focus-within:border-blue-400' : ''} 
+    ${field.error ? '' : 'border border-transparent'}
+  `}
+          >
+            {field.prefixValue && (
+              <Tooltip
+                title={field.prefixValue}
+                placement='top'
+                arrow
+                disableInteractive
+              >
+                <div
+                  className={`flex-shrink-0 max-w-[35%] pl-3 pr-1 py-1.5 h-[32px] flex items-center text-[13px]
+        rounded-l-xs border border-r overflow-hidden text-ellipsis whitespace-nowrap cursor-default
+        ${
+          field.error
+            ? 'border-red-500 bg-gray-100 text-gray-600'
+            : 'border-[#CBD6E2] bg-gray-100 text-gray-600'
+        }
+      `}
+                >
+                  <span className='block overflow-hidden text-ellipsis whitespace-nowrap'>
+                    {field.prefixValue}
+                  </span>
+                </div>
+              </Tooltip>
+            )}
+
+            <input
+              type={field.type}
+              name={field.name}
+              placeholder={field.placeholder}
+              autoComplete='off'
+              className={`placeholder-[#7D98B6] outline-none w-full sm:text-sm px-3 h-[32px]
+      ${field.prefixValue ? 'border-y border-r border-[#CBD6E2] rounded-r-xs' : 'border border-[#CBD6E2] rounded-xs focus:border-2 focus:border-blue-400'}
+      ${isError} ${fieldDisabled} ${
+        field.disabled
+          ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
+          : ''
+      }`}
+              maxLength={field.maxLength}
+              disabled={field.disabled}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (field.formatCostValue) {
+                  const cleanValue = removeFormatCostValue(inputValue);
+                  // Only format if it's a valid number
+                  if (/^\d*\.?\d*$/.test(cleanValue)) {
+                    const formattedValue = formatCostValue(cleanValue);
+                    // Update the input display value
+                    e.target.value = formattedValue;
+                    // Store the clean value in form data for processing
+                    handleChange(cleanValue);
+                  } else {
+                    handleChange(inputValue);
+                  }
                 } else {
                   handleChange(inputValue);
                 }
-              } else {
-                handleChange(inputValue);
-              }
-            }}
-            onBlur={(e) => {
-              if (field.formatCostValue) {
-                // Reformat on blur to ensure proper formatting
-                const inputValue = e.target.value;
-                const cleanValue = removeFormatCostValue(inputValue);
-                if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
-                  const formattedValue = formatCostValue(cleanValue);
-                  e.target.value = formattedValue;
+              }}
+              onBlur={(e) => {
+                if (field.formatCostValue) {
+                  // Reformat on blur to ensure proper formatting
+                  const inputValue = e.target.value;
+                  const cleanValue = removeFormatCostValue(inputValue);
+                  if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                    const formattedValue = formatCostValue(cleanValue);
+                    e.target.value = formattedValue;
+                  }
                 }
+              }}
+              value={
+                field.formatCostValue && fieldValue
+                  ? formatCostValue(fieldValue)
+                  : field.formatCostValue && field.defaultValue
+                    ? formatCostValue(field.defaultValue)
+                    : fieldValue || field.defaultValue || ''
               }
-            }}
-            value={
-              field.formatCostValue && fieldValue
-                ? formatCostValue(fieldValue)
-                : field.formatCostValue && field.defaultValue
-                  ? formatCostValue(field.defaultValue)
-                  : fieldValue || field.defaultValue || ''
-            }
-          />
+            />
+          </div>
         );
       case 'file':
         return (
-          <div className='w-full flex items-center justify-between gap-2'>
+          <div className='w-full flex items-center gap-2'>
             <input
               id='upload-logo'
               type={field.type}
@@ -1068,14 +1116,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               )}
             </div>
 
+            {/* Browse button */}
             <TextButton
               label='Browse'
               sx={{
-                height: '32px !important',
-                minWidth: '26%',
-                maxWidth: '26%',
+                height: '32px',
+                minWidth: '90px',
                 fontSize: '13px',
-                fontWeight: '400',
+                fontWeight: 400,
+                whiteSpace: 'nowrap',
               }}
               disabled={field.disabled}
               onClick={() => {
@@ -1171,6 +1220,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 '&.Mui-disabled': {
                   backgroundColor: '#f3f4f6',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: field.error
+                      ? '1px solid #ef4444 !important'
+                      : '1px solid #CBD6E2 !important',
+                    opacity: 1,
+                  },
+                  '& .MuiSelect-select': {
+                    color: '#7D98B6',
+                    WebkitTextFillColor: '#7D98B6',
+                  },
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   border: field.error
@@ -1221,6 +1280,165 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </div>
         );
       }
+      case 'multiSelect': {
+        const fieldValue =
+          constructFormData[field.name] || field.defaultValue || [];
+
+        // Ensure fieldValue is always an array and filter out any empty/null values
+        const safeFieldValue = Array.isArray(fieldValue)
+          ? fieldValue.filter(
+              (item) => item !== null && item !== undefined && item !== ''
+            )
+          : [];
+
+        return (
+          <div className='w-full'>
+            <Select
+              multiple
+              name={field.name}
+              className={
+                'custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px] ' +
+                (safeFieldValue.length === 0 ? 'text-[#7D98B6] ' : '') +
+                isError +
+                fieldDisabled
+              }
+              value={safeFieldValue} // Use the safe filtered array
+              onChange={(e) => {
+                const { value } = e.target;
+                // Also filter the incoming values to remove empty/null
+                const filteredValue =
+                  typeof value === 'string'
+                    ? value
+                        .split(',')
+                        .filter(
+                          (item) =>
+                            item !== null && item !== undefined && item !== ''
+                        )
+                    : value.filter(
+                        (item) =>
+                          item !== null && item !== undefined && item !== ''
+                      );
+                handleChange(filteredValue);
+              }}
+              disabled={field.disabled}
+              displayEmpty
+              fullWidth
+              size='small'
+              renderValue={(selected) => {
+                const selectedArray = selected as string[];
+                // Use the filtered selected array for display
+                const filteredSelected = selectedArray.filter(
+                  (item) => item !== null && item !== undefined && item !== ''
+                );
+
+                if (filteredSelected.length === 0 && field.placeholder) {
+                  return (
+                    <span style={{ color: '#7D98B6' }}>
+                      {field.placeholder}
+                    </span>
+                  );
+                }
+                return filteredSelected
+                  .map(
+                    (val) =>
+                      field.options?.find((opt) => opt.value === val)?.label ??
+                      val
+                  )
+                  .join(', ');
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxWidth: 300,
+                    maxHeight: 'calc(100vh - 420px)',
+                    marginTop: '4px',
+                    boxShadow:
+                      'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                    '& .MuiMenuItem-root': {
+                      fontSize: '13px',
+                      padding: '6px 12px',
+                    },
+                  },
+                },
+              }}
+              sx={{
+                height: '32px',
+                fontSize: '13px',
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid #60A5FA',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused': {
+                    boxShadow: 'none',
+                  },
+                },
+                '.MuiSelect-select': {
+                  padding: '6px 6px',
+                  color: safeFieldValue.length === 0 ? '#7D98B6' : 'black',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f3f4f6',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: field.error
+                      ? '1px solid #ef4444 !important'
+                      : '1px solid #CBD6E2 !important',
+                    opacity: 1,
+                  },
+                  '& .MuiSelect-select': {
+                    color: '#7D98B6',
+                    WebkitTextFillColor: '#7D98B6',
+                  },
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                  borderRadius: '2px',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                },
+                '& svg': {
+                  color: '#7D98B6',
+                },
+              }}
+            >
+              {field?.options?.map((option, i) => (
+                <MenuItem
+                  key={i}
+                  value={option.value}
+                  title={option.label}
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    '&.Mui-selected': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  <Checkbox
+                    size='small'
+                    checked={safeFieldValue.indexOf(option.value) > -1}
+                    sx={{
+                      color: '#CBD6E2',
+                      '&.Mui-checked': {
+                        color: '#1755E7',
+                      },
+                      padding: '0px',
+                      mr: 1,
+                    }}
+                  />
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </div>
+        );
+      }
+
       case 'expandselect': {
         const fieldValue =
           (constructFormData[field.name] || field.defaultValue) ?? '';
@@ -1488,9 +1706,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <div className='flex gap-4'>
             {field?.options?.map((option, i) => (
-              <label key={i} className='m-0'>
+              <label key={i} className='m-0 flex items-center gap-1'>
                 <Checkbox
-                  sx={{ p: 0.75 }}
+                  sx={{
+                    p: 0.75,
+                    color: '#7D98B6', // unchecked color (light blue-gray)
+                    '&.Mui-checked': {
+                      color: '#1976d2', // blue when checked
+                    },
+                  }}
                   size='small'
                   checked={
                     (constructFormData[field.name] as string[])?.includes(
@@ -1561,6 +1785,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })();
 
         const customMaxDate: Dayjs | undefined = (() => {
+          const hasMax = !!field?.maxDate;
+          const maxDate = hasMax ? dayjs(field.maxDate) : undefined;
+
+          // If allowFutureDates = true
+          if (field.allowFutureDates) {
+            // Case 2: maxDate provided → highest priority
+            if (hasMax) return maxDate;
+
+            // Case 1: allow all future dates
+            return undefined;
+          }
           if (isEndDateField && startDateValue) {
             return field?.maxDate
               ? dayjs(field.maxDate).isBefore(today)
@@ -1587,11 +1822,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               minDate={customMinDate || dayjs('1950-01-01')}
               maxDate={customMaxDate}
-              value={fieldValue ? dayjs(fieldValue, 'YYYY-MM-DD') : null}
+              value={
+                fieldValue
+                  ? dayjs(fieldValue, 'YYYY-MM-DD').isValid()
+                    ? dayjs(fieldValue, 'YYYY-MM-DD')
+                    : dayjs(fieldValue, 'YYYY-MMM-DD').isValid()
+                      ? dayjs(fieldValue, 'YYYY-MMM-DD')
+                      : null
+                  : null
+              }
               disabled={field.disabled}
               format='YYYY-MMM-DD'
               referenceDate={
-                customMaxDate ? dayjs(customMinDate) : dayjs(customMaxDate)
+                field.customDateOpen
+                  ? dayjs(field.customDateOpen)
+                  : customMinDate
+                    ? dayjs(customMinDate)
+                    : customMaxDate
+                      ? dayjs(customMaxDate)
+                      : dayjs()
               }
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
@@ -1605,11 +1854,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   newValue ? dayjs(newValue).format('YYYY-MM-DD') : null
                 );
               }}
-              shouldDisableDate={
-                field.disableFutureDates
-                  ? (date) => dayjs(date).isAfter(today, 'day')
-                  : undefined
-              }
+              shouldDisableDate={(date) => {
+                if (
+                  field.disableFutureDates &&
+                  dayjs(date).isAfter(today, 'day')
+                ) {
+                  return true;
+                }
+                if (
+                  field.disableDatesBefore &&
+                  dayjs(date).isBefore(dayjs(field.disableDatesBefore), 'day')
+                ) {
+                  return true;
+                }
+                return false;
+              }}
               slots={{
                 openPickerIcon: () => (
                   <CalendarIcon alt='calendar' className='w-4 h-4' />
@@ -1647,6 +1906,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
                       borderRadius: '2px',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isError
+                          ? '#EF4444 !important'
+                          : '#CBD6E2 !important',
+                      },
                       '& input': {
                         fontWeight: 400,
                         fontSize: '13px',
@@ -1660,6 +1924,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         '&[value="YYYY-MM-DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
+                        },
+                        '&[value=""]': {
+                          color: '#00295C !important',
+                          WebkitTextFillColor: '#00295C !important',
                         },
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -1709,9 +1977,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               value={dayjs(fieldValue, 'MM/DD')}
               disabled={field.disabled}
-              format='MMM/DD'
-              views={['month', 'day']}
-              open={false}
+              format={field.dateFormat || 'MMM/DD'}
+              views={field.views || ['month', 'day']}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('MM/DD'));
               }}
@@ -1810,6 +2077,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'emptyFeild':
         return <></>;
+      case 'custom':
+        return customFields?.[field.name] || null;
       default:
         return null;
     }
@@ -1887,7 +2156,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Validate required fields
           if (field.required && !hasValue) {
             hasError = true;
-            return { ...field, error: 'Field is required' };
+            return {
+              ...field,
+              error: field.requiredErrorMessage || 'Field is required',
+            };
           }
 
           if (field.type === 'file' && logo) {
@@ -1947,6 +2219,124 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
+          // Enhanced Date Validation for Case Dates
+          if (field.type === 'date' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
+
+            // Basic date format validation
+            if (!isValidDate(dateValue, 'YYYY-MM-DD')) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Please enter a valid date in YYYY-MM-DD format',
+              };
+            }
+
+            // Case-specific date validation
+            if (field.name === 'case_startdate') {
+              const plannedDate = constructFormData[
+                'planned_submission_date'
+              ] as string;
+              const statutoryDate = constructFormData[
+                'statutory_submission_date'
+              ] as string;
+
+              // Start Date must be ≤ Planned Submission Date
+              if (plannedDate && dayjs(dateValue).isAfter(dayjs(plannedDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Start Date must be before or equal to Planned Submission Date',
+                };
+              }
+
+              // Start Date must be ≤ Statutory Submission Date
+              if (
+                statutoryDate &&
+                dayjs(dateValue).isAfter(dayjs(statutoryDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Start Date must be before or equal to Statutory Submission Date',
+                };
+              }
+            }
+
+            if (field.name === 'planned_submission_date') {
+              const startDate = constructFormData['case_startdate'] as string;
+              const statutoryDate = constructFormData[
+                'statutory_submission_date'
+              ] as string;
+
+              // Planned Submission Date must be ≥ Start Date
+              if (startDate && dayjs(dateValue).isBefore(dayjs(startDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Planned Submission Date must be after or equal to Start Date', // Updated error message
+                };
+              }
+
+              // Planned Submission Date must be ≤ Statutory Submission Date
+              if (
+                statutoryDate &&
+                dayjs(dateValue).isAfter(dayjs(statutoryDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Planned Submission Date must be before or equal to Statutory Submission Date',
+                };
+              }
+            }
+
+            if (field.name === 'statutory_submission_date') {
+              const startDate = constructFormData['case_startdate'] as string;
+              const plannedDate = constructFormData[
+                'planned_submission_date'
+              ] as string;
+
+              // Statutory Submission Date must be ≥ Start Date
+              if (startDate && dayjs(dateValue).isBefore(dayjs(startDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Statutory Submission Date must be after or equal to Start Date',
+                };
+              }
+
+              // Statutory Submission Date must be ≥ Planned Submission Date
+              if (
+                plannedDate &&
+                dayjs(dateValue).isBefore(dayjs(plannedDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Statutory Submission Date must be after or equal to Planned Submission Date',
+                };
+              }
+
+              // Statutory Submission Date must not be before current date
+              const currentDate = dayjs().startOf('day');
+              if (dayjs(dateValue).isBefore(currentDate)) {
+                hasError = true;
+                const fiscalYear = constructFormData['fiscal_year'] as string;
+                return {
+                  ...field,
+                  error: `Statutory Submission for Fiscal Year ${fiscalYear} is closed. Submissions are no longer allowed.`,
+                };
+              }
+            }
+          }
+
           // Date validation
           if (field.type === 'fiscalDate' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
@@ -1956,6 +2346,105 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ...field,
                 error: 'Invalid date',
               };
+            }
+          }
+
+          if (field.type === 'date') {
+            if (
+              field.name === 'effective_start_datetime' ||
+              field.name === 'effective_end_datetime'
+            ) {
+              const startDate = constructFormData[
+                'effective_start_datetime'
+              ] as string;
+              const endDate = constructFormData[
+                'effective_end_datetime'
+              ] as string;
+
+              // Relationship validation between start and end dates
+              if (!startDate && endDate) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Effective Start Date is required if Effective End Date is provided',
+                };
+              }
+
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_start_datetime'
+                        ? 'Effective Start Date cannot be the same as Effective End Date'
+                        : 'Effective End Date cannot be the same as Effective Start Date',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_start_datetime'
+                        ? 'Effective Start Date cannot be after Effective End Date'
+                        : 'Effective End Date cannot be before Effective Start Date',
+                  };
+                }
+              }
+            }
+
+            if (
+              (isFrom === 'geoBasedRuleForm' &&
+                field.name === 'effective_start_date') ||
+              field.name === 'effective_end_date'
+            ) {
+              const startDate = constructFormData[
+                'effective_start_date'
+              ] as string;
+              const endDate = constructFormData['effective_end_date'] as string;
+
+              // Relationship validation between start and end dates
+              if (!startDate && endDate) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Effective Start Date is required if Effective End Date is provided',
+                };
+              }
+
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_start_date'
+                        ? 'Effective Start Date cannot be the same as Effective End Date'
+                        : 'Effective End Date cannot be the same as Effective Start Date',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_start_date'
+                        ? 'Effective Start Date cannot be after Effective End Date'
+                        : 'Effective End Date cannot be before Effective Start Date',
+                  };
+                }
+              }
             }
           }
 
@@ -2808,6 +3297,65 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     isHalf: boolean,
     index: number
   ) => {
+    const isFirstOneRestTwo = section.gridMode === 'first-one-rest-two';
+
+    if (isFirstOneRestTwo) {
+      return (
+        <div
+          className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} ${!formData?.[index + 1]?.sectionName ? 'mb-1' : 'mb-4'} `}
+        >
+          {section.fields.map((field, j) => {
+            if (field.hide) return null;
+
+            let colSpanClass = 'md:col-span-1';
+            if (j === 0) {
+              // First field takes 1 column
+              colSpanClass = 'md:col-span-1';
+            } else {
+              // Remaining fields take 2 columns
+              colSpanClass = 'md:col-span-2';
+            }
+
+            return (
+              <div key={j} className={`${colSpanClass} flex flex-col`}>
+                <label
+                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                  htmlFor={field.name}
+                >
+                  {field.label}
+                  {field.required && <span className='text-red-500'> *</span>}
+                </label>
+                <div>
+                  {field.type === 'website' ? (
+                    <div
+                      className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                    >
+                      <div className='h-[32px]  box-border flex items-center gap-[4px]'>
+                        <span className='pl-[10px] text-[13px] text-[#425A76]'>
+                          https://
+                        </span>
+                        <VerticalSeparatorIcon alt-='separtor' />
+                        {getFields(field)}
+                      </div>
+                    </div>
+                  ) : (
+                    getFields(field)
+                  )}
+
+                  {field.error && (
+                    <span className='text-[12px] text-red-400 col-span-full'>
+                      {field.error}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Original logic for other cases
     return (
       <div
         className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} ${!formData?.[index + 1]?.sectionName ? 'mb-1' : 'mb-4'} `}
@@ -2820,11 +3368,32 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}
             >
               <label
-                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                className={`text-[13px] inline-flex items-center gap-1 text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                 htmlFor={field.name}
               >
                 {field.label}
                 {field.required && <span className='text-red-500'> *</span>}
+                {field.labelTooltip?.showTooltip &&
+                  field.labelTooltip.tooltipMessage && (
+                    <Tooltip
+                      title={field.labelTooltip.tooltipMessage || ''}
+                      arrow
+                      placement='top'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            mr: 1,
+                          },
+                        },
+                      }}
+                    >
+                      <span className='w-5 inline-flex items-center justify-center cursor-pointer'>
+                        <React.Suspense fallback={null}>
+                          <ErrorInfoIcon className='w-5 h-5 -ml-0.5 p-[4px] [&>path]:fill-[#9fa0a1]' />
+                        </React.Suspense>
+                      </span>
+                    </Tooltip>
+                  )}
               </label>
               <div>
                 {field.type === 'website' ? (
@@ -2892,10 +3461,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       <form onSubmit={submitData} ref={formRef}>
         {formData?.map((section, i) => {
           const isHalf = section.fillType === 'half';
+
           if (section.hide) return null;
           return (
             <div key={i}>
-              {section.sectionName && (
+              {section.sectionName && section.sectionName !== 'emptyName' && (
                 <h4
                   className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
                 >
@@ -2907,7 +3477,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   ? loadSectionsWithoutTitle(section)
                   : section.sectionName === 'key_contacts_list'
                     ? loadKeyContactSection(section)
-                    : loadDefaultSections(section, isHalf, i)}
+                    : loadDefaultSections(
+                        section,
+                        isHalf,
+                        i
+                        // isFirstOneRestTwo
+                      )}
               </>
             </div>
           );

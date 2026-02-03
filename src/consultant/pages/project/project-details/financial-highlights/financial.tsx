@@ -16,6 +16,8 @@ import { useFetchState } from '../../../../services/account';
 import { FilterValue } from '../../../account-details-sidebar/components/filter/filterType';
 import { useGetResourceType } from '../../../../services/resource-list';
 import {
+  ActivityDropdownItem,
+  ColorCode,
   ExportType,
   ProjectFinancialResourceExportParams,
 } from '../../../../types';
@@ -46,6 +48,7 @@ interface ProjectFinancialProps {
   ) => void;
   setExportType: (type: ExportType) => void;
   onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Financial: React.FC<ProjectFinancialProps> = ({
@@ -53,6 +56,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   setExportType,
   setResCostExportParams,
   onQreAdjustmentUpdated,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -203,13 +207,20 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         onFilterChange={handleFilterChange}
         showSearch={tabParam === 'resource_cost'}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title='Financial Summary'
-        titleIcon={<FinancialIcon alt='financial-header-icon' />}
+        titleIcon={
+          <FinancialIcon
+            alt='financial-header-icon'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        }
         count={resourceCostCount}
         showItemCount={tabParam === 'resource_cost'}
-        iconBg='#D2E6FF'
+        iconBg={ColorCode.projectBgColor}
         bgType='circle'
         buttons={headerButtons}
       />

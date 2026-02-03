@@ -1,12 +1,13 @@
 import {
   AccountsIcon,
-  AttachmentIcon,
+  AttachmentsAdminIcon,
   CaseIcon,
   DashboardIcon,
   HelpIcon,
-  NotesIcon,
+  NotesAdminSideIcon,
   ProjectsIcon,
   SettingsIcon,
+  TaskTemplateIcon,
   TimeLineIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
@@ -14,10 +15,12 @@ import { INavItem } from '../../consultant/types';
 import {
   ACCOUNT,
   ATTACHMENTS,
+  CASE,
   MAIN_ROUTE,
   NOT_FOUND,
   NOTES,
   PROJECT,
+  TASKS,
 } from '../../routes';
 
 export const accountNavItems: INavItem[] = [
@@ -29,6 +32,7 @@ export const accountNavItems: INavItem[] = [
     type: 'link',
     matchLink: MAIN_ROUTE,
     noRedirect: true,
+    activePath: 'dashboard',
   },
   {
     id: MenuOption.ACCOUNTS,
@@ -37,6 +41,7 @@ export const accountNavItems: INavItem[] = [
     link: ACCOUNT,
     type: 'link',
     matchLink: ACCOUNT,
+    activePath: 'account',
   },
   {
     id: MenuOption.PROJECTS,
@@ -45,6 +50,7 @@ export const accountNavItems: INavItem[] = [
     link: PROJECT,
     type: 'link',
     matchLink: PROJECT,
+    activePath: 'project',
   },
   {
     id: MenuOption.TIMESHEET,
@@ -58,9 +64,10 @@ export const accountNavItems: INavItem[] = [
     id: MenuOption.CASES,
     icon: CaseIcon,
     name: 'Cases',
-    link: NOT_FOUND,
+    link: CASE,
     type: 'link',
-    matchLink: '',
+    matchLink: CASE,
+    activePath: 'case',
   },
   // Global Interactions removed as of now will be added in future if required
   // {
@@ -73,19 +80,30 @@ export const accountNavItems: INavItem[] = [
   // },
   {
     id: MenuOption.NOTES,
-    icon: NotesIcon,
+    icon: NotesAdminSideIcon,
     name: 'Notes',
     link: NOTES,
     type: 'link',
     matchLink: NOTES,
+    activePath: 'notes',
   },
   {
     id: MenuOption.ATTACHMENTS,
-    icon: AttachmentIcon,
+    icon: AttachmentsAdminIcon,
     name: 'Attachments',
     link: ATTACHMENTS,
     type: 'link',
     matchLink: ATTACHMENTS,
+    activePath: 'attachments',
+  },
+  {
+    id: MenuOption.TASKS,
+    icon: TaskTemplateIcon,
+    name: 'Tasks',
+    link: TASKS,
+    type: 'link',
+    matchLink: TASKS,
+    activePath: 'tasks',
   },
   {
     id: '',

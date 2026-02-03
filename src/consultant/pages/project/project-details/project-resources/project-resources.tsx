@@ -1,12 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import {
-  AcceptIcon,
-  CreateResourceIcon,
-  RejectIcon,
-  ResourcesIcon,
-} from '../../../../../assets';
+import { AcceptIcon, RejectIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import {
@@ -15,6 +10,7 @@ import {
   useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
+  CHECKLIST_CREATE,
   NOTES_CREATE,
   PROJECT_RESOURCE_CREATE,
   PROJECT_RESOURCE_EDIT,
@@ -49,6 +45,8 @@ import {
 import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import {
+  ActivityDropdownItem,
+  ColorCode,
   ExportType,
   FormFiscalDateType,
   SelectOption,
@@ -57,6 +55,11 @@ import {
 import { useFetchState } from '../../../../services/account';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import Uploads from '../../../../../components/Attachments/upload';
+
+enum ActionEnum {
+  ACCEPT = 'accept',
+  REJECT = 'reject',
+}
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -85,6 +88,9 @@ export const ProjectResources = ({
   setAttachmentParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
+  activityMenuItems,
+  isProjectSignedOff,
 }: {
   projectID?: string;
   accountData?: {
@@ -99,6 +105,9 @@ export const ProjectResources = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
+  activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -122,7 +131,10 @@ export const ProjectResources = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
+  // const [actionFlag, setActionFlag] = useState<null | ActionEnum>(null);
+  const [loadingRows, setLoadingRows] = useState<
+    Record<string, ActionEnum | null>
+  >({});
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -151,6 +163,7 @@ export const ProjectResources = ({
   const viewDetails = !!checkDetail;
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -287,10 +300,14 @@ export const ProjectResources = ({
         ':resourceId',
         resourceData.rid
       );
+      const PFY = projectFiscalDate;
       const queryParams = new URLSearchParams({
         account_Id: resourceData.account_rid,
         project_Id: resourceData?.project_fiscal_rid,
         projectCode: projectCode ?? '',
+        PFY: PFY ? JSON.stringify(PFY) : '',
+        account_name: accountData?.accountName || '',
+        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -368,7 +385,7 @@ export const ProjectResources = ({
       onClick: (row: ProjectResourcesListType) =>
         handleEditProjectResource(row),
       hide: !isProjectResourceFieldsEditable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
   ];
   const isResourceCreateViewEnable = checkPermission(
@@ -391,6 +408,11 @@ export const ProjectResources = ({
   const isNoteCreateEnable = checkPermission(
     permission,
     AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
   );
 
   const handleOpen = () => {
@@ -419,13 +441,31 @@ export const ProjectResources = ({
   const handleCreateNote = () => {
     const projectResourceId = searchParams.get('pro_res_id');
     const path = generatePath(NOTES_CREATE, {
-      module: 'account',
+      module: 'project',
     });
     const queryParams = new URLSearchParams({
       accountId: accountID,
       entityLevel: 'project_resource',
       entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -452,6 +492,14 @@ export const ProjectResources = ({
       hide: !viewDetails || !isNoteCreateEnable,
     },
     {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !viewDetails || !isChecklistCreateEnable,
+    },
+    {
       label: viewDetails ? 'Edit' : 'New',
       variant: 'outlined' as const,
       onClick: () =>
@@ -462,7 +510,7 @@ export const ProjectResources = ({
       hide: viewDetails
         ? !isProjectResourceFieldsEditable
         : !isResourceCreateViewEnable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
     {
       label: 'Show/Hide Fields',
@@ -532,7 +580,8 @@ export const ProjectResources = ({
     handleCountry,
     region.isPending,
     permissionMap,
-    accountOrProjectInActive
+    accountOrProjectInActive,
+    isProjectSignedOff
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -545,8 +594,6 @@ export const ProjectResources = ({
       (pro) => pro.rid === rowId
     );
     if (!selectedProject) return;
-
-    console.log('selectedProject', selectedProject);
 
     let netCost = '';
 
@@ -653,6 +700,12 @@ export const ProjectResources = ({
     .map((id) => projectResourcesColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
   const handleAccept = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row
+    setLoadingRows((prev) => ({
+      ...prev,
+      [row.rid as string]: ActionEnum.ACCEPT,
+    }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -660,15 +713,28 @@ export const ProjectResources = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
 
   const handleReject = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row
+    setLoadingRows((prev) => ({
+      ...prev,
+      [row.rid as string]: ActionEnum.REJECT,
+    }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -676,10 +742,17 @@ export const ProjectResources = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
@@ -700,20 +773,28 @@ export const ProjectResources = ({
         return [];
     }
 
+    // Get the loading state for this specific row
+    const rowAction = loadingRows[row.rid as string];
+    const isRowLoading = !!rowAction;
+
     return [
       {
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
-        onClick: handleAccept,
+        onClick: () => handleAccept(row),
         icon: AcceptIcon,
+        loading: rowAction === ActionEnum.ACCEPT,
+        disabled: isRowLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff] min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
-        onClick: handleReject,
+        onClick: () => handleReject(row),
         icon: RejectIcon,
+        loading: rowAction === ActionEnum.REJECT,
+        disabled: isRowLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },
     ];
   };
@@ -743,6 +824,8 @@ export const ProjectResources = ({
         projectResourceProjectID={projectID}
         showSearch={viewDetails ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={!viewDetails && !showUploads}
+        activityMenuItems={activityMenuItems}
       />
       <>
         {showUploads ? (
@@ -750,6 +833,7 @@ export const ProjectResources = ({
             accountId={accountID}
             attachID={resID}
             onUploadSuccess={handleDetailReFetch}
+            projectFiscalYear={projectFiscalYear}
           />
         ) : (
           <>
@@ -759,21 +843,18 @@ export const ProjectResources = ({
               }
               title={viewDetails ? 'Project Resource' : 'Project Resources'}
               titleIcon={
-                viewDetails ? (
-                  <ResourcesIcon
-                    alt='resource header icon'
-                    className='[&>path]:stroke-white w-[14px] h-[14px]'
-                  />
-                ) : (
-                  <CreateResourceIcon />
-                )
+                <ResourcesIcon
+                  alt='project-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
               }
               count={totalItems}
               showBackArrow={viewDetails}
               headerButtons={headerButtons}
               projectResourceNumber={resourceData?.r_number}
               onBackClick={handleBackClick}
-              iconBg={viewDetails ? '#7785ff' : ''}
+              iconBg={ColorCode.projectBgColor}
+              bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {showProjectResourceDetails ? (

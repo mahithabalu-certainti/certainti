@@ -8,7 +8,12 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { NOTES_CREATE, RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
+import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
+  RESOURCE,
+  RESOURCE_CREATE,
+} from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
 import {
   useGetResourceType,
@@ -55,7 +60,12 @@ import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ColorCode,
+  ExportType,
+  SelectOption,
+} from '../../../../types';
 import { FilterValue } from '../../components/filter/filterType';
 import { ResourcesIcon } from '../../../../../assets';
 
@@ -71,6 +81,7 @@ interface ResourceProps {
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
   setExportType?: (type: ExportType) => void;
+  activityMenuItems?: ActivityDropdownItem[];
 }
 
 export interface ResourceTabs {
@@ -128,6 +139,12 @@ const tabs: TabMenus[] = [
     hide: false,
     id: AllPermissions.NOTES_VIEW_EDIT,
   },
+  {
+    label: 'Checklists',
+    value: 'checklists',
+    hide: false,
+    id: AllPermissions.CHECKLIST_VIEW_EDIT,
+  },
 ];
 
 const Resource: React.FC<ResourceProps> = ({
@@ -135,6 +152,7 @@ const Resource: React.FC<ResourceProps> = ({
   permission,
   setTableParams,
   setExportType,
+  activityMenuItems,
 }) => {
   const [resourceTab, setResourceTab] = useState(resourceTabs);
   const [tabMenus, setTabMenus] = useState<TabMenus[]>(tabs);
@@ -193,6 +211,14 @@ const Resource: React.FC<ResourceProps> = ({
   const [notesOrder, setNotesOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [notesOrderBy, setNotesOrderBy] = useState<string>('r_number');
 
+  //Checklist
+  const [refreshChecklists, setRefreshChecklists] = useState<number>(
+    Date.now()
+  );
+  const [checklistsOrder, setChecklistsOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [checklistsOrderBy, setChecklistsOrderBy] =
+    useState<string>('r_number');
+
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const isModalOpen = Boolean(columnAnchorEl);
@@ -213,6 +239,11 @@ const Resource: React.FC<ResourceProps> = ({
   const { accountid } = useParams();
   const resId = searchParams.get('res_id');
   const source = searchParams.get('source');
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+  const noteId = searchParams.get('note_id');
+  const noteViewDetails = !!noteId;
+  const checklistId = searchParams.get('checklist_id') || '';
+  const checklistDetails = !!checklistId;
 
   // Permission Mangement
   const isAccountResourceFieldsEditable = useMemo(
@@ -396,6 +427,8 @@ const Resource: React.FC<ResourceProps> = ({
     searchParams.set('tab', newValue);
     searchParams.delete('attachment_entity');
     searchParams.delete('note_id');
+    searchParams.delete('checklist_id');
+    searchParams.delete('origin');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };
@@ -461,6 +494,7 @@ const Resource: React.FC<ResourceProps> = ({
     });
   };
   const showUploads = searchParams.get('attachment_entity') === 'resource';
+  const attachmentEntity = searchParams.get('attachment_entity');
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -503,6 +537,8 @@ const Resource: React.FC<ResourceProps> = ({
       return true;
     } else if (value === 'notes') {
       return true;
+    } else if (value === 'checklists') {
+      return true;
     }
     return accountInActive;
   };
@@ -528,6 +564,11 @@ const Resource: React.FC<ResourceProps> = ({
     AllPermissions.NOTES_CREATE
   );
 
+  const isChecklistCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.CHECKLIST_CREATE
+  );
+
   const handleBackClick = () => {
     if (source === 'timesheet') {
       const timesheetId = searchParams.get('timesheet_id');
@@ -546,6 +587,9 @@ const Resource: React.FC<ResourceProps> = ({
       searchParams.delete('res_id');
       searchParams.delete('attachment_entity');
       searchParams.delete('tab');
+      searchParams.delete('note_id');
+      searchParams.delete('checklist_id');
+      searchParams.delete('origin');
       navigate(
         {
           pathname: location.pathname,
@@ -572,6 +616,23 @@ const Resource: React.FC<ResourceProps> = ({
       entityLevel: 'resource',
       entityId: resourceId || '',
       source: `Resource > ${resourceNumber}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = () => {
+    const accountId = accountid ?? '';
+    const resourceId = searchParams.get('res_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource',
+      entityId: resourceId || '',
+      source: `Resource > ${resourceNumber}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -582,7 +643,7 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '120px' },
-      hide: value !== 'details' || !attachmentCreateEnable,
+      hide: !value || !attachmentCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
@@ -590,7 +651,15 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleCreateNote(),
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
-      hide: value !== 'details' || !isNoteCreateEnable,
+      hide: !value || !isNoteCreateEnable,
+      disabled: accountInActive ? accountInActive : resourceInActive,
+    },
+    {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !value || !isChecklistCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
@@ -605,14 +674,18 @@ const Resource: React.FC<ResourceProps> = ({
       hide:
         value === 'details'
           ? !isAccountResourceFieldsEditable
-          : handleCreateButtonEnable(),
+          : handleCreateButtonEnable() || !!attachmentEntity,
     },
     {
       label: 'Show/Hide Fields',
       variant: 'outlined' as const,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
-      hide: value === 'details',
+      hide:
+        value === 'details' ||
+        noteViewDetails ||
+        checklistDetails ||
+        !!attachmentEntity,
       disabled: false,
     },
     {
@@ -713,6 +786,10 @@ const Resource: React.FC<ResourceProps> = ({
       updatedParams.sortBy = notesOrderBy;
       updatedParams.sortOrder = notesOrder;
       setExportType?.('resource_notes');
+    } else if (value === 'checklists') {
+      updatedParams.sortBy = checklistsOrderBy;
+      updatedParams.sortOrder = checklistsOrder;
+      setExportType?.('resource_checklist');
     } else {
       updatedParams.sortBy = sortField;
       updatedParams.sortOrder = sortOrder;
@@ -741,6 +818,8 @@ const Resource: React.FC<ResourceProps> = ({
     notesOrderBy,
     notesOrder,
     searchText,
+    checklistsOrderBy,
+    checklistsOrder,
   ]);
 
   const handlePageChange = (newPage: number) => {
@@ -805,6 +884,8 @@ const Resource: React.FC<ResourceProps> = ({
       setRefreshAttachments(Date.now());
     } else if (value === 'notes') {
       setRefreshNotes(Date.now());
+    } else if (value === 'checklists') {
+      setRefreshChecklists(Date.now());
     } else {
       setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     }
@@ -839,6 +920,11 @@ const Resource: React.FC<ResourceProps> = ({
         isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
       );
       setNotesOrderBy(apiSortBy);
+    } else if (value === 'checklists') {
+      setChecklistsOrder(
+        isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
+      );
+      setChecklistsOrderBy(apiSortBy);
     } else {
       setSortOrder(isSortByEmpty ? 'ASC' : apiOrder);
       setSortField(apiSortBy);
@@ -965,27 +1051,53 @@ const Resource: React.FC<ResourceProps> = ({
           isResoureceOverviewHide
             ? false
             : isResourceViewAllEnable
-              ? showUploads
+              ? showUploads ||
+                noteViewDetails ||
+                checklistDetails ||
+                !!attachmentEntity
                 ? false
                 : filterVisibility
               : false
         }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        showRefresh={showUploads ? false : true}
+        showRefresh={
+          showUploads ||
+          noteViewDetails ||
+          checklistDetails ||
+          !!attachmentEntity
+            ? false
+            : true
+        }
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         fieldOptions={fieldOptions}
         handleFilterChange={handleCategory}
-        showSearch={value === 'details' ? false : true}
+        showSearch={
+          value === 'details' ||
+          noteViewDetails ||
+          checklistDetails ||
+          !!attachmentEntity
+            ? false
+            : true
+        }
         searchDisabled={false}
         searchHidden={value === 'cost' || value === 'skill' ? true : false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
         resetSearch={resetSearch}
         onSearchReset={handleSearchReset}
+        showAddActivity={
+          showUploads ||
+          noteViewDetails ||
+          checklistDetails ||
+          !!attachmentEntity
+            ? false
+            : true
+        }
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads accountId={accountid} attachID={resId} />
@@ -1001,14 +1113,15 @@ const Resource: React.FC<ResourceProps> = ({
               titleIcon={
                 <ResourcesIcon
                   alt='resource header icon'
-                  className='[&>path]:stroke-white w-[14px] h-[14px]'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               headerButtons={headerButtons}
               showBackArrow={showBackArrow}
               onBackClick={handleBackClick}
-              iconBg='#7785ff'
-              bgType={showBackArrow ? 'react' : 'circle'}
+              iconBg={ColorCode.accountBgColor}
+              bgType='circle'
+              showCount={noteViewDetails || checklistDetails ? false : true}
             />
 
             {!viewResourceList && value && (
@@ -1046,6 +1159,11 @@ const Resource: React.FC<ResourceProps> = ({
                 setNotesOrderBy={setNotesOrderBy}
                 refreshAttachments={refreshAttachments}
                 refreshNotes={refreshNotes}
+                checklistsOrder={checklistsOrder}
+                setChecklistsOrder={setChecklistsOrder}
+                checklistsOrderBy={checklistsOrderBy}
+                setChecklistsOrderBy={setChecklistsOrderBy}
+                refreshChecklists={refreshChecklists}
                 setCount={setCount}
                 resourceInActive={resourceInActive}
                 setResourceInActive={setResourceInActive}

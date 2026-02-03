@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { ManageConfigSettingIcon } from '../../../assets';
+import { ManageSettingsIcon } from '../../../assets';
 import { FormBuilder } from '../../../components';
 import { ConfigureSettingsFormFields } from './helper';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -14,6 +14,7 @@ import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import { useToast } from '../../../hooks';
 import TextButton from '../../../components/button/text-button';
 import { BUTTON_STYLES } from '../manage-user-detail/styles';
+import { ColorCode } from '../../../consultant/types';
 
 type FormValueType = string | number | boolean | object | string[] | null;
 interface UpdateSettingsSuccess {
@@ -80,6 +81,7 @@ const ConfigureSetting = () => {
       !!data?.data.settings.client_id;
 
     setIdRequried(hasAnyIdValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formValues]);
 
   const handleFormSubmit = (values: object) => {
@@ -114,18 +116,15 @@ const ConfigureSetting = () => {
     }
   };
 
-  if (isLoading) {
-    return <SkeletonForm />;
-  }
   return (
     <>
       <div className='flex flex-col w-full'>
         <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
           <div className='flex h-[33px]'>
             <div className='flex items-center justify-center'>
-              <ManageConfigSettingIcon
+              <ManageSettingsIcon
                 alt='manage user group'
-                className='h-7 w-7 rounded-[2px] bg-[#495E74] p-[5px]'
+                className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
               />
               <div className='flex flex-col mx-2.5 pb-1'>
                 <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
@@ -153,41 +152,46 @@ const ConfigureSetting = () => {
                 maxWidth: '59px',
               }}
               loading={updateManageSettings.isPending}
+              disabled={isLoading}
             />
           </div>
         </div>
       </div>
-      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
-        <Box
-          className='bg-white'
-          sx={{
-            // minHeight: '560px',
-            // maxHeight: '560px',
-            overflowY: 'auto',
-            '& .grid': {
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr) !important',
-              gap: '1rem',
-            },
-            '& .grid > div': {
-              gridColumn: 'span 1 !important',
-            },
-          }}
-        >
-          <FormBuilder
-            key={JSON.stringify(data?.data.settings)}
-            data={ConfigureSettingsFormFields(
-              permissionMap,
-              emailRequried,
-              idRequried
-            )}
-            formRef={formRef}
-            outData={handleFormSubmit}
-            values={formValues}
-            onChange={onChangeField}
-          />
-        </Box>
-      </div>
+      {isLoading ? (
+        <SkeletonForm />
+      ) : (
+        <div className='flex flex-col gap-0 border-b border-[#CBD6E2] rounded-[2px] py-5'>
+          <Box
+            className='bg-white'
+            sx={{
+              // minHeight: '560px',
+              // maxHeight: '560px',
+              overflowY: 'auto',
+              '& .grid': {
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr) !important',
+                gap: '1rem',
+              },
+              '& .grid > div': {
+                gridColumn: 'span 1 !important',
+              },
+            }}
+          >
+            <FormBuilder
+              key={JSON.stringify(data?.data.settings)}
+              data={ConfigureSettingsFormFields(
+                permissionMap,
+                emailRequried,
+                idRequried
+              )}
+              formRef={formRef}
+              outData={handleFormSubmit}
+              values={formValues}
+              onChange={onChangeField}
+            />
+          </Box>
+        </div>
+      )}
     </>
   );
 };

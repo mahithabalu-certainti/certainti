@@ -1,4 +1,8 @@
-import { AccountList, FilterState } from '../../consultant/types';
+import {
+  AccountList,
+  FilterState,
+  FinancialHighlightsResponse,
+} from '../../consultant/types';
 
 export interface AccountState {
   userId: string;
@@ -9,4 +13,6 @@ export interface AccountState {
   error: string | null;
   fiscalYear: string;
   refetchGlobalAccounts: boolean;
+  dossierFinancialStatus: string;
+  financialData: FinancialHighlightsResponse | null;
 }

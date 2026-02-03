@@ -116,6 +116,7 @@ export interface NewProjectData {
   total_effort_subcon?: string | null;
   total_cost_fte?: string | null;
   total_cost_subcon?: string | null;
+  total_nonlabor_prj?: string | null;
   auto_send_ai_interaction?: boolean | string;
   auto_assessment?: boolean | string;
   auto_access_rd?: boolean;
@@ -139,6 +140,7 @@ export interface NewProjectData {
   project_fiscal_rid?: string;
   attachment?: AttachmentList[];
   project_rid?: string;
+  is_rd_claim_qualified?: boolean;
 }
 
 export interface ProjectTypeItem {
@@ -190,6 +192,8 @@ export type Project = {
   project_status: string;
   project_point_of_contact: string | null;
   technical_point_of_contact: string | null;
+  project_point_of_contact_email: string | null;
+  technical_point_of_contact_email: string | null;
   r_number: string;
   program_name: string | null;
   project_startdate: string | null;
@@ -215,6 +219,9 @@ export type Project = {
   _level?: number;
   currency_rid?: string;
   rd_percent_final?: string;
+  is_project_exists: boolean;
+  is_rd_trigger_qualified?: boolean;
+  is_rd_claim_qualified?: boolean;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;
@@ -245,13 +252,15 @@ export type ProjectFiscalSummary = {
   isInteractionMapped?: boolean;
   isKeyContactIncluded?: boolean;
   interactionKeyRecipients?: InteractionKeyRecipients[];
+  is_rd_trigger_qualified: boolean;
+  is_rd_claim_qualified?: boolean;
 };
 
 interface InteractionKeyRecipients {
-  rid: string
-  key_contact_name: string
-  key_contact_email: string
-  is_primary_contact: boolean
+  rid: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  is_primary_contact: boolean;
 }
 
 export type FiscalYearType = {
@@ -268,6 +277,7 @@ export type ProjectTiggerAIResponse = {
 interface ProjectItem {
   account_rid: string;
   project_fiscal_rid: string[];
+  case_rid?: string;
 }
 export type ProjectTriggerAIPayload = {
   data: ProjectItem[];

@@ -162,6 +162,8 @@ export type FieldConfig = {
   operatorOption?: Options[];
   hide?: boolean;
   onChange?: boolean;
+  isFutureDateEnabled?: boolean;
+  dependsOn?: string;
 };
 
 export interface FilterComponentProps {
@@ -192,6 +194,7 @@ export interface FilterModalProps {
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
   carryFilterData?: boolean;
+  resetFilterTrigger?: number;
 }
 
 export const StatusOptions = [

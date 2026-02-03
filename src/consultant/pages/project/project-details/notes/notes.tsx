@@ -10,7 +10,13 @@ import {
   FilterTypes,
   OverviewTabs,
 } from '../../../../../common-service';
-import { ExportType, NotesList, NotesListURLParams } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ColorCode,
+  ExportType,
+  NotesList,
+  NotesListURLParams,
+} from '../../../../types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -39,7 +45,7 @@ import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { useManageUserList } from '../../../../../admin/service';
+import { useGetUserOptions } from '../../../../services/case-team';
 
 const NotesTabs: OverviewTabs[] = [
   {
@@ -61,6 +67,7 @@ interface NotesProps {
   accountInActive: boolean;
   projectFiscalYear?: number | string;
   projectCode?: string;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Notes: React.FC<NotesProps> = ({
@@ -69,6 +76,7 @@ const Notes: React.FC<NotesProps> = ({
   accountInActive,
   projectFiscalYear,
   projectCode,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -110,14 +118,10 @@ const Notes: React.FC<NotesProps> = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
+  const userListData = useGetUserOptions(accountId);
 
   const { data, isLoading, isError } = useNotesList(
     {
@@ -167,9 +171,9 @@ const Notes: React.FC<NotesProps> = ({
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);
@@ -248,6 +252,7 @@ const Notes: React.FC<NotesProps> = ({
       entityId: projectID || '',
       projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project > ${projectCode}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -262,6 +267,7 @@ const Notes: React.FC<NotesProps> = ({
       entityLevel: row.attachment_level || 'project',
       entityId: row.attach_to || '',
       source: `Project > ${projectCode}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -333,12 +339,16 @@ const Notes: React.FC<NotesProps> = ({
     handleDownload,
     isNotesExportEnable,
     permissionMap,
-    userListOptions
+    userListOptions,
+    undefined,
+    undefined,
+    'project'
   );
 
   const notesFilterFields = getNotesFilterFields(
     permissionMap,
-    userListOptions
+    userListOptions,
+    'project'
   );
 
   const getRowId = (row: NotesList) => row.rid;
@@ -451,6 +461,8 @@ const Notes: React.FC<NotesProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
         <NotesDetails
@@ -466,12 +478,12 @@ const Notes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-                className='[&>path]:stroke-white'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }
             buttons={headerButtons}
-            iconBg='#7F81F4'
+            iconBg={ColorCode.projectBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

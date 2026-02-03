@@ -2,6 +2,7 @@ import {
   costDisplay,
   getDateFormat,
   PROJECT_TASK_REGEX,
+  REGEX_PATTERNS,
   valueDisplay,
 } from '../../../../../common-utils';
 import TextButton from '../../../../../components/button/text-button';
@@ -24,6 +25,7 @@ export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
   handleAttachmentClick: (rowId: string) => void,
   handleCreateNote: (row: ProjectTaskListType) => void,
+  handleCreateChecklist: (row: ProjectTaskListType) => void,
   memoizedProjectResourceCode: SelectOption[],
   TaskTypeOptions: SelectOption[],
   classificationOptions: SelectOption[],
@@ -34,7 +36,9 @@ export const getProjectTaskColumns = (
   accountOrProjectInActive?: boolean,
   fiscalDate?: FormFiscalDateType,
   isAttachmentCreateEnable?: boolean,
-  isNoteCreateEnable?: boolean
+  isNoteCreateEnable?: boolean,
+  isChecklistCreateEnable?: boolean,
+  isProjectSignedOff?: boolean
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -55,7 +59,8 @@ export const getProjectTaskColumns = (
     editable:
       permissionMapTaskTableColumn?.['resource_code']?.read &&
       permissionMapTaskTableColumn?.['resource_code']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['resource_code']?.read &&
       !permissionMapTaskTableColumn?.['resource_code']?.edit,
@@ -94,11 +99,23 @@ export const getProjectTaskColumns = (
       type: 'text',
       required: false,
       placeholder: 'Enter Task Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Task Name must be more than 2 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_250,
+          errorMessage: 'Max length exceeded',
+        },
+      ],
     },
+
     editable:
       permissionMapTaskTableColumn?.['task_name']?.read &&
       permissionMapTaskTableColumn?.['task_name']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['task_name']?.read &&
       !permissionMapTaskTableColumn?.['task_name']?.edit,
@@ -133,7 +150,8 @@ export const getProjectTaskColumns = (
     editable:
       permissionMapTaskTableColumn?.['task_type_rid']?.read &&
       permissionMapTaskTableColumn?.['task_type_rid']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['task_type_rid']?.read &&
       !permissionMapTaskTableColumn?.['task_type_rid']?.edit,
@@ -154,7 +172,8 @@ export const getProjectTaskColumns = (
     editable:
       permissionMapTaskTableColumn?.['task_classification_rid']?.read &&
       permissionMapTaskTableColumn?.['task_classification_rid']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['task_classification_rid']?.read &&
       !permissionMapTaskTableColumn?.['task_classification_rid']?.edit,
@@ -174,7 +193,9 @@ export const getProjectTaskColumns = (
     width: 160,
     editable:
       permissionMapTaskTableColumn?.['start_date']?.read &&
-      permissionMapTaskTableColumn?.['start_date']?.edit,
+      permissionMapTaskTableColumn?.['start_date']?.edit &&
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['start_date']?.read &&
       !permissionMapTaskTableColumn?.['start_date']?.edit,
@@ -214,7 +235,9 @@ export const getProjectTaskColumns = (
     width: 160,
     editable:
       permissionMapTaskTableColumn?.['end_date']?.read &&
-      permissionMapTaskTableColumn?.['end_date']?.edit,
+      permissionMapTaskTableColumn?.['end_date']?.edit &&
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['end_date']?.read &&
       !permissionMapTaskTableColumn?.['end_date']?.edit,
@@ -260,7 +283,8 @@ export const getProjectTaskColumns = (
     editable:
       permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
       permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
       !permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit,
@@ -295,7 +319,8 @@ export const getProjectTaskColumns = (
     editable:
       permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
       permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
@@ -348,7 +373,8 @@ export const getProjectTaskColumns = (
     editable:
       permissionMapTaskTableColumn?.['comments']?.read &&
       permissionMapTaskTableColumn?.['comments']?.edit &&
-      !accountOrProjectInActive,
+      !accountOrProjectInActive &&
+      !isProjectSignedOff,
     hide:
       !permissionMapTaskTableColumn?.['comments']?.read &&
       !permissionMapTaskTableColumn?.['comments']?.edit,
@@ -406,6 +432,25 @@ export const getProjectTaskColumns = (
         disabled={accountOrProjectInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
         onClick={() => handleCreateNote(row)}
+      />
+    ),
+  },
+  {
+    id: 'checklists',
+    sortId: 'checklists',
+    label: 'Checklists',
+    width: 80,
+    sortable: false,
+    hide: !isChecklistCreateEnable,
+    sx: {
+      textAlign: 'center',
+    },
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountOrProjectInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
+        onClick={() => handleCreateChecklist(row)}
       />
     ),
   },

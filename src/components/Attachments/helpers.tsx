@@ -1,6 +1,7 @@
 import { DownloadIcon } from '../../assets';
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   REGEX_PATTERNS,
 } from '../../common-utils';
 import { FieldConfig } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
@@ -46,13 +47,15 @@ const dateOptions: { option: string; value: string }[] = [
 
 export const getAttachmentsFilterFields = (
   fieldOptions?: FieldOptionType,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): FieldConfig[] => {
   const {
     fiscalYears = [],
     docCategories = [],
     docTypes = [],
   } = fieldOptions || {};
+  const hideFiscalYear = module === 'case' || module === 'project';
   return [
     {
       name: 'Document Name',
@@ -87,8 +90,9 @@ export const getAttachmentsFilterFields = (
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
       operatorOption: enumOptions,
       hide:
-        !permissionMap?.['fiscal_year']?.edit &&
-        !permissionMap?.['fiscal_year']?.read,
+        hideFiscalYear ||
+        (!permissionMap?.['fiscal_year']?.edit &&
+          !permissionMap?.['fiscal_year']?.read),
     },
     {
       name: 'Document Category',
@@ -184,7 +188,9 @@ export const getAttachmentTableColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   isAttachmentExportEnable?: boolean,
   typeLoading?: boolean,
-  accountOrProjectInActive?: boolean
+  accountOrProjectInActive?: boolean,
+  isFromGlobal?: boolean,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): ListTableColumn<AttachmentList>[] => [
   {
     id: 'document_name',
@@ -229,14 +235,15 @@ export const getAttachmentTableColumns = (
     sortId: 'fiscal_year',
     label: 'Fiscal Year',
     width: 140,
-    sortable: true,
+    sortable: module !== 'case' && module !== 'project',
     editable:
       permissionMap?.['fiscal_year']?.edit &&
       permissionMap?.['fiscal_year']?.read &&
       !accountOrProjectInActive,
     hide:
-      !permissionMap?.['fiscal_year']?.edit &&
-      !permissionMap?.['fiscal_year']?.read,
+      module === 'case' ||
+      (!permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read),
     field: {
       type: 'select',
       required: true,
@@ -247,15 +254,16 @@ export const getAttachmentTableColumns = (
     conditionallyEdit: [
       {
         key: 'attachment_level',
-        matchValue: [
-          'account',
-          'project_resource',
-          'project_task',
-          'resource',
-          'resource_cost',
-          'resource_skill',
-        ],
+        matchValue: ['account', 'resource', 'resource_cost', 'resource_skill'],
       },
+      ...(isFromGlobal
+        ? [
+            {
+              key: 'status_name' as keyof AttachmentList,
+              matchValue: ['Active'],
+            },
+          ]
+        : []),
     ],
   },
   {
@@ -272,6 +280,9 @@ export const getAttachmentTableColumns = (
     hide:
       !permissionMap?.['document_category_rid']?.edit &&
       !permissionMap?.['document_category_rid']?.read,
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     render: (row: AttachmentList) =>
       row.document_category_others
         ? `${row.document_category} - ${row.document_category_others}`
@@ -388,6 +399,9 @@ export const getAttachmentTableColumns = (
     hide:
       !permissionMap?.['document_type_rid']?.edit &&
       !permissionMap?.['document_type_rid']?.read,
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     render: (row: AttachmentList) =>
       row.document_type_others
         ? `${row.document_type} - ${row.document_type_others}`
@@ -501,6 +515,7 @@ export const getAttachmentTableColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attach_to',

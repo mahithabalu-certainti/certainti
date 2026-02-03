@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ProjectListParams } from '../../../../consultant/types/project';
@@ -138,7 +137,7 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
           hoverHighlight={false}
           tableStyle={{
             height: '100%',
-            maxHeight: 'calc(100vh - 180px)',
+            maxHeight: 'calc(100vh - 190px)',
             overflow: 'auto',
           }}
           stickyHeader={true}

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { NotesSideIcon, UploadIcon } from '../../../../assets';
+import { EditIcon, NotesSideIcon, UploadIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
@@ -15,13 +15,14 @@ import {
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   getFiscalYears,
 } from '../../../../common-utils';
-import { NotesFormDataPayload } from '../../../types';
+import { ColorCode, NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
-import { useManageUserList } from '../../../../admin/service';
+import { useGetUserOptions } from '../../../services/case-team';
 
 const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
@@ -73,11 +74,15 @@ const NotesForm: React.FC = () => {
   const accountId = searchParams.get('accountId') || '';
   const entityLevel = searchParams.get('entityLevel') || '';
   const entityId = searchParams.get('entityId') || '';
-  const projectFiscalYear = searchParams.get('projectFiscalYear') || '';
+  const entityFiscalYear =
+    searchParams.get('projectFiscalYear') ||
+    searchParams.get('caseFiscalYear') ||
+    '';
   const sourcePath = searchParams.get('source') || '';
 
   const isFromGlobalNotes = sourcePath?.toLowerCase() === 'notes';
 
+  const userListData = useGetUserOptions(accountId);
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
   const { data: noteData, isLoading } = useNoteDetails(
@@ -85,14 +90,6 @@ const NotesForm: React.FC = () => {
     noteId,
     isEditView
   );
-
-  // User List Api
-  const { data: userListData, isLoading: userListLoading } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
 
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
@@ -125,7 +122,7 @@ const NotesForm: React.FC = () => {
         fiscal_year: noteData?.fiscal_year || '',
         rid: noteData?.rid || '',
         r_number: noteData?.r_number || '',
-        related_to: noteData?.attachment_level || '',
+        related_to: getCapitalizeWords(noteData?.attachment_level) || '',
         related_to_name: noteData?.attached_to || '',
         created_on: formatDateToYYYYMMDDWithTime(
           noteData?.created_datetime || '-'
@@ -142,9 +139,9 @@ const NotesForm: React.FC = () => {
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);
@@ -152,19 +149,29 @@ const NotesForm: React.FC = () => {
   useEffect(() => {
     if (isEditView && noteData) {
       const disableLevel =
-        noteData?.attachment_level?.toLowerCase() === 'project';
+        noteData?.attachment_level?.toLowerCase() === 'project' ||
+        noteData?.attachment_level?.toLowerCase() === 'project_resource' ||
+        noteData?.attachment_level?.toLowerCase() === 'project_task' ||
+        noteData?.attachment_level?.toLowerCase() === 'case';
       setDisableFiscalYear(disableLevel);
     }
   }, [noteData, isEditView]);
 
   useEffect(() => {
     if (isEditView && noteData) {
-      setExistingFile({
-        name: noteData?.document_name || '',
-        url: noteData?.browse_file,
-        size: noteData?.size_in_mb ? `${noteData.size_in_mb} MB` : '-',
-        format: noteData?.format || '',
-      });
+      if (
+        noteData?.browse_file &&
+        noteData?.document_name &&
+        noteData?.size_in_mb &&
+        noteData?.format
+      ) {
+        setExistingFile({
+          name: noteData?.document_name || '',
+          url: noteData?.browse_file,
+          size: noteData?.size_in_mb ? `${noteData.size_in_mb} MB` : '-',
+          format: noteData?.format || '',
+        });
+      }
       setAuditInfo({
         rid: noteData?.rid || '',
         r_number: noteData?.r_number || '',
@@ -267,13 +274,12 @@ const NotesForm: React.FC = () => {
   };
 
   const handleSubmitData = (data: Partial<NotesFormDataPayload>) => {
-    // Validation only when no existing file
-    if (!existingFile && selectedFiles.length === 0) {
-      showError('Please select a file before submitting.');
-      return;
+    if (selectedFiles.length === 0) {
+      setMessage(null);
     }
 
-    if (!existingFile) {
+    // File validation only if a file is selected
+    if (!existingFile && selectedFiles.length > 0) {
       const file = selectedFiles[0];
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(
@@ -287,7 +293,7 @@ const NotesForm: React.FC = () => {
     const accountRid = noteData?.account_rid || accountId || '';
     const attachTo = noteData?.attach_to || entityId;
     const attachmentLevel = noteData?.attachment_level || entityLevel;
-    const fiscalYear = projectFiscalYear || data?.fiscal_year;
+    const fiscalYear = entityFiscalYear || data?.fiscal_year;
     const title = data?.title || '';
     const notesOwner = data?.notes_owner || '';
     const descriptions = data?.descriptions || '';
@@ -304,6 +310,10 @@ const NotesForm: React.FC = () => {
     formData.append('notes_owner', notesOwner);
     formData.append('descriptions', descriptions);
 
+    if (!existingFile && isEditView && selectedFiles.length === 0) {
+      formData.append('is_file_deleted', 'true');
+    }
+
     if (isEditView) {
       formData.append('rid', noteData?.rid || '');
       updateNote.mutate(formData);
@@ -316,7 +326,7 @@ const NotesForm: React.FC = () => {
     isEditView,
     fiscalYears,
     userListOptions,
-    !!projectFiscalYear,
+    !!entityFiscalYear,
     disableFiscalYear,
     isFromGlobalNotes,
     permissionMap
@@ -326,7 +336,7 @@ const NotesForm: React.FC = () => {
     window.history.back();
   };
 
-  const formLoading = isLoading || userListLoading;
+  const formLoading = isLoading || userListData.isLoading;
 
   const hideAttachments =
     isEditView &&
@@ -341,10 +351,17 @@ const NotesForm: React.FC = () => {
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <NotesSideIcon
-            alt='note-icon'
-            className={`w-7 h-7 p-[5px] [&>path]:stroke-white bg-[#7F81F4] rounded`}
-          />
+          {isEditView ? (
+            <EditIcon
+              alt='projrct-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.notesBgColor}]`}
+            />
+          ) : (
+            <NotesSideIcon
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.notesBgColor}]`}
+            />
+          )}
           <div className='w-[90%]'>
             {isLoading ? (
               <div className='ml-2'>

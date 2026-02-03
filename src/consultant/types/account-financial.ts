@@ -34,4 +34,5 @@ export interface CostListParms {
   sortOrder?: SortOrder;
   fiscalYear?: number;
   search?: string;
+  caseRid?: string;
 }

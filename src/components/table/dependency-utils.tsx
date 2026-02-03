@@ -147,6 +147,8 @@ export const validateDependentFields = <T extends RowData>(
       // Default to legacy names if not provided
       const relatedStartField = dateConfig.startFieldId || 'effective_from';
       const relatedEndField = dateConfig.endFieldId || 'end_date';
+      const startFieldLabel = dateConfig.startFieldLabel || 'Start Date';
+      const endFieldLabel = dateConfig.endFieldLabel || 'End Date';
 
       if (cellValue) {
         const selectedDate = dayjs(String(cellValue));
@@ -224,11 +226,13 @@ export const validateDependentFields = <T extends RowData>(
         (!startDateValue && endDateValue)
       ) {
         if (column.id === relatedStartField && endDateValue && !cellValue) {
-          errors[cellKey] = 'Both Start Date and End Date must be provided';
+          errors[cellKey] =
+            `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
           continue;
         }
         if (column.id === relatedEndField && startDateValue && !cellValue) {
-          errors[cellKey] = 'Both Start Date and End Date must be provided';
+          errors[cellKey] =
+            `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
           continue;
         }
       }
@@ -243,7 +247,7 @@ export const validateDependentFields = <T extends RowData>(
           'day'
         )
       ) {
-        errors[cellKey] = 'End Date must be after Start Date';
+        errors[cellKey] = `${endFieldLabel} must be after ${startFieldLabel}`;
         continue;
       }
     }

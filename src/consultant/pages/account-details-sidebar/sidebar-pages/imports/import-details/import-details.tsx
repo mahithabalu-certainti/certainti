@@ -13,6 +13,7 @@ import SectionHeader from '../../../../../../components/details-section/section-
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
 } from '../../../../../../common-utils';
 import { FailureType, ImportEntityType } from '../../../../../types/imports';
 import { useSelector } from 'react-redux';
@@ -101,7 +102,7 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
     },
     {
       label: 'Entity',
-      value: data?.entity,
+      value: getCapitalizeWords(data?.entity || ''),
       key: 'entity',
     },
     // {
@@ -160,7 +161,22 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
     },
     {
       label: 'Records with Warning',
-      value: data?.records_with_warning,
+      value: data?.records_with_warning ? (
+        <span
+          className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
+          onClick={() =>
+            handleExportFailureData(
+              'warnings',
+              data?.entity as ImportEntityType
+            )
+          }
+        >
+          View Warning
+          {`(${data?.records_with_warning})`}
+        </span>
+      ) : (
+        '-'
+      ),
       key: 'records_with_warning',
     },
   ];

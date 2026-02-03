@@ -176,8 +176,9 @@ const FiscalYearDropdown = ({
               {isGlobal && (
                 <button
                   type='button'
-                  className={`h-[22px] w-[32px] text-[#425A76] text-[14px] font-bold cursor-pointer ${selectedYear === 'FY-All' ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
+                  className={`h-[22px] w-[32px] text-[#425A76] text-[14px] font-bold cursor-pointer ${selectedYear === 'FY-All' ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
                   onClick={handleAllClick}
+                  disabled={disabled}
                 >
                   All
                 </button>
@@ -196,7 +197,10 @@ const FiscalYearDropdown = ({
                         : ''
                     }`}
                     onClick={() => handleYearClick(year.value)}
-                    disabled={year.value > currentYear}
+                    disabled={
+                      year.value > currentYear ||
+                      (disabled && year.value !== Number(selectedYear))
+                    }
                   >
                     {year.value}
                   </button>

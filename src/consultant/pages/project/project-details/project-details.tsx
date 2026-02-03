@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -7,22 +7,32 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { ACCOUNT, PROJECT } from '../../../../routes';
-import { PageHeader, SideMenuPanel } from '../../../../components';
+import {
+  ActivityModal,
+  PageHeader,
+  SideMenuPanel,
+} from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
-  CasesIcon,
   ChecklistIcon,
-  DetailsIcon,
   FinancialIcon,
   InteractionsIcon,
   NotesSideIcon,
-  ProjectDetailsIcon,
   ProjectsSideIcon,
   ResourcesIcon,
   SettingIcon,
   TechSummaryIcon,
   ConfigIcon,
+  ActivitiesIcon,
+  TaskCreateIcon,
+  DraftEmailIcon,
+  MeetingIcon,
+  CallLogIcon,
+  HistorySubmissionIcon,
+  ProjectTaskIcon,
+  ManageGroupAccount,
+  DetailsKeyContactErrorIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -36,6 +46,11 @@ import {
   ProjectTriggerAIPayload,
 } from '../../../types/project';
 import {
+  ActivityDropdownItem,
+  ActivityListExportURLParams,
+  ActivityType,
+  ChecklistListExportParams,
+  ColorCode,
   ExportType,
   FiscalDates,
   FormFiscalDateType,
@@ -50,10 +65,10 @@ import {
   AllPermissions,
 } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setTemporaryFiscalYear } from '../../../../store/slices/account-slice';
 import { RootState } from '../../../../store/store';
 import { checkPermission, getFiscalDateBounds } from '../../../../common-utils';
-import { NotFound } from '../../../../pages';
 import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
@@ -82,6 +97,11 @@ import { useMutation } from '@apollo/client';
 import { ProjectQreAdjustmentResponse } from '../utils';
 import { Notes } from './notes';
 import { ExportNotesList } from '../../../services/notes/notes-service';
+import { QrePercentHistory } from './qre-percent-history';
+import { ExportChecklistList } from '../../../services/checklist/checklist-service';
+import { Checklist } from './checklist';
+import ProjectActivities from './project-activities/project-activities';
+import { ExportActivityList } from '../../../services/activities/activities-service';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -94,6 +114,9 @@ export const ProjectDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const detailPageView = activeKey === 'projectDetails';
+
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
       sortBy: '',
@@ -141,6 +164,23 @@ export const ProjectDetails = () => {
     sortOrder: 'ASC',
     filters: {},
   });
+
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [activityParams, setActivityParams] =
+    useState<ActivityListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      activity_type: 'all',
+    });
+
+  const [activityModalId, setActivityModalId] = useState<string | null>(null);
 
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
@@ -192,12 +232,16 @@ export const ProjectDetails = () => {
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
+
+  const activityId = searchParams.get('activity_id');
+  const activityType = searchParams.get('activity_type');
+  const activityViewDetails = !!activityId && !!activityType;
 
   const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
     projectID || ''
   );
-
   const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
     client: resourceClient,
   });
@@ -206,6 +250,8 @@ export const ProjectDetails = () => {
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
   const projectInActive =
     data?.data?.project?.status_name?.toLowerCase() === 'in-active';
+  const rdQualified = data?.data?.project?.is_rd_trigger_qualified;
+  const isProjectSignedOff = data?.data?.project?.is_rd_claim_qualified;
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -217,6 +263,13 @@ export const ProjectDetails = () => {
       });
     }
   }, [data]);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (projectData?.fiscal_year) {
+      dispatch(setTemporaryFiscalYear(projectData.fiscal_year.toString()));
+    }
+  }, [projectData, dispatch]);
 
   const handleQreAdjustmentUpdated = (result: ProjectQreAdjustmentResponse) => {
     const updatedProject = mergeAdjustmentResponse(
@@ -295,6 +348,56 @@ export const ProjectDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
+  const isActivityCallExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_EXPORT
+  );
+
+  const isActivityEmailExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_EXPORT
+  );
+
+  const isActivityMeetingExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_EXPORT
+  );
+
+  // Activity Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
+  );
+
+  const activityExportPermissionMap: Record<string, boolean> = {
+    task: !!isActivityTaskExportEnable,
+    email: !!isActivityEmailExportEnable,
+    meeting: !!isActivityMeetingExportEnable,
+    call: !!isActivityCallExportEnable,
+  };
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -308,6 +411,20 @@ export const ProjectDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return !isChecklistsExportEnable;
+    } else if (list === 'activities' && !activityViewDetails) {
+      const tab = searchParams.get('tab') || 'all';
+      if (tab === 'all') {
+        const canExportAll =
+          isActivityTaskExportEnable ||
+          isActivityEmailExportEnable ||
+          isActivityMeetingExportEnable ||
+          isActivityCallExportEnable;
+
+        return !canExportAll;
+      }
+      return !activityExportPermissionMap[tab];
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -340,6 +457,8 @@ export const ProjectDetails = () => {
     if (
       list !== 'attachments' &&
       list !== 'notes' &&
+      list !== 'checklist' &&
+      list !== 'activities' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
@@ -372,6 +491,31 @@ export const ProjectDetails = () => {
         ...notesParams,
         ...notePayload,
       });
+      return;
+    }
+
+    if (list === 'checklist' && exportType === 'checklist') {
+      const checklistPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistPayload,
+      });
+      return;
+    }
+    if (exportType === 'activities') {
+      const activityPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportActivityList(
+        { ...activityParams, ...activityPayload },
+        activityType as ActivityType
+      );
       return;
     }
 
@@ -540,6 +684,33 @@ export const ProjectDetails = () => {
     AllPermissions.TRIGGER_AI_ASSESSMENT
   );
 
+  const activityMenuItems: ActivityDropdownItem[] = [
+    {
+      label: 'Create Task',
+      onClick: () => setActivityModalId('create-task'),
+      icon: TaskCreateIcon,
+      hide: !isActivityTaskCreateEnable,
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => setActivityModalId('draft-email'),
+      icon: DraftEmailIcon,
+      hide: !isActivityEmailCreateEnable,
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => setActivityModalId('schedule-meeting'),
+      icon: MeetingIcon,
+      hide: !isActivityMeetingCreateEnable,
+    },
+    {
+      label: 'Log a call',
+      onClick: () => setActivityModalId('call-log'),
+      icon: CallLogIcon,
+      hide: !isActivityCallCreateEnable,
+    },
+  ];
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -549,12 +720,13 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setResCostExportParams={setFinancialResCostParams}
             onQreAdjustmentUpdated={handleQreAdjustmentUpdated}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projectDetails':
         return (
           <ProjectDetailsData
-            accountInActive={accountInActive || projectInActive}
+            accountInActive={accountInActive}
             projectDetails={{
               ...projectData!,
               attachment: data?.data?.attachment || [],
@@ -564,6 +736,7 @@ export const ProjectDetails = () => {
             projectDownloadIsEnable={projectDownloadIsEnable}
             projectEditIsEnable={isProjectFieldsEditable}
             permission={permission}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projectResources':
@@ -580,6 +753,9 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
+            activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'projectsTask':
@@ -596,9 +772,20 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
+            activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
-
+      case 'rd-assessment-history':
+        return (
+          <QrePercentHistory
+            refetchAccountDetails={refetch}
+            accountID={accountID}
+            projectID={projectID}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       case 'interactions':
         return (
           <Interactions
@@ -606,7 +793,10 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
             isSendInteraction={data?.data?.project?.is_send_interaction}
+            rdQualified={!rdQualified}
             loading={isPending}
+            activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'technicalSummary':
@@ -615,12 +805,22 @@ export const ProjectDetails = () => {
             accountInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
+            activityMenuItems={activityMenuItems}
           />
         );
-      case 'cases':
-        return <NotFound />;
       case 'activities':
-        return <NotFound />;
+        return (
+          <ProjectActivities
+            accountInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+            setExportType={setExportType}
+            setActivityParams={setActivityParams}
+            isDetailLoading={isPending}
+            isEmailConfigured={data?.data?.project?.is_send_interaction}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       case 'notes':
         return (
           <Notes
@@ -629,6 +829,7 @@ export const ProjectDetails = () => {
             setNotesParams={setNotesParams}
             projectFiscalYear={projectData?.fiscal_year}
             projectCode={projectData?.project_code}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'attachments':
@@ -639,12 +840,23 @@ export const ProjectDetails = () => {
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={refetch}
             projectFiscalYear={projectData?.fiscal_year}
+            activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
-      case 'checklists':
-        return <NotFound />;
+      case 'checklist':
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountOrProjectInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       case 'configuration':
-        return <Configuration />;
+        return <Configuration activityMenuItems={activityMenuItems} />;
       default:
         return (
           <div className='pr-4 pl-2 py-2 w-full'>
@@ -678,7 +890,7 @@ export const ProjectDetails = () => {
         key: 'projectDetails',
         id: AllModules.PROJECTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: ProjectsSideIcon,
       },
       {
         name: 'Project Resources',
@@ -692,7 +904,7 @@ export const ProjectDetails = () => {
         key: 'projectsTask',
         id: AllModules.PROJECT_TASK,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: ProjectTaskIcon,
       },
       {
         name: 'Interactions',
@@ -709,19 +921,19 @@ export const ProjectDetails = () => {
         icon: TechSummaryIcon,
       },
       {
-        name: 'Cases',
-        key: 'cases',
-        id: AllMenus.CASES,
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
         disabled: false,
-        icon: CasesIcon,
+        icon: ActivitiesIcon,
       },
-      // {
-      //   name: 'Activities',
-      //   key: 'activities',
-      //   id: AllModules.ACTIVITIES,
-      //   disabled: false,
-      //   icon: ActivitiesIcon,
-      // },
+      {
+        name: 'RD Assessment History',
+        key: 'rd-assessment-history',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+        icon: HistorySubmissionIcon,
+      },
       {
         name: 'Notes',
         key: 'notes',
@@ -738,7 +950,7 @@ export const ProjectDetails = () => {
       },
       {
         name: 'Checklists',
-        key: 'checklists',
+        key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: false,
         icon: ChecklistIcon,
@@ -755,7 +967,7 @@ export const ProjectDetails = () => {
             key: 'users',
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: false,
-            icon: ResourcesIcon,
+            icon: ManageGroupAccount,
           },
           {
             name: 'Settings',
@@ -772,7 +984,17 @@ export const ProjectDetails = () => {
       : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
   }, [isFinancialHighlightsEnable]);
 
+  const sourceDetails = {
+    accountId: accountID,
+    entityLevel: 'project',
+    entityId: projectID || '',
+    caseFiscalYear: projectData?.fiscal_year || '',
+    source: `Project > ${projectData?.project_code || ''}`,
+    isEmailConfigured: data?.data?.project?.is_send_interaction,
+  };
+
   if (!projectIsEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
@@ -780,9 +1002,9 @@ export const ProjectDetails = () => {
           variant='sub'
           placeholder='Project Code'
           icon={
-            <ProjectDetailsIcon
-              className='h-6 w-6 rounded p-[4px]'
-              style={{ backgroundColor: '#AF78FF' }}
+            <ProjectsSideIcon
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
             />
           }
           title={data?.data?.project?.project_code}
@@ -792,14 +1014,21 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive,
+              disabled:
+                accountInActive ||
+                projectInActive ||
+                !rdQualified ||
+                isProjectSignedOff,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
+              tooltipValue:
+                'Project type not allowed due to Configuration setting',
+              toolTipEnabled: !rdQualified,
             },
           ]}
           primaryButton={
-            isProjectFieldsEditable
+            isProjectFieldsEditable && !detailPageView
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
@@ -821,7 +1050,7 @@ export const ProjectDetails = () => {
         loading={isLoading}
         onAdjustmentFactorChange={handleAdjustmentFactor}
       />
-      <div className='flex flex-row flex-1 w-full'>
+      <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all duration-300 ease-in-out ${
             isCollapsed
@@ -838,15 +1067,40 @@ export const ProjectDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
             isLoading={isLoading}
+            maxHeight={292}
           />
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 283px)', overflow: 'auto' }}
         >
+          {isProjectSignedOff && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>
+                  {projectData?.project_code || ''}
+                </span>
+                -
+                <span className='ml-1 font-medium'>
+                  Financial workings of this Case is signed off. Project changes
+                  are no longer allowed.
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      <ActivityModal
+        modalId={activityModalId}
+        onCloseModal={() => setActivityModalId(null)}
+        sourceDetails={sourceDetails}
+      />
     </div>
   );
 };

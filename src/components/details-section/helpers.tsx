@@ -1,4 +1,8 @@
-import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
+} from '../../common-utils';
+import { ChecklistItemDetails } from '../../consultant/types';
 import { AttachmentList } from '../../consultant/types/attachment';
 
 type Column<T> = {
@@ -85,6 +89,7 @@ export const getDetailsAttachmentColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attach_to',
@@ -128,3 +133,35 @@ export const getDetailsAttachmentColumns = (
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
 ];
+
+export const getChecklistItemsTableColumns =
+  (): Column<ChecklistItemDetails>[] => [
+    {
+      id: 'checklist_item_name',
+      label: 'Checklist Item Name',
+      width: 200,
+      sticky: true,
+      sx: {
+        position: 'sticky',
+        left: 0,
+        background: '#fff',
+        borderRight: '1px solid #CBD6E2',
+        zIndex: 10,
+      },
+    },
+    {
+      id: 'checklist_item_description',
+      label: 'Comments',
+      width: 700,
+    },
+    {
+      id: 'modified_by_name',
+      label: 'Updated By',
+      width: 200,
+    },
+    {
+      id: 'status_name',
+      label: 'Status',
+      width: 100,
+    },
+  ];

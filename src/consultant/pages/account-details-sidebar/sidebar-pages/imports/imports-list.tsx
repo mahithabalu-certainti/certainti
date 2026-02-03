@@ -10,7 +10,12 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { AccountDetailsResponse, ExportType } from '../../../../types';
+import {
+  AccountDetailsResponse,
+  ActivityDropdownItem,
+  ColorCode,
+  ExportType,
+} from '../../../../types';
 import ImportFile from './import-file/import-file';
 import {
   useImportListList,
@@ -51,6 +56,7 @@ interface ImportsProps {
   setExportType?: (type: ExportType) => void;
   setImportsParams: React.Dispatch<React.SetStateAction<ImportsListURLParams>>;
   accountInActive: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Imports: React.FC<ImportsProps> = ({
@@ -58,6 +64,7 @@ const Imports: React.FC<ImportsProps> = ({
   setImportsParams,
   accountInActive,
   accountDetails,
+  activityMenuItems,
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -343,10 +350,12 @@ const Imports: React.FC<ImportsProps> = ({
         setSortFilterCount={setSortFilterCount}
         showRefresh={showUploads || viewDetails ? false : true}
         onRefreshClick={onRefreshClick}
-        showSearch={viewDetails ? false : true}
+        showSearch={showUploads || viewDetails ? false : true}
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={showUploads || viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <ImportFile
@@ -366,14 +375,14 @@ const Imports: React.FC<ImportsProps> = ({
             showItemCount={true}
             titleIcon={
               <ImportsIcon
-                className='[&>path]:stroke-white'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Imports-header-icon'
               />
             }
             ActionName='Download Templete'
             actionItems={menuItems}
             buttons={headerButtons}
-            iconBg='#af78ff'
+            iconBg={ColorCode.accountBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

@@ -12,7 +12,7 @@ import {
   DocumentIcon,
   EditTextIcon,
 } from '../../assets';
-import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
+import { formatDateToYYYYMMDDWithTime, sanitizeUrl } from '../../common-utils';
 import {
   useUpdateInteractionQuestionResponse,
   useUploadInteractionAttachment,
@@ -61,6 +61,7 @@ interface InteractionQuesProps {
   formData?: Record<string, string>;
   className?: string;
   responseDate?: string;
+  isProjectSignedOff?: boolean;
 }
 
 const Font = Quill.import('formats/font');
@@ -81,6 +82,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
   responseDate,
+  isProjectSignedOff = false,
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -394,8 +396,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const handleDownload = (documentUrl: string) => {
     if (!documentUrl) return;
 
+    const safeUrl = sanitizeUrl(documentUrl);
+    if (!safeUrl) {
+      console.error('Invalid or unsafe URL provided for download');
+      return;
+    }
+
     const link = document.createElement('a');
-    link.href = documentUrl;
+    link.href = safeUrl;
     link.download = '';
     document.body.appendChild(link);
     link.click();
@@ -443,7 +451,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         {
           label: 'Edit Response',
           variant: 'outlined' as const,
-          disabled: !isEditEnable,
+          disabled: !isEditEnable || isProjectSignedOff,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
           hide: !actionButtonEnable,
@@ -505,7 +513,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           <div key={q.rid} className='p-3'>
             <div className='font-medium text-[14px] text-[#2D3E4F]'>
               <span className='font-bold'>
-                {q.question_seq_num || `Q00${index + 1}`}
+                {`Q${index + 1}`}
                 {q.is_mandatory && <span className='text-red-500 ml-1'>*</span>}
               </span>{' '}
               - {q.question}

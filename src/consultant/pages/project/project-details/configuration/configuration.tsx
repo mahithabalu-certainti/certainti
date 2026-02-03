@@ -1,13 +1,13 @@
 import { useSearchParams } from 'react-router-dom';
-import { ComingSoon, DetailsIcon, ResourcesIcon } from '../../../../../assets';
+import {
+  ComingSoon,
+  ManageGroupIcon,
+  SettingIcon,
+} from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
-import React, { useRef, useState } from 'react';
-import {
-  AllMenus,
-  AllModules,
-  AllPermissions,
-} from '../../../../../common-service';
+import { useRef, useState } from 'react';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { Users } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -19,6 +19,7 @@ import { clearFilters } from '../../../account-details-sidebar/components/filter
 import { checkPermission } from '../../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -33,7 +34,12 @@ const ConfigTabs: ResourceTabs[] = [
   //   disable: true,
   // },
 ];
-const Configuration: React.FC = () => {
+
+interface ConfigurationProps {
+  activityMenuItems: ActivityDropdownItem[];
+}
+
+const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
@@ -49,7 +55,7 @@ const Configuration: React.FC = () => {
   const [resetSearch, setResetSearch] = useState(false);
 
   const [columnAnchorEl, setColumnAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
+    useState<HTMLButtonElement | null>(null);
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
@@ -72,11 +78,7 @@ const Configuration: React.FC = () => {
     permission,
     AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
   );
-  const projectSettingsEnable = checkPermission(
-    modules,
-    AllMenus.PROJECT_SETTINGS
-  );
-  console.log('projectSettingsEnable', projectSettingsEnable);
+
   const handleSubmit = () => {
     formRef.current?.requestSubmit();
   };
@@ -134,16 +136,16 @@ const Configuration: React.FC = () => {
     switch (list) {
       case 'users':
         return (
-          <ResourcesIcon
+          <ManageGroupIcon
             alt='resource header icon'
-            className='[&>path]:stroke-white w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       case 'settings':
         return (
-          <DetailsIcon
+          <SettingIcon
             alt='settings-header-icon'
-            className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       default:
@@ -210,6 +212,8 @@ const Configuration: React.FC = () => {
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
@@ -218,7 +222,7 @@ const Configuration: React.FC = () => {
         count={count}
         showItemCount={list !== 'settings'}
         hideSection={hideSection}
-        iconBg={list === 'users' ? '#7785ff' : '#D7E5FF'}
+        iconBg={ColorCode.projectBgColor}
         bgType='circle'
       />
       {renderContent()}

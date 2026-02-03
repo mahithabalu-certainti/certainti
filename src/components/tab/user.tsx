@@ -32,6 +32,7 @@ const Users: React.FC<UsersProps> = ({
     if (!isNaN(tabParam) && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {

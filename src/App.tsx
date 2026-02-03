@@ -47,6 +47,8 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
+  CASE,
+  CASE_DETAILS,
   INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
   INTERACTIONS,
@@ -64,13 +66,45 @@ import {
   NOTES_EDIT,
   GLOBAL_NOTES_EDIT,
   IMPORT_TEMPLATES,
+  EMAIL_TEMPLATES,
+  EMAIL_TEMPLATES_CREATE,
+  EMAIL_TEMPLATES_EDIT,
+  CASE_CREATE,
+  CASE_EDIT,
+  TASK_TEMPLATES,
+  TASK_TEMPLATES_CREATE,
+  TASK_TEMPLATES_EDIT,
+  CHECKLIST_TEMPLATES,
+  CHECKLIST_TEMPLATES_CREATE,
+  CHECKLIST_TEMPLATES_EDIT,
+  CHECKLIST_CREATE,
+  CHECKLIST_EDIT,
+  CASE_INTERACTIONS_CREATE,
+  CASE_INTERACTIONS_EDIT,
+  TASK_TEMPLATES_DETAILS,
+  ACTIVITY_CREATE,
+  ACTIVITY_EDIT,
+  MANAGE_GEO_BASED_RULE,
+  MANAGE_GEO_BASED_RULE_CREATE,
+  MANAGE_GEO_BASED_RULE_EDIT,
+  TASKS,
+  WORKFLOW_BUILDER,
+  WORKFLOW_BUILDER_CREATE,
+  WORKFLOW_BUILDER_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
 // import { ProjectTask } from './consultant/pages/project/project-details/project-task';
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
+import { Tasks } from './consultant/pages/tasks';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
+import CaseInteractionForm from './consultant/pages/interaction/interaction-form/case-interaction-form';
+import ManageTaskDetails from './admin/pages/task-templates/task-templates-list/details/taskDetails';
+import {
+  GeoBasedRuleForm,
+  ManageGeoBasedRuleList,
+} from './admin/pages/manage-geo-based-rule';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -173,6 +207,73 @@ const NotesForm = lazy(
   () => import('./consultant/pages/notes/notes-form/notes-form')
 );
 
+const EmailTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/email-templates/email-templates-list/email-templates-list'
+    )
+);
+
+const EmailTemplateForm = lazy(
+  () =>
+    import(
+      './admin/pages/email-templates/email-template-form/email-template-form'
+    )
+);
+
+const Case = lazy(() => import('./consultant/pages/case/case-list/cases'));
+const CaseForm = lazy(
+  () => import('./consultant/pages/case/case-form/create-cases')
+);
+const CaseDetails = lazy(
+  () => import('./consultant/pages/case/case-details/case-details')
+);
+
+const ChecklistTemplates = lazy(
+  () =>
+    import(
+      './admin/pages/checklist-templates/checklist-templates/templates-list'
+    )
+);
+
+const ChecklistTemplateForm = lazy(
+  () =>
+    import(
+      './admin/pages/checklist-templates/checklist-template-form/template-form'
+    )
+);
+
+const TaskTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/task-templates/task-templates-list/task-templates-list'
+    )
+);
+
+const TaskTemplateForm = lazy(
+  () =>
+    import('./admin/pages/task-templates/task-template-form/task-template-form')
+);
+
+const CheckListForm = lazy(
+  () => import('./consultant/pages/checklist/checklist-form/checklist-form')
+);
+
+const ActivityForm = lazy(
+  () => import('./consultant/pages/activities/activities-form/activity-form')
+);
+
+const WorkflowBuilder = lazy(
+  () =>
+    import(
+      './admin/pages/workflow-builder/workflow-builder-list/workflow-builder'
+    )
+);
+
+const WorkflowBuilderForm = lazy(
+  () => import('./admin/pages/workflow-builder/form/workflow-builder-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -230,6 +331,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                   <Route path={RESOURCE} element={<Resource />} />
                   <Route path={PROFILE} element={<Profile />} />
+                  <Route path={CASE} element={<Case />} />
+                  <Route path={CASE_DETAILS} element={<CaseDetails />} />
+                  <Route path={CASE_CREATE} element={<CaseForm />} />
+                  <Route path={CASE_EDIT} element={<CaseForm />} />
                   <Route
                     path={PROJECT_TASK_CREATE}
                     element={<ProjectTaskForm />}
@@ -271,27 +376,24 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     path={GLOBAL_INTERACTIONS_EDIT}
                     element={<InteractionForm />}
                   />
+                  <Route
+                    path={CASE_INTERACTIONS_CREATE}
+                    element={<CaseInteractionForm />}
+                  />
+                  <Route
+                    path={CASE_INTERACTIONS_EDIT}
+                    element={<CaseInteractionForm />}
+                  />
                   <Route path={ATTACHMENTS} element={<Attachments />} />
+                  <Route path={TASKS} element={<Tasks />} />
                   <Route path={NOTES} element={<Notes />} />
                   <Route path={NOTES_CREATE} element={<NotesForm />} />
                   <Route path={NOTES_EDIT} element={<NotesForm />} />
                   <Route path={GLOBAL_NOTES_EDIT} element={<NotesForm />} />
-                  <Route
-                    path={INTERACTION_TEMPLATES}
-                    element={<InteractionTemplates />}
-                  />
-                  <Route
-                    path={INTERACTION_TEMPLATES_CREATE}
-                    element={<InteractionTemplateForm />}
-                  />
-                  <Route
-                    path={INTERACTION_TEMPLATES_EDIT}
-                    element={<InteractionTemplateForm />}
-                  />
-                  <Route
-                    path={IMPORT_TEMPLATES}
-                    element={<ImportTemplatesList />}
-                  />
+                  <Route path={CHECKLIST_CREATE} element={<CheckListForm />} />
+                  <Route path={CHECKLIST_EDIT} element={<CheckListForm />} />
+                  <Route path={ACTIVITY_CREATE} element={<ActivityForm />} />
+                  <Route path={ACTIVITY_EDIT} element={<ActivityForm />} />
                   {/* Page not found */}
                   <Route path={NOT_MATCH} element={<NotFound />} />
                 </Route>
@@ -304,6 +406,18 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={MANAGE_ACCOUNT_ACCESS}
                     element={<ManageAccountAccess />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE}
+                    element={<ManageGeoBasedRuleList />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE_CREATE}
+                    element={<GeoBasedRuleForm />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE_EDIT}
+                    element={<GeoBasedRuleForm />}
                   />
                   <Route
                     path={MANAGE_SETTINGS}
@@ -336,6 +450,71 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={MANAGE_USER_GROUP_EDIT}
                     element={<CreateUserGroup />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES}
+                    element={<InteractionTemplates />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES_CREATE}
+                    element={<InteractionTemplateForm />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES_EDIT}
+                    element={<InteractionTemplateForm />}
+                  />
+                  <Route
+                    path={IMPORT_TEMPLATES}
+                    element={<ImportTemplatesList />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES}
+                    element={<EmailTemplateList />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES_CREATE}
+                    element={<EmailTemplateForm />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES_EDIT}
+                    element={<EmailTemplateForm />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES}
+                    element={<ChecklistTemplates />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES_CREATE}
+                    element={<ChecklistTemplateForm />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES_EDIT}
+                    element={<ChecklistTemplateForm />}
+                  />
+                  <Route path={TASK_TEMPLATES} element={<TaskTemplateList />} />
+                  <Route
+                    path={TASK_TEMPLATES_CREATE}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_EDIT}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_DETAILS}
+                    element={<ManageTaskDetails />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER}
+                    element={<WorkflowBuilder />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER_CREATE}
+                    element={<WorkflowBuilderForm />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER_EDIT}
+                    element={<WorkflowBuilderForm />}
                   />
                 </Route>
                 {/* Page not found */}

@@ -27,6 +27,8 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import {
+  ActivityDropdownItem,
+  ColorCode,
   ExportType,
   NotesList,
   NotesListExportParams,
@@ -44,7 +46,7 @@ import { useToast } from '../../../../../hooks';
 import { accountDetailsProps } from '../../../account-details/utils';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { useManageUserList } from '../../../../../admin/service';
+import { useGetUserOptions } from '../../../../services/case-team';
 
 const NotesTabs: OverviewTabs[] = [
   {
@@ -65,6 +67,7 @@ interface NotesProps {
   setNotesParams: React.Dispatch<React.SetStateAction<NotesListExportParams>>;
   accountInActive: boolean;
   accountDetails?: accountDetailsProps;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Notes: React.FC<NotesProps> = ({
@@ -72,6 +75,7 @@ const Notes: React.FC<NotesProps> = ({
   setNotesParams,
   accountInActive,
   accountDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -113,14 +117,10 @@ const Notes: React.FC<NotesProps> = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
+  const userListData = useGetUserOptions(accountid);
 
   const { data, isLoading, isError } = useNotesList(
     {
@@ -162,9 +162,9 @@ const Notes: React.FC<NotesProps> = ({
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);
@@ -244,6 +244,7 @@ const Notes: React.FC<NotesProps> = ({
       entityLevel: 'account',
       entityId: accountId,
       source: `Account > ${accountName}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -260,6 +261,7 @@ const Notes: React.FC<NotesProps> = ({
       entityLevel: row.attachment_level || 'account',
       entityId: row.attach_to || accountId,
       source: `Account > ${accountName}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -449,6 +451,8 @@ const Notes: React.FC<NotesProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
         <NotesDetails
@@ -463,12 +467,12 @@ const Notes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-                className='[&>path]:stroke-white'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }
             buttons={headerButtons}
-            iconBg='#7F81F4'
+            iconBg={ColorCode.accountBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

@@ -1,5 +1,9 @@
 import { useSearchParams } from 'react-router-dom';
-import { ComingSoon, DetailsIcon, ResourcesIcon } from '../../../../../assets';
+import {
+  ComingSoon,
+  ManageGroupIcon,
+  SettingIcon,
+} from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import React, { useRef, useState } from 'react';
@@ -15,7 +19,12 @@ import {
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../../common-utils';
-
+import JurisdictionSetting from './jurisdiction/setting';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
+interface ConfigurationProps {
+  countryId: string | null;
+  activityMenuItems: ActivityDropdownItem[];
+}
 const ConfigTabs: ResourceTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
@@ -30,7 +39,10 @@ const ConfigTabs: ResourceTabs[] = [
   // },
 ];
 
-const Configuration: React.FC = () => {
+const Configuration: React.FC<ConfigurationProps> = ({
+  countryId,
+  activityMenuItems,
+}) => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
@@ -108,6 +120,13 @@ const Configuration: React.FC = () => {
             setIsSaveDisable={setIsSaveDisable}
           />
         );
+      case 'jurisdiction_configuration':
+        return (
+          <JurisdictionSetting
+            countryId={countryId}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -121,16 +140,16 @@ const Configuration: React.FC = () => {
     switch (list) {
       case 'users':
         return (
-          <ResourcesIcon
+          <ManageGroupIcon
             alt='resource header icon'
-            className='[&>path]:stroke-white w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       case 'settings':
         return (
-          <DetailsIcon
+          <SettingIcon
             alt='settings-header-icon'
-            className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       default:
@@ -179,39 +198,45 @@ const Configuration: React.FC = () => {
 
   return (
     <div className='flex flex-col w-full pt-2 pl-2 pr-4'>
-      <SectionTabPanel
-        tabs={ConfigTabs}
-        filterMenu={filterFields}
-        filterVisibility={list !== 'settings'}
-        showFilter={showFilter}
-        contextKey={`account-settings-${tabParam}`}
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
-        handleFilter={handleFilter}
-        handleSorting={() => {}}
-        sortFilterCount={0}
-        setSortFilterCount={() => {}}
-        showRefresh={list !== 'settings'}
-        onRefreshClick={onRefreshClick}
-        hideTabPanel={hideSection}
-        showSearch={list === 'users' ? true : false}
-        searchDisabled={false}
-        searchPlaceholder='Search'
-        onSearch={(text) => setSearchText(text)}
-        searchReset={resetSearch}
-        onSearchReset={handleSearchReset}
-      />
-      <SectionHeader
-        title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
-        titleIcon={getTitleIcon()}
-        buttons={headerButtons}
-        count={count}
-        showItemCount={list !== 'settings'}
-        hideSection={hideSection}
-        iconBg={list === 'users' ? '#7785ff' : '#D7E5FF'}
-        bgType='circle'
-      />
+      {list !== 'jurisdiction_configuration' && (
+        <div>
+          <SectionTabPanel
+            tabs={ConfigTabs}
+            filterMenu={filterFields}
+            filterVisibility={list !== 'settings'}
+            showFilter={showFilter}
+            contextKey={`account-settings-${tabParam}`}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            setCurrentPage={setCurrentPage}
+            handleFilter={handleFilter}
+            handleSorting={() => {}}
+            sortFilterCount={0}
+            setSortFilterCount={() => {}}
+            showRefresh={list !== 'settings'}
+            onRefreshClick={onRefreshClick}
+            hideTabPanel={hideSection}
+            showSearch={list === 'users' ? true : false}
+            searchDisabled={false}
+            searchPlaceholder='Search'
+            onSearch={(text) => setSearchText(text)}
+            searchReset={resetSearch}
+            onSearchReset={handleSearchReset}
+            showAddActivity={true}
+            activityMenuItems={activityMenuItems}
+          />
+          <SectionHeader
+            title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={count}
+            showItemCount={list !== 'settings'}
+            hideSection={hideSection}
+            iconBg={ColorCode.accountBgColor}
+            bgType='circle'
+          />
+        </div>
+      )}
       {renderContent()}
     </div>
   );

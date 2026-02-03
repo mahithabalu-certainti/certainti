@@ -3,8 +3,8 @@ import React, { Suspense, useMemo, useState } from 'react';
 import {
   AccountSettingsIcon,
   ActionIcon,
+  AttachmentsSideIcon,
   NewFilterIcon,
-  ProjectDetailsIcon,
   RefreshIcon,
 } from '../../../../assets';
 import { ActionsDropdown } from '../../../../components';
@@ -17,8 +17,12 @@ import {
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../common-service';
-import { checkPermission, getFiscalYears } from '../../../../common-utils';
-import { SelectOption } from '../../../types';
+import {
+  checkPermission,
+  getFiscalYears,
+  reshapeGlobalFilter,
+} from '../../../../common-utils';
+import { ColorCode, FilterState, SelectOption } from '../../../types';
 import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { useSelector } from 'react-redux';
@@ -45,6 +49,12 @@ export const Attachments: React.FC = () => {
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -111,8 +121,8 @@ export const Attachments: React.FC = () => {
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
-      fiscalYear: tableParams.fiscalYear,
-      globalFilters: tableParams.globalFilters,
+      fiscalYear: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
       search: searchText || undefined,
     };
     exportAttachmentsData('all_attachments', projectParams);
@@ -203,9 +213,9 @@ export const Attachments: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] max-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <ProjectDetailsIcon
+            <AttachmentsSideIcon
               alt='menu-icon'
-              className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
+              className={`h-7 w-7 p-[5px] rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.attachmentBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>
@@ -252,6 +262,13 @@ export const Attachments: React.FC = () => {
             placeholder='Search'
             disabled={false}
             hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
           />
           <button
             aria-describedby={modalId}
@@ -291,7 +308,13 @@ export const Attachments: React.FC = () => {
               filterMenu={attachmentsFilterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
-              setCurrentPage={setPage}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
               handleSorting={handleSorting}
               onFilterChange={handleCategory}
             />

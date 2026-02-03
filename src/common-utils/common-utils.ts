@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -48,10 +50,15 @@ export const createTextField = (
     anyOneRequired?: boolean;
     hide?: boolean;
     defaultValue?: string;
+    prefixValue?: string;
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -59,6 +66,7 @@ export const createTextField = (
       minErrorMessage: string;
       maxErrorMessage: string;
     };
+    maxLength?: number;
   } = {}
 ): FieldType => ({
   type: options.type ?? 'text',
@@ -75,11 +83,14 @@ export const createTextField = (
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
   lengthRequired: options.lengthRequired,
+  labelTooltip: options.labelTooltip,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
+  prefixValue: options.prefixValue,
+  maxLength: options.maxLength,
 });
 
 export const createPhoneInputField = (
@@ -133,6 +144,8 @@ export const createCheckboxField = (
     required?: boolean;
     checkboxOptions: SelectOption[];
     defaultValue?: string;
+    onChange?: boolean;
+    resetDependsFields?: string[];
   }
 ): FieldType => ({
   type: 'checkbox',
@@ -141,6 +154,8 @@ export const createCheckboxField = (
   required: options.required ?? false,
   options: options.checkboxOptions,
   defaultValue: options.defaultValue,
+  onChange: options.onChange,
+  resetDependsFields: options.resetDependsFields,
 });
 
 export const createRadioField = (
@@ -229,6 +244,7 @@ export const createSelectField = (
     required: boolean;
     width?: string;
     placeholder?: string;
+    requiredErrorMessage?: string;
     disabled?: boolean;
     clearValue?: Record<string, string>;
     onChange?: boolean;
@@ -239,6 +255,10 @@ export const createSelectField = (
     assignDefaultValue?: boolean;
     dependantLabel?: string;
     isFiscalYear?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'select',
@@ -249,6 +269,7 @@ export const createSelectField = (
   width: others.width,
   disabled: others.disabled,
   placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
@@ -258,6 +279,45 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+  labelTooltip: others.labelTooltip,
+});
+export const createMultiSelectField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    requiredErrorMessage?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+  }
+): FieldType => ({
+  type: 'multiSelect',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
 });
 
 export const createAutoCompleteField = (
@@ -316,15 +376,24 @@ export const createButton = (
   onClick: others.onClick,
   disabled: others.disabled,
 });
+export interface EmptyFieldOptions {
+  name?: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+  hide?: boolean;
+}
+
 export const createEmptyField = (
   name: string,
   label: string,
-  options?: { name?: string; label?: string; type?: string; required?: boolean }
+  options?: EmptyFieldOptions
 ): FieldType => ({
   type: 'emptyFeild',
   name: options?.name || name,
   label: options?.label || label,
   required: options?.required ?? false,
+  hide: options?.hide,
 });
 
 export const createImgButton = (
@@ -356,8 +425,11 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    allowFutureDates?: boolean;
+    resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
+    onChange?: boolean;
     endDateValue?: boolean;
     startDateLabel?: string;
     endDateLabel?: string;
@@ -366,6 +438,15 @@ export const createDateField = (
     startValue?: boolean;
     errorMessage?: string;
     clearDate?: string;
+    customDateOpen?: Date;
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    requiredErrorMessage?: string;
+    disableDatesBefore?: Date;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'date',
@@ -377,7 +458,9 @@ export const createDateField = (
   maxDate: others.maxDate,
   disabled: others.disabled,
   hide: others.hide,
+  onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
+  allowFutureDates: others.allowFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
   startValue: others.startValue,
@@ -386,6 +469,13 @@ export const createDateField = (
   endDateLabel: others.endDateLabel,
   errorMessage: others.errorMessage,
   clearDate: others.clearDate,
+  resetDependsFields: others.resetDependsFields,
+  customDateOpen: others.customDateOpen,
+  defaultValue: others.defaultValue,
+  assignDefaultValue: others.assignDefaultValue,
+  requiredErrorMessage: others.requiredErrorMessage,
+  disableDatesBefore: others.disableDatesBefore,
+  labelTooltip: others.labelTooltip,
 });
 
 export const createFiscalDateField = (
@@ -397,6 +487,8 @@ export const createFiscalDateField = (
     greaterThan?: Record<string, string>;
     toBeNotSame?: Record<string, string>;
     hide?: boolean;
+    dateFormat?: string;
+    views?: ('day' | 'month' | 'year')[];
   }
 ): FieldType => ({
   type: 'fiscalDate',
@@ -407,6 +499,8 @@ export const createFiscalDateField = (
   greaterThan: others.greaterThan,
   toBeNotSame: others.toBeNotSame,
   hide: others.hide,
+  dateFormat: others.dateFormat,
+  views: others.views,
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [
@@ -441,6 +535,9 @@ export const REGEX_PATTERNS = {
   EMAIL:
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
+  CLIENT_ID:
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
+  SECRET: /^\S+$/,
   WEBSITE:
     /^(https?:\/\/|www\.)[a-zA-Z0-9-.]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
@@ -451,6 +548,9 @@ export const REGEX_PATTERNS = {
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
+  NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
+  ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
+  ALLOW_ZERO_TO_99: /^[0-9]{1,2}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -467,6 +567,7 @@ export const REGEX_PATTERNS = {
   USER_NAME: /^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
+  MAX_250: /^.{0,250}$/,
   MAX_64: /^.{0,64}$/,
   MAX_50: /^.{0,50}$/,
   MAX_100: /^.{0,100}$/,
@@ -496,7 +597,7 @@ export const REGEX_PATTERNS = {
   NAME_LENGTH_2_TO_64_REGEX: /^.{2,64}$/,
   NAME_LENGTH_3_TO_64_REGEX: /^.{3,64}$/,
   NO_LEADING_OR_TRAILING_SPECIAL_REGEX: /^(?!^[-' ]|.*[-' ]$)/,
-  ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z-' ]+$/,
+  ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z.,' -]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[-' ]{2})/,
   NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
   ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
@@ -524,6 +625,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_()]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT
@@ -623,6 +725,8 @@ export const RESOURCE_REGEX = {
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
   ROLE: /^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
+  NUMBER_ONLY: /^(?=.*\D).+$/,
+  ROLE_WITH_NUMBER: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s\-'. ,]+$/,
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -1040,4 +1144,77 @@ export const getIntersection = (
   return start <= end
     ? { start: start.toISOString(), end: end.toISOString() }
     : null;
+};
+
+export const formatTimeToAMPM = (time?: string | null): string => {
+  if (!time || typeof time !== 'string') return '-';
+  const trimmed = time.trim();
+  // Accept common time formats
+  const parsed = dayjs(trimmed, ['HH:mm', 'HH:mm:ss', 'H:mm'], true);
+  if (!parsed.isValid()) return '-';
+  return parsed.format('hh:mm A'); // AM/PM
+};
+
+export const formatDateToYyyyMmmDd = (dateString: string): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const year = date.getFullYear();
+  const month = monthNames[date.getMonth()];
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`; // 2026-May-02
+};
+
+export const getCapitalizeWords = (value: string): string => {
+  if (!value) return '';
+
+  return (
+    value
+      // replace _, -, and multiple non-alphanumeric chars with space
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  );
+};
+
+/**
+ * Sanitizes a URL to prevent javascript: or data: URI injection attacks
+ * @param url - The URL to sanitize
+ * @returns The sanitized URL if valid, or null if invalid
+ */
+export const sanitizeUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+
+  const trimmedUrl = url.trim();
+
+  // Check if URL starts with safe protocols (http or https)
+  const isSafeUrl = /^https?:\/\//i.test(trimmedUrl);
+
+  if (!isSafeUrl) {
+    console.warn('Potentially unsafe URL detected and blocked:', trimmedUrl);
+    return null;
+  }
+
+  return trimmedUrl;
 };

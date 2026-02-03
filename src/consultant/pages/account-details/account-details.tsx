@@ -6,12 +6,10 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
   CasesIcon,
   ChecklistIcon,
-  DetailsIcon,
   FinancialIcon,
   ImportsIcon,
   NotesSideIcon,
@@ -21,14 +19,27 @@ import {
   TimeSheetIcon,
   ConfigIcon,
   InteractionsIcon,
+  TaskCreateIcon,
+  DraftEmailIcon,
+  MeetingIcon,
+  CallLogIcon,
+  ConfigRuleIcon,
+  AccountDeatilsIcon,
+  AccountsIcon,
+  ManageGroupAccount,
+  HistorySubmissionIcon,
 } from '../../../assets';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
+import {
+  ActivityModal,
+  InfoSection,
+  PageHeader,
+  SideMenuPanel,
+} from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
 import {
   Activities,
   Attachments,
-  Cases,
   Checklist,
   Details,
   FinancialSummary,
@@ -38,6 +49,7 @@ import {
   Resources,
   Timesheet,
   Configuration,
+  Cases,
   Interactions,
 } from '../account-details-sidebar';
 import {
@@ -56,11 +68,17 @@ import { AccountState } from '../../../store/type';
 import {
   AccountDetailsResponse,
   AccountFieldsApiResponse,
+  ActivityListExportURLParams,
+  ActivityType,
+  ActivityDropdownItem,
+  CaseListExportParams,
+  ChecklistListExportParams,
   ExportType,
   MenuItem,
   NotesListExportParams,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
+  ColorCode,
 } from '../../types';
 import { exportProjectData, ProjectTriggerAI } from '../../services/project';
 import {
@@ -91,6 +109,10 @@ import { TimesheetProjectExportListURLParams } from '../../types/timesheet-proje
 import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../hooks';
 import { ExportNotesList } from '../../services/notes/notes-service';
+import { ExportCaseList } from '../../services/cases/case-service';
+import { ExportChecklistList } from '../../services/checklist/checklist-service';
+import { ExportActivityList } from '../../services/activities/activities-service';
+import HistorySubmission from '../case/case-details/history-submission/history-submission';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,6 +130,7 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.TRIGGER_AI_ASSESSMENT
   );
+  const [activityModalId, setActivityModalId] = useState<string | null>(null);
 
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
@@ -118,6 +141,10 @@ export const AccountDetails = () => {
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
+  const activityId = searchParams.get('activity_id');
+  const activityType = searchParams.get('activity_type');
+  const activityViewDetails = !!activityId && !!activityType;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -164,6 +191,16 @@ export const AccountDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
+  const isCasesExportEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_EXPORT
+  );
+
   const isImportExportEnable = checkPermission(
     permission,
     AllPermissions.IMPORTS_EXPORT
@@ -189,6 +226,51 @@ export const AccountDetails = () => {
     AllPermissions.ACCOUNT_TIMESHEET_EXPORT
   );
 
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
+  const isActivityCallExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_EXPORT
+  );
+
+  const isActivityEmailExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_EXPORT
+  );
+
+  const isActivityMeetingExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_EXPORT
+  );
+
+  // Activity Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
+  );
+
+  const activityExportPermissionMap: Record<string, boolean> = {
+    task: !!isActivityTaskExportEnable,
+    email: !!isActivityEmailExportEnable,
+    meeting: !!isActivityMeetingExportEnable,
+    call: !!isActivityCallExportEnable,
+  };
+
   const isAccountFieldsEditable = useMemo(
     () =>
       permission
@@ -208,6 +290,8 @@ export const AccountDetails = () => {
   );
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  const detailPageView = activeKey === 'details';
+
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
     sortOrder: 'DESC',
@@ -221,7 +305,7 @@ export const AccountDetails = () => {
     sortOrder: 'DESC',
     filters: {},
     fiscalYear: String(convertedFiscalYear),
-    accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
+    accountNumber: accountid || '',
   });
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
@@ -299,6 +383,29 @@ export const AccountDetails = () => {
     fiscalYear: convertedFiscalYear,
   });
 
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+    });
+
+  const [casesParams, setCasesParams] = useState<CaseListExportParams>({
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+    fiscalYear: convertedFiscalYear,
+  });
+
+  const [activityParams, setActivityParams] =
+    useState<ActivityListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      activity_type: 'all',
+    });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -322,7 +429,10 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'activities' &&
       searchParams.get('list') !== 'notes' &&
+      searchParams.get('list') !== 'checklist' &&
+      searchParams.get('list') !== 'cases' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
@@ -385,6 +495,19 @@ export const AccountDetails = () => {
       }),
     };
 
+    const checklistsPayload = {
+      accountRid: accountid || rNumber,
+      entityId: exportType === 'checklist' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'checklist' ? 'account' : 'resource',
+      ...(exportType === 'resource_checklist' && {
+        sortBy: tableParams.sortBy,
+        sortOrder: tableParams.sortOrder as 'ASC' | 'DESC' | undefined,
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+        search,
+      }),
+    };
+
     const financialPayload = {
       accountNumber: accountDetailsForEdit?.accountById?.r_number,
       accountRid: accountid,
@@ -392,6 +515,12 @@ export const AccountDetails = () => {
 
     const financialProjectPayload = {
       accountRid: accountid,
+    };
+
+    const activityPayload = {
+      accountRid: accountid,
+      entityId: accountid,
+      attachmentLevel: 'account',
     };
 
     if (exportType === 'project') {
@@ -410,8 +539,23 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'notes' || exportType === 'resource_notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    } else if (exportType === 'activities') {
+      ExportActivityList(
+        { ...activityParams, ...activityPayload },
+        activityType as ActivityType
+      );
+    } else if (
+      exportType === 'checklist' ||
+      exportType === 'resource_checklist'
+    ) {
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistsPayload,
+      });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
+    } else if (exportType === 'cases') {
+      ExportCaseList(casesParams, accountid);
     } else if (exportType === 'timesheet' && !tab) {
       exportTimesheetData({
         ...importsParams,
@@ -551,6 +695,22 @@ export const AccountDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'resources' && tab === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'resources' && tab === 'checklists' && !checklistView) {
+      return !isChecklistsExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return !isChecklistsExportEnable;
+    } else if (list === 'activities' && !activityViewDetails) {
+      const tab = searchParams.get('tab') || 'all';
+      if (tab === 'all') {
+        const canExportAll =
+          isActivityTaskExportEnable ||
+          isActivityEmailExportEnable ||
+          isActivityMeetingExportEnable ||
+          isActivityCallExportEnable;
+
+        return !canExportAll;
+      }
+      return !activityExportPermissionMap[tab];
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
@@ -559,6 +719,8 @@ export const AccountDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
+    } else if (list === 'cases') {
+      return !isCasesExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {
@@ -635,6 +797,33 @@ export const AccountDetails = () => {
     });
   };
 
+  const activityMenuItems: ActivityDropdownItem[] = [
+    {
+      label: 'Create Task',
+      onClick: () => setActivityModalId('create-task'),
+      icon: TaskCreateIcon,
+      hide: !isActivityTaskCreateEnable,
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => setActivityModalId('draft-email'),
+      icon: DraftEmailIcon,
+      hide: !isActivityEmailCreateEnable,
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => setActivityModalId('schedule-meeting'),
+      icon: MeetingIcon,
+      hide: !isActivityMeetingCreateEnable,
+    },
+    {
+      label: 'Log a call',
+      onClick: () => setActivityModalId('call-log'),
+      icon: CallLogIcon,
+      hide: !isActivityCallCreateEnable,
+    },
+  ];
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -646,6 +835,7 @@ export const AccountDetails = () => {
             setFinancialProjectCostParams={setFinancialProjectCostParams}
             countryId={data?.data.accountById.country_rid}
             stateId={data?.data.accountById.region_rid}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'details':
@@ -655,6 +845,7 @@ export const AccountDetails = () => {
             isLoading={isPending}
             isError={isError}
             isAccountEditEnable={isAccountFieldsEditable}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'resources':
@@ -664,6 +855,7 @@ export const AccountDetails = () => {
             setTableParams={setTableParams}
             setExportType={setExportType}
             permission={permission}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'attachments':
@@ -673,6 +865,7 @@ export const AccountDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchAccountDetails={onRefreshClick}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projects':
@@ -686,6 +879,7 @@ export const AccountDetails = () => {
             setProjectParams={setProjectParams}
             toggleEnabled={toggleEnabled}
             setToggleEnabled={setToggleEnabled}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'interactions':
@@ -696,12 +890,40 @@ export const AccountDetails = () => {
             setExportType={setExportType}
             setInteractionsParams={setInteractionsParams}
             loading={isPending}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'cases':
-        return <Cases />;
+        return (
+          <Cases
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setCasesParams={setCasesParams}
+            activityMenuItems={activityMenuItems}
+          />
+        );
+      case 'historical_submission':
+        return (
+          <div className='w-full pr-4 pl-2 py-2'>
+            <HistorySubmission
+              activityMenuItems={activityMenuItems}
+              isDetailLoading={isPending}
+              accountDetails={{ ...data?.data } as accountDetailsProps}
+            />
+          </div>
+        );
       case 'activities':
-        return <Activities />;
+        return (
+          <Activities
+            setExportType={setExportType}
+            setActivityParams={setActivityParams}
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            isDetailLoading={isPending}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       case 'notes':
         return (
           <Notes
@@ -709,10 +931,19 @@ export const AccountDetails = () => {
             accountInActive={accountInActive}
             setNotesParams={setNotesParams}
             accountDetails={{ ...data?.data } as accountDetailsProps}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'checklist':
-        return <Checklist />;
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       case 'timesheet':
         return (
           <Timesheet
@@ -721,6 +952,7 @@ export const AccountDetails = () => {
             setTimesheetProjectParams={setTimesheetProjectParams}
             setTimesheetResourceParams={setTimesheetResourceParams}
             setTimesheetTaskParams={setTimesheetTaskParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'imports':
@@ -733,10 +965,17 @@ export const AccountDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setImportsParams={setImportsParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'configuration':
-        return <Configuration />;
+        return (
+          <Configuration
+            countryId={data?.data.accountById.country_rid ?? null}
+            activityMenuItems={activityMenuItems}
+          />
+        );
+
       default:
         return (
           <div className='w-full pr-4 pl-2 py-2'>
@@ -763,7 +1002,7 @@ export const AccountDetails = () => {
         key: 'details',
         id: AllModules.ACCOUNTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: AccountDeatilsIcon,
       },
       {
         name: 'Resources',
@@ -798,6 +1037,14 @@ export const AccountDetails = () => {
         icon: CasesIcon,
       },
       {
+        name: 'Historical Submission',
+        key: 'historical_submission',
+        id: AllModules.HISTORICAL_SUBMISSION,
+        disabled: disable,
+        hide: disable,
+        icon: HistorySubmissionIcon,
+      },
+      {
         name: 'Activities',
         key: 'activities',
         id: AllModules.ACTIVITIES,
@@ -822,7 +1069,7 @@ export const AccountDetails = () => {
         icon: AttachmentsSideIcon,
       },
       {
-        name: 'Checklist',
+        name: 'Checklists',
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: disable,
@@ -859,7 +1106,7 @@ export const AccountDetails = () => {
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: disable,
             hide: disable,
-            icon: ResourcesIcon,
+            icon: ManageGroupAccount,
           },
           {
             name: 'Settings',
@@ -868,6 +1115,14 @@ export const AccountDetails = () => {
             disabled: false,
             hide: false,
             icon: SettingIcon,
+          },
+          {
+            name: 'Jurisdiction Configuration',
+            key: 'jurisdiction_configuration',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: disable,
+            hide: disable,
+            icon: ConfigRuleIcon,
           },
         ],
       },
@@ -881,6 +1136,14 @@ export const AccountDetails = () => {
     navigate(ACCOUNT);
   };
 
+  const sourceDetails = {
+    accountId: accountid || '',
+    entityLevel: 'account',
+    entityId: accountid || '',
+    source: `Account > ${data?.data?.accountById?.r_number || ''}`,
+    isEmailConfigured: data?.data?.accountDetails?.is_send_interaction,
+  };
+
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
   return (
     <div className='flex flex-col h-full'>
@@ -889,9 +1152,9 @@ export const AccountDetails = () => {
           variant='sub'
           placeholder='Account Name'
           icon={
-            <AccountDetailsIcon
-              className='h-6 w-6 rounded'
-              style={{ backgroundColor: '#4B9BFF' }}
+            <AccountsIcon
+              alt='account-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
             />
           }
           title={data?.data?.accountById?.account_name ?? ''}
@@ -908,7 +1171,7 @@ export const AccountDetails = () => {
             },
           ]}
           primaryButton={
-            isAccountFieldsEditable
+            isAccountFieldsEditable && !detailPageView
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
@@ -930,7 +1193,7 @@ export const AccountDetails = () => {
         error={isError}
         singleLineView={false}
       />
-      <div className='flex flex-1 flex-row w-full'>
+      <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed
@@ -947,15 +1210,21 @@ export const AccountDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
             isLoading={isPending}
+            maxHeight={225}
           />
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 220px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      <ActivityModal
+        modalId={activityModalId}
+        onCloseModal={() => setActivityModalId(null)}
+        sourceDetails={sourceDetails}
+      />
     </div>
   );
 };

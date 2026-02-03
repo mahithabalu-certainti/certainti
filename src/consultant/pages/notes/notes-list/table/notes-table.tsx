@@ -171,11 +171,71 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
-      // disabled: accountInActive,
+      disabled: (row: NotesList) =>
+        row?.status_name?.toLowerCase() !== 'active',
       onClick: (row: NotesList) => handleEdit(row),
       hide: !notesFieldsEditable,
     },
   ];
+
+  const handleViewGlobalNoteDetails = (row: NotesList) => {
+    if (!row?.attachment_level) return;
+
+    const noteId = row?.notes_rid || '';
+    const attachTo = row?.attach_to || '';
+    const parentId = row?.parent_rid || '';
+    const accountId = row?.account_rid || '';
+    const currencyId = row?.currency_rid || '';
+
+    switch (row.attachment_level.toLowerCase()) {
+      // Account-level notes
+      case 'account':
+        navigate(
+          `/account/details/${attachTo}?list=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
+      // Resource-level notes
+      case 'resource':
+        navigate(
+          `/account/details/${accountId}?list=resources&res_id=${attachTo}&tab=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
+      // Resource sub-level (cost or skill)
+      case 'resource_cost':
+      case 'resource_skill':
+        navigate(
+          `/account/details/${accountId}?list=resources&res_id=${parentId}&tab=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
+      // Project-level notes
+      case 'project':
+        navigate(
+          `/project/details/${attachTo}?accountID=${accountId}&source=account&currency_rid=${currencyId}&list=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
+      // Project sub-level (task or resource)
+      case 'project_task':
+      case 'project_resource':
+        navigate(
+          `/project/details/${parentId}?accountID=${accountId}&source=account&currency_rid=${currencyId}&list=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
+      // Case-level notes
+      case 'case':
+        navigate(
+          `/case/details/${attachTo}?accountID=${accountId}&list=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
+      default:
+        console.warn('Unknown attachment level:', row?.attachment_level);
+    }
+  };
 
   const notesColumns = getNotesTableColumns(
     false,
@@ -183,7 +243,9 @@ export const NotesTable: React.FC<NotesTableProps> = ({
     handleDownload,
     isNotesExportEnable,
     permissionMap,
-    userListOptions
+    userListOptions,
+    handleViewGlobalNoteDetails,
+    true
   );
 
   const handlePopoverClose = () => {

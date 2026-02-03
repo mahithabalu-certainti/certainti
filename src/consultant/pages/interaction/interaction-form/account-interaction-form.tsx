@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -16,6 +17,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
+  ColorCode,
   InteractionFormData,
   InteractionFormErrors,
   InteractionFormQuestion,
@@ -42,7 +44,7 @@ import {
 import {
   DetailsKeyContactErrorIcon,
   ErrorInfoIcon,
-  InteractionDetailIcon,
+  InteractionsIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
   NewFilterIcon,
@@ -278,7 +280,6 @@ const AccountInteractionForm = () => {
     if (commonSuccess) {
       successToast('Interaction created successfully');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess]);
   useEffect(() => {
     const interactionOptions = getInteractionLevel.data?.data?.interactionLevel;
@@ -286,18 +287,44 @@ const AccountInteractionForm = () => {
       setInteractionLevel(interactionOptions[0].rid);
     }
   }, [getInteractionLevel.data?.data]);
+  const getProjectDisableReason = (shouldDisableProject: boolean): string => {
+    if (shouldDisableProject) {
+      return 'Project type not allowed due to Configuration setting';
+    }
+    return '';
+  };
+
   useEffect(() => {
     if (projectData.data?.projects) {
       const updatedProjectList =
         projectData.data.projects.map((project) => {
           const updatedFiscal =
-            project.ProjectFiscal?.map((item) => {
-              return item;
+            project.ProjectFiscal?.map((fiscal) => {
+              const checkBoxMessage = getProjectDisableReason(
+                fiscal?.is_rd_trigger_qualified === false
+              );
+
+              return {
+                ...fiscal,
+                disableCheckBox: !!checkBoxMessage,
+                checkBoxMessage,
+              };
             }) || [];
+
+          const hasDisabledChild = updatedFiscal.some(
+            (fiscal) => fiscal.disableCheckBox
+          );
+
+          const parentDisableMessage = hasDisabledChild
+            ? getProjectDisableReason(true)
+            : null;
 
           return {
             ...project,
             ProjectFiscal: updatedFiscal,
+            disableCheckBox: hasDisabledChild,
+            checkBoxMessage: parentDisableMessage,
+            hasDisabledFiscal: hasDisabledChild,
           };
         }) || [];
 
@@ -621,7 +648,11 @@ const AccountInteractionForm = () => {
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <InteractionDetailIcon className='h-8 w-8 bg-[#6FBDA0] p-1.5 border-box rounded' />
+          <InteractionsIcon
+            alt='menu-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.accountBgColor}]`}
+          />
+
           <div className='w-[90%]'>
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
               New Interaction
@@ -1049,11 +1080,7 @@ const AccountInteractionForm = () => {
                                             padding: '4px',
                                           }}
                                         >
-                                          {question.question_seq_num.startsWith(
-                                            'SNO'
-                                          )
-                                            ? '-'
-                                            : question.question_seq_num}
+                                          {`Q${index + 1}`}
                                         </div>
                                       )}
 
@@ -1258,7 +1285,8 @@ const AccountInteractionForm = () => {
                       <span className='font-bold mr-1'>Projects List </span> -{' '}
                       <span className='ml-1 font-medium'>
                         {' '}
-                        Please add a project to an account in order to create a new interaction.
+                        Please add a project to an account in order to create a
+                        new interaction.
                       </span>
                     </Box>
                   </Box>

@@ -167,6 +167,101 @@ interface ProjectResourceData {
   projectResourceDetails: ProjectTaskDetailsType;
 }
 
+export interface ProjectResourceDetailData {
+  rid: string;
+  r_number: string;
+  created_by: string;
+  modified_by: string;
+  created_datetime: string;
+  modified_datetime: string;
+  project_resource_rid: string;
+  start_date: string | null;
+  end_date: string | null;
+  total_hours_pro_res: string | null;
+  total_cost_pro_res: string | null;
+  case_project_rid: string;
+  case_rid: string;
+  account_rid: string;
+  currency_rid: string;
+  description: string | null;
+  country_rid: string | null;
+
+  effort_project_resource_level: number | null;
+  cost_project_resource_level: number | null;
+  cost_project_task_level: number | null;
+  blended_cost_project_task_level: number | null;
+  blended_cost_project_resource_level: number | null;
+  effort_project_task_level: number | null;
+
+  total_hours_from_tasks: number | null;
+  total_cost_from_tasks: number | null;
+  total_cost_from_tasks_blended: number | null;
+
+  rd_percent_potential_ai: number | null;
+  rd_percent_adjustment: number | null;
+  rd_percent_final: number | null;
+
+  qre_fte: number | null;
+  qre_subcon: number | null;
+  qre_nonlabor: number | null;
+  qre_final: number | null;
+
+  rd_credits_fte_region_level: number | null;
+  rd_credits_subcon_region_level: number | null;
+  rd_credits_nonlabor_region_level: number | null;
+  rd_credits_region_level: number | null;
+
+  rd_credits_fte_fed_level: number | null;
+  rd_credits_subcon_fed_level: number | null;
+  rd_credits_nonlabor_fed_level: number | null;
+  rd_credits_fed_level: number | null;
+  rd_credits_total: number | null;
+
+  status_rid: string;
+  salary: number | null;
+  bonus: number | null;
+  insurance: number | null;
+  deductions: number | null;
+
+  assigned_skill_role_type_rid: string | null;
+  project_resource_code: string;
+  eid: string | null;
+
+  project_rid: string;
+  resource_rid: string;
+
+  qre_percent: number | null;
+  region_rid: string | null;
+
+  fiscal_year: number;
+  project_fiscal_rid: string;
+
+  project_resource_role: string | null;
+
+  net_total_cost_pro_res: string | null;
+
+  country_name: string | null;
+  country_code: string | null;
+  region_name: string | null;
+
+  currency_name: string;
+  currency_symbol: string;
+
+  created_name: string;
+  modified_name: string;
+  status_name: string;
+
+  resource_type_name: string;
+  assigned_skill_role: string | null;
+
+  resource_code: string;
+  resource_name: string | null;
+}
+
+interface ProjectResourceDetailsData {
+  projectResource: ProjectResourceDetailData;
+}
+
 export interface ProjectResourceDetailsApiResponse {
   statusCode: number;
   statusCodeValue: string;
@@ -179,6 +274,12 @@ export interface ProjectTaskDetailsApiResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: ProjectTaskDetailsType;
+}
+export interface ProjectResourceDetailApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: ProjectResourceDetailsData;
 }
 
 //create task api payload

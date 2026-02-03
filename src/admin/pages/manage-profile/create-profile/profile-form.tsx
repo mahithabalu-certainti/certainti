@@ -1,6 +1,6 @@
 import React from 'react';
-import { SelectOption } from '../../../../consultant/types';
-import { ProfileIcon } from '../../../../assets';
+import { ColorCode, SelectOption } from '../../../../consultant/types';
+import { ManageProfileIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import {
   CircularProgress,
@@ -127,7 +127,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     <div className='flex flex-col h-full'>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
-          <ProfileIcon alt='manage-profile' className='h-6 w-6 rounded' />
+          <ManageProfileIcon
+            alt='manage-profile'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
+          />
           <div className='w-[90%]'>
             <div className='font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal'>
               {`Admin Permission > Manage Profile`}

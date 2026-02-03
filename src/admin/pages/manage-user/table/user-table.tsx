@@ -78,25 +78,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
     return map;
   }, [userViewEditFields]);
 
-  useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters]);
-
-  useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      search: searchValue,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchValue]);
-
   const { data, isLoading, isError } = useManageUserList(
-    tableParams,
+    { ...tableParams, filters: appliedFilters, search: searchValue },
     refreshUserTrigger
   );
   const totalItems = data?.data?.count || 0;

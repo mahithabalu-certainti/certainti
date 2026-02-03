@@ -4,7 +4,7 @@ import {
   AllPermissions,
   FilterTypes,
 } from '../../../../common-service';
-import { FilterState, NotesListURLParams } from '../../../types';
+import { ColorCode, FilterState, NotesListURLParams } from '../../../types';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -183,7 +183,7 @@ export const Notes: React.FC = () => {
           <div className='flex items-center justify-center'>
             <NotesSideIcon
               alt='note-icon'
-              className={`w-7 h-7 p-[5px] [&>path]:stroke-white bg-[#7F81F4] rounded`}
+              className={`h-7 w-7 p-[5px] rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.notesBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>Notes</div>
@@ -228,6 +228,13 @@ export const Notes: React.FC = () => {
             placeholder='Search'
             disabled={false}
             hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
           />
           <button
             aria-describedby={modalId}
@@ -267,7 +274,13 @@ export const Notes: React.FC = () => {
               filterMenu={notesFilterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
-              setCurrentPage={setPage}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
               handleSorting={handleSorting}
             />
           </Suspense>
