@@ -117,6 +117,7 @@ export class DataMapperForms
                 form_name: {
                     type: DataTypes.STRING(120),
                     allowNull: false,
+                    unique: true,
                 },
                 browse_file: {
                     type: DataTypes.STRING(1000),

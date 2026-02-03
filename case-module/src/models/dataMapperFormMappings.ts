@@ -17,6 +17,7 @@ interface DataMapperFormMappingsAttributes {
     calculation_config?: any | null;
     field_type?: string | null;
     column_id?: string | null;
+    extraction_order?: number | null;
 }
 
 export interface DataMapperFormMappingsCreationAttributes
@@ -30,6 +31,7 @@ export interface DataMapperFormMappingsCreationAttributes
         | "calculation_config"
         | "field_type"
         | "column_id"
+        | "extraction_order"
     > { }
 
 export class DataMapperFormMappings
@@ -48,6 +50,7 @@ export class DataMapperFormMappings
     public calculation_config?: any | null;
     public field_type?: string | null;
     public column_id?: string | null;
+    public extraction_order?: number | null;
 
     static initialize(
         sequelize: Sequelize,
@@ -100,6 +103,10 @@ export class DataMapperFormMappings
                 },
                 column_id: {
                     type: DataTypes.STRING(120),
+                    allowNull: true,
+                },
+                extraction_order: {
+                    type: DataTypes.INTEGER,
                     allowNull: true,
                 },
             },

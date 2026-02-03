@@ -1,5 +1,6 @@
 
 import json
+import os
 import uuid
 import psycopg2
 from psycopg2 import pool
@@ -130,6 +131,30 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
             # 3. If we have extracted data, insert mappings
             if extracted_data:
+                try:
+                    # Create directory if it doesn't exist
+                    output_dir = "extracted_json"
+                    if not os.path.exists(output_dir):
+                        os.makedirs(output_dir)
+                    
+                    # Define file path
+                    file_path = os.path.join(output_dir, f"extraction_{rid}.json")
+                    
+                    # Ensure data is a dictionary (for JSON serialization)
+                    data_to_save = extracted_data
+                    if isinstance(data_to_save, str):
+                        try:
+                            data_to_save = json.loads(data_to_save)
+                        except json.JSONDecodeError:
+                            print(f"Warning: extracted_data is a string but not valid JSON for {rid}")
+                    
+                    # Write to file
+                    with open(file_path, 'w') as f:
+                        json.dump(data_to_save, f, indent=4)
+                    
+                    print(f"Extracted data saved to {file_path}")
+                except Exception as e:
+                    print(f"Error saving extracted data to JSON: {e}")
 
                 # delete existing mappings for this form
                 cur.execute(f"DELETE FROM {schema}.data_mapper_form_mappings WHERE form_rid = %s", (rid,))
@@ -145,8 +170,8 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                 
                 field_insert_sql = f"""
                                 INSERT INTO {schema}.data_mapper_form_mappings 
-                            (form_rid, field_label, created_by, field_type, column_id)
-                            VALUES (%s, %s, %s, %s, %s)
+                            (form_rid, field_label, created_by, field_type, column_id, extraction_order)
+                            VALUES (%s, %s, %s, %s, %s, %s)
                             """
 
                 
@@ -154,9 +179,13 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                 if isinstance(data_obj, dict):
                     processed_labels = set()
 
+                    extraction_order = 0
+
                     def insert_safe_label(label, f_type):
+                        nonlocal extraction_order
                         if label and label not in processed_labels:
-                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None))
+                            extraction_order += 1
+                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order))
                             processed_labels.add(label)
 
                     header_fields = data_obj.get("header_fields", [])
@@ -227,8 +256,12 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
                     pdf_form_fields = data_obj.get("pdf_form_fields", [])
                     if pdf_form_fields and isinstance(pdf_form_fields, list):
-                        query = f"UPDATE {schema}.data_mapper_forms SET field_array = %s, form_type = %s WHERE rid = %s"
-                        params = [json.dumps(pdf_form_fields), "fillable", rid]
+                        if len(pdf_form_fields) > 1:
+                            query = f"UPDATE {schema}.data_mapper_forms SET field_array = %s, form_type = %s WHERE rid = %s"
+                            params = [json.dumps(pdf_form_fields), "fillable", rid]
+                        else:
+                            query = f"UPDATE {schema}.data_mapper_forms SET form_type = %s WHERE rid = %s"
+                            params = ["non-fillable", rid]
                     else:
                         query = f"UPDATE {schema}.data_mapper_forms SET form_type = %s WHERE rid = %s"
                         params = ["non-fillable", rid]
