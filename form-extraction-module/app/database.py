@@ -1,6 +1,5 @@
 
 import json
-import os
 import uuid
 import psycopg2
 from psycopg2 import pool
@@ -131,31 +130,6 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
             # 3. If we have extracted data, insert mappings
             if extracted_data:
-                try:
-                    # Create directory if it doesn't exist
-                    output_dir = "extracted_json"
-                    if not os.path.exists(output_dir):
-                        os.makedirs(output_dir)
-                    
-                    # Define file path
-                    file_path = os.path.join(output_dir, f"extraction_{rid}.json")
-                    
-                    # Ensure data is a dictionary (for JSON serialization)
-                    data_to_save = extracted_data
-                    if isinstance(data_to_save, str):
-                        try:
-                            data_to_save = json.loads(data_to_save)
-                        except json.JSONDecodeError:
-                            print(f"Warning: extracted_data is a string but not valid JSON for {rid}")
-                    
-                    # Write to file
-                    with open(file_path, 'w') as f:
-                        json.dump(data_to_save, f, indent=4)
-                    
-                    print(f"Extracted data saved to {file_path}")
-                except Exception as e:
-                    print(f"Error saving extracted data to JSON: {e}")
-
                 # delete existing mappings for this form
                 cur.execute(f"DELETE FROM {schema}.data_mapper_form_mappings WHERE form_rid = %s", (rid,))
                 cur.execute(f"DELETE FROM {schema}.data_mapper_table_mappings WHERE form_rid = %s", (rid,))
