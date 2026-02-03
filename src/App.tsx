@@ -91,6 +91,10 @@ import {
   WORKFLOW_BUILDER,
   WORKFLOW_BUILDER_CREATE,
   WORKFLOW_BUILDER_EDIT,
+  DATA_MAPPER,
+  DATA_MAPPER_CREATE,
+  DATA_MAPPER_EDIT,
+  DATA_MAPPER_CONFIG,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -272,6 +276,19 @@ const WorkflowBuilder = lazy(
 
 const WorkflowBuilderForm = lazy(
   () => import('./admin/pages/workflow-builder/form/workflow-builder-form')
+);
+
+const DataMapper = lazy(
+  () => import('./admin/pages/data-mapper/data-mapper-list/data-mapper')
+);
+
+const DataMapperForm = lazy(
+  () => import('./admin/pages/data-mapper/data-mapper-form/data-mapper-form')
+);
+
+const DataMapperConfig = lazy(
+  () =>
+    import('./admin/pages/data-mapper/data-mapper-config/data-mapper-config')
 );
 
 // Loading component for Suspense fallback
@@ -515,6 +532,16 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={WORKFLOW_BUILDER_EDIT}
                     element={<WorkflowBuilderForm />}
+                  />
+                  <Route path={DATA_MAPPER} element={<DataMapper />} />
+                  <Route
+                    path={DATA_MAPPER_CREATE}
+                    element={<DataMapperForm />}
+                  />
+                  <Route path={DATA_MAPPER_EDIT} element={<DataMapperForm />} />
+                  <Route
+                    path={DATA_MAPPER_CONFIG}
+                    element={<DataMapperConfig />}
                   />
                 </Route>
                 {/* Page not found */}

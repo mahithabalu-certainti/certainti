@@ -47,13 +47,13 @@ export const FileList: React.FC<FileListProps> = ({
         >
           <div className='flex items-center gap-2 flex-1 min-w-0'>
             <React.Suspense fallback={null}>
-              <AttachmentsSideIcon className='w-[14px] h-[14px]' />
+              <AttachmentsSideIcon className='w-[14px] h-[14px] [&>path]:stroke-[#2D3E4F]' />
             </React.Suspense>
             <span
               className='text-sm text-[#2D3E4F] truncate'
-              title={`${file.name}${file.format ? ` ${file.format}` : ''}`}
+              title={`${file.name}${file.format ? `${file.format}` : ''}`}
             >
-              {`${file.name}${file.format ? ` ${file.format}` : ''}`}
+              {`${file.name}${file.format ? `${file.format}` : ''}`}
             </span>
             <span className='text-xs text-[#6B7280] flex-shrink-0'>
               {`(${file.size})`}
@@ -92,7 +92,7 @@ export const FileList: React.FC<FileListProps> = ({
           }}
         >
           <div className='flex items-center gap-2 flex-1 min-w-0'>
-            <AttachmentsSideIcon className='w-[14px] h-[14px]' />
+            <AttachmentsSideIcon className='w-[14px] h-[14px] [&>path]:stroke-[#2D3E4F]' />
             <span className='text-sm text-[#2D3E4F] truncate' title={file.name}>
               {file.name}
             </span>

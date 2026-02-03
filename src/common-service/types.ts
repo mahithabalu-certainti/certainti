@@ -440,6 +440,7 @@ export enum MenuOption {
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
   WORKFLOW_BUILDER = 'workflow_builder',
+  DATA_MAPPER = 'data_mapper',
 }
 
 export interface OverviewTabs {
