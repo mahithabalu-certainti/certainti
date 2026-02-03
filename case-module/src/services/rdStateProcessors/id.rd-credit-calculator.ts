@@ -45,7 +45,8 @@ export class RdCreditCalculatorForID {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(qreCalInfo.final_credit)
         }
     }
 

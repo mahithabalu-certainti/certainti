@@ -71,7 +71,7 @@ export class ComputationService {
             const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
             const hasFederal = findAvailableConfigLevels.includes(true);
             const hasState = findAvailableConfigLevels.includes(false);
-            const configLevelKey =
+            let configLevelKey =
                 hasFederal && hasState ? ConfigType.BOTH :
                     hasFederal ? ConfigType.FEDERAL_ONLY :
                         hasState ? ConfigType.STATE_ONLY :
@@ -80,17 +80,60 @@ export class ComputationService {
             const executionConfigMap: Record<string, () => Promise<any>> = {
                 [ConfigType.BOTH]: async () => {
                     logMessage("Both Federal and State computations to be executed.");
-                    // await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                    return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
+                     await this.stateComputationService.runComputation(accountRid,caseRid,effectiveStart,effectiveEnd);
+                     const federalResult =  await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                     const [stateResult]:any[] = await orgDb.query(rawQueries.fetchConfiguration(schemaName,caseRid),{type: "SELECT"});
+                     return {
+                        statusCode: federalResult.statusCode,
+                        message: federalResult.message,
+                        data: {
+                            is_federal_level: stateResult.is_federal_level,
+                            is_state_level: stateResult.is_state_level,
+                            federal: federalResult.data
+                        }
+                      }
                 },
                 [ConfigType.FEDERAL_ONLY]: async () => {
                     logMessage("Only Federal computation to be executed.");
-                    return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
-                    // return await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                },
+                    const federalResult = await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                    const [stateResult]:any[] = await orgDb.query(rawQueries.fetchConfiguration(schemaName,caseRid),{type: "SELECT"});
+                     return {
+                        statusCode: federalResult.statusCode,
+                        message: federalResult.message,
+                        data: {
+                            is_federal_level: stateResult.is_federal_level,
+                            is_state_level: stateResult.is_state_level,
+                            federal: federalResult.data
+                        }
+                      }
+                    },
                 [ConfigType.STATE_ONLY]: async () => {
                     logMessage("Only State computation to be executed.");
-                    return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
+                     await this.stateComputationService.runComputation(accountRid,caseRid,effectiveStart,effectiveEnd);
+                     const [stateResult]:any[] = await orgDb.query(rawQueries.fetchConfiguration(schemaName,caseRid),{type: "SELECT"});
+                     if(!stateResult.is_state_level || !stateResult || stateResult.length === 0){
+                        return {
+                            statusCode: HttpStatus.FAILED,
+                            message: HttpStatus.FAILED_MESSAGE,
+                            errorMessage: "No State configuration found",
+                            data:{
+                                is_federal_level: stateResult.is_federal_level,
+                                is_state_level: stateResult.is_state_level,
+                                federal: {}
+                            }
+                          
+                        }
+                     }
+                    const stateWiseResult = await this.getStateSummaryResults(accountRid!, caseRid!)
+                     return {
+                        statusCode: stateWiseResult.statusCode,
+                        message: stateWiseResult.message,
+                        data: {
+                            is_federal_level: stateResult.is_federal_level,
+                            is_state_level: stateResult.is_state_level,
+                            federal: stateWiseResult.data
+                        }
+                      }
                 },
                 [ConfigType.NONE]: async () => ({
                     statusCode: HttpStatus.FAILED,
@@ -189,6 +232,36 @@ export class ComputationService {
                 }
             }
 
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.rdCreditPreview,
+                data: results,
+            };
+        } catch (error) {
+            logMessage(`Error fetching RD Credit : ${error}`);
+
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: HttpStatus.FAILED_MESSAGE,
+                errorMessage: STATUS_MESSAGE.jurisdictionFetchedFailed || "Failed to fetch",
+            };
+        }
+    }
+
+     /**
+     * 
+     * @param accountRid 
+     * @param caseRid 
+     * @param stateCode 
+     * @returns 
+     */
+    async getStateSummaryResults(accountRid: string, caseRid: string) {
+        try {
+            const mainDb = await this.getMainDb();
+            const fetchParentAccountRnumber: any = await mainDb.query(
+                await rawQueries.fetchParentAccount(accountRid, mainDb)
+            );
+            const results = await this.rdCreditSchemaService.getStateSummaryResults(fetchParentAccountRnumber[0][0].r_number, caseRid);
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: STATUS_MESSAGE.rdCreditPreview,

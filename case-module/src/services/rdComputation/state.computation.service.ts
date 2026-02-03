@@ -115,16 +115,11 @@ export class StateComputationService {
             const executionConfigMap: Record<string, () => Promise<any>> = {
                 [ConfigType.BOTH]: async () => {
                     logMessage("Both Federal and State computations to be executed.");
-                    await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                    await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
-                },
-                [ConfigType.FEDERAL_ONLY]: async () => {
-                    logMessage("Only Federal computation to be executed.");
-                    return await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                    return await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
                 },
                 [ConfigType.STATE_ONLY]: async () => {
                     logMessage("Only State computation to be executed.");
-                    await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
+                    return await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
                 },
                 [ConfigType.NONE]: async () => ({
                     statusCode: HttpStatus.FAILED,
@@ -134,11 +129,12 @@ export class StateComputationService {
             };
             const executeComputation = executionConfigMap[configLevelKey];
             if (executeComputation) {
-                await executeComputation();
+                return await executeComputation();
             } else {
                 throw new Error(`Invalid ConfigType: ${configLevelKey}`);
             }
-            console.log("Computation Completed.......!")
+          
+            
 
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);
@@ -216,7 +212,7 @@ export class StateComputationService {
                     
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                         fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
-                        result.inputFields, result.computedFields
+                        result.inputFields, result.computedFields,result.finalCredit
                     );
                 }
             } catch (err) {

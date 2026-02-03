@@ -78,7 +78,8 @@ export class RdCreditCalculatorForOH {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(final_credits_earned)
         }
 
 

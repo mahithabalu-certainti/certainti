@@ -1167,6 +1167,12 @@ export const rawQueries = {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
   },
+  fetchConfiguration(schemaName:string,caseRid:string)
+  {
+    return `
+      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
+    `
+  },
   GET_CURRENCIES: `
   SELECT rid, currency_symbol, currency_name, currency_code FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRid)
   `,

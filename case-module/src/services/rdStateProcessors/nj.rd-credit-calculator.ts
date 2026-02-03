@@ -44,7 +44,8 @@ export class RdCreditCalculatorForNJ {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(part5DevelopmentTaxCreditCalculationInfo.tot_available_credit)
         }
 
     }

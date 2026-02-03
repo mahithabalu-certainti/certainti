@@ -68,7 +68,8 @@ export class RdCreditCalculatorForSC {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(final_credit)
         }
 
     }

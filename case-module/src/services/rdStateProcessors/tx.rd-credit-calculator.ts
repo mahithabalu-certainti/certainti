@@ -42,7 +42,8 @@ export class RdCreditCalculatorForTX {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(qreActivitiesCreditInfo.rd_credit_activities_avail)
         }
     }
 
