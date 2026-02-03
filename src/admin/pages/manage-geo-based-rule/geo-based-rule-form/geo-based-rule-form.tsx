@@ -307,7 +307,7 @@ const GeoBasedRuleForm: React.FC = () => {
 
   return (
     <div>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
+      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           {/* Add Icon if needed */}
           <ManageRule
