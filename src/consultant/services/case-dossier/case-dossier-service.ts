@@ -13,8 +13,6 @@ import {
 import { caseServiceApi } from '../../../api/api';
 import { getClosingRemarksListURL } from '../urls/dossier-url';
 
-
-
 // Resource Summary
 export const fetchResourceSummaryList = async (
   params?: ResourceSummaryListURLParams
@@ -52,7 +50,6 @@ export const useResourceSummaryList = (
   });
 };
 
-
 // Dossier Summary
 export const fetchDossierSummary = async (
   accountRid: string,
@@ -81,11 +78,6 @@ export const useDossierSummary = (
     enabled: !!accountRid && !!caseRid,
   });
 };
-
-
-
-
-
 
 export const downloadPdfFromBase64 = (
   base64Data: string,
@@ -117,7 +109,6 @@ export const downloadPdfFromBase64 = (
     console.error('Export failed:', error);
   }
 };
-
 
 // closing remarks list
 export const fetchClosingRemarksList = async (

@@ -351,12 +351,12 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={
           tabParam === 'financial_workings'
             ? Boolean(
-              dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
-            )
+                dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
+              )
             : showTableControls
         }
         onRefreshClick={handleRefresh}
@@ -399,8 +399,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={() => {}}
+            setExportType={() => {}}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -429,8 +429,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={() => {}}
+            setExportType={() => {}}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -443,8 +443,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={() => {}}
+            setExportType={() => {}}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -457,8 +457,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={() => {}}
+            setExportType={() => {}}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -471,8 +471,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={() => {}}
+            setExportType={() => {}}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}

@@ -483,7 +483,6 @@ export const QualifiedProjectsMockData: QualifiedProjectListResponse = {
   },
 };
 
-
 export const DossierSummaryMockData: DossierSummaryResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
@@ -578,7 +577,6 @@ Exploratory research in cutting-edge technologies:
     },
   },
 };
-
 
 export const ResourceSummaryMockData: ResourceSummaryListResponse = {
   statusCode: 200,
@@ -885,5 +883,3 @@ export const ResourceSummaryMockData: ResourceSummaryListResponse = {
     ],
   },
 };
-
-

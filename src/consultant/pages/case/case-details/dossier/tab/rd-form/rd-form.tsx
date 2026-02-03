@@ -39,8 +39,11 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
   const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
   const { errorToast } = useToast();
-  const { mutate: previewRDCredit, isPending: isPreviewLoading, isError: isPreviewError } =
-    useRDFormMapperPreviewMutation();
+  const {
+    mutate: previewRDCredit,
+    isPending: isPreviewLoading,
+    isError: isPreviewError,
+  } = useRDFormMapperPreviewMutation();
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -58,8 +61,6 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
       })) || [],
     [region.data?.data.states]
   );
-
-
 
   // Permission
   const accountViewEditFields = useMemo(
@@ -123,7 +124,6 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
       }
     );
   };
-
 
   const isViewButtonEnabled = () => {
     if (isFederal === 'yes') {
@@ -213,7 +213,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                  !accountPermissionMap?.['country_rid']?.edit
+                !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -229,9 +229,10 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
+                errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-                }`}
+              }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -247,7 +248,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                    !accountPermissionMap?.['region_rid']?.edit
+                  !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -266,8 +267,9 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${
+                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={

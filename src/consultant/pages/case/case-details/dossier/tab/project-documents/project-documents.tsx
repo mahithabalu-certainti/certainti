@@ -42,7 +42,9 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [projectDocuments, setProjectDocuments] = useState<AttachmentList[]>([]);
+  const [projectDocuments, setProjectDocuments] = useState<AttachmentList[]>(
+    []
+  );
   const [tableParams, setTableParams] = useState<ProjectDocumentsListURLParams>(
     {
       page: currentPage + 1,

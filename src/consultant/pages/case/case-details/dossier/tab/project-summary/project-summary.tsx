@@ -46,9 +46,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [projectSummary, setProjectSummary] = useState<AssignProject[]>(
-    []
-  );
+  const [projectSummary, setProjectSummary] = useState<AssignProject[]>([]);
   const [tableParams, setTableParams] = useState<ProjectSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
@@ -129,8 +127,8 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   const RestrictedColumns = [
     { id: 'project_code', canHide: false, canDrag: false },
   ];
-  
-    const { permission } = useSelector((state: RootState) => state.permission);
+
+  const { permission } = useSelector((state: RootState) => state.permission);
   const projectViewEditlistFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)

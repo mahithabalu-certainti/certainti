@@ -47,17 +47,16 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [qualifiedProjects, setQualifiedProjects] = useState<
-    AssignProject[]
-  >([]);
-  const [tableParams, setTableParams] = useState<QualifiedProjectsListURLParams>(
-    {
+  const [qualifiedProjects, setQualifiedProjects] = useState<AssignProject[]>(
+    []
+  );
+  const [tableParams, setTableParams] =
+    useState<QualifiedProjectsListURLParams>({
       page: currentPage + 1,
       limit: 100,
       sortBy: 'project_code',
       sortOrder: 'ASC',
-    }
-  );
+    });
 
   // const { data, isLoading, isError } = useQualifiedProjectsList(
   //   {
@@ -69,8 +68,6 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   //   },
   //   refreshTrigger
   // );
-
-
 
   const { data, isLoading, isError } = useAssignProjectsList(
     {
@@ -163,7 +160,9 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(
-    Object.fromEntries(qualifiedProjectsColumns.map((col) => [col.id, !col.hide]))
+    Object.fromEntries(
+      qualifiedProjectsColumns.map((col) => [col.id, !col.hide])
+    )
   );
 
   const [columnOrder, setColumnOrder] = useState(

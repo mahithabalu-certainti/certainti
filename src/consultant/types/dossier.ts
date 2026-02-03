@@ -48,7 +48,7 @@ export type ProjectDocumentItem = {
   document_type: string;
   uploaded_by: string;
   attached_to: string;
-}
+};
 
 export interface ProjectDocumentListResponse {
   statusCode: number;
@@ -127,7 +127,6 @@ export interface QualifiedProjectListResponse {
   };
 }
 
-
 //-------- Dossier Summary ----------
 export type DossierSummarySectionItem = {
   title: string;
@@ -152,7 +151,6 @@ export interface DossierSummaryResponse {
     dossierSummary: DossierSummary;
   };
 }
-
 
 //-------- Resource Summary ----------
 export interface ResourceSummaryListURLParams {
@@ -264,7 +262,7 @@ export type ClosingRemarksItems = {
   signoff_type_name: string;
   signoff_at: string;
   rid: string;
-}
+};
 export interface ClosingRemarksResponse {
   statusCode: number;
   statusCodeValue: string;
@@ -341,7 +339,6 @@ export interface ProjectSummaryListResponse {
   };
 }
 
-
 export interface RDFormPayload {
   country_rid: string;
   region_rid?: string;
@@ -388,9 +385,9 @@ export interface RDFormResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data:{
+  data: {
     rdformUrl: string;
-  }
+  };
 }
 
 export interface RDCreditStatusResponse {
@@ -454,9 +451,9 @@ export interface FinancialHighlightsData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-  | FinancialHighlightsComputedFields
-  | AustraliaComputedFields
-  | USAComputedFields;
+    | FinancialHighlightsComputedFields
+    | AustraliaComputedFields
+    | USAComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -467,9 +464,9 @@ export interface CaseSummaryData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-  | FinancialHighlightsComputedFields
-  | AustraliaComputedFields
-  | USAComputedFields;
+    | FinancialHighlightsComputedFields
+    | AustraliaComputedFields
+    | USAComputedFields;
 }
 
 export interface AustraliaRdExpenditure {

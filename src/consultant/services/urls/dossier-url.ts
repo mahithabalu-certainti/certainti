@@ -64,7 +64,10 @@ export const getSignOffFinancialHighlightsURL = (): string => {
   return `/api/cases/financialWorking/signoff`;
 };
 
-export const getClosingRemarksListURL = (accountRid: string, caseRid: string): string => {
+export const getClosingRemarksListURL = (
+  accountRid: string,
+  caseRid: string
+): string => {
   return `/api/cases/closureRemarks/${accountRid}/${caseRid}`;
 };
 
@@ -80,4 +83,3 @@ export const getRDFormMapperPreviewURL = (
 ): string => {
   return `/api/rdFormMapper/preview?account_rid=${accountRid}&case_rid=${caseRid}&is_federal=${isFederal}&country_rid=${countryRid}`;
 };
-

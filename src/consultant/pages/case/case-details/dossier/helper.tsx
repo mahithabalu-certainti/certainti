@@ -355,7 +355,6 @@ export const getQualifiedProjectsFilterFields = (): FieldConfig[] => [
   },
 ];
 
-
 export const getResourceSummaryFilterFields = (): FieldConfig[] => [
   {
     name: 'Resource Code',

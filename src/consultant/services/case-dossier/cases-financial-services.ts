@@ -138,7 +138,6 @@ export const useSignOffFinancialHighlights = () => {
   });
 };
 
-
 export const rdFormMapper = async (
   payload: RDCreditInitiatePayload
 ): Promise<RDCreditInitiateResponse> => {
@@ -149,8 +148,7 @@ export const rdFormMapper = async (
 
 export const useRDFormMapper = () => {
   return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
-    mutationFn: (payload: RDCreditInitiatePayload) =>
-      rdFormMapper(payload),
+    mutationFn: (payload: RDCreditInitiatePayload) => rdFormMapper(payload),
   });
 };
 
@@ -160,7 +158,12 @@ export const fetchRDFormMapperPreview = async (
   stateRid?: string,
   isFederal?: boolean
 ): Promise<RDFormResponse> => {
-  const url = getRDFormMapperPreviewURL(accountRid, caseRid, stateRid ?? '', isFederal);
+  const url = getRDFormMapperPreviewURL(
+    accountRid,
+    caseRid,
+    stateRid ?? '',
+    isFederal
+  );
   const response = await caseServiceApi.get(url);
   return response.data;
 };
