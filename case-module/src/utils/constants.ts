@@ -1935,6 +1935,11 @@ export const activityStatus = {
   completed: "Completed",
   scheduled: "Scheduled",
 };
+export const computationStatus = {
+  pending: "Pending",
+  completed: "Completed",
+  failed: "Failed",
+}
 
 export const ruleTemplateNames = {
   caseCreated: "case_create",

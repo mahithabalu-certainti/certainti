@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, computationStatus, rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import RDCreditSchemaService from "./schemaService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -82,28 +82,23 @@ export class ComputationService {
                     logMessage("Both Federal and State computations to be executed.");
                      await this.stateComputationService.runComputation(accountRid,caseRid,effectiveStart,effectiveEnd);
                      const federalResult =  await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                     const [stateResult]:any[] = await orgDb.query(rawQueries.fetchConfiguration(schemaName,caseRid),{type: "SELECT"});
                      return {
                         statusCode: federalResult.statusCode,
                         message: federalResult.message,
                         data: {
-                            is_federal_level: stateResult.is_federal_level,
-                            is_state_level: stateResult.is_state_level,
-                            federal: federalResult.data
+                            computed_fields: federalResult.data
                         }
                       }
                 },
                 [ConfigType.FEDERAL_ONLY]: async () => {
                     logMessage("Only Federal computation to be executed.");
                     const federalResult = await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                    const [stateResult]:any[] = await orgDb.query(rawQueries.fetchConfiguration(schemaName,caseRid),{type: "SELECT"});
                      return {
                         statusCode: federalResult.statusCode,
                         message: federalResult.message,
                         data: {
-                            is_federal_level: stateResult.is_federal_level,
-                            is_state_level: stateResult.is_state_level,
-                            federal: federalResult.data
+                            computed_fields: federalResult.data,
+                             status:computationStatus.completed,
                         }
                       }
                     },
@@ -117,21 +112,19 @@ export class ComputationService {
                             message: HttpStatus.FAILED_MESSAGE,
                             errorMessage: "No State configuration found",
                             data:{
-                                is_federal_level: stateResult.is_federal_level,
-                                is_state_level: stateResult.is_state_level,
-                                federal: {}
+                                computed_fields: {},
+                                 status:computationStatus.failed,
                             }
                           
                         }
                      }
-                    const stateWiseResult = await this.getStateSummaryResults(accountRid!, caseRid!)
+                    const stateWiseResult = await this.getStateSummaryResults(accountRid!, caseRid!,effectiveEnd)
                      return {
                         statusCode: stateWiseResult.statusCode,
                         message: stateWiseResult.message,
                         data: {
-                            is_federal_level: stateResult.is_federal_level,
-                            is_state_level: stateResult.is_state_level,
-                            federal: stateWiseResult.data
+                            status:computationStatus.completed,
+                            computed_fields: stateWiseResult.data
                         }
                       }
                 },
@@ -166,12 +159,16 @@ export class ComputationService {
      * @param stateCode 
      * @returns 
      */
-    async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateRid: string) {
+    async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateRid: string,type: string) {
         try {
             const mainDb = await this.getMainDb();
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
+            if(type === 'summary'){
+                return this.getStateSummaryResults(accountRid, caseRid,fetchParentAccountRnumber[0][0].effective_end);
+            }
+            else{
             const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(fetchParentAccountRnumber[0][0].r_number, caseRid, stateRid);
              //statecode
             const [stateCode]:any[] = await mainDb.query(rawQueries.fetchStatesByIds(),
@@ -237,6 +234,7 @@ export class ComputationService {
                 message: STATUS_MESSAGE.rdCreditPreview,
                 data: results,
             };
+        }
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);
 
@@ -255,17 +253,35 @@ export class ComputationService {
      * @param stateCode 
      * @returns 
      */
-    async getStateSummaryResults(accountRid: string, caseRid: string) {
+    async getStateSummaryResults(accountRid: string, caseRid: string,effectiveEnd : string) {
         try {
             const mainDb = await this.getMainDb();
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
+            const date = new Date(effectiveEnd);
+                    const formatted = date.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric"
+                    });
+            let metaInfo = {
+               
+                credit_type: "Research Tax Credit",
+                "Fiscal Year Ended" : formatted,
+                "Description": "Research Tax Credit",
+                stateDetails : "State Credit Summary"
+            }
+
             const results = await this.rdCreditSchemaService.getStateSummaryResults(fetchParentAccountRnumber[0][0].r_number, caseRid);
+            let finalData = {
+                computed_fields: results,
+                metaData: metaInfo
+            }
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: STATUS_MESSAGE.rdCreditPreview,
-                data: results,
+                data: finalData,
             };
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);
