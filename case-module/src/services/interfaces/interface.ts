@@ -531,6 +531,7 @@ export interface IChildCaseService extends ICaseService {
     closing_remarks: never[];
 } | undefined>
 initiateCreateDossierForm(data : any) : Promise<string>
+exportCaseClosingRemarks(data : any): Promise<string | undefined>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;

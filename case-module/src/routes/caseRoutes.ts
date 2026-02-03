@@ -312,12 +312,17 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.childCaseController.getClosedCasesList
 )
-routes.get(
-  "/closureRemarks/:accountId/:caseId",
+routes.post(
+  "/closureRemarks",
   checkUserStatusMiddleware("NA"),
   controller.childCaseController.fetchCaseClosingRemarks
 )
 
 routes.get('/regions/:accountId/:caseId', controller.childCaseController.RegionListForFinancialHighlights)
 routes.post('/dossier/create', checkUserStatusMiddleware("NA"), controller.childCaseController.initiateCreateDossierForm)
+routes.post(
+  '/closureRemarks/export',
+  checkUserStatusMiddleware("NA"),
+  controller.childCaseController.exportSignOffDetails
+)
 export default routes;

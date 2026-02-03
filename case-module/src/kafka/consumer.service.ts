@@ -2,6 +2,8 @@ import { kafka, ENV } from "../config/kafka";
 import StateComputationService from "../services/rdComputation/state.computation.service";
 import { logMessage } from "../utils/helpers";
 import RDCreditSchemaService from "../services/rdComputation/schemaService";
+import { ChildCaseService } from "../services/cases/childCaseService";
+import Configurations from "../config/config"
 
 /**
  * Kafka Consumer Service
@@ -9,6 +11,7 @@ import RDCreditSchemaService from "../services/rdComputation/schemaService";
 export class KafkaConsumerService {
     private rdCreditSchemaService: RDCreditSchemaService;
     private stateComputationService: StateComputationService;
+    private childCaseService : ChildCaseService
     private rdFormMapperService: any;
 
     constructor() {
@@ -17,7 +20,9 @@ export class KafkaConsumerService {
         // Dynamically import the rdFormMapperService from Configurations
         const Configurations = require("../config/config").default;
         const Services = Configurations.getInstance().getServices();
+        const logger = Configurations.getInstance().getLogger()
         this.rdFormMapperService = Services.rdFormMapperService;
+        this.childCaseService = new ChildCaseService(logger)
     }
 
     private consumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID });
@@ -88,13 +93,21 @@ export class KafkaConsumerService {
         const dossierTopic = ENV.DOSSIER_KAFKA_TOPIC || "create-dossier-form";
         await this.dossierConsumer.connect();
         await this.dossierConsumer.subscribe({topic : dossierTopic, fromBeginning : false});
+        logMessage("Kafka Dossier Form Consumer Ready");
 
         await this.dossierConsumer.run({
             eachMessage : async ({message}) => {
+                 console.log("Dossier consumer message received");
                 const key = message.key?.toString();
                 const value = message.value?.toString();
-                if(!key) return;
-                if(!value) return;
+                if(!key) {
+                    console.log("Skipping message: no key");
+                    return;
+                }
+                if(!value) {
+                    console.log("Skipping message: no value");
+                    return;
+                }
 
                 let payload;
                 try {
@@ -104,13 +117,15 @@ export class KafkaConsumerService {
                     console.error("Invalid JSON in form topic message", value);
                     return;
                 }
-                console.log(`Processing form topic message: ${JSON.stringify(payload)}`);
+                console.log(`Processing dossier topic message: ${JSON.stringify(payload)}`); // <-- updated log
                 try {
 
                     const markInProgress = await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, key, 'dossier-form');
-                    
+                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId);
+                    await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid,'dossier-form');
+                    console.log(`Dossier processing complete for ID: ${key}`);
                 } catch (error) {
-                    
+                    console.error("Error processing dossier message", error);
                 }
             }
         })

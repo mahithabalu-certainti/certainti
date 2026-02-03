@@ -212,7 +212,46 @@ export const STATUS_MESSAGE = {
   rdFormPreview : "RD form retrieved successfully",
   financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
   caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully",
-  dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully"
+  dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully",
+  closureRemarksExportedSuccess : "Closing Remarks Exported Successfully"
+};
+
+export const R_NUMBER_PREFIX = {
+  ACCOUNT_FISCAL_REGION: "ACFR",
+  ACCOUNT_FISCAL: "ACF",
+  PROJECT: "PRJ",
+  PROJECT_FISCAL: "PFI",
+  PROJECT_FISCAL_REGION: "PFIR",
+  PROJECT_HISTORY: "PRH",
+  PROJECT_TIMELINE: "PRT",
+  RESOURCE: "RES",
+  RESOURCE_HISTORY: "REH",
+  RESOURCE_TIMELINE: "RTL",
+  RESOURCE_SKILL: "RSK",
+  RESOURCE_SKILL_HISTORY: "RSH",
+  RESOURCE_SKILL_TIMELINE: "RST",
+  RESOURCE_COST: "RCO",
+  RESOURCE_COST_HISTORY: "RCH",
+  RESOURCE_COST_TIMELINE: "RCT",
+  RESOURCE_FISCAL: "RSF",
+  RESOURCE_FISCAL_REGION: "RSFR",
+  PROJECT_FISCAL_SUMMARY: "PFS",
+  CLASSIFICATION: "CSF",
+  KEY_CONTACT_DETAILS: "KEY",
+  ATTACHMENT: "ATT",
+  ATTACHMENT_TIMELINE: "ATI",
+  PROJECT_RESOURCE: "PRS",
+  PROJECT_RESOURCE_FISCAL: "PRSF",
+  PROJECT_RESOURCE_FISCAL_REGION: "PRSFR",
+  PROJECT_RESOURCE_HISTORY: "PRSH",
+  PROJECT_RESOURCE_TIMELINE: "PRST",
+  PROJECT_TASK: `PTA`,
+  PROJECT_TASK_FISCAL: "PTAF",
+  PROJECT_TASK_TIMELINE: "PTAT",
+  PROJECT_TASK_HISTORY: "PTAH",
+  NOTES: "NTE",
+  NOTES_TIMELINE: "NTETI",
+  NOTES_SUMMARY: "NOTS",
 };
 
 export const caseStatuses = {
@@ -1663,8 +1702,8 @@ export const rawQueries = {
   fetchFiscalEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   },
-  insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string) {
-    return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}')`
+  insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string, comments : string) {
+    return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid, comments) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}', '${comments.replace(/'/g, '')}')`
   },
   findSignOffTypes (rids : string[]) {
     return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d : any) => `'${d}'`).join(',')})`
@@ -1795,7 +1834,19 @@ WHERE dmf.country_rid = '${countryRid}'
           FROM ${schemaName}.${refTable}
           WHERE case_rid = :case_rid
           LIMIT 1`
-  }
+  },
+  fetchAssignedProjectIds (caseRid : string, schemaName : string){
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+},
+  fetchDocumentByIds() {
+    return `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`;
+  },
+  fetchDocumentCategory() {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`;
+  },
+  fetchUserByIds() {
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -2202,3 +2253,4 @@ export const onlyFederals = {
   usa: "USA",
   canada: "CAN"
 }
+export const DOSSIER_NAME = 'dossier_project_document'
