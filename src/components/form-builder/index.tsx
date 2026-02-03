@@ -3046,6 +3046,185 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     return chunks;
   };
 
+  const loadDynamicTableSection = (section: FormType) => {
+    const visibleFields = section.fields.filter((field) => !field.hide);
+    const hasFields = visibleFields.length > 0;
+
+    // Create headers from field labels
+    const headerFields = visibleFields.map((field) => ({
+      name: field.name,
+      label: field.label,
+      width: field.width || '200px',
+    }));
+
+    return (
+      <div className='px-10 mb-4'>
+        <TableContainer
+          sx={{
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            border: '1px solid #CBD6E2',
+            borderTop: 'none',
+          }}
+        >
+          <Table sx={{ borderCollapse: 'separate' }}>
+            <TableHead
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  color: '#2A2A2A',
+                  padding: '0px 8px',
+                  height: '29px',
+                  boxSizing: 'border-box',
+                  borderRight: '1px solid #CBD6E2',
+                  borderBottom: '1px solid #CBD6E2',
+                },
+              }}
+            >
+              <TableRow sx={{ height: 29 }}>
+                {headerFields.map((field, j) => {
+                  return (
+                    <TableCell
+                      sx={{
+                        width: `${field.width}`,
+                        minWidth: `${field.width}`,
+                        maxWidth: `${field.width}`,
+                      }}
+                      key={`${field.name}_${j}`}
+                    >
+                      {field.label}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            </TableHead>
+            {hasFields ? (
+              <TableBody
+                sx={{
+                  '& .MuiTableCell-root': {
+                    padding: '0px',
+                    '& input': {
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      background: 'transparent',
+                    },
+                  },
+                }}
+              >
+                <TableRow>
+                  {visibleFields.map((field, colIndex) => {
+                    const isRequired = field.required;
+                    return (
+                      <TableCell
+                        sx={{
+                          position: 'relative',
+                          height: '32px !important',
+                          width: `${field.width}`,
+                          minWidth: `${field.width}`,
+                          maxWidth: `${field.width}`,
+                          verticalAlign: 'top',
+                          borderRight: '1px solid #CBD6E2',
+                          borderBottom: '1px solid #CBD6E2',
+                          '& input': {
+                            border: field.error
+                              ? '1px solid #fb2c36 !important'
+                              : 'none',
+                            backgroundColor: field?.disabled
+                              ? '#f3f4f6 !important'
+                              : 'inherit',
+                            '&:focus': {
+                              border: field.error
+                                ? '1px solid #fb2c36'
+                                : '1px solid #60A5FA',
+                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: field.error
+                              ? '1px solid #ef4444'
+                              : 'none !important',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            border: field.error
+                              ? '1px solid #ef4444'
+                              : 'none !important',
+                          },
+                          '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              border: '1px solid #60A5FA !important',
+                            },
+                          },
+                        }}
+                        key={colIndex}
+                        style={{
+                          verticalAlign: 'top',
+                          height: '32px !important',
+                          backgroundColor: field.error
+                            ? '#FEF2F2'
+                            : 'transparent',
+                        }}
+                      >
+                        <React.Suspense fallback={null}>
+                          <div
+                            className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
+                          >
+                            {getFields(field)}
+                            {field.error && (
+                              <Tooltip
+                                title={field.error}
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      backgroundColor: '#FEF2F2',
+                                      mr: 1,
+                                    },
+                                  },
+                                }}
+                              >
+                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                  <React.Suspense fallback={null}>
+                                    <ErrorInfoIcon
+                                      alt='error'
+                                      className='w-5 h-3.5'
+                                    />
+                                  </React.Suspense>
+                                </span>
+                              </Tooltip>
+                            )}
+                            {isRequired && !field.error && (
+                              <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                *
+                              </span>
+                            )}
+                          </div>
+                        </React.Suspense>
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              </TableBody>
+            ) : (
+              <TableBody>
+                <TableRow>
+                  <TableCell
+                    colSpan={headerFields.length}
+                    align='center'
+                    sx={{ height: '32px', padding: '0px', color: '#7d98b6' }}
+                  >
+                    No data available
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            )}
+          </Table>
+        </TableContainer>
+      </div>
+    );
+  };
+
   const loadKeyContactSection = (section: FormType) => {
     const newContactColumn = newContactLength ? 8 : 7;
     const visibleFields = section.fields.filter(
@@ -3057,8 +3236,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldRows = chunkFields(visibleFields, newContactColumn);
     return (
       <div className='px-10'>
-        <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table className='border-l border-[#CBD6E2]'>
+        <TableContainer
+          sx={{
+            overflowX: 'auto',
+            border: '1px solid #CBD6E2',
+            borderTop: 'none',
+            maxHeight: '300px',
+          }}
+        >
+          <Table
+            stickyHeader
+            sx={{
+              borderCollapse: 'separate',
+            }}
+          >
             <TableHead
               sx={{
                 '& .MuiTableCell-root': {
@@ -3068,6 +3259,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   padding: '0px 8px',
                   height: '29px',
                   boxSizing: 'border-box',
+                  borderRight: '1px solid #CBD6E2',
+                  borderBottom: '1px solid #CBD6E2',
                 },
               }}
             >
@@ -3143,6 +3336,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                 `${field.type}` === 'iconButton'
                                   ? 'middle !important'
                                   : 'top',
+                              borderRight: '1px solid #CBD6E2',
+                              borderBottom: '1px solid #CBD6E2',
                               '& input': {
                                 border: field.error
                                   ? '1px solid #fb2c36 !important'
@@ -3477,12 +3672,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   ? loadSectionsWithoutTitle(section)
                   : section.sectionName === 'key_contacts_list'
                     ? loadKeyContactSection(section)
-                    : loadDefaultSections(
-                        section,
-                        isHalf,
-                        i
-                        // isFirstOneRestTwo
-                      )}
+                    : section.renderAsTable
+                      ? loadDynamicTableSection(section)
+                      : loadDefaultSections(
+                          section,
+                          isHalf,
+                          i
+                          // isFirstOneRestTwo
+                        )}
               </>
             </div>
           );
