@@ -58,16 +58,6 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       sortOrder: 'ASC',
     });
 
-  // const { data, isLoading, isError } = useQualifiedProjectsList(
-  //   {
-  //     ...tableParams,
-  //     search: searchValue,
-  //     filters: appliedFilters,
-  //     accountRid: accountId || '',
-  //     caseRid: caseId || '',
-  //   },
-  //   refreshTrigger
-  // );
 
   const { data, isLoading, isError } = useAssignProjectsList(
     {
@@ -79,7 +69,6 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       filter: appliedFilters,
       case_rid: caseId,
       account_rid: accountId,
-      fiscal_year: 2024,
     },
     refreshTrigger
   );
