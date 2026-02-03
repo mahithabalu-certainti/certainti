@@ -130,7 +130,6 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
             # 3. If we have extracted data, insert mappings
             if extracted_data:
-
                 # delete existing mappings for this form
                 cur.execute(f"DELETE FROM {schema}.data_mapper_form_mappings WHERE form_rid = %s", (rid,))
                 cur.execute(f"DELETE FROM {schema}.data_mapper_table_mappings WHERE form_rid = %s", (rid,))
@@ -145,8 +144,8 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                 
                 field_insert_sql = f"""
                                 INSERT INTO {schema}.data_mapper_form_mappings 
-                            (form_rid, field_label, created_by, field_type, column_id)
-                            VALUES (%s, %s, %s, %s, %s)
+                            (form_rid, field_label, created_by, field_type, column_id, extraction_order)
+                            VALUES (%s, %s, %s, %s, %s, %s)
                             """
 
                 
@@ -154,9 +153,13 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                 if isinstance(data_obj, dict):
                     processed_labels = set()
 
+                    extraction_order = 0
+
                     def insert_safe_label(label, f_type):
+                        nonlocal extraction_order
                         if label and label not in processed_labels:
-                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None))
+                            extraction_order += 1
+                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order))
                             processed_labels.add(label)
 
                     header_fields = data_obj.get("header_fields", [])
@@ -227,8 +230,12 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
                     pdf_form_fields = data_obj.get("pdf_form_fields", [])
                     if pdf_form_fields and isinstance(pdf_form_fields, list):
-                        query = f"UPDATE {schema}.data_mapper_forms SET field_array = %s, form_type = %s WHERE rid = %s"
-                        params = [json.dumps(pdf_form_fields), "fillable", rid]
+                        if len(pdf_form_fields) > 1:
+                            query = f"UPDATE {schema}.data_mapper_forms SET field_array = %s, form_type = %s WHERE rid = %s"
+                            params = [json.dumps(pdf_form_fields), "fillable", rid]
+                        else:
+                            query = f"UPDATE {schema}.data_mapper_forms SET form_type = %s WHERE rid = %s"
+                            params = ["non-fillable", rid]
                     else:
                         query = f"UPDATE {schema}.data_mapper_forms SET form_type = %s WHERE rid = %s"
                         params = ["non-fillable", rid]
