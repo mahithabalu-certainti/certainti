@@ -330,14 +330,14 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
           sticky: isFirstColumn,
           sx: isFirstColumn
             ? {
-                position: 'sticky',
-                left: 0,
-                background: '#fff',
-                padding: '0px 8px 0px 14px !important',
-                zIndex: 10,
-                borderRight: '1px solid #CBD6E2 !important',
-                borderBottom: '1px solid #CBD6E2 !important',
-              }
+              position: 'sticky',
+              left: 0,
+              background: '#fff',
+              padding: '0px 8px 0px 14px !important',
+              zIndex: 10,
+              borderRight: '1px solid #CBD6E2 !important',
+              borderBottom: '1px solid #CBD6E2 !important',
+            }
             : undefined,
           render: (row: TableRow) => {
             const value = row[headerId];
@@ -347,7 +347,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 ? table_headers[0]
                 : table_headers[0].id;
             const rowLabel = row[firstColHeaderId] as string;
-            const isRowBold = rowLabel && boldRows.includes(rowLabel);
+            const isRowBold =
+              (rowLabel && boldRows.includes(rowLabel)) || rowLabel === 'Total';
             const isBold = isFirstColumn || isRowBold;
 
             // Format value: 0 becomes '-', numbers become currency, strings stay as is
@@ -372,19 +373,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     const tableDataRows: TableRow[] =
       table_rows && Array.isArray(table_rows)
         ? table_rows.map((rowObj: any, index: number) => {
-            const row: TableRow = {
-              id: `row_${index}`,
-            };
+          const row: TableRow = {
+            id: `row_${index}`,
+          };
 
-            // Map each header ID to its value from the row object
-            table_headers.forEach((headerItem: any) => {
-              const headerId =
-                typeof headerItem === 'string' ? headerItem : headerItem.id;
-              row[headerId] = rowObj[headerId];
-            });
+          // Map each header ID to its value from the row object
+          table_headers.forEach((headerItem: any) => {
+            const headerId =
+              typeof headerItem === 'string' ? headerItem : headerItem.id;
+            row[headerId] = rowObj[headerId];
+          });
 
-            return row;
-          })
+          return row;
+        })
         : [];
 
     if (Total !== undefined && Total !== null && table_headers.length > 0) {
@@ -467,6 +468,33 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     return renderTableSection({
       table_headers,
       table_rows,
+    });
+  };
+
+  const renderFederalTable = (
+    federalData: Record<string, any>,
+    totalValue?: any
+  ) => {
+    if (!federalData || Object.keys(federalData).length === 0) return null;
+
+    const table_headers = [
+      { id: 'state', label: 'State' },
+      { id: 'credit_benefit', label: 'Credit Benefit' },
+    ];
+
+    const table_rows = Object.entries(federalData).map(([state, value]) => {
+      const numValue = Number(value);
+      return {
+        id: state,
+        state: state,
+        credit_benefit: !isNaN(numValue) ? numValue : value,
+      };
+    });
+
+    return renderTableSection({
+      table_headers,
+      table_rows,
+      Total: totalValue,
     });
   };
 
@@ -557,8 +585,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-                val.trim() !== '' &&
-                !isNaN(Number(val));
+              val.trim() !== '' &&
+              !isNaN(Number(val));
 
           return (
             <div
@@ -713,7 +741,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             if (
               key === 'computed_fields' ||
               key === 'qreSummary' ||
-              key === 'BOLD'
+              key === 'BOLD' ||
+              key === 'total'
             )
               return null;
 
@@ -748,6 +777,25 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                   {renderCard(
                     formatLabel(key),
                     renderIllinoisTable(value),
+                    false
+                  )}
+                </div>
+              );
+            }
+
+            // Special handling for "federal"
+            if (
+              key === 'federal' &&
+              typeof value === 'object' &&
+              value !== null &&
+              !Array.isArray(value)
+            ) {
+              const totalValue = (computedFields as any)?.total;
+              return (
+                <div key={key} className='mb-4'>
+                  {renderCard(
+                    formatLabel(key),
+                    renderFederalTable(value, totalValue),
                     false
                   )}
                 </div>
