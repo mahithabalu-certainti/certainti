@@ -125,7 +125,7 @@ const Selection280C: React.FC<Selection280CProps> = ({
         ...getSelectStyles(false, false),
         color: '#2D3E4F',
         width: '100%',
-        bgcolor: 'red',
+        bgcolor: '#f4989c',
         height: '32px',
         '.MuiSelect-select': {
           textAlign: 'center',
@@ -171,7 +171,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
   // Calculate current 280C values from data
   // Using useMemo to avoid re-calculation on every render unless computedFields changes
   const otherValues = React.useMemo(() => find280CValues(computedFields), [
-
     computedFields,
   ]);
 
