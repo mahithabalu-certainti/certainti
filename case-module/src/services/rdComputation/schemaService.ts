@@ -608,14 +608,20 @@ class RDCreditSchemaService {
 
         // Build result object: { state_code: final_credit }
         const result: { [key: string]: number } = {};
+        let total = 0;
         stateCalculations.forEach(calc => {
             const stateCode = stateCodeMap.get(calc.state_rid);
             if (stateCode && calc.final_credit != null) {
-                result[stateCode] = calc.final_credit;
+                const finalCredit = Number(calc.final_credit);
+                result[stateCode] = finalCredit;
+                total += finalCredit;
             }
         });
 
-        return result;
+        return {
+            federal: result,
+            total: total
+        };
     }
 
 

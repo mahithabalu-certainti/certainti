@@ -86,7 +86,8 @@ export class ComputationService {
                         statusCode: federalResult.statusCode,
                         message: federalResult.message,
                         data: {
-                            computed_fields: federalResult.data
+                            computed_fields: federalResult.data,
+                            status:computationStatus.completed,
                         }
                       }
                 },
@@ -138,7 +139,6 @@ export class ComputationService {
             const result =
                 executionConfigMap[configLevelKey] ??
                 executionConfigMap[ConfigType.NONE];
-
             return (result as () => Promise<any>)();
 
         } catch (error) {
