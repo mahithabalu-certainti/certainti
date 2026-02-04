@@ -60,7 +60,6 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       sortOrder: 'ASC',
     });
 
-
   const { data, isLoading, isError } = useAssignProjectsList(
     {
       page: currentPage + 1,
