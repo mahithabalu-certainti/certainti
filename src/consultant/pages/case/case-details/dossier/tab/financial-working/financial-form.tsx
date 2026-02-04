@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import FinancialWorking from './financial-working';
 import FinancialWorkingAustralia from './financial-working-australia';
 import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
-import { MenuItem, Select, Tab, Tabs } from '@mui/material';
+import { Box, MenuItem, Select, Tab, Tabs } from '@mui/material';
 import { useParams, useSearchParams } from 'react-router-dom';
 // import { useQueryClient } from '@tanstack/react-query';
 import { RootState } from '../../../../../../../store/store';
@@ -55,7 +55,7 @@ const FinancialWorkingUKTable = ({
   const computedFields = data?.data?.computed_fields as any;
   const submissions =
     computedFields?.[
-      'Technical Submissions by Cost that are 50% or more of Total QRE'
+    'Technical Submissions by Cost that are 50% or more of Total QRE'
     ] || [];
   const hmrcTotal =
     computedFields?.['Total Project to be shared with HMRC']?.Total;
@@ -182,9 +182,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     caseId as string
   );
   const configDetails = data?.data.states;
+  const configFedral = data?.data
 
   // Restore showFinancialValues and form states if data exists
-  React.useEffect(() => {
+  useEffect(() => {
     if (financialData) {
       setShowFinancialValues(true);
 
@@ -193,8 +194,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       if (stateRid) {
         setActiveTab(1); // Non-Federal tab
         setSelectedRegion(stateRid);
-      } else if (financialData.data) {
-        setActiveTab(0); // Federal tab
       }
     }
   }, [financialData]);
@@ -202,7 +201,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
 
   // Auto-initiate on component mount (only once)
-  React.useEffect(() => {
+  useEffect(() => {
     if (
       !hasInitiated &&
       caseDetails?.case_total_projects &&
@@ -214,28 +213,24 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       handleInitiateFinancialHighlights();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseDetails, hasInitiated]);
+  }, [caseDetails]);
 
   // Call appropriate API when federal tab changes
-  React.useEffect(() => {
+
+  useEffect(() => {
     if (!hasInitiated) return; // Wait for initiate to complete first
 
     if (activeTab === 0) {
       // Federal Yes: Call handleViewFinancialHighlights
       handleViewFinancialHighlights();
     } else if (activeTab === 1) {
-      // Federal No: Set first region as default and call API
-      if (regionListOptions.length > 0 && !selectedRegion) {
-        const firstRegion = regionListOptions[0].value;
-        setSelectedRegion(firstRegion);
-        // API will be called by the region change effect
-      }
+      handleViewFinancialHighlightsForRegion()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, hasInitiated]);
 
   // Call region API when region changes in Federal No mode (activeTab === 1)
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeTab === 1 && selectedRegion && hasInitiated) {
       handleViewFinancialHighlightsForRegion();
     }
@@ -318,13 +313,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const responseCurrencySymbol = caseDetails?.currency_symbol || '$';
 
   const handleViewFinancialHighlightsForRegion = async () => {
-    if (!selectedRegion) return;
-
     previewRDCredit(
       {
         accountrid: accountid,
         caseId: caseId ?? '',
-        stateRid: selectedRegion,
+        ...(selectedRegion
+          ? { stateRid: selectedRegion }
+          : { type: 'summary' }),
       },
       {
         onSuccess: (response) => {
@@ -347,10 +342,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   };
 
   const handleViewFinancialHighlights = async () => {
-    if (activeTab === 1 && selectedRegion) {
-      await handleViewFinancialHighlightsForRegion();
-      return;
-    }
 
     const payload = {
       account_rid: accountid,
@@ -431,42 +422,41 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             />
           </div>
         </div>
-        <div className='px-4 border-b border-[#CBD6E2]'>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            TabIndicatorProps={{
-              style: {
-                backgroundColor: '#1565C0',
-                height: '2px',
-              },
-            }}
-            sx={{
-              minHeight: '38px',
-              borderBottom: '1px solid #CBD6E2',
-              '& .MuiTab-root': {
+        <div className='px-4 pt-3'>
+          <Box>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              TabIndicatorProps={{
+                style: {
+                  backgroundColor: '#1565C0',
+                  height: '2px',
+                },
+              }}
+              sx={{
                 minHeight: '38px',
-                textTransform: 'none',
-                fontWeight: 'normal',
-                color: '#5F6B7C',
-                fontSize: '14px',
-                paddingX: '16px',
-              },
-              '& .Mui-selected': {
-                color: '#172B4D',
-                fontWeight: 600,
-              },
-              '& .Mui-disabled': {
-                opacity: 0.5,
-              },
-            }}
-          >
-            <Tab label='Federal' disabled={!caseDetails?.is_state_available} />
-            <Tab
-              label='State-wise'
-              disabled={!caseDetails?.is_state_available}
-            />
-          </Tabs>
+                borderBottom: '1px solid #CBD6E2',
+                '& .MuiTab-root': {
+                  minHeight: '38px',
+                  textTransform: 'none',
+                  fontWeight: 'normal',
+                  color: '#5F6B7C',
+                  fontSize: '14px',
+                  paddingX: '16px',
+                },
+                '& .Mui-selected': {
+                  color: '#172B4D',
+                  fontWeight: 600,
+                },
+                '& .Mui-disabled': {
+                  opacity: 0.5,
+                },
+              }}
+            >
+              <Tab label='Federal' disabled={!caseDetails?.is_state_available || !configFedral?.is_federal_level} />
+              <Tab label='State-wise' disabled={!caseDetails?.is_state_available || !configFedral?.is_state_level} />
+            </Tabs>
+          </Box>
         </div>
         {/* Country and Region Fields */}
         <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
@@ -474,7 +464,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                !accountPermissionMap?.['country_rid']?.edit
+                  !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -490,10 +480,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
-                errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-              }`}
+                }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -509,7 +498,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
+                    !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -528,9 +517,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
@@ -572,146 +560,148 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             </div>
           )}
         </div>
-      </div>
+      </div >
 
       {/* Loading State */}
-      {(isInitiating || isFinancialHighlights || isPreviewLoading) &&
-        !showFinancialValue && <DetailsSectionSkeleton />}
+      {(isInitiating || isFinancialHighlights || isPreviewLoading) && !showFinancialValue && (
+        <DetailsSectionSkeleton />
+      )}
 
-      {showFinancialValue && (
-        <div className=''>
-          {/* Dynamic Title Header based on Country */}
-          {(() => {
-            const title =
-              (financialData?.data?.computed_fields as any)?.Title || {};
-            const countryName = caseDetails?.country_name;
+      {
+        showFinancialValue && (
+          <div className=''>
+            {/* Dynamic Title Header based on Country */}
+            {(() => {
+              const title =
+                (financialData?.data?.computed_fields as any)?.Title || {};
+              const countryName = caseDetails?.country_name;
 
-            if (countryName === FinancialWorkingCountries.Ireland) {
-              return (
-                <div className='flex flex-col items-center justify-center py-1 text-[#2D3E4F] '>
-                  <div className='text-[14px] font-semibold'>
-                    Expleo - {title['Expleo'] || ''}
-                  </div>
-                  <div className='text-[14px] font-semibold mt-1'>
-                    {title['Description'] || 'Summary of R&D Expenditures'}
-                  </div>
-                </div>
-              );
-            }
-
-            if (countryName === FinancialWorkingCountries.UK) {
-              return (
-                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
-                  <div className='text-[14px] font-semibold'>
-                    {title['Account Name'] || ''}
-                  </div>
-                  <div className='text-[14px] font-semibold mt-1'>
-                    {title['Description'] || 'Summary of SR&ED Expenditures'}
-                  </div>
-                  <div className='text-[14px] mt-1'>
-                    <span className='font-semibold'>Fiscal Year:</span>{' '}
-                    {title['Fiscal Year'] || ''}
-                  </div>
-                </div>
-              );
-            }
-            if (countryName === FinancialWorkingCountries.Australia) {
-              return (
-                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
-                  <div className='text-[14px] font-semibold'>
-                    {title['Account Name'] || ''}
-                  </div>
-                  <div className='text-[14px] font-semibold mt-1'>
-                    {title['Description'] || 'Summary of SR&ED Expenditures'}
-                  </div>
-                </div>
-              );
-            }
-
-            if (countryName === FinancialWorkingCountries.Canada) {
-              return (
-                <div className='flex items-center justify-start py-1 text-[#2D3E4F] px-4'>
-                  <div className='text-[14px] font-semibold'>
-                    Ref - {title['Fiscal Year'] || ''} -{' '}
-                    {title['Descriptions'] || ''}
-                  </div>
-                </div>
-              );
-            }
-
-            if (countryName === FinancialWorkingCountries.US) {
-              const metadata =
-                (financialData?.data?.input_params as any)?.metadata || {};
-              const description =
-                metadata['Description'] || metadata['Descriptions'];
-              const taxYearEnded =
-                metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
-              const fiscalYearEnded =
-                metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
-              const stateDetails = metadata['stateDetails'];
-
-              return (
-                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
-                  {description && (
+              if (countryName === FinancialWorkingCountries.Ireland) {
+                return (
+                  <div className='flex flex-col items-center justify-center py-1 text-[#2D3E4F] '>
+                    <div className='text-[14px] font-semibold'>
+                      Expleo - {title['Expleo'] || ''}
+                    </div>
                     <div className='text-[14px] font-semibold mt-1'>
-                      {description}
+                      {title['Description'] || 'Summary of R&D Expenditures'}
                     </div>
-                  )}
-                  {taxYearEnded && (
-                    <div className='text-[14px] mt-1'>
-                      <span className='font-semibold'>Tax Year Ended:</span>{' '}
-                      {taxYearEnded}
-                    </div>
-                  )}
-                  {fiscalYearEnded && (
-                    <div className='text-[14px] mt-1'>
-                      <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
-                      {fiscalYearEnded}
-                    </div>
-                  )}
-                  {stateDetails && (
-                    <div className='text-[14px] mt-1 font-semibold'>
-                      {stateDetails}
-                    </div>
-                  )}
-                </div>
-              );
-            }
+                  </div>
+                );
+              }
 
-            // Default fallback or no title
-            return null;
-          })()}
-          <div>
-            {caseDetails?.country_name ===
-            FinancialWorkingCountries.Australia ? (
-              <FinancialWorkingAustralia data={financialData} />
-            ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
-              <FinancialWorkingUSA data={financialData} />
-            ) : (
-              <FinancialWorking
-                data={financialData}
-                currencySymbol={responseCurrencySymbol}
-              />
+              if (countryName === FinancialWorkingCountries.UK) {
+                return (
+                  <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                    <div className='text-[14px] font-semibold'>
+                      {title['Account Name'] || ''}
+                    </div>
+                    <div className='text-[14px] font-semibold mt-1'>
+                      {title['Description'] || 'Summary of SR&ED Expenditures'}
+                    </div>
+                    <div className='text-[14px] mt-1'>
+                      <span className='font-semibold'>Fiscal Year:</span>{' '}
+                      {title['Fiscal Year'] || ''}
+                    </div>
+                  </div>
+                );
+              }
+              if (countryName === FinancialWorkingCountries.Australia) {
+                return (
+                  <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                    <div className='text-[14px] font-semibold'>
+                      {title['Account Name'] || ''}
+                    </div>
+                    <div className='text-[14px] font-semibold mt-1'>
+                      {title['Description'] || 'Summary of SR&ED Expenditures'}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (countryName === FinancialWorkingCountries.Canada) {
+                return (
+                  <div className='flex items-center justify-start py-1 text-[#2D3E4F] px-4'>
+                    <div className='text-[14px] font-semibold'>
+                      Ref - {title['Fiscal Year'] || ''} -{' '}
+                      {title['Descriptions'] || ''}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (countryName === FinancialWorkingCountries.US) {
+                const metadata =
+                  (financialData?.data?.input_params as any)?.metadata || {};
+                const description =
+                  metadata['Description'] || metadata['Descriptions'];
+                const taxYearEnded =
+                  metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
+                const fiscalYearEnded =
+                  metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
+                const stateDetails = metadata['stateDetails'];
+
+                return (
+                  <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                    {description && (
+                      <div className='text-[14px] font-semibold mt-1'>
+                        {description}
+                      </div>
+                    )}
+                    {taxYearEnded && (
+                      <div className='text-[14px] mt-1'>
+                        <span className='font-semibold'>Tax Year Ended:</span>{' '}
+                        {taxYearEnded}
+                      </div>
+                    )}
+                    {fiscalYearEnded && (
+                      <div className='text-[14px] mt-1'>
+                        <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
+                        {fiscalYearEnded}
+                      </div>
+                    )}
+                    {stateDetails && (
+                      <div className='text-[14px] mt-1 font-semibold'>
+                        {stateDetails}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Default fallback or no title
+              return null;
+            })()}
+            <div>
+              {caseDetails?.country_name ===
+                FinancialWorkingCountries.Australia ? (
+                <FinancialWorkingAustralia data={financialData} />
+              ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
+                <FinancialWorkingUSA data={financialData} />
+              ) : (
+                <FinancialWorking
+                  data={financialData}
+                  currencySymbol={responseCurrencySymbol}
+                />
+              )}
+            </div>
+            {caseDetails?.country_name === FinancialWorkingCountries.UK && (
+              <div className='flex flex-wrap md:flex-nowrap gap-4 px-4 pt-4'>
+                <div className='w-full md:w-1/2'>
+                  <FinancialWorkingUKTable
+                    data={financialData}
+                    currencySymbol={responseCurrencySymbol}
+                  />
+                </div>
+                <div className='w-full md:w-1/2'>
+                  <FinancialWorkingUKPercentageTable
+                    data={financialData}
+                    currencySymbol={responseCurrencySymbol}
+                  />
+                </div>
+              </div>
             )}
           </div>
-          {caseDetails?.country_name === FinancialWorkingCountries.UK && (
-            <div className='flex flex-wrap md:flex-nowrap gap-4 px-4 pt-4'>
-              <div className='w-full md:w-1/2'>
-                <FinancialWorkingUKTable
-                  data={financialData}
-                  currencySymbol={responseCurrencySymbol}
-                />
-              </div>
-              <div className='w-full md:w-1/2'>
-                <FinancialWorkingUKPercentageTable
-                  data={financialData}
-                  currencySymbol={responseCurrencySymbol}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
       <SignOffModal
         isOpen={isSignOffModalOpen}
@@ -720,7 +710,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         accountId={accountid}
         refetchCaseDetails={refetchCaseDetails}
       />
-    </div>
+    </div >
   );
 };
 
