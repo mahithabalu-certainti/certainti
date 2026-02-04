@@ -377,11 +377,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     };
 
     initiateProcess(payload, {
-      onSuccess: async (data) => {
-        setDossierFinancialStatus(data.status === 'Completed' ? true : false);
-        // successToast('Initiated successfully');
-        // Don't auto-call view here - let the federal tab useEffect handle it
-      },
       onError: (error: any) => {
         errorToast(
           error?.response?.data?.statusMessage || 'Failed to initiate'
