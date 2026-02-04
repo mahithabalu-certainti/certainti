@@ -370,6 +370,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   };
 
   const handleInitiateFinancialHighlights = async () => {
+    setShowFinancialValues(false);
     const payload = {
       account_rid: accountid,
       case_rid: caseId ?? '',
@@ -377,6 +378,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     };
 
     initiateProcess(payload, {
+      onSuccess: () => {
+        handleViewFinancialHighlights();
+      },
       onError: (error: any) => {
         errorToast(
           error?.response?.data?.statusMessage || 'Failed to initiate'
@@ -696,7 +700,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 FinancialWorkingCountries.Australia ? (
                 <FinancialWorkingAustralia data={financialData} />
               ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
-                <FinancialWorkingUSA data={financialData} />
+                <FinancialWorkingUSA
+                  data={financialData}
+                  onSuccess={handleInitiateFinancialHighlights}
+                />
               ) : (
                 <FinancialWorking
                   data={financialData}
