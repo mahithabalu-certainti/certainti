@@ -10,4 +10,5 @@ routes.post("/federal/calculate", checkUserStatusMiddleware("NA"), controller.fi
 routes.get("/preview/:accountRid/:caseRid/:stateCode", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.findRdCreditComputedResults);
 routes.post("/process/initiate", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.initiateRDCreditProcess);
 routes.get("/status/:accountRid/:caseRid", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.findProcessStatusByCaseRid);
+routes.put("/federal/userPreference", checkUserStatusMiddleware("NA"), controller.financialRDCreditController.updateUserPreference)
 export default routes;

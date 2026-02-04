@@ -6,7 +6,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { federalCalculators } from "../rdFederalProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
-import { fetchCountryData } from "../../utils/rdFinancialWorking.rawQueries";
+import { fetchCountryData, updateRRCASC280C } from "../../utils/rdFinancialWorking.rawQueries";
 
 export class FederalComputationService {
     private rdCreditSchemaService: RDCreditSchemaService;
@@ -70,7 +70,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if (federalComputation) {
-                const result = await federalComputation.compute(extractConfig, federalRDData, annualGrossReceipts.length, date);
+                const result = await federalComputation.compute(extractConfig, federalRDData, annualGrossReceipts.length, date, caseDetails);
                 await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields);
                 return {
                     statusCode: HttpStatus.SUCCESS,
@@ -521,6 +521,24 @@ export class FederalComputationService {
         return {
             selectedProjects : bestCombination,
             selectedSum : bestSum
+        }
+    }
+    async updateASCRRC280CInCase (data : any) {
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+        const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+        const schemName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+        const updatedResult : any = await orgDb.query(updateRRCASC280C(data.case_rid, schemName, data.asc_credit_280_c, data.rrc_credit_280_c));
+        if(updatedResult[1].rowCount > 0) {
+            return {
+                statusCode : HttpStatus.SUCCESS,
+                statusMessage : STATUS_MESSAGE.userPreferenceUpdatedSuccess
+            }
+        } else {
+           return {
+                statusCode : HttpStatus.FAILED,
+                statusMessage : STATUS_MESSAGE.userPreferenceUpdationFailed
+            } 
         }
     }
 }

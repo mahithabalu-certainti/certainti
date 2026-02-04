@@ -240,10 +240,53 @@ async function findProcessStatusByCaseRid(
   }
 }
 
+async function updateUserPreference (req : Request, res : Response) {
+  const methodName = "updateUserPreference";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID missing in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await federalComputationService.updateASCRRC280CInCase(data);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+      statusCode : HttpStatus.SUCCESS,
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      statusMessage : result.statusMessage
+    })
+    } else {
+      return res.status(HttpStatus.FAILED).send({
+      statusCode : HttpStatus.FAILED,
+      statusCodeValue : HttpStatus.FAILED_MESSAGE,
+      statusMessage : result.statusMessage
+    })
+    }
+  } catch (err) {
+    // Step 6: Catch unexpected errors
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 // Export controller
 export default {
   financialRDCreditFederal,
   findRdCreditComputedResults,
   initiateRDCreditProcess,
-  findProcessStatusByCaseRid
+  findProcessStatusByCaseRid,
+  updateUserPreference
 };
