@@ -126,14 +126,24 @@ const Selection280C: React.FC<Selection280CProps> = ({
         color: '#2D3E4F',
         width: '100%',
         bgcolor: '#f4989c',
+        borderRadius: '4px',
         height: '32px',
         '.MuiSelect-select': {
           textAlign: 'center',
-          paddingRight: '14px !important', // Adjust for icon if present or force center
         },
         '& .MuiSelect-icon': {
-          display: 'none', // mimicking "custom-select-no-arrow" if needed, or keeping it
+          color: '#2D3E4F',
         },
+        '& fieldset': {
+          borderColor: 'transparent',
+        },
+        '&:hover fieldset': {
+          borderColor: 'transparent',
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: 'transparent',
+        },
+
       }}
     >
       <MenuItem value='Yes'>Yes</MenuItem>
