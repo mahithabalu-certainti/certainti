@@ -207,7 +207,9 @@ export const STATUS_MESSAGE = {
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
   regionsFetchedSuccess : "Regions listed successfully",
-  financialWorkingInitiated:"Financial workings are being computed. Refresh the page to check the status"
+  financialWorkingInitiated:"Financial workings are being computed. Refresh the page to check the status",
+  userPreferenceUpdatedSuccess : "UserPreference updated successfully",
+  userPreferenceUpdationFailed : "UserPreference updation failed",
 };
 
 export const caseStatuses = {
@@ -977,7 +979,8 @@ export const rawQueries = {
     employers_pension_contribution,other, total_expenses, other, sub_contracts, cloud_software, unpaid_amounts_paid,
     unpaid_amounts, aggregated_turnover, taxable_income, export_sales_revenue,
     lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
-    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total
+    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total,
+    rrc_credit_280_c, asc_credit_280_c
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;

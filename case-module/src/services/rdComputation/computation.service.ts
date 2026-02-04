@@ -277,7 +277,7 @@ export class ComputationService {
             let finalData = {
                 computed_fields: results,
                 input_params: {
-                    metaData: metaInfo
+                    metadata: metaInfo
                 }
             }
             return {
