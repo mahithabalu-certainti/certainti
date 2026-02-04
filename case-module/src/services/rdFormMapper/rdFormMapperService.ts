@@ -593,23 +593,23 @@ export class RdFormMapperService {
             orgDb,
             schemaName,
           );
-          this.processStateForms(
-            accountRid,
-            caseRid,
-            fetchAccountCountryId[0].country_rid,
-            effectiveStart,
-            effectiveEnd,
-            accountNumber,
-            mainDb,
-            orgDb,
-            availableConfig.states || [],
-            schemaName,
-          ).catch((error) => {
-            this.logger.error(
-              `Error processing state forms in background for case ${caseRid}:`,
-              error,
-            );
-          });
+          // this.processStateForms(
+          //   accountRid,
+          //   caseRid,
+          //   fetchAccountCountryId[0].country_rid,
+          //   effectiveStart,
+          //   effectiveEnd,
+          //   accountNumber,
+          //   mainDb,
+          //   orgDb,
+          //   availableConfig.states || [],
+          //   schemaName,
+          // ).catch((error) => {
+          //   this.logger.error(
+          //     `Error processing state forms in background for case ${caseRid}:`,
+          //     error,
+          //   );
+          // });
           return federalResult;
         },
         [ConfigType.FEDERAL_ONLY]: async () => {
