@@ -30,11 +30,12 @@ import {
 import SignOffModal from './sign-off-modal';
 import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
 import DetailsSectionSkeleton from '../../../../../../../components/skeleton-component/detailsskeleton';
+import { DetailsKeyContactErrorIcon } from '../../../../../../../assets';
 
 interface FinancialWorkingFormProps {
   caseDetails?: CaseDetails;
-  setDossierFinancialStatus: (status: string) => void;
-  dossierFinancialStatus: string;
+  setDossierFinancialStatus: (status: boolean) => void;
+  dossierFinancialStatus: boolean;
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
@@ -163,12 +164,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   financialData,
   setFinancialData,
   refetchCaseDetails,
+  dossierFinancialStatus,
+  setDossierFinancialStatus
 }) => {
   const [activeTab, setActiveTab] = useState<number>(0); // 0 for Federal, 1 for Non-Federal
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
-  const [hasInitiated, setHasInitiated] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
@@ -182,7 +184,17 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     caseId as string
   );
   const configDetails = data?.data.states;
-  const configFedral = data?.data
+  const configFedral = data?.data;
+
+  useEffect(() => {
+    if (configFedral) {
+      if (configFedral.is_federal_level) {
+        setActiveTab(0);
+      } else {
+        setActiveTab(1);
+      }
+    }
+  }, [configFedral]);
 
   // Restore showFinancialValues and form states if data exists
   useEffect(() => {
@@ -203,13 +215,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   // Auto-initiate on component mount (only once)
   useEffect(() => {
     if (
-      !hasInitiated &&
+      !dossierFinancialStatus &&
       caseDetails?.case_total_projects &&
       caseDetails?.case_total_projects !== 0 &&
       caseDetails?.case_total_projects !== '0' &&
       !caseDetails?.financial_working_signoff
     ) {
-      setHasInitiated(true);
+      setDossierFinancialStatus(true);
       handleInitiateFinancialHighlights();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,24 +230,22 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   // Call appropriate API when federal tab changes
 
   useEffect(() => {
-    if (!hasInitiated) return; // Wait for initiate to complete first
+    if (!dossierFinancialStatus) return; // Wait for initiate to complete first
 
     if (activeTab === 0) {
       // Federal Yes: Call handleViewFinancialHighlights
       handleViewFinancialHighlights();
-    } else if (activeTab === 1) {
-      handleViewFinancialHighlightsForRegion()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, hasInitiated]);
+  }, [activeTab, dossierFinancialStatus]);
 
   // Call region API when region changes in Federal No mode (activeTab === 1)
   useEffect(() => {
-    if (activeTab === 1 && selectedRegion && hasInitiated) {
+    if (activeTab === 1 && dossierFinancialStatus) {
       handleViewFinancialHighlightsForRegion();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRegion, activeTab, hasInitiated]);
+  }, [selectedRegion, activeTab, dossierFinancialStatus]);
 
   const isSignoffVisible = checkPermission(
     permission,
@@ -368,7 +378,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
     initiateProcess(payload, {
       onSuccess: async (data) => {
-        console.log('Initiated successfully', data);
+        setDossierFinancialStatus(data.status === 'Completed' ? true : false);
         // successToast('Initiated successfully');
         // Don't auto-call view here - let the federal tab useEffect handle it
       },
@@ -399,7 +409,23 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       </div>
     );
   }
-
+  if (!configFedral?.is_federal_level && !configFedral?.is_state_level) {
+    return (
+      <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+        <div>
+          <React.Suspense fallback={null}>
+            <DetailsKeyContactErrorIcon alt='key-contact' />
+          </React.Suspense>
+        </div>
+        <div>
+          <span className='font-bold mr-1 capitalize'>Jurisdiction Configuration</span>-
+          <span className='ml-1 font-medium'>
+            Jurisdiction configuration is not updated. Please update it in Settings to proceed with Financial Workings.
+          </span>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className='w-full'>
       {/* Federal Level Radio Buttons */}
@@ -528,12 +554,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 <MenuItem
                   value=''
                   sx={{
-                    color: '#7D98B6',
+                    color: '#425A76',
                     fontSize: '13px',
                     fontWeight: 500,
                   }}
                 >
-                  Choose Region
+                  All Summary
                 </MenuItem>
                 {regionListOptions?.map((option, i) => (
                   <MenuItem

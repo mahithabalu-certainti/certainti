@@ -19,7 +19,7 @@ const initialState: AccountState = {
   error: null,
   fiscalYear: 'FY-All',
   refetchGlobalAccounts: false,
-  dossierFinancialStatus: '',
+  dossierFinancialStatus: false,
   financialData: null,
 };
 
@@ -64,7 +64,7 @@ export const accountSlice = createSlice({
     setTemporaryFiscalYear(state, action: PayloadAction<string>) {
       state.fiscalYear = action.payload;
     },
-    setDossierFinancialStatus(state, action: PayloadAction<string>) {
+    setDossierFinancialStatus(state, action: PayloadAction<boolean>) {
       state.dossierFinancialStatus = action.payload;
     },
     setFinancialData(

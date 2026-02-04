@@ -42,8 +42,8 @@ const DossierTabs = [
 interface DossierProps {
   activityMenuItems: ActivityDropdownItem[];
   caseDetails?: CaseDetails;
-  setDossierFinancialStatus: (status: string) => void;
-  dossierFinancialStatus: string;
+  setDossierFinancialStatus: (status: boolean) => void;
+  dossierFinancialStatus: boolean;
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
@@ -116,8 +116,6 @@ const Dossier: React.FC<DossierProps> = ({
     statusData: RDCreditStatusResponse,
     actionType?: 'initiate' | 'regenerate' | 'refresh'
   ) => {
-    const message = statusData?.data ?? statusData?.statusMessage ?? '';
-    setDossierFinancialStatus(message);
     setRefreshTrigger(Date.now());
     if (statusData?.data === 'COMPLETED') {
       if (actionType === 'initiate' || actionType === 'refresh') {
@@ -219,13 +217,9 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
-          tabParam === 'financial_workings'
-            ? Boolean(
-                dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
-              )
-            : tabParam !== 'rd_form'
+          tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
         onRefreshClick={handleRefresh}
         showSearch={tabParam !== 'financial_workings' && tabParam !== 'rd_form'}
@@ -278,8 +272,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
