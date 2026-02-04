@@ -139,7 +139,6 @@ export class ComputationService {
             const result =
                 executionConfigMap[configLevelKey] ??
                 executionConfigMap[ConfigType.NONE];
-
             return (result as () => Promise<any>)();
 
         } catch (error) {
