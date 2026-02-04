@@ -163,8 +163,17 @@ async function findRdCreditComputedResults(
       );
       return;
     }
-
-    const resultState = await computationService.getComputationResultsByIDAndState(accountRid!, caseRid!, stateCode!,type);
+    if(type != 'summary' && stateCode == '') {
+      errorLog(methodName, "Invalid type query parameter");
+      handleErrorResponse(  
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "State Id is required"
+      );
+      return;
+    }
+    const resultState = await computationService.getComputationResultsByIDAndState(accountRid!, caseRid!, stateCode || '',type);
 
     // Step 5: Handle service response
     handleCustomResponse(
