@@ -420,7 +420,7 @@ interface ObjectRidMap {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator';
+  type: 'chip' | 'operator' | 'manual';
   value: string;
 }
 
@@ -461,7 +461,7 @@ export function validateMappingItem(
   // Check for pending input value (unconverted text)
   if (hasInputValue) {
     errors.targetError =
-      'Invalid text in Target. Please select from dropdown or use operators.';
+      'Invalid input in the Target field. Select an option from the dropdown, or use # for manual entry (press Enter to add), or apply a supported operator.';
     return errors;
   }
 
@@ -484,7 +484,7 @@ export function validateMappingItem(
       return errors;
     }
 
-    // Check for consecutive operators or consecutive chips
+    // Check for consecutive operators or consecutive chips/manual entries
     for (let i = 0; i < expressions.length - 1; i++) {
       const current = expressions[i];
       const next = expressions[i + 1];
@@ -494,7 +494,11 @@ export function validateMappingItem(
         return errors;
       }
 
-      if (current.type === 'chip' && next.type === 'chip') {
+      // Treat chips and manual entries the same - both need operators between them
+      const isCurrentValue = current.type === 'chip' || current.type === 'manual';
+      const isNextValue = next.type === 'chip' || next.type === 'manual';
+      
+      if (isCurrentValue && isNextValue) {
         errors.targetError = 'Missing operator between Object IDs';
         return errors;
       }
@@ -515,7 +519,7 @@ export function validateMappingItem(
       const isOdd = key % 2 === 1;
       const isEven = key % 2 === 0;
 
-      // Odd indices should be object IDs (UUIDs)
+      // Odd indices should be object IDs (UUIDs) or manual entries (starting with #)
       if (isOdd && operators.includes(value)) {
         errors.targetError =
           'Invalid target structure: Object ID expected at this position';

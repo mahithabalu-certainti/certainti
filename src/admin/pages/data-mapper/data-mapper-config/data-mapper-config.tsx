@@ -21,7 +21,7 @@ interface ObjectRidMap {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator';
+  type: 'chip' | 'operator' | 'manual';
   value: string;
 }
 
