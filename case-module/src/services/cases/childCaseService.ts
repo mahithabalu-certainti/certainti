@@ -305,42 +305,52 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseClosingPayload.sort = 'signoff_at';
     caseClosingPayload.sort_by = 'ASC';
     caseClosingPayload.timezone = ''
-    console.log("caseClosingPayload =====> ", caseClosingPayload)
     const closingRemarksData = await this.exportCaseClosingRemarks(caseClosingPayload);
 
     const fetchCountryUrl : any = await orgDb.query(fetchRdFormUrlForCountry(schemaName, caseRid));
     const fetchStateUrl : any = await orgDb.query(fetchRdFormUrlForState(schemaName, caseRid));
-    const countryUrlData = fetchCountryUrl[0][0].country_url;
-    const stateUrlData = fetchStateUrl[0][0].state_url;
+    let countryUrlData = fetchCountryUrl[0].filter((c : any) => c.country_url !== null);
+    let stateUrlData = fetchStateUrl[0].filter((d : any) => d.state_url !== null);
+    countryUrlData = countryUrlData[0][0].country_url
+    let stateUrls = await Promise.all(stateUrlData[0].map(async (s : any) => {
+      return {
+        url : await generateSasUrl(s.state_url)
+      }
+    }))
     const exportProjectDocuments = await this.exportAttachments(userId, 'project', caseDetails?.rid, accountRid, '', {}, 'project_code', 'DESC', 0, {}, '', DOSSIER_NAME);
     const convertToZip = await createZipFile([
       {
       name : "QualifiedProjects",
-      buffer : Buffer.from(generateQualifiedProjectsCSV, 'base64')
+      buffer : Buffer.from(generateQualifiedProjectsCSV, 'base64'),
+      extension : ".xlsx"
     },
     {
       name : "ProjectSummary",
-      buffer : Buffer.from(generateProjectSummaryCSV, 'base64')
+      buffer : Buffer.from(generateProjectSummaryCSV, 'base64'),
+      extension : ".xlsx"
     },
     {
       name : "ResourceSummary",
-      buffer : Buffer.from(generateResourceSummaryCSV, 'base64')
+      buffer : Buffer.from(generateResourceSummaryCSV, 'base64'),
+      extension : ".xlsx"
     },
     {
       name : "ProjectDocument",
-      buffer : Buffer.from(exportProjectDocuments.data, "base64")
+      buffer : Buffer.from(exportProjectDocuments.data, "base64"),
+      extension : ".xlsx"
     },
     {
       name : "Closing-Remarks",
-      buffer : Buffer.from(closingRemarksData!,'base64')
+      buffer : Buffer.from(closingRemarksData!,'base64'),
+      extension : ".xlsx"
     },
     {
       name : "RD-Forms-Federal",
-      url : countryUrlData
+      url : countryUrlData[0][0].country_url
     },
     {
       name : "RD-Forms-State",
-      urls : stateUrlData
+      urls : stateUrls
     }
   ]);
   console.log(`Converted to Zip Successfully : `, convertToZip);
@@ -356,7 +366,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     size : JSON.stringify(uploadToAzure.size),
     created_datetime : new Date()
   });
-  console.log(`Dossier form created : `, createdResult);
+  console.log(`Dossier form created : `, await generateSasUrl(createdResult.browse_url));
 }
   async exportAttachments(
     userId: string,
