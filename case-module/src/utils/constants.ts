@@ -1692,9 +1692,10 @@ WHERE dmf.country_rid = '${countryRid}'
   },
   checkFinancialSignOffDone(schemaName: string, caseRid: string) {
     return `
-    SELECT financial_working_signoff FROM ${schemaName}.cases 
-    WHERE
-    rid = '${caseRid}'
+    SELECT COALESCE(
+      (SELECT financial_working_signoff FROM ${schemaName}.cases WHERE rid = '${caseRid}'),
+      false
+    ) AS financial_working_signoff
     `
   },
   fetchRdFormMapperConfigurations(formId: string){
