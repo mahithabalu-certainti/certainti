@@ -6,6 +6,7 @@ import {
   RDCreditInitiatePayload,
   RDCreditInitiateResponse,
   SignOffFinancialHighlightsPayload,
+  UserPreferencePayload,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -13,6 +14,7 @@ import {
   getRDCreditStatusURL,
   getRDCreditInitiateURL,
   getSignOffFinancialHighlightsURL,
+  getUserPreferenceURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -133,5 +135,22 @@ export const useSignOffFinancialHighlights = () => {
   return useMutation({
     mutationFn: (payload: SignOffFinancialHighlightsPayload) =>
       signOffFinancialHighlights(payload),
+  });
+};
+
+
+// 3. POST Initiate - Initiate RD credit calculation process
+export const getUserPreference = async (
+  payload: UserPreferencePayload
+): Promise<RDCreditInitiateResponse> => {
+  const url = getUserPreferenceURL();
+  const response = await caseServiceApi.put(url, payload);
+  return response.data;
+};
+
+export const useUserPreference = () => {
+  return useMutation<RDCreditInitiateResponse, Error, UserPreferencePayload>({
+    mutationFn: (payload: UserPreferencePayload) =>
+      getUserPreference(payload),
   });
 };
