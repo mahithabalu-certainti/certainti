@@ -19,7 +19,6 @@ export async function validateRequest(
     type?: "GET" | "POST" | "PUT" | "DELETE",
     organization?: string
 ): Promise<any> {
-    // const requestValidationType = type === "GET" ? req.query : req.body;
     const requestValidationType = type === "GET" ? req.query : req.body;
     const { error, value } = schema.validate(requestValidationType, {
         abortEarly: false,
@@ -198,7 +197,6 @@ export async function generateExcelBase64WithEmptyCheck(data: Array<Record<strin
 
     // Generate buffer and encode to base64
     const buffer = await workbook.xlsx.writeBuffer();
-    //  await workbook.xlsx.writeFile('cases1.xlsx');
     return Buffer.from(buffer).toString('base64');
 }
 
@@ -218,7 +216,6 @@ export async function generateExcelBase64(data: any, sheetName: string) {
 
     // Generate buffer
     const buffer = await workbook.xlsx.writeBuffer();
-    // await workbook.xlsx.writeFile('cases.xlsx');
     return Buffer.from(buffer).toString("base64");
 }
 

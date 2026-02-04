@@ -1,12 +1,9 @@
 import { Request, Response } from "express";
 import configurations from "../config/config";
-import { handleSuccessResponse, handleErrorResponse, logMessage, errorLog, validateRequest, isValidTimezone, generateExcelBase64, handleCustomResponse } from "../utils/helpers";
+import { handleErrorResponse, errorLog, handleCustomResponse } from "../utils/helpers";
 import { HttpStatus } from "../utils/constants";
-// import { listCasesAccountSchema } from "../lib/joi/schemas/schema";
-import { authMiddleware, checkUserStatusMiddleware } from "../middlewares/authMiddleware";
 
 const reportService = configurations.getInstance().getServices().reportService;
-
 
 async function getCountDetails(req: Request, res: Response): Promise<void> {
     const methodName = "getCountDetails";

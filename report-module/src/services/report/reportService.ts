@@ -41,8 +41,6 @@ export class ReportService {
             );
             const childAccountIds = childAccountsInfo.map((acc) => acc.id);
 
-            console.log("childAccountIds", childAccountIds);
-
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: "Success",

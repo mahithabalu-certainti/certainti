@@ -13,7 +13,7 @@ const requestLogger = (
         timestamp: new Date().toISOString(),
     };
 
-    logger.info("Incomming Requests : ", logMessage);
+    logger.info("Incoming Requests : ", logMessage);
     next();
 };
 
