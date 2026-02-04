@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
-import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService, IDataMapperService } from "./interfaces/interface";
+import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService, IDataMapperService, IRDFormMapperService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
@@ -33,7 +33,7 @@ class Services {
   stateComputationService: StateComputationService;
   federalComputationService: FederalComputationService;
   computationService: ComputationService;
-  rdFormMapperService : RdFormMapperService
+  rdFormMapperService : IRDFormMapperService
 
   constructor(logger: Logger) {
     this.logger = logger;

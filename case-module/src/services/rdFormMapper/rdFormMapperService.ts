@@ -61,7 +61,7 @@ export class RdFormMapperService {
     mainDb: Sequelize,
     orgDb: Sequelize,
     schemaName: string,
-  ): Promise<void> {
+  ): Promise<any> {
     logMessage("Processing Federal form computation.");
 
     const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
@@ -149,7 +149,10 @@ export class RdFormMapperService {
 
     logMessage(
       `Successfully saved federal filled form URL for case: ${caseRid}`,
-    );
+    ); 
+    return {
+     filledFormUrl
+    }
   }
 
   /**
@@ -534,7 +537,12 @@ export class RdFormMapperService {
     return enhancedConfigs;
   }
 
-  async processRdFormMapperRequests(message: any): Promise<any[]> {
+  async processRdFormMapperRequests(message: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { task: any };
+  }> {
     try {
       const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
@@ -574,7 +582,7 @@ export class RdFormMapperService {
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
           logMessage("Processing both Federal and State forms.");
-          await this.processFederalForms(
+          const federalResult = await this.processFederalForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -585,7 +593,7 @@ export class RdFormMapperService {
             orgDb,
             schemaName,
           );
-          await this.processStateForms(
+          this.processStateForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -596,11 +604,17 @@ export class RdFormMapperService {
             orgDb,
             availableConfig.states || [],
             schemaName,
-          );
+          ).catch((error) => {
+            this.logger.error(
+              `Error processing state forms in background for case ${caseRid}:`,
+              error,
+            );
+          });
+          return federalResult;
         },
         [ConfigType.FEDERAL_ONLY]: async () => {
           logMessage("Processing Federal forms only.");
-          await this.processFederalForms(
+          return await this.processFederalForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -626,6 +640,11 @@ export class RdFormMapperService {
             availableConfig.states || [],
             schemaName,
           );
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: "State forms processed successfully",
+            data: {},
+          };
         },
         [ConfigType.NONE]: async () => {
           throw new Error(
@@ -639,16 +658,19 @@ export class RdFormMapperService {
         throw new Error(`Invalid ConfigType: ${configLevelKey}`);
       }
 
-      await executeComputation();
+      const result = await executeComputation();
       logMessage(
         `Successfully completed form mapper processing for case: ${caseRid}`,
       );
-
-      return [];
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : err;
       logMessage(`Error processing RD Mapper requests: ${errorMessage}`);
-      return [];
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage:"Failed to process RD form mapper requests",
+      };
     }
   }
 
@@ -656,7 +678,12 @@ export class RdFormMapperService {
     accountRid: string,
     caseRid: string,
     fiscalYear: number,
-  ) {
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }> {
     try {
       const mainDb = await this.getMainDb();
       const orgDb = await this.getOrgDb();
@@ -670,7 +697,7 @@ export class RdFormMapperService {
         rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
         { type: "SELECT" },
       );
-      if (!isFinancialSignOffDone[0].financial_working_signoff) {
+      if (!isFinancialSignOffDone.financial_working_signoff) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -694,14 +721,15 @@ export class RdFormMapperService {
       );
       let effectiveStart = fetchedStartEndDate.startDate;
       let effectiveEnd = fetchedStartEndDate.endDate;
-      return await this.initiateRDFormFiller(
+      let payload = {
         accountRid,
         caseRid,
         effectiveStart,
         effectiveEnd,
         schemaName,
-        fetchParentAccountRnumber[0][0].r_number,
-      );
+        accountNumber: fetchParentAccountRnumber[0][0].r_number
+      }
+      return await this.processRdFormMapperRequests(payload);
     } catch (error) {
       logMessage(`Error initiating RD Credit Process: ${error}`);
 
@@ -795,7 +823,12 @@ export class RdFormMapperService {
     is_federal: boolean;
     country_rid: string;
     state_rid?: string;
-  }) {
+  }): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }> {
     try {
       // Validate input parameters
       if (!value.is_federal && !value.state_rid) {
