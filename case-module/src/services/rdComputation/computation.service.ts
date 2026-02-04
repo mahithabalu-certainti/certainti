@@ -276,7 +276,9 @@ export class ComputationService {
             const results = await this.rdCreditSchemaService.getStateSummaryResults(fetchParentAccountRnumber[0][0].r_number, caseRid);
             let finalData = {
                 computed_fields: results,
-                metaData: metaInfo
+                input_params: {
+                    metaData: metaInfo
+                }
             }
             return {
                 statusCode: HttpStatus.SUCCESS,
