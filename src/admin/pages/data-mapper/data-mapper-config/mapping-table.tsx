@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { ErrorInfoIcon } from '../../../../assets';
+import TruncateWithTooltip from '../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 
 interface ObjectItem {
   rid: string;
@@ -21,7 +22,7 @@ interface ObjectItem {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator';
+  type: 'chip' | 'operator' | 'manual';
   value: string;
 }
 
@@ -96,6 +97,14 @@ const MappingTable: React.FC<MappingTableProps> = ({
                     value: operatorMap[value] || value,
                   };
                 } else {
+                  // Check if this is a manual entry (starts with #)
+                  if (typeof value === 'string' && value.startsWith('#')) {
+                    return {
+                      type: 'manual' as const,
+                      value: value,
+                    };
+                  }
+
                   // Odd keys are object IDs - find the corresponding parent.child
                   const objectItem = objectsList.find(
                     (obj) => obj.rid === value
@@ -211,12 +220,16 @@ const MappingTable: React.FC<MappingTableProps> = ({
             newExpressions.forEach((exp) => {
               if (exp.type === 'chip') {
                 // Odd indices for object IDs
-                const [parent, child] = exp.value.split('.');
+                const [parent, child] = exp.value.split('.', 2);
                 const objectId = targetOptions[parent]?.[child] || '';
                 if (objectId) {
                   objectRidMap[index] = objectId;
                   index += 2; // Next odd number
                 }
+              } else if (exp.type === 'manual') {
+                // Odd indices for manual entries (store the value as-is)
+                objectRidMap[index] = exp.value;
+                index += 2; // Next odd number
               } else if (exp.type === 'operator') {
                 // Even indices for operators - only add if there's a preceding chip
                 if (index > 1) {
@@ -286,8 +299,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
     const atIndex = currentInput.lastIndexOf('@');
 
     if (atIndex !== -1) {
-      const dotCount = (selectedValue.match(/\./g) || []).length;
-      const isCompleteProperty = dotCount === 1; // parent.child format
+      // Check if selectedValue contains a dot (parent.child format)
+      // If it has a dot, it's a complete selection; if not, it's just a parent
+      const isCompleteProperty = selectedValue.includes('.');
 
       if (!isCompleteProperty) {
         // User selected a parent, add dot and show children
@@ -340,12 +354,16 @@ const MappingTable: React.FC<MappingTableProps> = ({
             newExpressions.forEach((exp) => {
               if (exp.type === 'chip') {
                 // Odd indices for object IDs
-                const [parent, child] = exp.value.split('.');
+                const [parent, child] = exp.value.split('.', 2);
                 const objectId = targetOptions[parent]?.[child] || '';
                 if (objectId) {
                   objectRidMap[index] = objectId;
                   index += 2; // Next odd number
                 }
+              } else if (exp.type === 'manual') {
+                // Odd indices for manual entries (store the value as-is)
+                objectRidMap[index] = exp.value;
+                index += 2; // Next odd number
               } else if (exp.type === 'operator') {
                 // Even indices for operators - only add if there's a preceding chip
                 if (index > 1) {
@@ -395,12 +413,16 @@ const MappingTable: React.FC<MappingTableProps> = ({
           newExpressions.forEach((exp) => {
             if (exp.type === 'chip') {
               // Odd indices for object IDs
-              const [parent, child] = exp.value.split('.');
+              const [parent, child] = exp.value.split('.', 2);
               const objectId = targetOptions[parent]?.[child] || '';
               if (objectId) {
                 objectRidMap[index] = objectId;
                 index += 2; // Next odd number
               }
+            } else if (exp.type === 'manual') {
+              // Odd indices for manual entries (store the value as-is)
+              objectRidMap[index] = exp.value;
+              index += 2; // Next odd number
             } else if (exp.type === 'operator') {
               // Even indices for operators - only add if there's a preceding chip
               if (index > 1) {
@@ -446,12 +468,16 @@ const MappingTable: React.FC<MappingTableProps> = ({
           newExpressions.forEach((exp) => {
             if (exp.type === 'chip') {
               // Odd indices for object IDs
-              const [parent, child] = exp.value.split('.');
+              const [parent, child] = exp.value.split('.', 2);
               const objectId = targetOptions[parent]?.[child] || '';
               if (objectId) {
                 objectRidMap[index] = objectId;
                 index += 2; // Next odd number
               }
+            } else if (exp.type === 'manual') {
+              // Odd indices for manual entries (store the value as-is)
+              objectRidMap[index] = exp.value;
+              index += 2; // Next odd number
             } else if (exp.type === 'operator') {
               // Even indices for operators - only add if there's a preceding chip
               if (index > 1) {
@@ -483,6 +509,76 @@ const MappingTable: React.FC<MappingTableProps> = ({
   };
 
   const handleKeyDown = (rid: string, event: React.KeyboardEvent): void => {
+    const mapping = localMappings.find((m) => m.rid === rid);
+    const currentInput = mapping?.inputValue || '';
+
+    // Handle manual entry mode (when input starts with #)
+    if (event.key === 'Enter' && currentInput.trim().startsWith('#')) {
+      event.preventDefault();
+      const manualValue = currentInput.trim();
+
+      if (manualValue.length > 1) {
+        // Must have content after #
+        setLocalMappings((prev) => {
+          const updated = prev.map((m) => {
+            if (m.rid === rid) {
+              const newExpressions = [...(m.fieldExpressions || [])];
+
+              newExpressions.push({
+                type: 'manual' as const,
+                value: manualValue,
+              });
+
+              // Build ObjectRidMap from expressions
+              const objectRidMap: ObjectRidMap = {};
+              let index = 1;
+
+              newExpressions.forEach((exp) => {
+                if (exp.type === 'chip') {
+                  // Odd indices for object IDs
+                  const [parent, child] = exp.value.split('.', 2);
+                  const objectId = targetOptions[parent]?.[child] || '';
+                  if (objectId) {
+                    objectRidMap[index] = objectId;
+                    index += 2; // Next odd number
+                  }
+                } else if (exp.type === 'manual') {
+                  // Odd indices for manual entries (store the value as-is)
+                  objectRidMap[index] = exp.value;
+                  index += 2; // Next odd number
+                } else if (exp.type === 'operator') {
+                  // Even indices for operators - only add if there's a preceding chip/manual
+                  if (index > 1) {
+                    const operatorMap: Record<string, string> = {
+                      '+': 'add',
+                      '-': 'subtract',
+                      '*': 'multiply',
+                      '/': 'divide',
+                    };
+                    objectRidMap[index - 1] =
+                      operatorMap[exp.value] || exp.value;
+                  }
+                }
+              });
+
+              return {
+                ...m,
+                fieldExpressions: newExpressions,
+                calculation_config:
+                  Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
+                targetError: undefined,
+                inputValue: '',
+              };
+            }
+            return m;
+          });
+          onMappingsChange(updated);
+          return updated;
+        });
+      }
+      return;
+    }
+
     if (!showAutocomplete[rid]) return;
 
     const options = getFilteredOptions(rid);
@@ -571,7 +667,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
     const dotCount = (searchText.match(/\./g) || []).length;
 
     if (dotCount >= 1) {
-      const [parentKeyLower, childKeyLower = ''] = searchText.split('.');
+      const [parentKeyLower, childKeyLower = ''] = searchText.split('.', 2);
 
       // Find the actual parent key (case-insensitive match)
       const actualParentKey = Object.keys(filteredTargetOptions).find(
@@ -780,36 +876,27 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 <TableCell
                   sx={{ p: '8px', maxHeight: '90px', verticalAlign: 'top' }}
                 >
-                  <Tooltip
-                    title={
-                      <div className='flex items-center gap-1'>
-                        <span className='break-all'>{mapping.field_label}</span>
-                      </div>
+                  <TruncateWithTooltip
+                    text={mapping.field_label}
+                    maxHeight='90px'
+                    tooltipMaxWidth={'20vw'}
+                    style={
+                      {
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 4,
+                        WebkitBoxOrient: 'vertical',
+                        wordBreak: 'break-word',
+                        whiteSpace: 'normal', // Override default nowrap
+                        textOverflow: 'clip', // Override ellipsis for multi-line
+                      } as React.CSSProperties
                     }
-                    arrow
-                    placement='top'
-                  >
-                    <div
-                      style={
-                        {
-                          maxHeight: '90px',
-                          overflow: 'hidden',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 4,
-                          WebkitBoxOrient: 'vertical',
-                          wordBreak: 'break-word',
-                          cursor: 'pointer',
-                        } as React.CSSProperties
-                      }
-                    >
-                      {mapping.field_label}
-                    </div>
-                  </Tooltip>
+                  />
                 </TableCell>
                 {formType !== 'non-fillable' && (
                   <TableCell sx={{ p: '8px' }}>
                     <div
-                      className={`flex relative ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                      className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
                     >
                       <textarea
                         value={mapping.field_id || ''}
@@ -820,18 +907,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                         placeholder='Enter Field ID'
-                        className={`w-full px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none ${
+                        className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
                           mapping.fieldIdError
                             ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
                             : 'border-gray-300 focus:border-blue-400'
                         }`}
-                        style={
-                          {
-                            minHeight: '32px',
-                            maxHeight: '90px',
-                            overflowY: 'auto',
-                          } as React.CSSProperties
-                        }
                       />
                       {mapping.fieldIdError && (
                         <Tooltip
@@ -847,7 +927,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                             },
                           }}
                         >
-                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
+                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[1px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
                             <React.Suspense fallback={null}>
                               <ErrorInfoIcon
                                 alt='error'
@@ -912,6 +992,32 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                   },
                                 }}
                               />
+                            ) : item.type === 'manual' ? (
+                              <Chip
+                                label={item.value}
+                                size='small'
+                                variant='outlined'
+                                onDelete={() => removeChip(mapping.rid, idx)}
+                                sx={{
+                                  fontSize: '11px',
+                                  height: '20px',
+                                  backgroundColor: '#f0fdf4',
+                                  borderColor: '#22c55e',
+                                  color: '#16a34a',
+                                  margin: '1px',
+                                  '& .MuiChip-deleteIcon': {
+                                    fontSize: '14px',
+                                    color: '#16a34a',
+                                    '&:hover': {
+                                      color: '#ef4444',
+                                    },
+                                  },
+                                  '& .MuiChip-label': {
+                                    paddingLeft: '6px',
+                                    paddingRight: '6px',
+                                  },
+                                }}
+                              />
                             ) : (
                               <Chip
                                 label={item.value}
@@ -959,7 +1065,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onBlur={() => handleInputBlur(mapping.rid)}
                           placeholder={
                             (mapping.fieldExpressions || []).length === 0
-                              ? 'Type @ to add fields or +, -, *, / for operators'
+                              ? 'Type @ to add fields, # for manual entry, or +, -, *, / for operators'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -981,7 +1087,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                             },
                           }}
                         >
-                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[2px] right-[4px] bg-[#FEF2F2] cursor-pointer'>
+                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[1px] right-[4px] bg-[#FEF2F2] cursor-pointer'>
                             <React.Suspense fallback={null}>
                               <ErrorInfoIcon
                                 alt='error'

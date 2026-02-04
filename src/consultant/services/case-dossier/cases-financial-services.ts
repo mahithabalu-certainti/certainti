@@ -6,6 +6,7 @@ import {
   RDCreditInitiatePayload,
   RDCreditInitiateResponse,
   SignOffFinancialHighlightsPayload,
+  RDFormResponse,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -13,6 +14,8 @@ import {
   getRDCreditStatusURL,
   getRDCreditInitiateURL,
   getSignOffFinancialHighlightsURL,
+  getRDFormMapperURL,
+  getRDFormMapperPreviewURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -132,5 +135,46 @@ export const useSignOffFinancialHighlights = () => {
   return useMutation({
     mutationFn: (payload: SignOffFinancialHighlightsPayload) =>
       signOffFinancialHighlights(payload),
+  });
+};
+
+export const rdFormMapper = async (
+  payload: RDCreditInitiatePayload
+): Promise<RDCreditInitiateResponse> => {
+  const url = getRDFormMapperURL();
+  const response = await caseServiceApi.post(url, payload);
+  return response.data;
+};
+
+export const useRDFormMapper = () => {
+  return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
+    mutationFn: (payload: RDCreditInitiatePayload) => rdFormMapper(payload),
+  });
+};
+
+export const fetchRDFormMapperPreview = async (
+  accountRid: string,
+  caseRid: string,
+  stateRid?: string,
+  isFederal?: boolean
+): Promise<RDFormResponse> => {
+  const url = getRDFormMapperPreviewURL(
+    accountRid,
+    caseRid,
+    stateRid ?? '',
+    isFederal
+  );
+  const response = await caseServiceApi.get(url);
+  return response.data;
+};
+
+export const useRDFormMapperPreviewMutation = () => {
+  return useMutation<
+    RDFormResponse,
+    Error,
+    { accountrid: string; caseId: string; stateRid: string; isFederal: boolean }
+  >({
+    mutationFn: ({ accountrid, caseId, stateRid, isFederal }) =>
+      fetchRDFormMapperPreview(accountrid, caseId, stateRid, isFederal),
   });
 };

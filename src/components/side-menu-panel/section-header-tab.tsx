@@ -83,7 +83,14 @@ const SectionHeaderTab: React.FC<SectionHeaderTabProps> = ({
               color: '#172B4D',
               fontWeight: 600,
             },
+            // Hide scroll buttons when disabled to prevent empty space
+            '& .MuiTabScrollButton-root.Mui-disabled': {
+              display: 'none',
+            },
           }}
+          variant='scrollable'
+          scrollButtons='auto'
+          aria-label='scrollable-auto-tabs'
         >
           {visibleTabs.map((tab) => (
             <Tab key={tab.value} label={tab.label} disabled={tab.disabled} />

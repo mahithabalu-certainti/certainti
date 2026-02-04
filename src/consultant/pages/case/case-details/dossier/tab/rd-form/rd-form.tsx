@@ -11,11 +11,13 @@ import { CaseDetails } from '../../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { useFetchState } from '../../../../../../services/account';
-import { useGetRDFormData } from '../../../../../../services/case-dossier/case-dossier-service';
 import { AllPermissions } from '../../../../../../../common-service';
 import TextButton from '../../../../../../../components/button/text-button';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
 import PdfViewer from './pdf-viewer';
+import { useParams, useSearchParams } from 'react-router';
+import { useToast } from '../../../../../../../hooks';
+import { useRDFormMapperPreviewMutation } from '../../../../../../services/case-dossier/cases-financial-services';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
@@ -31,8 +33,17 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPdfViewer, setShowPdfViewer] = useState<boolean>(false);
-
+  const [rdFormData, setRdFormData] = useState<string | null>('');
+  const { caseId } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
+  const { errorToast } = useToast();
+  const {
+    mutate: previewRDCredit,
+    isPending: isPreviewLoading,
+    isError: isPreviewError,
+  } = useRDFormMapperPreviewMutation();
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -49,17 +60,6 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         value: state.rid,
       })) || [],
     [region.data?.data.states]
-  );
-
-  const {
-    data: rdFormData,
-    isLoading: isLoadingPdf,
-    isError: isPdfError,
-  } = useGetRDFormData(
-    caseDetails?.account_rid || '',
-    caseCountryDetails.country_id,
-    isFederal === 'no' ? selectedRegion : undefined,
-    showPdfViewer // Only fetch when viewer is shown
   );
 
   // Permission
@@ -95,15 +95,34 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     }
   };
 
-  const handleViewPdf = () => {
-    // Validate region if federal is "No"
+  const handleViewFinancialHighlightsForRegion = async () => {
     if (isFederal === 'no' && !selectedRegion) {
       setErrors((prev) => ({ ...prev, region: 'Please select a region' }));
       return;
     }
-
-    // Show PDF viewer - React Query hook will automatically fetch the data
-    setShowPdfViewer(true);
+    previewRDCredit(
+      {
+        accountrid: accountid,
+        caseId: caseId ?? '',
+        stateRid: selectedRegion,
+        isFederal: isFederal === 'yes',
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.data) {
+            setRdFormData(response?.data?.rdformUrl);
+            setShowPdfViewer(true);
+          } else {
+            errorToast('No data available');
+          }
+        },
+        onError: (error) => {
+          console.error(error);
+          setRdFormData(null);
+          errorToast('Failed to fetch financial highlights');
+        },
+      }
+    );
   };
 
   const isViewButtonEnabled = () => {
@@ -123,9 +142,9 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
           <div>Jurisdiction Information</div>
           <TextButton
             label={'View'}
-            loading={isLoadingPdf}
-            onClick={handleViewPdf}
-            disabled={!isViewButtonEnabled() || isLoadingPdf}
+            loading={isPreviewLoading}
+            onClick={handleViewFinancialHighlightsForRegion}
+            disabled={!isViewButtonEnabled() || isPreviewLoading}
             sx={{
               width: '55px',
               minWidth: '55px',
@@ -302,9 +321,9 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
           </div>
           <div className='max-h-[600px] overflow-auto p-3'>
             <PdfViewer
-              pdfUrl={rdFormData?.data || ''}
-              isLoadingPdf={isLoadingPdf}
-              isPdfError={isPdfError}
+              pdfUrl={rdFormData || ''}
+              isLoadingPdf={isPreviewLoading}
+              isPdfError={isPreviewError}
             />
           </div>
         </div>

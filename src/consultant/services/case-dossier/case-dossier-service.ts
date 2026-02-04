@@ -1,55 +1,17 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
-  ProjectDocumentItem,
-  ProjectDocumentsListURLParams,
   ResourceSummaryItem,
   ResourceSummaryListURLParams,
-  ProjectSummaryItem,
-  ProjectSummaryListURLParams,
-  RDFormResponse,
+  DossierSummary,
+  ClosingRemarksItems,
+  ClosingRemarksResponse,
 } from '../../types';
 import {
-  ProjectDocumentListMockData,
   ResourceSummaryMockData,
-  ProjectSummaryMockData,
-  mockRDFormResponse,
+  DossierSummaryMockData,
 } from '../../mockdata/dossier';
-
-export const fetchProjectDocumentList = async (
-  params?: ProjectDocumentsListURLParams
-): Promise<{ projectDocuments: ProjectDocumentItem[]; count: number }> => {
-  // const response = await caseServiceApi.get<ProjectDocumentListResponse>(
-  //   ProjectDocumentListURL(params)
-  // );
-
-  // Mock usage
-  console.log('project-documents-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return {
-    projectDocuments: ProjectDocumentListMockData.data.projectDocuments,
-    count: ProjectDocumentListMockData.data.count,
-  };
-};
-
-export const useProjectDocumentList = (
-  params: ProjectDocumentsListURLParams,
-  refreshList?: number
-): UseQueryResult<
-  { projectDocuments: ProjectDocumentItem[]; count: number },
-  Error
-> => {
-  return useQuery<
-    { projectDocuments: ProjectDocumentItem[]; count: number },
-    Error
-  >({
-    queryKey: ['project-document-list', params, refreshList],
-    queryFn: () => fetchProjectDocumentList(params),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!params.accountRid && !!params.caseRid,
-  });
-};
+import { caseServiceApi } from '../../../api/api';
+import { getClosingRemarksListURL } from '../urls/dossier-url';
 
 // Resource Summary
 export const fetchResourceSummaryList = async (
@@ -88,76 +50,32 @@ export const useResourceSummaryList = (
   });
 };
 
-// Project Summary
-export const fetchProjectSummaryList = async (
-  params?: ProjectSummaryListURLParams
-): Promise<{ projectSummary: ProjectSummaryItem[]; count: number }> => {
-  // const response = await caseServiceApi.get<ProjectSummaryListResponse>(
-  //   ProjectSummaryListURL(params)
+// Dossier Summary
+export const fetchDossierSummary = async (
+  accountRid: string,
+  caseRid: string
+): Promise<DossierSummary> => {
+  // const response = await caseServiceApi.get<DossierSummaryResponse>(
+  //   `/api/dossier/summary?account_rid=${accountRid}&case_rid=${caseRid}`
   // );
 
   // Mock usage
-  console.log('project-summary-list-params', params);
+  console.log('dossier-summary-params', { accountRid, caseRid });
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  return {
-    projectSummary: ProjectSummaryMockData.data.projectSummary,
-    count: ProjectSummaryMockData.data.count,
-  };
+  return DossierSummaryMockData.data.dossierSummary;
 };
 
-export const useProjectSummaryList = (
-  params: ProjectSummaryListURLParams,
-  refreshList?: number
-): UseQueryResult<
-  { projectSummary: ProjectSummaryItem[]; count: number },
-  Error
-> => {
-  return useQuery<
-    { projectSummary: ProjectSummaryItem[]; count: number },
-    Error
-  >({
-    queryKey: ['project-summary-list', params, refreshList],
-    queryFn: () => fetchProjectSummaryList(params),
+export const useDossierSummary = (
+  accountRid: string,
+  caseRid: string
+): UseQueryResult<DossierSummary, Error> => {
+  return useQuery<DossierSummary, Error>({
+    queryKey: ['dossier-summary', accountRid, caseRid],
+    queryFn: () => fetchDossierSummary(accountRid, caseRid),
     retry: 0,
     gcTime: 0,
-    enabled: !!params.accountRid && !!params.caseRid,
-  });
-};
-
-// RD Form
-const fetchRDFormData = async (
-  accountId: string,
-  countryId: string,
-  regionId?: string
-): Promise<RDFormResponse> => {
-  // let url = `/api/rd-form?account_rid=${accountId}&country_rid=${countryId}`;
-
-  // // Add region parameter if provided
-  // if (regionId) {
-  //   url += `&state_rid=${regionId}`;
-  // }
-
-  // const response = await caseServiceApi.get<RDFormResponse>(url);
-  // return response.data;
-  console.log(accountId, countryId, regionId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  return mockRDFormResponse;
-};
-
-export const useGetRDFormData = (
-  accountId: string,
-  countryId: string,
-  regionId?: string,
-  enabled?: boolean
-): UseQueryResult<RDFormResponse | undefined, Error> => {
-  return useQuery<RDFormResponse | undefined, Error>({
-    queryKey: ['rd-credit-forms', accountId, countryId, regionId],
-    queryFn: () => fetchRDFormData(accountId, countryId, regionId),
-    retry: 0,
-    gcTime: 0,
-    enabled: enabled && !!accountId && !!countryId,
+    enabled: !!accountRid && !!caseRid,
   });
 };
 
@@ -190,4 +108,38 @@ export const downloadPdfFromBase64 = (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+// closing remarks list
+export const fetchClosingRemarksList = async (
+  accountid: string,
+  caseid: string
+): Promise<{ closingRemarks: ClosingRemarksItems[]; count: number }> => {
+  const response = await caseServiceApi.get<ClosingRemarksResponse>(
+    getClosingRemarksListURL(accountid, caseid)
+  );
+  return {
+    closingRemarks: response.data.data.closing_remarks,
+    count: response.data.data.closing_remarks.length,
+  };
+};
+
+export const useClosingRemarksList = (
+  accountId: string,
+  caseId: string,
+  refreshList?: number
+): UseQueryResult<
+  { closingRemarks: ClosingRemarksItems[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { closingRemarks: ClosingRemarksItems[]; count: number },
+    Error
+  >({
+    queryKey: ['closing-remarks-list', accountId, caseId, refreshList],
+    queryFn: () => fetchClosingRemarksList(accountId, caseId),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountId && !!caseId,
+  });
 };

@@ -222,7 +222,8 @@ export const validateDependentFields = <T extends RowData>(
 
       // Check if both start and end dates must be provided together
       // Default to true if not specified
-      const bothStartEndRequireValidate = dateConfig.bothStartEndRequireValidate !== false;
+      const bothStartEndRequireValidate =
+        dateConfig.bothStartEndRequireValidate !== false;
 
       // Only enforce "both must be provided" validation if bothStartEndRequireValidate is true
       if (bothStartEndRequireValidate) {

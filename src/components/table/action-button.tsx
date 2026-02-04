@@ -17,9 +17,9 @@ interface ActionButtonProps {
   alignHorizontal?: 'left' | 'center' | 'right';
 }
 
-export default function TableActionButton({ 
-  actions, 
-  alignHorizontal = 'center' 
+export default function TableActionButton({
+  actions,
+  alignHorizontal = 'center',
 }: ActionButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);

@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
   ExportType,
-  ProjectDocumentItem,
   ProjectDocumentsListExportParams,
   ProjectDocumentsListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useProjectDocumentList } from '../../../../../../services/case-dossier/case-dossier-service';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
 import { getProjectDocumentsColumns } from './columns';
+import { useAttachmentList } from '../../../../../../services/attachments/attachments-service';
+import { AttachmentList } from '../../../../../../types/attachment';
 
 interface ProjectDocumentsProps {
   refreshTrigger: number;
@@ -42,9 +42,9 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [projectDocuments, setProjectDocuments] = useState<
-    ProjectDocumentItem[]
-  >([]);
+  const [projectDocuments, setProjectDocuments] = useState<AttachmentList[]>(
+    []
+  );
   const [tableParams, setTableParams] = useState<ProjectDocumentsListURLParams>(
     {
       page: currentPage + 1,
@@ -54,13 +54,19 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     }
   );
 
-  const { data, isLoading, isError } = useProjectDocumentList(
+  const { data, isLoading, isError } = useAttachmentList(
     {
-      ...tableParams,
-      search: searchValue,
+      page: currentPage + 1,
+      limit: tableParams.limit,
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
-      accountRid: accountId || '',
-      caseRid: caseId || '',
+      attachmentLevel: 'project',
+      accountRid: accountId,
+      entityId: caseId || '',
+      search: searchValue,
+      fiscalYear: 0,
+      type: 'dossier_project_document',
     },
     refreshTrigger
   );
@@ -69,7 +75,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
   useEffect(() => {
     if (data) {
-      setProjectDocuments(data.projectDocuments || []);
+      setProjectDocuments(data.attachments || []);
       setCount(data.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,7 +116,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     setTableParams((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
-  const getRowId = (row: ProjectDocumentItem) => row.rid;
+  const getRowId = (row: AttachmentList) => row.rid;
 
   // Column visibility states
   const isModalOpen = Boolean(columnAnchorEl);

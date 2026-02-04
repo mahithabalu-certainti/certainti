@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  ClosingRemarksItems,
   ExportType,
   ResourceSummaryListExportParams,
   ResourceSummaryListURLParams,
@@ -10,16 +11,10 @@ import {
   ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
-import { RootState } from '../../../../../../../store/store';
-import { useSelector } from 'react-redux';
-import { AllPermissions } from '../../../../../../../common-service';
-import { useCaseProjectResourceList } from '../../../../../../services/case-project-resource/case-project-resource-service';
-import {
-  CaseProjectResourceRowType,
-  getCaseProjectResourceColumns,
-} from '../../../case-project-resource/columns';
+import { getClosingRemarksColumns } from './column';
+import { useClosingRemarksList } from '../../../../../../services/case-dossier/case-dossier-service';
 
-interface ResourceSummaryProps {
+interface ClosingRemarksProps {
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
@@ -33,7 +28,7 @@ interface ResourceSummaryProps {
   searchValue: string;
 }
 
-const ResourceSummary: React.FC<ResourceSummaryProps> = ({
+const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
   refreshTrigger,
   currentPage,
   appliedFilters,
@@ -47,38 +42,28 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [resourceSummary, setResourceSummary] = useState<
-    CaseProjectResourceRowType[]
-  >([]);
+  const [resourceSummary, setResourceSummary] = useState<ClosingRemarksItems[]>(
+    []
+  );
   const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
     sortBy: 'resource_code',
     sortOrder: 'ASC',
   });
-  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const { data, isLoading, isError } = useCaseProjectResourceList(
-    {
-      page: tableParams.page,
-      limit: tableParams.limit,
-      sortBy: tableParams.sortBy,
-      sortOrder: tableParams.sortOrder,
-      search: searchValue,
-      filters: appliedFilters,
-      accountRid: accountId || '',
-      case_rid: caseId || '',
-      fiscalYear: 0,
-    },
+  const { data, isLoading, isError } = useClosingRemarksList(
+    accountId,
+    caseId ?? '',
     refreshTrigger
   );
 
-  const totalItems = data?.data.count || 0;
+  const totalItems = data?.count || 0;
 
   useEffect(() => {
     if (data) {
-      setResourceSummary(data?.data?.projectResources || []);
-      setCount(data?.data?.count || 0);
+      setResourceSummary(data.closingRemarks || []);
+      setCount(data.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
@@ -106,36 +91,36 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
 
   // Permission Management
-  const projectViewEditFields = useMemo(
-    () =>
-      permission.find(
-        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
-      )?.fields ?? [],
-    [permission]
-  );
+  // const projectViewEditFields = useMemo(
+  //     () =>
+  //         permission.find(
+  //             (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+  //         )?.fields ?? [],
+  //     [permission]
+  // );
 
-  const permissionMap = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    projectViewEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [projectViewEditFields]);
+  // const permissionMap = useMemo(() => {
+  //     const map: Record<string, { read: boolean; edit: boolean }> = {};
+  //     projectViewEditFields.forEach((item) => {
+  //         map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+  //     });
+  //     return map;
+  // }, [projectViewEditFields]);
 
-  const projectListViewEditFields = useMemo(
-    () =>
-      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
-        ?.fields ?? [],
-    [permission]
-  );
+  // const projectListViewEditFields = useMemo(
+  //     () =>
+  //         permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+  //             ?.fields ?? [],
+  //     [permission]
+  // );
 
-  const projectPermissionMap = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    projectListViewEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [projectListViewEditFields]);
+  // const projectPermissionMap = useMemo(() => {
+  //     const map: Record<string, { read: boolean; edit: boolean }> = {};
+  //     projectListViewEditFields.forEach((item) => {
+  //         map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+  //     });
+  //     return map;
+  // }, [projectListViewEditFields]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -150,7 +135,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
     setTableParams((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
-  const getRowId = (row: CaseProjectResourceRowType) => row.rid;
+  const getRowId = (row: ClosingRemarksItems) => row.rid;
 
   // Column visibility states
   const isModalOpen = Boolean(columnAnchorEl);
@@ -164,11 +149,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
     { id: 'resource_code', canHide: false, canDrag: false },
   ];
 
-  const resourceSummaryColumns = getCaseProjectResourceColumns(
-    undefined,
-    permissionMap,
-    projectPermissionMap
-  );
+  const resourceSummaryColumns = getClosingRemarksColumns();
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -221,7 +202,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
         actionDisplayMode='dropdown'
         actionMenuItems={[]}
         loading={isLoading}
-        error={isError ? 'Failed to load resource summary data' : undefined}
+        error={isError ? 'Failed to load closing remarks data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
@@ -236,4 +217,4 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   );
 };
 
-export default ResourceSummary;
+export default ClosingRemarks;

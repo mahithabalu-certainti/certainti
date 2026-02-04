@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AllPermissions } from '../../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../../../common-service';
 import {
   ActivityDropdownItem,
   CaseDetails,
@@ -10,20 +13,35 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ComingSoon, DossierIcon } from '../../../../../assets';
+import { DossierIcon } from '../../../../../assets';
+import {
+  DossierSummary,
+  FinancialWorkingForm,
+  ProjectDocuments,
+  ProjectSummary,
+  QualifiedProjects,
+  RDForm,
+  ResourceSummary,
+} from './tab';
 import {
   getProjectDocumentsFilterFields,
   getProjectSummaryFilterFields,
-  getResourceSummaryFilterFields,
+  getQualifiedProjectsFilterFields,
 } from './helper';
-import { ProjectDocuments } from './tab';
-import FinancialWorkingForm from './tab/financial-working/financial-form';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { useToast } from '../../../../../hooks';
 import { useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
+import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
+import { useFetchState } from '../../../../services/account';
+import {
+  useGetResourceStatus,
+  useGetResourceType,
+} from '../../../../services/resource-list';
+import { FilterValue } from '../../../../types/account-filter';
+import ClosingRemarks from './tab/close-remarks/closing-remarks';
 
 const DossierTabs = [
   {
@@ -74,6 +92,7 @@ const Dossier: React.FC<DossierProps> = ({
   const [searchText, setSearchText] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -81,7 +100,49 @@ const Dossier: React.FC<DossierProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const initialTab = 'financial_workings';
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const isFinancialView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
+  );
+
+  // Permission Management
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
+
+  const initialTab = useMemo(() => {
+    if (isFinancialView) return 'financial_workings';
+    return 'summary';
+  }, [isFinancialView]);
 
   useEffect(() => {
     if (searchParams.get('list') === 'dossier' && !searchParams.get('tab')) {
@@ -118,7 +179,6 @@ const Dossier: React.FC<DossierProps> = ({
   ) => {
     const message = statusData?.data ?? statusData?.statusMessage ?? '';
     setDossierFinancialStatus(message);
-    setRefreshTrigger(Date.now());
     if (statusData?.data === 'COMPLETED') {
       if (actionType === 'initiate' || actionType === 'refresh') {
         successToast('Initiated successfully');
@@ -129,37 +189,99 @@ const Dossier: React.FC<DossierProps> = ({
   };
 
   const handleRefresh = async () => {
-    const result = await refetchRDCreditStatus();
-    if (result.data) {
-      handleStatusUpdate(result.data, 'refresh');
+    if (tabParam === 'financial_workings') {
+      const result = await refetchRDCreditStatus();
+      if (result.data) {
+        handleStatusUpdate(result.data, 'refresh');
+      }
+    } else {
+      setRefreshTrigger(Date.now());
     }
   };
   const handleFilter = () => setShowFilter(!showFilter);
-  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const isFinancialView = checkPermission(
-    permission,
-    AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
+  const handleFilterChange = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'country_rid' && value) {
+      setCurrentCountry(String(value));
+    }
+  };
+
+  const allCountries = useGetAllCountries();
+  const regions = useFetchState(currentCountry?.toString() || '');
+  const resourceTypeOptions = useGetResourceType();
+  const resourceStatusOptions = useGetResourceStatus();
+
+  const countryOptions = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        option: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
+
+  const regionOptions = useMemo(
+    () =>
+      regions.data?.data.states.map((state) => ({
+        option: state.state_name,
+        value: state.rid,
+      })) || [],
+    [regions.data?.data.states]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedResourceStatus = useMemo(
+    () =>
+      resourceStatusOptions?.data?.data?.resourceStatus.map((item) => ({
+        option: item.resource_status_name,
+        value: item.rid,
+      })) || [],
+    [resourceStatusOptions?.data?.data?.resourceStatus]
   );
 
   const filterFields = useMemo(() => {
     switch (tabParam) {
+      case 'qualified_projects':
+        return getQualifiedProjectsFilterFields();
       case 'project_documents':
         return getProjectDocumentsFilterFields();
       case 'project_summary':
         return getProjectSummaryFilterFields();
       case 'resource_summary':
-        return getResourceSummaryFilterFields();
+        return caseProjectResourceFilterFields(
+          permissionMap,
+          projectPermissionMap,
+          countryOptions,
+          regionOptions,
+          memoizedResourceType,
+          memoizedResourceStatus
+        );
       default:
         return [];
     }
-  }, [tabParam]);
+  }, [
+    countryOptions,
+    memoizedResourceStatus,
+    memoizedResourceType,
+    permissionMap,
+    projectPermissionMap,
+    regionOptions,
+    tabParam,
+  ]);
 
   const tabs = [
     {
       label: 'Financial Workings',
       value: 'financial_workings',
-      hide: false,
+      hide: !isFinancialView,
     },
     {
       label: 'Summary',
@@ -172,7 +294,7 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'RD Forms',
+      label: 'RD Form',
       value: 'rd_form',
       hide: false,
     },
@@ -191,7 +313,17 @@ const Dossier: React.FC<DossierProps> = ({
       value: 'resource_summary',
       hide: false,
     },
+    {
+      label: 'Closing Remarks',
+      value: 'closing_remarks',
+      hide: false,
+    },
   ];
+
+  const showTableControls =
+    tabParam !== 'summary' &&
+    tabParam !== 'rd_form' &&
+    tabParam !== 'financial_workings';
 
   const headerButtons = [
     {
@@ -200,18 +332,18 @@ const Dossier: React.FC<DossierProps> = ({
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
-      hide: tabParam === 'financial_workings',
+      hide: !showTableControls,
     },
   ];
+
+  // if (!isFinancialView) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={
-          tabParam !== 'financial_workings' && tabParam !== 'rd_form'
-        }
+        filterVisibility={showTableControls}
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -225,15 +357,16 @@ const Dossier: React.FC<DossierProps> = ({
             ? Boolean(
                 dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
               )
-            : tabParam !== 'rd_form'
+            : showTableControls
         }
         onRefreshClick={handleRefresh}
-        showSearch={tabParam !== 'financial_workings' && tabParam !== 'rd_form'}
+        showSearch={showTableControls}
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
+        onFilterChange={handleFilterChange}
       />
 
       <SectionHeader
@@ -247,7 +380,7 @@ const Dossier: React.FC<DossierProps> = ({
         iconBg={ColorCode.caseBgColor}
         bgType='circle'
         count={count}
-        showItemCount={tabParam !== 'financial_workings'}
+        showItemCount={showTableControls}
         buttons={headerButtons}
       />
 
@@ -258,6 +391,22 @@ const Dossier: React.FC<DossierProps> = ({
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
+        {tabParam === 'summary' && <DossierSummary />}
+
+        {tabParam === 'qualified_projects' && (
+          <QualifiedProjects
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => {}}
+            setExportType={() => {}}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
+        )}
+
         {tabParam === 'financial_workings' &&
           (!isFinancialView ? (
             <AccessRestricted />
@@ -272,7 +421,9 @@ const Dossier: React.FC<DossierProps> = ({
             />
           ))}
 
-        {tabParam === 'project-assigned-documents' && (
+        {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
+
+        {tabParam === 'project_documents' && (
           <ProjectDocuments
             refreshTrigger={refreshTrigger}
             currentPage={currentPage}
@@ -285,10 +436,47 @@ const Dossier: React.FC<DossierProps> = ({
             searchValue={searchText}
           />
         )}
-        {tabParam !== 'financial_workings' && (
-          <div className='flex items-center justify-center w-full h-full'>
-            <ComingSoon alt='comingSoon' />
-          </div>
+
+        {tabParam === 'project_summary' && (
+          <ProjectSummary
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => {}}
+            setExportType={() => {}}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
+        )}
+
+        {tabParam === 'resource_summary' && (
+          <ResourceSummary
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => {}}
+            setExportType={() => {}}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
+        )}
+
+        {tabParam === 'closing_remarks' && (
+          <ClosingRemarks
+            refreshTrigger={refreshTrigger}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setExportParams={() => {}}
+            setExportType={() => {}}
+            columnAnchorEl={columnAnchorEl}
+            setColumnAnchorEl={setColumnAnchorEl}
+            searchValue={searchText}
+          />
         )}
       </div>
     </div>
