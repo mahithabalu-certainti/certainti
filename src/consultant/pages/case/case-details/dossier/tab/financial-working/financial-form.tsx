@@ -317,9 +317,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       {
         accountrid: accountid,
         caseId: caseId ?? '',
-        ...(selectedRegion
-          ? { stateRid: selectedRegion }
-          : { type: 'summary' }),
+        type: selectedRegion ? 'state' : 'summary',
+        ...(selectedRegion && { stateRid: selectedRegion }),
       },
       {
         onSuccess: (response) => {
