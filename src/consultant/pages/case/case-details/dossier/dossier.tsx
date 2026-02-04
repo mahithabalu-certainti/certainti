@@ -404,6 +404,7 @@ const Dossier: React.FC<DossierProps> = ({
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
+            fiscalYear={caseDetails?.fiscal_year ?? 0}
           />
         )}
 
@@ -448,6 +449,7 @@ const Dossier: React.FC<DossierProps> = ({
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
+            fiscalYear={caseDetails?.fiscal_year ?? 0}
           />
         )}
 

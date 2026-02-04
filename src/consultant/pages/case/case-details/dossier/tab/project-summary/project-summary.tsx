@@ -30,6 +30,7 @@ interface ProjectSummaryProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  fiscalYear: number;
 }
 
 const ProjectSummary: React.FC<ProjectSummaryProps> = ({
@@ -42,6 +43,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  fiscalYear,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -64,7 +66,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
       filter: appliedFilters,
       case_rid: caseId,
       account_rid: accountId,
-      fiscal_year: 2024,
+      fiscal_year: fiscalYear,
     },
     refreshTrigger
   );

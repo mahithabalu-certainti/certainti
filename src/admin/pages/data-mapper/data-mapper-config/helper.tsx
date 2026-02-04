@@ -495,9 +495,10 @@ export function validateMappingItem(
       }
 
       // Treat chips and manual entries the same - both need operators between them
-      const isCurrentValue = current.type === 'chip' || current.type === 'manual';
+      const isCurrentValue =
+        current.type === 'chip' || current.type === 'manual';
       const isNextValue = next.type === 'chip' || next.type === 'manual';
-      
+
       if (isCurrentValue && isNextValue) {
         errors.targetError = 'Missing operator between Object IDs';
         return errors;

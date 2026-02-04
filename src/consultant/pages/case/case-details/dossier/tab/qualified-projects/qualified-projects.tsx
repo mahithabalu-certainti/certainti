@@ -31,6 +31,7 @@ interface QualifiedProjectsProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  fiscalYear: number;
 }
 
 const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
@@ -43,6 +44,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  fiscalYear,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -58,7 +60,6 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       sortOrder: 'ASC',
     });
 
-
   const { data, isLoading, isError } = useAssignProjectsList(
     {
       page: currentPage + 1,
@@ -69,6 +70,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       filter: appliedFilters,
       case_rid: caseId,
       account_rid: accountId,
+      fiscal_year: fiscalYear,
     },
     refreshTrigger
   );
