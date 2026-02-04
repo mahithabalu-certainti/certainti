@@ -3,7 +3,7 @@ import { CaseService } from "./caseService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
-import { caseFilingTypes, caseStatuses, DOSSIER_NAME, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, DOSSIER_NAME, HttpStatus, rawQueries, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
 import { CaseClosureRemarks, CaseData, ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadToAzureBlob } from "../../utils/helpers";
@@ -13,10 +13,11 @@ import { Kafka, Producer } from "kafkajs";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { ProjectResourceService } from "../projectResource/projectResourceService";
 import moment from "moment";
-import {buildRawWhereClause, fetchProjectResourceById, getAttachmentDisplayNames, getProjectResourcesByProjectIds, getProjectsByAccountId, getProjectTasksByProjectIds, getResourceCostsByResourceIds, getResourcesByAccountId, getResourceSkillsByResourceIds, mapAttachmentToCommonFormat} from '../../utils/attachments.helper'
+import {buildRawWhereClause, fetchProjectResourceById, getAttachmentDisplayNames, getProjectResourcesByProjectIds, getProjectsByAccountId, getProjectTasksByProjectIds, getResourceCostsByResourceIds, getResourcesByAccountId, getResourceSkillsByResourceIds, getSortParameters, mapAttachmentToCommonFormat, processDateFilter, processNumberFilter, processProjectCountFilter, processTextFilter} from '../../utils/attachments.helper'
 import { Attachment } from "../../models/attachments";
 import { createZipFile, uploadZipBufferToAzureBlob } from "../../utils/dossier.package";
 import { DossierForm } from "../../models/dossierForm";
+import { AiTechnicalSummary } from "../../models/aiTechnicalSummary";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -238,7 +239,6 @@ async getCaseClosureRemarks (data : any) {
 }
 async exportCaseClosingRemarks (data : any) {
     const result = await this.getCaseClosureRemarks(data);
-    console.log("exportCaseClosingRemarks ===> ", result)
     if(result?.closing_remarks.length! > 0) {
         const finalData = result?.closing_remarks.map((d : any) => {
             console.log("Signoff AT : ", d.signoff_at)
@@ -269,7 +269,7 @@ async initiateCreateDossierForm (data : any) {
     console.log(`Message published to ID : ${processingRid}`);
     return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
 }
-async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string) {
+async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string) {
     const orgDb = await this.getOrgDb()
     let schemaName = rawQueries.fetchSchemaName(accountNumber)
     const {DossierFormModel} = await this.getModels(schemaName)
@@ -293,12 +293,6 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
           getProjectResourceSummary.data?.projectResources,
           "Resource-Summary"
         )
-    
-    const projectSummaryData = getProjectQualifiedData
-    const generateProjectSummaryCSV = await generateExcelBase64(
-          projectSummaryData.data,
-          "Project-Summary"
-    )
     let caseClosingPayload : any = {}
     caseClosingPayload.case_rid = caseRid;
     caseClosingPayload.account_rid = accountRid;
@@ -311,12 +305,97 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const fetchStateUrl : any = await orgDb.query(fetchRdFormUrlForState(schemaName, caseRid));
     let countryUrlData = fetchCountryUrl[0].filter((c : any) => c.country_url !== null);
     let stateUrlData = fetchStateUrl[0].filter((d : any) => d.state_url !== null);
-    countryUrlData = countryUrlData[0][0].country_url
-    let stateUrls = await Promise.all(stateUrlData[0].map(async (s : any) => {
+    let stateUrls : string[];
+    let countryUrls : string;
+    if(countryUrlData.length > 0) {
+      countryUrlData = await Promise.all(countryUrlData.map(async (c : any) => {
+      return {
+        url : await generateSasUrl(c.country_url)
+      }
+    }))
+    countryUrls = countryUrlData[0].url
+    } else {
+      countryUrls = ''
+    }
+    if(stateUrlData.length > 0) {
+      stateUrlData = await Promise.all(stateUrlData.map(async (s : any) => {
       return {
         url : await generateSasUrl(s.state_url)
       }
     }))
+    stateUrls = stateUrlData.map((d : any) => d.url)
+    } else {
+      stateUrls = []
+    }
+    const techSummary =
+        await this.listTechnicalSummary(
+          accountNumber,
+          '',
+          0,
+          0,
+          {},
+          'r_number',
+          'ASC',
+          "download",
+          caseRid,
+          accountRid
+        );
+    const fields = await this.getAllowedExportFields(
+      userId,
+      "projects_tech_summary_view_edit"
+    );
+     const allowedFieldSet = new Set<string>();
+    for (const field of fields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const timezone = ''
+     const isValidTZ = timezone && isValidTimezone(timezone);
+    const formatDate = (date?: Date) => {
+      const offsetMs = (5 * 60 + 30) * 60 * 1000;
+      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
+      return date
+        ? moment
+            .utc(convertedDate)
+            .tz(isValidTZ ? timezone : "UTC")
+            .utcOffset('-012:30')
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+        : null;
+    }
+    const finalStructuredData =
+        techSummary.technicalSummary.length < 1
+          ? []
+          : techSummary.technicalSummary.map((d: any) => {
+              let resultMap: { [key: string]: any } = {
+                r_number: d.r_number,
+                project_code: d.project_code,
+                fiscal_year: d.fiscal_year,
+                status_name: d.status_name,
+                version: d.version,
+                summary_context: d.summary_context,
+                technical_summary: d.technical_summary,
+                created_by: d.created_user_name,
+                created_datetime: formatDate(d.created_datetime),
+                modified_by: d.modified_user_name,
+                modified_datetime:
+                  d.modified_datetime == null
+                    ? ""
+                    : formatDate(d.modified_datetime),
+              };
+              const exportRecord: Record<string, any> = {};
+              techSummaryFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              return exportRecord;
+            });
+      const generateProjectSummaryCSV = await generateExcelBase64(
+        finalStructuredData,
+        "Project Summary"
+      );
     const exportProjectDocuments = await this.exportAttachments(userId, 'project', caseDetails?.rid, accountRid, '', {}, 'project_code', 'DESC', 0, {}, '', DOSSIER_NAME);
     const convertToZip = await createZipFile([
       {
@@ -346,7 +425,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     },
     {
       name : "RD-Forms-Federal",
-      url : countryUrlData[0][0].country_url
+      url : countryUrls
     },
     {
       name : "RD-Forms-State",
@@ -356,17 +435,40 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
   console.log(`Converted to Zip Successfully : `, convertToZip);
   const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", accountRid, caseDetails?.r_number!, accountNumber, "cases");
   console.log(`Uploaded To Azure Successfully : `, uploadToAzure);
-  const createdResult = await DossierFormModel.create({
-    account_rid : accountRid,
-    case_rid : caseRid,
-    browse_url : uploadToAzure.url,
-    created_by : userId,
-    document_name : uploadToAzure.name,
-    extension : uploadToAzure.extension,
-    size : JSON.stringify(uploadToAzure.size),
-    created_datetime : new Date()
-  });
-  console.log(`Dossier form created : `, await generateSasUrl(createdResult.browse_url));
+  const findData = await DossierFormModel.findOne({
+    where : {
+      case_rid : caseRid,
+      account_rid : accountRid
+    }, raw : true
+  })
+
+  if(findData) {
+    await DossierFormModel.update({
+      browse_url : uploadToAzure.url,
+      modified_by : userId,
+      document_name : uploadToAzure.name,
+      extension : uploadToAzure.extension,
+      size : JSON.stringify(uploadToAzure.size),
+      modified_datetime : new Date()
+    }, {
+     where : {
+      case_rid : caseRid,
+      account_rid : accountRid
+    }
+    })
+  } else {
+    const createdResult = await DossierFormModel.create({
+      account_rid : accountRid,
+      case_rid : caseRid,
+      browse_url : uploadToAzure.url,
+      created_by : userId,
+      document_name : uploadToAzure.name,
+      extension : uploadToAzure.extension,
+      size : JSON.stringify(uploadToAzure.size),
+      created_datetime : new Date()
+    });
+    console.log(`Dossier form created : `, await generateSasUrl(createdResult.dataValues.browse_url));
+  }
 }
   async exportAttachments(
     userId: string,
@@ -1030,8 +1132,292 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
 async getModels(schemaName: string) {
     const sequelize = await initOrgSequelize();
     const DossierFormModel = DossierForm.initialise(sequelize, schemaName)
+    const AiTechnicalSummaryModel = AiTechnicalSummary.initialize(sequelize, schemaName)
     return {
-      DossierFormModel
+      DossierFormModel,
+      AiTechnicalSummaryModel
     }
 }
+async fetchDossierPackage (data : any) {
+  const orgDbSequelize = await initOrgSequelize();
+  if (!orgDbSequelize)
+    throw new Error("Failed to initialize database connection");
+  const mainDbSequelize = await initMainDbSequelize();
+  if (!mainDbSequelize)
+    throw new Error("Failed to initialize database connection");
+  const fetchParentNumber : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize));
+  let schemaName = rawQueries.fetchSchemaName(fetchParentNumber[0][0].r_number)
+  const {DossierFormModel} = await this.getModels(schemaName);
+  let getZipPackage = await DossierFormModel.findOne({
+    where : {
+      case_rid : data.case_rid,
+      account_rid : data.account_rid
+    }, raw : true
+  })
+  if(getZipPackage) {
+    getZipPackage.browse_url = await generateSasUrl(getZipPackage.browse_url);
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      data : getZipPackage
+    }
+  } else {
+    return {
+      statusCode : HttpStatus.NOT_FOUND,
+      data : null
+    }
+  }
 }
+async listTechnicalSummary(
+    accountNumber: string,
+    projectFiscalRid: string,
+    page: number = 1,
+    limit: number = 100,
+    filters: Record<string, string>,
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    type: string = "list",
+    caseRid? : string,
+    accountRid? : string
+  ) {
+    try {
+      const orgDbSequelize = await initOrgSequelize();
+      if (!orgDbSequelize)
+        throw new Error("Failed to initialize database connection");
+      const mainDbSequelize = await initMainDbSequelize();
+      if (!mainDbSequelize)
+        throw new Error("Failed to initialize database connection");
+      const offset = (page - 1) * limit;
+        let modifiedByFilter;
+      let modifiedByConditions;
+      let projectNameFilter;
+      let projectNameConditions;
+      let projectCodeFilter;
+      let projectCodeConditions;
+      let totalResults: number = 0;
+      let disablePagination = false;
+      if(type === "download")
+        {
+          disablePagination = true
+        }
+       const detectConditions = (filters: any) => {
+        if (!filters) return null;
+        for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+          if (Object.keys(filters).includes(conditions)) return conditions;
+        }
+        return null;
+      };
+      if (filters?.modified_by) {
+        modifiedByFilter = filters.modified_by;
+        modifiedByConditions = detectConditions(modifiedByFilter);
+      }
+      if (filters?.project_name) {
+        projectNameFilter = filters.project_name;
+        projectNameConditions = detectConditions(projectNameFilter);
+      }
+      if (filters?.project_code) {
+        projectCodeFilter = filters.project_code;
+        projectCodeConditions = detectConditions(projectCodeFilter);
+      }
+       ["modified_by"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      ["project_name"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      ["project_code"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      if (mainTableFilters[sortBy] !== undefined) {
+        disablePagination = true;
+      }
+      const { whereClause } = this.buildWhereClause(filters);
+      const [finalSortBy, finalSortOrder] = getSortParameters(sortBy, sortOrder);
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const { AiTechnicalSummaryModel } = await this.getModels(schemaName);
+      // Fetch technical summaries and count
+      let whereCondition;
+      if(caseRid !== undefined && caseRid !== '') {
+        const projectFiscalIds : any = await orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        whereCondition = {
+          account_rid : accountRid,
+          project_fiscal_rid: {
+            [Op.in] : projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d : any) => d.project_fiscal_rid) : []
+          },
+          [Op.and]: Sequelize.where(
+        Sequelize.col('"AiTechnicalSummary".version'),
+        '=',
+        Sequelize.literal(`
+          (
+            SELECT MAX(t2.version)
+            FROM ${schemaName}.ai_technical_summary AS t2
+            WHERE 
+              t2.account_rid = "AiTechnicalSummary".account_rid
+              AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
+          )
+        `)),
+          ...whereClause
+        }
+      } else {
+        whereCondition = {
+          project_fiscal_rid: projectFiscalRid,
+          ...whereClause
+        }
+      }
+      const { rows: technicalSummary, count } = await AiTechnicalSummaryModel.findAndCountAll({
+        where: whereCondition,
+        order: [[finalSortBy, finalSortOrder]],
+        ...(disablePagination
+          ? {}
+          : { limit: limit, offset: offset }),
+      });
+      // You can now use both technicalSummary (array) and count (number)
+      if (technicalSummary.length === 0) {
+        return {
+          technicalSummary: [],
+          count: 0
+        };
+      }
+      let fetchProjectDetails : any[] = [...new Set(technicalSummary.map((project : any) => project.project_fiscal_rid))];
+      let createdByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.created_by))];
+      let modifiedByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.modified_by))];
+      let statusIds: any[] = [...new Set(technicalSummary.map((user: any) => user.status_rid))];
+      let fetchCreatedByUsers = await mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
+      let fetchModifiedByUsers = await mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
+      let fetchStatusInfo = await mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
+      let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+
+      let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+      let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+      let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+      let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
+        return {
+          rid: d.rid,
+          account_rid : d.account_rid,
+          project_rid : d.project_rid,
+          project_fiscal_rid : d.project_fiscal_rid,
+          project_code : projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
+          project_name : projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
+          signoff : projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
+          r_number: d.r_number,
+          technical_summary: d.technical_summary,
+          version: d.version,
+          status_rid: d.status_rid,
+          status_name: statusMap.get(d.status_rid) || null,
+          created_by: d.created_by,
+          created_user_name: createdMap.get(d.created_by) || null,
+          modified_by: d.modified_by,
+          modified_user_name: modifiedMap.get(d.modified_by) || null,
+          created_datetime: d.created_datetime,
+          modified_datetime: d.modified_datetime
+        };
+      });
+      const applyFilters = (data: any[], conditions: any, value: any, field: any) => {
+        if (!conditions || !field) return data;
+        const val = value[conditions];
+        switch (conditions) {
+          case ALPHANUMERIC_CONDITIONS.equals:
+            return data.filter((d: any) => d[field]?.toLowerCase() === val?.toLowerCase());
+          case ALPHANUMERIC_CONDITIONS.notEquals:
+            return data.filter((d: any) => d[field]?.toLowerCase() != val?.toLowerCase());
+          case ALPHANUMERIC_CONDITIONS.contains:
+            return data.filter((d: any) => d[field]?.toLowerCase().includes(val?.toLowerCase()));
+          case ALPHANUMERIC_CONDITIONS.isEmpty:
+            return data.filter((d: any) => d[field] == null);
+          default:
+            return data;
+        }
+      };
+      if (modifiedByConditions != null && modifiedByConditions != undefined)
+        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
+      if(projectCodeConditions != null && projectCodeConditions != undefined)
+        finalData = applyFilters(finalData, projectCodeConditions, projectCodeFilter, "project_code")
+      if(projectNameConditions != null && projectNameConditions != undefined)
+        finalData = applyFilters(finalData, projectNameConditions, projectNameFilter, "project_name")
+      if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!a?.[sortBy]) return 1;
+          if (!b?.[sortBy]) return -1;
+          return a[sortBy].localeCompare(b[sortBy]);
+        });
+      } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!b?.[sortBy]) return 1;
+          if (!a?.[sortBy]) return -1;
+          return b[sortBy].localeCompare(a[sortBy]);
+        });
+      }
+      totalResults = disablePagination ? finalData.length : count;
+      let finalPaginatedData = [];
+      if(type === "download") 
+        {
+          finalPaginatedData = finalData;
+        }
+        else
+        {
+           finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+        }
+
+    
+      return {
+        technicalSummary: finalPaginatedData,
+        count: totalResults
+      };
+    } catch (err) {
+      logMessage(`Error listing technical summary: ${err}`);
+      throw new Error("Error listing technical summary: " + (err as Error).message);
+    }
+  }
+private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
+    whereClause: Record<string, any>;
+  } {
+    let whereClause: Record<string, any> = {};
+    let includeClause: Array<any> = [];
+    if (filters) {
+      const filterProcessors: Record<string, Function> = {
+        'r_number': (value: any) => processTextFilter('r_number', value, whereClause),
+        'technical_summary': (value: any) => processTextFilter('technical_summary', value, whereClause),
+        'version': (value: any) => processNumberFilter('version', value, whereClause),
+        'created_datetime': (value: any) => processDateFilter('created_datetime', value, whereClause),
+        'modified_datetime': (value: any) => processDateFilter('modified_datetime', value, whereClause),
+        'status_rid': (value: any) => processTextFilter('status_rid', value, whereClause),
+        'project_count': (value: any) => processProjectCountFilter(value, whereClause, schemaName ?? ""),
+      };
+      Object.keys(filters).forEach(key => {
+        
+        const value = filters[key];
+        if (value === undefined || value === null) return;
+        if (filterProcessors[key]) {
+          filterProcessors[key](value);
+        } else if (value !== '') {
+          whereClause[key] = value;
+        }
+      });
+    }
+    return { whereClause };
+  }
+}
+
+export const mainTableFilters : Record<any, any> = {
+  created_user_name : "created_user_name",
+  updated_user_name : "updated_user_name",
+  interaction_type_name : "interaction_type_name",
+  interaction_source_name : "interaction_source_name",
+  status_name : "status_name",
+  response_source_name : "response_source_name",
+  interaction_level_name:"interaction_level_name",
+  modified_by: "modified_by",
+  modified_user_name:"modified_user_name",
+  project_name : "project_name",
+  project_code : "project_code"
+}
+

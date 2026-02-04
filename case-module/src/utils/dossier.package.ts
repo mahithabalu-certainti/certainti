@@ -30,7 +30,7 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
           });
         }
         else if ("url" in file) {
-          if(file.url !== null) {
+          if(file.url !== '') {
             const response = await axios.get(file.url, {
             responseType: "stream",
             timeout: 30_000,
@@ -43,18 +43,17 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
         }
         else if ("urls" in file) {
           let index = 1;
-          for (const url of file.urls) {
-            if(url !== null) {
+          if(file.urls.length > 0) {
+            for (const url of file.urls) {
               const response = await axios.get(url, {
               responseType: "stream",
               timeout: 30_000,
             });
+              archive.append(response.data, {
+                name: `${file.name}_${index}${ext}`,
+              });
 
-            archive.append(response.data, {
-              name: `${file.name}_${index}${ext}`,
-            });
-
-            index++;
+              index++;
             }
           }
         }

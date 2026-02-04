@@ -325,4 +325,5 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.childCaseController.exportSignOffDetails
 )
+routes.get('/dossierPackage/:accountId/:caseId', checkUserStatusMiddleware("NA"), controller.childCaseController.getDossierPackage)
 export default routes;

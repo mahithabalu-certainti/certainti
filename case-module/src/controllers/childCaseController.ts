@@ -255,11 +255,47 @@ async function exportSignOffDetails (req : Request, res : Response) {
   }
 }
 
+async function getDossierPackage (req : Request, res : Response) {
+  const methodName = "getDossierPackage";
+  try {
+    const {accountId, caseId} = req.params;
+    const data : any = {};
+    data.account_rid = accountId;
+    data.case_rid = caseId;
+    const result = await childCaseService.fetchDossierPackage(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dossierPackageFetchedSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.NOT_FOUND).send({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : null
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
     signOffFinancialWorking,
     RegionListForFinancialHighlights,
     getClosedCasesList,
     fetchCaseClosingRemarks,
     initiateCreateDossierForm,
-    exportSignOffDetails
+    exportSignOffDetails,
+    getDossierPackage
 }

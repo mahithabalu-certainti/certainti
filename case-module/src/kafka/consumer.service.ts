@@ -27,7 +27,7 @@ export class KafkaConsumerService {
 
     private consumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID });
     private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_FORM_GROUP_ID });
-    private dossierConsumer = kafka.consumer({groupId : ENV.DOSSIER_GROUP_ID})
+    private dossierConsumer = kafka.consumer({groupId : ENV.DOSSIER_GROUP_ID, sessionTimeout: 60000, heartbeatInterval: 5000})
 
     async start() {
         // Start original consumer
@@ -108,11 +108,9 @@ export class KafkaConsumerService {
                     console.log("Skipping message: no value");
                     return;
                 }
-
                 let payload;
                 try {
                     payload = JSON.parse(value);
-
                 } catch (e) {
                     console.error("Invalid JSON in form topic message", value);
                     return;
@@ -121,8 +119,8 @@ export class KafkaConsumerService {
                 try {
 
                     const markInProgress = await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, key, 'dossier-form');
-                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId);
-                    await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, payload.processRid,'dossier-form');
+                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key);
+                    await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, key,'dossier-form');
                     console.log(`Dossier processing complete for ID: ${key}`);
                 } catch (error) {
                     console.error("Error processing dossier message", error);

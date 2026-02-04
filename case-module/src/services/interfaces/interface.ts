@@ -1,5 +1,6 @@
 import { CaseTask } from "../../models/caseTaskModel";
 import { TaskTemplate } from "../../models/caseTaskTemplateModel";
+import { DossierForm } from "../../models/dossierForm";
 import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
@@ -532,6 +533,13 @@ export interface IChildCaseService extends ICaseService {
 } | undefined>
 initiateCreateDossierForm(data : any) : Promise<string>
 exportCaseClosingRemarks(data : any): Promise<string | undefined>
+fetchDossierPackage(data : any) : Promise<{
+    statusCode: number;
+    data: DossierForm;
+} | {
+    statusCode: number;
+    data: null;
+}>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;

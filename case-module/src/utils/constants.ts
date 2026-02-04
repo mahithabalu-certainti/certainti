@@ -213,7 +213,8 @@ export const STATUS_MESSAGE = {
   financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
   caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully",
   dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully",
-  closureRemarksExportedSuccess : "Closing Remarks Exported Successfully"
+  closureRemarksExportedSuccess : "Closing Remarks Exported Successfully",
+  dossierPackageFetchedSuccess : "Dossier Package fetched successfully"
 };
 
 export const R_NUMBER_PREFIX = {
@@ -1847,6 +1848,13 @@ WHERE dmf.country_rid = '${countryRid}'
   fetchUserByIds() {
     return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`;
   },
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -2254,3 +2262,13 @@ export const onlyFederals = {
   canada: "CAN"
 }
 export const DOSSIER_NAME = 'dossier_project_document'
+   export const techSummaryFieldMappings = [
+     
+    { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+    { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+   
+  ];

@@ -6,6 +6,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { ProjectFiscal } from "../models/projectFiscal";
 import moment from "moment";
 import { DossierForm } from "../models/dossierForm";
+import dayjs from "dayjs";
 
 export function buildRawWhereClause(
     filters: Record<string, any>,
@@ -630,4 +631,193 @@ export async function getAttachmentDisplayNames(attachments: any[], schemaNumber
       : "-",
       "Attachment ID": at.r_number || "-",
     };
+  }
+
+  export function processTextFilter(field: string, value: any,  whereClause: Record<string | symbol, any>): void {
+    if (typeof value === 'string') {
+      // Simple string value - treat as equals
+      whereClause[field] = value;
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        value.equals.toLowerCase()
+      );
+      } else if (value.not_equals !== undefined) {
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        '!=',
+        value.not_equals.toLowerCase()
+      );
+      } else if (value.contains !== undefined) {
+        whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
+      } else if (Array.isArray(value.in) && value.in.length > 0) {
+        whereClause[Op.or] = value.in.map((val: string) =>
+        Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(field)),
+          '=',
+          val.toLowerCase()
+        )
+      );
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = { [Op.or]: [null, ''] };
+        } else {
+          whereClause[field] = { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] };
+        }
+      }
+    }
+  }
+  export function processNumberFilter(field: string, value: any, whereClause: Record<string | symbol, any>): void {
+    if (typeof value === 'number') {
+      // Simple number value - treat as equals
+      whereClause[field] = value;
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        whereClause[field] = value.equals;
+      } else if (value.not_equals !== undefined) {
+        whereClause[field] = { [Op.ne]: value.not_equals };
+      } else if (value.greater_than !== undefined) {
+        whereClause[field] = { ...(whereClause[field] || {}), [Op.gt]: value.greater_than };
+      } 
+      if (value.less_than !== undefined) {
+        whereClause[field] = { ...(whereClause[field] || {}), [Op.lt]: value.less_than };
+      }
+      if (Array.isArray(value.in) && value.in.length > 0) {
+        whereClause[field] = { [Op.in]: value.in };
+      }
+      // Support for between operator (e.g., { between: [min, max] })
+      if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+        whereClause[field] = {
+          ...(whereClause[field] || {}),
+          [Op.gte]: value.between[0],
+          [Op.lte]: value.between[1],
+        };
+      }
+    }
+      if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = null;
+        } else {
+          whereClause[field] = { [Op.ne]: null };
+        }
+      }
+    }
+  
+  export function processDateFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string, any>
+  ): void {
+    if (typeof value === 'string') {
+      const date = dayjs(value, 'YYYY-MM-DD').startOf('day').toDate();
+      const nextDay = dayjs(date).add(1, 'day').toDate();
+
+      whereClause[field] = {
+        [Op.gte]: date,
+        [Op.lt]: nextDay
+      };
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        const date = dayjs(value.equals, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const nextDay = dayjs(date).add(1, 'day').toDate();
+
+        whereClause[field] = {
+          [Op.gte]: date,
+          [Op.lt]: nextDay
+        };
+      } else if (value.before !== undefined) {
+        const beforeDate = dayjs(value.before, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.lt]: beforeDate };
+      } else if (value.after !== undefined) {
+        const afterDate = dayjs(value.after, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.gt]: afterDate };
+      } else if (value.between[0] && value.between[1]) {
+        const fromDate = dayjs(value.between[0], 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const toDate = dayjs(value.between[1], 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+        whereClause[field] = {
+          [Op.gte]: fromDate,
+          [Op.lte]: toDate
+        };
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = null;
+        } else {
+          whereClause[field] = { [Op.ne]: null };
+        }
+      }
+    }
+  }
+
+  export function processProjectCountFilter(value: any, whereClause: Record<string, any>, schemaName: string): void {
+  const conditions: any[] = [];
+  
+  if (typeof value === 'number') {
+    conditions.push(createProjectCountCondition('=', value,schemaName));
+  } else if (value && typeof value === 'object') {
+    if ('equals' in value) {
+      conditions.push(createProjectCountCondition('=', value.equals,schemaName));
+    }
+    if ('not_equals' in value) {
+      conditions.push(createProjectCountCondition('!=', value.not_equals,schemaName));
+    }
+    if ('greater_than' in value) {
+      conditions.push(createProjectCountCondition('>', value.greater_than,schemaName));
+    }
+    if ('less_than' in value) {
+      conditions.push(createProjectCountCondition('<', value.less_than,schemaName));
+    }
+    if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+      conditions.push({
+        [Op.and]: [
+          createProjectCountCondition('>=', value.between[0],schemaName),
+          createProjectCountCondition('<=', value.between[1],schemaName),
+        ]
+      });
+    }
+    if ('is_empty' in value) {
+      conditions.push(
+        value.is_empty
+          ? createProjectCountCondition('=', 0, schemaName)
+          : createProjectCountCondition('>', 0, schemaName)
+      );
+    }
+  }
+
+  if (conditions.length > 0) {
+    if (!whereClause[Op.and as any]) {  // Type assertion for Op.and
+      whereClause[Op.and as any] = [];
+    }
+    (whereClause[Op.and as any] as any[]).push(...conditions);
+  }
+}
+
+function createProjectCountCondition(operator: string, value: number,schemaName: string): any {
+  return {
+    [Op.and as any]: [  // Type assertion for Op.and
+      Sequelize.literal(`(
+        SELECT COUNT(*)
+          FROM "${schemaName}"."interactions" AS i
+          WHERE i.account_interaction_rid = "AccountInteractions"."rid"
+      ) ${operator} ${value}`)
+    ]
+  };
+}
+
+  export function getSortParameters(sortBy: string, sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "r_number",
+      "created_datetime",
+      "modified_datetime",     
+       "version",
+      "status",
+      "project_count"
+    ];
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
   }
