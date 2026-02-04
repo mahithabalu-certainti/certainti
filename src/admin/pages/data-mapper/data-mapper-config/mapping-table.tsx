@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { ErrorInfoIcon } from '../../../../assets';
+import TruncateWithTooltip from '../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 
 interface ObjectItem {
   rid: string;
@@ -211,7 +212,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
             newExpressions.forEach((exp) => {
               if (exp.type === 'chip') {
                 // Odd indices for object IDs
-                const [parent, child] = exp.value.split('.');
+                const [parent, child] = exp.value.split('.', 2);
                 const objectId = targetOptions[parent]?.[child] || '';
                 if (objectId) {
                   objectRidMap[index] = objectId;
@@ -286,8 +287,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
     const atIndex = currentInput.lastIndexOf('@');
 
     if (atIndex !== -1) {
-      const dotCount = (selectedValue.match(/\./g) || []).length;
-      const isCompleteProperty = dotCount === 1; // parent.child format
+      // Check if selectedValue contains a dot (parent.child format)
+      // If it has a dot, it's a complete selection; if not, it's just a parent
+      const isCompleteProperty = selectedValue.includes('.');
 
       if (!isCompleteProperty) {
         // User selected a parent, add dot and show children
@@ -340,7 +342,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
             newExpressions.forEach((exp) => {
               if (exp.type === 'chip') {
                 // Odd indices for object IDs
-                const [parent, child] = exp.value.split('.');
+                const [parent, child] = exp.value.split('.', 2);
                 const objectId = targetOptions[parent]?.[child] || '';
                 if (objectId) {
                   objectRidMap[index] = objectId;
@@ -395,7 +397,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
           newExpressions.forEach((exp) => {
             if (exp.type === 'chip') {
               // Odd indices for object IDs
-              const [parent, child] = exp.value.split('.');
+              const [parent, child] = exp.value.split('.', 2);
               const objectId = targetOptions[parent]?.[child] || '';
               if (objectId) {
                 objectRidMap[index] = objectId;
@@ -446,7 +448,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
           newExpressions.forEach((exp) => {
             if (exp.type === 'chip') {
               // Odd indices for object IDs
-              const [parent, child] = exp.value.split('.');
+              const [parent, child] = exp.value.split('.', 2);
               const objectId = targetOptions[parent]?.[child] || '';
               if (objectId) {
                 objectRidMap[index] = objectId;
@@ -571,7 +573,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
     const dotCount = (searchText.match(/\./g) || []).length;
 
     if (dotCount >= 1) {
-      const [parentKeyLower, childKeyLower = ''] = searchText.split('.');
+      const [parentKeyLower, childKeyLower = ''] = searchText.split('.', 2);
 
       // Find the actual parent key (case-insensitive match)
       const actualParentKey = Object.keys(filteredTargetOptions).find(
@@ -780,36 +782,27 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 <TableCell
                   sx={{ p: '8px', maxHeight: '90px', verticalAlign: 'top' }}
                 >
-                  <Tooltip
-                    title={
-                      <div className='flex items-center gap-1'>
-                        <span className='break-all'>{mapping.field_label}</span>
-                      </div>
+                  <TruncateWithTooltip
+                    text={mapping.field_label}
+                    maxHeight='90px'
+                    tooltipMaxWidth={'20vw'}
+                    style={
+                      {
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 4,
+                        WebkitBoxOrient: 'vertical',
+                        wordBreak: 'break-word',
+                        whiteSpace: 'normal', // Override default nowrap
+                        textOverflow: 'clip', // Override ellipsis for multi-line
+                      } as React.CSSProperties
                     }
-                    arrow
-                    placement='top'
-                  >
-                    <div
-                      style={
-                        {
-                          maxHeight: '90px',
-                          overflow: 'hidden',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 4,
-                          WebkitBoxOrient: 'vertical',
-                          wordBreak: 'break-word',
-                          cursor: 'pointer',
-                        } as React.CSSProperties
-                      }
-                    >
-                      {mapping.field_label}
-                    </div>
-                  </Tooltip>
+                  />
                 </TableCell>
                 {formType !== 'non-fillable' && (
                   <TableCell sx={{ p: '8px' }}>
                     <div
-                      className={`flex relative ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                      className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
                     >
                       <textarea
                         value={mapping.field_id || ''}
@@ -820,18 +813,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                         placeholder='Enter Field ID'
-                        className={`w-full px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none ${
+                        className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
                           mapping.fieldIdError
                             ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
                             : 'border-gray-300 focus:border-blue-400'
                         }`}
-                        style={
-                          {
-                            minHeight: '32px',
-                            maxHeight: '90px',
-                            overflowY: 'auto',
-                          } as React.CSSProperties
-                        }
                       />
                       {mapping.fieldIdError && (
                         <Tooltip
