@@ -811,3 +811,23 @@ export interface IDataMapperService {
     data?: any;
   }>;
 }
+
+export interface IRDFormMapperService {
+  initiateRDFormFillerProcess(
+    accountRid: string,
+    caseRid: string,
+    fiscalYear: number,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+  getRdFormUrl(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
+}

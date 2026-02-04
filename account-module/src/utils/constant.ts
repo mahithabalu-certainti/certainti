@@ -658,7 +658,7 @@ export const rawQueries = {
         project_name VARCHAR(255),
         project_startdate TIMESTAMP,
         project_enddate TIMESTAMP,
-        project_type_rid VARCHAR(50),
+        project_type_rid VARCHAR(50) NULL,
         project_classification_rid VARCHAR(50),
         project_classification_other VARCHAR(300),
         project_client_group VARCHAR(255),
@@ -730,7 +730,7 @@ export const rawQueries = {
         fiscal_year INTEGER NOT NULL,
         project_name VARCHAR(200),
         program_name TEXT,
-        project_type_rid VARCHAR(50),
+        project_type_rid VARCHAR(50) NULL,
         project_classification_rid VARCHAR(50),
         project_classification_other TEXT,
         project_client_group TEXT,
@@ -916,7 +916,7 @@ export const rawQueries = {
         fiscal_year INTEGER NOT NULL,
         project_name VARCHAR(200) NULL,
         program_name VARCHAR(255) NULL,
-        project_type_rid VARCHAR(50),
+        project_type_rid VARCHAR(50) NULL,
         project_classification_rid VARCHAR(50) NULL,
         project_classification_other VARCHAR(255) NULL,
         project_client_group VARCHAR(255) NULL,
@@ -1720,7 +1720,39 @@ export const rawQueries = {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_seq START 1;
     `;
-  },                                                                              
+  },
+  getCreateCaseHistorySubmissionSequenceQuery (schemaName : string) : string {
+    return `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_history_submission_seq START 1`
+  },
+  getCreateCaseHistorySubmissionTableQuery(schemaName: string): string {
+  return `
+    CREATE TABLE IF NOT EXISTS "${schemaName}"."case_history_submission" (
+      rid VARCHAR(50) NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      r_number VARCHAR(20) UNIQUE,
+      eid VARCHAR(120),
+      created_datetime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by VARCHAR(50) NOT NULL,
+      modified_datetime TIMESTAMPTZ,
+      modified_by VARCHAR(50),
+      account_rid VARCHAR(50) NOT NULL,
+      country_rid VARCHAR(50) NOT NULL,
+      state_rid VARCHAR(50),
+      fiscal_year INTEGER NOT NULL,
+      total_project INTEGER NOT NULL,
+      total_qualified_project INTEGER NOT NULL,
+      total_project_cost NUMERIC(18,2) NOT NULL,
+      total_qualified_project_cost NUMERIC(18,2) NOT NULL,
+      total_qre NUMERIC(18,2) NOT NULL,
+      total_rd_credits NUMERIC(18,2) NOT NULL,
+      annual_gross_receipts NUMERIC(18,2),
+      total_fte_cost NUMERIC(18,2),
+      total_subcon_cost NUMERIC(18,2),
+      total_nonlabor_cost NUMERIC(18,2),
+      CONSTRAINT case_history_submission_pkey PRIMARY KEY (rid),
+      CONSTRAINT case_history_submission_r_number_key UNIQUE (r_number)
+    );
+    `;
+  },                                                            
   getCreateAttachmentsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}"."attachments" (

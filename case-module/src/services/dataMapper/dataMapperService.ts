@@ -1,7 +1,7 @@
 import { Sequelize, Op, QueryTypes } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { DataMapperForms, setupDataMapperFormsSequence } from "../../models/dataMapperForms";
-import { uploadToAzureBlob, logMessage, errorLog, generateSasUrl } from "../../utils/helpers";
+import { uploadToAzureBlob, logMessage, errorLog, generateSasUrl, deleteFromAzureBlob } from "../../utils/helpers";
 import { Kafka, Producer } from "kafkajs";
 import { ENV } from "../../config/kafka";
 import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants";
@@ -46,6 +46,14 @@ export class DataMapperService implements IDataMapperService {
             // Initialize model
             const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
             await setupDataMapperFormsSequence(sequelize, MAIN_SCHEMA_NAME);
+
+            const existingForm = await DataMapperModel.findOne({ where: { form_name: data.form_name } });
+            if (existingForm) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "Form name already exists",
+                };
+            }
 
             // Handle File Upload
             let fileUrl = "";
@@ -463,7 +471,10 @@ export class DataMapperService implements IDataMapperService {
             const mappings = await DataMapperFormMappingsModel.findAll({
                 where: {
                     form_rid: rid
-                }
+                },
+                order: [
+                    ['extraction_order', 'ASC']
+                ]
             });
 
             if (!mappings) {
@@ -505,6 +516,22 @@ export class DataMapperService implements IDataMapperService {
                 };
             }
 
+            if (data.form_name) {
+                const existingForm = await DataMapperModel.findOne({
+                    where: {
+                        form_name: data.form_name,
+                        rid: { [Op.ne]: data.rid }
+                    }
+                });
+
+                if (existingForm) {
+                    return {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        message: "Form name already exists",
+                    };
+                }
+            }
+
             const updatePayload: any = {
                 modified_by: userId,
                 modified_datetime: new Date()
@@ -533,6 +560,10 @@ export class DataMapperService implements IDataMapperService {
                     countryRid,
                     "data-mapper"
                 );
+
+                if (record.browse_file) {
+                    await deleteFromAzureBlob(record.browse_file);
+                }
 
                 updatePayload.browse_file = uploadResult.url;
                 updatePayload.document_name = uploadResult.name;
@@ -671,6 +702,23 @@ export class DataMapperService implements IDataMapperService {
                     statusMessage: "Record not found",
                     data: null,
                 };
+            }
+
+            if (data.form_name !== undefined) {
+                const existingForm = await DataMapperModel.findOne({
+                    where: {
+                        form_name: data.form_name,
+                        rid: { [Op.ne]: data.rid }
+                    }
+                });
+
+                if (existingForm) {
+                    return {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        statusMessage: "Form name already exists",
+                        data: null,
+                    };
+                }
             }
 
             const updatePayload: any = {

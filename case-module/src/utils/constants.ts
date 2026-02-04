@@ -1733,9 +1733,10 @@ WHERE dmf.country_rid = '${countryRid}'
   },
   checkFinancialSignOffDone(schemaName: string, caseRid: string) {
     return `
-    SELECT financial_working_signoff FROM ${schemaName}.cases 
-    WHERE
-    rid = '${caseRid}'
+    SELECT COALESCE(
+      (SELECT financial_working_signoff FROM ${schemaName}.cases WHERE rid = '${caseRid}'),
+      false
+    ) AS financial_working_signoff
     `
   },
   fetchRdFormMapperConfigurations(formId: string){
@@ -1743,11 +1744,15 @@ WHERE dmf.country_rid = '${countryRid}'
      SELECT DISTINCT
        dmfm.field_label,
        dmfm.field_id,
+       dmfm.field_type,
        dmfm.calculation_config,
-       dmfm.created_datetime
+       dmfm.created_datetime,
+       dmfm.column_id,
+       dmfm.extraction_order,
+       dmfm.data_order_by
       FROM ${MAIN_SCHEMA_NAME}.data_mapper_form_mappings dmfm
       WHERE dmfm.form_rid = :formId
-      ORDER BY dmfm.created_datetime ASC`
+      ORDER BY dmfm.extraction_order ASC`
   },
   saveFederalFilledFormUrl(schemaName: string)
   {
@@ -1836,7 +1841,7 @@ WHERE dmf.country_rid = '${countryRid}'
           WHERE case_rid = :case_rid
           LIMIT 1`
   },
-  fetchAssignedProjectIds (caseRid : string, schemaName : string){
+   fetchAssignedProjectIds (caseRid : string, schemaName : string){
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
 },
   fetchDocumentByIds() {
@@ -1855,6 +1860,14 @@ WHERE dmf.country_rid = '${countryRid}'
     return `
     SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
   },
+  getTableMappings() {
+    return `
+        SELECT column_id_list 
+        FROM trd365.data_mapper_table_mappings 
+        WHERE rid = :columnId
+        LIMIT 1`;
+  }
+
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

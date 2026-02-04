@@ -69,3 +69,7 @@ terraform.*
 *.tfvars
 
 .venv
+del-form-ex-vm.md
+del-form-ex-worflow.md
+del-report-vm.md
+del-reprot-worflow.md
