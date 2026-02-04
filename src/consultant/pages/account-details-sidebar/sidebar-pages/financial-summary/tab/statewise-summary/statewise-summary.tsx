@@ -33,7 +33,7 @@ interface FinancialSummaryProps {
 export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   fiscalYear,
   countryId,
-  stateId,
+  // stateId,
   accountDetails,
 }) => {
   // hooks
@@ -49,10 +49,10 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   );
   const [rdCredits, setRdCredits] = useState<SummaryRdCredits[]>([]);
   const [type, setType] = useState('all');
-  const [region, setRegion] = useState('');
+  const [region, setRegion] = useState('all');
   const [payload, setPayload] = useState({
     flag: 'all',
-    region_rid: '',
+    region_rid: 'all',
   });
 
   const currencySymbol = accountDetails?.accountById?.currency?.currency_symbol;
@@ -77,11 +77,13 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     },
   ];
   const memoizedState: SelectOption[] = useMemo(
-    () =>
-      financislStates.data?.data.map((state) => ({
+    () => [
+      { label: 'All', value: 'all' },
+      ...(financislStates.data?.data.map((state) => ({
         label: state.state_name,
         value: state.rid,
-      })) || [],
+      })) || []),
+    ],
     [financislStates.data?.data]
   );
   const allData = data?.data;
@@ -103,17 +105,18 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   const accountName = accountDetails?.accountById?.account_name;
 
   useEffect(() => {
-    if (accountid && fiscalYear && (stateId || region)) {
+    // Auto-load when "All" is selected (non-statewise like summary.tsx)
+    if (accountid && fiscalYear && region === 'all') {
       mutate({
         account_rid: accountid,
         fiscal_year: Number(fiscalYear),
-        summaryType: 'state',
-        region_rid: (region || stateId) as string,
+        summaryType: 'summary',
+        region_rid: '',
         flag: (type || 'all') as FinancialSummaryFlag,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountid, fiscalYear, stateId]);
+  }, [accountid, fiscalYear, region]);
   useEffect(() => {
     if (allData) {
       setResourceMetric(allData.resource_metrics);
@@ -203,20 +206,20 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
                   borderRadius: '2px',
                 },
               }}
-              value={region || stateId || ''}
+              value={region}
               onChange={(e) => setRegion(e.target.value)}
               renderValue={(selected) => {
                 if (!selected) {
-                  return 'Select State';
+                  return 'Choose State';
                 }
                 const selectedOption = memoizedState.find(
                   (it) => it.value === selected
                 );
-                return selectedOption ? selectedOption.label : 'Select State';
+                return selectedOption ? selectedOption.label : 'Choose State';
               }}
             >
               <MenuItem value='' disabled>
-                Select State
+                Choose State
               </MenuItem>
               {memoizedState.map((it, i) => {
                 return (
@@ -309,12 +312,13 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
             sx={{ padding: '15px 4px' }}
             onClick={() => {
               setPayload({ flag: type, region_rid: region });
-              if (accountid && fiscalYear && (region || stateId)) {
+              // Only load data on Go button click for specific states (not "All")
+              if (accountid && fiscalYear && region) {
                 mutate({
                   account_rid: accountid,
                   fiscal_year: Number(fiscalYear),
-                  summaryType: 'state',
-                  region_rid: (region || stateId) as string,
+                  summaryType: region === 'all' ? 'summary' : 'state',
+                  region_rid: region === 'all' ? '' : (region as string),
                   flag: (type || 'all') as FinancialSummaryFlag,
                 });
               }

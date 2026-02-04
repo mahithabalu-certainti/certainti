@@ -40,9 +40,10 @@ export const ProjectDocumentListURL = ({
 export const getRDCreditPreviewURL = (
   accountRid: string,
   caseRid: string,
-  stateRid: string
+  stateRid: string,
+  type: string
 ): string => {
-  return `/api/rd-credit/preview/${accountRid}/${caseRid}${stateRid ? `/${stateRid}` : ''}`;
+  return `/api/rd-credit/preview/${accountRid}/${caseRid}${stateRid ? `/${stateRid}` : ''}${type ? `/${type}` : ''}`;
 };
 
 export const getRDCreditStatusURL = (

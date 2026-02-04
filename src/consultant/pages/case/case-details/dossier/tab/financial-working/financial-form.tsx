@@ -1,17 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import FinancialWorking from './financial-working';
 import FinancialWorkingAustralia from './financial-working-australia';
 import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
-import {
-  FormControl,
-  FormControlLabel,
-  MenuItem,
-  Radio,
-  RadioGroup,
-  Select,
-} from '@mui/material';
+import { Box, MenuItem, Select, Tab, Tabs } from '@mui/material';
 import { useParams, useSearchParams } from 'react-router-dom';
 // import { useQueryClient } from '@tanstack/react-query';
 import { RootState } from '../../../../../../../store/store';
@@ -22,7 +15,6 @@ import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import {
   CaseDetails,
   FinancialHighlightsResponse,
-  RDCreditStatusResponse,
 } from '../../../../../../types';
 import { FinancialWorkingCountries } from '../../../../../../types/interactions';
 import TextButton from '../../../../../../../components/button/text-button';
@@ -33,11 +25,11 @@ import {
 import {
   useFinancialHighlights,
   useInitiateRDCreditProcess,
-  useRDCreditStatus,
   useRDCreditPreviewMutation,
 } from '../../../../../../services/case-dossier/cases-financial-services';
 import SignOffModal from './sign-off-modal';
 import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
+import DetailsSectionSkeleton from '../../../../../../../components/skeleton-component/detailsskeleton';
 
 interface FinancialWorkingFormProps {
   caseDetails?: CaseDetails;
@@ -63,7 +55,7 @@ const FinancialWorkingUKTable = ({
   const computedFields = data?.data?.computed_fields as any;
   const submissions =
     computedFields?.[
-      'Technical Submissions by Cost that are 50% or more of Total QRE'
+    'Technical Submissions by Cost that are 50% or more of Total QRE'
     ] || [];
   const hmrcTotal =
     computedFields?.['Total Project to be shared with HMRC']?.Total;
@@ -168,21 +160,20 @@ const FinancialWorkingUKPercentageTable = ({
 
 const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   caseDetails,
-  setDossierFinancialStatus,
-  dossierFinancialStatus,
   financialData,
   setFinancialData,
   refetchCaseDetails,
 }) => {
-  const [isFederal, setIsFederal] = useState<string>('yes');
+  const [activeTab, setActiveTab] = useState<number>(0); // 0 for Federal, 1 for Non-Federal
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
+  const [hasInitiated, setHasInitiated] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
-  const { successToast, errorToast } = useToast();
+  const { errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
 
   const { data } = useFetchCasesConfigFields(
@@ -191,32 +182,64 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     caseId as string
   );
   const configDetails = data?.data.states;
+  const configFedral = data?.data
 
   // Restore showFinancialValues and form states if data exists
-  React.useEffect(() => {
+  useEffect(() => {
     if (financialData) {
       setShowFinancialValues(true);
 
       // Restore region/federal state from payload if available
       const stateRid = (financialData.data as any)?.state_rid;
       if (stateRid) {
-        setIsFederal('no');
+        setActiveTab(1); // Non-Federal tab
         setSelectedRegion(stateRid);
-      } else if (financialData.data) {
-        setIsFederal('yes');
       }
     }
   }, [financialData]);
 
   const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
 
+  // Auto-initiate on component mount (only once)
+  useEffect(() => {
+    if (
+      !hasInitiated &&
+      caseDetails?.case_total_projects &&
+      caseDetails?.case_total_projects !== 0 &&
+      caseDetails?.case_total_projects !== '0' &&
+      !caseDetails?.financial_working_signoff
+    ) {
+      setHasInitiated(true);
+      handleInitiateFinancialHighlights();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseDetails]);
+
+  // Call appropriate API when federal tab changes
+
+  useEffect(() => {
+    if (!hasInitiated) return; // Wait for initiate to complete first
+
+    if (activeTab === 0) {
+      // Federal Yes: Call handleViewFinancialHighlights
+      handleViewFinancialHighlights();
+    } else if (activeTab === 1) {
+      handleViewFinancialHighlightsForRegion()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, hasInitiated]);
+
+  // Call region API when region changes in Federal No mode (activeTab === 1)
+  useEffect(() => {
+    if (activeTab === 1 && selectedRegion && hasInitiated) {
+      handleViewFinancialHighlightsForRegion();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRegion, activeTab, hasInitiated]);
+
   const isSignoffVisible = checkPermission(
     permission,
     AllPermissions.DOSSIER_FINANCIAL_SIGNOFF
-  );
-  const isInitiateVisible = checkPermission(
-    permission,
-    AllPermissions.DOSSIER_FINANCIAL_INITIATE
   );
 
   const { mutate: initiateProcess, isPending: isInitiating } =
@@ -225,13 +248,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     useFinancialHighlights();
   const { mutate: previewRDCredit, isPending: isPreviewLoading } =
     useRDCreditPreviewMutation();
-
-  // Fetch Status
-  const {
-    data: statusData,
-    refetch: refetchRDCreditStatus,
-    isRefetching,
-  } = useRDCreditStatus(accountid, caseId ?? '', false);
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -278,9 +294,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     return map;
   }, [accountViewEditFields]);
 
-  const handleFederalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setIsFederal(value);
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
     setShowFinancialValues(false);
     setFinancialData(null);
     setSelectedRegion('');
@@ -291,11 +306,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     setSelectedRegion(value);
     setErrors((prev) => ({ ...prev, region: '' }));
     setFinancialData(null);
-
-    // Reset PDF when region changes (but not shown yet)
-    if (showFinancialValue) {
-      setShowFinancialValues(false);
-    }
+    setShowFinancialValues(false);
+    // API will be called by the useEffect watching selectedRegion
   };
 
   const responseCurrencySymbol = caseDetails?.currency_symbol || '$';
@@ -305,7 +317,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       {
         accountrid: accountid,
         caseId: caseId ?? '',
-        stateRid: selectedRegion,
+        ...(selectedRegion
+          ? { stateRid: selectedRegion }
+          : { type: 'summary' }),
       },
       {
         onSuccess: (response) => {
@@ -328,10 +342,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   };
 
   const handleViewFinancialHighlights = async () => {
-    if (isFederal === 'no' && selectedRegion) {
-      await handleViewFinancialHighlightsForRegion();
-      return;
-    }
 
     const payload = {
       account_rid: accountid,
@@ -350,55 +360,25 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     });
   };
 
-  const handleStatusUpdate = (
-    statusData: RDCreditStatusResponse,
-    actionType?: 'initiate' | 'regenerate' | 'refresh'
-  ) => {
-    const message = statusData?.data ?? statusData?.statusMessage ?? '';
-    setDossierFinancialStatus(message);
-
-    if (statusData?.data === 'COMPLETED') {
-      if (actionType === 'initiate' || actionType === 'refresh') {
-        successToast('Initiated successfully');
-      } else if (actionType === 'regenerate') {
-        successToast('Re-Generated successfully');
-      }
-    }
-  };
-
   const handleInitiateFinancialHighlights = async () => {
-    setDossierFinancialStatus('');
-    const actionType =
-      statusData?.data === 'COMPLETED' ? 'regenerate' : 'initiate';
     const payload = {
       account_rid: accountid,
       case_rid: caseId ?? '',
       fiscal_year: Number(caseDetails?.fiscal_year || 0),
     };
-    if (dossierFinancialStatus === 'COMPLETED') {
-      setShowFinancialValues(false);
-      setFinancialData(null);
-    }
+
     initiateProcess(payload, {
       onSuccess: async (data) => {
         console.log('Initiated successfully', data);
         // successToast('Initiated successfully');
-        // Refetch and handle status
-        const result = await refetchRDCreditStatus();
-        if (result.data) {
-          handleStatusUpdate(result.data, actionType);
-        }
+        // Don't auto-call view here - let the federal tab useEffect handle it
       },
       onError: (error: any) => {
-        errorToast(error?.response.data.statusMessage || 'Failed to initiate');
+        errorToast(
+          error?.response?.data?.statusMessage || 'Failed to initiate'
+        );
       },
     });
-  };
-  const isViewButtonEnabled = () => {
-    const isStatusCompleted = dossierFinancialStatus === 'COMPLETED';
-    if (isStatusCompleted) return true;
-
-    return false;
   };
 
   if (
@@ -431,58 +411,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             <TextButton
               label={'Sign off'}
               onClick={() => setIsSignOffModalOpen(true)}
-              disabled={
-                dossierFinancialStatus !== 'COMPLETED' ||
-                isFinancialWorkingSignoff
-              }
+              disabled={!financialData || isFinancialWorkingSignoff}
               hide={!isSignoffVisible}
               sx={{
                 width: 'auto',
                 minWidth: '65px',
-                fontSize: '13px',
-                fontWeight: 400,
-                marginRight: '10px',
-              }}
-            />
-            <TextButton
-              label={'View'}
-              loading={isFinancialHighlights || isPreviewLoading}
-              onClick={handleViewFinancialHighlights}
-              disabled={
-                !isViewButtonEnabled() ||
-                isFinancialHighlights ||
-                isPreviewLoading ||
-                showFinancialValue
-              }
-              sx={{
-                width: '55px',
-                minWidth: '55px',
-                fontSize: '13px',
-                fontWeight: 400,
-                marginRight: '10px',
-              }}
-              // hide={isInitiateVisible}
-            />
-            <TextButton
-              label={
-                dossierFinancialStatus === 'COMPLETED'
-                  ? 'Re-Generate'
-                  : 'Initiate'
-              }
-              hide={!isInitiateVisible}
-              loading={isInitiating}
-              onClick={handleInitiateFinancialHighlights}
-              disabled={
-                isInitiating ||
-                isRefetching ||
-                isFinancialWorkingSignoff ||
-                (!!dossierFinancialStatus &&
-                  dossierFinancialStatus !== 'COMPLETED')
-              }
-              sx={{
-                width: dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
-                minWidth:
-                  dossierFinancialStatus === 'COMPLETED' ? '95px' : '55px',
                 fontSize: '13px',
                 fontWeight: 400,
               }}
@@ -490,61 +423,40 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           </div>
         </div>
         <div className='px-4 pt-3'>
-          <FormControl
-            component='fieldset'
-            disabled={!caseDetails?.is_state_available}
-          >
-            <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-2 block'>
-              Federal Level
-            </label>
-            <RadioGroup
-              row
-              value={isFederal}
-              onChange={handleFederalChange}
-              className='gap-6'
+          <Box>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              TabIndicatorProps={{
+                style: {
+                  backgroundColor: '#1565C0',
+                  height: '2px',
+                },
+              }}
+              sx={{
+                minHeight: '38px',
+                borderBottom: '1px solid #CBD6E2',
+                '& .MuiTab-root': {
+                  minHeight: '38px',
+                  textTransform: 'none',
+                  fontWeight: 'normal',
+                  color: '#5F6B7C',
+                  fontSize: '14px',
+                  paddingX: '16px',
+                },
+                '& .Mui-selected': {
+                  color: '#172B4D',
+                  fontWeight: 600,
+                },
+                '& .Mui-disabled': {
+                  opacity: 0.5,
+                },
+              }}
             >
-              <FormControlLabel
-                value='yes'
-                control={
-                  <Radio
-                    disableRipple
-                    sx={{
-                      color: '#CBD6E2',
-                      '&.Mui-checked': {
-                        color: '#3B82F6',
-                      },
-                      padding: '4px 8px',
-                    }}
-                  />
-                }
-                label={
-                  <span className='text-[13px] text-[#2D3E4F] font-medium'>
-                    Yes
-                  </span>
-                }
-              />
-              <FormControlLabel
-                value='no'
-                control={
-                  <Radio
-                    disableRipple
-                    sx={{
-                      color: '#CBD6E2',
-                      '&.Mui-checked': {
-                        color: '#3B82F6',
-                      },
-                      padding: '4px 8px',
-                    }}
-                  />
-                }
-                label={
-                  <span className='text-[13px] text-[#2D3E4F] font-medium'>
-                    No
-                  </span>
-                }
-              />
-            </RadioGroup>
-          </FormControl>
+              <Tab label='Federal' disabled={!caseDetails?.is_state_available || !configFedral?.is_federal_level} />
+              <Tab label='State-wise' disabled={!caseDetails?.is_state_available || !configFedral?.is_state_level} />
+            </Tabs>
+          </Box>
         </div>
         {/* Country and Region Fields */}
         <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
@@ -552,7 +464,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                !accountPermissionMap?.['country_rid']?.edit
+                  !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -568,10 +480,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
-                errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-              }`}
+                }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -582,12 +493,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             )}
           </div>
 
-          {isFederal === 'no' && (
+          {activeTab === 1 && (
             <div
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
+                    !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -606,9 +517,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
@@ -650,147 +560,148 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             </div>
           )}
         </div>
-      </div>
+      </div >
 
-      {showFinancialValue && (
-        <div className=''>
-          {/* Dynamic Title Header based on Country */}
-          {(() => {
-            const title =
-              (financialData?.data?.computed_fields as any)?.Title || {};
-            const countryName = caseDetails?.country_name;
+      {/* Loading State */}
+      {(isInitiating || isFinancialHighlights || isPreviewLoading) && !showFinancialValue && (
+        <DetailsSectionSkeleton />
+      )}
 
-            if (countryName === FinancialWorkingCountries.Ireland) {
-              return (
-                <div className='flex flex-col items-center justify-center py-1 text-[#2D3E4F] '>
-                  <div className='text-[14px] font-semibold'>
-                    Expleo - {title['Expleo'] || ''}
-                  </div>
-                  <div className='text-[14px] font-semibold mt-1'>
-                    {title['Description'] || 'Summary of R&D Expenditures'}
-                  </div>
-                </div>
-              );
-            }
+      {
+        showFinancialValue && (
+          <div className=''>
+            {/* Dynamic Title Header based on Country */}
+            {(() => {
+              const title =
+                (financialData?.data?.computed_fields as any)?.Title || {};
+              const countryName = caseDetails?.country_name;
 
-            if (countryName === FinancialWorkingCountries.UK) {
-              return (
-                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
-                  <div className='text-[14px] font-semibold'>
-                    {title['Account Name'] || ''}
-                  </div>
-                  <div className='text-[14px] font-semibold mt-1'>
-                    {title['Description'] || 'Summary of SR&ED Expenditures'}
-                  </div>
-                  <div className='text-[14px] mt-1'>
-                    <span className='font-semibold'>Fiscal Year:</span>{' '}
-                    {title['Fiscal Year'] || ''}
-                  </div>
-                </div>
-              );
-            }
-            if (countryName === FinancialWorkingCountries.Australia) {
-              return (
-                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
-                  <div className='text-[14px] font-semibold'>
-                    {title['Account Name'] || ''}
-                  </div>
-                  <div className='text-[14px] font-semibold mt-1'>
-                    {title['Description'] || 'Summary of SR&ED Expenditures'}
-                  </div>
-                </div>
-              );
-            }
-
-            if (countryName === FinancialWorkingCountries.Canada) {
-              return (
-                <div className='flex items-center justify-start py-1 text-[#2D3E4F] px-4'>
-                  <div className='text-[14px] font-semibold'>
-                    Ref - {title['Fiscal Year'] || ''} -{' '}
-                    {title['Descriptions'] || ''}
-                  </div>
-                </div>
-              );
-            }
-
-            if (countryName === FinancialWorkingCountries.US) {
-              const metadata =
-                (financialData?.data?.input_params as any)?.metadata || {};
-              const description =
-                metadata['Description'] || metadata['Descriptions'];
-              const taxYearEnded =
-                metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
-              const fiscalYearEnded =
-                metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
-              const stateDetails = metadata['stateDetails'];
-
-              return (
-                <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
-                  {description && (
+              if (countryName === FinancialWorkingCountries.Ireland) {
+                return (
+                  <div className='flex flex-col items-center justify-center py-1 text-[#2D3E4F] '>
+                    <div className='text-[14px] font-semibold'>
+                      Expleo - {title['Expleo'] || ''}
+                    </div>
                     <div className='text-[14px] font-semibold mt-1'>
-                      {description}
+                      {title['Description'] || 'Summary of R&D Expenditures'}
                     </div>
-                  )}
-                  {taxYearEnded && (
+                  </div>
+                );
+              }
+
+              if (countryName === FinancialWorkingCountries.UK) {
+                return (
+                  <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                    <div className='text-[14px] font-semibold'>
+                      {title['Account Name'] || ''}
+                    </div>
+                    <div className='text-[14px] font-semibold mt-1'>
+                      {title['Description'] || 'Summary of SR&ED Expenditures'}
+                    </div>
                     <div className='text-[14px] mt-1'>
-                      <span className='font-semibold'>Tax Year Ended:</span>{' '}
-                      {taxYearEnded}
+                      <span className='font-semibold'>Fiscal Year:</span>{' '}
+                      {title['Fiscal Year'] || ''}
                     </div>
-                  )}
-                  {fiscalYearEnded && (
-                    <div className='text-[14px] mt-1'>
-                      <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
-                      {fiscalYearEnded}
+                  </div>
+                );
+              }
+              if (countryName === FinancialWorkingCountries.Australia) {
+                return (
+                  <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                    <div className='text-[14px] font-semibold'>
+                      {title['Account Name'] || ''}
                     </div>
-                  )}
-                  {stateDetails && (
-                    <div className='text-[14px] mt-1 font-semibold'>
-                      {stateDetails}
+                    <div className='text-[14px] font-semibold mt-1'>
+                      {title['Description'] || 'Summary of SR&ED Expenditures'}
                     </div>
-                  )}
+                  </div>
+                );
+              }
+
+              if (countryName === FinancialWorkingCountries.Canada) {
+                return (
+                  <div className='flex items-center justify-start py-1 text-[#2D3E4F] px-4'>
+                    <div className='text-[14px] font-semibold'>
+                      Ref - {title['Fiscal Year'] || ''} -{' '}
+                      {title['Descriptions'] || ''}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (countryName === FinancialWorkingCountries.US) {
+                const metadata =
+                  (financialData?.data?.input_params as any)?.metadata || {};
+                const description =
+                  metadata['Description'] || metadata['Descriptions'];
+                const taxYearEnded =
+                  metadata['Tax Year Ended:'] || metadata['Tax Year Ended'];
+                const fiscalYearEnded =
+                  metadata['Fiscal Year Ended'] || metadata['For the Year Ended'];
+                const stateDetails = metadata['stateDetails'];
+
+                return (
+                  <div className='flex flex-col items-start justify-start py-1 text-[#2D3E4F] px-4'>
+                    {description && (
+                      <div className='text-[14px] font-semibold mt-1'>
+                        {description}
+                      </div>
+                    )}
+                    {taxYearEnded && (
+                      <div className='text-[14px] mt-1'>
+                        <span className='font-semibold'>Tax Year Ended:</span>{' '}
+                        {taxYearEnded}
+                      </div>
+                    )}
+                    {fiscalYearEnded && (
+                      <div className='text-[14px] mt-1'>
+                        <span className='font-semibold'>Fiscal Year Ended:</span>{' '}
+                        {fiscalYearEnded}
+                      </div>
+                    )}
+                    {stateDetails && (
+                      <div className='text-[14px] mt-1 font-semibold'>
+                        {stateDetails}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Default fallback or no title
+              return null;
+            })()}
+            <div>
+              {caseDetails?.country_name ===
+                FinancialWorkingCountries.Australia ? (
+                <FinancialWorkingAustralia data={financialData} />
+              ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
+                <FinancialWorkingUSA data={financialData} />
+              ) : (
+                <FinancialWorking
+                  data={financialData}
+                  currencySymbol={responseCurrencySymbol}
+                />
+              )}
+            </div>
+            {caseDetails?.country_name === FinancialWorkingCountries.UK && (
+              <div className='flex flex-wrap md:flex-nowrap gap-4 px-4 pt-4'>
+                <div className='w-full md:w-1/2'>
+                  <FinancialWorkingUKTable
+                    data={financialData}
+                    currencySymbol={responseCurrencySymbol}
+                  />
                 </div>
-              );
-            }
-
-            // Default fallback or no title
-            return null;
-          })()}
-
-          <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-            {(financialData?.data?.input_params?.credit_type as string) ||
-              'Federal R&D Credit'}
-          </div>
-          <div>
-            {caseDetails?.country_name ===
-            FinancialWorkingCountries.Australia ? (
-              <FinancialWorkingAustralia data={financialData} />
-            ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
-              <FinancialWorkingUSA data={financialData} />
-            ) : (
-              <FinancialWorking
-                data={financialData}
-                currencySymbol={responseCurrencySymbol}
-              />
+                <div className='w-full md:w-1/2'>
+                  <FinancialWorkingUKPercentageTable
+                    data={financialData}
+                    currencySymbol={responseCurrencySymbol}
+                  />
+                </div>
+              </div>
             )}
           </div>
-          {caseDetails?.country_name === FinancialWorkingCountries.UK && (
-            <div className='flex flex-wrap md:flex-nowrap gap-4 px-4 pt-4'>
-              <div className='w-full md:w-1/2'>
-                <FinancialWorkingUKTable
-                  data={financialData}
-                  currencySymbol={responseCurrencySymbol}
-                />
-              </div>
-              <div className='w-full md:w-1/2'>
-                <FinancialWorkingUKPercentageTable
-                  data={financialData}
-                  currencySymbol={responseCurrencySymbol}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
       <SignOffModal
         isOpen={isSignOffModalOpen}
@@ -799,7 +710,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         accountId={accountid}
         refetchCaseDetails={refetchCaseDetails}
       />
-    </div>
+    </div >
   );
 };
 
