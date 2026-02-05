@@ -405,14 +405,15 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any) {
+    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any,finalCredit : number) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditCountryCalculations.upsert(
             {
                 case_rid,
                 country_rid,
                 input_params,
-                computed_fields
+                computed_fields,
+                final_credit : finalCredit
             },
             {
                 returning: true
@@ -566,7 +567,7 @@ class RDCreditSchemaService {
         return result?.status || null;
     }
 
-    async getStateSummaryResults(accountNumber: string, case_rid: string) {
+    async getStateSummaryResults(accountNumber: string, case_rid: string,schemaName : string): Promise<{ [key: string]: any }> {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         
         // Get state calculations with state_rid and final_credit
@@ -579,9 +580,12 @@ class RDCreditSchemaService {
             raw: true
         });
 
-        // Initialize main database connection
+        // Initialize databases
         if (!this.mainDbSequelize) {
             this.mainDbSequelize = await initMainDbSequelize();
+        }
+        if (!this.orgDbSequelize) {
+            this.orgDbSequelize = await initOrgSequelize();
         }
 
         // Get unique state_rids
@@ -599,28 +603,57 @@ class RDCreditSchemaService {
                 type: QueryTypes.SELECT,
             }
         );
+        // Get project counts, QRE totals, and resource counts by state
+        const projectData: any[] = await this.orgDbSequelize.query(
+           rawQueries.fetchProjectCountsAndQreByState(schemaName),
+            {
+                replacements: { case_rid, stateRids },
+                type: QueryTypes.SELECT,
+            }
+        );
 
-        // Create a map of state_rid to state_code
-        const stateCodeMap = new Map();
+        // Create maps
+        const stateInfoMap = new Map();
         stateData.forEach(state => {
-            stateCodeMap.set(state.rid, state.state_code);
+            stateInfoMap.set(state.rid, {
+                state_code: state.state_code,
+                state_name: state.state_name
+            });
         });
 
-        // Build result object: { state_code: final_credit }
-        const result: { [key: string]: number } = {};
-        let total = 0;
+        const projectMap = new Map();
+        projectData.forEach(data => {
+            projectMap.set(data.state_rid, {
+                total_projects: Number(data.total_projects || 0),
+                total_resources: Number(data.total_resources || 0),
+                total_qre: Number(data.total_qre || 0)
+            });
+        });
+
+        // Build result object: { state_name: { state_code, final_credit, total_projects, total_resources, total_qre } }
+        const result: { [key: string]: any } = {};
+        let totalCredit = 0;
+
         stateCalculations.forEach(calc => {
-            const stateCode = stateCodeMap.get(calc.state_rid);
-            if (stateCode && calc.final_credit != null) {
+            const stateInfo = stateInfoMap.get(calc.state_rid);
+            const projectInfo = projectMap.get(calc.state_rid) || { total_projects: 0, total_resources: 0, total_qre: 0 };
+            
+            if (stateInfo && calc.final_credit != null) {
                 const finalCredit = Number(calc.final_credit);
-                result[stateCode] = finalCredit;
-                total += finalCredit;
+                result[stateInfo.state_name] = {
+                    state_code: stateInfo.state_code,
+                    final_credit: finalCredit,
+                    total_projects: projectInfo.total_projects,
+                    total_resources: projectInfo.total_resources,
+                    total_qre: projectInfo.total_qre
+                };
+                totalCredit += finalCredit;
             }
         });
 
         return {
             federal: result,
-            total: total
+            total_credit: totalCredit
         };
     }
 

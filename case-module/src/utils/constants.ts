@@ -1628,6 +1628,24 @@ export const rawQueries = {
   },
   fetchFiscalEndDate (accountRid : string, schemaName : string) {
     return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  },
+  fetchProjectCountsAndQreByState(schemaName: string) {
+    return  `
+                SELECT 
+                    pfr.region_rid as state_rid,
+                    COUNT(DISTINCT cp.project_fiscal_rid) as total_projects,
+                    COUNT(DISTINCT pr.rid) as total_resources,
+                    SUM(pfr.total_cost_fte_from_prj_res + pfr.total_cost_nonlabor_from_prj_res + pfr.total_cost_subcon_from_prj_res) as total_qre
+                FROM ${schemaName}.case_projects cp
+                JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+                JOIN ${schemaName}.project_fiscal_region pfr ON pf.rid = pfr.project_fiscal_rid
+                LEFT JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid 
+                    AND pr.region_rid = pfr.region_rid
+                WHERE cp.case_rid = :case_rid 
+                    AND pf.fiscal_year = cp.fiscal_year
+                    AND pfr.region_rid IN (:stateRids)
+                GROUP BY pfr.region_rid
+            `
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
