@@ -408,14 +408,16 @@ export class FederalComputationService {
                             "Fiscal Year" : d.computed_fields["Title"]["Fiscal Year"]
                         },
                         "Preliminary Calculation" : d.computed_fields["Preliminary Calculation"],
-                        "R&D Expenditure" : {
-                            'R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
-                            'R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
-                            'Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
-                            'Total of notional R&D deductions (X plus Y)':d.computed_fields["R&D Expenditure"]['Total of notional R&D deductions (X plus Y)']
+                        "[PART A] Calculation of notional R&D deductions" : {
+                            '[1] R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
+                            '[2] R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
+                            '[3] Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
+                            '[11] Total of notional R&D deductions (X plus Y)':d.computed_fields["R&D Expenditure"]['Total of notional R&D deductions (X plus Y)']
                         },
-                        "Additional Information" : d.computed_fields["Additional Information"],
-                        "Non-refundable tax offset": {
+                        "[PART E] R&D tax offset calculation" : {
+                            "[1] Additional Information" : d.computed_fields["Additional Information"],
+                        },
+                        "[3] Non-refundable tax offset": {
                            'R&D entity total expenses' : d.computed_fields["Non-refundable tax offset"]['R&D entity total expenses'],
                            'Total notional R&D deductions': d.computed_fields["Non-refundable tax offset"]['Total notional R&D deductions'],
                            'R&D intensity' : d.computed_fields["Non-refundable tax offset"]['R&D intensity']
