@@ -4,8 +4,8 @@ import { logMessage } from "../../utils/helpers";
 import RDCreditSchemaService from "./schemaService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import StateComputationService from "./state.computation.service";
-import FederalComputationService from "./federal.computation.service";
+import StateComputationService from "./stateComputation";
+import FederalComputationService from "./federalComputation";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 import { reorderComputedFieldsForState, hasFieldOrderingConfig, IL_LINE_ORDER } from "../../utils/stateFieldOrdering";
 

@@ -1,8 +1,8 @@
-import { RdCreditCalculatorForAus } from "./aus.rd-credit-calculator";
-import { RdCreditCalculatorForCAN } from "./can.rd-credit-calculator";
-import { RdCreditCalculatorForIRL } from "./irl.rd-credit-calculator";
-import { RdCreditCalculatorForUK } from "./uk.rd-credit-calculator";
-import { RdCreditCalculatorForUSA } from "./usa.rd-credit-calculator";
+import { RdCreditCalculatorForAus } from "./ausRdCreditcalculator";
+import { RdCreditCalculatorForCAN } from "./canRdCreditcalculator";
+import { RdCreditCalculatorForIRL } from "./irlRdCreditCalculator";
+import { RdCreditCalculatorForUK } from "./ukRdCreditCalculator";
+import { RdCreditCalculatorForUSA } from "./usaRdCreditCalculator";
 
 export const federalCalculators: any = {
     "USA": new RdCreditCalculatorForUSA(),
