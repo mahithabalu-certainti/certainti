@@ -120,13 +120,14 @@ export class RdCreditCalculatorForUSA {
         let dynamicPercentageKey = `Enter ${configAsc.credit_rate}%. If QREs in any of the 3 years is zero, enter ${configAsc.fixed_base_percentage}%`
 
         return {
-            "20 Total Qualified Research Expenses": Number(await this.round2(totalQRE)),
-            "21 Total QREs for prior 3 tax years": Number(await this.round2(line21)),
-            "22 Divide line 21 by 6.0": Number(await this.round2(line22)),
-            "23 Subtract line 22 from line 20": Number(await this.round2(line23)),
+            "[20] Total Qualified Research Expenses": Number(await this.round2(totalQRE)),
+            "[21] Total QREs for prior 3 tax years": Number(await this.round2(line21)),
+            "[22] Divide line 21 by 6.0": Number(await this.round2(line22)),
+            "[23] Subtract line 22 from line 20": Number(await this.round2(line23)),
             [dynamicPercentageKey]: `${percentage}%`,
-            "24 Multiply line 23 by the percentage above": Number(await this.round2(line24)),
-            "25 Add lines 19 and 24": Number(await this.round2(line25)),
+            "[24] Multiply line 23 by the percentage above": Number(await this.round2(line24)),
+            "[25] Add lines 19 and 24": Number(await this.round2(line25)),
+
             final_credit: line25,
         };
     }
@@ -160,16 +161,16 @@ export class RdCreditCalculatorForUSA {
 
         //---- Line 11: Enter smaller of line 9 or line 10
         const line11 = Decimal.min(line10, maxLine9);
-        let dynamicLine5 = `10 Multiply line 5 by ${configRRC.qre_cap_rate}`
+        let dynamicLine5 = `[10] Multiply line 5 by ${configRRC.qre_cap_rate}`
 
         return {
-            "5 Total Qualified Research Expenses": await this.round2(currentYearQRE),
-            "6 Fixed-base percentage": `${configRRC.fixed_base_percentage}%`,
-            "7 Average Annual Gross Receipts": await this.round2(line7),
-            "8 Multiply line 7 by percentage on line 6": await this.round2(line8),
-            "9 Subtract line 8 from line 5": await this.round2(maxLine9),
+            "[5] Total Qualified Research Expenses": await this.round2(currentYearQRE),
+            "[6] Fixed-base percentage": `${configRRC.fixed_base_percentage}%`,
+            "[7] Average Annual Gross Receipts": await this.round2(line7),
+            "[8] Multiply line 7 by percentage on line 6": await this.round2(line8),
+            "[9] Subtract line 8 from line 5": await this.round2(maxLine9),
             [dynamicLine5]: await this.round2(line10),
-            "11 Enter smaller of line 9 or line 10": await this.round2(line11),
+            "[11] Enter smaller of line 9 or line 10": await this.round2(line11),
             final_credit: line11
         };
     }
@@ -197,7 +198,7 @@ export class RdCreditCalculatorForUSA {
         return {
             reduction280c: {
                 no_elect280c: {
-                    "13 Electing reduced credit under 280C": caseDetails.rrc_credit_280_c!,
+                    "[13] Electing reduced credit under 280C": caseDetails.rrc_credit_280_c!,
                     [dynamicRRC280CKey]: dynamicRRCValue
                 }
             }
@@ -228,7 +229,7 @@ export class RdCreditCalculatorForUSA {
         return {
             reduction280c: {
                 no_elect280c: {
-                    "26 Electing reduced credit under 280C": caseDetails.asc_credit_280_c!,
+                    "[26] Electing reduced credit under 280C": caseDetails.asc_credit_280_c!,
                     [dynamicRRC280CKey]: dynamicASCValue
                 }
             }
@@ -323,8 +324,8 @@ export class RdCreditCalculatorForUSA {
      */
     async buildComputedFields(creditASC: any, creditRRC: any, asc280C: any, rrc280C: any, taxCredit: any) {
         return {
-            "ASC Credit": { creditASC, asc280C },
-            "Regular Credit": { creditRRC, rrc280C },
+            "(Regular Credit)": { ...creditRRC, rrc280C },
+            "(ASC Credit)": { ...creditASC, asc280C },
             "Research and Development Tax Credit" : taxCredit
         }
     }
