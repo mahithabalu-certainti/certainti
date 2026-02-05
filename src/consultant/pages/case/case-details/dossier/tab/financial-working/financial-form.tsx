@@ -452,7 +452,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           <div>{caseDetails?.country_name} Financial Information</div>
           <div>
             <TextButton
-              label={'Sign off'}
+              label={'Approve'}
               onClick={() => setIsSignOffModalOpen(true)}
               disabled={!financialData || isFinancialWorkingSignoff}
               hide={!isSignoffVisible}
