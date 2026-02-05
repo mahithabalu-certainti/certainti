@@ -177,6 +177,9 @@ export const CaseDetails = () => {
 
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+  const projectResourceDetails = searchParams.get('resourceId');
+  const caseProjectTaskDetails = searchParams.get('caseProjectTask');
+  const technicalSummaryDetails = searchParams.get('technical_summary_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
@@ -619,11 +622,11 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
-    } else if (list === 'projectTask') {
+    } else if (list === 'projectTask' && !caseProjectTaskDetails) {
       return !isProjectTaskExportEnable;
-    } else if (list === 'projectResource') {
+    } else if (list === 'projectResource' && !projectResourceDetails) {
       return !isProjectResourceExportEnable;
-    } else if (list === 'technicalSummary') {
+    } else if (list === 'technicalSummary' && !technicalSummaryDetails) {
       return !technicalSummaryExportEnable;
     } else if (list === 'financialHighlights') {
       const tab = searchParams.get('tab');
