@@ -2570,8 +2570,6 @@ class CaseSchemaService {
 
       const projectFiscal = projectFiscalRecords.length > 0 ? projectFiscalRecords[0] : null;
 
-      console.log("yoki", projectFiscal);
-
       const createdCaseProject = await CaseProject.create({
         case_rid: data.case_rid,
         account_rid: data.account_rid,
@@ -2687,13 +2685,17 @@ class CaseSchemaService {
       const totalProjects = getTotalProjects[0][0].total_projects === 0 ? null : getTotalProjects[0][0].total_projects;
       const totalProjectsCost = getTotalProjects[0][0].total_projects_cost === 0 ? null : getTotalProjects[0][0].total_projects_cost;
       const totalProjectsQreCost = getTotalProjects[0][0].total_projects_qre_cost === 0 ? null : getTotalProjects[0][0].total_projects_qre_cost;
+      const totalQualifiedProjects = getTotalProjects[0][0].total_qualified_projects
+      const totalQualifiedProjectCost = getTotalProjects[0][0].total_qualified_project_cost
       await this.orgDbSequelize.query(
         rawQueries.updateCostCountInCase(
           schemaName,
           data.case_rid,
           totalProjects,
           totalProjectsCost,
-          totalProjectsQreCost
+          totalProjectsQreCost,
+          totalQualifiedProjects,
+          totalQualifiedProjectCost
         )
       );
       await this.mainDbSequelize.query(
@@ -2701,7 +2703,9 @@ class CaseSchemaService {
           data.case_rid,
           getTotalProjects[0][0].total_projects,
           getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          getTotalProjects[0][0].total_projects_qre_cost,
+          totalQualifiedProjects,
+          totalQualifiedProjectCost
         )
       );
       if (totalCount === 1) {
@@ -2863,7 +2867,9 @@ class CaseSchemaService {
           data.case_rid,
           getTotalProjects[0][0].total_projects,
           getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          getTotalProjects[0][0].total_projects_qre_cost,
+          getTotalProjects[0][0].total_qualified_projects,
+          getTotalProjects[0][0].total_qualified_project_cost
         )
       );
       await this.mainDbSequelize.query(
@@ -2871,7 +2877,9 @@ class CaseSchemaService {
           data.case_rid,
           getTotalProjects[0][0].total_projects,
           getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          getTotalProjects[0][0].total_projects_qre_cost,
+          getTotalProjects[0][0].total_qualified_projects,
+          getTotalProjects[0][0].total_qualified_project_cost
         )
       );
       if (totalCount === 1) {

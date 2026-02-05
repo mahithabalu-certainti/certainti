@@ -502,36 +502,40 @@ export const rawQueries = {
     accountRid: string,
     caseRid: string
   ) {
-    return `SELECT 
-    CASE 
-        WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL 
-        ELSE COUNT(cp.project_fiscal_rid) 
-    END AS total_projects,
+    let query = `SELECT 
+    CASE WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL ELSE COUNT(cp.project_fiscal_rid) END AS total_projects,
     SUM(pf.total_cost_prj) AS total_projects_cost,
-    SUM(pf.qre_final) AS total_projects_qre_cost
+    COUNT(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.rid END) AS total_qualified_projects,
+    COALESCE(SUM(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.total_cost_prj END), 0) AS total_qualified_project_cost,
+    COALESCE(SUM(pf.qre_final), 0) AS total_projects_qre_cost
     FROM ${schemaName}.project_fiscal pf
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
     cp.case_rid = '${caseRid}'
     AND
     cp.account_rid = '${accountRid}'`;
+    return query;
   },
   updateCostCountInCase(
     schemaName: string,
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    total_projects_qre_cost: any
+    total_projects_qre_cost: any,
+    totalQualifiedProjects : any,
+    totalQualifiedProjectCost : any
   ) {
-    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE rid = '${caseRid}'`;
+    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE rid = '${caseRid}'`;
   },
   updateCostCountInCaseSummary(
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    total_projects_qre_cost: any
+    total_projects_qre_cost: any,
+    totalQualifiedProjects : any,
+    totalQualifiedProjectCost : any
   ) {
-    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE case_rid = '${caseRid}'`;
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE case_rid = '${caseRid}'`;
   },
   updateCostCountInCaseForDelete(
     schemaName: string,
