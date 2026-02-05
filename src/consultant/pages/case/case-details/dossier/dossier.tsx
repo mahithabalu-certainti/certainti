@@ -47,6 +47,7 @@ interface DossierProps {
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
+  isDetailLoading?: boolean;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -57,6 +58,7 @@ const Dossier: React.FC<DossierProps> = ({
   financialData,
   setFinancialData,
   refetchCaseDetails,
+  isDetailLoading,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -217,7 +219,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={
           tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
@@ -263,6 +265,7 @@ const Dossier: React.FC<DossierProps> = ({
               financialData={financialData}
               setFinancialData={setFinancialData}
               refetchCaseDetails={refetchCaseDetails}
+              isDetailLoading={isDetailLoading}
             />
           ))}
 
@@ -272,8 +275,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={() => {}}
+            setExportType={() => {}}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}

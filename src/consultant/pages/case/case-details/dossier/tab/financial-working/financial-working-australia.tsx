@@ -191,7 +191,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
 
   return (
     <div className='p-4'>
-      <div className='max-w-7xl mx-auto'>
+      <div>
         <div className='flex flex-col gap-0'>
           {Object.entries(computedFields).map(([key, value]) => {
             if (key === 'Title') return null;

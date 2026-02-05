@@ -13,7 +13,6 @@ import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useUserPreference } from '../../../../../../services/case-dossier/cases-financial-services';
 
-
 // Helper to extract Yes/No value from reduction280c object
 const extractVal = (reduction280c: any) => {
   const columnKeys = Object.keys(reduction280c).filter(
@@ -36,7 +35,9 @@ const extractVal = (reduction280c: any) => {
 };
 
 // Helper to traverse computedFields and find current 280C values
-const find280CValues = (fields: any): { asc_credit_280_c?: string; rrc_credit_280_c?: string } => {
+const find280CValues = (
+  fields: any
+): { asc_credit_280_c?: string; rrc_credit_280_c?: string } => {
   let asc_credit_280_c: string | undefined;
   let rrc_credit_280_c: string | undefined;
 
@@ -143,7 +144,6 @@ const Selection280C: React.FC<Selection280CProps> = ({
         '&.Mui-focused fieldset': {
           borderColor: 'transparent',
         },
-
       }}
     >
       <MenuItem value='Yes'>Yes</MenuItem>
@@ -180,9 +180,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
   // Calculate current 280C values from data
   // Using useMemo to avoid re-calculation on every render unless computedFields changes
-  const otherValues = React.useMemo(() => find280CValues(computedFields), [
-    computedFields,
-  ]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const otherValues = React.useMemo(
+    () => find280CValues(computedFields),
+    [computedFields]
+  );
 
   const boldRows = (computedFields as any)?.BOLD || [];
 
@@ -514,14 +516,14 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           sticky: isFirstColumn,
           sx: isFirstColumn
             ? {
-              position: 'sticky',
-              left: 0,
-              background: '#fff',
-              padding: '0px 8px 0px 14px !important',
-              zIndex: 10,
-              borderRight: '1px solid #CBD6E2 !important',
-              borderBottom: '1px solid #CBD6E2 !important',
-            }
+                position: 'sticky',
+                left: 0,
+                background: '#fff',
+                padding: '0px 8px 0px 14px !important',
+                zIndex: 10,
+                borderRight: '1px solid #CBD6E2 !important',
+                borderBottom: '1px solid #CBD6E2 !important',
+              }
             : undefined,
           render: (row: TableRow) => {
             const value = row[headerId];
@@ -557,19 +559,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     const tableDataRows: TableRow[] =
       table_rows && Array.isArray(table_rows)
         ? table_rows.map((rowObj: any, index: number) => {
-          const row: TableRow = {
-            id: `row_${index}`,
-          };
+            const row: TableRow = {
+              id: `row_${index}`,
+            };
 
-          // Map each header ID to its value from the row object
-          table_headers.forEach((headerItem: any) => {
-            const headerId =
-              typeof headerItem === 'string' ? headerItem : headerItem.id;
-            row[headerId] = rowObj[headerId];
-          });
+            // Map each header ID to its value from the row object
+            table_headers.forEach((headerItem: any) => {
+              const headerId =
+                typeof headerItem === 'string' ? headerItem : headerItem.id;
+              row[headerId] = rowObj[headerId];
+            });
 
-          return row;
-        })
+            return row;
+          })
         : [];
 
     if (Total !== undefined && Total !== null && table_headers.length > 0) {
@@ -769,8 +771,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-              val.trim() !== '' &&
-              !isNaN(Number(val));
+                val.trim() !== '' &&
+                !isNaN(Number(val));
 
           return (
             <div
@@ -891,7 +893,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
   return (
     <div className='p-4'>
-      <div className='max-w-7xl mx-auto'>
+      <div>
         <div className='flex flex-col gap-0'>
           {/* Dynamic Input Params Sections */}
           {inputParams &&
