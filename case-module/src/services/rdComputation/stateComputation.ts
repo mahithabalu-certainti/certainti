@@ -7,7 +7,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { stateCalculators } from "../rdStateProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 import { kafkaProducerService } from "../../kafka/producer.service";
-import FederalComputationService from "./federal.computation.service";
+import FederalComputationService from "./federalComputation";
 
 enum ConfigType {
     NONE = "NONE",

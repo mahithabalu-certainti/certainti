@@ -41,7 +41,7 @@ export class RdCreditCalculatorForCAN {
             return {
                 "Project Code":projectData.project_code,
                 "Project Name" : projectData.project_name,
-                "Total Hours" : parseFloat(Number(projectData.total_effort_prj).toFixed(1)) || 0.00,
+                "Total Hours" : JSON.stringify(parseFloat(Number(projectData.total_effort_prj).toFixed(1))) || "0.00",
                 "Project Total Cost": parseFloat(Number(projectData.total_cost_prj).toFixed(1)) || 0.00,
                 "FTE Cost": parseFloat(Number(projectData.total_cost_fte_prj).toFixed(1)) || 0.00,
                 "SubCon Cost": parseFloat(Number(projectData.total_cost_subcon_prj).toFixed(1)) || 0.00,

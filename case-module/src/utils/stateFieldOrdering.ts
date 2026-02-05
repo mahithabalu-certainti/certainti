@@ -338,11 +338,11 @@ CA: {
 },
     CO: {
         sectionOrder: [
-            "PART IV: Research and Experimental Activities Credit",
+            "(PART IV): Research and Experimental Activities Credit",
             "Research and Experimental Activities Credit Do not send, keep for your records"
         ],
         sectionFieldOrders: {
-            "PART IV: Research and Experimental Activities Credit" : [
+            "(PART IV): Research and Experimental Activities Credit" : [
                 { pattern : "text", order : 1}
             ],
             "Research and Experimental Activities Credit Do not send, keep for your records": [
