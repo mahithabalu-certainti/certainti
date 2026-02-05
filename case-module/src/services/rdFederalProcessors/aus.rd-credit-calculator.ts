@@ -111,7 +111,8 @@ export class RdCreditCalculatorForAus {
                 credit_type : this.creditType,
                 currency : this.currency
             },
-          computedFields : finalData
+          computedFields : finalData,
+          finalCredit: nonRefundableRdTaxOffset
         }
       }
     }

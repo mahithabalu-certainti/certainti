@@ -42,8 +42,7 @@ export class RdCreditCalculatorForTX {
 
         return {
             inputFields,
-            computedFields,
-            finalCredit: this.round2(qreActivitiesCreditInfo.rd_credit_activities_avail)
+            computedFields
         }
     }
 
@@ -124,7 +123,7 @@ export class RdCreditCalculatorForTX {
         return {
             average_prev_year_qre: average_prev_year_qre,
             average_qret_rate_50pct: average_qret_rate_50pct,
-            difference: difference,
+            difference: finalDifference,
             credit_eq_zero: credit_eq_zero instanceof Decimal ? credit_eq_zero : credit_eq_zero,
             credit_gt_zero: credit_gt_zero instanceof Decimal ? credit_gt_zero : credit_gt_zero,
             config
@@ -269,9 +268,9 @@ export class RdCreditCalculatorForTX {
         }
 
         let precedingWithQret ={
-            "5. Average QRET for preceding periods": Number(precedingWithQretInfo.average_prev_year_qre) || precedingWithQretInfo.average_prev_year_qre,
-           [`6. Average QRET x ${config.average_qret_rate_50pct}%`]: Number(precedingWithQretInfo.average_qret_rate_50pct) || precedingWithQretInfo.average_qret_rate_50pct,
-            "7. Difference":Number(precedingWithQretInfo.difference) || precedingWithQretInfo.difference,
+            "5. Average QRET for preceding periods": this.round2(precedingWithQretInfo.average_prev_year_qre) || precedingWithQretInfo.average_prev_year_qre,
+           [`6. Average QRET x ${config.average_qret_rate_50pct}%`]: this.round2(precedingWithQretInfo.average_qret_rate_50pct) || precedingWithQretInfo.average_qret_rate_50pct,
+            "7. Difference":this.round2(precedingWithQretInfo.difference) || precedingWithQretInfo.difference,
             [`8. Credit (If amount in Item 1b is zero, multiply Item 7 by ${config.qre_rate_5pct}% (${config.qre_rate_5pct/100}) )`]: Number(precedingWithQretInfo.credit_eq_zero) || precedingWithQretInfo.credit_eq_zero,
             [`9. Credit  (If amount in Item 1b is greater than zero, multiply Item 7 by ${config.qre_rate_6_25pct}% (${config.qre_rate_6_25pct/100}) )`]:Number(precedingWithQretInfo.credit_gt_zero) || precedingWithQretInfo.credit_gt_zero
         }
@@ -283,6 +282,7 @@ export class RdCreditCalculatorForTX {
         let qreActivitiesCredit = {
             "12. R&D activities credit" : Number(qreActivitiesCreditInfo.rd_credit_activities) || qreActivitiesCreditInfo.rd_credit_activities,
             "13. R&D activities credit carried forward from prior years":  Number(qreActivitiesCreditInfo.rd_credit_activities_carry_forward) || qreActivitiesCreditInfo.rd_credit_activities_carry_forward,
+            "14. R&D activities credit available (Item 12 plus Item 13)": Number(qreActivitiesCreditInfo.rd_credit_activities_avail) || qreActivitiesCreditInfo.rd_credit_activities_avail
 
         }
         return {

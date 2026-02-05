@@ -75,7 +75,8 @@ export class RdCreditCalculatorForUSA {
             // Step 4: Return success response
             return {
                 inputFields,
-                computedFields
+                computedFields,
+                finalCredit:taxCredit
             }
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);

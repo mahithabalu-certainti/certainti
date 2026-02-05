@@ -31,7 +31,8 @@ export class RdCreditCalculatorForIRL {
                 credit_type : this.creditType,
                 currency : this.currency
             },
-            computedFields : calculateComputedValues
+            computedFields : calculateComputedValues,
+            finalCredit: extractConfig.research_development_tax_credit
         }
     }
 }
