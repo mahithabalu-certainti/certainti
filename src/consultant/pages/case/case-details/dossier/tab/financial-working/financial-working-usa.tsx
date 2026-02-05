@@ -562,7 +562,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           id: headerId,
           label: (
             <div
-              className={`flex flex-col items-center w-full min-w-0 overflow-hidden ${isFirstColumn ? 'items-start' : 'items-center'}`}
+              className='flex flex-col items-start w-full min-w-0 overflow-hidden'
             >
               <TruncateWithTooltip
                 text={headerLabel}
@@ -612,7 +612,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               <TruncateWithTooltip
                 text={String(formattedValue || '')}
                 enableCopy={false}
-                className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+                className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} ${!isFirstColumn ? 'text-right' : 'text-left'}`}
               />
             );
           },
@@ -824,7 +824,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     if (allKeys.some((k) => k.toLowerCase() === 'year')) {
       columns.push({
         id: 'year',
-        label: 'Year' as any,
+        label: (
+          <div className='text-left w-full'>Year</div>
+        ) as any,
         sortId: 'year',
         width: 120,
         sticky: true,
@@ -835,7 +837,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           );
           const val = yearKey ? row[yearKey] : '-';
           return (
-            <div className='px-2 py-0 text-sm font-bold text-[#1A2733]'>
+            <div className='px-2 py-0 w-full flex  text-sm font-bold text-[#1A2733]'>
               {val || '-'}
             </div>
           );
@@ -854,7 +856,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
       columns.push({
         id: key,
-        label: label as any,
+        label: (
+          <div className='text-left w-full'>{label}</div>
+        ) as any,
         sortId: key,
         width: 180,
         render: (row: any) => {
@@ -871,7 +875,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
           return (
             <div
-              className={`px-2  text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+              className={`px-2 w-full flex  text-left ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
             >
               {val !== undefined && val !== null && val !== ''
                 ? isCurrency
