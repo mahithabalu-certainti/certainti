@@ -279,10 +279,10 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     const isEmpty = value === null || value === undefined || value === '';
 
     return (
-      <div className='w-[180px] min-h-[32px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] inline-flex items-center justify-end'>
+      <div className='w-[180px] h-[24px] px-2 py-0 align-middle  my-[2px] rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] inline-flex items-center justify-end'>
         {!isEmpty && (
           <span
-            className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
+            className={`text-[12px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
           >
             {(() => {
               // Only format strict numbers as currency
@@ -301,15 +301,15 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     content: React.ReactNode,
     isPrimitive: boolean = false
   ) => (
-    <div className='w-full border border-[#CBD6E2] mb-4'>
-      <div className='bg-[#ECECEC] border-b border-[#CBD6E2] px-3 py-1'>
+    <div className='w-full border border-[#CBD6E2] mb-2'>
+      <div className='bg-[#ECECEC] border-b border-[#CBD6E2] px-2 py-1'>
         <div className='font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%]'>
           {title}
         </div>
       </div>
       <div className={`p-0 bg-white`}>
         {isPrimitive ? (
-          <div className='px-3 py-2 text-left'>{content}</div>
+          <div className='px-2 py-1 text-left'>{content}</div>
         ) : (
           <div className='w-full'>{content}</div>
         )}
@@ -342,7 +342,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 >
                   <td
                     colSpan={2}
-                    className='px-3 py-1.5 text-sm text-[#425A76] font-medium'
+                    className='px-2 py-0 text-sm text-[#425A76] font-medium'
                   >
                     {value}
                   </td>
@@ -352,13 +352,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
             const isBold = boldRows.includes(key);
             return (
-              <tr key={key} className='border-b border-[#CBD6E2] last:border-0'>
+              <tr key={key} className='h-[28px] border-b border-[#CBD6E2] last:border-0'>
                 <td
-                  className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}
+                  className={`px-2 py-0 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}
                 >
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>
+                <td className='px-2 py-0 text-right'>
                   {renderValue(value, isBold)}
                 </td>
               </tr>
@@ -382,11 +382,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     return (
       <div className='overflow-x-auto'>
         <table className='w-full border-collapse'>
-          <thead>
+          {/* <thead>
             <tr className='bg-gray-50 border-b border-[#CBD6E2]'>
               <th
                 scope='col'
-                className='px-3 py-1.5 text-left text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'
+                className='px-2 py-0 text-left text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'
               >
                 {formatLabel(title)}
               </th>
@@ -394,13 +394,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 <th
                   key={key}
                   scope='col'
-                  className='px-3 py-1.5 text-right text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'
+                  className='px-2 py-0 text-right text-[12px] font-bold text-[#2D3E4F] uppercase tracking-wider'
                 >
                   {formatLabel(key)}
                 </th>
               ))}
             </tr>
-          </thead>
+          </thead> */}
           <tbody>
             {(() => {
               // Get unique keys from all columns to render rows
@@ -416,10 +416,10 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 return (
                   <tr
                     key={rowKey}
-                    className='border-b border-[#CBD6E2] last:border-0'
+                    className='h-[28px] border-b border-[#CBD6E2] last:border-0'
                   >
                     <td
-                      className={`px-3 py-1.5 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+                      className={`px-2 py-0 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
                     >
                       {formatLabel(rowKey)}
                     </td>
@@ -440,8 +440,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                               ? 'rrc_credit_280_c'
                               : title;
                         return (
-                          <td key={colKey} className='px-3 py-1.5 text-right'>
-                            <div className='w-[180px] min-h-[32px] inline-flex items-center justify-end'>
+                          <td key={colKey} className='px-2 py-0 text-right'>
+                            <div className='w-[180px] h-[24px] inline-flex items-center justify-end'>
                               <Selection280C
                                 value={cellValue}
                                 logKey={logKey}
@@ -453,7 +453,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                         );
                       }
                       return (
-                        <td key={colKey} className='px-3 py-1.5 text-right'>
+                        <td key={colKey} className='px-2 py-0 text-right'>
                           {renderValue(reduction280c[colKey][rowKey], isBold)}
                         </td>
                       );
@@ -516,14 +516,14 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           sticky: isFirstColumn,
           sx: isFirstColumn
             ? {
-                position: 'sticky',
-                left: 0,
-                background: '#fff',
-                padding: '0px 8px 0px 14px !important',
-                zIndex: 10,
-                borderRight: '1px solid #CBD6E2 !important',
-                borderBottom: '1px solid #CBD6E2 !important',
-              }
+              position: 'sticky',
+              left: 0,
+              background: '#fff',
+              // padding: '0px 2px 0px 4px !important',
+              zIndex: 10,
+              borderRight: '1px solid #CBD6E2 !important',
+              borderBottom: '1px solid #CBD6E2 !important',
+            }
             : undefined,
           render: (row: TableRow) => {
             const value = row[headerId];
@@ -559,19 +559,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     const tableDataRows: TableRow[] =
       table_rows && Array.isArray(table_rows)
         ? table_rows.map((rowObj: any, index: number) => {
-            const row: TableRow = {
-              id: `row_${index}`,
-            };
+          const row: TableRow = {
+            id: `row_${index}`,
+          };
 
-            // Map each header ID to its value from the row object
-            table_headers.forEach((headerItem: any) => {
-              const headerId =
-                typeof headerItem === 'string' ? headerItem : headerItem.id;
-              row[headerId] = rowObj[headerId];
-            });
+          // Map each header ID to its value from the row object
+          table_headers.forEach((headerItem: any) => {
+            const headerId =
+              typeof headerItem === 'string' ? headerItem : headerItem.id;
+            row[headerId] = rowObj[headerId];
+          });
 
-            return row;
-          })
+          return row;
+        })
         : [];
 
     if (Total !== undefined && Total !== null && table_headers.length > 0) {
@@ -740,7 +740,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           );
           const val = yearKey ? row[yearKey] : '-';
           return (
-            <div className='px-4 py-2 text-sm font-bold text-[#1A2733]'>
+            <div className='px-2 py-0 text-sm font-bold text-[#1A2733]'>
               {val || '-'}
             </div>
           );
@@ -771,12 +771,12 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-                val.trim() !== '' &&
-                !isNaN(Number(val));
+              val.trim() !== '' &&
+              !isNaN(Number(val));
 
           return (
             <div
-              className={`px-3 py-1.5 text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+              className={`px-2  text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
             >
               {val !== undefined && val !== null && val !== ''
                 ? isCurrency
@@ -812,20 +812,20 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     if (typeof value !== 'object' || value === null) {
       if (key) {
         return (
-          <table className='w-full border-collapse'>
+          <table className='w-full  border-collapse'>
             <tbody>
-              <tr className='border-b border-[#CBD6E2] last:border-0'>
-                <td className='px-3 py-1.5 text-sm text-[#425A76] font-medium w-1/2'>
+              <tr className='h-[28px] border-b border-[#CBD6E2] last:border-0'>
+                <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-1/2'>
                   {formatLabel(key)}
                 </td>
-                <td className='px-3 py-1.5 text-right'>{renderValue(value)}</td>
+                <td className='px-2 py-0 text-right'>{renderValue(value)}</td>
               </tr>
             </tbody>
           </table>
         );
       }
       return (
-        <div className='flex justify-start items-center p-3'>
+        <div className='h-[28px] flex justify-start items-center p-0 px-1.5'>
           {renderValue(value)}
         </div>
       );
@@ -853,7 +853,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             return (
               <div
                 key={k}
-                className='px-3 py-1.5 text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
+                className='h-[28px] px-2  text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
               >
                 {v as string}
               </div>
@@ -864,7 +864,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             if ((v as any).reduction280c) return render280C(k, v);
             return (
               <div key={k} className='border-b border-[#CBD6E2] last:border-0'>
-                <div className='bg-[#F9FAFB] px-3 py-1 font-semibold text-[13px] text-[#2D3E4F] border-b border-[#CBD6E2]'>
+                <div className='h-[28px] bg-[#F9FAFB] px-2 py-0 font-semibold text-[13px] text-[#2D3E4F] border-b border-[#CBD6E2]'>
                   {formatLabel(k)}
                 </div>
                 {renderKeyValuePairs(v)}
@@ -876,7 +876,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           return (
             <div
               key={k}
-              className='px-3 py-1.5 flex justify-between items-center border-b border-[#CBD6E2] last:border-0'
+              className='h-[28px] px-2 py-0 flex justify-between items-center border-b border-[#CBD6E2] last:border-0'
             >
               <span
                 className={`text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
@@ -887,12 +887,12 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             </div>
           );
         })}
-      </div>
+      </div >
     );
   };
 
   return (
-    <div className='p-4'>
+    <div className='p-1.5'>
       <div>
         <div className='flex flex-col gap-0'>
           {/* Dynamic Input Params Sections */}
@@ -907,7 +907,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
               if (Array.isArray(value) && value.length > 0) {
                 return (
-                  <div key={key} className='mb-4'>
+                  <div key={key} className='mb-2'>
                     {renderCard(key, renderDynamicArrayTable(value))}
                   </div>
                 );
@@ -943,7 +943,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 <React.Fragment key={key}>
                   {Object.entries(value).map(
                     ([tableName, tableData], index) => (
-                      <div key={`${key}_${index}`} className='mb-4'>
+                      <div key={`${key}_${index}`} className='mb-2'>
                         {renderCard(
                           tableName,
                           renderTableSection(tableData),
@@ -959,7 +959,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             // Special handling for "illinois"
             if (key === 'illinois' && Array.isArray(value)) {
               return (
-                <div key={key} className='mb-4'>
+                <div key={key} className='mb-2'>
                   {renderCard(
                     formatLabel(key),
                     renderIllinoisTable(value),
@@ -978,7 +978,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             ) {
               const totalValue = (computedFields as any)?.total;
               return (
-                <div key={key} className='mb-4'>
+                <div key={key} className='mb-2'>
                   {renderCard(
                     formatLabel(key),
                     renderFederalTable(value, totalValue),
@@ -989,7 +989,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             }
 
             return (
-              <div key={key} className='mb-4'>
+              <div key={key} className='mb-2'>
                 {renderCard(
                   formatLabel(key),
                   renderCardContent(value, key),
@@ -1001,7 +1001,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
           {/* Top-level final_credit summary if present */}
           {(data?.data as any)?.final_credit !== undefined && (
-            <div className='mb-4'>
+            <div className='mb-2'>
               {renderCard(
                 'Final Credit',
                 renderCardContent(
