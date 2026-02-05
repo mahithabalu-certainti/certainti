@@ -148,6 +148,7 @@ export interface CaseDetails {
   is_state_available?: boolean;
   state_rid?: string;
   financial_working_signoff?: boolean;
+  final_credit?: string | number | null;
 }
 
 export interface CaseDetailsResponse {

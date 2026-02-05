@@ -232,11 +232,6 @@ export const ResourceFormData = (
                 errorMessage: 'Please enter more than 1 characters.',
               },
               {
-                regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
-                errorMessage:
-                  'Consecutive spaces, hyphens, and apostrophes are not allowed.',
-              },
-              {
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded.',
               },
@@ -276,11 +271,6 @@ export const ResourceFormData = (
                 errorMessage: 'Please enter more than 1 characters.',
               },
               {
-                regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
-                errorMessage:
-                  'Consecutive spaces, hyphens, and apostrophes are not allowed.',
-              },
-              {
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded.',
               },
@@ -313,11 +303,6 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.MIN_2,
                 errorMessage: 'Please enter more than 1 characters.',
-              },
-              {
-                regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
-                errorMessage:
-                  'Consecutive spaces, hyphens, and apostrophes are not allowed.',
               },
               {
                 regex: REGEX_PATTERNS.MAX_64,

@@ -240,7 +240,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
 
   return (
     <div className='w-full h-full overflow-hidden flex flex-col'>
-      <div className='flex-1 overflow-auto'>
+      <div className='flex-1 overflow-auto border-t border-[#CBD6E2]'>
         <ListTable
           data={tableData}
           columns={columns}
