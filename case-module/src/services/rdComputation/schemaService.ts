@@ -647,6 +647,7 @@ class RDCreditSchemaService {
                     total_resources: projectInfo.total_resources,
                     total_qre: projectInfo.total_qre
                 };
+                totalCredit += finalCredit;
             }
         });
 
