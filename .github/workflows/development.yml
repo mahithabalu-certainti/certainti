@@ -1254,7 +1254,7 @@ jobs:
     needs:
       - changes
     if: ${{ needs.changes.outputs.form-extraction-module == 'true' }}
-    name: Build and Deploy Rule Builder Module
+    name: Build and Deploy Form Extraction Module
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -1389,7 +1389,7 @@ jobs:
     needs:
       - changes
     if: ${{ needs.changes.outputs.report-module == 'true' }}
-    name: Build and Deploy Rule Builder Module
+    name: Build and Deploy Report Module
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
