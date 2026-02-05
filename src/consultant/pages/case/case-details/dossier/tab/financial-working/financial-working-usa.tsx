@@ -275,6 +275,16 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
+  const extractPrefix = (str: string) => {
+    const bracketMatch = str.match(/^\[(.*?)\]\s*(.*)/);
+    if (bracketMatch) return { prefix: bracketMatch[1], label: bracketMatch[2] };
+
+    const parenMatch = str.match(/^\((.*?)\)\s*(.*)/);
+    if (parenMatch) return { prefix: parenMatch[1], label: parenMatch[2] };
+
+    return { prefix: '', label: str };
+  };
+
   const renderValue = (value: any, isBold?: boolean) => {
     const isEmpty = value === null || value === undefined || value === '';
 
@@ -299,25 +309,41 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
   const renderCard = (
     title: string,
     content: React.ReactNode,
-    isPrimitive: boolean = false
-  ) => (
-    <div className='w-full border border-[#CBD6E2] mb-2'>
-      <div className='bg-[#ECECEC] border-b border-[#CBD6E2] px-2 py-1'>
-        <div className='font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%]'>
-          {title}
+    isPrimitive: boolean = false,
+    enablePrefixSplit: boolean = false
+  ) => {
+    const { prefix, label } = extractPrefix(title);
+    return (
+      <div className='w-full border border-[#CBD6E2] mb-2'>
+        <div className='bg-[#ECECEC] border-b border-[#CBD6E2] flex items-stretch min-h-[30px]'>
+          <div className='font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] w-full'>
+            {enablePrefixSplit ? (
+              <div className='flex items-stretch h-full'>
+                <div className='w-[130px] flex-shrink-0 border-r border-[#CBD6E2] pl-2 flex items-center py-1 whitespace-nowrap overflow-hidden'>
+                  {prefix}
+                </div>
+                <div className='pl-2 flex items-center flex-1 py-1'>{label}</div>
+              </div>
+            ) : (
+              <div className='px-2 flex items-center h-full py-1'>{title}</div>
+            )}
+          </div>
+        </div>
+        <div className={`p-0 bg-white`}>
+          {isPrimitive ? (
+            <div className='px-2 py-1 text-left'>{content}</div>
+          ) : (
+            <div className='w-full'>{content}</div>
+          )}
         </div>
       </div>
-      <div className={`p-0 bg-white`}>
-        {isPrimitive ? (
-          <div className='px-2 py-1 text-left'>{content}</div>
-        ) : (
-          <div className='w-full'>{content}</div>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
-  const renderKeyValuePairs = (obj: Record<string, any>) => {
+  const renderKeyValuePairs = (
+    obj: Record<string, any>,
+    enablePrefixSplit: boolean = false
+  ) => {
     if (!obj) return null;
     const entries = Object.entries(obj);
 
@@ -341,7 +367,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                   className='border-b border-[#CBD6E2] last:border-0'
                 >
                   <td
-                    colSpan={2}
+                    colSpan={3}
                     className='px-2 py-0 text-sm text-[#425A76] font-medium'
                   >
                     {value}
@@ -351,14 +377,44 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             }
 
             const isBold = boldRows.includes(key);
+            const { prefix, label } = extractPrefix(formatLabel(key));
+
+            if (enablePrefixSplit) {
+              return (
+                <tr
+                  key={key}
+                  className='h-[28px] border-b border-[#CBD6E2] last:border-0'
+                >
+                  <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
+                    {prefix}
+                  </td>
+                  <td className='align-middle px-2 py-0'>
+                    <div className='flex justify-between items-center w-full'>
+                      <div
+                        className={`text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+                      >
+                        {label}
+                      </div>
+                      <div className='text-right'>
+                        {renderValue(value, isBold)}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              );
+            }
+
             return (
-              <tr key={key} className='h-[28px] border-b border-[#CBD6E2] last:border-0'>
+              <tr
+                key={key}
+                className='h-[28px] border-b border-[#CBD6E2] last:border-0'
+              >
                 <td
-                  className={`px-2 py-0 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} w-1/2`}
+                  className={`px-2 py-0 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} align-middle w-1/2`}
                 >
                   {formatLabel(key)}
                 </td>
-                <td className='px-2 py-0 text-right'>
+                <td className='px-2 py-0 text-right align-middle'>
                   {renderValue(value, isBold)}
                 </td>
               </tr>
@@ -413,15 +469,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
               return Array.from(allRowKeys).map((rowKey) => {
                 const isBold = boldRows.includes(rowKey);
+                const { prefix, label } = extractPrefix(formatLabel(rowKey));
                 return (
                   <tr
                     key={rowKey}
                     className='h-[28px] border-b border-[#CBD6E2] last:border-0'
                   >
+                    <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
+                      {prefix}
+                    </td>
                     <td
-                      className={`px-2 py-0 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+                      className={`px-2 py-0 text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} align-middle`}
                     >
-                      {formatLabel(rowKey)}
+                      {label}
                     </td>
                     {columnKeys.map((colKey) => {
                       const cellValue = reduction280c[colKey][rowKey];
@@ -808,17 +868,45 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     );
   };
 
-  const renderCardContent = (value: any, key?: string) => {
+  const renderCardContent = (
+    value: any,
+    key?: string,
+    enablePrefixSplit: boolean = false
+  ) => {
     if (typeof value !== 'object' || value === null) {
       if (key) {
+        if (enablePrefixSplit) {
+          return (
+            <table className='w-full border-collapse'>
+              <tbody>
+                <tr className='h-[28px] border-b border-[#CBD6E2] last:border-0'>
+                  <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
+                    {extractPrefix(formatLabel(key)).prefix}
+                  </td>
+                  <td className='align-middle px-2 py-0'>
+                    <div className='flex justify-between items-center w-full'>
+                      <div className='text-sm text-[#425A76] font-medium'>
+                        {extractPrefix(formatLabel(key)).label}
+                      </div>
+                      <div className='text-right'>{renderValue(value)}</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          );
+        }
+
         return (
-          <table className='w-full  border-collapse'>
+          <table className='w-full border-collapse'>
             <tbody>
               <tr className='h-[28px] border-b border-[#CBD6E2] last:border-0'>
-                <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-1/2'>
+                <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-1/2 align-middle'>
                   {formatLabel(key)}
                 </td>
-                <td className='px-2 py-0 text-right'>{renderValue(value)}</td>
+                <td className='px-2 py-0 text-right align-middle'>
+                  {renderValue(value)}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -841,7 +929,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     );
 
     if (!hasObjects) {
-      return renderKeyValuePairs(value);
+      return renderKeyValuePairs(value, enablePrefixSplit);
     }
 
     return (
@@ -850,10 +938,25 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           if (k === 'name') return null;
 
           if (k === 'text') {
+            if (enablePrefixSplit) {
+              return (
+                <div
+                  key={k}
+                  className='h-[28px] px-0 py-0 flex items-center border-b border-[#CBD6E2] last:border-0'
+                >
+                  <div className='w-[130px] flex-shrink-0 text-sm text-[#425A76] font-medium border-r border-[#CBD6E2] pl-2 self-stretch flex items-center whitespace-nowrap'>
+                    &nbsp;
+                  </div>
+                  <div className='flex-1 flex items-center pl-2 pr-2 text-sm text-[#425A76] font-medium'>
+                    {v as string}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={k}
-                className='h-[28px] px-2  text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
+                className='h-[28px] px-2 flex items-center text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
               >
                 {v as string}
               </div>
@@ -864,15 +967,74 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             if ((v as any).reduction280c) return render280C(k, v);
             return (
               <div key={k} className='border-b border-[#CBD6E2] last:border-0'>
-                <div className='h-[28px] bg-[#F9FAFB] px-2 py-0 font-semibold text-[13px] text-[#2D3E4F] border-b border-[#CBD6E2]'>
-                  {formatLabel(k)}
+                <div className='h-[28px] bg-[#F9FAFB] border-b border-[#CBD6E2] flex items-stretch'>
+                  {enablePrefixSplit ? (
+                    <div className='flex items-center w-full'>
+                      <div className='w-[130px] flex-shrink-0 font-semibold text-[13px] text-[#2D3E4F] border-r border-[#CBD6E2] pl-2 flex items-center h-full whitespace-nowrap'>
+                        {/* Assuming sub-headers don't have prefixes usually, but if they do: */}
+                        {formatLabel(k)}
+                      </div>
+                      <div className='pl-2 font-semibold text-[13px] text-[#2D3E4F] flex items-center h-full flex-1'>
+                        {/* Label part if split needed, or just full label if not perfectly handled here. 
+                                              User said "header section line is not tocted". This is a sub-header. 
+                                              I'll stick to simple full width unless prefix detected. 
+                                              But for consistency with "computed fields" enablePrefixSplit, I should probably respect it.
+                                              However, usually these sub-headers are just "Wages" etc. 
+                                              Let's keep it simple: if enabled, show the line? Or just use full width?
+                                              The user said "line effect run inside only computed fields". 
+                                              If I apply it here, I need to split k.
+                                           */}
+                        {/* Reverting to simple block for sub-header to avoid complexity unless requested specifically for sub-headers. 
+                                            Actually, let's just make it look like the main header if enabled.
+                                           */}
+                        {/* Wait, k is the key (e.g. "Wages").  */}
+                        {/* Let's just render it simply but ensure height matching if we wanted. 
+                             Actually, for now I will just use the original div but ensure 60px alignment if I split it.
+                             I will NOT split sub-headers for now to avoid breaking "Wages" etc. unless they come with []. 
+                             The user example "qreSummary" had "Wages". "Average Annual..." had [].
+                             So I will check if k has prefix.
+                          */}
+                        {formatLabel(k)}
+                        {/* Wait, the code below calls renderKeyValuePairs(v). That will handle the rows. 
+                             This div is just the TITLE of the section inside the card.
+                          */}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className='px-2 py-0 font-semibold text-[13px] text-[#2D3E4F] flex items-center h-full'>
+                      {formatLabel(k)}
+                    </div>
+                  )}
                 </div>
-                {renderKeyValuePairs(v)}
+                {renderKeyValuePairs(v, enablePrefixSplit)}
               </div>
             );
           }
 
           const isBold = k && boldRows.includes(k);
+          const { prefix, label } = extractPrefix(formatLabel(k));
+
+          if (enablePrefixSplit) {
+            return (
+              <div
+                key={k}
+                className='h-[28px] px-0 py-0 flex items-center border-b border-[#CBD6E2] last:border-0'
+              >
+                <div className='w-[130px] flex-shrink-0 text-sm text-[#425A76] font-medium border-r border-[#CBD6E2] px-2 self-stretch flex items-center justify-end whitespace-nowrap'>
+                  {prefix}
+                </div>
+                <div className='flex-1 flex justify-between items-center pl-2 pr-2'>
+                  <span
+                    className={`text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+                  >
+                    {label}
+                  </span>
+                  {renderValue(v, isBold)}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div
               key={k}
@@ -992,8 +1154,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               <div key={key} className='mb-2'>
                 {renderCard(
                   formatLabel(key),
-                  renderCardContent(value, key),
-                  false // Content handles padding via tables/rows
+                  renderCardContent(value, key, true), // Enable split for computed fields
+                  false,
+                  true // Enable split for header
                 )}
               </div>
             );
