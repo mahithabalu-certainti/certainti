@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExportType,
   ProjectSummaryItem,
@@ -6,13 +6,17 @@ import {
   ProjectSummaryListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useProjectSummaryList } from '../../../../../../services/case-dossier/case-dossier-service';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
-import { getProjectSummaryColumns } from './columns';
+import { useAssignProjectsList } from '../../../../../../services/cases-assign-projects/assign-project-service';
+import { AssignProject } from '../../../../../../types/assign-projects';
+import { getAssignedProjectColumns } from '../../../case-assign-projects/assigned-projects/column';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
 
 interface ProjectSummaryProps {
   refreshTrigger: number;
@@ -26,6 +30,7 @@ interface ProjectSummaryProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  fiscalYear: number;
 }
 
 const ProjectSummary: React.FC<ProjectSummaryProps> = ({
@@ -38,27 +43,30 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  fiscalYear,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [projectSummary, setProjectSummary] = useState<ProjectSummaryItem[]>(
-    []
-  );
+  const [projectSummary, setProjectSummary] = useState<AssignProject[]>([]);
   const [tableParams, setTableParams] = useState<ProjectSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'r_number',
+    sortBy: 'project_code',
     sortOrder: 'ASC',
   });
 
-  const { data, isLoading, isError } = useProjectSummaryList(
+  const { data, isLoading, isError } = useAssignProjectsList(
     {
-      ...tableParams,
+      page: currentPage + 1,
+      limit: tableParams.limit,
+      sort: tableParams.sortBy,
+      sort_by: tableParams.sortOrder,
       search: searchValue,
-      filters: appliedFilters,
-      accountRid: accountId || '',
-      caseRid: caseId || '',
+      filter: appliedFilters,
+      case_rid: caseId,
+      account_rid: accountId,
+      fiscal_year: fiscalYear,
     },
     refreshTrigger
   );
@@ -67,7 +75,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
 
   useEffect(() => {
     if (data) {
-      setProjectSummary(data.projectSummary || []);
+      setProjectSummary(data.projects || []);
       setCount(data.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,10 +127,25 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
     : undefined;
 
   const RestrictedColumns = [
-    { id: 'r_number', canHide: false, canDrag: false },
+    { id: 'project_code', canHide: false, canDrag: false },
   ];
 
-  const projectSummaryColumns = getProjectSummaryColumns();
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const projectViewEditlistFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditlistFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditlistFields]);
+  // const qualifiedProjectsColumns = getQualifiedProjectsColumns();
+  const projectSummaryColumns = getAssignedProjectColumns(permissionMap);
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

@@ -14,9 +14,13 @@ interface ActionItem {
 
 interface ActionButtonProps {
   actions: ActionItem[];
+  alignHorizontal?: 'left' | 'center' | 'right';
 }
 
-export default function TableActionButton({ actions }: ActionButtonProps) {
+export default function TableActionButton({
+  actions,
+  alignHorizontal = 'center',
+}: ActionButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -58,8 +62,8 @@ export default function TableActionButton({ actions }: ActionButtonProps) {
         open={open}
         onClose={handleClose}
         MenuListProps={{ 'aria-labelledby': 'action-button' }}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: alignHorizontal }}
+        transformOrigin={{ vertical: 'top', horizontal: alignHorizontal }}
         PaperProps={{
           elevation: 0,
           sx: {

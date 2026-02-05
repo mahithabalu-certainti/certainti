@@ -18,6 +18,7 @@ function extractTextFromReactNode(node: React.ReactNode): string {
 interface TruncateWithTooltipProps {
   text?: string;
   maxWidth?: number | string;
+  maxHeight?: number | string;
   className?: string;
   children?: ReactNode;
   style?: React.CSSProperties;
@@ -30,6 +31,7 @@ interface TruncateWithTooltipProps {
 const TruncateWithTooltip = ({
   text,
   maxWidth,
+  maxHeight,
   className = '',
   children,
   style = {},
@@ -57,10 +59,13 @@ const TruncateWithTooltip = ({
     const checkOverflow = () => {
       const element = textRef.current;
       if (element) {
-        setIsOverflowing(
-          element.scrollWidth > element.clientWidth ||
-            element.scrollHeight > element.clientHeight
-        );
+        // Use setTimeout to ensure styles are fully applied
+        setTimeout(() => {
+          setIsOverflowing(
+            element.scrollWidth > element.clientWidth ||
+              element.scrollHeight > element.clientHeight
+          );
+        }, 0);
       }
     };
 
@@ -77,6 +82,9 @@ const TruncateWithTooltip = ({
     whiteSpace: 'nowrap' as const,
     maxWidth:
       typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth || '100%',
+    ...(maxHeight && {
+      maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+    }),
     ...style,
   };
 

@@ -70,7 +70,26 @@ export const getFinancialHighlightsURL = (): string => {
 export const getSignOffFinancialHighlightsURL = (): string => {
   return `/api/cases/financialWorking/signoff`;
 };
-
 export const getUserPreferenceURL = (): string => {
   return `/api/rd-credit/federal/userPreference`;
+};
+
+export const getClosingRemarksListURL = (
+  accountRid: string,
+  caseRid: string
+): string => {
+  return `/api/cases/closureRemarks/${accountRid}/${caseRid}`;
+};
+
+export const getRDFormMapperURL = (): string => {
+  return `/api/rdFormMapper/process/initiate`;
+};
+
+export const getRDFormMapperPreviewURL = (
+  accountRid: string,
+  caseRid: string,
+  countryRid: string,
+  isFederal: boolean = true
+): string => {
+  return `/api/rdFormMapper/preview?account_rid=${accountRid}&case_rid=${caseRid}&is_federal=${isFederal}&country_rid=${countryRid}`;
 };

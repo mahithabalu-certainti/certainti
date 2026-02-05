@@ -74,6 +74,7 @@ const ListTable = <T extends RowData>({
   // Actions
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
+  actionAlignHorizontal = 'center',
   actionMenuItems = [],
   conditionMenuItems,
   // State
@@ -1386,6 +1387,7 @@ const ListTable = <T extends RowData>({
                                             : item.disabled,
                                       onClick: () => item.onClick(row),
                                     }))}
+                                    alignHorizontal={actionAlignHorizontal}
                                   />
                                 )}
                               </>
@@ -1598,10 +1600,12 @@ const ListTable = <T extends RowData>({
                                     <span
                                       className={`h-[26px] w-6 flex items-center justify-center absolute ${column?.field?.type === 'textarea' ? 'top-0.5 bg-[#FEF2F2] right-[2px] z-40' : 'top-[3px] right-0 bg-[#FEF2F2]'} cursor-pointer`}
                                     >
-                                      <ErrorInfoIcon
-                                        alt='error'
-                                        className='w-5 h-3.5'
-                                      />
+                                      <React.Suspense fallback={null}>
+                                        <ErrorInfoIcon
+                                          alt='error'
+                                          className='w-5 h-3.5'
+                                        />
+                                      </React.Suspense>
                                     </span>
                                   </Tooltip>
                                 )}

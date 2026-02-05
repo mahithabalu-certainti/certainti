@@ -2446,6 +2446,46 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
+
+            // Data Mapper date validation
+            if (
+              (isFrom === 'data-mapper' &&
+                field.name === 'effective_from_date') ||
+              field.name === 'effective_to_date'
+            ) {
+              const fromDate = constructFormData[
+                'effective_from_date'
+              ] as string;
+              const toDate = constructFormData['effective_to_date'] as string;
+
+              // If to date is provided, validate it against from date
+              if (fromDate && toDate) {
+                const from = dayjs(fromDate);
+                const to = dayjs(toDate);
+
+                if (to.isSame(from, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_from_date'
+                        ? 'Effective From Date cannot be the same as Effective To Date'
+                        : 'Effective To Date cannot be the same as Effective From Date',
+                  };
+                }
+
+                if (to.isBefore(from, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_from_date'
+                        ? 'Effective From Date cannot be after Effective To Date'
+                        : 'Effective To Date cannot be before Effective From Date',
+                  };
+                }
+              }
+            }
           }
 
           if (field.type === 'date') {
