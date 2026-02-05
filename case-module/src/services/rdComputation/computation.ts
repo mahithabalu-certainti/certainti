@@ -119,7 +119,7 @@ export class ComputationService {
                           
                         }
                      }
-                    const stateWiseResult = await this.getStateSummaryResults(accountRid!, caseRid!,effectiveEnd)
+                    const stateWiseResult = await this.getStateSummaryResults(accountRid!, caseRid!,schemaName)
                      return {
                         statusCode: stateWiseResult.statusCode,
                         message: stateWiseResult.message,
@@ -166,7 +166,8 @@ export class ComputationService {
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
             if(type === 'summary'){
-                return this.getStateSummaryResults(accountRid, caseRid,fetchParentAccountRnumber[0][0].effective_end);
+                let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number);
+                return this.getStateSummaryResults(accountRid, caseRid,schemaName);
             }
             else{
             const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(fetchParentAccountRnumber[0][0].r_number, caseRid, stateRid);
@@ -253,27 +254,17 @@ export class ComputationService {
      * @param stateCode 
      * @returns 
      */
-    async getStateSummaryResults(accountRid: string, caseRid: string,effectiveEnd : string) {
+    async getStateSummaryResults(accountRid: string, caseRid: string,schemaName:string) {
         try {
             const mainDb = await this.getMainDb();
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
-            const date = new Date(effectiveEnd);
-                    const formatted = date.toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric"
-                    });
             let metaInfo = {
-               
-                credit_type: "Research Tax Credit",
-                "Fiscal Year Ended" : formatted,
-                "Description": "Research Tax Credit",
                 stateDetails : "State Credit Summary"
             }
 
-            const results = await this.rdCreditSchemaService.getStateSummaryResults(fetchParentAccountRnumber[0][0].r_number, caseRid);
+            const results = await this.rdCreditSchemaService.getStateSummaryResults(fetchParentAccountRnumber[0][0].r_number, caseRid, schemaName);
             let finalData = {
                 computed_fields: results,
                 input_params: {

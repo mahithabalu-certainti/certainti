@@ -185,7 +185,8 @@ export class RdCreditCalculatorForCAN {
                 credit_type : this.creditType,
                 currency : this.currency
             },
-            computedFields : finalData
+            computedFields : finalData,
+            finalCredit : Math.round(totalCreditWithORDTC)
         }
     }
 }
