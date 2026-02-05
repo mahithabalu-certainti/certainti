@@ -38,7 +38,8 @@ export class RdCreditCalculatorForIL {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(columnBCurrentYearExpenseInfo.final_credit)
         }
     }
 

@@ -3,6 +3,7 @@ import { logMessage } from "../../utils/helpers";
 import { Decimal } from "decimal.js";
 import { AnnualGrossReceipt, QRE, FederalRDData } from "../rdComputation/rdCreditTypes";
 import { FederalMockDataLoadMap } from "../rdComputation/rdDataLoadMockService";
+import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
     credit_rate: number;
@@ -33,7 +34,7 @@ export class RdCreditCalculatorForUSA {
      * @param caseRid 
      * @returns 
      */
-    async compute(config: any, federalRdData: FederalRDData, annualGrossReceiptsCount : number, date? : string) {
+    async compute(config: any, federalRdData: FederalRDData, annualGrossReceiptsCount : number, date : string, caseDetails : Case) {
         try {
             const { asc, rrc } = this.splitAscRrcConfig(config);
             logMessage(`Extracted ASC Config: ${JSON.stringify(asc)}`);
@@ -49,11 +50,11 @@ export class RdCreditCalculatorForUSA {
 
             const extractConfigAsc = asc;
             const creditASC = await this.calculateASC(totalCurrentYearQRE, federalRdData.prior3YearsQREs, extractConfigAsc);
-            const asc280C = await this.apply280C_ASC(creditASC, extractConfigAsc);
+            const asc280C = await this.apply280C_ASC(creditASC, extractConfigAsc, caseDetails);
 
             const extractConfigRRC = rrc;
             const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, extractConfigRRC, annualGrossReceiptsCount);
-            const rrc280C = await this.apply280C_RRC(creditRRC, extractConfigRRC);
+            const rrc280C = await this.apply280C_RRC(creditRRC, extractConfigRRC, caseDetails);
 
             const inputFields = await this.buildInputParams(federalRdData.currentYearQREs, federalRdData.prior3YearsQREs, federalRdData.annualGrossReceipts || [], {
                 country: this.country,
@@ -179,19 +180,25 @@ export class RdCreditCalculatorForUSA {
      * @param configRRC 
      * @returns 
      */
-    async apply280C_RRC(creditRRC: any, configRRC: ConfigJson) {
+    async apply280C_RRC(creditRRC: any, configRRC: ConfigJson, caseDetails : Case) {
         // ASC Federal 280C reduction rules
         const rateWhenElect = configRRC.elect_280c_yes/100;
         const rateWhenNoElect = configRRC.elect_280c_no/100; // do not elect 280C
 
         const creditNoElect = creditRRC.final_credit.mul(rateWhenNoElect);
+        const creditYesElect = creditRRC.final_credit.mul(rateWhenElect);
         let dynamicRRC280CKey = `Multiply line 11 by ${configRRC.elect_280c_no}% (by ${configRRC.elect_280c_yes}% if line 13 is No)`;
-
+        let dynamicRRCValue;
+        if(caseDetails.rrc_credit_280_c == 'No') {
+            dynamicRRCValue = Number(await this.round2(creditNoElect))
+        } else {
+            dynamicRRCValue = Number(await this.round2(creditYesElect))
+        }
         return {
             reduction280c: {
                 no_elect280c: {
-                    "13 Electing reduced credit under 280C": "NO",
-                    [dynamicRRC280CKey]:  Number(await this.round2(creditNoElect))
+                    "13 Electing reduced credit under 280C": caseDetails.rrc_credit_280_c!,
+                    [dynamicRRC280CKey]: dynamicRRCValue
                 }
             }
         };
@@ -203,18 +210,26 @@ export class RdCreditCalculatorForUSA {
      * @param configASC 
      * @returns 
      */
-    async apply280C_ASC(creditASC: any, configASC: ConfigJson) {
+    async apply280C_ASC(creditASC: any, configASC: ConfigJson, caseDetails : Case) {
         // Federal RRC 280C reduction factors
         const factorElect = configASC.elect_280c_yes/100;   // elect 280C → reduced credit
         const factorNoElect = configASC.elect_280c_no; // no election → full credit
 
         const creditNoElect = creditASC.final_credit
+        const creditYesElect = creditASC.final_credit.mul(factorElect);
         let dynamicRRC280CKey = `Multiply line 20 by ${configASC.elect_280c_yes}% (equals line 25 if line 26 is No)`
+        let dynamicASCValue;
+        if(caseDetails.asc_credit_280_c === 'No') {
+            dynamicASCValue = Number(await this.round2(creditNoElect))
+        } 
+        else {
+            dynamicASCValue = Number(await this.round2(creditYesElect))
+        }
         return {
             reduction280c: {
                 no_elect280c: {
-                    "26 Electing reduced credit under 280C": "NO",
-                    [dynamicRRC280CKey]: Number(await this.round2(creditNoElect))
+                    "26 Electing reduced credit under 280C": caseDetails.asc_credit_280_c!,
+                    [dynamicRRC280CKey]: dynamicASCValue
                 }
             }
         };

@@ -49,7 +49,8 @@ export class RdCreditCalculatorForCA {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: rrcResult?.reducedCreditAmountPercentageValue
         }
     }
 

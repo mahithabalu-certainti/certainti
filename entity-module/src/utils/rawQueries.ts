@@ -958,7 +958,7 @@ export const summaryHighlightsQueryRegion = (
   account_rid: string,
   fiscal_year: number,
   schemaName: string,
-  region_rid: string
+  region_rid?: string
 ) => {
   let query = `
     WITH calculate_rd_claimed_projects AS (
@@ -972,8 +972,7 @@ export const summaryHighlightsQueryRegion = (
         af.account_rid = '${account_rid}'
         AND
         af.fiscal_year = ${fiscal_year}
-        AND
-        af.region_rid = '${region_rid}'
+        ${region_rid ? `AND af.region_rid = '${region_rid}'` : ''}
         AND
         pf.is_rd_claim_qualified = true
     ),
@@ -992,8 +991,7 @@ export const summaryHighlightsQueryRegion = (
         af.account_rid = '${account_rid}'
         AND
         af.fiscal_year = ${fiscal_year}
-        AND
-        af.region_rid = '${region_rid}' 
+        ${region_rid ? `AND af.region_rid = '${region_rid}'` : ''}
         GROUP BY af.account_rid
     ),
     calculate_hours_fte AS (
@@ -1011,8 +1009,7 @@ export const summaryHighlightsQueryRegion = (
             afr.account_rid = '${account_rid}'
             AND
             afr.fiscal_year = ${fiscal_year}
-            AND
-			afr.region_rid = '${region_rid}'
+            ${region_rid ? `AND afr.region_rid = '${region_rid}'` : ''}
         GROUP BY
         afr.account_rid
     ),
@@ -1031,8 +1028,7 @@ export const summaryHighlightsQueryRegion = (
             afr.account_rid = '${account_rid}'
             AND
             afr.fiscal_year = ${fiscal_year}
-            AND
-			afr.region_rid = '${region_rid}'
+            ${region_rid ? `AND afr.region_rid = '${region_rid}'` : ''}
             GROUP BY
         afr.account_rid
     ),
@@ -1051,8 +1047,7 @@ export const summaryHighlightsQueryRegion = (
             afr.account_rid = '${account_rid}'
             AND
             afr.fiscal_year = ${fiscal_year}
-            AND
-			afr.region_rid = '${region_rid}'
+            ${region_rid ? `AND afr.region_rid = '${region_rid}'` : ''}
             GROUP BY
         afr.account_rid
     ),
@@ -1130,8 +1125,7 @@ export const summaryHighlightsQueryRegion = (
         af.account_rid = '${account_rid}'
         AND
         af.fiscal_year = ${fiscal_year}
-        AND
-		af.region_rid = '${region_rid}'
+        ${region_rid ? `AND af.region_rid = '${region_rid}'` : ''}
         GROUP BY af.account_rid
     ),
     calculate_total_rd_credits AS (
@@ -2172,7 +2166,7 @@ export const summaryHighlightsQueryRegionForCase = (
   account_rid: string,
   fiscal_year: number,
   schemaName: string,
-  region_rid: string,
+  region_rid: string | undefined,
   caseRid: string
 ) => {
   let query = `
@@ -2185,8 +2179,7 @@ export const summaryHighlightsQueryRegionForCase = (
         cp.account_rid = '${account_rid}'
         AND
         cp.fiscal_year = ${fiscal_year}
-        AND
-        cp.region_rid = '${region_rid}'
+        ${region_rid ? `AND cp.region_rid = '${region_rid}'` : ''}
         AND
         cp.is_rd_claim_qualified = true
         AND
@@ -2203,8 +2196,7 @@ export const summaryHighlightsQueryRegionForCase = (
       cf.account_rid = '${account_rid}'
       AND
       cf.fiscal_year = ${fiscal_year}
-      AND
-      cf.region_rid = '${region_rid}' 
+      ${region_rid ? `AND cf.region_rid = '${region_rid}'` : ''}
       AND
       cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2221,8 +2213,7 @@ export const summaryHighlightsQueryRegionForCase = (
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
-        AND
-        cf.region_rid = '${region_rid}'
+        ${region_rid ? `AND cf.region_rid = '${region_rid}'` : ''}
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2238,8 +2229,7 @@ export const summaryHighlightsQueryRegionForCase = (
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
-        AND
-        cf.region_rid = '${region_rid}'
+        ${region_rid ? `AND cf.region_rid = '${region_rid}'` : ''}
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2255,8 +2245,7 @@ export const summaryHighlightsQueryRegionForCase = (
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
-        AND
-        cf.region_rid = '${region_rid}'
+        ${region_rid ? `AND cf.region_rid = '${region_rid}'` : ''}
         AND
         cf.case_rid = '${caseRid}'
         GROUP BY cf.account_rid
@@ -2272,8 +2261,7 @@ export const summaryHighlightsQueryRegionForCase = (
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
-        AND
-        cf.region_rid = '${region_rid}'
+        ${region_rid ? `AND cf.region_rid = '${region_rid}'` : ''}
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2289,8 +2277,7 @@ export const summaryHighlightsQueryRegionForCase = (
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
-        AND
-        cf.region_rid = '${region_rid}'
+        ${region_rid ? `AND cf.region_rid = '${region_rid}'` : ''}
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2324,8 +2311,7 @@ export const summaryHighlightsQueryRegionForCase = (
       cf.account_rid = '${account_rid}'
       AND
       cf.fiscal_year = ${fiscal_year}
-      AND
-      cf.region_rid = '${region_rid}'
+      ${region_rid ? `AND cf.region_rid = '${region_rid}'` : ''}
       AND
       cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid

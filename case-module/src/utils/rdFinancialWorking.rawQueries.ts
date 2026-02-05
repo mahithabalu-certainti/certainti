@@ -126,3 +126,7 @@ export const countAssignedProjects = (caseRid : string, schemaName : string) => 
 export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) => {
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
 }
+
+export const updateRRCASC280C = (caseRid : string, schemaName : string, userPreferenceASC : string, userPreferenceRRC : string) => {
+    return `UPDATE ${schemaName}.cases SET rrc_credit_280_c = '${userPreferenceRRC}', asc_credit_280_c = '${userPreferenceASC}' WHERE rid = '${caseRid}'`
+}

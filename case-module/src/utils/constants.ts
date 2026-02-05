@@ -207,6 +207,8 @@ export const STATUS_MESSAGE = {
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
   regionsFetchedSuccess : "Regions listed successfully",
+  userPreferenceUpdatedSuccess : "UserPreference updated successfully",
+  userPreferenceUpdationFailed : "UserPreference updation failed",
   rdCreditFinancialSignOffPending:"Financial working sign-off is pending. Cannot initiate RD Form Filler process.",
   rdFormProcessInitiatedSuccess : "RD form filler process initiated successfully",
   rdFormPreview : "RD form retrieved successfully",
@@ -545,36 +547,40 @@ export const rawQueries = {
     accountRid: string,
     caseRid: string
   ) {
-    return `SELECT 
-    CASE 
-        WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL 
-        ELSE COUNT(cp.project_fiscal_rid) 
-    END AS total_projects,
+    let query = `SELECT 
+    CASE WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL ELSE COUNT(cp.project_fiscal_rid) END AS total_projects,
     SUM(pf.total_cost_prj) AS total_projects_cost,
-    SUM(pf.qre_final) AS total_projects_qre_cost
+    COUNT(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.rid END) AS total_qualified_projects,
+    COALESCE(SUM(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.total_cost_prj END), 0) AS total_qualified_project_cost,
+    COALESCE(SUM(pf.qre_final), 0) AS total_projects_qre_cost
     FROM ${schemaName}.project_fiscal pf
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
     cp.case_rid = '${caseRid}'
     AND
     cp.account_rid = '${accountRid}'`;
+    return query;
   },
   updateCostCountInCase(
     schemaName: string,
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    total_projects_qre_cost: any
+    total_projects_qre_cost: any,
+    totalQualifiedProjects : any,
+    totalQualifiedProjectCost : any
   ) {
-    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE rid = '${caseRid}'`;
+    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE rid = '${caseRid}'`;
   },
   updateCostCountInCaseSummary(
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    total_projects_qre_cost: any
+    total_projects_qre_cost: any,
+    totalQualifiedProjects : any,
+    totalQualifiedProjectCost : any
   ) {
-    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE case_rid = '${caseRid}'`;
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE case_rid = '${caseRid}'`;
   },
   updateCostCountInCaseForDelete(
     schemaName: string,
@@ -1022,7 +1028,8 @@ export const rawQueries = {
     employers_pension_contribution,other, total_expenses, other, sub_contracts, cloud_software, unpaid_amounts_paid,
     unpaid_amounts, aggregated_turnover, taxable_income, export_sales_revenue,
     lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
-    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total
+    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total,
+    rrc_credit_280_c, asc_credit_280_c
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
@@ -2181,6 +2188,11 @@ export const activityStatus = {
   completed: "Completed",
   scheduled: "Scheduled",
 };
+export const computationStatus = {
+  pending: "Pending",
+  completed: "Completed",
+  failed: "Failed",
+}
 
 export const ruleTemplateNames = {
   caseCreated: "case_create",
