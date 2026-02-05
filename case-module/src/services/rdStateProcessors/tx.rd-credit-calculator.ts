@@ -42,8 +42,7 @@ export class RdCreditCalculatorForTX {
 
         return {
             inputFields,
-            computedFields,
-            finalCredit: this.round2(qreActivitiesCreditInfo.rd_credit_activities_avail)
+            computedFields
         }
     }
 
@@ -124,7 +123,7 @@ export class RdCreditCalculatorForTX {
         return {
             average_prev_year_qre: average_prev_year_qre,
             average_qret_rate_50pct: average_qret_rate_50pct,
-            difference: difference,
+            difference: finalDifference,
             credit_eq_zero: credit_eq_zero instanceof Decimal ? credit_eq_zero : credit_eq_zero,
             credit_gt_zero: credit_gt_zero instanceof Decimal ? credit_gt_zero : credit_gt_zero,
             config
