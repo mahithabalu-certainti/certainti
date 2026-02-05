@@ -35,7 +35,7 @@ interface FinancialSummaryProps {
 export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   fiscalYear,
   countryId,
-  stateId,
+  // stateId,
   accountDetails,
   caseRid,
   accountId,
@@ -53,10 +53,10 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     []
   );
   const [rdCredits, setRdCredits] = useState<SummaryRdCredits[]>([]);
-  const [region, setRegion] = useState('');
+  const [region, setRegion] = useState('all');
   const [payload, setPayload] = useState({
     flag: 'all',
-    region_rid: '',
+    region_rid: 'all',
   });
 
   const currencySymbol = accountDetails?.accountById?.currency?.currency_symbol;
@@ -72,11 +72,13 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
 
   // Variables
   const memoizedState: SelectOption[] = useMemo(
-    () =>
-      financislStates.data?.data.map((state) => ({
+    () => [
+      { label: 'All', value: 'all' },
+      ...(financislStates.data?.data.map((state) => ({
         label: state.state_name,
         value: state.rid,
-      })) || [],
+      })) || []),
+    ],
     [financislStates.data?.data]
   );
   const allData = data?.data;
@@ -99,30 +101,19 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
 
   // UseEffects
   useEffect(() => {
-    if (
-      accountid &&
-      fiscalYear &&
-      (stateId || payload.region_rid) &&
-      payload.flag
-    ) {
+    // Auto-load when "All" is selected (non-statewise like summary.tsx)
+    if (accountid && fiscalYear && region === 'all') {
       mutate({
         account_rid: accountid,
         fiscal_year: Number(fiscalYear),
-        summaryType: 'state',
-        region_rid: (payload.region_rid || stateId) as string,
-        flag: payload.flag as FinancialSummaryFlag,
+        summaryType: 'summary',
+        region_rid: '',
+        flag: 'all' as FinancialSummaryFlag,
         case_rid: caseRid,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    accountid,
-    fiscalYear,
-    payload.region_rid,
-    payload.flag,
-    stateId,
-    caseRid,
-  ]);
+  }, [accountid, fiscalYear, region, caseRid]);
   useEffect(() => {
     if (allData) {
       setResourceMetric(allData.resource_metrics);
@@ -213,22 +204,22 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
                     borderRadius: '2px',
                   },
                 }}
-                value={region || stateId || ''}
+                value={region}
                 onChange={(e) => {
                   setRegion(e.target.value);
                 }}
                 renderValue={(selected) => {
                   if (!selected) {
-                    return 'Select State';
+                    return 'Choose State';
                   }
                   const selectedOption = memoizedState.find(
                     (it) => it.value === selected
                   );
-                  return selectedOption ? selectedOption.label : 'Select State';
+                  return selectedOption ? selectedOption.label : 'Choose State';
                 }}
               >
                 <MenuItem value='' disabled>
-                  Select State
+                  Choose State
                 </MenuItem>
                 {memoizedState.map((it, i) => {
                   return (
@@ -253,8 +244,20 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
             key='section-header-btn'
             label='Go'
             sx={{ padding: '15px 4px' }}
+            disabled={region === 'all'}
             onClick={() => {
               setPayload((prev) => ({ ...prev, region_rid: region }));
+              // Only load data on Go button click for specific states (not "All")
+              if (accountid && fiscalYear && region && region !== 'all') {
+                mutate({
+                  account_rid: accountid,
+                  fiscal_year: Number(fiscalYear),
+                  summaryType: 'state',
+                  region_rid: region as string,
+                  flag: 'all' as FinancialSummaryFlag,
+                  case_rid: caseRid,
+                });
+              }
             }}
           />
         </div>

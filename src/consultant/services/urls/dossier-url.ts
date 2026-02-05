@@ -40,10 +40,17 @@ export const ProjectDocumentListURL = ({
 export const getRDCreditPreviewURL = (
   accountRid: string,
   caseRid: string,
-  stateRid: string
+  stateRid: string | null | undefined,
+  type: string
 ): string => {
-  return `/api/rd-credit/preview/${accountRid}/${caseRid}${stateRid ? `/${stateRid}` : ''}`;
+  const resolvedStateRid =
+    stateRid && stateRid.trim() ? stateRid : "''";
+
+  const baseUrl = `/api/rd-credit/preview/${accountRid}/${caseRid}/${resolvedStateRid}`;
+
+  return `${baseUrl}?type=${encodeURIComponent(type)}`;
 };
+
 
 export const getRDCreditStatusURL = (
   accountRid: string,
@@ -62,6 +69,9 @@ export const getFinancialHighlightsURL = (): string => {
 
 export const getSignOffFinancialHighlightsURL = (): string => {
   return `/api/cases/financialWorking/signoff`;
+};
+export const getUserPreferenceURL = (): string => {
+  return `/api/rd-credit/federal/userPreference`;
 };
 
 export const getClosingRemarksListURL = (

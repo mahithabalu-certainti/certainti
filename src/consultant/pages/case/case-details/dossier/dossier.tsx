@@ -13,7 +13,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { DossierIcon } from '../../../../../assets';
+import { ComingSoon, DossierIcon } from '../../../../../assets';
 import {
   DossierSummary,
   FinancialWorkingForm,
@@ -60,8 +60,8 @@ const DossierTabs = [
 interface DossierProps {
   activityMenuItems: ActivityDropdownItem[];
   caseDetails?: CaseDetails;
-  setDossierFinancialStatus: (status: string) => void;
-  dossierFinancialStatus: string;
+  setDossierFinancialStatus: (status: boolean) => void;
+  dossierFinancialStatus: boolean;
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
@@ -177,8 +177,7 @@ const Dossier: React.FC<DossierProps> = ({
     statusData: RDCreditStatusResponse,
     actionType?: 'initiate' | 'regenerate' | 'refresh'
   ) => {
-    const message = statusData?.data ?? statusData?.statusMessage ?? '';
-    setDossierFinancialStatus(message);
+    setRefreshTrigger(Date.now());
     if (statusData?.data === 'COMPLETED') {
       if (actionType === 'initiate' || actionType === 'refresh') {
         successToast('Initiated successfully');
@@ -351,13 +350,9 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
-          tabParam === 'financial_workings'
-            ? Boolean(
-                dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED'
-              )
-            : showTableControls
+          tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
         onRefreshClick={handleRefresh}
         showSearch={showTableControls}
@@ -391,6 +386,19 @@ const Dossier: React.FC<DossierProps> = ({
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
+        {tabParam === 'financial_workings' &&
+          (!isFinancialView ? (
+            <AccessRestricted />
+          ) : (
+            <FinancialWorkingForm
+              caseDetails={caseDetails}
+              setDossierFinancialStatus={setDossierFinancialStatus}
+              dossierFinancialStatus={dossierFinancialStatus}
+              financialData={financialData}
+              setFinancialData={setFinancialData}
+              refetchCaseDetails={refetchCaseDetails}
+            />
+          ))}
         {tabParam === 'summary' && <DossierSummary />}
 
         {tabParam === 'qualified_projects' && (
@@ -399,8 +407,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -430,22 +438,21 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
           />
         )}
-
         {tabParam === 'project_summary' && (
           <ProjectSummary
             refreshTrigger={refreshTrigger}
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -459,8 +466,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -473,12 +480,18 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
+            setExportParams={() => { }}
+            setExportType={() => { }}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
           />
+        )
+        }
+        {tabParam !== 'financial_workings' && (
+          <div className='flex items-center justify-center w-full h-full'>
+            <ComingSoon alt='comingSoon' />
+          </div>
         )}
       </div>
     </div>

@@ -13,6 +13,6 @@ export interface AccountState {
   error: string | null;
   fiscalYear: string;
   refetchGlobalAccounts: boolean;
-  dossierFinancialStatus: string;
+  dossierFinancialStatus: boolean;
   financialData: FinancialHighlightsResponse | null;
 }

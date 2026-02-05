@@ -8,11 +8,159 @@ import {
   USAComputedFields,
 } from '../../../../../../types/dossier';
 
-interface FinancialWorkingUSAProps {
-  data: FinancialHighlightsResponse | null;
+import { MenuItem, Select } from '@mui/material';
+import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useUserPreference } from '../../../../../../services/case-dossier/cases-financial-services';
+
+
+// Helper to extract Yes/No value from reduction280c object
+const extractVal = (reduction280c: any) => {
+  const columnKeys = Object.keys(reduction280c).filter(
+    (k) => typeof reduction280c[k] === 'object'
+  );
+  for (const colKey of columnKeys) {
+    const col = reduction280c[colKey];
+    for (const rowKey in col) {
+      if (rowKey.includes('Electing reduced credit under 280C')) {
+        const v = col[rowKey];
+        if (typeof v === 'string') {
+          const trimmed = v.trim();
+          if (trimmed === 'Yes') return 'Yes';
+          if (trimmed === 'No') return 'No';
+        }
+      }
+    }
+  }
+  return undefined;
+};
+
+// Helper to traverse computedFields and find current 280C values
+const find280CValues = (fields: any): { asc_credit_280_c?: string; rrc_credit_280_c?: string } => {
+  let asc_credit_280_c: string | undefined;
+  let rrc_credit_280_c: string | undefined;
+
+  Object.entries(fields || {}).forEach(([key, val]: any) => {
+    if (key === 'asc280C' && val?.reduction280c) {
+      asc_credit_280_c = extractVal(val.reduction280c);
+    }
+    if (key === 'rrc280C' && val?.reduction280c) {
+      rrc_credit_280_c = extractVal(val.reduction280c);
+    }
+
+    if (
+      typeof val === 'object' &&
+      val !== null &&
+      !val.reduction280c &&
+      !Array.isArray(val)
+    ) {
+      Object.entries(val).forEach(([subKey, subVal]: any) => {
+        if (subKey === 'asc280C' && subVal?.reduction280c) {
+          asc_credit_280_c = extractVal(subVal.reduction280c);
+        }
+        if (subKey === 'rrc280C' && subVal?.reduction280c) {
+          rrc_credit_280_c = extractVal(subVal.reduction280c);
+        }
+      });
+    }
+  });
+
+  return { asc_credit_280_c, rrc_credit_280_c };
+};
+
+interface Selection280CProps {
+  value: string;
+  logKey: string;
+  onSuccess: () => void;
+  otherValues: { asc_credit_280_c?: string; rrc_credit_280_c?: string };
 }
 
-const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
+const Selection280C: React.FC<Selection280CProps> = ({
+  value,
+  logKey,
+  onSuccess,
+  otherValues,
+}) => {
+  const [currentValue, setCurrentValue] = React.useState(value);
+  const { caseId } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountid = searchParams.get('accountID') ?? '';
+  const { mutate: updateUserPreference } = useUserPreference();
+
+  const handleSelect = (event: any) => {
+    const val = event.target.value;
+    setCurrentValue(val);
+
+    const payload: any = {
+      case_rid: caseId ?? '',
+      account_rid: accountid,
+      asc_credit_280_c:
+        logKey === 'asc_credit_280_c'
+          ? val
+          : otherValues.asc_credit_280_c || 'No',
+      rrc_credit_280_c:
+        logKey === 'rrc_credit_280_c'
+          ? val
+          : otherValues.rrc_credit_280_c || 'No',
+    };
+
+    updateUserPreference(payload, {
+      onSuccess: () => {
+        onSuccess();
+      },
+      onError: (error) => {
+        console.error('Failed to update user preference', error);
+      },
+    });
+  };
+
+  return (
+    <Select
+      value={currentValue}
+      onChange={handleSelect}
+      displayEmpty
+      size='small'
+      MenuProps={COMMON_MENU_PROPS}
+      sx={{
+        ...getSelectStyles(false, false),
+        color: '#2D3E4F',
+        width: '100%',
+        bgcolor: '#f4989c',
+        borderRadius: '4px',
+        height: '32px',
+        '.MuiSelect-select': {
+          textAlign: 'center',
+        },
+        '& .MuiSelect-icon': {
+          color: '#2D3E4F',
+        },
+        '& fieldset': {
+          borderColor: 'transparent',
+        },
+        '&:hover fieldset': {
+          borderColor: 'transparent',
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: 'transparent',
+        },
+
+      }}
+    >
+      <MenuItem value='Yes'>Yes</MenuItem>
+      <MenuItem value='No'>No</MenuItem>
+    </Select>
+  );
+};
+
+interface FinancialWorkingUSAProps {
+  data: FinancialHighlightsResponse | null;
+  onSuccess: () => void;
+}
+
+const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
+  data,
+  onSuccess,
+}) => {
   // Check if data is present
   const rawComputedFields = data?.data?.computed_fields as USAComputedFields;
   const computedFields =
@@ -29,6 +177,12 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
       </div>
     );
   }
+
+  // Calculate current 280C values from data
+  // Using useMemo to avoid re-calculation on every render unless computedFields changes
+  const otherValues = React.useMemo(() => find280CValues(computedFields), [
+    computedFields,
+  ]);
 
   const boldRows = (computedFields as any)?.BOLD || [];
 
@@ -267,11 +421,41 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                     >
                       {formatLabel(rowKey)}
                     </td>
-                    {columnKeys.map((colKey) => (
-                      <td key={colKey} className='px-3 py-1.5 text-right'>
-                        {renderValue(reduction280c[colKey][rowKey], isBold)}
-                      </td>
-                    ))}
+                    {columnKeys.map((colKey) => {
+                      const cellValue = reduction280c[colKey][rowKey];
+                      const isReductionRow = rowKey.includes(
+                        'Electing reduced credit under 280C'
+                      );
+
+                      if (
+                        isReductionRow &&
+                        (cellValue === 'Yes' || cellValue === 'No')
+                      ) {
+                        const logKey =
+                          title === 'asc280C'
+                            ? 'asc_credit_280_c'
+                            : title === 'rrc280C'
+                              ? 'rrc_credit_280_c'
+                              : title;
+                        return (
+                          <td key={colKey} className='px-3 py-1.5 text-right'>
+                            <div className='w-[180px] min-h-[32px] inline-flex items-center justify-end'>
+                              <Selection280C
+                                value={cellValue}
+                                logKey={logKey}
+                                onSuccess={onSuccess}
+                                otherValues={otherValues}
+                              />
+                            </div>
+                          </td>
+                        );
+                      }
+                      return (
+                        <td key={colKey} className='px-3 py-1.5 text-right'>
+                          {renderValue(reduction280c[colKey][rowKey], isBold)}
+                        </td>
+                      );
+                    })}
                   </tr>
                 );
               });
@@ -330,14 +514,14 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
           sticky: isFirstColumn,
           sx: isFirstColumn
             ? {
-                position: 'sticky',
-                left: 0,
-                background: '#fff',
-                padding: '0px 8px 0px 14px !important',
-                zIndex: 10,
-                borderRight: '1px solid #CBD6E2 !important',
-                borderBottom: '1px solid #CBD6E2 !important',
-              }
+              position: 'sticky',
+              left: 0,
+              background: '#fff',
+              padding: '0px 8px 0px 14px !important',
+              zIndex: 10,
+              borderRight: '1px solid #CBD6E2 !important',
+              borderBottom: '1px solid #CBD6E2 !important',
+            }
             : undefined,
           render: (row: TableRow) => {
             const value = row[headerId];
@@ -347,7 +531,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                 ? table_headers[0]
                 : table_headers[0].id;
             const rowLabel = row[firstColHeaderId] as string;
-            const isRowBold = rowLabel && boldRows.includes(rowLabel);
+            const isRowBold =
+              (rowLabel && boldRows.includes(rowLabel)) || rowLabel === 'Total';
             const isBold = isFirstColumn || isRowBold;
 
             // Format value: 0 becomes '-', numbers become currency, strings stay as is
@@ -372,19 +557,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     const tableDataRows: TableRow[] =
       table_rows && Array.isArray(table_rows)
         ? table_rows.map((rowObj: any, index: number) => {
-            const row: TableRow = {
-              id: `row_${index}`,
-            };
+          const row: TableRow = {
+            id: `row_${index}`,
+          };
 
-            // Map each header ID to its value from the row object
-            table_headers.forEach((headerItem: any) => {
-              const headerId =
-                typeof headerItem === 'string' ? headerItem : headerItem.id;
-              row[headerId] = rowObj[headerId];
-            });
+          // Map each header ID to its value from the row object
+          table_headers.forEach((headerItem: any) => {
+            const headerId =
+              typeof headerItem === 'string' ? headerItem : headerItem.id;
+            row[headerId] = rowObj[headerId];
+          });
 
-            return row;
-          })
+          return row;
+        })
         : [];
 
     if (Total !== undefined && Total !== null && table_headers.length > 0) {
@@ -467,6 +652,33 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
     return renderTableSection({
       table_headers,
       table_rows,
+    });
+  };
+
+  const renderFederalTable = (
+    federalData: Record<string, any>,
+    totalValue?: any
+  ) => {
+    if (!federalData || Object.keys(federalData).length === 0) return null;
+
+    const table_headers = [
+      { id: 'state', label: 'State' },
+      { id: 'credit_benefit', label: 'Credit Benefit' },
+    ];
+
+    const table_rows = Object.entries(federalData).map(([state, value]) => {
+      const numValue = Number(value);
+      return {
+        id: state,
+        state: state,
+        credit_benefit: !isNaN(numValue) ? numValue : value,
+      };
+    });
+
+    return renderTableSection({
+      table_headers,
+      table_rows,
+      Total: totalValue,
     });
   };
 
@@ -557,8 +769,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-                val.trim() !== '' &&
-                !isNaN(Number(val));
+              val.trim() !== '' &&
+              !isNaN(Number(val));
 
           return (
             <div
@@ -713,7 +925,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
             if (
               key === 'computed_fields' ||
               key === 'qreSummary' ||
-              key === 'BOLD'
+              key === 'BOLD' ||
+              key === 'total'
             )
               return null;
 
@@ -748,6 +961,25 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({ data }) => {
                   {renderCard(
                     formatLabel(key),
                     renderIllinoisTable(value),
+                    false
+                  )}
+                </div>
+              );
+            }
+
+            // Special handling for "federal"
+            if (
+              key === 'federal' &&
+              typeof value === 'object' &&
+              value !== null &&
+              !Array.isArray(value)
+            ) {
+              const totalValue = (computedFields as any)?.total;
+              return (
+                <div key={key} className='mb-4'>
+                  {renderCard(
+                    formatLabel(key),
+                    renderFederalTable(value, totalValue),
                     false
                   )}
                 </div>
