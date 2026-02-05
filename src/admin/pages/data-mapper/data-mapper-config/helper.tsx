@@ -420,8 +420,10 @@ interface ObjectRidMap {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual';
+  type: 'chip' | 'operator' | 'manual' | 'function';
   value: string;
+  functionType?: 'MIN' | 'MAX';
+  functionArgs?: string[];
 }
 
 interface MappingItemForValidation {
@@ -454,7 +456,7 @@ export function validateMappingItem(
   const hasFieldId = mapping.field_id && mapping.field_id.trim() !== '';
 
   // Validate Field ID requirement (skip for non-fillable forms)
-  if (hasTarget && !hasFieldId && !isNonFillable) {
+  if (hasTarget && !hasFieldId && !isNonFillable && !hasInputValue) {
     errors.fieldIdError = 'Field ID is required when Target is specified';
   }
 
@@ -484,7 +486,17 @@ export function validateMappingItem(
       return errors;
     }
 
-    // Check for consecutive operators or consecutive chips/manual entries
+    // Validate function expressions
+    for (const exp of expressions) {
+      if (exp.type === 'function') {
+        if (!exp.functionArgs || exp.functionArgs.length < 2) {
+          errors.targetError = `${exp.functionType || 'Function'} requires at least 2 arguments`;
+          return errors;
+        }
+      }
+    }
+
+    // Check for consecutive operators or consecutive chips/manual entries/functions
     for (let i = 0; i < expressions.length - 1; i++) {
       const current = expressions[i];
       const next = expressions[i + 1];
@@ -494,10 +506,15 @@ export function validateMappingItem(
         return errors;
       }
 
-      // Treat chips and manual entries the same - both need operators between them
+      // Treat chips, manual entries, and functions the same - all need operators between them
       const isCurrentValue =
-        current.type === 'chip' || current.type === 'manual';
-      const isNextValue = next.type === 'chip' || next.type === 'manual';
+        current.type === 'chip' ||
+        current.type === 'manual' ||
+        current.type === 'function';
+      const isNextValue =
+        next.type === 'chip' ||
+        next.type === 'manual' ||
+        next.type === 'function';
 
       if (isCurrentValue && isNextValue) {
         errors.targetError = 'Missing operator between Object IDs';

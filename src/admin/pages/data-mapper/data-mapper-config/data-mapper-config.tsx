@@ -21,8 +21,10 @@ interface ObjectRidMap {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual';
+  type: 'chip' | 'operator' | 'manual' | 'function';
   value: string;
+  functionType?: 'MIN' | 'MAX';
+  functionArgs?: string[];
 }
 
 interface MappingItem {
