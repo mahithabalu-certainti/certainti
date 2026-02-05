@@ -102,14 +102,14 @@ export class RdCreditCalculatorForCO {
                 "PART IV: Research and Experimental Activities Credit" : {
                     "text" : "In order to calculate any current year Research and Experimental Activities Credit in Part III, please use worksheet 3 below. Complete the remainder of the form following the instructions to claim allowable credit you earned in prior periods."
                 },
-                "Worksheet 3: Research and Experimental Activities Credit Do not send, keep for your records" : {
-                    "A.Enter the current year qualified expenditures": data.totalQREs.toNumber() || 0,
-                    "B.Enter the first preceding year expenditures": data.priorYear1QREs.toNumber() || 0,
-                    "C. Enter the second preceding year expenditures" : data.priorYear2QREs.toNumber() || 0,
-                    "D.Enter the sum of lines B and C": data.sumPriorTwoYears.toNumber(),
-                    [`E.Enter ${data.config.qre_cap_rate}% of line D`]: data.fiftyPercentOfPriorTwoYears.toNumber(),
-                    "F.Enter line A minus line E": data.excessQRE.toNumber(),
-                    [`G.Allowable amount: ${data.config.credit_rate}% of line F`]: data.allowableCredit.toNumber(),
+                "Research and Experimental Activities Credit Do not send, keep for your records" : {
+                "[A] Enter the current year qualified expenditures": data.totalQREs.toNumber() || 0,
+                "[B] Enter the first preceding year expenditures": data.priorYear1QREs.toNumber() || 0,
+                "[C] Enter the second preceding year expenditures": data.priorYear2QREs.toNumber() || 0,
+                "[D] Enter the sum of lines B and C": data.sumPriorTwoYears.toNumber(),
+                [`[E] Enter ${data.config.qre_cap_rate}% of line D`]: data.fiftyPercentOfPriorTwoYears.toNumber(),
+                "[F] Enter line A minus line E": data.excessQRE.toNumber(),
+                [`[G] Allowable amount: ${data.config.credit_rate}% of line F`]: data.allowableCredit.toNumber(),
                 }
             }
         }
