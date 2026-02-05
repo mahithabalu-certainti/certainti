@@ -192,24 +192,28 @@ export const STATUS_MESSAGE = {
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
   projectTaskUpdatedSuccess: "Project task details updated successfully",
   configNotAvailable: "Configuration not available for the selected criteria",
-  technicalDocumentationSignedOff : "Technical documentation has been successfully signed off",
-  technicalDocsAlreadySignedOff : "Technical documentation is already signed off",
-  signoffNotAllowed : "Sign-off cannot be reverted. Approval is required to proceed",
+  technicalDocumentationSignedOff: "Technical documentation has been successfully signed off",
+  technicalDocsAlreadySignedOff: "Technical documentation is already signed off",
+  signoffNotAllowed: "Sign-off cannot be reverted. Approval is required to proceed",
   configCreatedSuccess: "Configuration created successfully",
   configUpdatedSuccess: "Configuration updated successfully",
   configCreationFailed: "Configuration creation failed",
   configUpdateFailed: "Configuration update failed",
-  rdCreditPreviewSuccess : "R&D Credit preview fetched successfully",
+  rdCreditPreviewSuccess: "R&D Credit preview fetched successfully",
   rdCreditPreview: "RD credit calculation results retrieved",
-  rdCreditProcessInitiatedSuccess : "RD credit calculation initiated successfully",
+  rdCreditProcessInitiatedSuccess: "RD credit calculation initiated successfully",
   rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
   regionsFetchedSuccess : "Regions listed successfully",
-  financialWorkingInitiated:"Financial workings are being computed. Refresh the page to check the status",
   userPreferenceUpdatedSuccess : "UserPreference updated successfully",
   userPreferenceUpdationFailed : "UserPreference updation failed",
+  rdCreditFinancialSignOffPending:"Financial working sign-off is pending. Cannot initiate RD Form Filler process.",
+  rdFormProcessInitiatedSuccess : "RD form filler process initiated successfully",
+  rdFormPreview : "RD form retrieved successfully",
+  financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
+  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully"
 };
 
 export const caseStatuses = {
@@ -220,7 +224,7 @@ export const caseStatuses = {
 };
 
 export const caseFilingTypes = {
- regular: "Regular",
+  regular: "Regular",
   amendment: "Amendment",
 };
 
@@ -579,8 +583,8 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,storage_type,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
-  fetchCasesInfo(rid:string) {
-      return `SELECT cs.rid,
+  fetchCasesInfo(rid: string) {
+    return `SELECT cs.rid,
       CONCAT(ac.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_name,ac.account_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email ,s.status_name FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
       LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid 
       LEFT JOIN ${MAIN_SCHEMA_NAME}.account ac ON cs.account_rid = ac.rid
@@ -588,7 +592,7 @@ export const rawQueries = {
        LEFT JOIN ${MAIN_SCHEMA_NAME}.case_status  s ON cs.status_rid = s.rid
       WHERE cs.case_rid = '${rid}'
      `;
-    },
+  },
   fetchUserGroupType: `
       SELECT type group_type
       FROM ${MAIN_SCHEMA_NAME}.user_groups ug
@@ -809,10 +813,10 @@ export const rawQueries = {
       return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (${ids})`
     }
   },
-  getAllTags (rid : any[]) {
-    let ids : string[] = []
-    if(rid.length > 0) {
-      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+  getAllTags(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
       return `SELECT rid, tag_name FROM ${MAIN_SCHEMA_NAME}.tags WHERE rid IN (${ids})`
     }
   },
@@ -1014,7 +1018,7 @@ export const rawQueries = {
     return `SELECT rid, r_number, case_name, account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
   },
   getTaskInfo(rid: string, schemaName: string) {
-      return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid = '${rid}'`
+    return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid = '${rid}'`
   },
   getSpecificTaskStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
@@ -1049,7 +1053,7 @@ export const rawQueries = {
     if (newRid === null) newRid = ''
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
   },
-   fetchCaseStatus(oldRid: string, newRid: string) {
+  fetchCaseStatus(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN ('${oldRid}', '${newRid}')`
@@ -1103,7 +1107,7 @@ export const rawQueries = {
       return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector WHERE rid IN (${ids})`
     }
   },
-  fetchCaseName( caseRids: string) {
+  fetchCaseName(caseRids: string) {
     return `SELECT  CONCAT(a.account_name, '-', ct.country_name, '-',c.fiscal_year,'-',c.case_name) AS case_full_name FROM ${MAIN_SCHEMA_NAME}.case_summary  c
     lEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = c.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country ct ON ct.rid = a.country_rid
@@ -1135,8 +1139,8 @@ export const rawQueries = {
   fetchCurrencyById() {
     return `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`;
   },
-  fetchCurrencies(rid : any[]) {
-    return `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (${rid.map((d : any) => `'${d}'`).join(',')})`;
+  fetchCurrencies(rid: any[]) {
+    return `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (${rid.map((d: any) => `'${d}'`).join(',')})`;
   },
   fetchUserById() {
     return `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`;
@@ -1173,12 +1177,6 @@ export const rawQueries = {
   fetchActiveStatus() {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
-  },
-  fetchConfiguration(schemaName:string,caseRid:string)
-  {
-    return `
-      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
-    `
   },
   GET_CURRENCIES: `
   SELECT rid, currency_symbol, currency_name, currency_code FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRid)
@@ -1427,7 +1425,7 @@ export const rawQueries = {
     WHERE g.rid = '${credit_config_group_rid}';
     `;
   },
-  getPlatformJurisdictionConfig(countryRid : string) {
+  getPlatformJurisdictionConfig(countryRid: string) {
     return `
       SELECT 
       k.rid as credit_parameter_key_rid,
@@ -1504,7 +1502,7 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = rv.modified_by
     WHERE federal_config_id = '${config_rid}';`
   },
-  fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
+  fetchPlatformConfig(rid: string, formattedStartDate: string, formattedEndDate: string) {
     return `
     SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
   join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
@@ -1575,33 +1573,33 @@ export const rawQueries = {
       SELECT c.* FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'
     `;
   },
-  fetchProjectFiscalById (rid : string, accountRid : string, schemaName : string) {
+  fetchProjectFiscalById(rid: string, accountRid: string, schemaName: string) {
     return `SELECT rid, signoff, project_code FROM ${schemaName}.project_fiscal WHERE rid = '${rid}' AND account_rid = '${accountRid}'`
   },
   getProjectsForCases(caseRid: string, accountRid: string, schemaName: string) {
     return `SELECT rid, project_fiscal_rid, region_rid, fiscal_year FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
   },
-  updateSignoffInCase(schemaName : string, caseRid : string, signOff : boolean) {
+  updateSignoffInCase(schemaName: string, caseRid: string, signOff: boolean) {
     return `UPDATE ${schemaName}.cases SET financial_working_signoff = ${signOff} WHERE rid = '${caseRid}'`
   },
-  updateClaimQualifiedInCaseProject (caseRid : string, projectFiscalRids : string[], accountRid : string, schemaName : string) {
-    return `UPDATE ${schemaName}.case_projects SET is_rd_claim_qualified = true WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' AND project_fiscal_rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')})`
+  updateClaimQualifiedInCaseProject(caseRid: string, projectFiscalRids: string[], accountRid: string, schemaName: string) {
+    return `UPDATE ${schemaName}.case_projects SET is_rd_claim_qualified = true WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' AND project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')})`
   },
-  updateClaimQualifiedInProjectFiscal (projectFiscalRids : string[], accountRid : string, schemaName : string) {
-    return `UPDATE ${schemaName}.project_fiscal SET is_rd_claim_qualified = true WHERE rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  updateClaimQualifiedInProjectFiscal(projectFiscalRids: string[], accountRid: string, schemaName: string) {
+    return `UPDATE ${schemaName}.project_fiscal SET is_rd_claim_qualified = true WHERE rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
-  updateClaimQualifiedInProjectFiscalSummary (projectFiscalRids : string[], accountRid : string) {
-    return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = true WHERE project_fiscal_rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  updateClaimQualifiedInProjectFiscalSummary(projectFiscalRids: string[], accountRid: string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = true WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
   getFinancialWorkingId () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%financial_working%'`
   },
-  updateClaimQualifiedInCaseProjectFiscalRegion (ProjectRegionIds : any[], accountRid : string, schemaName : string) {
-    let ids = ProjectRegionIds.filter((d : any) => d.region_rid !== null)
+  updateClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
+    let ids = ProjectRegionIds.filter((d: any) => d.region_rid !== null)
     let validIds;
-    validIds = ids.map((d : any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
+    validIds = ids.map((d: any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
     let finalQuery;
-    if(validIds === '') {
+    if (validIds === '') {
       finalQuery = ''
     } else {
       finalQuery = `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = true WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
@@ -1614,21 +1612,209 @@ export const rawQueries = {
     WHERE 
     rid IN (${formattedStateIds})`;
   },
-  fetchMilestoneDetails (rid : string) {
+  fetchMilestoneDetails(rid: string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
   },
-  fetchAccountStartEndDate (accountRid : string, schemaName : string) {
+  getDataMapperFormsById(rid: string) {
+    return `SELECT 
+    f.rid,
+    f.r_number,
+    f.created_datetime,
+    f.created_by,
+    f.modified_datetime,
+    f.modified_by,
+    f.form_name,
+    f.browse_file,
+    f.document_name,
+    f.effective_from_date,
+    f.effective_to_date,
+    f.country_rid,
+    f.state_rid,
+    f.format,
+    f.size_in_mb,
+    f.status_rid,
+    f.is_active,
+    f.error_message,
+    f.form_type,
+    c.country_name,
+    s.state_name,
+    ds.status_name,
+    concat(cu.first_name, ' ', cu.last_name) AS created_by_name,
+    concat(mu.first_name, ' ', mu.last_name) AS modified_by_name
+    FROM ${MAIN_SCHEMA_NAME}.data_mapper_forms f
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c
+        ON f.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state s
+        ON f.state_rid = s.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.data_mapper_upload_status ds
+        ON f.status_rid = ds.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}."user" cu
+        ON f.created_by = cu.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}."user" mu
+        ON f.modified_by = mu.rid
+    WHERE f.rid = '${rid}'`;
+  },
+  getFieldArrayByFormRid(form_rid: string) {
+    return `SELECT field_array FROM ${MAIN_SCHEMA_NAME}.data_mapper_forms WHERE rid = '${form_rid}'`
+  },
+  getDataMapperInitiatedStatus: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Initiated' LIMIT 1`,
+  getDataMapperFailedStatus: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Failed' LIMIT 1`,
+  getDataMapperUploadStatuses: `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE rid IN (:rids)`,
+  fetchAccountStartEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   },
-  insertDataIntoAttachments (schemaName : string, caseRid : string, userId : string, accountRid : string, browseFile : string, documentName : string, fiscalYear : number, format : string, size : number, comments : any) {
+  insertDataIntoAttachments(schemaName: string, caseRid: string, userId: string, accountRid: string, browseFile: string, documentName: string, fiscalYear: number, format: string, size: number, comments: any) {
     return `INSERT INTO ${schemaName}.attachments (created_by, created_datetime, account_rid, browse_file, document_name, attach_to, attachment_level, fiscal_year, format, size_in_mb, document_category_rid, document_type_rid, document_category_others, document_type_others, comments) VALUES ('${userId}', NOW(), '${accountRid}', '${browseFile}', '${documentName}', '${caseRid}', 'case', ${fiscalYear}, '${format}', ${size}, '', '', '', '', '${comments.replace(/'/g, "")}')`
+  },
+  fetchFiscalEndDate(accountRid: string, schemaName: string) {
+    return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   },
   insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string) {
     return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}')`
   },
-  fetchFiscalEndDate (accountRid : string, schemaName : string) {
-    return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  findSignOffTypes (rids : string[]) {
+    return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d : any) => `'${d}'`).join(',')})`
+  },
+  fetchFederalForms(countryRid: string, effectiveStart: string, effectiveEnd: string){
+    return `SELECT dmf.browse_file,dmf.rid,dmf.form_type
+    FROM trd365.data_mapper_forms dmf
+  WHERE dmf.country_rid = '${countryRid}'
+  AND (dmf.state_rid IS NULL OR dmf.state_rid = '')
+  AND (dmf.effective_from_date IS NULL 
+       OR dmf.effective_from_date <= DATE '${effectiveEnd}')
+  AND (dmf.effective_to_date IS NULL 
+       OR dmf.effective_to_date >= DATE '${effectiveStart}')
+  AND is_active = true`
+  },
+  fetchStateForms(countryRid: string,stateRid: string, effectiveStart: string, effectiveEnd: string){
+    return `SELECT dmf.browse_file,dmf.rid
+FROM trd365.data_mapper_forms dmf
+WHERE dmf.country_rid = '${countryRid}'
+  AND dmf.state_rid = '${stateRid}'
+  AND (dmf.effective_from_date IS NULL 
+       OR dmf.effective_from_date <= DATE '${effectiveEnd}')
+  AND (dmf.effective_to_date IS NULL 
+       OR dmf.effective_to_date >= DATE '${effectiveStart}')
+  AND is_active = true`
+  },
+  checkFinancialSignOffDone(schemaName: string, caseRid: string) {
+    return `
+    SELECT COALESCE(
+      (SELECT financial_working_signoff FROM ${schemaName}.cases WHERE rid = '${caseRid}'),
+      false
+    ) AS financial_working_signoff
+    `
+  },
+  fetchRdFormMapperConfigurations(formId: string){
+    return `
+     SELECT DISTINCT
+       dmfm.field_label,
+       dmfm.field_id,
+       dmfm.field_type,
+       dmfm.calculation_config,
+       dmfm.created_datetime,
+       dmfm.column_id,
+       dmfm.extraction_order,
+       dmfm.data_order_by
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_form_mappings dmfm
+      WHERE dmfm.form_rid = :formId
+      ORDER BY dmfm.extraction_order ASC`
+  },
+  saveFederalFilledFormUrl(schemaName: string)
+  {
+    return `
+          UPDATE ${schemaName}.rd_credit_country_calculations
+          SET rd_form_url = :filledFormUrl
+          WHERE case_rid = :caseRid
+          and country_rid  =:countryRid`
+  },
+  saveStateFilledFormUrl(schemaName: string)
+  {
+    return `
+           UPDATE ${schemaName}.rd_credit_state_calculations
+      SET rd_form_url = :filledFormUrl
+      WHERE case_rid = :caseRid
+      and state_rid  =:stateRid`
+  },
+  updateFederalFormError(schemaName: string)
+    {
+      return `UPDATE ${schemaName}.rd_credit_country_calculations
+      SET form_error_message = 'Federal form file not found'
+      WHERE case_rid = :caseRid
+      and country_rid  =:countryRid`
+    },
+  updateStateFormError(schemaName: string)
+    {
+      return `UPDATE ${schemaName}.rd_credit_state_calculations
+            SET form_error_message = 'State form file not found'
+            WHERE case_rid = :caseRid
+            and country_rid  =:countryRid
+            and state_rid = :stateRid`
+    },
+  fetchFederalFormUrl(schemaName: string){
+    return `
+      SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_country_calculations
+      WHERE case_rid = :caseRid
+      and country_rid  =:countryRid
+      LIMIT 1`
+  },
+   fetchStateFormUrl(schemaName: string){
+    return `
+     SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_state_calculations
+      WHERE case_rid = :caseRid
+      and state_rid  =:stateRid
+      LIMIT 1`
+  },
+  getDataMapperObjects() {
+    return `
+       SELECT 
+        dmo.id,
+        dmo.field_label,
+        dmo.field_id,
+        dmo.ref_table,
+        dmo.field_name,
+        dmo.where_condition,
+        dmo.default_value,
+        creditASC as parentObject,
+        dmo.is_json
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+      WHERE dmo.country_rid = :country_rid
+      ORDER BY dmo.field_label
+    `;
+  },
+  getDatamapperObjectById() {
+    return `
+      SELECT 
+        dmo.rid,
+        dmo.ref_table,
+        dmo.field_name,
+        dmo.is_json
+      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+      WHERE dmo.rid = :rid
+      LIMIT 1`
+  },
+  fetchConfiguration(schemaName:string,caseRid:string)
+  {
+    return `
+      SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
+    `
+  },
+  fetchDynamicFieldValues(schemaName:string, refTable:string, quotedJsonPath:string)
+  {
+    return `
+          SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
+          FROM ${schemaName}.${refTable}
+          WHERE case_rid = :case_rid
+          LIMIT 1`
+  },
+  getTableMappings() {
+    return `
+        SELECT column_id_list 
+        FROM trd365.data_mapper_table_mappings 
+        WHERE rid = :columnId
+        LIMIT 1`;
   }
+
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -1950,9 +2136,9 @@ export const computationStatus = {
 
 export const ruleTemplateNames = {
   caseCreated: "case_create",
-  statusUpdated:"task_status_update",
-  taskCreated:"task_create",
-  assigneeChanged:"task_assignee_change"
+  statusUpdated: "task_status_update",
+  taskCreated: "task_create",
+  assigneeChanged: "task_assignee_change"
 }
 
 export const ruleNames = {
@@ -2037,6 +2223,6 @@ export const mainTableFiltersForCase: Record<any, any> = {
 }
 
 export const onlyFederals = {
-  usa : "USA",
-  canada : "CAN"
+  usa: "USA",
+  canada: "CAN"
 }

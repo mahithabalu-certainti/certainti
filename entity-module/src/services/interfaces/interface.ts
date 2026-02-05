@@ -448,7 +448,8 @@ export interface IAttachmentService {
     sortBy: string,
     sortOrder: string,
     fiscalYear: number,
-    graphqlData: any
+    graphqlData: any,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -467,7 +468,8 @@ export interface IAttachmentService {
     sortOrder: string,
     fiscalYear: number,
     graphqlData: any,
-    timezone : string
+    timezone : string,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;

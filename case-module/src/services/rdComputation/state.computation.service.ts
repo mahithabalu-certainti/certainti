@@ -72,7 +72,7 @@ export class StateComputationService {
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
-            const processRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentAccountRnumber[0][0].r_number, caseRid);
+            const processRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentAccountRnumber[0][0].r_number, caseRid, 'financial_computation');
             // Publish to Kafka
             await kafkaProducerService.publish(accountRid, fetchParentAccountRnumber[0][0].r_number, processRid, caseRid, effectiveStart, effectiveEnd);
 
