@@ -157,7 +157,7 @@ export const CaseDetails = () => {
     (state: RootState) => state.account
   );
 
-  const setDossierFinancialStatus = (status: string) => {
+  const setDossierFinancialStatus = (status: boolean) => {
     dispatch(setDossierFinancialStatusAction(status));
   };
 
@@ -339,7 +339,7 @@ export const CaseDetails = () => {
 
   useEffect(() => {
     // Reset dossier states when case changes to avoid showing stale data from previous case
-    setDossierFinancialStatus('');
+    setDossierFinancialStatus(false);
     setFinancialData(null);
   }, [caseId]);
 
@@ -1129,13 +1129,12 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${
-          isActionItemsExpanded
-            ? 'max-h-0 opacity-0'
-            : isError
-              ? 'max-h-[60px] opacity-100'
-              : 'max-h-[140px] opacity-100'
-        }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
+          ? 'max-h-0 opacity-0'
+          : isError
+            ? 'max-h-[60px] opacity-100'
+            : 'max-h-[140px] opacity-100'
+          }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1147,11 +1146,10 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -1202,21 +1200,6 @@ export const CaseDetails = () => {
                 <span className='ml-1 font-medium'>
                   Financial workings of this Case is signed off. Project changes
                   are no longer allowed.
-                </span>
-              </div>
-            </div>
-          )}
-          {dossierFinancialStatus && dossierFinancialStatus !== 'COMPLETED' && (
-            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box mb-2'>
-              <div>
-                <React.Suspense fallback={null}>
-                  <DetailsKeyContactErrorIcon alt='key-contact' />
-                </React.Suspense>
-              </div>
-              <div>
-                <span className='font-bold mr-1 capitalize'>Status:</span>
-                <span className='ml-1 font-medium'>
-                  {dossierFinancialStatus || '-'}
                 </span>
               </div>
             </div>

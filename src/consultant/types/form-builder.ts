@@ -6,6 +6,7 @@ export interface FormType {
   fields: FormTypeFields[];
   from?: string;
   hide?: boolean;
+  renderAsTable?: boolean;
 }
 
 export interface FormTypeFields {

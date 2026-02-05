@@ -402,6 +402,12 @@ export interface RDCreditInitiatePayload {
   case_rid: string;
   fiscal_year?: number;
 }
+export interface UserPreferencePayload {
+  account_rid: string;
+  case_rid: string;
+  asc_credit_280_c: string
+  rrc_credit_280_c: string
+}
 
 export interface SignOffFinancialHighlightsPayload {
   case_rid: string;
@@ -451,9 +457,9 @@ export interface FinancialHighlightsData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-    | FinancialHighlightsComputedFields
-    | AustraliaComputedFields
-    | USAComputedFields;
+  | FinancialHighlightsComputedFields
+  | AustraliaComputedFields
+  | USAComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -464,9 +470,9 @@ export interface CaseSummaryData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-    | FinancialHighlightsComputedFields
-    | AustraliaComputedFields
-    | USAComputedFields;
+  | FinancialHighlightsComputedFields
+  | AustraliaComputedFields
+  | USAComputedFields;
 }
 
 export interface AustraliaRdExpenditure {
@@ -556,5 +562,6 @@ export interface RDCreditInitiateResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
+  status: string;
   data: CaseSummaryData | string; // Adjusted to allow string (from previous usage or just flexible)
 }
