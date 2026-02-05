@@ -537,7 +537,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
   };
 
   // New function to render table sections from tables object structure using ListTable
-  const renderTableSection = (tableData: any) => {
+  const renderTableSection = (tableData: any, maxHeight: string = '450px') => {
     if (!tableData || typeof tableData !== 'object') return null;
 
     const { table_headers, table_rows, Total } = tableData;
@@ -577,19 +577,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               )}
             </div>
           ) as React.ReactNode as string,
-          width: isFirstColumn ? 350 : 180,
+          width: isFirstColumn ? 150 : 120,
           sortId: headerId,
           sticky: isFirstColumn,
           sx: isFirstColumn
             ? {
-                position: 'sticky',
-                left: 0,
-                background: '#fff',
-                // padding: '0px 2px 0px 4px !important',
-                zIndex: 10,
-                borderRight: '1px solid #CBD6E2 !important',
-                borderBottom: '1px solid #CBD6E2 !important',
-              }
+              position: 'sticky',
+              left: 0,
+              background: '#fff',
+              // padding: '0px 2px 0px 4px !important',
+              zIndex: 10,
+              borderRight: '1px solid #CBD6E2 !important',
+              borderBottom: '1px solid #CBD6E2 !important',
+            }
             : undefined,
           render: (row: TableRow) => {
             const value = row[headerId];
@@ -625,19 +625,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     const tableDataRows: TableRow[] =
       table_rows && Array.isArray(table_rows)
         ? table_rows.map((rowObj: any, index: number) => {
-            const row: TableRow = {
-              id: `row_${index}`,
-            };
+          const row: TableRow = {
+            id: `row_${index}`,
+          };
 
-            // Map each header ID to its value from the row object
-            table_headers.forEach((headerItem: any) => {
-              const headerId =
-                typeof headerItem === 'string' ? headerItem : headerItem.id;
-              row[headerId] = rowObj[headerId];
-            });
+          // Map each header ID to its value from the row object
+          table_headers.forEach((headerItem: any) => {
+            const headerId =
+              typeof headerItem === 'string' ? headerItem : headerItem.id;
+            row[headerId] = rowObj[headerId];
+          });
 
-            return row;
-          })
+          return row;
+        })
         : [];
 
     if (Total !== undefined && Total !== null && table_headers.length > 0) {
@@ -674,7 +674,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             stickyColumnsCount={1}
             tableStyle={{
               height: '100%',
-              maxHeight: '450px',
+              maxHeight: maxHeight,
               overflow: 'auto',
             }}
           />
@@ -774,10 +774,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       });
     }
 
-    return renderTableSection({
-      table_headers,
-      table_rows,
-    });
+    return renderTableSection(
+      {
+        table_headers,
+        table_rows,
+      },
+      '600px'
+    );
   };
 
   const renderDynamicArrayTable = (data: any[]) => {
@@ -867,8 +870,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-                val.trim() !== '' &&
-                !isNaN(Number(val));
+              val.trim() !== '' &&
+              !isNaN(Number(val));
 
           return (
             <div
@@ -1176,7 +1179,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               return (
                 <div key={key} className='mb-2'>
                   {renderCard(
-                    formatLabel(key),
+                    'State Credit Summary',
                     renderFederalTable(value),
                     false
                   )}
