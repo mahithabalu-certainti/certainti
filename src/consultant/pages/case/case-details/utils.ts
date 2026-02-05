@@ -64,9 +64,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
           label: 'Total Qualified Project Cost',
           value: cases?.case_total_project_cost
             ? costDisplay(
-                cases.case_total_qualified_project_cost,
-                currencySymbol
-              )
+              cases.case_total_qualified_project_cost,
+              currencySymbol
+            )
             : '-',
         },
       ],
@@ -92,8 +92,8 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
 
         {
           label: 'Total RD Credits',
-          value: cases?.case_total_rd_cost
-            ? costDisplay(cases.case_total_rd_cost, currencySymbol)
+          value: cases?.final_credit
+            ? costDisplay(cases.final_credit, currencySymbol)
             : '-',
         },
       ],

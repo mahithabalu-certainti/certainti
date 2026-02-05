@@ -128,9 +128,14 @@ const Selection280C: React.FC<Selection280CProps> = ({
         width: '100%',
         bgcolor: '#f4989c',
         borderRadius: '4px',
-        height: '32px',
+        height: '24px',
         '.MuiSelect-select': {
           textAlign: 'center',
+          paddingTop: '0 !important',
+          paddingBottom: '0 !important',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         },
         '& .MuiSelect-icon': {
           color: '#2D3E4F',
@@ -717,30 +722,60 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     });
   };
 
-  const renderFederalTable = (
-    federalData: Record<string, any>,
-    totalValue?: any
-  ) => {
+  const renderFederalTable = (federalData: Record<string, any>) => {
     if (!federalData || Object.keys(federalData).length === 0) return null;
 
-    const table_headers = [
-      { id: 'state', label: 'State' },
-      { id: 'credit_benefit', label: 'Credit Benefit' },
-    ];
+    const entries = Object.entries(federalData);
+    const firstValue = entries[0]?.[1];
+    const isObjectData =
+      typeof firstValue === 'object' &&
+      firstValue !== null &&
+      !Array.isArray(firstValue);
 
-    const table_rows = Object.entries(federalData).map(([state, value]) => {
-      const numValue = Number(value);
-      return {
+    let table_headers: any[] = [];
+    let table_rows: any[] = [];
+
+    if (isObjectData) {
+      // Dynamic columns from object keys
+      const allKeys = new Set<string>();
+      entries.forEach(([, value]) => {
+        if (value && typeof value === 'object') {
+          Object.keys(value).forEach((key) => allKeys.add(key));
+        }
+      });
+
+      const dynamicColumns = Array.from(allKeys).map((key) => ({
+        id: key,
+        label: formatLabel(key),
+      }));
+
+      table_headers = [{ id: 'state', label: 'State' }, ...dynamicColumns];
+
+      table_rows = entries.map(([state, value]) => ({
         id: state,
         state: state,
-        credit_benefit: !isNaN(numValue) ? numValue : value,
-      };
-    });
+        ...value,
+      }));
+    } else {
+      // Legacy simple key-value
+      table_headers = [
+        { id: 'state', label: 'State' },
+        { id: 'credit_benefit', label: 'Credit Benefit' },
+      ];
+
+      table_rows = entries.map(([state, value]) => {
+        const numValue = Number(value);
+        return {
+          id: state,
+          state: state,
+          credit_benefit: !isNaN(numValue) ? numValue : value,
+        };
+      });
+    }
 
     return renderTableSection({
       table_headers,
       table_rows,
-      Total: totalValue,
     });
   };
 
@@ -1058,6 +1093,12 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       <div>
         <div className='flex flex-col gap-0'>
           {/* Dynamic Input Params Sections */}
+          {/* QRE Summary Section */}
+          {qreSummary && (
+            <React.Fragment>
+              {renderCard('QRE Summary', renderKeyValuePairs(qreSummary))}
+            </React.Fragment>
+          )}
           {inputParams &&
             Object.entries(inputParams).map(([key, value]) => {
               if (
@@ -1077,12 +1118,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               return null;
             })}
 
-          {/* QRE Summary Section */}
-          {qreSummary && (
-            <React.Fragment>
-              {renderCard('QRE Summary', renderKeyValuePairs(qreSummary))}
-            </React.Fragment>
-          )}
+
 
           {/* Dynamic Computed Fields Section */}
           {Object.entries(computedFields).map(([key, value]) => {
@@ -1138,12 +1174,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               value !== null &&
               !Array.isArray(value)
             ) {
-              const totalValue = (computedFields as any)?.total;
               return (
                 <div key={key} className='mb-2'>
                   {renderCard(
                     formatLabel(key),
-                    renderFederalTable(value, totalValue),
+                    renderFederalTable(value),
                     false
                   )}
                 </div>
