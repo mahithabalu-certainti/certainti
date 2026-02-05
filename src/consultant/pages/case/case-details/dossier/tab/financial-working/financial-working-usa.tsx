@@ -282,7 +282,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
   const extractPrefix = (str: string) => {
     const bracketMatch = str.match(/^\[(.*?)\]\s*(.*)/);
-    if (bracketMatch) return { prefix: bracketMatch[1], label: bracketMatch[2] };
+    if (bracketMatch)
+      return { prefix: bracketMatch[1], label: bracketMatch[2] };
 
     const parenMatch = str.match(/^\((.*?)\)\s*(.*)/);
     if (parenMatch) return { prefix: parenMatch[1], label: parenMatch[2] };
@@ -327,7 +328,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 <div className='w-[130px] flex-shrink-0 border-r border-[#CBD6E2] pl-2 flex items-center py-1 whitespace-nowrap overflow-hidden'>
                   {prefix}
                 </div>
-                <div className='pl-2 flex items-center flex-1 py-1'>{label}</div>
+                <div className='pl-2 flex items-center flex-1 py-1'>
+                  {label}
+                </div>
               </div>
             ) : (
               <div className='px-2 flex items-center h-full py-1'>{title}</div>
@@ -561,9 +564,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
         return {
           id: headerId,
           label: (
-            <div
-              className='flex flex-col items-start w-full min-w-0 overflow-hidden'
-            >
+            <div className='flex flex-col items-start w-full min-w-0 overflow-hidden'>
               <TruncateWithTooltip
                 text={headerLabel}
                 enableCopy={false}
@@ -581,14 +582,14 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           sticky: isFirstColumn,
           sx: isFirstColumn
             ? {
-              position: 'sticky',
-              left: 0,
-              background: '#fff',
-              // padding: '0px 2px 0px 4px !important',
-              zIndex: 10,
-              borderRight: '1px solid #CBD6E2 !important',
-              borderBottom: '1px solid #CBD6E2 !important',
-            }
+                position: 'sticky',
+                left: 0,
+                background: '#fff',
+                // padding: '0px 2px 0px 4px !important',
+                zIndex: 10,
+                borderRight: '1px solid #CBD6E2 !important',
+                borderBottom: '1px solid #CBD6E2 !important',
+              }
             : undefined,
           render: (row: TableRow) => {
             const value = row[headerId];
@@ -624,19 +625,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     const tableDataRows: TableRow[] =
       table_rows && Array.isArray(table_rows)
         ? table_rows.map((rowObj: any, index: number) => {
-          const row: TableRow = {
-            id: `row_${index}`,
-          };
+            const row: TableRow = {
+              id: `row_${index}`,
+            };
 
-          // Map each header ID to its value from the row object
-          table_headers.forEach((headerItem: any) => {
-            const headerId =
-              typeof headerItem === 'string' ? headerItem : headerItem.id;
-            row[headerId] = rowObj[headerId];
-          });
+            // Map each header ID to its value from the row object
+            table_headers.forEach((headerItem: any) => {
+              const headerId =
+                typeof headerItem === 'string' ? headerItem : headerItem.id;
+              row[headerId] = rowObj[headerId];
+            });
 
-          return row;
-        })
+            return row;
+          })
         : [];
 
     if (Total !== undefined && Total !== null && table_headers.length > 0) {
@@ -824,9 +825,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     if (allKeys.some((k) => k.toLowerCase() === 'year')) {
       columns.push({
         id: 'year',
-        label: (
-          <div className='text-left w-full'>Year</div>
-        ) as any,
+        label: (<div className='text-left w-full'>Year</div>) as any,
         sortId: 'year',
         width: 120,
         sticky: true,
@@ -856,9 +855,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
       columns.push({
         id: key,
-        label: (
-          <div className='text-left w-full'>{label}</div>
-        ) as any,
+        label: (<div className='text-left w-full'>{label}</div>) as any,
         sortId: key,
         width: 180,
         render: (row: any) => {
@@ -870,8 +867,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-              val.trim() !== '' &&
-              !isNaN(Number(val));
+                val.trim() !== '' &&
+                !isNaN(Number(val));
 
           return (
             <div
@@ -1088,7 +1085,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             </div>
           );
         })}
-      </div >
+      </div>
     );
   };
 
@@ -1121,8 +1118,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               }
               return null;
             })}
-
-
 
           {/* Dynamic Computed Fields Section */}
           {Object.entries(computedFields).map(([key, value]) => {
