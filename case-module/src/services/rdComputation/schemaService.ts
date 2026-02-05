@@ -642,18 +642,21 @@ class RDCreditSchemaService {
                 const finalCredit = Number(calc.final_credit);
                 result[stateInfo.state_name] = {
                     state_code: stateInfo.state_code,
-                    final_credit: finalCredit,
+                    rd_credits: finalCredit,
                     total_projects: projectInfo.total_projects,
                     total_resources: projectInfo.total_resources,
                     total_qre: projectInfo.total_qre
                 };
-                totalCredit += finalCredit;
             }
         });
 
+        // Add total as a state-like structure
+        result['Total'] = {
+            rd_credits: totalCredit
+        };
+
         return {
-            federal: result,
-            total_credit: totalCredit
+            federal: result
         };
     }
 
