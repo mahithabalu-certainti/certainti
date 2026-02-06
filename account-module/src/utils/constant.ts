@@ -1123,7 +1123,7 @@ export const rawQueries = {
         created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         modified_datetime TIMESTAMPTZ,
         account_rid varchar(50) REFERENCES "${schemaName}"."account_details"(account_rid),
-        project_rid varchar(50) REFERENCES "${schemaName}"."project"(rid),
+        project_rid varchar(50),
         uploaded_by_user_rid varchar(50),
         related_to VARCHAR(50) NOT NULL,
         related_to_rid varchar(50),
