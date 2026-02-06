@@ -1,5 +1,5 @@
 import { kafka, ENV } from "../config/kafka";
-import StateComputationService from "../services/rdComputation/state.computation.service";
+import StateComputationService from "../services/rdComputation/stateComputation";
 import { logMessage } from "../utils/helpers";
 import RDCreditSchemaService from "../services/rdComputation/schemaService";
 import { ChildCaseService } from "../services/cases/childCaseService";

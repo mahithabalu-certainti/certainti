@@ -1,16 +1,16 @@
-import { RdCreditCalculatorForAZ } from "./az.rd-credit-calculator";
-import { RdCreditCalculatorForCA } from "./ca.rd-credit-calculator";
-import { RdCreditCalculatorForNJ } from "./nj.rd-credit-calculator";
-import { RdCreditCalculatorForCO } from "./co.rd-credit-calculator";
-import { RdCreditCalculatorForCT } from "./ct.rd-credit-calculator";
-import { RdCreditCalculatorForGA } from "./ga.rd-credit-calculator";
-import { RdCreditCalculatorForIL } from "./il.rd-credit-calculator";
-import { RdCreditCalculatorForMA } from "./ma.rd-credit-calculator";
-import { RdCreditCalculatorForOH } from "./oh.rd-credit-calculator";
-import { RdCreditCalculatorForSC } from "./sc.rd-credit-calculator";
-import { RdCreditCalculatorForTX } from "./tx.rd-credit-calculator";
-import { RdCreditCalculatorForID } from "./id.rd-credit-calculator";
-import { RdCreditCalculatorForON } from "./ontario-credit-calculator";
+import { RdCreditCalculatorForAZ } from "./azRdCreditCalculator";
+import { RdCreditCalculatorForCA } from "./caRdCreditCalculator";
+import { RdCreditCalculatorForNJ } from "./njRdCreditCalculator";
+import { RdCreditCalculatorForCO } from "./coRdCreditCalculator";
+import { RdCreditCalculatorForCT } from "./ctRdCreditCalculator";
+import { RdCreditCalculatorForGA } from "./gaRdCreditCalculator";
+import { RdCreditCalculatorForIL } from "./ilRdCreditCalculator";
+import { RdCreditCalculatorForMA } from "./maRdCreditCalculator";
+import { RdCreditCalculatorForOH } from "./ohRdCreditCalculator";
+import { RdCreditCalculatorForSC } from "./scRdCreditCalculator";
+import { RdCreditCalculatorForTX } from "./txRdCreditCalculator";
+import { RdCreditCalculatorForID } from "./idRdCreditCalculator";
+import { RdCreditCalculatorForON } from "./ontarioCreditCalculator";
 
 export const stateCalculators: any = {
     "AZ": new RdCreditCalculatorForAZ(),

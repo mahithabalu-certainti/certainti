@@ -550,8 +550,8 @@ export const rawQueries = {
     let query = `SELECT 
     CASE WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL ELSE COUNT(cp.project_fiscal_rid) END AS total_projects,
     SUM(pf.total_cost_prj) AS total_projects_cost,
-    COUNT(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.rid END) AS total_qualified_projects,
-    COALESCE(SUM(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.total_cost_prj END), 0) AS total_qualified_project_cost,
+    COUNT(CASE WHEN pf.is_qualified = true THEN pf.rid END) AS total_qualified_projects,
+    COALESCE(SUM(CASE WHEN pf.is_qualified = true THEN pf.total_cost_prj END), 0) AS total_qualified_project_cost,
     COALESCE(SUM(pf.qre_final), 0) AS total_projects_qre_cost
     FROM ${schemaName}.project_fiscal pf
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
@@ -1709,6 +1709,24 @@ export const rawQueries = {
   },
   fetchFiscalEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  },
+  fetchProjectCountsAndQreByState(schemaName: string) {
+    return  `
+                SELECT 
+                    pfr.region_rid as state_rid,
+                    COUNT(DISTINCT cp.project_fiscal_rid) as total_projects,
+                    COUNT(DISTINCT pr.rid) as total_resources,
+                    SUM(pfr.total_cost_fte_from_prj_res + pfr.total_cost_nonlabor_from_prj_res + pfr.total_cost_subcon_from_prj_res) as total_qre
+                FROM ${schemaName}.case_projects cp
+                JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+                JOIN ${schemaName}.project_fiscal_region pfr ON pf.rid = pfr.project_fiscal_rid
+                LEFT JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid 
+                    AND pr.region_rid = pfr.region_rid
+                WHERE cp.case_rid = :case_rid 
+                    AND pf.fiscal_year = cp.fiscal_year
+                    AND pfr.region_rid IN (:stateRids)
+                GROUP BY pfr.region_rid
+            `
   },
   insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string, comments : string) {
     return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid, comments) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}', '${comments.replace(/'/g, '')}')`
