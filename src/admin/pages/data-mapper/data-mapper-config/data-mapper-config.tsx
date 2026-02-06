@@ -17,12 +17,14 @@ import { useToast } from '../../../../hooks';
 import { extractPDFFields, validateMappingItem } from './helper';
 
 interface ObjectRidMap {
-  [key: number]: string;
+  [key: number]: string | number;
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual';
+  type: 'chip' | 'operator' | 'manual' | 'function' | 'number';
   value: string;
+  functionType?: 'MIN' | 'MAX';
+  functionArgs?: string[];
 }
 
 interface MappingItem {
