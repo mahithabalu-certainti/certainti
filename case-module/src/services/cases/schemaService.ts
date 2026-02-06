@@ -1409,6 +1409,7 @@ class CaseSchemaService {
       "fiscal_year",
       "case_total_projects",
       "case_total_qualified_projects",
+      "case_total_qualified_project_cost",
 
       "case_total_project_cost",
       "case_total_rd_cost",
@@ -1483,6 +1484,12 @@ class CaseSchemaService {
         case_total_project_cost: (value: any) =>
           this.processNumberFilter(
             "case_total_project_cost",
+            value,
+            whereClause
+          ),
+        case_total_qualified_project_cost: (value: any) =>
+          this.processNumberFilter(
+            "case_total_qualified_project_cost",
             value,
             whereClause
           ),
