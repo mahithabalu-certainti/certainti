@@ -952,13 +952,22 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               );
             }
 
+            const isYesSpilt = key === 'yesSpilt' || key === 'yes_spilt';
+            const cardTitle = isYesSpilt ? 'NoTitle' : formatLabel(key);
+
+            const disbleRowSplit = ['Input Information', 'NoTitle']; // Content (rows) split disabled for these
+            const disbleHeaderSplit = ['Input Information', 'NoTitle', 'Yes Spilt', 'yesSpilt']; // Header split disabled for these
+
+            const isContentSplitEnabled = isYesSpilt || !disbleRowSplit.includes(cardTitle);
+            const isHeaderSplitEnabled = !isYesSpilt && !disbleHeaderSplit.includes(cardTitle);
+
             return (
               <div key={key} className='mb-2'>
                 {renderCard(
-                  formatLabel(key),
-                  renderCardContent(value, key, true), // Enable split for computed fields
+                  cardTitle,
+                  renderCardContent(value, key, isContentSplitEnabled), // Enable split for computed fields
                   false,
-                  true // Enable split for header
+                  isHeaderSplitEnabled // Conditionally enable split for header
                 )}
               </div>
             );
