@@ -69,6 +69,7 @@ interface DossierProps {
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
+  isDetailLoading?: boolean;
   isFinancialWorkingSignoff?: boolean;
   setExportType: (type: ExportType) => void;
   setQualifiedProjectsParams?: React.Dispatch<
@@ -90,6 +91,7 @@ const Dossier: React.FC<DossierProps> = ({
   financialData,
   setFinancialData,
   refetchCaseDetails,
+  isDetailLoading,
   isFinancialWorkingSignoff,
   setExportType,
   setQualifiedProjectsParams,
@@ -417,6 +419,7 @@ const Dossier: React.FC<DossierProps> = ({
               financialData={financialData}
               setFinancialData={setFinancialData}
               refetchCaseDetails={refetchCaseDetails}
+              isDetailLoading={isDetailLoading}
             />
           ))}
         {tabParam === 'summary' && <DossierSummary />}

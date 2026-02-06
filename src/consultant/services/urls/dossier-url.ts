@@ -43,14 +43,12 @@ export const getRDCreditPreviewURL = (
   stateRid: string | null | undefined,
   type: string
 ): string => {
-  const resolvedStateRid =
-    stateRid && stateRid.trim() ? stateRid : "''";
+  const resolvedStateRid = stateRid && stateRid.trim() ? stateRid : "''";
 
   const baseUrl = `/api/rd-credit/preview/${accountRid}/${caseRid}/${resolvedStateRid}`;
 
   return `${baseUrl}?type=${encodeURIComponent(type)}`;
 };
-
 
 export const getRDCreditStatusURL = (
   accountRid: string,
