@@ -3,7 +3,7 @@ import { CaseModelService } from "../caseModelsService";
 import { logMessage } from "../../utils/helpers";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { QRE, AnnualGrossReceipt } from "./rdCreditTypes";
 import { fetchAvailableConfigLevelQuery, fetchRdCreditConfigQuery, fetchRdCreditConfigStateLevelQuery } from "../../utils/rawQueries";
 
@@ -429,7 +429,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any,final_credit : number) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditStateCalculations.upsert(
             {
@@ -437,7 +437,8 @@ class RDCreditSchemaService {
                 country_rid,
                 input_params,
                 computed_fields,
-                state_rid
+                state_rid,
+                final_credit
             },
             {
                 returning: true
@@ -529,7 +530,7 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'Financial workings are being computed. Refresh the page to check the status' },
+            { status: 'Dossier Packages is Inprogress. Refresh the page to check the status' },
             { where: { rid, request_type: type } }
         );
     }
@@ -559,11 +560,72 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         const result = await RdCreditProcess.findOne({
-            where: { case_rid },
+            where: { 
+                case_rid, 
+                request_type : "financial_computation" 
+            },
             order: [['created_datetime', 'DESC']],
             attributes: ['status'],
         });
         return result?.status || null;
+    }
+
+    async getStateSummaryResults(accountNumber: string, case_rid: string) {
+        const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
+        
+        // Get state calculations with state_rid and final_credit
+        const stateCalculations = await RdCreditStateCalculations.findAll({
+            attributes: ['state_rid', 'final_credit'],
+            where: {
+                case_rid
+            },
+            order: [['created_datetime', 'DESC']],
+            raw: true
+        });
+
+        // Initialize main database connection
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initMainDbSequelize();
+        }
+
+        // Get unique state_rids
+        const stateRids = [...new Set(stateCalculations.map(calc => calc.state_rid))];
+        
+        if (stateRids.length === 0) {
+            return {};
+        }
+
+        // Fetch state codes from main database
+        const stateData: any[] = await this.mainDbSequelize.query(
+            rawQueries.fetchStatesByIds(),
+            {
+                replacements: { ids: stateRids },
+                type: QueryTypes.SELECT,
+            }
+        );
+
+        // Create a map of state_rid to state_code
+        const stateCodeMap = new Map();
+        stateData.forEach(state => {
+            stateCodeMap.set(state.rid, state.state_code);
+        });
+
+        // Build result object: { state_code: final_credit }
+        const result: { [key: string]: number } = {};
+        let total = 0;
+        stateCalculations.forEach(calc => {
+            const stateCode = stateCodeMap.get(calc.state_rid);
+            if (stateCode && calc.final_credit != null) {
+                const finalCredit = Number(calc.final_credit);
+                result[stateCode] = finalCredit;
+                total += finalCredit;
+            }
+        });
+
+        return {
+            federal: result,
+            total: total
+        };
     }
 
 

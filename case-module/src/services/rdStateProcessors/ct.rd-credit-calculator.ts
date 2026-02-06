@@ -43,7 +43,8 @@ export class RdCreditCalculatorForCT {
         const computedFields = await this.buildComputedFields(part1Computation, part1TentativeComputation, part2Computation, config, year);
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: part2Computation.final_credit
         }
     }
 

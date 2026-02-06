@@ -1,5 +1,6 @@
 import { CaseTask } from "../../models/caseTaskModel";
 import { TaskTemplate } from "../../models/caseTaskTemplateModel";
+import { DossierForm } from "../../models/dossierForm";
 import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
@@ -530,6 +531,15 @@ export interface IChildCaseService extends ICaseService {
     case_name: any;
     closing_remarks: never[];
 } | undefined>
+initiateCreateDossierForm(data : any) : Promise<string>
+exportCaseClosingRemarks(data : any): Promise<string | undefined>
+fetchDossierPackage(data : any) : Promise<{
+    statusCode: number;
+    data: DossierForm;
+} | {
+    statusCode: number;
+    data: null;
+}>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;
@@ -800,4 +810,24 @@ export interface IDataMapperService {
     errorMessage?: string;
     data?: any;
   }>;
+}
+
+export interface IRDFormMapperService {
+  initiateRDFormFillerProcess(
+    accountRid: string,
+    caseRid: string,
+    fiscalYear: number,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+  getRdFormUrl(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
 }

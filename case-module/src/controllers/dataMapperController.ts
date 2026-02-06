@@ -38,7 +38,11 @@ async function createDataMapper(req: Request, res: Response): Promise<void> {
 
         const result = await dataMapperService.createDataMapper(value, file, userId);
 
-        handleCustomResponse(res, result.data, result.message);
+        if (result.statusCode === HttpStatus.SUCCESS) {
+            handleCustomResponse(res, result.data, result.message);
+        } else {
+            handleErrorResponse(res, result.statusCode, HttpStatus.BAD_REQUEST_MESSAGE, result.message);
+        }
 
     } catch (error) {
         const err = error as Error;
@@ -333,7 +337,11 @@ async function editDataMapper(req: Request, res: Response): Promise<void> {
 
         const result = await dataMapperService.editDataMapper(value, file, userId);
 
-        handleCustomResponse(res, result.data, result.message);
+        if (result.statusCode === HttpStatus.SUCCESS) {
+            handleCustomResponse(res, result.data, result.message);
+        } else {
+            handleErrorResponse(res, result.statusCode, HttpStatus.BAD_REQUEST_MESSAGE, result.message);
+        }
 
     } catch (error) {
         const err = error as Error;
