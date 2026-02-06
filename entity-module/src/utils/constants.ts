@@ -1117,7 +1117,8 @@ export const rawQueries = {
       qre_subcon = ${data.qre_subcon},
       qre_nonlabor = ${data.qre_nonlabor},
       modified_by = '${data.modified_by}',
-      modified_datetime = '${new Date().toISOString()}'
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
     WHERE
       rid = '${data.rid}'
     `;
@@ -1133,7 +1134,8 @@ export const rawQueries = {
       qre_subcon = ${data.qre_subcon},
       qre_nonlabor = ${data.qre_nonlabor},
       modified_by = '${data.modified_by}',
-      modified_datetime = '${new Date().toISOString()}'
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
     WHERE
       project_fiscal_rid = '${data.rid}'
     `;

@@ -39,7 +39,7 @@ class ProjectGraphQlServices {
         else {
             let schemaName = `"${MAIN_SCHEMA_NAME}_${checkAccountExists[0][0].r_number.replace('ACC-', '')}"`
             let findProjectFiscal : any = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
-            if(findProjectFiscal[0][0].is_qualified) {
+            if(findProjectFiscal[0][0].is_rd_claim_qualified) {
                 return {
                     statusCode : HttpStatus.NOT_FOUND,
                     statusMessage : STATUS_MESSAGE.qualifiedProject
