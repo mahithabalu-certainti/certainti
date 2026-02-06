@@ -177,6 +177,9 @@ export const CaseDetails = () => {
 
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+  const projectResourceDetails = searchParams.get('resourceId');
+  const caseProjectTaskDetails = searchParams.get('caseProjectTask');
+  const technicalSummaryDetails = searchParams.get('technical_summary_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
@@ -619,11 +622,11 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
-    } else if (list === 'projectTask') {
+    } else if (list === 'projectTask' && !caseProjectTaskDetails) {
       return !isProjectTaskExportEnable;
-    } else if (list === 'projectResource') {
+    } else if (list === 'projectResource' && !projectResourceDetails) {
       return !isProjectResourceExportEnable;
-    } else if (list === 'technicalSummary') {
+    } else if (list === 'technicalSummary' && !technicalSummaryDetails) {
       return !technicalSummaryExportEnable;
     } else if (list === 'financialHighlights') {
       const tab = searchParams.get('tab');
@@ -911,6 +914,7 @@ export const CaseDetails = () => {
             financialData={financialData}
             setFinancialData={setFinancialData}
             refetchCaseDetails={refetchCaseDetails}
+            isDetailLoading={isPending}
           />
         );
       default:
@@ -1129,12 +1133,13 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
-          ? 'max-h-0 opacity-0'
-          : isError
-            ? 'max-h-[60px] opacity-100'
-            : 'max-h-[140px] opacity-100'
-          }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1146,10 +1151,11 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

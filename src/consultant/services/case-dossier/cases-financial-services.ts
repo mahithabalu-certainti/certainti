@@ -27,7 +27,12 @@ export const fetchRDCreditPreview = async (
   stateRid?: string,
   type?: string
 ): Promise<RDCreditPreviewResponse> => {
-  const url = getRDCreditPreviewURL(accountRid, caseRid, stateRid ?? '', type ?? '');
+  const url = getRDCreditPreviewURL(
+    accountRid,
+    caseRid,
+    stateRid ?? '',
+    type ?? ''
+  );
   const response = await caseServiceApi.get(url);
   return response.data;
 };
@@ -51,7 +56,7 @@ export const useRDCreditPreviewMutation = () => {
   return useMutation<
     RDCreditPreviewResponse,
     Error,
-    { accountrid: string; caseId: string; stateRid?: string, type?: string }
+    { accountrid: string; caseId: string; stateRid?: string; type?: string }
   >({
     mutationFn: ({ accountrid, caseId, stateRid, type }) =>
       fetchRDCreditPreview(accountrid, caseId, stateRid, type),
@@ -192,7 +197,6 @@ export const getUserPreference = async (
 
 export const useUserPreference = () => {
   return useMutation<RDCreditInitiateResponse, Error, UserPreferencePayload>({
-    mutationFn: (payload: UserPreferencePayload) =>
-      getUserPreference(payload),
+    mutationFn: (payload: UserPreferencePayload) => getUserPreference(payload),
   });
 };

@@ -163,7 +163,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
 
   const description: DetailItem[] = [
     {
-      label: 'Description',
+      label: 'Minutes of Meeting',
       value: call?.minutes_of_meeting ?? '-',
       key: 'minutes_of_meeting',
     },
