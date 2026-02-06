@@ -642,10 +642,10 @@ class RDCreditSchemaService {
                 const finalCredit = Number(calc.final_credit);
                 result[stateInfo.state_name] = {
                     state_code: stateInfo.state_code,
-                    rd_credits: finalCredit,
-                    total_projects: projectInfo.total_projects,
-                    total_resources: projectInfo.total_resources,
-                    total_qre: projectInfo.total_qre
+                    total_projects: projectInfo.total_projects.toString(),
+                    total_resources: projectInfo.total_resources.toString(),
+                    total_QRE: projectInfo.total_qre,
+                    RD_credits: Number(calc.final_credit)
                 };
                 totalCredit += finalCredit;
             }
