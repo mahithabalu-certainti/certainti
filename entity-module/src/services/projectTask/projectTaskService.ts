@@ -483,7 +483,7 @@ export class ProjectInjestionTaskService {
       const { accountNumber, resourceData, projectData, taskData } =
         validationResult;
 
-      if (projectData.is_qualified) {
+      if (projectData.is_rd_claim_qualified) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,

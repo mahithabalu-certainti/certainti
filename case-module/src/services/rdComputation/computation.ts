@@ -6,7 +6,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import StateComputationService from "./stateComputation";
 import FederalComputationService from "./federalComputation";
-import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { reorderComputedFieldsForState, hasFieldOrderingConfig, IL_LINE_ORDER } from "../../utils/stateFieldOrdering";
 
 enum ConfigType {
