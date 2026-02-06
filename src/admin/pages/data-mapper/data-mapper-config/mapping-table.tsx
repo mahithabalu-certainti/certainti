@@ -1856,7 +1856,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               >
                 {/* Chips */}
                 {functionPopover.args.map((arg, idx) => (
-                  <Tooltip title={arg.value} arrow placement='top'>
+                  <Tooltip key={idx} title={arg.value} arrow placement='top'>
                     <Chip
                       key={idx}
                       label={arg.value}
