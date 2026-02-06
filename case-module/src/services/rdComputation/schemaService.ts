@@ -645,7 +645,7 @@ class RDCreditSchemaService {
                     total_projects: projectInfo.total_projects.toString(),
                     total_resources: projectInfo.total_resources.toString(),
                     total_QRE: projectInfo.total_qre,
-                    RD_credits: finalCredit
+                    RD_credits: Number(calc.final_credit)
                 };
                 totalCredit += finalCredit;
             }
