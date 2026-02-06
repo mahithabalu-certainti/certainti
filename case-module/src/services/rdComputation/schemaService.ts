@@ -653,7 +653,7 @@ class RDCreditSchemaService {
 
         // Add total as a state-like structure
         result['Total'] = {
-            rd_credits: totalCredit
+            RD_credits: totalCredit
         };
 
         return {
