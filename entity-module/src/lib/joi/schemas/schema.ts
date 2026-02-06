@@ -1958,6 +1958,7 @@ const listAttachmentsSchema = Joi.object({
     }),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+  type: Joi.string().optional().allow(null),
 })
 
 const exportListAttachmentsSchema = Joi.object({
@@ -2007,7 +2008,8 @@ const exportListAttachmentsSchema = Joi.object({
     }),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
-  timezone: Joi.string().optional()
+  timezone: Joi.string().optional(),
+  type: Joi.string().optional().allow(null),
 })
 
 const listAttachmentSummarySchema = Joi.object({

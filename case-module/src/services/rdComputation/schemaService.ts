@@ -511,11 +511,12 @@ class RDCreditSchemaService {
      * @param case_rid 
      * @returns 
      */
-    async markAsInitiated(accountNumber: string, case_rid: string): Promise<string> {
+    async markAsInitiated(accountNumber: string, case_rid: string,type:string): Promise<string> {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
         const createdRecord = await RdCreditProcess.create({
             case_rid,
-            status: 'INITIATED'
+            status: 'INITIATED',
+            request_type : type
         });
         return createdRecord.rid!;
     }
@@ -526,12 +527,12 @@ class RDCreditSchemaService {
      * @param rid 
      * @returns 
      */
-    async markAsInProgress(accountNumber: string, rid: string) {
+    async markAsInProgress(accountNumber: string, rid: string,type:string) {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'Financial workings are being computed. Refresh the page to check the status' },
-            { where: { rid } }
+            { status: 'Dossier Packages is Inprogress. Refresh the page to check the status' },
+            { where: { rid, request_type: type } }
         );
     }
 
@@ -541,12 +542,12 @@ class RDCreditSchemaService {
      * @param rid 
      * @returns 
      */
-    async markAsCompleted(accountNumber: string, rid: string) {
+    async markAsCompleted(accountNumber: string, rid: string,type:string) {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
             { status: 'COMPLETED' },
-            { where: { rid } }
+            { where: { rid,request_type : type } }
         );
     }
 
@@ -560,7 +561,10 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         const result = await RdCreditProcess.findOne({
-            where: { case_rid },
+            where: { 
+                case_rid, 
+                request_type : "financial_computation" 
+            },
             order: [['created_datetime', 'DESC']],
             attributes: ['status'],
         });
