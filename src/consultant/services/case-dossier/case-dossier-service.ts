@@ -5,13 +5,17 @@ import {
   DossierSummary,
   ClosingRemarksItems,
   ClosingRemarksResponse,
+  RDFormResponse,
 } from '../../types';
 import {
   ResourceSummaryMockData,
   DossierSummaryMockData,
 } from '../../mockdata/dossier';
 import { caseServiceApi } from '../../../api/api';
-import { getClosingRemarksListURL } from '../urls/dossier-url';
+import {
+  getClosingRemarksListURL,
+  getRDFormMapperPreviewURL,
+} from '../urls/dossier-url';
 
 // Resource Summary
 export const fetchResourceSummaryList = async (
@@ -141,5 +145,91 @@ export const useClosingRemarksList = (
     retry: 0,
     gcTime: 0,
     enabled: !!accountId && !!caseId,
+  });
+};
+
+// RD Form Mapper Generate
+export const fetchRDFormMapperGenerate = async (
+  accountRid: string,
+  caseRid: string,
+  fiscalYear?: number
+): Promise<{
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+}> => {
+  const response = await caseServiceApi.get(
+    `/api/rdFormMapper/rdForms/generate?account_rid=${accountRid}&case_rid=${caseRid}&fiscal_year=${fiscalYear}`
+  );
+  return response.data;
+};
+
+export const useRDFormMapperGenerate = (
+  accountRid: string,
+  caseRid: string,
+  fiscalYear?: number,
+  enabled: boolean = true
+): UseQueryResult<
+  { statusCode: number; statusCodeValue: string; statusMessage: string },
+  Error
+> => {
+  return useQuery<
+    { statusCode: number; statusCodeValue: string; statusMessage: string },
+    Error
+  >({
+    queryKey: ['rd-form-mapper-generate', accountRid, caseRid, fiscalYear],
+    queryFn: () => fetchRDFormMapperGenerate(accountRid, caseRid, fiscalYear),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid && !!fiscalYear && enabled,
+  });
+};
+
+export const fetchRDFormMapperPreview = async (
+  accountRid: string,
+  caseRid: string,
+  countryRid: string,
+  isFederal: boolean,
+  stateRid?: string
+): Promise<RDFormResponse> => {
+  const url = getRDFormMapperPreviewURL(
+    accountRid,
+    caseRid,
+    countryRid,
+    isFederal,
+    stateRid
+  );
+  const response = await caseServiceApi.get(url);
+  return response.data;
+};
+
+export const useRDFormMapperPreview = (
+  accountRid: string,
+  caseRid: string,
+  countryRid: string,
+  isFederal: boolean,
+  stateRid?: string,
+  enabled: boolean = true
+): UseQueryResult<RDFormResponse, Error> => {
+  return useQuery<RDFormResponse, Error>({
+    queryKey: [
+      'rd-form-mapper-preview',
+      accountRid,
+      caseRid,
+      countryRid,
+      isFederal,
+      stateRid,
+    ],
+    queryFn: () =>
+      fetchRDFormMapperPreview(
+        accountRid,
+        caseRid,
+        countryRid,
+        isFederal,
+        stateRid
+      ),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid && !!countryRid && enabled,
   });
 };

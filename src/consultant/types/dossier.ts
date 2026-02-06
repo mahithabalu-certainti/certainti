@@ -387,6 +387,8 @@ export interface RDFormResponse {
   statusMessage: string;
   data: {
     rdformUrl: string;
+    base64?: string;
+    rdErrorMessage: string | null;
   };
 }
 

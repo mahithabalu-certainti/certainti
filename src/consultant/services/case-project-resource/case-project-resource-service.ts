@@ -118,10 +118,11 @@ export const getCasePorjectResourceExportListURL = (
 export const ExportCaseProjectResourceList = async (
   params: ProjectResourcesListParams,
   accountId?: string,
-  caseId?: string
+  caseId?: string,
+  fileName?: string
 ): Promise<void> => {
   try {
-    const filename = `cases_projects_resource_list.xlsx`;
+    const filename = fileName || `cases_projects_resource_list.xlsx`;
 
     const response = await caseServiceApi.get<ExportCaseListResponse>(
       getCasePorjectResourceExportListURL({ ...params }, accountId, caseId)

@@ -5,15 +5,17 @@ import {
 } from '../../../../../common-service';
 import {
   ActivityDropdownItem,
+  CaseAssignedExportParams,
   CaseDetails,
   ColorCode,
+  ExportType,
   FinancialHighlightsResponse,
   RDCreditStatusResponse,
 } from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ComingSoon, DossierIcon } from '../../../../../assets';
+import { DossierIcon } from '../../../../../assets';
 import {
   DossierSummary,
   FinancialWorkingForm,
@@ -42,6 +44,8 @@ import {
 } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
 import ClosingRemarks from './tab/close-remarks/closing-remarks';
+import { AttachmentsListExportParams } from '../../../../types/attachment';
+import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 
 const DossierTabs = [
   {
@@ -65,6 +69,17 @@ interface DossierProps {
   financialData: FinancialHighlightsResponse | null;
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
+  isFinancialWorkingSignoff?: boolean;
+  setExportType: (type: ExportType) => void;
+  setQualifiedProjectsParams?: React.Dispatch<
+    React.SetStateAction<CaseAssignedExportParams>
+  >;
+  setProjectDocumentsParams?: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
+  setResourceSummaryParams?: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
+  >;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -75,6 +90,11 @@ const Dossier: React.FC<DossierProps> = ({
   financialData,
   setFinancialData,
   refetchCaseDetails,
+  isFinancialWorkingSignoff,
+  setExportType,
+  setQualifiedProjectsParams,
+  setProjectDocumentsParams,
+  setResourceSummaryParams,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -350,7 +370,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={
           tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
@@ -407,8 +427,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={setQualifiedProjectsParams}
+            setExportType={setExportType}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -430,7 +450,12 @@ const Dossier: React.FC<DossierProps> = ({
             />
           ))}
 
-        {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
+        {tabParam === 'rd_form' && (
+          <RDForm
+            caseDetails={caseDetails}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+          />
+        )}
 
         {tabParam === 'project_documents' && (
           <ProjectDocuments
@@ -438,8 +463,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={setProjectDocumentsParams}
+            setExportType={setExportType}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -451,8 +476,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={setQualifiedProjectsParams}
+            setExportType={setExportType}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -466,8 +491,8 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={setResourceSummaryParams}
+            setExportType={setExportType}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
@@ -480,18 +505,12 @@ const Dossier: React.FC<DossierProps> = ({
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
+            setExportParams={() => {}}
+            setExportType={setExportType}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}
             searchValue={searchText}
           />
-        )
-        }
-        {tabParam !== 'financial_workings' && (
-          <div className='flex items-center justify-center w-full h-full'>
-            <ComingSoon alt='comingSoon' />
-          </div>
         )}
       </div>
     </div>

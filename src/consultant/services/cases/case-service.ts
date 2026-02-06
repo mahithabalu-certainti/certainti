@@ -235,10 +235,11 @@ export const getCasesProjectExportUrl = () =>
 export const getCaseTaskExportUrl = () => '/api/cases/task/export';
 
 export const ExportAssignedList = async (
-  params: CaseAssignedExportParams
+  params: CaseAssignedExportParams,
+  fileName?: string
 ): Promise<void> => {
   try {
-    const filename = `case-projects.xlsx`;
+    const filename = `${fileName || 'case-projects'}.xlsx`;
     const response = await caseServiceApi.post<CaseExportResponse>(
       getCasesProjectExportUrl(),
       params

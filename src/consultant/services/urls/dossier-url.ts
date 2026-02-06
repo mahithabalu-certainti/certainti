@@ -85,11 +85,24 @@ export const getRDFormMapperURL = (): string => {
   return `/api/rdFormMapper/process/initiate`;
 };
 
+export const getRDFormMapperGenerateURL = (
+  accountRid: string,
+  caseRid: string,
+  fiscalYear: number
+): string => {
+  return `/api/rdFormMapper/rdForms/generate?account_rid=${accountRid}&case_rid=${caseRid}&fiscal_year=${fiscalYear}`;
+};
+
 export const getRDFormMapperPreviewURL = (
   accountRid: string,
   caseRid: string,
   countryRid: string,
-  isFederal: boolean = true
+  isFederal: boolean = true,
+  stateRid?: string
 ): string => {
-  return `/api/rdFormMapper/preview?account_rid=${accountRid}&case_rid=${caseRid}&is_federal=${isFederal}&country_rid=${countryRid}`;
+  let url = `/api/rdFormMapper/preview?account_rid=${accountRid}&case_rid=${caseRid}&is_federal=${isFederal}&country_rid=${countryRid}`;
+  if (stateRid) {
+    url += `&state_rid=${stateRid}`;
+  }
+  return url;
 };

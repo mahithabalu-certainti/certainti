@@ -468,6 +468,7 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'activities' &&
       searchParams.get('list') !== 'caseProjects' &&
+      searchParams.get('list') !== 'dossier' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
       searchParams.get('list') !== 'interactions' &&
@@ -501,11 +502,18 @@ export const CaseDetails = () => {
 
     if (exportType === 'notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
-    } else if (exportType === 'attachments') {
-      exportAttachmentsData('attachments', {
-        ...attachmentParams,
-        ...attachmentPayload,
-      });
+    } else if (
+      exportType === 'attachments' ||
+      exportType === 'dossier-project-documents'
+    ) {
+      exportAttachmentsData(
+        'attachments',
+        {
+          ...attachmentParams,
+          ...attachmentPayload,
+        },
+        exportType === 'dossier-project-documents' ? 'project-documents' : ''
+      );
     } else if (exportType === 'checklist') {
       const checklistPayload = {
         accountRid: accountId,
@@ -521,8 +529,19 @@ export const CaseDetails = () => {
         { ...activityParams, ...activityPayload },
         activityType as ActivityType
       );
-    } else if (list === 'caseProjects' && exportType === 'cases_projects') {
-      ExportAssignedList(caseProjectParams);
+    } else if (
+      (list === 'caseProjects' && exportType === 'cases_projects') ||
+      (list === 'dossier' && exportType === 'dossier-qualified-projects') ||
+      (list === 'dossier' && exportType === 'dossier-project-summary')
+    ) {
+      ExportAssignedList(
+        caseProjectParams,
+        exportType === 'dossier-qualified-projects'
+          ? 'qualified-projects'
+          : exportType === 'dossier-project-summary'
+            ? 'project-summary'
+            : ''
+      );
     } else if (exportType === 'case_task') {
       ExportCaseTaskList(caseTaskParams);
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
@@ -530,10 +549,15 @@ export const CaseDetails = () => {
     } else if (list === 'projectTask' && exportType === 'projectTask') {
       ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
     } else if (
-      list === 'projectResource' &&
-      exportType === 'project_resource'
+      (list === 'projectResource' && exportType === 'project_resource') ||
+      (list === 'dossier' && exportType === 'dossier-resource-summary')
     ) {
-      ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
+      ExportCaseProjectResourceList(
+        projectResourceParams,
+        accountId,
+        caseId,
+        exportType === 'dossier-resource-summary' ? 'resource-summary' : ''
+      );
     } else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
         exportFinancialProjectCost(financialProjectCostParams);
@@ -615,6 +639,19 @@ export const CaseDetails = () => {
       } else {
         return !isProjectExportEnable;
       }
+    } else if (list === 'dossier') {
+      const dossierTab = searchParams.get('tab');
+      if (
+        dossierTab === 'qualified_projects' ||
+        dossierTab === 'project_summary'
+      ) {
+        return !isProjectExportEnable;
+      } else if (dossierTab === 'project_documents') {
+        return !isAttachmentExportEnable;
+      } else if (dossierTab === 'resource_summary') {
+        return !isProjectResourceExportEnable;
+      }
+      return true;
     } else if (searchParams.get('tab') === 'case_task') {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
@@ -911,6 +948,11 @@ export const CaseDetails = () => {
             financialData={financialData}
             setFinancialData={setFinancialData}
             refetchCaseDetails={refetchCaseDetails}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+            setExportType={setExportType}
+            setQualifiedProjectsParams={setCaseProjectParams}
+            setProjectDocumentsParams={setAttachmentParams}
+            setResourceSummaryParams={setProjectResourceParams}
           />
         );
       default:
@@ -1129,12 +1171,13 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
-          ? 'max-h-0 opacity-0'
-          : isError
-            ? 'max-h-[60px] opacity-100'
-            : 'max-h-[140px] opacity-100'
-          }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1146,10 +1189,11 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

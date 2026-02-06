@@ -16,7 +16,8 @@ import { ArrowBackIcon } from '../../../../../../../assets';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface PdfViewerProps {
-  pdfUrl: string; // Can be a URL or base64 string
+  pdfUrl?: string; // Can be a URL
+  base64?: string; // Can be base64 string
   isLoadingPdf?: boolean;
   isPdfError?: boolean;
 }
@@ -48,6 +49,7 @@ const ZOOM_LEVELS = [50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300];
 
 const PdfViewer: React.FC<PdfViewerProps> = ({
   pdfUrl,
+  base64,
   isLoadingPdf,
   isPdfError,
 }) => {
@@ -60,7 +62,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    if (!pdfUrl) return;
+    // Use base64 if available, otherwise use pdfUrl
+    const dataSource = base64 || pdfUrl;
+    if (!dataSource) return;
 
     const loadPDF = async () => {
       setIsLoading(true);
@@ -69,14 +73,14 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       try {
         let loadingTask;
 
-        // Check if pdfUrl is base64 or a URL
-        if (isBase64(pdfUrl)) {
+        // Check if dataSource is base64 or a URL
+        if (base64 || isBase64(dataSource)) {
           // Convert base64 to Uint8Array
-          const pdfData = base64ToUint8Array(pdfUrl);
+          const pdfData = base64ToUint8Array(dataSource);
           loadingTask = pdfjsLib.getDocument({ data: pdfData });
         } else {
           // Load from URL
-          loadingTask = pdfjsLib.getDocument(pdfUrl);
+          loadingTask = pdfjsLib.getDocument(dataSource);
         }
 
         const pdf = await loadingTask.promise;
@@ -97,7 +101,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfUrl]);
+  }, [pdfUrl, base64]);
 
   const renderPage = useCallback(
     async (pageNum: number) => {

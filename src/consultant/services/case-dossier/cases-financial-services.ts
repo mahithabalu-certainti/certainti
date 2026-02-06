@@ -7,7 +7,6 @@ import {
   RDCreditInitiateResponse,
   SignOffFinancialHighlightsPayload,
   UserPreferencePayload,
-  RDFormResponse,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -17,7 +16,6 @@ import {
   getSignOffFinancialHighlightsURL,
   getUserPreferenceURL,
   getRDFormMapperURL,
-  getRDFormMapperPreviewURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -27,7 +25,12 @@ export const fetchRDCreditPreview = async (
   stateRid?: string,
   type?: string
 ): Promise<RDCreditPreviewResponse> => {
-  const url = getRDCreditPreviewURL(accountRid, caseRid, stateRid ?? '', type ?? '');
+  const url = getRDCreditPreviewURL(
+    accountRid,
+    caseRid,
+    stateRid ?? '',
+    type ?? ''
+  );
   const response = await caseServiceApi.get(url);
   return response.data;
 };
@@ -51,7 +54,7 @@ export const useRDCreditPreviewMutation = () => {
   return useMutation<
     RDCreditPreviewResponse,
     Error,
-    { accountrid: string; caseId: string; stateRid?: string, type?: string }
+    { accountrid: string; caseId: string; stateRid?: string; type?: string }
   >({
     mutationFn: ({ accountrid, caseId, stateRid, type }) =>
       fetchRDCreditPreview(accountrid, caseId, stateRid, type),
@@ -155,32 +158,6 @@ export const useRDFormMapper = () => {
   });
 };
 
-export const fetchRDFormMapperPreview = async (
-  accountRid: string,
-  caseRid: string,
-  stateRid?: string,
-  isFederal?: boolean
-): Promise<RDFormResponse> => {
-  const url = getRDFormMapperPreviewURL(
-    accountRid,
-    caseRid,
-    stateRid ?? '',
-    isFederal
-  );
-  const response = await caseServiceApi.get(url);
-  return response.data;
-};
-
-export const useRDFormMapperPreviewMutation = () => {
-  return useMutation<
-    RDFormResponse,
-    Error,
-    { accountrid: string; caseId: string; stateRid: string; isFederal: boolean }
-  >({
-    mutationFn: ({ accountrid, caseId, stateRid, isFederal }) =>
-      fetchRDFormMapperPreview(accountrid, caseId, stateRid, isFederal),
-  });
-};
 // 3. POST Initiate - Initiate RD credit calculation process
 export const getUserPreference = async (
   payload: UserPreferencePayload
@@ -192,7 +169,6 @@ export const getUserPreference = async (
 
 export const useUserPreference = () => {
   return useMutation<RDCreditInitiateResponse, Error, UserPreferencePayload>({
-    mutationFn: (payload: UserPreferencePayload) =>
-      getUserPreference(payload),
+    mutationFn: (payload: UserPreferencePayload) => getUserPreference(payload),
   });
 };
