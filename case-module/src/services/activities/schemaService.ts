@@ -1770,14 +1770,7 @@ class ActivitySchemaService {
     const existingActivity = await Activities.findOne({
         where: { rid: activityRequest.activity_rid }
       });
-    if (activityRequest.email_status === "Sent") {
-      await this.sendActivityEmail(
-        accountNumber,
-        activityRequest,
-        userId,
-        files
-      );
-    }
+   
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
@@ -1824,6 +1817,14 @@ class ActivitySchemaService {
       }
     }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+    if (activityRequest.email_status === "Sent") {
+      await this.sendActivityEmail(
+        accountNumber,
+        activityRequest,
+        userId,
+        files
+      );
+    }
     await this.addActivityHistory(
         accountNumber,
         activityRequest.activity_rid as string,
@@ -2262,14 +2263,7 @@ class ActivitySchemaService {
     };
    
     // Generate attachments array from uploaded files
-    let attachments: any[] = Array.isArray(files)
-      ? files.map((file) => ({
-          "@odata.type": "#microsoft.graph.fileAttachment",
-          name: file.originalname || file.filename,
-          contentBytes: file.buffer.toString("base64"),
-          contentType: file.mimetype,
-        }))
-      : [];
+    let attachments: any[] = []
 
     if (activityRequest.activity_rid) {
       const dbAttachments = await ActivityAttachments.findAll({
@@ -2284,7 +2278,7 @@ class ActivitySchemaService {
           const buffer = Buffer.from(await response.arrayBuffer());
           attachments.push({
             "@odata.type": "#microsoft.graph.fileAttachment",
-            name: dbFile.document_name,
+            name: dbFile.document_name+(dbFile.format ? `.${dbFile.format}` : ""),
             contentBytes: buffer.toString("base64"),
             contentType: dbFile.format || "application/octet-stream",
           });

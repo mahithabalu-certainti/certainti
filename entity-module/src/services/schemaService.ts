@@ -3977,6 +3977,10 @@ class SchemaService {
       const qreSubconCost = totalSubconCost * (netQre / 100);
       const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
 
+      let isQualifiedFlag : boolean = false;
+      if(qreAdjustment !== 0) isQualifiedFlag = true
+      else isQualifiedFlag = false;
+
       await sequelize.query(
         rawQueries.updateProjectFiscalQre(schemaName, 
           {
@@ -3988,7 +3992,8 @@ class SchemaService {
             qre_nonlabor: qreNonlaborCost,
             modified_by: userId,
             modified_datetime: new Date(),
-            rid: projectFiscalId
+            rid: projectFiscalId,
+            is_qualified : isQualifiedFlag
           }
         ),
         {
@@ -4008,7 +4013,8 @@ class SchemaService {
             qre_nonlabor: qreNonlaborCost,
             modified_by: userId,
             modified_datetime: new Date(),
-            rid: projectFiscalId
+            rid: projectFiscalId,
+            is_qualified : isQualifiedFlag
           }
         ),
         {

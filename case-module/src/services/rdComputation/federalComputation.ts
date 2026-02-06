@@ -71,7 +71,7 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if (federalComputation) {
                 const result = await federalComputation.compute(extractConfig, federalRDData, annualGrossReceipts.length, date, caseDetails);
-                await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields);
+                await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit);
                 return {
                     statusCode: HttpStatus.SUCCESS,
                     message: STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
@@ -149,7 +149,7 @@ export class FederalComputationService {
                         ],
                         Total : {
                             "LABOUR" : 0,
-                            "Employees" : totalEmployees,
+                            "Employees" : `${totalEmployees}`,
                             "EPW" : totalEpw,
                             [reductionValue] : totalReduction,
                             "Net EPW" : totalNetEpw,
@@ -168,7 +168,7 @@ export class FederalComputationService {
                             return {
                                 "Project Name": d.project_client_group || d.project_name,
                                 "Total Projects" : JSON.stringify(d.total_projects_count) || '0',
-                                "Employees" : d.employees,
+                                "Employees" : `${d.employees}`,
                                 "EPW" : d.epw,
                                 [reductionValue] : d.reductions,
                                 "Net EPW" : d.net_epw,
@@ -190,7 +190,7 @@ export class FederalComputationService {
                             "Technical Submissions by Cost that are 50% or more of Total QRE"
                         ]
                     }
-                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData); 
+                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData,grossReduction); 
                         return {
                             statusCode : HttpStatus.SUCCESS,
                             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -279,7 +279,7 @@ export class FederalComputationService {
                             }),
                             "BOLD" : ["Total Labour", "LABOUR", "Total QRE", dynamicRdCredit]
                         } 
-                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData); 
+                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData,parseFloat(researchDevelopmentTaxCredit)); 
                         return {
                             statusCode : HttpStatus.SUCCESS,
                             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -295,7 +295,7 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
                     const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
-                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields); 
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields, federalComputation.finalCredit); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
                         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -310,7 +310,7 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
                     const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
-                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields); 
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
                         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -408,14 +408,16 @@ export class FederalComputationService {
                             "Fiscal Year" : d.computed_fields["Title"]["Fiscal Year"]
                         },
                         "Preliminary Calculation" : d.computed_fields["Preliminary Calculation"],
-                        "R&D Expenditure" : {
-                            'R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
-                            'R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
-                            'Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
-                            'Total of notional R&D deductions (X plus Y)':d.computed_fields["R&D Expenditure"]['Total of notional R&D deductions (X plus Y)']
+                        "[PART A] Calculation of notional R&D deductions" : {
+                            '[1] R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
+                            '[2] R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
+                            '[3] Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
+                            '[11] Total of notional R&D deductions (X plus Y)':d.computed_fields["R&D Expenditure"]['Total of notional R&D deductions (X plus Y)']
                         },
-                        "Additional Information" : d.computed_fields["Additional Information"],
-                        "Non-refundable tax offset": {
+                        "[PART E] R&D tax offset calculation" : {
+                            "[1] Additional Information" : d.computed_fields["Additional Information"],
+                        },
+                        "[3] Non-refundable tax offset": {
                            'R&D entity total expenses' : d.computed_fields["Non-refundable tax offset"]['R&D entity total expenses'],
                            'Total notional R&D deductions': d.computed_fields["Non-refundable tax offset"]['Total notional R&D deductions'],
                            'R&D intensity' : d.computed_fields["Non-refundable tax offset"]['R&D intensity']
@@ -453,39 +455,34 @@ export class FederalComputationService {
                 })
                 return finalUkData[0];
             } else if(fetchCountryDetails[0][0].country_code === "USA") {
-                
                 const finalUSAData = result.map((u : any) => {
-                    let creditRRC = u["computed_fields"]["Regular Credit"]["creditRRC"]
-                    let creditASC = u["computed_fields"]["ASC Credit"]["creditASC"]
+                    let creditRRC = u["computed_fields"]["(Regular Credit)"]
+                    let creditASC = u["computed_fields"]["(ASC Credit)"]
                     let creditASCKey = Object.keys(creditASC).find((v : string) => v.startsWith("Enter"))
                     let creditRRCKey = Object.keys(creditRRC).find((d : string) => d.startsWith("10 Multiply line 5"))
                     let refinedRRCKey = creditRRCKey + "%"
                     return {
                         ...u,
                         "computed_fields" : {
-                            "Regular Credit" : {
-                                "creditRRC" : {
-                                    "5 Total Qualified Research Expenses" : creditRRC["5 Total Qualified Research Expenses"],
-                                    "6 Fixed-base percentage" : creditRRC["6 Fixed-base percentage"],
-                                    "7 Average Annual Gross Receipts" : creditRRC["7 Average Annual Gross Receipts"],
-                                    "8 Multiply line 7 by percentage on line 6" : creditRRC["8 Multiply line 7 by percentage on line 6"],
-                                    "9 Subtract line 8 from line 5" : creditRRC["9 Subtract line 8 from line 5"],
+                            "(Regular Credit)" : {
+                                    "[5] Total Qualified Research Expenses" : creditRRC["[5] Total Qualified Research Expenses"],
+                                    "[6] Fixed-base percentage" : creditRRC["[6] Fixed-base percentage"],
+                                    "[7] Average Annual Gross Receipts" : creditRRC["[7] Average Annual Gross Receipts"],
+                                    "[8] Multiply line 7 by percentage on line 6" : creditRRC["[8] Multiply line 7 by percentage on line 6"],
+                                    "[9] Subtract line 8 from line 5" : creditRRC["[9] Subtract line 8 from line 5"],
                                     [refinedRRCKey!] : creditRRC[creditRRCKey!],
-                                    "11 Enter smaller of line 9 or line 10" : creditRRC["11 Enter smaller of line 9 or line 10"]
-                                },
-                                "rrc280C" : u["computed_fields"]["Regular Credit"]["rrc280C"]
+                                    "[11] Enter smaller of line 9 or line 10" : creditRRC["[11] Enter smaller of line 9 or line 10"],
+                                "rrc280C" : u["computed_fields"]["(Regular Credit)"]["rrc280C"]
                             },
-                            "ASC Credit" : {
-                                "creditASC": {
-                                    "20 Total Qualified Research Expenses" : creditASC["20 Total Qualified Research Expenses"],
-                                    "21 Total QREs for prior 3 tax years" : creditASC["21 Total QREs for prior 3 tax years"],
-                                    "22 Divide line 21 by 6.0" : creditASC["22 Divide line 21 by 6.0"],
-                                    "23 Subtract line 22 from line 20" : creditASC["23 Subtract line 22 from line 20"],
+                            "(ASC Credit)" : {
+                                    "[20] Total Qualified Research Expenses" : creditASC["[20] Total Qualified Research Expenses"],
+                                    "[21] Total QREs for prior 3 tax years" : creditASC["[21] Total QREs for prior 3 tax years"],
+                                    "[22] Divide line 21 by 6.0" : creditASC["[22] Divide line 21 by 6.0"],
+                                    "[23] Subtract line 22 from line 20" : creditASC["[23] Subtract line 22 from line 20"],
                                     [creditASCKey!] : creditASC[creditASCKey!],
-                                    "24 Multiply line 23 by the percentage above" : creditASC["24 Multiply line 23 by the percentage above"],
-                                    "25 Add lines 19 and 24": creditASC["25 Add lines 19 and 24"],
-                                },
-                                "asc280C": u["computed_fields"]["ASC Credit"]["asc280C"]
+                                    "[24] Multiply line 23 by the percentage above" : creditASC["[24] Multiply line 23 by the percentage above"],
+                                    "[25] Add lines 19 and 24": creditASC["[25] Add lines 19 and 24"],
+                                "asc280C": u["computed_fields"]["(ASC Credit)"]["asc280C"]
                             },
                             "Research and Development Tax Credit": u["computed_fields"]['Research and Development Tax Credit']
                         }

@@ -15,9 +15,9 @@ type extractConfig = {
     provincial_oitc_amount : number
 }
 
-export class RdCreditCalculatorForON {
+export class RdCreditCalculatorForCAN {
     country = "CAN";
-    creditType = "State R&D Credit - ON"
+    creditType = "Federal R&D Credit - CAN";
     currency = "CAD";
 
     private orgDbSequelize: Sequelize | null = null;
@@ -29,7 +29,7 @@ export class RdCreditCalculatorForON {
         return this.orgDbSequelize;
     }
 
-    async compute(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
+    async computeForCanada(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any) {
         const orgDb = await this.getOrgDb();
         const fetchIds = await orgDb.query<ProjectFiscalIds>(fetchAssignedProjectIds(caseRid, schemaName), {type : QueryTypes.SELECT})
         const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, fetchIds, accountRid), {type : QueryTypes.SELECT})
@@ -41,7 +41,7 @@ export class RdCreditCalculatorForON {
             return {
                 "Project Code":projectData.project_code,
                 "Project Name" : projectData.project_name,
-                "Total Hours" : parseFloat(Number(projectData.total_effort_prj).toFixed(1)) || 0.00,
+                "Total Hours" : JSON.stringify(parseFloat(Number(projectData.total_effort_prj).toFixed(1))) || "0.00",
                 "Project Total Cost": parseFloat(Number(projectData.total_cost_prj).toFixed(1)) || 0.00,
                 "FTE Cost": parseFloat(Number(projectData.total_cost_fte_prj).toFixed(1)) || 0.00,
                 "SubCon Cost": parseFloat(Number(projectData.total_cost_subcon_prj).toFixed(1)) || 0.00,
@@ -111,7 +111,7 @@ export class RdCreditCalculatorForON {
 
         const finalData = {
             Title : {
-                "Fiscal Year" : `FY-${caseDetails.fiscal_year - 1}-${caseDetails.fiscal_year}`,
+                "Fiscal Year" : `${countryInfo.accountName}-FY-${caseDetails.fiscal_year - 1}-${caseDetails.fiscal_year}`,
                 "Descriptions" : "R&D Assessment Workbook"
             },
             Columns : [
@@ -148,15 +148,15 @@ export class RdCreditCalculatorForON {
             "Total" : {
                "Project Code" : "-",
                 "Project Name" : "-",
-                "Total Hours" : Math.round(totalHours),
+                "Total Hours" : JSON.stringify(totalHours),
                 "Project Total Cost" : Math.round(totalCost),
                 "FTE Cost" : Math.round(totalFteCost),
                 "SubCon Cost" : Math.round(totalSubconCost),
                 "Other Cost" : Math.round(totalOtherCost),
                 "Total Cost" : Math.round(totalCost),
                 "Net QRE %" : `${totalNetQrePercent}%`,
-                "FTE QRE Adjustment" : `${extractConfig.fte_qre_adjustment}%`,
-                "Subcon QRE Adjustment" : `${extractConfig.subcon_qre_adjustment}%`,
+                "FTE QRE Adjustment" : "-",
+                "Subcon QRE Adjustment" : "-",
                 "FTE QRE" : Math.round(totalFteQre),
                 [fteProxyPercent] : Math.round(totalfteProxy),
                 "Subcon QRE" : Math.round(totalSubconQre),
@@ -185,7 +185,8 @@ export class RdCreditCalculatorForON {
                 credit_type : this.creditType,
                 currency : this.currency
             },
-            computedFields : finalData
+            computedFields : finalData,
+            finalCredit : Math.round(totalCreditWithORDTC)
         }
     }
 }

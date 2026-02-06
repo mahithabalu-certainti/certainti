@@ -15,9 +15,9 @@ type extractConfig = {
     provincial_oitc_amount : number
 }
 
-export class RdCreditCalculatorForCAN {
+export class RdCreditCalculatorForON {
     country = "CAN";
-    creditType = "Federal R&D Credit - CAN";
+    creditType = "State R&D Credit - ON"
     currency = "CAD";
 
     private orgDbSequelize: Sequelize | null = null;
@@ -29,7 +29,7 @@ export class RdCreditCalculatorForCAN {
         return this.orgDbSequelize;
     }
 
-    async computeForCanada(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any) {
+    async compute(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
         const orgDb = await this.getOrgDb();
         const fetchIds = await orgDb.query<ProjectFiscalIds>(fetchAssignedProjectIds(caseRid, schemaName), {type : QueryTypes.SELECT})
         const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, fetchIds, accountRid), {type : QueryTypes.SELECT})
@@ -111,7 +111,7 @@ export class RdCreditCalculatorForCAN {
 
         const finalData = {
             Title : {
-                "Fiscal Year" : `${countryInfo.accountName}-FY-${caseDetails.fiscal_year - 1}-${caseDetails.fiscal_year}`,
+                "Fiscal Year" : `FY-${caseDetails.fiscal_year - 1}-${caseDetails.fiscal_year}`,
                 "Descriptions" : "R&D Assessment Workbook"
             },
             Columns : [
@@ -148,15 +148,15 @@ export class RdCreditCalculatorForCAN {
             "Total" : {
                "Project Code" : "-",
                 "Project Name" : "-",
-                "Total Hours" : JSON.stringify(totalHours),
+                "Total Hours" : Math.round(totalHours),
                 "Project Total Cost" : Math.round(totalCost),
                 "FTE Cost" : Math.round(totalFteCost),
                 "SubCon Cost" : Math.round(totalSubconCost),
                 "Other Cost" : Math.round(totalOtherCost),
                 "Total Cost" : Math.round(totalCost),
                 "Net QRE %" : `${totalNetQrePercent}%`,
-                "FTE QRE Adjustment" : "-",
-                "Subcon QRE Adjustment" : "-",
+                "FTE QRE Adjustment" : `${extractConfig.fte_qre_adjustment}%`,
+                "Subcon QRE Adjustment" : `${extractConfig.subcon_qre_adjustment}%`,
                 "FTE QRE" : Math.round(totalFteQre),
                 [fteProxyPercent] : Math.round(totalfteProxy),
                 "Subcon QRE" : Math.round(totalSubconQre),
@@ -185,7 +185,8 @@ export class RdCreditCalculatorForCAN {
                 credit_type : this.creditType,
                 currency : this.currency
             },
-            computedFields : finalData
+            computedFields : finalData,
+            finalCredit : Math.round(totalCreditWithORDTC)
         }
     }
 }

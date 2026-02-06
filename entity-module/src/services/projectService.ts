@@ -570,7 +570,7 @@ export class ProjectService {
     existingRegionId = existingFiscalData?.region_rid!
 
     let findProjectFiscal: any = await orgDb.query(rawQueries.findProjectFiscal(schemaName, projectData.project_id, accountData.rid, projectData.project_fiscal_id))
-    if (findProjectFiscal[0][0].is_qualified) {
+    if (findProjectFiscal[0][0].is_rd_claim_qualified) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         statusMessage: STATUS_MESSAGE.qualifiedProject
