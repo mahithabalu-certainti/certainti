@@ -577,20 +577,22 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               )}
             </div>
           ) as React.ReactNode as string,
-          width: isFirstColumn ? 150 : 120,
+          width: isFirstColumn ? '20%' : '12%',
           sortId: headerId,
           sticky: isFirstColumn,
           sx: isFirstColumn
             ? {
-              position: 'sticky',
-              left: 0,
-              background: '#fff',
-              // padding: '0px 2px 0px 4px !important',
-              zIndex: 10,
-              borderRight: '1px solid #CBD6E2 !important',
-              borderBottom: '1px solid #CBD6E2 !important',
-            }
-            : undefined,
+                position: 'sticky',
+                left: 0,
+                background: '#fff',
+                // padding: '0px 2px 0px 4px !important',
+                zIndex: 10,
+                borderRight: '1px solid #CBD6E2 !important',
+                borderBottom: '1px solid #CBD6E2 !important',
+              }
+            : {
+                textAlign: 'right',
+              },
           render: (row: TableRow) => {
             const value = row[headerId];
             // The value to check for bolding is the label in the first column
@@ -610,11 +612,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 : formatCurrency(value as string | number | null | undefined);
 
             return (
-              <TruncateWithTooltip
-                text={String(formattedValue || '')}
-                enableCopy={false}
+              <div
                 className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} ${!isFirstColumn ? 'text-right' : 'text-left'}`}
-              />
+              >
+                {formattedValue}
+              </div>
             );
           },
         };
@@ -625,19 +627,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     const tableDataRows: TableRow[] =
       table_rows && Array.isArray(table_rows)
         ? table_rows.map((rowObj: any, index: number) => {
-          const row: TableRow = {
-            id: `row_${index}`,
-          };
+            const row: TableRow = {
+              id: `row_${index}`,
+            };
 
-          // Map each header ID to its value from the row object
-          table_headers.forEach((headerItem: any) => {
-            const headerId =
-              typeof headerItem === 'string' ? headerItem : headerItem.id;
-            row[headerId] = rowObj[headerId];
-          });
+            // Map each header ID to its value from the row object
+            table_headers.forEach((headerItem: any) => {
+              const headerId =
+                typeof headerItem === 'string' ? headerItem : headerItem.id;
+              row[headerId] = rowObj[headerId];
+            });
 
-          return row;
-        })
+            return row;
+          })
         : [];
 
     if (Total !== undefined && Total !== null && table_headers.length > 0) {
@@ -870,8 +872,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-              val.trim() !== '' &&
-              !isNaN(Number(val));
+                val.trim() !== '' &&
+                !isNaN(Number(val));
 
           return (
             <div
