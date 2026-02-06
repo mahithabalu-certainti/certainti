@@ -443,6 +443,7 @@ const Dossier: React.FC<DossierProps> = ({
           <RDForm
             caseDetails={caseDetails}
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+            isDetailLoading={isDetailLoading}
           />
         )}
 

@@ -13,10 +13,12 @@ import {
   useRDFormMapperGenerate,
   useRDFormMapperPreview,
 } from '../../../../../../services/case-dossier/case-dossier-service';
+import DetailsSectionSkeleton from '../../../../../../../components/skeleton-component/detailsskeleton';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
   isFinancialWorkingSignoff?: boolean;
+  isDetailLoading?: boolean;
 }
 
 interface FormErrors {
@@ -27,6 +29,7 @@ interface FormErrors {
 const RDForm: React.FC<RDFormProps> = ({
   caseDetails,
   isFinancialWorkingSignoff,
+  isDetailLoading,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('federal');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
@@ -42,7 +45,7 @@ const RDForm: React.FC<RDFormProps> = ({
     country_id: caseDetails?.country_rid || '',
   };
 
-  const { isSuccess: isGenerateSuccess } = useRDFormMapperGenerate(
+  const { isLoading, isSuccess: isGenerateSuccess } = useRDFormMapperGenerate(
     accountid,
     caseId ?? '',
     caseDetails?.fiscal_year,
@@ -124,6 +127,10 @@ const RDForm: React.FC<RDFormProps> = ({
       setSelectedRegion('');
     }
   };
+
+  if (isDetailLoading || isLoading) {
+    return <DetailsSectionSkeleton sectionCount={2} />;
+  }
 
   if (!isFinancialWorkingSignoff)
     return (
