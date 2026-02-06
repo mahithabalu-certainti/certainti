@@ -1,9 +1,9 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
-// import { Case } from "./caseModel";
 import { logMessage } from "../utils/helpers";
+import { CaseSummary } from "./caseSummaryModel";
 
 export const models = {
-    // Case,
+    CaseSummary,
 };
 
 export async function initModels() {

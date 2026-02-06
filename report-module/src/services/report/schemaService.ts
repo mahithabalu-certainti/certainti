@@ -106,5 +106,121 @@ class SchemaService {
             return [];
         }
     }
+
+    async fetchAccountsByIds(accountRids: string[]) {
+        try {
+            const mainDbSequelize = await initMainDbSequelize();
+
+            // Return empty array if no account IDs provided
+            if (!accountRids || accountRids.length === 0) {
+                return [];
+            }
+
+            const accounts = await mainDbSequelize.query(
+                rawQueries.getAccountsByRidsQuery(),
+                {
+                    replacements: { accountRids },
+                    type: "SELECT",
+                }
+            );
+
+            return accounts;
+        } catch (err) {
+            throw new Error(
+                "Error fetching accounts by IDs: " + (err as Error).message
+            );
+        }
+    }
+
+    /**
+ * Fetches the parent account number for a given parent account ID.
+ * @param parentAccountId - Parent account RID.
+ * @returns Parent account number.
+ */
+    async fetchParentAccount(parentAccountId: string): Promise<string> {
+        try {
+            const sequelize = await initMainDbSequelize();
+
+            const [account]: any[] = await sequelize.query(
+                rawQueries.fetchAccountDetailsByRid(parentAccountId),
+                {
+                    type: "SELECT",
+                }
+            );
+
+            return account?.r_number;
+        } catch (err) {
+            errorLog("Error fetching parent account : " + (err as Error).message);
+            throw new Error(
+                "Error fetching parent account : " + (err as Error).message
+            );
+        }
+    }
+    async getAllowedExportFields(
+        userId: string,
+        permission_name: string
+    ): Promise<any[]> {
+        const mainDbSequelize = await initMainDbSequelize();
+        const [userInfo] = (await mainDbSequelize.query(
+            rawQueries.fetchUserProfileId(),
+            {
+                replacements: { userId },
+                type: QueryTypes.SELECT,
+            }
+        )) as [{ profile_rid: string }] | [];
+
+        if (!userInfo?.profile_rid) {
+            return [];
+        }
+
+        const [profileFields, userFields] = await Promise.all([
+            mainDbSequelize.query(rawQueries.fetchProfilePermissions(), {
+                replacements: {
+                    permissionName: permission_name,
+                    profileId: userInfo?.profile_rid,
+                },
+                type: "SELECT",
+            }),
+            mainDbSequelize.query(rawQueries.fetchUserPermissions(), {
+                replacements: {
+                    permissionName: permission_name,
+                    userId,
+                },
+                type: QueryTypes.SELECT,
+            }),
+        ]);
+
+        // Merge: user overrides profile
+        const userFieldMap = new Map<string, any>();
+        for (const field of userFields as any[]) {
+            userFieldMap.set(field.field_name, field);
+        }
+
+        const merged = (profileFields as any[]).map((pf) => {
+            const userPerm = userFieldMap.get(pf.field_name);
+            if (userPerm) {
+                userFieldMap.delete(pf.field_name);
+                return {
+                    field_desc: pf.field_desc,
+                    field_name: pf.field_name,
+                    read: pf.read ? true : userPerm?.read === true,
+                };
+            }
+            return {
+                field_desc: pf.field_desc,
+                field_name: pf.field_name,
+                read: pf.read,
+            };
+        });
+
+        const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+            field_desc: uf.field_desc,
+            field_name: uf.field_name,
+            read: uf.read,
+        }));
+
+        const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+        return exportableFields;
+    }
 }
 export default SchemaService;
