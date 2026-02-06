@@ -123,7 +123,7 @@ export interface PDFDocument {
 }
 
 //----------- Mapping Details Types --------
-export type ObjectRidMap = Record<number, string>;
+export type ObjectRidMap = Record<number, string | number>;
 export interface FormDetail {
   rid: string;
   r_number: string;

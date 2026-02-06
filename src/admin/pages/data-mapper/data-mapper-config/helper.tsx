@@ -416,11 +416,11 @@ export async function loadPDFDocument(file: File) {
 
 // Validation function for mapping items
 interface ObjectRidMap {
-  [key: number]: string;
+  [key: number]: string | number;
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function';
+  type: 'chip' | 'operator' | 'manual' | 'function' | 'number';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
@@ -463,7 +463,7 @@ export function validateMappingItem(
   // Check for pending input value (unconverted text)
   if (hasInputValue) {
     errors.targetError =
-      'Invalid input in the Target field. Select an option from the dropdown, or use # for manual entry (press Enter to add), or apply a supported operator.';
+      'Invalid input in the Target field. Select an option from the dropdown, or use # for manual entry / enter a number (press Enter to add), or apply a supported operator.';
     return errors;
   }
 
@@ -486,7 +486,9 @@ export function validateMappingItem(
       return errors;
     }
 
-    // Validate function expressions
+    // Validate function expressions and collect invalid numbers
+    const invalidNumbers: string[] = [];
+
     for (const exp of expressions) {
       if (exp.type === 'function') {
         if (!exp.functionArgs || exp.functionArgs.length < 2) {
@@ -494,6 +496,21 @@ export function validateMappingItem(
           return errors;
         }
       }
+
+      // Validate number expressions - max 3 decimal places
+      if (exp.type === 'number') {
+        const decimalMatch = exp.value.match(/\.(\d+)$/);
+        if (decimalMatch && decimalMatch[1].length > 3) {
+          invalidNumbers.push(exp.value);
+        }
+      }
+    }
+
+    // If there are invalid numbers, show error
+    if (invalidNumbers.length > 0) {
+      errors.targetError =
+        'Number entries have too many decimal places. Maximum of 3 decimal places allowed.';
+      return errors;
     }
 
     // Check for consecutive operators or consecutive chips/manual entries/functions
@@ -506,14 +523,16 @@ export function validateMappingItem(
         return errors;
       }
 
-      // Treat chips, manual entries, and functions the same - all need operators between them
+      // Treat chips, manual entries, numbers, and functions the same - all need operators between them
       const isCurrentValue =
         current.type === 'chip' ||
         current.type === 'manual' ||
+        current.type === 'number' ||
         current.type === 'function';
       const isNextValue =
         next.type === 'chip' ||
         next.type === 'manual' ||
+        next.type === 'number' ||
         next.type === 'function';
 
       if (isCurrentValue && isNextValue) {
@@ -537,15 +556,15 @@ export function validateMappingItem(
       const isOdd = key % 2 === 1;
       const isEven = key % 2 === 0;
 
-      // Odd indices should be object IDs (UUIDs) or manual entries (starting with #)
-      if (isOdd && operators.includes(value)) {
+      // Odd indices should be object IDs (UUIDs), manual entries (starting with #), or numbers
+      if (isOdd && operators.includes(String(value))) {
         errors.targetError =
           'Invalid target structure: Object ID expected at this position';
         return errors;
       }
 
       // Even indices should be operators
-      if (isEven && !operators.includes(value)) {
+      if (isEven && !operators.includes(String(value))) {
         errors.targetError =
           'Invalid target structure: Operator expected at this position';
         return errors;
