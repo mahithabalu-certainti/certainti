@@ -405,14 +405,19 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any) {
+    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any,result: any) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditCountryCalculations.upsert(
             {
                 case_rid,
                 country_rid,
                 input_params,
-                computed_fields
+                computed_fields,
+                total_qre: result.totalQRE,
+                average_annual_gross_receipts: result.averageAnnualGrossReceipts,
+                prev_year1_qre: result.prev1yearQRE,
+                prev_year2_qre: result.prev2yearQRE,
+                prev_year3_qre: result.prev3yearQRE
             },
             {
                 returning: true
