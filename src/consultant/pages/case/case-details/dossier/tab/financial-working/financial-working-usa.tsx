@@ -303,14 +303,32 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               return null;
 
             if (key === 'text') {
+              if (enablePrefixSplit) {
+                const { prefix: valPrefix, label: valLabel } = extractPrefix(
+                  value as string
+                );
+                return (
+                  <tr
+                    key={key}
+                    className='border-b border-[#CBD6E2] last:border-0'
+                  >
+                    <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
+                      {valPrefix}
+                    </td>
+                    <td className='px-2 py-0 text-sm text-[#425A76] font-medium align-middle'>
+                      {valLabel}
+                    </td>
+                  </tr>
+                );
+              }
               return (
                 <tr
                   key={key}
                   className='border-b border-[#CBD6E2] last:border-0'
                 >
                   <td
-                    colSpan={3}
-                    className='px-2 py-0 text-sm text-[#425A76] font-medium'
+                    colSpan={2}
+                    className='px-2 py-1 text-sm text-[#425A76] font-medium'
                   >
                     {value}
                   </td>
@@ -475,8 +493,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
     // Build header objects
     const table_headers = [
-      { id: 'Prefix', label: '' }, // New column for prefix
-      { id: 'Description', label: '' }, // Column for label
+      { id: 'Prefix', label: '', width: '10%' }, // Much smaller width for the prefix column
+      { id: 'Description', label: '', width: '25%' }, // Adjusted width for the description
       ...illinoisData.map((col) => ({
         id: col['Column Name'] || '',
         label: col['Column Name'] || '',
@@ -608,8 +626,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-                val.trim() !== '' &&
-                !isNaN(Number(val));
+              val.trim() !== '' &&
+              !isNaN(Number(val));
 
           return (
             <div
@@ -718,16 +736,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
           if (k === 'text') {
             if (enablePrefixSplit) {
+              const { prefix: valPrefix, label: valLabel } = extractPrefix(
+                v as string
+              );
               return (
                 <div
                   key={k}
-                  className='h-[28px] px-0 py-0 flex items-center border-b border-[#CBD6E2] last:border-0'
+                  className='min-h-[28px] px-0 py-0 flex items-stretch border-b border-[#CBD6E2] last:border-0'
                 >
-                  <div className='w-[130px] flex-shrink-0 text-sm text-[#425A76] font-medium border-r border-[#CBD6E2] pl-2 self-stretch flex items-center whitespace-nowrap'>
-                    &nbsp;
+                  <div className='w-[130px] flex-shrink-0 text-sm text-[#425A76] font-medium border-r border-[#CBD6E2] px-2 flex items-center justify-end whitespace-nowrap'>
+                    {valPrefix}
                   </div>
-                  <div className='flex-1 flex items-center pl-2 pr-2 text-sm text-[#425A76] font-medium'>
-                    {v as string}
+                  <div className='flex-1 flex items-center pl-2 pr-2 py-1 text-sm text-[#425A76] font-medium'>
+                    {valLabel}
                   </div>
                 </div>
               );
@@ -735,7 +756,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             return (
               <div
                 key={k}
-                className='h-[28px] px-2 flex items-center text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
+                className='min-h-[28px] px-2 py-1 flex items-center text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
               >
                 {v as string}
               </div>

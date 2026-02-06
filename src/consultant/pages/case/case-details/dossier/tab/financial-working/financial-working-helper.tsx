@@ -129,21 +129,21 @@ export const renderTableSection = (
             )}
           </div>
         ) as React.ReactNode as string,
-        width: isFirstColumn ? '20%' : '12%',
+        width: (headerItem as any)?.width || (isFirstColumn ? '20%' : '12%'),
         sortId: headerId,
         sticky: isFirstColumn,
         sx: isFirstColumn
           ? {
-              position: 'sticky',
-              left: 0,
-              background: '#fff',
-              zIndex: 10,
-              borderRight: '1px solid #CBD6E2 !important',
-              borderBottom: '1px solid #CBD6E2 !important',
-            }
+            position: 'sticky',
+            left: 0,
+            background: '#fff',
+            zIndex: 10,
+            borderRight: '1px solid #CBD6E2 !important',
+            borderBottom: '1px solid #CBD6E2 !important',
+          }
           : {
-              textAlign: 'right',
-            },
+            textAlign: 'right',
+          },
         render: (row: TableRow) => {
           const value = row[headerId];
           const firstColHeaderId =
@@ -177,18 +177,18 @@ export const renderTableSection = (
   const tableDataRows: TableRow[] =
     table_rows && Array.isArray(table_rows)
       ? table_rows.map((rowObj: any, index: number) => {
-          const row: TableRow = {
-            id: `row_${index}`,
-          };
+        const row: TableRow = {
+          id: `row_${index}`,
+        };
 
-          table_headers.forEach((headerItem: any) => {
-            const headerId =
-              typeof headerItem === 'string' ? headerItem : headerItem.id;
-            row[headerId] = rowObj[headerId];
-          });
+        table_headers.forEach((headerItem: any) => {
+          const headerId =
+            typeof headerItem === 'string' ? headerItem : headerItem.id;
+          row[headerId] = rowObj[headerId];
+        });
 
-          return row;
-        })
+        return row;
+      })
       : [];
 
   if (Total !== undefined && Total !== null && table_headers.length > 0) {
