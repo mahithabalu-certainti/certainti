@@ -191,11 +191,11 @@ export const getCaseListColumns = (
         !permissionMap?.['case_total_projects']?.read,
     },
     {
-      id: 'case_total_qualified_projects_cost',
+      id: 'case_total_qualified_project_cost',
       label: 'Total Qualified Project Cost',
       width: 220,
       sortable: true,
-      sortId: 'case_total_qualified_projects_cost',
+      sortId: 'case_total_qualified_project_cost',
       sx: {
         textAlign: 'right',
       },
@@ -203,8 +203,8 @@ export const getCaseListColumns = (
         !permissionMap?.['case_total_qualified_project_cost']?.edit &&
         !permissionMap?.['case_total_qualified_project_cost']?.read,
       render: (row) =>
-        row.case_total_qualified_projects_cost
-          ? costDisplay(row.case_total_qualified_projects_cost, currencySymbol)
+        row.case_total_qualified_project_cost
+          ? costDisplay(row.case_total_qualified_project_cost, currencySymbol)
           : '-',
     },
     {

@@ -29,7 +29,7 @@ export type CaseList = {
   case_owner_name: string;
   case_total_projects: number | null;
   case_total_project_cost: string | null;
-  case_total_qualified_projects_cost: string | null;
+  case_total_qualified_project_cost: string | null;
   case_total_rd_cost: string | null;
   case_total_qre_cost: string | null;
   filing_type_rid: string;
