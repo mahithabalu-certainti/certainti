@@ -62,11 +62,11 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
 
         {
           label: 'Total Qualified Project Cost',
-          value: cases?.case_total_project_cost
+          value: cases?.case_total_qualified_project_cost
             ? costDisplay(
-                cases.case_total_qualified_project_cost,
-                currencySymbol
-              )
+              cases.case_total_qualified_project_cost,
+              currencySymbol
+            )
             : '-',
         },
       ],

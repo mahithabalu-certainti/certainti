@@ -8,6 +8,10 @@ import {
   FinancialHighlightsComputedFields,
 } from '../../../../../../types/dossier';
 import { costDisplay } from '../../../../../../../common-utils';
+import {
+  renderFederalTable,
+  renderCard,
+} from './financial-working-helper';
 
 interface FinancialWorkingProps {
   data: FinancialHighlightsResponse | null;
@@ -59,6 +63,14 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     }
     if (typeof value === 'number') {
       return costDisplay(value, currency || '$');
+    }
+    return value;
+  };
+
+  const formatCurrencyLocal = (value: number | string | null | undefined) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'number') {
+      return costDisplay(value, symbol);
     }
     return value;
   };
@@ -229,8 +241,7 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
   const getRowId = (row: FinancialWorkingRow) => {
     return row.id;
   };
-
-  if (!data?.data || !computedFields || !('Columns' in computedFields)) {
+  if (!data?.data || !computedFields) {
     return (
       <div className='p-8 text-center text-[#425A76] italic font-medium'>
         No data available
@@ -241,20 +252,36 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
   return (
     <div className='w-full h-full overflow-hidden flex flex-col'>
       <div className='flex-1 overflow-auto border-t border-[#CBD6E2]'>
-        <ListTable
-          data={tableData}
-          columns={columns}
-          getRowId={getRowId}
-          showEmptyRow={true}
-          actionMenuItems={[]}
-          actionWidth={80}
-          stickyColumnsCount={1}
-          tableStyle={{
-            height: '100%',
-            maxHeight: '300px',
-            overflow: 'auto',
-          }}
-        />
+        {computedFields && 'Columns' in computedFields && (
+          <ListTable
+            data={tableData}
+            columns={columns}
+            getRowId={getRowId}
+            showEmptyRow={true}
+            actionMenuItems={[]}
+            actionWidth={80}
+            stickyColumnsCount={1}
+            tableStyle={{
+              height: '100%',
+              maxHeight: '300px',
+              overflow: 'auto',
+            }}
+          />
+        )}
+        {/* Render Federal Table if present */}
+        {(computedFields as any)?.federal && (
+          <div className='mt-4'>
+            {renderCard(
+              'State Credit Summary',
+              renderFederalTable(
+                (computedFields as any).federal,
+                boldRows,
+                formatCurrencyLocal
+              ),
+              false
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
