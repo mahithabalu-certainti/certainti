@@ -31,7 +31,7 @@ const initExpressServer = (): Server => {
   app.use("/api", rateLimiter);
 
   app.use((req, res, next) => {
-    res.setTimeout(30000, () => {
+    res.setTimeout(60000, () => {
       res.status(408).json({ status: "error", message: "Request timed out" });
     });
     next();
