@@ -48,7 +48,8 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
 
   const extractPrefix = (str: string) => {
     const bracketMatch = str.match(/^\[(.*?)\]\s*(.*)/);
-    if (bracketMatch) return { prefix: bracketMatch[1], label: bracketMatch[2] };
+    if (bracketMatch)
+      return { prefix: bracketMatch[1], label: bracketMatch[2] };
 
     const parenMatch = str.match(/^\((.*?)\)\s*(.*)/);
     if (parenMatch) return { prefix: parenMatch[1], label: parenMatch[2] };
@@ -123,7 +124,10 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
             const { prefix, label } = extractPrefix(formatLabel(key));
 
             return (
-              <tr key={key} className='h-[28px] border-b border-[#CBD6E2] last:border-0'>
+              <tr
+                key={key}
+                className='h-[28px] border-b border-[#CBD6E2] last:border-0'
+              >
                 <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
                   {prefix}
                 </td>
@@ -203,7 +207,10 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
                     {rowName}
                   </td>
                   {columnKeys.map((key) => (
-                    <td key={key} className='px-2 py-0 align-middle py-[1.5px] text-right'>
+                    <td
+                      key={key}
+                      className='px-2 py-0 align-middle py-[1.5px] text-right'
+                    >
                       {renderValue(tier[key], isBold)}
                     </td>
                   ))}

@@ -282,7 +282,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
   const extractPrefix = (str: string) => {
     const bracketMatch = str.match(/^\[(.*?)\]\s*(.*)/);
-    if (bracketMatch) return { prefix: bracketMatch[1], label: bracketMatch[2] };
+    if (bracketMatch)
+      return { prefix: bracketMatch[1], label: bracketMatch[2] };
 
     const parenMatch = str.match(/^\((.*?)\)\s*(.*)/);
     if (parenMatch) return { prefix: parenMatch[1], label: parenMatch[2] };
@@ -327,7 +328,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 <div className='w-[130px] flex-shrink-0 border-r border-[#CBD6E2] pl-2 flex items-center py-1 whitespace-nowrap overflow-hidden'>
                   {prefix}
                 </div>
-                <div className='pl-2 flex items-center flex-1 py-1'>{label}</div>
+                <div className='pl-2 flex items-center flex-1 py-1'>
+                  {label}
+                </div>
               </div>
             ) : (
               <div className='px-2 flex items-center h-full py-1'>{title}</div>
@@ -534,7 +537,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
   };
 
   // New function to render table sections from tables object structure using ListTable
-  const renderTableSection = (tableData: any) => {
+  const renderTableSection = (tableData: any, maxHeight: string = '450px') => {
     if (!tableData || typeof tableData !== 'object') return null;
 
     const { table_headers, table_rows, Total } = tableData;
@@ -561,9 +564,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
         return {
           id: headerId,
           label: (
-            <div
-              className={`flex flex-col items-center w-full min-w-0 overflow-hidden ${isFirstColumn ? 'items-start' : 'items-center'}`}
-            >
+            <div className='flex flex-col items-start w-full min-w-0 overflow-hidden'>
               <TruncateWithTooltip
                 text={headerLabel}
                 enableCopy={false}
@@ -576,7 +577,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               )}
             </div>
           ) as React.ReactNode as string,
-          width: isFirstColumn ? 350 : 180,
+          width: isFirstColumn ? 150 : 120,
           sortId: headerId,
           sticky: isFirstColumn,
           sx: isFirstColumn
@@ -612,7 +613,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               <TruncateWithTooltip
                 text={String(formattedValue || '')}
                 enableCopy={false}
-                className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+                className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} ${!isFirstColumn ? 'text-right' : 'text-left'}`}
               />
             );
           },
@@ -673,7 +674,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             stickyColumnsCount={1}
             tableStyle={{
               height: '100%',
-              maxHeight: '450px',
+              maxHeight: maxHeight,
               overflow: 'auto',
             }}
           />
@@ -773,10 +774,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       });
     }
 
-    return renderTableSection({
-      table_headers,
-      table_rows,
-    });
+    return renderTableSection(
+      {
+        table_headers,
+        table_rows,
+      },
+      '600px'
+    );
   };
 
   const renderDynamicArrayTable = (data: any[]) => {
@@ -824,7 +828,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     if (allKeys.some((k) => k.toLowerCase() === 'year')) {
       columns.push({
         id: 'year',
-        label: 'Year' as any,
+        label: (<div className='text-left w-full'>Year</div>) as any,
         sortId: 'year',
         width: 120,
         sticky: true,
@@ -835,7 +839,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           );
           const val = yearKey ? row[yearKey] : '-';
           return (
-            <div className='px-2 py-0 text-sm font-bold text-[#1A2733]'>
+            <div className='px-2 py-0 w-full flex  text-sm font-bold text-[#1A2733]'>
               {val || '-'}
             </div>
           );
@@ -854,7 +858,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
       columns.push({
         id: key,
-        label: label as any,
+        label: (<div className='text-left w-full'>{label}</div>) as any,
         sortId: key,
         width: 180,
         render: (row: any) => {
@@ -871,7 +875,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
           return (
             <div
-              className={`px-2  text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+              className={`px-2 w-full flex  text-left ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
             >
               {val !== undefined && val !== null && val !== ''
                 ? isCurrency
@@ -1084,7 +1088,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             </div>
           );
         })}
-      </div >
+      </div>
     );
   };
 
@@ -1117,8 +1121,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               }
               return null;
             })}
-
-
 
           {/* Dynamic Computed Fields Section */}
           {Object.entries(computedFields).map(([key, value]) => {
@@ -1177,7 +1179,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               return (
                 <div key={key} className='mb-2'>
                   {renderCard(
-                    formatLabel(key),
+                    'State Credit Summary',
                     renderFederalTable(value),
                     false
                   )}

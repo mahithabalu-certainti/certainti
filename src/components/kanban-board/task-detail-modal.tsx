@@ -646,7 +646,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       // Preserve checklist state if rawTask hasn't changed (effect triggered by collaborator/user changes only)
       // This prevents checklist from being reset when adding/removing collaborators
       const isRawTaskSame = prevRawTaskRef.current === rawTask;
-      if (isRawTaskSame && editedTask?.checklist && editedTask.checklist.length > 0) {
+      if (
+        isRawTaskSame &&
+        editedTask?.checklist &&
+        editedTask.checklist.length > 0
+      ) {
         enriched.checklist = editedTask.checklist;
       }
       prevRawTaskRef.current = rawTask;
