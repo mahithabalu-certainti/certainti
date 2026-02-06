@@ -8,10 +8,7 @@ import {
   FinancialHighlightsComputedFields,
 } from '../../../../../../types/dossier';
 import { costDisplay } from '../../../../../../../common-utils';
-import {
-  renderFederalTable,
-  renderCard,
-} from './financial-working-helper';
+import { renderFederalTable, renderCard } from './financial-working-helper';
 
 interface FinancialWorkingProps {
   data: FinancialHighlightsResponse | null;

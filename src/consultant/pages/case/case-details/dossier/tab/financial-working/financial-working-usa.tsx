@@ -20,7 +20,6 @@ import {
   renderCard,
 } from './financial-working-helper';
 
-
 // Helper to extract Yes/No value from reduction280c object
 const extractVal = (reduction280c: any) => {
   const columnKeys = Object.keys(reduction280c).filter(
@@ -283,9 +282,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     return value;
   };
 
- 
-
-
   const renderKeyValuePairs = (
     obj: Record<string, any>,
     enablePrefixSplit: boolean = false
@@ -474,7 +470,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     );
   };
 
-
   const renderIllinoisTable = (illinoisData: any[]) => {
     if (!Array.isArray(illinoisData) || illinoisData.length === 0) return null;
 
@@ -526,7 +521,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     );
   };
 
-
   const renderDynamicArrayTable = (data: any[]) => {
     if (!Array.isArray(data) || data.length === 0) return null;
 
@@ -574,7 +568,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
         id: 'year',
         label: (<div className='text-left w-full'>Year</div>) as any,
         sortId: 'year',
-        width: "20%",
+        width: '20%',
         sticky: true,
         render: (row: any) => {
           // Find the actual key that matches 'year' case-insensitively
@@ -604,7 +598,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
         id: key,
         label: (<div className='text-left w-full'>{label}</div>) as any,
         sortId: key,
-        width: "20%",
+        width: '20%',
         render: (row: any) => {
           const val = row[key];
           // Check if it looks like a "Total" column
@@ -614,8 +608,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             typeof val === 'number'
               ? !isNaN(val)
               : typeof val === 'string' &&
-              val.trim() !== '' &&
-              !isNaN(Number(val));
+                val.trim() !== '' &&
+                !isNaN(Number(val));
 
           return (
             <div
@@ -671,7 +665,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                       <div className='text-sm text-[#425A76] font-medium'>
                         {extractPrefix(formatLabel(key)).label}
                       </div>
-                      <div className='text-right'>{renderValue(value, false, formatCurrency)}</div>
+                      <div className='text-right'>
+                        {renderValue(value, false, formatCurrency)}
+                      </div>
                     </div>
                   </td>
                 </tr>
