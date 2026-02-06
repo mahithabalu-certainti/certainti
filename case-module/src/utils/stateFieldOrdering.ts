@@ -57,15 +57,15 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
                 { pattern: "table_rows", order: 2 }
             ],
             "Application of Credit and Carry-Forward": [
-                { pattern: "1) Current Tax Liability w/o applied credits - E", order: 1 },
-                { pattern: "2) Value of all Other Credits Claimed - C", order: 2 },
-                { pattern: "3) Remaining Tax Liability (C-E)", order: 3 },
-                { pattern: /^4\) Maximum Credit Allowed \(Line 3 \* \d+(\.\d+)?%\)$/, order: 4 },
-                { pattern: "5) Research Tax Credit - J", order: 5 },
-                { pattern: "5a)Tax Carryover from PY - D", order: 6 },
-                { pattern: "6) Total available Research Tax Credit (J+D)", order: 7 },
-                { pattern: "7) Credit to be claimed on return  (lesser of line 4 or 6)", order: 8 },
-                { pattern: "8) Unused Credit or Carry-Forward", order: 9 }
+                { pattern: "[1] Current Tax Liability w/o applied credits - E", order: 1 },
+                { pattern: "[2] Value of all Other Credits Claimed - C", order: 2 },
+                { pattern: "[3] Remaining Tax Liability (C-E)", order: 3 },
+                { pattern: /^\[4\] Maximum Credit Allowed \(Line 3 \* \d+(\.\d+)?%\)$/, order: 4 },
+                { pattern: "[5] Research Tax Credit - J", order: 5 },
+                { pattern: "[5a] Tax Carryover from PY - D", order: 6 },
+                { pattern: "[6] Total available Research Tax Credit (J+D)", order: 7 },
+                { pattern: "[7] Credit to be claimed on return  (lesser of line 4 or 6)", order: 8 },
+                { pattern: "[8] Unused Credit or Carry-Forward", order: 9 }
             ]
         },
         BOLD: []
@@ -216,10 +216,10 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     },
     SC: {
         sectionOrder: [
-            "credit_calculation"
+            "yesSpilt"
         ],
         sectionFieldOrders: {
-            "credit_calculation": [
+            "yesSpilt": [
                 { pattern: /^\[1\] Qualified research expenses made in South Carolina\.$/, order: 1 },
                 { pattern: /^\[2\] Enter .+% of line 1\. This is your current year credit\.$/, order: 2 },
                 { pattern: /^\[3\] Research Expenses Credit Carried forward from previous years \(attach schedule\)\.$/, order: 3 },
@@ -295,10 +295,10 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
 
 CA: {
     sectionOrder: [
-        "Qualified research expenses paid or incurred."
+        "(Line) Qualified research expenses paid or incurred."
     ],
     sectionFieldOrders: {
-        "Qualified research expenses paid or incurred.": [
+        "(Line) Qualified research expenses paid or incurred.": [
         { pattern: "[5] Wages for qualified services. See instructions", order: 1 },
         { pattern: "[6] Cost of supplies. See instructions", order: 2 },
         { pattern: "[7] Rental or lease costs of computers. See instructions", order: 3 },
@@ -331,18 +331,18 @@ CA: {
         { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for individuals and estates or trusts$/, order: 15 },
         { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for  corporations$/, order: 16 },
         { pattern: /^\d+(\.\d+)?%? \(\d+(\.\d+)?\) for S corporations$/, order: 17 },
-        { pattern: "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :", order: 18 }
+        { pattern: "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b", order: 18 }
         ]
     },
     BOLD: []
 },
     CO: {
         sectionOrder: [
-            "(PART IV): Research and Experimental Activities Credit",
+            "(PART IV) Research and Experimental Activities Credit",
             "Research and Experimental Activities Credit Do not send, keep for your records"
         ],
         sectionFieldOrders: {
-            "(PART IV): Research and Experimental Activities Credit" : [
+            "(PART IV) Research and Experimental Activities Credit" : [
                 { pattern : "text", order : 1}
             ],
             "Research and Experimental Activities Credit Do not send, keep for your records": [
@@ -458,10 +458,10 @@ CA: {
     },
     OH: {
         sectionOrder: [
-            "credit_calculation"
+            "NoTitle"
         ],
         sectionFieldOrders: {
-            "credit_calculation": [
+            "NoTitle": [
                 { pattern: "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:", order: 1 },
                 { pattern: /^Tax Year \d{4} QREs$/, order: 2 },
                 { pattern: /^Tax Year \d{4} QREs$/, order: 3 },

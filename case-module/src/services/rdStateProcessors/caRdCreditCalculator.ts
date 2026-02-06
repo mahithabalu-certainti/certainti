@@ -193,12 +193,12 @@ export class RdCreditCalculatorForCA {
             [`${creditRRC.config.individual}% (${(creditRRC.config.individual/100).toFixed(3)}) for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
             [`${creditRRC.config.corporation}% (${(creditRRC.config.corporation/100).toFixed(3)}) for  corporations`]:creditRRC.reduced_credit_amount.s_corp,
             [`${creditRRC.config.s_corp}% (${(creditRRC.config.s_corp/100).toFixed(3)}) for S corporations`]:creditRRC.reduced_credit_amount.corporation,
-            "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :":creditRRC.reducedCreditAmountPercentageValue
+            "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b":creditRRC.reducedCreditAmountPercentageValue
 
         }
         return {
             computed_fields: {
-                "Qualified research expenses paid or incurred.":finalData,
+                "(Line) Qualified research expenses paid or incurred.":finalData,
                 "BOLD":["[15] Total qualified research expenses. Add line 11 through line 14"]
                 
             }

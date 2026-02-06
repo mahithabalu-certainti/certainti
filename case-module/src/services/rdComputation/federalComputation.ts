@@ -6,7 +6,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { federalCalculators } from "../rdFederalProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
-import { fetchCountryData, updateRRCASC280C } from "../../utils/rdFinancialWorking.rawQueries";
+import { fetchCountryData, updateRRCASC280C } from "../../utils/rdFinancialWorkingQueries";
 
 export class FederalComputationService {
     private rdCreditSchemaService: RDCreditSchemaService;

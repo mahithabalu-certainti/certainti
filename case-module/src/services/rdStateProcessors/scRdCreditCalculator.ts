@@ -170,7 +170,7 @@ export class RdCreditCalculatorForSC {
     };
         return {
             computed_fields: {
-                credit_calculation: finalData
+                "yesSpilt": finalData
             }
         }
     }

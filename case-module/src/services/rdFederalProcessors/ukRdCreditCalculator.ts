@@ -1,6 +1,6 @@
 import { QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { countAssignedProjects, fetchProjectCostDetailsBasedOnCases, fetchProjectCostDetailsForUkBasedOnCases } from "../../utils/rdFinancialWorking.rawQueries";
+import { countAssignedProjects, fetchProjectCostDetailsBasedOnCases, fetchProjectCostDetailsForUkBasedOnCases } from "../../utils/rdFinancialWorkingQueries";
 import { ProjectComputeValue } from "../../utils/types";
 
 type extractConfig = {
