@@ -505,7 +505,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 }
               />
               <Tab
-                label='State-wise'
+                label='States'
                 disabled={
                   !caseDetails?.is_state_available ||
                   !configFedral?.is_state_level

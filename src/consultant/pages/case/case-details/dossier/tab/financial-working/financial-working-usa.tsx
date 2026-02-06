@@ -2,7 +2,6 @@
 import React from 'react';
 import ListTable from '../../../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../../../components/table/types';
-import TruncateWithTooltip from '../../../../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 import {
   FinancialHighlightsResponse,
   USAComputedFields,
@@ -12,6 +11,14 @@ import { MenuItem, Select } from '@mui/material';
 import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useUserPreference } from '../../../../../../services/case-dossier/cases-financial-services';
+import {
+  formatLabel,
+  extractPrefix,
+  renderTableSection,
+  renderFederalTable,
+  renderValue,
+  renderCard,
+} from './financial-working-helper';
 
 // Helper to extract Yes/No value from reduction280c object
 const extractVal = (reduction280c: any) => {
@@ -275,79 +282,6 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     return value;
   };
 
-  const formatLabel = (key: string) => {
-    if (key.includes(' ')) return key;
-    return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-  };
-
-  const extractPrefix = (str: string) => {
-    const bracketMatch = str.match(/^\[(.*?)\]\s*(.*)/);
-    if (bracketMatch)
-      return { prefix: bracketMatch[1], label: bracketMatch[2] };
-
-    const parenMatch = str.match(/^\((.*?)\)\s*(.*)/);
-    if (parenMatch) return { prefix: parenMatch[1], label: parenMatch[2] };
-
-    return { prefix: '', label: str };
-  };
-
-  const renderValue = (value: any, isBold?: boolean) => {
-    const isEmpty = value === null || value === undefined || value === '';
-
-    return (
-      <div className='w-[180px] h-[24px] px-2 py-0 align-middle  my-[2px] rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] inline-flex items-center justify-end'>
-        {!isEmpty && (
-          <span
-            className={`text-[12px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
-          >
-            {(() => {
-              // Only format strict numbers as currency
-              const isStrictNumber = typeof value === 'number';
-              return isStrictNumber ? formatCurrency(value) : value;
-            })()}
-          </span>
-        )}
-        {isEmpty && <span>&nbsp;</span>}
-      </div>
-    );
-  };
-
-  const renderCard = (
-    title: string,
-    content: React.ReactNode,
-    isPrimitive: boolean = false,
-    enablePrefixSplit: boolean = false
-  ) => {
-    const { prefix, label } = extractPrefix(title);
-    return (
-      <div className='w-full border border-[#CBD6E2] mb-2'>
-        <div className='bg-[#ECECEC] border-b border-[#CBD6E2] flex items-stretch min-h-[30px]'>
-          <div className='font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] w-full'>
-            {enablePrefixSplit ? (
-              <div className='flex items-stretch h-full'>
-                <div className='w-[130px] flex-shrink-0 border-r border-[#CBD6E2] pl-2 flex items-center py-1 whitespace-nowrap overflow-hidden'>
-                  {prefix}
-                </div>
-                <div className='pl-2 flex items-center flex-1 py-1'>
-                  {label}
-                </div>
-              </div>
-            ) : (
-              <div className='px-2 flex items-center h-full py-1'>{title}</div>
-            )}
-          </div>
-        </div>
-        <div className={`p-0 bg-white`}>
-          {isPrimitive ? (
-            <div className='px-2 py-1 text-left'>{content}</div>
-          ) : (
-            <div className='w-full'>{content}</div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   const renderKeyValuePairs = (
     obj: Record<string, any>,
     enablePrefixSplit: boolean = false
@@ -369,14 +303,32 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               return null;
 
             if (key === 'text') {
+              if (enablePrefixSplit) {
+                const { prefix: valPrefix, label: valLabel } = extractPrefix(
+                  value as string
+                );
+                return (
+                  <tr
+                    key={key}
+                    className='border-b border-[#CBD6E2] last:border-0'
+                  >
+                    <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
+                      {valPrefix}
+                    </td>
+                    <td className='px-2 py-0 text-sm text-[#425A76] font-medium align-middle'>
+                      {valLabel}
+                    </td>
+                  </tr>
+                );
+              }
               return (
                 <tr
                   key={key}
                   className='border-b border-[#CBD6E2] last:border-0'
                 >
                   <td
-                    colSpan={3}
-                    className='px-2 py-0 text-sm text-[#425A76] font-medium'
+                    colSpan={2}
+                    className='px-2 py-1 text-sm text-[#425A76] font-medium'
                   >
                     {value}
                   </td>
@@ -536,159 +488,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     );
   };
 
-  // New function to render table sections from tables object structure using ListTable
-  const renderTableSection = (tableData: any, maxHeight: string = '450px') => {
-    if (!tableData || typeof tableData !== 'object') return null;
-
-    const { table_headers, table_rows, Total } = tableData;
-
-    if (!table_headers || !Array.isArray(table_headers)) return null;
-
-    // Define interface for table row
-    interface TableRow {
-      id: string;
-      [key: string]: string | number | boolean | undefined;
-    }
-
-    // Create columns dynamically from table_headers
-    const columns: ListTableColumn<TableRow>[] = table_headers.map(
-      (headerItem: any, index: number) => {
-        const isFirstColumn = index === 0;
-        const headerId =
-          typeof headerItem === 'string' ? headerItem : headerItem.id;
-        const headerLabel =
-          typeof headerItem === 'string' ? headerItem : headerItem.label;
-        const subLabel =
-          typeof headerItem === 'object' ? headerItem.subLabel : null;
-
-        return {
-          id: headerId,
-          label: (
-            <div className='flex flex-col items-start w-full min-w-0 overflow-hidden'>
-              <TruncateWithTooltip
-                text={headerLabel}
-                enableCopy={false}
-                className='font-bold'
-              />
-              {subLabel && (
-                <span className='text-[11px] font-normal text-[#425A76] mt-0.5 leading-tight'>
-                  {subLabel}
-                </span>
-              )}
-            </div>
-          ) as React.ReactNode as string,
-          width: isFirstColumn ? 150 : 120,
-          sortId: headerId,
-          sticky: isFirstColumn,
-          sx: isFirstColumn
-            ? {
-              position: 'sticky',
-              left: 0,
-              background: '#fff',
-              // padding: '0px 2px 0px 4px !important',
-              zIndex: 10,
-              borderRight: '1px solid #CBD6E2 !important',
-              borderBottom: '1px solid #CBD6E2 !important',
-            }
-            : undefined,
-          render: (row: TableRow) => {
-            const value = row[headerId];
-            // The value to check for bolding is the label in the first column
-            const firstColHeaderId =
-              typeof table_headers[0] === 'string'
-                ? table_headers[0]
-                : table_headers[0].id;
-            const rowLabel = row[firstColHeaderId] as string;
-            const isRowBold =
-              (rowLabel && boldRows.includes(rowLabel)) || rowLabel === 'Total';
-            const isBold = isFirstColumn || isRowBold;
-
-            // Format value: 0 becomes '-', numbers become currency, strings stay as is
-            const formattedValue =
-              value === 0 || value === '0'
-                ? '-'
-                : formatCurrency(value as string | number | null | undefined);
-
-            return (
-              <TruncateWithTooltip
-                text={String(formattedValue || '')}
-                enableCopy={false}
-                className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} ${!isFirstColumn ? 'text-right' : 'text-left'}`}
-              />
-            );
-          },
-        };
-      }
-    );
-
-    // Transform table_rows into ListTable data format
-    const tableDataRows: TableRow[] =
-      table_rows && Array.isArray(table_rows)
-        ? table_rows.map((rowObj: any, index: number) => {
-          const row: TableRow = {
-            id: `row_${index}`,
-          };
-
-          // Map each header ID to its value from the row object
-          table_headers.forEach((headerItem: any) => {
-            const headerId =
-              typeof headerItem === 'string' ? headerItem : headerItem.id;
-            row[headerId] = rowObj[headerId];
-          });
-
-          return row;
-        })
-        : [];
-
-    if (Total !== undefined && Total !== null && table_headers.length > 0) {
-      const firstHeaderId =
-        typeof table_headers[0] === 'string'
-          ? table_headers[0]
-          : table_headers[0].id;
-      const lastHeader = table_headers[table_headers.length - 1];
-      const lastHeaderId =
-        typeof lastHeader === 'string' ? lastHeader : lastHeader.id;
-
-      const totalRow: TableRow = {
-        id: 'row_total',
-        [firstHeaderId]: 'Total',
-        [lastHeaderId]: Total,
-      };
-
-      tableDataRows.push(totalRow);
-    }
-
-    const getRowId = (row: TableRow) => row.id;
-
-    // Always render the table with headers, even if there's no data
-    return (
-      <div className='w-full h-full overflow-hidden flex flex-col'>
-        <div className='flex-1 overflow-auto'>
-          <ListTable
-            data={tableDataRows}
-            columns={columns}
-            getRowId={getRowId}
-            showEmptyRow={true}
-            actionMenuItems={[]}
-            actionWidth={80}
-            stickyColumnsCount={1}
-            tableStyle={{
-              height: '100%',
-              maxHeight: maxHeight,
-              overflow: 'auto',
-            }}
-          />
-        </div>
-      </div>
-    );
-  };
-
   const renderIllinoisTable = (illinoisData: any[]) => {
     if (!Array.isArray(illinoisData) || illinoisData.length === 0) return null;
 
     // Build header objects
     const table_headers = [
-      { id: 'Description', label: '' },
+      { id: 'Prefix', label: '', width: '10%' }, // Much smaller width for the prefix column
+      { id: 'Description', label: '', width: '25%' }, // Adjusted width for the description
       ...illinoisData.map((col) => ({
         id: col['Column Name'] || '',
         label: col['Column Name'] || '',
@@ -707,9 +513,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       });
     });
 
-    // Create rows
+    // Create rows with prefix and label split
     const table_rows = Array.from(rowKeysSet).map((rowKey) => {
-      const rowItem: any = { Description: rowKey };
+      const { prefix, label } = extractPrefix(rowKey); // Extract prefix and label
+      const rowItem: any = {
+        Prefix: prefix, // First column
+        Description: label, // Second column
+      };
       illinoisData.forEach((colObj) => {
         const colId = colObj['Column Name'] || '';
         rowItem[colId] = colObj[rowKey];
@@ -717,69 +527,15 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       return rowItem;
     });
 
-    return renderTableSection({
-      table_headers,
-      table_rows,
-    });
-  };
-
-  const renderFederalTable = (federalData: Record<string, any>) => {
-    if (!federalData || Object.keys(federalData).length === 0) return null;
-
-    const entries = Object.entries(federalData);
-    const firstValue = entries[0]?.[1];
-    const isObjectData =
-      typeof firstValue === 'object' &&
-      firstValue !== null &&
-      !Array.isArray(firstValue);
-
-    let table_headers: any[] = [];
-    let table_rows: any[] = [];
-
-    if (isObjectData) {
-      // Dynamic columns from object keys
-      const allKeys = new Set<string>();
-      entries.forEach(([, value]) => {
-        if (value && typeof value === 'object') {
-          Object.keys(value).forEach((key) => allKeys.add(key));
-        }
-      });
-
-      const dynamicColumns = Array.from(allKeys).map((key) => ({
-        id: key,
-        label: formatLabel(key),
-      }));
-
-      table_headers = [{ id: 'state', label: 'State' }, ...dynamicColumns];
-
-      table_rows = entries.map(([state, value]) => ({
-        id: state,
-        state: state,
-        ...value,
-      }));
-    } else {
-      // Legacy simple key-value
-      table_headers = [
-        { id: 'state', label: 'State' },
-        { id: 'credit_benefit', label: 'Credit Benefit' },
-      ];
-
-      table_rows = entries.map(([state, value]) => {
-        const numValue = Number(value);
-        return {
-          id: state,
-          state: state,
-          credit_benefit: !isNaN(numValue) ? numValue : value,
-        };
-      });
-    }
-
     return renderTableSection(
       {
         table_headers,
         table_rows,
       },
-      '600px'
+      boldRows,
+      formatCurrency,
+      '450px',
+      [1] // Left align columns at index 0 (Prefix) and 1 (Description)
     );
   };
 
@@ -830,7 +586,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
         id: 'year',
         label: (<div className='text-left w-full'>Year</div>) as any,
         sortId: 'year',
-        width: 120,
+        width: '20%',
         sticky: true,
         render: (row: any) => {
           // Find the actual key that matches 'year' case-insensitively
@@ -839,7 +595,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           );
           const val = yearKey ? row[yearKey] : '-';
           return (
-            <div className='px-2 py-0 w-full flex  text-sm font-bold text-[#1A2733]'>
+            <div className='px-2 py-0 w-full flex justify-end text-sm font-bold text-[#1A2733]'>
               {val || '-'}
             </div>
           );
@@ -860,7 +616,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
         id: key,
         label: (<div className='text-left w-full'>{label}</div>) as any,
         sortId: key,
-        width: 180,
+        width: '20%',
         render: (row: any) => {
           const val = row[key];
           // Check if it looks like a "Total" column
@@ -875,7 +631,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
           return (
             <div
-              className={`px-2 w-full flex  text-left ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+              className={`px-2 w-full flex justify-end  text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
             >
               {val !== undefined && val !== null && val !== ''
                 ? isCurrency
@@ -927,7 +683,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                       <div className='text-sm text-[#425A76] font-medium'>
                         {extractPrefix(formatLabel(key)).label}
                       </div>
-                      <div className='text-right'>{renderValue(value)}</div>
+                      <div className='text-right'>
+                        {renderValue(value, false, formatCurrency)}
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -944,7 +702,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                   {formatLabel(key)}
                 </td>
                 <td className='px-2 py-0 text-right align-middle'>
-                  {renderValue(value)}
+                  {renderValue(value, false, formatCurrency)}
                 </td>
               </tr>
             </tbody>
@@ -953,7 +711,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       }
       return (
         <div className='h-[28px] flex justify-start items-center p-0 px-1.5'>
-          {renderValue(value)}
+          {renderValue(value, false, formatCurrency)}
         </div>
       );
     }
@@ -978,16 +736,19 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
           if (k === 'text') {
             if (enablePrefixSplit) {
+              const { prefix: valPrefix, label: valLabel } = extractPrefix(
+                v as string
+              );
               return (
                 <div
                   key={k}
-                  className='h-[28px] px-0 py-0 flex items-center border-b border-[#CBD6E2] last:border-0'
+                  className='min-h-[28px] px-0 py-0 flex items-stretch border-b border-[#CBD6E2] last:border-0'
                 >
-                  <div className='w-[130px] flex-shrink-0 text-sm text-[#425A76] font-medium border-r border-[#CBD6E2] pl-2 self-stretch flex items-center whitespace-nowrap'>
-                    &nbsp;
+                  <div className='w-[130px] flex-shrink-0 text-sm text-[#425A76] font-medium border-r border-[#CBD6E2] px-2 flex items-center justify-end whitespace-nowrap'>
+                    {valPrefix}
                   </div>
-                  <div className='flex-1 flex items-center pl-2 pr-2 text-sm text-[#425A76] font-medium'>
-                    {v as string}
+                  <div className='flex-1 flex items-center pl-2 pr-2 py-1 text-sm text-[#425A76] font-medium'>
+                    {valLabel}
                   </div>
                 </div>
               );
@@ -995,7 +756,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             return (
               <div
                 key={k}
-                className='h-[28px] px-2 flex items-center text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
+                className='min-h-[28px] px-2 py-1 flex items-center text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
               >
                 {v as string}
               </div>
@@ -1068,7 +829,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                   >
                     {label}
                   </span>
-                  {renderValue(v, isBold)}
+                  {renderValue(v, isBold, formatCurrency)}
                 </div>
               </div>
             );
@@ -1084,7 +845,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               >
                 {formatLabel(k)}
               </span>
-              {renderValue(v, isBold)}
+              {renderValue(v, isBold, formatCurrency)}
             </div>
           );
         })}
@@ -1146,7 +907,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                       <div key={`${key}_${index}`} className='mb-2'>
                         {renderCard(
                           tableName,
-                          renderTableSection(tableData),
+                          renderTableSection(
+                            tableData,
+                            boldRows,
+                            formatCurrency
+                          ),
                           false
                         )}
                       </div>
@@ -1161,7 +926,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               return (
                 <div key={key} className='mb-2'>
                   {renderCard(
-                    formatLabel(key),
+                    'NoTitle', // Empty title for Illinois table
                     renderIllinoisTable(value),
                     false
                   )}
@@ -1180,7 +945,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 <div key={key} className='mb-2'>
                   {renderCard(
                     'State Credit Summary',
-                    renderFederalTable(value),
+                    renderFederalTable(value, boldRows, formatCurrency),
                     false
                   )}
                 </div>
