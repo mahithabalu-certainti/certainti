@@ -21,6 +21,8 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
     WHERE
     cp.rid = fpr.project_fiscal_rid
+    AND
+    cp.is_qualified = true
     GROUP BY
     cp.project_name, cp.rid, cp.currency_rid
     ORDER BY cp.project_name ASC
@@ -62,6 +64,8 @@ export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accou
     LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid AND fpr.project_client_group = cp.project_client_group
     WHERE
     cp.rid = fpr.project_fiscal_rid
+    AND
+    cp.is_qualified = true
     GROUP BY
     cp.project_client_group
     ORDER BY cp.project_client_group ASC
@@ -93,6 +97,8 @@ export const calculateRDExpenditureQuery = (schemaName : string, caseRid : strin
     cp.case_rid = '${caseRid}'
     AND
     cp.account_rid = '${accountRid}'
+    AND
+    pf.is_qualified = true
     `
     return query;
 }
@@ -116,11 +122,20 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : Pro
         cp.rid IN (${caseRid.map((d : any) => `'${d.project_fiscal_rid}'`).join(',')})
         AND
         cp.account_rid = '${accountRid}'
+        AND
+        cp.is_qualified = true
     `
     return query;
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
-    return `SELECT COALESCE(COUNT(rid), 0) AS total FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+    return `SELECT COALESCE(COUNT(pf.rid), 0) AS total 
+    FROM 
+    ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid 
+    WHERE 
+    cp.case_rid = '${caseRid}'
+    AND
+    pf.is_qualified = true`
 }
 
 export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) => {
