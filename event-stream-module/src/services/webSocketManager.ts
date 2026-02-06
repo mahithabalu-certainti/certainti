@@ -47,8 +47,8 @@ class WebSocketManager {
     });
   }
 
-  // Send message to a specific assessment room based on transaction_id
-  sendRefinementPrompt(transaction_id: string, message: any): void {
+  // Send message to a specific assessment room based on company_id and project_id
+  sendRefinementPrompt(company_id: string, project_id: string, message: any): void {
     if (!this.io) {
       logMessage("WebSocket server not initialized");
       return;
@@ -61,7 +61,7 @@ class WebSocketManager {
         ? rawSummary
         : JSON.stringify(rawSummary);
 
-    const roomName = `assessment_${transaction_id}`;
+    const roomName = `assessment_${company_id}_${project_id}`;
     this.io.to(roomName).emit("ai-response", project_summary);
     logMessage(`Message sent to room ${roomName}: ${JSON.stringify(message)}`);
   }
