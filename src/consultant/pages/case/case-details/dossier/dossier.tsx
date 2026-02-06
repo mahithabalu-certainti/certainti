@@ -439,20 +439,6 @@ const Dossier: React.FC<DossierProps> = ({
           />
         )}
 
-        {tabParam === 'financial_workings' &&
-          (!isFinancialView ? (
-            <AccessRestricted />
-          ) : (
-            <FinancialWorkingForm
-              caseDetails={caseDetails}
-              setDossierFinancialStatus={setDossierFinancialStatus}
-              dossierFinancialStatus={dossierFinancialStatus}
-              financialData={financialData}
-              setFinancialData={setFinancialData}
-              refetchCaseDetails={refetchCaseDetails}
-            />
-          ))}
-
         {tabParam === 'rd_form' && (
           <RDForm
             caseDetails={caseDetails}
