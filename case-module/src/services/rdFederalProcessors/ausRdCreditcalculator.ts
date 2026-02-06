@@ -1,6 +1,6 @@
 import { QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { calculateRDExpenditureQuery } from "../../utils/rdFinancialWorking.rawQueries";
+import { calculateRDExpenditureQuery } from "../../utils/rdFinancialWorkingQueries";
 import { CalculateQreCostType } from "../../utils/types";
 import { Case } from "../../models/caseModel";
 

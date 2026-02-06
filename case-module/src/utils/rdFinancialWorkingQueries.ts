@@ -1,3 +1,4 @@
+import { MAIN_SCHEMA_NAME } from "./constants";
 import { ProjectFiscalIds } from "./types";
 
 export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number) => {
@@ -144,4 +145,12 @@ export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) =
 
 export const updateRRCASC280C = (caseRid : string, schemaName : string, userPreferenceASC : string, userPreferenceRRC : string) => {
     return `UPDATE ${schemaName}.cases SET rrc_credit_280_c = '${userPreferenceRRC}', asc_credit_280_c = '${userPreferenceASC}' WHERE rid = '${caseRid}'`
+}
+
+export const findTaskWeightageDetails = (weightageIds : string[]) => {
+    return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid IN (${weightageIds.map((d : string) => `'${d}'`).join(',')})`
+}
+
+export const getCompletedTaskStatusId = () => {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%Completed%'`
 }

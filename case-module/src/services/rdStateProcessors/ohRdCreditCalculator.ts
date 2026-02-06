@@ -169,7 +169,7 @@ export class RdCreditCalculatorForOH {
         }
         return {
             computed_fields: {
-                credit_calculation: finalData
+                "NoTitle": finalData
             }
         }
     }

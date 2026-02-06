@@ -1,6 +1,6 @@
 import { QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorking.rawQueries";
+import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorkingQueries";
 import { ProjectCalculatedDataCanada, ProjectComputeValue, ProjectFiscalIds } from "../../utils/types";
 import { Case } from "../../models/caseModel";
 

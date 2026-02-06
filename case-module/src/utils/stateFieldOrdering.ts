@@ -216,10 +216,10 @@ const stateConfigurations: { [stateCode: string]: StateFieldConfig } = {
     },
     SC: {
         sectionOrder: [
-            "credit_calculation"
+            "yesSpilt"
         ],
         sectionFieldOrders: {
-            "credit_calculation": [
+            "yesSpilt": [
                 { pattern: /^\[1\] Qualified research expenses made in South Carolina\.$/, order: 1 },
                 { pattern: /^\[2\] Enter .+% of line 1\. This is your current year credit\.$/, order: 2 },
                 { pattern: /^\[3\] Research Expenses Credit Carried forward from previous years \(attach schedule\)\.$/, order: 3 },
@@ -458,10 +458,10 @@ CA: {
     },
     OH: {
         sectionOrder: [
-            "credit_calculation"
+            "NoTitle"
         ],
         sectionFieldOrders: {
-            "credit_calculation": [
+            "NoTitle": [
                 { pattern: "Average Investment in Qualifying Research Expenses for Three Preceding Taxable Years:", order: 1 },
                 { pattern: /^Tax Year \d{4} QREs$/, order: 2 },
                 { pattern: /^Tax Year \d{4} QREs$/, order: 3 },
