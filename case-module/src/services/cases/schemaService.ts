@@ -82,7 +82,7 @@ import { HelperMethods } from "./helperMethods";
 import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } from "../../models/rdCreditCountryCalcModel";
 import { RdCreditProcess, setupRdCreditProcessSequence } from "../../models/rdCreditProcessModel";
 import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
-import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { setupSignoffDetailsSequence, SignoffDetails } from "../../models/signoffDetails";
 
 class CaseSchemaService {

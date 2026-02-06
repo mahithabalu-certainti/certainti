@@ -505,8 +505,8 @@ export const rawQueries = {
     let query = `SELECT 
     CASE WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL ELSE COUNT(cp.project_fiscal_rid) END AS total_projects,
     SUM(pf.total_cost_prj) AS total_projects_cost,
-    COUNT(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.rid END) AS total_qualified_projects,
-    COALESCE(SUM(CASE WHEN pf.qre_final IS NOT NULL OR pf.qre_final > 0 THEN pf.total_cost_prj END), 0) AS total_qualified_project_cost,
+    COUNT(CASE WHEN pf.is_qualified = true THEN pf.rid END) AS total_qualified_projects,
+    COALESCE(SUM(CASE WHEN pf.is_qualified = true THEN pf.total_cost_prj END), 0) AS total_qualified_project_cost,
     COALESCE(SUM(pf.qre_final), 0) AS total_projects_qre_cost
     FROM ${schemaName}.project_fiscal pf
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid

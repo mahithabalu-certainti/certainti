@@ -103,7 +103,7 @@ export class ProjectResourceService {
           project_fiscal_rid
         );
 
-      if (projectFiscalData.is_qualified) {
+      if (projectFiscalData.is_rd_claim_qualified) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -825,7 +825,7 @@ export class ProjectResourceService {
           project_fiscal_rid
         );
 
-      if (projectData.is_qualified) {
+      if (projectData.is_rd_claim_qualified) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1180,7 +1180,7 @@ export class ProjectResourceService {
           project_fiscal_rid
         );
 
-      if (projectFiscalData.is_qualified) {
+      if (projectFiscalData.is_rd_claim_qualified) {
         logMessage("Qualified project cannot be updated.");
         throw new Error("Qualified project cannot be updated.");
       }
@@ -1805,7 +1805,7 @@ export class ProjectResourceService {
           project_fiscal_rid
         );
 
-      if (projectData.is_qualified) {
+      if (projectData.is_rd_claim_qualified) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
