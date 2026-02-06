@@ -103,7 +103,7 @@ export const GeoBasedRuleFormFieldsData = (
         fillType: 'half' as const,
         hide: fields.length === 0,
         fields,
-        renderAsTable: isTableView,
+        renderAsDetailTable: isTableView,
       };
     });
 
