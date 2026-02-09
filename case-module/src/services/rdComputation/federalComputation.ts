@@ -409,9 +409,10 @@ export class FederalComputationService {
                         },
                         "Preliminary Calculation" : d.computed_fields["Preliminary Calculation"],
                         "[PART A] Calculation of notional R&D deductions" : {
-                            '[1] R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
-                            '[2] R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
-                            '[3] Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
+                            "[1] R&D expenditure - Research service provider (RSP)" : 0,
+                            '[2] R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
+                            '[3] R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
+                            '[10] Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
                             '[11] Total of notional R&D deductions (X plus Y)':d.computed_fields["R&D Expenditure"]['Total of notional R&D deductions (X plus Y)']
                         },
                         "[PART E] R&D tax offset calculation" : {

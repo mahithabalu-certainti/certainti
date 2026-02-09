@@ -87,6 +87,7 @@ export class RdCreditCalculatorForAus {
             "Add-back of R&D accounting expenditure (Item 7D)" : preliminaryCalculation
           },
           "R&D Expenditure" : {
+            "R&D expenditure - Research service provider (RSP)" : 0,
             "R&D expenditure - Contract expenditure (not RSP)": totalSubconQreCost,
             "R&D expenditure - Salary expenditure": totalFteQreCost,
             "Total of allocated notional deductions" : totalAllocatedNotionalDections,
