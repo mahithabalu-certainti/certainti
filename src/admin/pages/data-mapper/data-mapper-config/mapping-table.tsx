@@ -1080,53 +1080,46 @@ const MappingTable: React.FC<MappingTableProps> = ({
     // Clear error on change
     clause.error = undefined;
 
-    // Check for operators
-    const isOperator = [
+    // Check for operators - IMPORTANT: Check longer operators first!
+    const operators = [
       '===',
       '!==',
+      '<=',
+      '>=',
       '&&',
       '||',
+      '<',
+      '>',
       '+',
       '-',
       '*',
       '/',
       '%',
-      '>=',
-      '<=',
-      '>',
-      '<',
-    ].some((op) => value.endsWith(op));
+    ];
 
-    if (isOperator) {
-      const operatorMatch = [
-        '===',
-        '!==',
-        '&&',
-        '||',
-        '+',
-        '-',
-        '*',
-        '/',
-        '%',
-        '>=',
-        '<=',
-        '>',
-        '<',
-      ].find((op) => value.endsWith(op));
+    // Don't auto-add if user might be typing a compound operator
+    // For example, if value ends with '<', they might be typing '<='
+    const potentialCompoundChars = ['<', '>', '=', '!', '&', '|'];
+    const lastChar = value.slice(-1);
+    const isPotentialCompound = potentialCompoundChars.includes(lastChar);
 
-      if (operatorMatch) {
-        // Add operator chip
-        clause.expressions = [
-          ...(clause.expressions || []),
-          { type: 'operator', value: operatorMatch },
-        ];
-        clause.inputValue = '';
-        clause.showAutocomplete = false;
+    // Only check for operator match if:
+    // 1. It's not a potential compound start, OR
+    // 2. It's a complete multi-char operator
+    const operatorMatch = operators.find((op) => value.endsWith(op));
 
-        newClauses[index] = clause;
-        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-        return;
-      }
+    if (operatorMatch && (!isPotentialCompound || operatorMatch.length > 1)) {
+      // Add operator chip
+      clause.expressions = [
+        ...(clause.expressions || []),
+        { type: 'operator', value: operatorMatch },
+      ];
+      clause.inputValue = '';
+      clause.showAutocomplete = false;
+
+      newClauses[index] = clause;
+      setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+      return;
     }
 
     // Check for autocomplete trigger
@@ -1417,6 +1410,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
           // Continue to collect other errors or stop? Let's keep checking for logic errors.
         }
 
+        // Define operator categories
+        const comparisonOps = ['===', '!==', '>', '<', '>=', '<='];
+        const arithmeticOps = ['+', '-', '*', '/', '%'];
+        const logicalOps = ['&&', '||'];
+
         // Rule 0: Minimum 3 chips for each sub-condition (split by &&, ||)
         const segments: FieldExpression[][] = [[]];
         expressions.forEach((exp) => {
@@ -1447,7 +1445,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
             'Condition cannot end with a operators or &&, || symbol';
           hasValidationErrors = true;
         } else {
-          // Sequence Rules
+          // Sequence Rules with strict operator validation
+          let conditionComplete = false; // Track when a complete condition exists (operand + operator + operand)
+
           for (let j = 0; j < expressions.length - 1; j++) {
             const current = expressions[j];
             const next = expressions[j + 1];
@@ -1471,6 +1471,37 @@ const MappingTable: React.FC<MappingTableProps> = ({
               clause.error = 'The symbol sequence in the condition is invalid';
               hasValidationErrors = true;
               break;
+            }
+
+            // NEW Rule 5: Track condition completion and validate operator usage
+            if (isCurrentOperator) {
+              const opValue = current.value;
+              const isComparison = comparisonOps.includes(opValue);
+              const isArithmetic = arithmeticOps.includes(opValue);
+              const isLogical = logicalOps.includes(opValue);
+
+              // If we already have a complete condition and next operator is not logical
+              if (conditionComplete && (isComparison || isArithmetic)) {
+                clause.error = `Invalid operator "${opValue}". Use && or || to connect conditions`;
+                hasValidationErrors = true;
+                break;
+              }
+
+              // Mark condition as complete after: operand + (comparison/arithmetic) + operand
+              if ((isComparison || isArithmetic) && isNextOperand) {
+                // Check if operand after this operator completes the condition
+                if (
+                  j + 2 < expressions.length &&
+                  expressions[j + 2].type === 'operator'
+                ) {
+                  conditionComplete = true;
+                }
+              }
+
+              // Reset completion flag after logical operator
+              if (isLogical) {
+                conditionComplete = false;
+              }
             }
           }
         }
