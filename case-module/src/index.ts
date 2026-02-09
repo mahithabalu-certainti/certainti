@@ -3,8 +3,8 @@ dotenv.config();
 import initExpressServer from "./servers/expressServer";
 import initGraphQLServer from "./servers/graphqlServer";
 import { logMessage } from "./utils/helpers";
-import { kafkaProducerService } from "./kafka/producer.service";
-import { kafkaConsumerService } from "./kafka/consumer.service";
+import { kafkaProducerService } from "./kafka/producerService";
+import { kafkaConsumerService } from "./kafka/consumerService";
 
 const PORT = process.env.SERVER_PORT || 3000;
 

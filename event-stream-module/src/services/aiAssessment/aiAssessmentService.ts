@@ -82,7 +82,7 @@ export class AIAssessmentService {
         logMessage(`Detected refine_summary message type, sending via WebSocket`);
         if (company_id && project_id) {
           // Send to specific assessment room
-          this.wsManager.sendRefinementPrompt(transaction_id, aiResponse);
+          this.wsManager.sendRefinementPrompt(company_id, project_id, aiResponse);
           logMessage(`AI response sent to WebSocket room: assessment_${company_id}_${project_id}`);
         } else {
           logMessage(`Missing company_id or project_id in refine_summary message: ${JSON.stringify(aiResponse)}`);

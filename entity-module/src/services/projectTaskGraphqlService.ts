@@ -65,7 +65,7 @@ export default class ProjectTaskGraphqlServies {
           data.project_fiscal_rid
         );
 
-      if (projectData.is_qualified) {
+      if (projectData.is_rd_claim_qualified) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
