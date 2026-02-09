@@ -120,7 +120,7 @@ class SchemaService {
                 rawQueries.getAccountsByRidsQuery(),
                 {
                     replacements: { accountRids },
-                    type: "SELECT",
+                    type: QueryTypes.SELECT,
                 }
             );
 
@@ -144,7 +144,7 @@ class SchemaService {
             const [account]: any[] = await sequelize.query(
                 rawQueries.fetchAccountDetailsByRid(parentAccountId),
                 {
-                    type: "SELECT",
+                    type: QueryTypes.SELECT,
                 }
             );
 
@@ -179,7 +179,7 @@ class SchemaService {
                     permissionName: permission_name,
                     profileId: userInfo?.profile_rid,
                 },
-                type: "SELECT",
+                type: QueryTypes.SELECT,
             }),
             mainDbSequelize.query(rawQueries.fetchUserPermissions(), {
                 replacements: {

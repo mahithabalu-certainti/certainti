@@ -175,8 +175,8 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                             line_items = section.get("line_items", [])
                             if line_items and isinstance(line_items, list):
                                 for line_item in line_items:
-                                    id = line_item.get("id", "")
-                                    f_label = f"{id} - {line_item.get('label', '')}" if id else line_item.get('label', '')
+                                    line_item_id = line_item.get("id", "")
+                                    f_label = f"{line_item_id} - {line_item.get('label', '')}" if line_item_id else line_item.get('label', '')
                                     insert_safe_label(f_label, "line-item")
                             
                             #insert tables

@@ -146,7 +146,7 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
                 const exportRecord: Record<string, any> = {};
 
                 fieldMappings.forEach(mapping => {
-                    if (allowedFieldSet.size === 0 || allowedFieldSet.has(mapping.permission)) {
+                    if (allowedFieldSet.has(mapping.permission)) {
                         exportRecord[mapping.header] = resultMap[mapping.key];
                     }
                 });

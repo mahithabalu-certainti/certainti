@@ -102,12 +102,15 @@ export const rawQueries = {
     let query = `SELECT count('x') FROM ${MAIN_SCHEMA_NAME}.case_summary a
     join ${MAIN_SCHEMA_NAME}.case_status b
     on a.status_rid = b.rid 
-    and b.status_name = '${status}'`;
+    and b.status_name = :status`;
+
+    const replacements: any = { status };
 
     if (accountIds && accountIds.length > 0) {
-      query += ` and a.account_rid in ('${accountIds.join("','")}')`;
+      query += ` and a.account_rid in (:accountIds)`;
+      replacements.accountIds = accountIds;
     }
-    return query;
+    return { query, replacements };
   },
   fetchOpenTaskCount(accountIds?: string[], userId?: string) {
     let query = `SELECT count('x')
@@ -404,7 +407,7 @@ export const rawQueries = {
   },
   fetchUserProfileId(): string {
     return `
-      SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;
+      SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1;
     `;
   },
   fetchProfilePermissions(): string {

@@ -37,7 +37,8 @@ export class ReportService implements IReportService {
     async getCountDetails(userId: string, flag: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
-            const CaseSummaryModel = CaseSummary.initialize(sequelize, MAIN_SCHEMA_NAME);
+            const existingCaseSummaryModel = sequelize.models.CaseSummary as typeof CaseSummary | undefined;
+            const CaseSummaryModel = existingCaseSummaryModel ?? CaseSummary.initialize(sequelize, MAIN_SCHEMA_NAME);
 
             if (flag === "user") {
                 const childAccountIds = await this.getChildAccountIds(userId);
@@ -58,16 +59,20 @@ export class ReportService implements IReportService {
                     }
                 })
 
+                const closedCasesQuery = rawQueries.fetchCaseCountWithStatus('Closed', childAccountIds);
                 const completedCasesCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchCaseCountWithStatus('Closed', childAccountIds),
+                    closedCasesQuery.query,
                     {
+                        replacements: closedCasesQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const onHoldCasesQuery = rawQueries.fetchCaseCountWithStatus('On Hold', childAccountIds);
                 const onHoldCasesCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchCaseCountWithStatus('On Hold', childAccountIds),
+                    onHoldCasesQuery.query,
                     {
+                        replacements: onHoldCasesQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
@@ -121,16 +126,20 @@ export class ReportService implements IReportService {
 
                 const totalCases = await CaseSummaryModel.count({});
 
+                const closedCasesQuery = rawQueries.fetchCaseCountWithStatus('Closed');
                 const completedCasesCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchCaseCountWithStatus('Closed'),
+                    closedCasesQuery.query,
                     {
+                        replacements: closedCasesQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const onHoldCasesQuery = rawQueries.fetchCaseCountWithStatus('On Hold');
                 const onHoldCasesCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchCaseCountWithStatus('On Hold'),
+                    onHoldCasesQuery.query,
                     {
+                        replacements: onHoldCasesQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
@@ -189,7 +198,7 @@ export class ReportService implements IReportService {
 
 
         } catch (error) {
-            errorLog("getDataMapperFormsDetail", (error as Error).message);
+            errorLog("getCountDetails", (error as Error).message);
             throw error;
         }
     }
@@ -417,7 +426,7 @@ export class ReportService implements IReportService {
 
 
         } catch (error) {
-            errorLog("getDataMapperFormsDetail", (error as Error).message);
+            errorLog("getMeetingList", (error as Error).message);
             throw error;
         }
     }
@@ -559,7 +568,7 @@ export class ReportService implements IReportService {
                 {
                     category: "Pending Tasks",
                     count: openTasks,
-                    total: overdueTasks,
+                    total: weeklyTotal,
                     unit: "tasks"
                 },
                 {
