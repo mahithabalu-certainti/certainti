@@ -21,10 +21,21 @@ interface ObjectRidMap {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number';
+  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
+  conditionalData?: ConditionalExpression;
+}
+
+interface ConditionalClause {
+  type: 'IF' | 'ELSE_IF' | 'ELSE';
+  condition?: string; // The condition expression (not needed for ELSE)
+  result: string; // The result expression
+}
+
+interface ConditionalExpression {
+  clauses: ConditionalClause[];
 }
 
 interface MappingItem {
