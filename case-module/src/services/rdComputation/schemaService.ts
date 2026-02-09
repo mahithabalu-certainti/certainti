@@ -631,6 +631,7 @@ class RDCreditSchemaService {
             });
         });
 
+        
         // Build result object: { state_name: { state_code, final_credit, total_projects, total_resources, total_qre } }
         const result: { [key: string]: any } = {};
         let totalCredit = 0;
