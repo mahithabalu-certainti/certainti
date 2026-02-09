@@ -89,7 +89,7 @@ class RDCreditSchemaService {
                     FROM ${schemaName}.cases cs
                     JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
                     JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
-                    JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid AND cpr.region_rid = pf.region_rid
+                    JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid
                     WHERE cs.rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid AND pf.is_qualified = true
                     GROUP BY cs.tax_liability
                 `,
