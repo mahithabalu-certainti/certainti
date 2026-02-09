@@ -419,22 +419,11 @@ interface ObjectRidMap {
   [key: number]: string | number;
 }
 
-interface ConditionalClause {
-  type: 'IF' | 'ELSE_IF' | 'ELSE';
-  condition?: string;
-  result: string;
-}
-
-interface ConditionalExpression {
-  clauses: ConditionalClause[];
-}
-
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
+  type: 'chip' | 'operator' | 'manual' | 'function' | 'number';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
-  conditionalData?: ConditionalExpression;
 }
 
 interface MappingItemForValidation {

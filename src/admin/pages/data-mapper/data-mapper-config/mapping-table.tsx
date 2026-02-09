@@ -9,9 +9,8 @@ import {
   Chip,
   Tooltip,
   Popover,
-  IconButton,
 } from '@mui/material';
-import { CloseIcon, ErrorInfoIcon } from '../../../../assets';
+import { ErrorInfoIcon } from '../../../../assets';
 import TruncateWithTooltip from '../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 import TextButton from '../../../../components/button/text-button';
 
@@ -24,27 +23,11 @@ interface ObjectItem {
   field_type: 'line-item' | 'table';
 }
 
-interface ConditionalClause {
-  type: 'IF' | 'ELSE_IF' | 'ELSE';
-  condition?: string;
-  expressions?: FieldExpression[]; // Store chips for this clause
-  inputValue?: string; // Store text input for this clause
-  showAutocomplete?: boolean;
-  autocompleteIndex?: number;
-  result: string;
-  error?: string; // Individual error message
-}
-
-interface ConditionalExpression {
-  clauses: ConditionalClause[];
-}
-
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
+  type: 'chip' | 'operator' | 'manual' | 'function' | 'number';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[]; // Array of arguments (object RIDs or manual values)
-  conditionalData?: ConditionalExpression;
 }
 
 interface ObjectRidMap {
@@ -98,17 +81,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
   } | null>(null);
 
   const functionPopoverInputRef = useRef<HTMLInputElement | null>(null);
-  const clauseInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
-  const clauseContainerRefs = useRef<Record<number, HTMLDivElement | null>>({});
-
-  // Conditional popover state
-  const [conditionalPopover, setConditionalPopover] = useState<{
-    rid: string;
-    clauses: ConditionalClause[];
-    anchorEl: HTMLElement | null;
-    editingIndex?: number;
-    error?: string;
-  } | null>(null);
 
   useEffect(() => {
     if (mappings && mappings.length > 0) {
@@ -210,179 +182,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
                     }
                   }
 
-                  // Check if this is a conditional expression
-                  if (typeof value === 'string' && value.startsWith('IF(')) {
-                    // Check if we already have fieldExpressions with conditionalData
-                    const existingConditional = mapping.fieldExpressions?.find(
-                      (exp) => exp.type === 'conditional' && exp.conditionalData
-                    );
-
-                    if (existingConditional?.conditionalData) {
-                      // Use existing structured data instead of re-parsing
-                      return existingConditional;
-                    }
-
-                    // Only parse if we don't have structured data (first-time load from backend)
-                    const parseConditionalString = (
-                      str: string
-                    ): ConditionalClause[] => {
-                      const clauses: ConditionalClause[] = [];
-                      const regex = /(IF|ELSE IF|ELSE)\((.*?)\)/g;
-                      let match;
-
-                      while ((match = regex.exec(str)) !== null) {
-                        const type =
-                          match[1] === 'ELSE IF'
-                            ? 'ELSE_IF'
-                            : (match[1] as 'IF' | 'ELSE');
-                        const content = match[2];
-
-                        if (type === 'ELSE') {
-                          // Skip ELSE() suffix for the builder UI
-                          continue;
-                        } else {
-                          // Tokenizer that preserves #... manual values with spaces
-                          const tokenize = (input: string): string[] => {
-                            const tokens: string[] = [];
-                            let current = '';
-                            let inManualValue = false;
-
-                            for (let i = 0; i < input.length; i++) {
-                              const char = input[i];
-
-                              if (char === '#' && !inManualValue) {
-                                // Start of manual value
-                                if (current.trim()) {
-                                  tokens.push(current.trim());
-                                  current = '';
-                                }
-                                inManualValue = true;
-                                current = char;
-                              } else if (char === ' ' && !inManualValue) {
-                                // Space outside manual value - token separator
-                                if (current.trim()) {
-                                  tokens.push(current.trim());
-                                  current = '';
-                                }
-                              } else if (char === ' ' && inManualValue) {
-                                // Check if next token is an operator or RID (end of manual value)
-                                const remaining = input.substring(i + 1);
-                                const nextToken = remaining.split(' ')[0];
-                                const isOperator = [
-                                  '===',
-                                  '!==',
-                                  '&&',
-                                  '||',
-                                  '+',
-                                  '-',
-                                  '*',
-                                  '/',
-                                  '%',
-                                  '>',
-                                  '<',
-                                  '>=',
-                                  '<=',
-                                ].includes(nextToken);
-                                const isRid = objectsList.some(
-                                  (obj) => obj.rid === nextToken
-                                );
-
-                                if (isOperator || isRid) {
-                                  // End manual value
-                                  if (current.trim()) {
-                                    tokens.push(current.trim());
-                                    current = '';
-                                  }
-                                  inManualValue = false;
-                                } else {
-                                  // Space is part of manual value
-                                  current += char;
-                                }
-                              } else {
-                                current += char;
-                              }
-                            }
-
-                            // Push remaining token
-                            if (current.trim()) {
-                              tokens.push(current.trim());
-                            }
-
-                            return tokens;
-                          };
-
-                          const parts = tokenize(content);
-                          const expressions: FieldExpression[] = parts
-                            .map((part) => {
-                              if (!part) return null;
-
-                              // Check if part is an RID
-                              const objectItem = objectsList.find(
-                                (obj) => obj.rid === part
-                              );
-                              if (objectItem) {
-                                return {
-                                  type: 'chip',
-                                  value: `${objectItem.parent_object}.${objectItem.object_name}`,
-                                };
-                              }
-
-                              // Check for operators
-                              const isOperator = [
-                                '===',
-                                '!==',
-                                '&&',
-                                '||',
-                                '+',
-                                '-',
-                                '*',
-                                '/',
-                                '%',
-                                '>',
-                                '<',
-                                '>=',
-                                '<=',
-                              ].includes(part);
-                              if (isOperator) {
-                                return { type: 'operator', value: part };
-                              }
-
-                              // Check for numbers
-                              if (!isNaN(Number(part)) && part.trim() !== '') {
-                                return { type: 'number', value: part };
-                              }
-
-                              // Fallback to manual (includes #... values)
-                              return { type: 'manual', value: part };
-                            })
-                            .filter(Boolean) as FieldExpression[];
-
-                          clauses.push({
-                            type,
-                            condition: content,
-                            result: content,
-                            expressions:
-                              expressions.length > 0
-                                ? expressions
-                                : [{ type: 'manual', value: content }],
-                            inputValue: '',
-                          });
-                        }
-                      }
-                      return clauses;
-                    };
-
-                    const clauses = parseConditionalString(value);
-
-                    if (clauses.length > 0) {
-                      return {
-                        type: 'conditional' as const,
-                        value: value,
-                        conditionalData: { clauses },
-                      };
-                    }
-                  }
-
                   // Odd keys are object IDs - find the corresponding parent.child
                   const objectItem = objectsList.find(
                     (obj) => obj.rid === value
@@ -468,51 +267,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
     return options;
   }, [objectsList]);
 
-  const buildCalculationConfig = (
-    expressions: FieldExpression[]
-  ): ObjectRidMap | null => {
-    const objectRidMap: ObjectRidMap = {};
-    let currentIndex = 1;
-
-    expressions.forEach((exp) => {
-      if (exp.type === 'chip') {
-        const [parent, child] = exp.value.split('.', 2);
-        const objectId = targetOptions[parent]?.[child] || '';
-        if (objectId) {
-          objectRidMap[currentIndex] = objectId;
-          currentIndex += 2;
-        }
-      } else if (exp.type === 'manual') {
-        objectRidMap[currentIndex] = exp.value;
-        currentIndex += 2;
-      } else if (exp.type === 'number') {
-        objectRidMap[currentIndex] = parseFloat(exp.value);
-        currentIndex += 2;
-      } else if (exp.type === 'function') {
-        if (exp.functionType && exp.functionArgs) {
-          const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
-          objectRidMap[currentIndex] = funcStr;
-          currentIndex += 2;
-        }
-      } else if (exp.type === 'conditional') {
-        objectRidMap[currentIndex] = exp.value;
-        currentIndex += 2;
-      } else if (exp.type === 'operator') {
-        if (currentIndex > 1) {
-          const operatorMap: Record<string, string> = {
-            '+': 'add',
-            '-': 'subtract',
-            '*': 'multiply',
-            '/': 'divide',
-          };
-          objectRidMap[currentIndex - 1] = operatorMap[exp.value] || exp.value;
-        }
-      }
-    });
-
-    return Object.keys(objectRidMap).length > 0 ? objectRidMap : null;
-  };
-
   const handleFieldIdChange = (rid: string, value: string): void => {
     const updatedMappings = localMappings.map((mapping) => {
       if (mapping.rid === rid) {
@@ -539,10 +293,52 @@ const MappingTable: React.FC<MappingTableProps> = ({
             ];
 
             // Rebuild ObjectRidMap from expressions
+            const objectRidMap: ObjectRidMap = {};
+            let index = 1;
+
+            newExpressions.forEach((exp) => {
+              if (exp.type === 'chip') {
+                // Odd indices for object IDs
+                const [parent, child] = exp.value.split('.', 2);
+                const objectId = targetOptions[parent]?.[child] || '';
+                if (objectId) {
+                  objectRidMap[index] = objectId;
+                  index += 2; // Next odd number
+                }
+              } else if (exp.type === 'manual') {
+                // Odd indices for manual entries (store the value as-is)
+                objectRidMap[index] = exp.value;
+                index += 2; // Next odd number
+              } else if (exp.type === 'number') {
+                // Odd indices for number entries (store as actual number)
+                objectRidMap[index] = parseFloat(exp.value);
+                index += 2; // Next odd number
+              } else if (exp.type === 'function') {
+                // Odd indices for function calls
+                if (exp.functionType && exp.functionArgs) {
+                  const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
+                  objectRidMap[index] = funcStr;
+                  index += 2;
+                }
+              } else if (exp.type === 'operator') {
+                // Even indices for operators - only add if there's a preceding chip
+                if (index > 1) {
+                  const operatorMap: Record<string, string> = {
+                    '+': 'add',
+                    '-': 'subtract',
+                    '*': 'multiply',
+                    '/': 'divide',
+                  };
+                  objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+                }
+              }
+            });
+
             return {
               ...mapping,
               fieldExpressions: newExpressions,
-              calculation_config: buildCalculationConfig(newExpressions),
+              calculation_config:
+                Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
               targetError: undefined,
               inputValue: '',
             };
@@ -642,13 +438,52 @@ const MappingTable: React.FC<MappingTableProps> = ({
             });
 
             // Build ObjectRidMap from expressions
-            return {
+            const objectRidMap: ObjectRidMap = {};
+            let index = 1;
+
+            newExpressions.forEach((exp) => {
+              if (exp.type === 'chip') {
+                // Odd indices for object IDs
+                const [parent, child] = exp.value.split('.', 2);
+                const objectId = targetOptions[parent]?.[child] || '';
+                if (objectId) {
+                  objectRidMap[index] = objectId;
+                  index += 2; // Next odd number
+                }
+              } else if (exp.type === 'manual') {
+                // Odd indices for manual entries (store the value as-is)
+                objectRidMap[index] = exp.value;
+                index += 2; // Next odd number
+              } else if (exp.type === 'function') {
+                // Odd indices for function calls
+                if (exp.functionType && exp.functionArgs) {
+                  const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
+                  objectRidMap[index] = funcStr;
+                  index += 2;
+                }
+              } else if (exp.type === 'operator') {
+                // Even indices for operators - only add if there's a preceding chip
+                if (index > 1) {
+                  const operatorMap: Record<string, string> = {
+                    '+': 'add',
+                    '-': 'subtract',
+                    '*': 'multiply',
+                    '/': 'divide',
+                  };
+                  objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+                }
+              }
+            });
+
+            const updatedMapping = {
               ...m,
               fieldExpressions: newExpressions,
               inputValue: '',
-              calculation_config: buildCalculationConfig(newExpressions),
+              calculation_config:
+                Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
               targetError: undefined, // Clear targetError when user makes changes
             };
+            return updatedMapping;
           }
           return m;
         });
@@ -669,12 +504,55 @@ const MappingTable: React.FC<MappingTableProps> = ({
           );
 
           // Rebuild ObjectRidMap from remaining expressions
-          return {
+          const objectRidMap: ObjectRidMap = {};
+          let index = 1;
+
+          newExpressions.forEach((exp) => {
+            if (exp.type === 'chip') {
+              // Odd indices for object IDs
+              const [parent, child] = exp.value.split('.', 2);
+              const objectId = targetOptions[parent]?.[child] || '';
+              if (objectId) {
+                objectRidMap[index] = objectId;
+                index += 2; // Next odd number
+              }
+            } else if (exp.type === 'manual') {
+              // Odd indices for manual entries (store the value as-is)
+              objectRidMap[index] = exp.value;
+              index += 2; // Next odd number
+            } else if (exp.type === 'number') {
+              // Odd indices for number entries (store as actual number)
+              objectRidMap[index] = parseFloat(exp.value);
+              index += 2; // Next odd number
+            } else if (exp.type === 'function') {
+              // Odd indices for function calls
+              if (exp.functionType && exp.functionArgs) {
+                const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
+                objectRidMap[index] = funcStr;
+                index += 2;
+              }
+            } else if (exp.type === 'operator') {
+              // Even indices for operators - only add if there's a preceding chip
+              if (index > 1) {
+                const operatorMap: Record<string, string> = {
+                  '+': 'add',
+                  '-': 'subtract',
+                  '*': 'multiply',
+                  '/': 'divide',
+                };
+                objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+              }
+            }
+          });
+
+          const updatedMapping = {
             ...mapping,
             fieldExpressions: newExpressions,
-            calculation_config: buildCalculationConfig(newExpressions),
+            calculation_config:
+              Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
             targetError: undefined, // Clear targetError when user makes changes
           };
+          return updatedMapping;
         }
         return mapping;
       });
@@ -692,12 +570,55 @@ const MappingTable: React.FC<MappingTableProps> = ({
           );
 
           // Rebuild ObjectRidMap from remaining expressions
-          return {
+          const objectRidMap: ObjectRidMap = {};
+          let index = 1;
+
+          newExpressions.forEach((exp) => {
+            if (exp.type === 'chip') {
+              // Odd indices for object IDs
+              const [parent, child] = exp.value.split('.', 2);
+              const objectId = targetOptions[parent]?.[child] || '';
+              if (objectId) {
+                objectRidMap[index] = objectId;
+                index += 2; // Next odd number
+              }
+            } else if (exp.type === 'manual') {
+              // Odd indices for manual entries (store the value as-is)
+              objectRidMap[index] = exp.value;
+              index += 2; // Next odd number
+            } else if (exp.type === 'number') {
+              // Odd indices for number entries (store as actual number)
+              objectRidMap[index] = parseFloat(exp.value);
+              index += 2; // Next odd number
+            } else if (exp.type === 'function') {
+              // Odd indices for function calls
+              if (exp.functionType && exp.functionArgs) {
+                const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
+                objectRidMap[index] = funcStr;
+                index += 2;
+              }
+            } else if (exp.type === 'operator') {
+              // Even indices for operators - only add if there's a preceding chip
+              if (index > 1) {
+                const operatorMap: Record<string, string> = {
+                  '+': 'add',
+                  '-': 'subtract',
+                  '*': 'multiply',
+                  '/': 'divide',
+                };
+                objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+              }
+            }
+          });
+
+          const updatedMapping = {
             ...mapping,
             fieldExpressions: newExpressions,
-            calculation_config: buildCalculationConfig(newExpressions),
+            calculation_config:
+              Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
             targetError: undefined, // Clear targetError when user makes changes
           };
+          return updatedMapping;
         }
         return mapping;
       });
@@ -733,30 +654,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
         return;
       }
 
-      // Check if user typed IF and pressed Enter
-      if (functionInput === 'IF') {
-        event.preventDefault();
-
-        // Open conditional popover
-        const containerElement = containerRefs.current[rid];
-        if (containerElement) {
-          setConditionalPopover({
-            rid,
-            clauses: [
-              {
-                type: 'IF',
-                condition: '',
-                expressions: [],
-                inputValue: '',
-                result: '',
-              },
-            ],
-            anchorEl: containerElement,
-          });
-        }
-        return;
-      }
-
       // Handle manual entry mode (when input starts with # and NOT in popover)
       if (currentInput.trim().startsWith('#')) {
         event.preventDefault();
@@ -775,10 +672,49 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 });
 
                 // Build ObjectRidMap from expressions
+                const objectRidMap: ObjectRidMap = {};
+                let index = 1;
+
+                newExpressions.forEach((exp) => {
+                  if (exp.type === 'chip') {
+                    // Odd indices for object IDs
+                    const [parent, child] = exp.value.split('.', 2);
+                    const objectId = targetOptions[parent]?.[child] || '';
+                    if (objectId) {
+                      objectRidMap[index] = objectId;
+                      index += 2; // Next odd number
+                    }
+                  } else if (exp.type === 'manual') {
+                    // Odd indices for manual entries (store the value as-is)
+                    objectRidMap[index] = exp.value;
+                    index += 2; // Next odd number
+                  } else if (exp.type === 'function') {
+                    // Odd indices for function calls
+                    if (exp.functionType && exp.functionArgs) {
+                      const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
+                      objectRidMap[index] = funcStr;
+                      index += 2;
+                    }
+                  } else if (exp.type === 'operator') {
+                    // Even indices for operators - only add if there's a preceding chip/manual
+                    if (index > 1) {
+                      const operatorMap: Record<string, string> = {
+                        '+': 'add',
+                        '-': 'subtract',
+                        '*': 'multiply',
+                        '/': 'divide',
+                      };
+                      objectRidMap[index - 1] =
+                        operatorMap[exp.value] || exp.value;
+                    }
+                  }
+                });
+
                 return {
                   ...m,
                   fieldExpressions: newExpressions,
-                  calculation_config: buildCalculationConfig(newExpressions),
+                  calculation_config:
+                    Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
                   targetError: undefined,
                   inputValue: '',
                 };
@@ -812,10 +748,53 @@ const MappingTable: React.FC<MappingTableProps> = ({
               });
 
               // Build ObjectRidMap from expressions
+              const objectRidMap: ObjectRidMap = {};
+              let index = 1;
+
+              newExpressions.forEach((exp) => {
+                if (exp.type === 'chip') {
+                  // Odd indices for object IDs
+                  const [parent, child] = exp.value.split('.', 2);
+                  const objectId = targetOptions[parent]?.[child] || '';
+                  if (objectId) {
+                    objectRidMap[index] = objectId;
+                    index += 2; // Next odd number
+                  }
+                } else if (exp.type === 'manual') {
+                  // Odd indices for manual entries (store the value as-is)
+                  objectRidMap[index] = exp.value;
+                  index += 2; // Next odd number
+                } else if (exp.type === 'number') {
+                  // Odd indices for number entries (store as actual number)
+                  objectRidMap[index] = parseFloat(exp.value);
+                  index += 2; // Next odd number
+                } else if (exp.type === 'function') {
+                  // Odd indices for function calls
+                  if (exp.functionType && exp.functionArgs) {
+                    const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
+                    objectRidMap[index] = funcStr;
+                    index += 2;
+                  }
+                } else if (exp.type === 'operator') {
+                  // Even indices for operators - only add if there's a preceding chip/manual/number
+                  if (index > 1) {
+                    const operatorMap: Record<string, string> = {
+                      '+': 'add',
+                      '-': 'subtract',
+                      '*': 'multiply',
+                      '/': 'divide',
+                    };
+                    objectRidMap[index - 1] =
+                      operatorMap[exp.value] || exp.value;
+                  }
+                }
+              });
+
               return {
                 ...m,
                 fieldExpressions: newExpressions,
-                calculation_config: buildCalculationConfig(newExpressions),
+                calculation_config:
+                  Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
                 targetError: undefined,
                 inputValue: '',
               };
@@ -985,19 +964,17 @@ const MappingTable: React.FC<MappingTableProps> = ({
   };
 
   const getPopoverFilteredOptions = (searchText: string): string[] => {
-    const rid = functionPopover?.rid || conditionalPopover?.rid;
-    if (!rid) return [];
+    if (!functionPopover) return [];
 
     // Reuse main getFilteredOptions function with custom search text
-    return getFilteredOptions(rid, searchText);
+    return getFilteredOptions(functionPopover.rid, searchText);
   };
 
   const getPopoverDisplayName = (option: string): string => {
-    const rid = functionPopover?.rid || conditionalPopover?.rid;
-    if (!rid) return option;
+    if (!functionPopover) return option;
 
     // Reuse main getDisplayName function
-    return getDisplayName(option, rid);
+    return getDisplayName(option, functionPopover.rid);
   };
 
   const removeFunctionPopoverChip = (indexToRemove: number): void => {
@@ -1071,10 +1048,48 @@ const MappingTable: React.FC<MappingTableProps> = ({
           }
 
           // Build ObjectRidMap from expressions
+          const objectRidMap: ObjectRidMap = {};
+          let index = 1;
+
+          newExpressions.forEach((exp) => {
+            if (exp.type === 'chip') {
+              const [parent, child] = exp.value.split('.', 2);
+              const objectId = targetOptions[parent]?.[child] || '';
+              if (objectId) {
+                objectRidMap[index] = objectId;
+                index += 2;
+              }
+            } else if (exp.type === 'manual') {
+              objectRidMap[index] = exp.value;
+              index += 2;
+            } else if (exp.type === 'number') {
+              // Odd indices for number entries (store as actual number)
+              objectRidMap[index] = parseFloat(exp.value);
+              index += 2;
+            } else if (exp.type === 'function') {
+              if (exp.functionType && exp.functionArgs) {
+                const funcStr = `${exp.functionType}(${exp.functionArgs.join(', ')})`;
+                objectRidMap[index] = funcStr;
+                index += 2;
+              }
+            } else if (exp.type === 'operator') {
+              if (index > 1) {
+                const operatorMap: Record<string, string> = {
+                  '+': 'add',
+                  '-': 'subtract',
+                  '*': 'multiply',
+                  '/': 'divide',
+                };
+                objectRidMap[index - 1] = operatorMap[exp.value] || exp.value;
+              }
+            }
+          });
+
           return {
             ...m,
             fieldExpressions: newExpressions,
-            calculation_config: buildCalculationConfig(newExpressions),
+            calculation_config:
+              Object.keys(objectRidMap).length > 0 ? objectRidMap : null,
             targetError: undefined,
             inputValue: '', // Clear the MIN/MAX text from main input
           };
@@ -1125,571 +1140,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
         type: expression.functionType || 'MIN',
         args,
         inputValue: '',
-        anchorEl: containerElement,
-        editingIndex: index,
-      });
-    }
-  };
-
-  // Conditional popover handlers - Chip-based building
-  const handleClauseInputChange = (index: number, value: string): void => {
-    if (!conditionalPopover) return;
-
-    const newClauses = [...conditionalPopover.clauses];
-    const clause = { ...newClauses[index] };
-
-    // Clear error on change
-    clause.error = undefined;
-
-    // Check for operators - IMPORTANT: Check longer operators first!
-    const operators = [
-      '===',
-      '!==',
-      '<=',
-      '>=',
-      '&&',
-      '||',
-      '<',
-      '>',
-      '+',
-      '-',
-      '*',
-      '/',
-      '%',
-    ];
-
-    // Don't auto-add if user might be typing a compound operator
-    // For example, if value ends with '<', they might be typing '<='
-    const potentialCompoundChars = ['<', '>', '=', '!', '&', '|'];
-    const lastChar = value.slice(-1);
-    const isPotentialCompound = potentialCompoundChars.includes(lastChar);
-
-    // Only check for operator match if:
-    // 1. It's not a potential compound start, OR
-    // 2. It's a complete multi-char operator
-    const operatorMatch = operators.find((op) => value.endsWith(op));
-
-    if (operatorMatch && (!isPotentialCompound || operatorMatch.length > 1)) {
-      // Add operator chip
-      clause.expressions = [
-        ...(clause.expressions || []),
-        { type: 'operator', value: operatorMatch },
-      ];
-      clause.inputValue = '';
-      clause.showAutocomplete = false;
-
-      newClauses[index] = clause;
-      setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-      return;
-    }
-
-    // Check for autocomplete trigger
-    const atIndex = value.lastIndexOf('@');
-    const shouldShow = atIndex !== -1 && atIndex >= 0;
-
-    clause.inputValue = value;
-    clause.showAutocomplete = shouldShow;
-    if (shouldShow) {
-      clause.autocompleteIndex = 0;
-    }
-
-    newClauses[index] = clause;
-    setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-  };
-
-  const handleClauseKeyDown = (
-    index: number,
-    event: React.KeyboardEvent
-  ): void => {
-    if (!conditionalPopover) return;
-
-    const newClauses = [...conditionalPopover.clauses];
-    const clause = { ...newClauses[index] };
-    clause.error = undefined;
-    const currentInput = clause.inputValue || '';
-
-    if (event.key === 'Enter') {
-      event.preventDefault();
-
-      // 1. Check Autocomplete Selection
-      if (clause.showAutocomplete) {
-        const options = getPopoverFilteredOptions(
-          currentInput.substring(currentInput.lastIndexOf('@') + 1)
-        );
-        if (options.length > 0) {
-          const selectedOption = options[clause.autocompleteIndex || 0];
-          handleClauseAutocompleteSelect(index, selectedOption);
-          return;
-        }
-      }
-
-      // 2. Manual Entry (#)
-      if (currentInput.trim().startsWith('#')) {
-        clause.expressions = [
-          ...(clause.expressions || []),
-          { type: 'manual', value: currentInput.trim() },
-        ];
-        clause.inputValue = '';
-        clause.showAutocomplete = false;
-        newClauses[index] = clause;
-        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-        return;
-      }
-
-      // 3. Number Entry
-      const numberInput = currentInput.trim();
-      const numberRegex = /^-?\d+(\.\d+)?$/;
-      if (numberRegex.test(numberInput)) {
-        // Validate max 3 decimal places
-        const decimalMatch = numberInput.match(/\.(\d+)$/);
-        if (decimalMatch && decimalMatch[1].length > 3) {
-          clause.error = 'Maximum of 3 decimal places allowed for numbers';
-          newClauses[index] = clause;
-          setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-          return;
-        }
-        clause.expressions = [
-          ...(clause.expressions || []),
-          { type: 'number', value: numberInput },
-        ];
-        clause.inputValue = '';
-        clause.showAutocomplete = false;
-        newClauses[index] = clause;
-        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-        return;
-      }
-
-      // 4. Operator Entry (Manual)
-      const opInput = currentInput.trim();
-      const isFullOp = [
-        '===',
-        '!==',
-        '&&',
-        '||',
-        '+',
-        '-',
-        '*',
-        '/',
-        '%',
-        '>=',
-        '<=',
-        '>',
-        '<',
-      ].includes(opInput);
-      if (isFullOp) {
-        clause.expressions = [
-          ...(clause.expressions || []),
-          { type: 'operator', value: opInput },
-        ];
-        clause.inputValue = '';
-        clause.showAutocomplete = false;
-        newClauses[index] = clause;
-        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-        return;
-      }
-
-      // 5. Invalid Input Fallback
-      if (currentInput.trim()) {
-        clause.error = `Invalid input: "${currentInput.trim()}". Please use @ for fields, # for manual, or enter valid numbers/operators.`;
-        newClauses[index] = clause;
-        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-      }
-    }
-
-    // Autocomplete Navigation
-    if (clause.showAutocomplete) {
-      const options = getPopoverFilteredOptions(
-        currentInput.substring(currentInput.lastIndexOf('@') + 1)
-      );
-
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        clause.autocompleteIndex = Math.min(
-          (clause.autocompleteIndex || 0) + 1,
-          options.length - 1
-        );
-        newClauses[index] = clause;
-        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-      } else if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        clause.autocompleteIndex = Math.max(
-          (clause.autocompleteIndex || 0) - 1,
-          0
-        );
-        newClauses[index] = clause;
-        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-      }
-    }
-  };
-
-  const handleClauseAutocompleteSelect = (
-    index: number,
-    selectedValue: string
-  ): void => {
-    if (!conditionalPopover) return;
-    const newClauses = [...conditionalPopover.clauses];
-    const clause = { ...newClauses[index] };
-    clause.error = undefined;
-    const currentInput = clause.inputValue || '';
-
-    const atIndex = currentInput.lastIndexOf('@');
-    if (atIndex === -1) return;
-
-    const isCompleteProperty = selectedValue.includes('.');
-
-    if (!isCompleteProperty) {
-      // Parent selected, append dot and keep autocomplete open
-      const newInputValue =
-        currentInput.substring(0, atIndex + 1) + selectedValue + '.';
-      clause.inputValue = newInputValue;
-      // Keep autocomplete open
-      clause.showAutocomplete = true;
-      clause.autocompleteIndex = 0;
-    } else {
-      // Complete selection -> Add Chip
-      clause.expressions = [
-        ...(clause.expressions || []),
-        { type: 'chip', value: selectedValue },
-      ];
-      clause.inputValue = '';
-      clause.showAutocomplete = false;
-    }
-
-    newClauses[index] = clause;
-    setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-  };
-
-  const handleClauseRemoveChip = (
-    clauseIndex: number,
-    chipIndex: number
-  ): void => {
-    if (!conditionalPopover) return;
-    const newClauses = [...conditionalPopover.clauses];
-    const clause = { ...newClauses[clauseIndex] };
-    clause.error = undefined;
-
-    const newExpressions = [...(clause.expressions || [])];
-    newExpressions.splice(chipIndex, 1);
-
-    clause.expressions = newExpressions;
-    newClauses[clauseIndex] = clause;
-    setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
-  };
-
-  const handleAddElseIf = (): void => {
-    if (!conditionalPopover) return;
-
-    setConditionalPopover({
-      ...conditionalPopover,
-      clauses: [
-        ...conditionalPopover.clauses,
-        {
-          type: 'ELSE_IF',
-          condition: '',
-          expressions: [], // Initialize with empty expressions for the new input
-          inputValue: '',
-          result: '',
-        },
-      ],
-    });
-  };
-
-  const handleRemoveClause = (index: number): void => {
-    if (!conditionalPopover) return;
-
-    const newClauses = [...conditionalPopover.clauses];
-    newClauses.splice(index, 1);
-
-    setConditionalPopover({
-      ...conditionalPopover,
-      clauses: newClauses,
-    });
-  };
-
-  const handleConditionalPopoverSave = (): void => {
-    if (!conditionalPopover) return;
-
-    const clauses = conditionalPopover.clauses;
-
-    // Validation: Ensure IF exists
-    if (clauses.length === 0 || !clauses.some((c) => c.type === 'IF')) {
-      setConditionalPopover({
-        ...conditionalPopover,
-        error: 'Please start the expression with an IF statement',
-      });
-      return;
-    }
-
-    // Clear loop for validation and payload construction
-    const newClauses = [...clauses];
-    let hasValidationErrors = false;
-    const payloadParts: string[] = [];
-
-    // First pass: Validate ALL clauses and collect errors
-    for (let i = 0; i < newClauses.length; i++) {
-      const clause = { ...newClauses[i] };
-      // Clear previous error
-      clause.error = undefined;
-
-      // Rule: Invalid input validation (Check for uncommitted text)
-      if (clause.inputValue && clause.inputValue.trim()) {
-        clause.error = `Invalid text in input field. Use @ for fields or # for manual values.`;
-        hasValidationErrors = true;
-      }
-
-      // Validation Logic for Expressions
-      const expressions = clause.expressions || [];
-
-      if (expressions.length === 0 && !clause.inputValue) {
-        if (clause.type === 'IF') {
-          clause.error = 'The IF condition cannot be empty';
-          hasValidationErrors = true;
-        } else if (clause.type === 'ELSE_IF') {
-          clause.error =
-            'Please enter a condition or remove this ELSE IF block';
-          hasValidationErrors = true;
-        }
-      } else if (expressions.length > 0) {
-        // Rule: Number validation (Check for valid numbers in chips)
-        expressions.forEach((exp) => {
-          if (exp.type === 'number') {
-            if (isNaN(Number(exp.value)) || exp.value.trim() === '') {
-              clause.error = `Invalid number value: ${exp.value}`;
-              hasValidationErrors = true;
-            } else {
-              // Validate max 3 decimal places
-              const decimalMatch = exp.value.match(/\.(\d+)$/);
-              if (decimalMatch && decimalMatch[1].length > 3) {
-                clause.error = `Number entries has too many decimal places. Maximum of 3 allowed.`;
-                hasValidationErrors = true;
-              }
-            }
-          }
-        });
-
-        if (hasValidationErrors) {
-          // Continue to collect other errors or stop? Let's keep checking for logic errors.
-        }
-
-        // Define operator categories
-        const comparisonOps = ['===', '!==', '>', '<', '>=', '<='];
-        const arithmeticOps = ['+', '-', '*', '/', '%'];
-        const logicalOps = ['&&', '||'];
-
-        // Rule 0: Minimum 3 chips for each sub-condition (split by &&, ||)
-        const segments: FieldExpression[][] = [[]];
-        expressions.forEach((exp) => {
-          if (
-            exp.type === 'operator' &&
-            (exp.value === '&&' || exp.value === '||')
-          ) {
-            segments.push([]);
-          } else {
-            segments[segments.length - 1].push(exp);
-          }
-        });
-
-        if (segments.some((seg) => seg.length > 0 && seg.length < 3)) {
-          clause.error =
-            'Each part of the condition must be fully defined (e.g., value === 10)';
-          hasValidationErrors = true;
-        }
-        // Rule 1: Cannot start with operator
-        if (expressions[0].type === 'operator') {
-          clause.error =
-            'A condition cannot start with a operator or (&&, ||) symbol';
-          hasValidationErrors = true;
-        }
-        // Rule 2: Cannot end with operator
-        else if (expressions[expressions.length - 1].type === 'operator') {
-          clause.error =
-            'Condition cannot end with a operators or (&&, ||) symbol';
-          hasValidationErrors = true;
-        } else {
-          // Sequence Rules with strict operator validation
-          let conditionComplete = false; // Track when a complete condition exists (operand + operator + operand)
-
-          for (let j = 0; j < expressions.length - 1; j++) {
-            const current = expressions[j];
-            const next = expressions[j + 1];
-
-            const isCurrentOperator = current.type === 'operator';
-            const isNextOperator = next.type === 'operator';
-
-            const isCurrentOperand = !isCurrentOperator;
-            const isNextOperand = !isNextOperator;
-
-            // Rule 3: Operand followed by Operand (Missing Operator)
-            if (isCurrentOperand && isNextOperand) {
-              clause.error =
-                'Please use && or || to connect multiple conditions';
-              hasValidationErrors = true;
-              break; // Stop checking this clause
-            }
-
-            // Rule 4: Operator followed by Operator (Duplicate Operator)
-            if (isCurrentOperator && isNextOperator) {
-              clause.error = 'The symbol sequence in the condition is invalid';
-              hasValidationErrors = true;
-              break;
-            }
-
-            // NEW Rule 5: Track condition completion and validate operator usage
-            if (isCurrentOperator) {
-              const opValue = current.value;
-              const isComparison = comparisonOps.includes(opValue);
-              const isArithmetic = arithmeticOps.includes(opValue);
-              const isLogical = logicalOps.includes(opValue);
-
-              // If we already have a complete condition and next operator is not logical
-              if (conditionComplete && (isComparison || isArithmetic)) {
-                clause.error = `Invalid operator "${opValue}". Use && or || to connect conditions`;
-                hasValidationErrors = true;
-                break;
-              }
-
-              // Mark condition as complete after: operand + (comparison/arithmetic) + operand
-              if ((isComparison || isArithmetic) && isNextOperand) {
-                // Check if operand after this operator completes the condition
-                if (
-                  j + 2 < expressions.length &&
-                  expressions[j + 2].type === 'operator'
-                ) {
-                  conditionComplete = true;
-                }
-              }
-
-              // Reset completion flag after logical operator
-              if (isLogical) {
-                conditionComplete = false;
-              }
-            }
-          }
-        }
-      }
-
-      newClauses[i] = clause;
-    }
-
-    if (hasValidationErrors) {
-      setConditionalPopover({
-        ...conditionalPopover,
-        clauses: newClauses,
-        error: undefined, // Clear global error
-      });
-      return;
-    }
-
-    // Second pass: Construct Payload (only if no errors)
-    const validClauses: ConditionalClause[] = [];
-    for (let i = 0; i < newClauses.length; i++) {
-      const clause = newClauses[i];
-      // Build string from expressions
-      const conditionStr = (clause.expressions || [])
-        .map((exp) => {
-          if (exp.type === 'chip') {
-            const [parent, child] = exp.value.split('.', 2);
-            const objectId = targetOptions[parent]?.[child] || '';
-            return objectId;
-          } else if (exp.type === 'operator') {
-            return ` ${exp.value} `;
-          } else {
-            return exp.value;
-          }
-        })
-        .join('');
-
-      if (!conditionStr.trim()) continue;
-
-      const validClause = {
-        ...clause,
-        condition: conditionStr.trim(),
-        result: conditionStr.trim(),
-        expressions: clause.expressions,
-      };
-      validClauses.push(validClause);
-
-      if (clause.type === 'IF') {
-        payloadParts.push(`IF(${conditionStr.trim()})`);
-      } else if (clause.type === 'ELSE_IF') {
-        payloadParts.push(`ELSE IF(${conditionStr.trim()})`);
-      }
-    }
-
-    // Always append ELSE()
-    payloadParts.push('ELSE()');
-    const payloadValue = payloadParts.join(' ');
-
-    const conditionalExpression: ConditionalExpression = {
-      clauses: validClauses,
-    };
-
-    setLocalMappings((prev) => {
-      const updated = prev.map((m) => {
-        if (m.rid === conditionalPopover.rid) {
-          const newExpressions = [...(m.fieldExpressions || [])];
-
-          const conditionalExp: FieldExpression = {
-            type: 'conditional' as const,
-            value: payloadValue, // This is the string representation like IF(...) ELSE IF(...)
-            conditionalData: conditionalExpression,
-          };
-
-          if (conditionalPopover.editingIndex !== undefined) {
-            newExpressions[conditionalPopover.editingIndex] = conditionalExp;
-          } else {
-            newExpressions.push(conditionalExp);
-          }
-
-          // Build ObjectRidMap for payload from all expressions (sequential odd/even index logic)
-          return {
-            ...m,
-            fieldExpressions: newExpressions,
-            calculation_config: buildCalculationConfig(newExpressions),
-            inputValue: '',
-          };
-        }
-        return m;
-      });
-      onMappingsChange(updated);
-      return updated;
-    });
-
-    setConditionalPopover(null);
-  };
-
-  const handleConditionalPopoverCancel = (): void => {
-    setConditionalPopover(null);
-  };
-
-  const handleConditionalChipClick = (rid: string, index: number): void => {
-    const mapping = localMappings.find((m) => m.rid === rid);
-    if (!mapping) return;
-
-    const expression = mapping.fieldExpressions?.[index];
-    if (!expression || expression.type !== 'conditional') return;
-
-    if (!expression.conditionalData) return;
-
-    const containerElement = containerRefs.current[rid];
-    if (containerElement) {
-      // Load clauses and ensure expressions exist
-      const loadedClauses = expression.conditionalData.clauses.map((c) => ({
-        ...c,
-        // If expressions missing (legacy), convert condition string to manual chip
-        expressions:
-          c.expressions ||
-          (c.condition
-            ? [{ type: 'manual' as const, value: c.condition }]
-            : []),
-        inputValue: '',
-        showAutocomplete: false,
-        autocompleteIndex: 0,
-      }));
-
-      setConditionalPopover({
-        rid,
-        clauses: loadedClauses,
         anchorEl: containerElement,
         editingIndex: index,
       });
@@ -1932,7 +1382,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               <span>
                 <Tooltip
                   title={
-                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for manual text entry, then press Enter (e.g., #Custom Value)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (IF/ELSE IF), then press Enter\n• Use operators: +, -, *, / between values'
+                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for manual text entry, then press Enter (e.g., #Custom Value)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Use operators: +, -, *, / between values'
                   }
                   arrow
                   placement='top'
@@ -2064,8 +1514,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         className={`w-full h-full max-h-[90px] overflow-y-auto px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text ${
                           mapping.targetError
                             ? 'border-red-500 bg-[#FEF2F2] border-2 pr-8'
-                            : functionPopover?.rid === mapping.rid ||
-                                conditionalPopover?.rid === mapping.rid
+                            : functionPopover?.rid === mapping.rid
                               ? 'border-blue-400 bg-white border-2'
                               : 'border-gray-300 bg-white focus-within:border-2 focus-within:border-blue-400'
                         }`}
@@ -2217,45 +1666,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                   }}
                                 />
                               </Tooltip>
-                            ) : item.type === 'conditional' ? (
-                              <Tooltip title={item.value} arrow placement='top'>
-                                <Chip
-                                  label={item.value}
-                                  size='small'
-                                  variant='outlined'
-                                  onClick={() =>
-                                    handleConditionalChipClick(mapping.rid, idx)
-                                  }
-                                  onDelete={() => removeChip(mapping.rid, idx)}
-                                  sx={{
-                                    fontSize: '11px',
-                                    height: '20px',
-                                    maxWidth: '200px',
-                                    backgroundColor: '#fdf2f8',
-                                    borderColor: '#f472b6',
-                                    color: '#9d174d',
-                                    margin: '1px',
-                                    cursor: 'pointer',
-                                    '&:hover': {
-                                      backgroundColor: '#cffafe',
-                                    },
-                                    '& .MuiChip-deleteIcon': {
-                                      fontSize: '14px',
-                                      color: '#9d174d',
-                                      '&:hover': {
-                                        color: '#ef4444',
-                                      },
-                                    },
-                                    '& .MuiChip-label': {
-                                      paddingLeft: '6px',
-                                      paddingRight: '6px',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                    },
-                                  }}
-                                />
-                              </Tooltip>
                             ) : (
                               <Chip
                                 label={item.value}
@@ -2307,7 +1717,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onBlur={() => handleInputBlur(mapping.rid)}
                           placeholder={
                             (mapping.fieldExpressions || []).length === 0
-                              ? 'Type @ fields, # manual, numbers, MIN/MAX, IF/ELSE IF or +, -, *, / for operators'
+                              ? 'Type @ to add fields, # for manual entry, numbers (e.g., 10.55), MIN/MAX for functions, or +, -, *, / for operators'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -2347,15 +1757,21 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           className='absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto'
                           style={{
                             zIndex: 9999,
-                            maxHeight: '150px',
+                            maxHeight: '200px',
                           }}
                         >
                           {getFilteredOptions(mapping.rid).map(
                             (option, idx) => {
+                              const isSelected =
+                                idx === (selectedOptionIndex[mapping.rid] || 0);
                               return (
                                 <div
                                   key={idx}
-                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-100 hover:text-blue-800`}
+                                  className={`px-3 py-2 text-sm cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'hover:bg-gray-100'
+                                  }`}
                                   onMouseEnter={() =>
                                     setSelectedOptionIndex((prev) => ({
                                       ...prev,
@@ -2500,7 +1916,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               {functionPopover.inputValue.includes('@') && (
                 <div
                   className='absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto z-[10000]'
-                  style={{ maxHeight: '150px' }}
+                  style={{ maxHeight: '200px' }}
                 >
                   {getPopoverFilteredOptions(
                     functionPopover.inputValue.substring(
@@ -2552,348 +1968,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
                   fontWeight: 400,
                 }}
               />
-            </div>
-          </div>
-        )}
-      </Popover>
-
-      {/* Conditional Popover Dialog */}
-      <Popover
-        open={Boolean(conditionalPopover)}
-        anchorEl={conditionalPopover?.anchorEl}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-        TransitionProps={{
-          timeout: 0,
-        }}
-        slotProps={{
-          paper: {
-            sx: {
-              width: conditionalPopover?.anchorEl
-                ? conditionalPopover.anchorEl.clientWidth + 5
-                : '500px',
-              maxHeight: '600px',
-              overflow: 'visible',
-              mt: '3px',
-            },
-          },
-        }}
-      >
-        {conditionalPopover && (
-          <div className='flex flex-col p-4 gap-3'>
-            {/* Header */}
-            <div className='text-sm font-semibold text-gray-700'>
-              {`Build (IF / ELSE IF) Condition`}
-            </div>
-
-            <div className='max-h-[250px] overflow-y-auto flex flex-col gap-3 px-1'>
-              {conditionalPopover.clauses.map((clause, index) => (
-                <div
-                  key={index}
-                  className={`flex flex-col gap-1 ${clause.showAutocomplete ? 'z-[100]' : 'z-[1]'}`}
-                >
-                  <div className='flex items-center justify-between'>
-                    <label
-                      className={`text-xs font-bold text-gray-700 ${clause.type === 'IF' ? '' : 'mt-2'}`}
-                    >
-                      {clause.type === 'IF'
-                        ? 'IF'
-                        : clause.type === 'ELSE_IF'
-                          ? 'ELSE IF'
-                          : 'ELSE'}
-                    </label>
-                    {clause.type === 'ELSE_IF' && (
-                      <IconButton
-                        size='small'
-                        onClick={() => handleRemoveClause(index)}
-                        sx={{
-                          padding: '2px',
-                          color: '#dc2626',
-                          '&:hover': {
-                            backgroundColor: '#fee2e2',
-                          },
-                        }}
-                      >
-                        <React.Suspense fallback={null}>
-                          <CloseIcon className='w-4 h-4 p-0.5' />
-                        </React.Suspense>
-                      </IconButton>
-                    )}
-                  </div>
-
-                  <div
-                    className={`relative ${clause.showAutocomplete ? 'z-[100]' : 'z-[1]'}`}
-                  >
-                    <div
-                      ref={(el) => (clauseContainerRefs.current[index] = el)}
-                      className={`w-full min-h-[40px] max-h-[120px] overflow-y-auto px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${
-                        clause.error
-                          ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500'
-                          : 'border-gray-300 bg-white focus-within:border-blue-400'
-                      }`}
-                      onClick={() => {
-                        // Focus logic
-                      }}
-                    >
-                      {/* Chips */}
-                      {(clause.expressions || []).map((item, chipIdx) => (
-                        <div key={chipIdx}>
-                          {item.type === 'chip' ? (
-                            <Tooltip title={item.value} arrow placement='top'>
-                              <Chip
-                                label={item.value}
-                                size='small'
-                                variant='outlined'
-                                onDelete={() =>
-                                  handleClauseRemoveChip(index, chipIdx)
-                                }
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '20px',
-                                  maxWidth: '150px',
-                                  backgroundColor: '#f0f9ff',
-                                  borderColor: '#3b82f6',
-                                  color: '#1e40af',
-                                  margin: '1px',
-                                  '& .MuiChip-deleteIcon': {
-                                    fontSize: '14px',
-                                    color: '#1e40af',
-                                    '&:hover': { color: '#ef4444' },
-                                  },
-                                }}
-                              />
-                            </Tooltip>
-                          ) : item.type === 'manual' ? (
-                            <Tooltip title={item.value} arrow placement='top'>
-                              <Chip
-                                label={item.value}
-                                size='small'
-                                variant='outlined'
-                                onDelete={() =>
-                                  handleClauseRemoveChip(index, chipIdx)
-                                }
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '20px',
-                                  maxWidth: '150px',
-                                  backgroundColor: '#f0fdf4',
-                                  borderColor: '#22c55e',
-                                  color: '#16a34a',
-                                  margin: '1px',
-                                  '& .MuiChip-deleteIcon': {
-                                    fontSize: '14px',
-                                    color: '#16a34a',
-                                    '&:hover': { color: '#ef4444' },
-                                  },
-                                }}
-                              />
-                            </Tooltip>
-                          ) : item.type === 'number' ? (
-                            <Tooltip title={item.value} arrow placement='top'>
-                              <Chip
-                                label={item.value}
-                                size='small'
-                                variant='outlined'
-                                onDelete={() =>
-                                  handleClauseRemoveChip(index, chipIdx)
-                                }
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '20px',
-                                  maxWidth: '150px',
-                                  backgroundColor: '#fff7ed',
-                                  borderColor: '#f97316',
-                                  color: '#ea580c',
-                                  margin: '1px',
-                                  '& .MuiChip-deleteIcon': {
-                                    fontSize: '14px',
-                                    color: '#ea580c',
-                                    '&:hover': { color: '#ef4444' },
-                                  },
-                                }}
-                              />
-                            </Tooltip>
-                          ) : item.type === 'operator' ? (
-                            <Chip
-                              label={item.value}
-                              size='small'
-                              variant='outlined'
-                              onDelete={() =>
-                                handleClauseRemoveChip(index, chipIdx)
-                              }
-                              sx={{
-                                fontSize: '11px',
-                                height: '20px',
-                                backgroundColor:
-                                  item.value === '&&' || item.value === '||'
-                                    ? '#fdf2f8'
-                                    : '#fef9c3',
-                                borderColor:
-                                  item.value === '&&' || item.value === '||'
-                                    ? '#f472b6'
-                                    : '#eab308',
-                                color:
-                                  item.value === '&&' || item.value === '||'
-                                    ? '#9d174d'
-                                    : '#a16207',
-                                margin: '1px',
-                                '& .MuiChip-deleteIcon': {
-                                  fontSize: '14px',
-                                  color:
-                                    item.value === '&&' || item.value === '||'
-                                      ? '#9d174d'
-                                      : '#a16207',
-                                  '&:hover': { color: '#ef4444' },
-                                },
-                                '& .MuiChip-label': {
-                                  paddingBottom:
-                                    item.value === '*' ? '0px' : '2px',
-                                  paddingTop:
-                                    item.value === '*' ? '6px' : '0px',
-                                },
-                              }}
-                            />
-                          ) : null}
-                        </div>
-                      ))}
-
-                      {/* Input */}
-                      <input
-                        ref={(el) => (clauseInputRefs.current[index] = el)}
-                        type='text'
-                        value={clause.inputValue || ''}
-                        onChange={(e) =>
-                          handleClauseInputChange(index, e.target.value)
-                        }
-                        onKeyDown={(e) => handleClauseKeyDown(index, e)}
-                        placeholder={
-                          (clause.expressions || []).length === 0
-                            ? 'Type @ fields, # manual, numbers, &&,|| for conditions or +, -, *, / for operators'
-                            : 'Add more...'
-                        }
-                        className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
-                        style={{ minWidth: '150px' }}
-                      />
-                    </div>
-
-                    {/* Autocomplete */}
-                    {clause.showAutocomplete &&
-                      clauseContainerRefs.current[index] && (
-                        <Popover
-                          open={true}
-                          anchorEl={clauseContainerRefs.current[index]}
-                          onClose={() => {
-                            const newClauses = [...conditionalPopover.clauses];
-                            newClauses[index].showAutocomplete = false;
-                            setConditionalPopover({
-                              ...conditionalPopover,
-                              clauses: newClauses,
-                            });
-                          }}
-                          anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'left',
-                          }}
-                          transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'left',
-                          }}
-                          disableAutoFocus
-                          disableEnforceFocus
-                          slotProps={{
-                            paper: {
-                              sx: {
-                                maxHeight: '200px',
-                                width:
-                                  clauseContainerRefs.current[index]
-                                    ?.clientWidth + 2 || '300px',
-                                mt: '4px',
-                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                border: '1px solid #d1d5db',
-                                zIndex: 1300,
-                              },
-                            },
-                          }}
-                        >
-                          <div className='bg-white max-h-[150px] overflow-y-auto'>
-                            {getPopoverFilteredOptions(
-                              (clause.inputValue || '').substring(
-                                (clause.inputValue || '').lastIndexOf('@') + 1
-                              )
-                            ).map((option, idx) => (
-                              <div
-                                key={idx}
-                                className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-100 hover:text-blue-800`}
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() =>
-                                  handleClauseAutocompleteSelect(index, option)
-                                }
-                              >
-                                {getPopoverDisplayName(option)}
-                              </div>
-                            ))}
-                          </div>
-                        </Popover>
-                      )}
-
-                    {/* Individual Clause Error */}
-                    {clause.error && (
-                      <div className='text-xs text-red-600 mt-1'>
-                        {clause.error}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* Error Message */}
-              {conditionalPopover.error && (
-                <div className='text-xs text-red-600 my-1'>
-                  {conditionalPopover.error}
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className='flex justify-between mt-2'>
-              <TextButton
-                label='Add ELSE IF'
-                onClick={handleAddElseIf}
-                sx={{
-                  width: 'auto',
-                  minWidth: '100px',
-                  fontSize: '13px',
-                  fontWeight: 400,
-                }}
-              />
-              <div className='flex justify-end gap-2'>
-                <TextButton
-                  label='Cancel'
-                  onClick={handleConditionalPopoverCancel}
-                  sx={{
-                    width: '70px',
-                    minWidth: '70px',
-                    fontSize: '13px',
-                    fontWeight: 400,
-                  }}
-                />
-                <TextButton
-                  label='Save'
-                  onClick={handleConditionalPopoverSave}
-                  sx={{
-                    width: '64px',
-                    minWidth: '64px',
-                    fontSize: '13px',
-                    fontWeight: 400,
-                  }}
-                />
-              </div>
             </div>
           </div>
         )}
