@@ -2620,7 +2620,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           },
                         }}
                       >
-                        <CloseIcon className='w-4 h-4 p-0.5' />
+                        <React.Suspense fallback={null}>
+                          <CloseIcon className='w-4 h-4 p-0.5' />
+                        </React.Suspense>
                       </IconButton>
                     )}
                   </div>
