@@ -3,7 +3,7 @@ import configurations from "../config/config";
 import { handleErrorResponse, errorLog, handleCustomResponse, validateRequest, generateExcelBase64, handleSuccessResponse, isValidTimezone } from "../utils/helpers";
 import moment from "moment-timezone";
 import { HttpStatus } from "../utils/constants";
-import { reportFlagSchema } from "../lib/joi/schemas/schema";
+import { reportFlagSchema, getOverallProjectValueSchema, globalLevelChartSchema } from "../lib/joi/schemas/schema";
 
 
 const reportService = configurations.getInstance().getServices().reportService;
@@ -332,6 +332,81 @@ async function exportCompletedTasksThisWeek(req: Request, res: Response): Promis
     await handleTaskExport(req, res, reportService.getCompletedTasksThisWeekList, "exportCompletedTasksThisWeek", "CompletedTasksThisWeek");
 }
 
+async function getPendingFollowUpsList(req: Request, res: Response): Promise<void> {
+    await handleTaskList(req, res, reportService.getPendingFollowUpsList, "getPendingFollowUpsList");
+}
+
+async function exportPendingFollowUps(req: Request, res: Response): Promise<void> {
+    await handleTaskExport(req, res, reportService.getPendingFollowUpsList, "exportPendingFollowUps", "PendingFollowUps");
+}
+
+async function getOverallProjectValue(req: Request, res: Response): Promise<void> {
+    const methodName = "getOverallProjectValue";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+
+        const value = await validateRequest(req, getOverallProjectValueSchema, res, "GET");
+
+        if (!value) return;
+
+        if (!userId) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required");
+            return;
+        }
+
+        const result = await reportService.getOverallProjectValue(
+            userId,
+            value.flag,
+            value.fiscalYear
+        );
+
+        if (result.statusCode === HttpStatus.SUCCESS) {
+            handleCustomResponse(res, result.data, result.message);
+        } else {
+            handleErrorResponse(res, result.statusCode, HttpStatus.BAD_REQUEST_MESSAGE, result.message);
+        }
+
+    } catch (error) {
+        const err = error as Error;
+        errorLog(methodName, err.message);
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, err.message);
+    }
+}
+
+async function getGlobalLevelChart(req: Request, res: Response): Promise<void> {
+    const methodName = "getGlobalLevelChart";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+
+        const value = await validateRequest(req, globalLevelChartSchema, res, "GET");
+
+        if (!value) return;
+
+        if (!userId) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required");
+            return;
+        }
+
+        const result = await reportService.getGlobalLevelChart(
+            userId,
+            value.flag,
+            value.fiscalYear,
+            value.countryRid
+        );
+
+        if (result.statusCode === HttpStatus.SUCCESS) {
+            handleCustomResponse(res, result.data, result.message);
+        } else {
+            handleErrorResponse(res, result.statusCode, HttpStatus.BAD_REQUEST_MESSAGE, result.message);
+        }
+
+    } catch (error) {
+        const err = error as Error;
+        errorLog(methodName, err.message);
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, err.message);
+    }
+}
+
 
 export default {
     getCountDetails,
@@ -346,6 +421,10 @@ export default {
     getOpenTasksList,
     exportOpenTasks,
     getCompletedTasksThisWeekList,
-    exportCompletedTasksThisWeek
+    exportCompletedTasksThisWeek,
+    getPendingFollowUpsList,
+    exportPendingFollowUps,
+    getOverallProjectValue,
+    getGlobalLevelChart
 };
 

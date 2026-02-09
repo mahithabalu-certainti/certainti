@@ -260,6 +260,10 @@ export class ReportService implements IReportService {
                 await Promise.all(
                     Array.from(uniqueSchemaNames).map(async (schemaName) => {
                         try {
+                            const tableExists = await this.checkTableExistence(orgDb, schemaName, 'activities');
+                            if (!tableExists) {
+                                return;
+                            }
                             // Get unique RIDs for this schema
                             const result: any[] = await orgDb.query(
                                 rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId, userEmail),
@@ -354,6 +358,10 @@ export class ReportService implements IReportService {
                     schemaList.map(async (schema) => {
                         try {
                             const schemaName = schema.schema_name;
+                            const tableExists = await this.checkTableExistence(orgDb, schemaName, 'activities');
+                            if (!tableExists) {
+                                return;
+                            }
                             const result: any[] = await orgDb.query(
                                 rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId),
                                 {
@@ -433,6 +441,20 @@ export class ReportService implements IReportService {
 
     async getAllowedExportFields(userId: string, permissionName: string) {
         return this.schemaService.getAllowedExportFields(userId, permissionName);
+    }
+
+    private async checkTableExistence(sequelize: Sequelize, schemaName: string, tableName: string): Promise<boolean> {
+        try {
+            const query = rawQueries.checkTableExistence();
+            const result: { exists: boolean }[] = await sequelize.query(query, {
+                replacements: { schemaName, tableName },
+                type: QueryTypes.SELECT
+            });
+            return result[0]?.exists || false;
+        } catch (error) {
+            errorLog(`Error checking table existence for ${schemaName}.${tableName}: ${error}`);
+            return false;
+        }
     }
 
     async getWeeklyProductivityList(userId: string, flag: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
@@ -531,6 +553,11 @@ export class ReportService implements IReportService {
             await Promise.all(
                 Array.from(uniqueSchemaNames).map(async (schemaName) => {
                     try {
+                        const tableExists = await this.checkTableExistence(orgDb, schemaName, 'activities');
+                        if (!tableExists) {
+                            return;
+                        }
+
                         const [totalRes, attendedRes] = await Promise.all([
                             orgDb.query<{ count: number }>(
                                 rawQueries.fetchWeeklyMeetingCount(schemaName, totalStatuses, flag === "user" ? userEmail : undefined),
@@ -661,5 +688,81 @@ export class ReportService implements IReportService {
 
     async getCompletedTasksThisWeekList(userId: string, flag: string) {
         return this.fetchTasksList(userId, flag, rawQueries.fetchWeeklyCompletedTasks);
+    }
+
+    async getPendingFollowUpsList(userId: string, flag: string) {
+        return this.fetchTasksList(userId, flag, rawQueries.fetchWeeklyPendingFollowUps);
+    }
+
+    async getOverallProjectValue(userId: string, flag: string, fiscalYear?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+            let accountIds: string[] = [];
+
+            if (flag === "user") {
+                const childAccountIds = await this.getChildAccountIds(userId);
+
+                if (!childAccountIds) {
+                    return {
+                        statusCode: HttpStatus.SUCCESS,
+                        message: "No accessible accounts found",
+                        data: []
+                    };
+                }
+                accountIds = childAccountIds;
+            }
+
+            const { query, replacements } = rawQueries.fetchOverallProjectValue(flag === "user" ? accountIds : undefined, fiscalYear);
+            const result: any[] = await sequelize.query(query, {
+                replacements,
+                type: QueryTypes.SELECT
+            });
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Success",
+                data: result
+            };
+
+        } catch (error) {
+            errorLog("getOverallProjectValue", (error as Error).message);
+            throw error;
+        }
+    }
+
+    async getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+            let accountIds: string[] = [];
+
+            if (flag === "user") {
+                const childAccountIds = await this.getChildAccountIds(userId);
+
+                if (!childAccountIds) {
+                    return {
+                        statusCode: HttpStatus.SUCCESS,
+                        message: "No accessible accounts found",
+                        data: []
+                    };
+                }
+                accountIds = childAccountIds;
+            }
+
+            const { query, replacements } = rawQueries.fetchGlobalAccountClaimedAmounts(flag === "user" ? accountIds : undefined, fiscalYear, countryRid);
+            const result: any[] = await sequelize.query(query, {
+                replacements,
+                type: QueryTypes.SELECT
+            });
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Success",
+                data: result
+            };
+
+        } catch (error) {
+            errorLog("getGlobalLevelChart", (error as Error).message);
+            throw error;
+        }
     }
 }

@@ -605,5 +605,127 @@ export const rawQueries = {
     query += ` AND a.effective_end_datetime::date >= date_trunc('week', CURRENT_DATE)::date
       AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days';`;
     return query;
+  },
+  fetchWeeklyPendingFollowUps(accountIds?: string[], userId?: string) {
+    let query = `
+    SELECT 
+      a.rid,
+      a.r_number,
+      a.task_name,
+      d.task_status_name as status,
+	  a.effective_start_datetime,
+      a.effective_end_datetime,
+      c.r_number as case_r_number,
+      c.case_name,
+      a.assigned_to,
+	  e.priority_name,
+	  a.fiscal_year,
+	  f.account_name,
+	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
+	  h.category_name
+    FROM ${MAIN_SCHEMA_NAME}.task_summary a
+    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+      ON a.task_type_rid = b.rid
+    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+      ON a.attach_to = c.case_rid
+    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+      ON a.status_rid = d.rid
+    left join ${MAIN_SCHEMA_NAME}.case_priority e
+    on a.priority_rid = e.rid
+    left join ${MAIN_SCHEMA_NAME}.account f
+    on a.account_rid = f.rid
+    left join ${MAIN_SCHEMA_NAME}.user g
+    on a.assigned_to = g.rid
+    left join ${MAIN_SCHEMA_NAME}.task_category h
+    on a.task_category_rid = h.rid
+    WHERE b.task_type_name = 'Milestone'
+      AND d.task_status_name IN ('In Progress', 'To Do')
+	  AND h.category_name = 'Reviews'`;
+
+    if (accountIds && accountIds.length > 0) {
+      query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
+    }
+
+    if (userId) {
+      query += ` AND a.assigned_to = '${userId}'`;
+    }
+
+    query += ` AND a.effective_end_datetime::date >= date_trunc('week', CURRENT_DATE)::date
+      AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days';`;
+    return query;
+  },
+  checkTableExistence() {
+    return `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = :schemaName 
+        AND table_name = :tableName
+      ) as "exists";
+    `;
+  },
+  fetchOverallProjectValue(accountIds?: string[], fiscalYear?: string) {
+    let query = `
+      SELECT 
+        c.country_name,
+        COALESCE(SUM(p.total_cost_prj), 0) as total_project_cost,
+        COALESCE(SUM(p.effective_cost), 0) as qualified_project_cost,
+        COALESCE(SUM(p.qre_final), 0) as qre_cost,
+        COALESCE(SUM(p.rd_credits_total), 0) as rd_credits_computed,
+        COALESCE(SUM(CASE WHEN p.claim_status = 'Submitted' THEN p.rd_credits_total ELSE 0 END), 0) as rd_credits_submitted,
+        COALESCE(SUM(CASE WHEN p.claim_status = 'Approved' THEN p.rd_credits_total ELSE 0 END), 0) as rd_credits_approved
+      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON p.country_rid = c.rid
+      WHERE 1=1
+    `;
+
+    const replacements: any = {};
+
+    if (accountIds && accountIds.length > 0) {
+      query += ` AND p.account_rid in (:accountIds)`;
+      replacements.accountIds = accountIds;
+    }
+
+    if (fiscalYear) {
+      query += ` AND p.fiscal_year = :fiscalYear`;
+      replacements.fiscalYear = fiscalYear;
+    }
+
+    query += ` GROUP BY c.country_name;`;
+
+    return { query, replacements };
+  },
+  fetchGlobalAccountClaimedAmounts(accountIds?: string[], fiscalYear?: string, countryRid?: string) {
+    let query = `
+      SELECT 
+        a.account_name,
+        c.country_name,
+		    c.country_code,
+        COALESCE(SUM(p.total_project_cost), 0) as total_project_cost
+      FROM ${MAIN_SCHEMA_NAME}.account_fiscal_summary p
+      JOIN ${MAIN_SCHEMA_NAME}.account a ON p.account_rid = a.rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON a.country_rid = c.rid
+      WHERE 1=1
+    `;
+
+    const replacements: any = {};
+
+    if (accountIds && accountIds.length > 0) {
+      query += ` AND p.account_rid in (:accountIds)`;
+      replacements.accountIds = accountIds;
+    }
+
+    if (fiscalYear) {
+      query += ` AND p.fiscal_year = :fiscalYear`;
+      replacements.fiscalYear = fiscalYear;
+    }
+
+    if (countryRid) {
+      query += ` AND a.country_rid = :countryRid`;
+      replacements.countryRid = countryRid;
+    }
+
+    query += ` GROUP BY a.account_name, c.country_name, c.country_code;`;
+
+    return { query, replacements };
   }
 };

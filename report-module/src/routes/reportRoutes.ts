@@ -22,4 +22,12 @@ router.get("/openTasksExport", checkUserStatusMiddleware("NA"), controller.repor
 router.get("/completedTasksThisWeekList", checkUserStatusMiddleware("NA"), controller.reportController.getCompletedTasksThisWeekList);
 router.get("/completedTasksThisWeekExport", checkUserStatusMiddleware("NA"), controller.reportController.exportCompletedTasksThisWeek);
 
+router.get("/pendingFollowUpsList", checkUserStatusMiddleware("NA"), controller.reportController.getPendingFollowUpsList);
+router.get("/pendingFollowUpsExport", checkUserStatusMiddleware("NA"), controller.reportController.exportPendingFollowUps);
+
+
+router.get("/overallProjectValue", checkUserStatusMiddleware("NA"), controller.reportController.getOverallProjectValue);
+router.get("/globalLevelChart", checkUserStatusMiddleware("NA"), controller.reportController.getGlobalLevelChart);
+
+
 export default router;

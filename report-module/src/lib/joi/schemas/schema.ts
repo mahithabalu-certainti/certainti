@@ -9,6 +9,19 @@ const reportFlagSchema = Joi.object({
     flag: Joi.string().valid("all", "user").required()
 });
 
+const getOverallProjectValueSchema = Joi.object({
+    flag: Joi.string().valid("all", "user").required(),
+    fiscalYear: Joi.number().optional()
+});
+
+const globalLevelChartSchema = Joi.object({
+    flag: Joi.string().valid("all", "user").required(),
+    fiscalYear: Joi.number().optional(),
+    countryRid: Joi.string().optional()
+});
+
 export {
-    reportFlagSchema
+    reportFlagSchema,
+    getOverallProjectValueSchema,
+    globalLevelChartSchema
 };
