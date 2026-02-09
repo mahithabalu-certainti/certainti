@@ -50,6 +50,14 @@ export const nonMadatoryOptions: { option: string; value: string }[] = [
   { option: 'Contains', value: 'contains' },
   { option: 'Is-Empty', value: 'is_empty' },
 ];
+export const qualifiedEnumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+];
+export const qualifiedOptions: { option: string; value: string }[] = [
+  { option: 'Yes', value: 'true' },
+  { option: 'No', value: 'false' },
+];
 export const fiscalOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not-Equals', value: 'not_equals' },
