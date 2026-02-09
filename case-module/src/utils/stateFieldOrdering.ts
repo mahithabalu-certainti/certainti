@@ -523,7 +523,7 @@ CA: {
             }
         ],
 
-        "Qualified Research Expenses Paid or Incurred for Research Conducted in Idaho": [
+        "Qualiﬁed Research Expenses Paid or Incurred for Research Conducted in Idaho": [
             { pattern: "[4] Wages for qualified services performed in Idaho", order: 1 },
             { pattern: "[5] Cost of supplies used in Idaho", order: 2 },
             { pattern: "[6] Rental or lease costs of computers in Idaho", order: 3 },
