@@ -105,17 +105,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
   const [conditionalPopover, setConditionalPopover] = useState<{
     rid: string;
     clauses: ConditionalClause[];
-    currentClauseIndex: number;
-    // Chip-based condition building
-    conditionExpressions: FieldExpression[];
-    conditionInput: string;
-    showConditionAutocomplete: boolean;
-    conditionSelectedIndex: number;
-    // Chip-based result building
-    resultExpressions: FieldExpression[];
-    resultInput: string;
-    showResultAutocomplete: boolean;
-    resultSelectedIndex: number;
     anchorEl: HTMLElement | null;
     editingIndex?: number;
     error?: string;
@@ -223,6 +212,17 @@ const MappingTable: React.FC<MappingTableProps> = ({
 
                   // Check if this is a conditional expression
                   if (typeof value === 'string' && value.startsWith('IF(')) {
+                    // Check if we already have fieldExpressions with conditionalData
+                    const existingConditional = mapping.fieldExpressions?.find(
+                      (exp) => exp.type === 'conditional' && exp.conditionalData
+                    );
+
+                    if (existingConditional?.conditionalData) {
+                      // Use existing structured data instead of re-parsing
+                      return existingConditional;
+                    }
+
+                    // Only parse if we don't have structured data (first-time load from backend)
                     const parseConditionalString = (
                       str: string
                     ): ConditionalClause[] => {
@@ -241,7 +241,77 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           // Skip ELSE() suffix for the builder UI
                           continue;
                         } else {
-                          const parts = content.split(' ');
+                          // Tokenizer that preserves #... manual values with spaces
+                          const tokenize = (input: string): string[] => {
+                            const tokens: string[] = [];
+                            let current = '';
+                            let inManualValue = false;
+
+                            for (let i = 0; i < input.length; i++) {
+                              const char = input[i];
+
+                              if (char === '#' && !inManualValue) {
+                                // Start of manual value
+                                if (current.trim()) {
+                                  tokens.push(current.trim());
+                                  current = '';
+                                }
+                                inManualValue = true;
+                                current = char;
+                              } else if (char === ' ' && !inManualValue) {
+                                // Space outside manual value - token separator
+                                if (current.trim()) {
+                                  tokens.push(current.trim());
+                                  current = '';
+                                }
+                              } else if (char === ' ' && inManualValue) {
+                                // Check if next token is an operator or RID (end of manual value)
+                                const remaining = input.substring(i + 1);
+                                const nextToken = remaining.split(' ')[0];
+                                const isOperator = [
+                                  '===',
+                                  '!==',
+                                  '&&',
+                                  '||',
+                                  '+',
+                                  '-',
+                                  '*',
+                                  '/',
+                                  '%',
+                                  '>',
+                                  '<',
+                                  '>=',
+                                  '<=',
+                                ].includes(nextToken);
+                                const isRid = objectsList.some(
+                                  (obj) => obj.rid === nextToken
+                                );
+
+                                if (isOperator || isRid) {
+                                  // End manual value
+                                  if (current.trim()) {
+                                    tokens.push(current.trim());
+                                    current = '';
+                                  }
+                                  inManualValue = false;
+                                } else {
+                                  // Space is part of manual value
+                                  current += char;
+                                }
+                              } else {
+                                current += char;
+                              }
+                            }
+
+                            // Push remaining token
+                            if (current.trim()) {
+                              tokens.push(current.trim());
+                            }
+
+                            return tokens;
+                          };
+
+                          const parts = tokenize(content);
                           const expressions: FieldExpression[] = parts
                             .map((part) => {
                               if (!part) return null;
@@ -282,7 +352,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                 return { type: 'number', value: part };
                               }
 
-                              // Fallback to manual
+                              // Fallback to manual (includes #... values)
                               return { type: 'manual', value: part };
                             })
                             .filter(Boolean) as FieldExpression[];
@@ -681,15 +751,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 result: '',
               },
             ],
-            currentClauseIndex: 0,
-            conditionExpressions: [],
-            conditionInput: '',
-            showConditionAutocomplete: false,
-            conditionSelectedIndex: 0,
-            resultExpressions: [],
-            resultInput: '',
-            showResultAutocomplete: false,
-            resultSelectedIndex: 0,
             anchorEl: containerElement,
           });
         }
@@ -1436,13 +1497,13 @@ const MappingTable: React.FC<MappingTableProps> = ({
         // Rule 1: Cannot start with operator
         if (expressions[0].type === 'operator') {
           clause.error =
-            'A condition cannot start with a operator or &&, || symbol';
+            'A condition cannot start with a operator or (&&, ||) symbol';
           hasValidationErrors = true;
         }
         // Rule 2: Cannot end with operator
         else if (expressions[expressions.length - 1].type === 'operator') {
           clause.error =
-            'Condition cannot end with a operators or &&, || symbol';
+            'Condition cannot end with a operators or (&&, ||) symbol';
           hasValidationErrors = true;
         } else {
           // Sequence Rules with strict operator validation
@@ -1629,15 +1690,6 @@ const MappingTable: React.FC<MappingTableProps> = ({
       setConditionalPopover({
         rid,
         clauses: loadedClauses,
-        currentClauseIndex: 0,
-        conditionExpressions: [], // Unused root props
-        conditionInput: '',
-        showConditionAutocomplete: false,
-        conditionSelectedIndex: 0,
-        resultExpressions: [],
-        resultInput: '',
-        showResultAutocomplete: false,
-        resultSelectedIndex: 0,
         anchorEl: containerElement,
         editingIndex: index,
       });
@@ -2697,6 +2749,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                       : '#a16207',
                                   '&:hover': { color: '#ef4444' },
                                 },
+                                '& .MuiChip-label': {
+                                  paddingBottom:
+                                    item.value === '*' ? '0px' : '2px',
+                                  paddingTop:
+                                    item.value === '*' ? '6px' : '0px',
+                                },
                               }}
                             />
                           ) : null}
@@ -2714,7 +2772,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         onKeyDown={(e) => handleClauseKeyDown(index, e)}
                         placeholder={
                           (clause.expressions || []).length === 0
-                            ? 'Type @ fields, # manual, numbers, &&,|| for condtions or +, -, *, / for operators'
+                            ? 'Type @ fields, # manual, numbers, &&,|| for conditions or +, -, *, / for operators'
                             : 'Add more...'
                         }
                         className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
