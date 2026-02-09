@@ -252,7 +252,7 @@ const Dossier: React.FC<DossierProps> = ({
         onTabChange={handleTabChange}
         defaultValue={tabParam}
       />
-      {caseDetails?.case_total_qualified_projects === 0 ? (
+      {caseDetails?.case_total_qualified_projects === 0 || caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>
@@ -260,9 +260,9 @@ const Dossier: React.FC<DossierProps> = ({
             </React.Suspense>
           </div>
           <div>
-            <span className='font-bold mr-1 capitalize'>Case Team</span>-
+            <span className='font-bold mr-1 capitalize'>Qualified Projects</span>-
             <span className='ml-1 font-medium'>
-              No Quaified Projects assigned to this case
+              No  Qualified Projects assigned to this case
             </span>
           </div>
         </div>

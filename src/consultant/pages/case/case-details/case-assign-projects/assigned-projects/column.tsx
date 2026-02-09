@@ -49,8 +49,11 @@ export const getAssignedProjectColumns = (
       sortId: 'is_qualified',
       width: 160,
       hide:
-        !permissionMap?.['project_name']?.read &&
-        !permissionMap?.['project_name']?.edit,
+        !permissionMap?.['is_qualified']?.read &&
+        !permissionMap?.['is_qualified']?.edit,
+      render: (row: AssignProject) => {
+        return row.is_qualified ? 'Yes' : 'No';
+      },
     },
     {
       id: 'project_type_name',

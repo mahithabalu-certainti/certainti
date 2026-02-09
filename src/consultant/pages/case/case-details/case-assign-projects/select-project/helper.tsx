@@ -44,8 +44,8 @@ export const selectProjectFilterFields = (
       options: qualifiedOptions,
       operatorOption: qualifiedEnumOptions,
       hide:
-        !projectPermissionMap?.['project_name']?.read &&
-        !projectPermissionMap?.['project_name']?.edit,
+        !projectPermissionMap?.['is_qualified']?.read &&
+        !projectPermissionMap?.['is_qualified']?.edit,
     },
     {
       name: 'Project Type',

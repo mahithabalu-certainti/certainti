@@ -55,8 +55,8 @@ export const qualifiedEnumOptions: { option: string; value: string }[] = [
   { option: 'Not-Equals', value: 'not_equals' },
 ];
 export const qualifiedOptions: { option: string; value: string }[] = [
-  { option: 'Yes', value: 'yes' },
-  { option: 'No', value: 'no' },
+  { option: 'Yes', value: 'true' },
+  { option: 'No', value: 'false' },
 ];
 export const fiscalOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },

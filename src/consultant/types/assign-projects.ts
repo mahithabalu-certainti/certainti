@@ -4,6 +4,7 @@ import { NewProjectData } from './project';
 export type AssignProject = {
   rid: string;
   r_number: string;
+  is_qualified: boolean;
   account_rid: string;
   project_rid: string;
   project_code: string;
