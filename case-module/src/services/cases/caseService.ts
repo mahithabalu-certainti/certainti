@@ -1497,6 +1497,7 @@ export class CaseService {
       const labelMap: Record<string, string> = {
         "Project Code": "Project Code",
         "Project Name": "Name",
+        "Qualified Status" : "Qualified Status",
         "Project Type": "Project Type",
         "Account Name": "Name",
         "Fiscal Year": "Fiscal Year",
@@ -1527,6 +1528,7 @@ export class CaseService {
             ? fiscal.project_code + " - FY" + fiscal.fiscal_year
             : "-",
           Name: fiscal.project_name || "-",
+          "Qualified Status" : fiscal.is_qualified === true ? "Yes" : "No",
           "Project Type": fiscal.project_type_name || "-",
           "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
           "Project Classification": fiscal.project_classification_name || "-",
