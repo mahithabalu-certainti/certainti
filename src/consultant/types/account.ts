@@ -533,7 +533,7 @@ export type ExportType =
   | 'case_task'
   | 'review_projects'
   | 'activities'
-  | 'dossier-project-summary'
+  | 'dossier-technical-summary'
   | 'dossier-resource-summary'
   | 'dossier-project-documents'
   | 'dossier-qualified-projects';

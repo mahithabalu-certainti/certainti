@@ -11,6 +11,7 @@ import {
   ExportType,
   FinancialHighlightsResponse,
   RDCreditStatusResponse,
+  TechnicalSummaryExportListParams,
 } from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
@@ -20,14 +21,13 @@ import {
   DossierSummary,
   FinancialWorkingForm,
   ProjectDocuments,
-  ProjectSummary,
+  TechnicalSummary,
   QualifiedProjects,
   RDForm,
   ResourceSummary,
 } from './tab';
 import {
   getProjectDocumentsFilterFields,
-  getProjectSummaryFilterFields,
   getQualifiedProjectsFilterFields,
 } from './helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -46,6 +46,7 @@ import { FilterValue } from '../../../../types/account-filter';
 import ClosingRemarks from './tab/close-remarks/closing-remarks';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
+import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
 
 const DossierTabs = [
   {
@@ -81,6 +82,9 @@ interface DossierProps {
   setResourceSummaryParams?: React.Dispatch<
     React.SetStateAction<ReviewProjectListURLParams>
   >;
+  setTechnicalSummaryParams?: (
+    params: TechnicalSummaryExportListParams
+  ) => void;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -97,6 +101,7 @@ const Dossier: React.FC<DossierProps> = ({
   setQualifiedProjectsParams,
   setProjectDocumentsParams,
   setResourceSummaryParams,
+  setTechnicalSummaryParams,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -268,14 +273,31 @@ const Dossier: React.FC<DossierProps> = ({
     [resourceStatusOptions?.data?.data?.resourceStatus]
   );
 
+  const technicalSummaryViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) =>
+          item.name === AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const technicalSummarypermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    technicalSummaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [technicalSummaryViewEditFields]);
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'qualified_projects':
         return getQualifiedProjectsFilterFields();
       case 'project_documents':
         return getProjectDocumentsFilterFields();
-      case 'project_summary':
-        return getProjectSummaryFilterFields();
+      case 'technical_summary':
+        return getTechnicalSummaryFilterFields(technicalSummarypermissionMap);
       case 'resource_summary':
         return caseProjectResourceFilterFields(
           permissionMap,
@@ -296,6 +318,7 @@ const Dossier: React.FC<DossierProps> = ({
     projectPermissionMap,
     regionOptions,
     tabParam,
+    technicalSummarypermissionMap,
   ]);
 
   const tabs = [
@@ -325,8 +348,8 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'Project Summary',
-      value: 'project_summary',
+      label: 'Technical Summary',
+      value: 'technical_summary',
       hide: false,
     },
     {
@@ -377,11 +400,11 @@ const Dossier: React.FC<DossierProps> = ({
           tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
         onRefreshClick={handleRefresh}
-        showSearch={showTableControls}
+        showSearch={showTableControls && tabParam !== 'technical_summary'}
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
-        showAddActivity={true}
+        showAddActivity={tabParam !== 'technical_summary'}
         activityMenuItems={activityMenuItems}
         onFilterChange={handleFilterChange}
       />
@@ -460,13 +483,13 @@ const Dossier: React.FC<DossierProps> = ({
             searchValue={searchText}
           />
         )}
-        {tabParam === 'project_summary' && (
-          <ProjectSummary
+        {tabParam === 'technical_summary' && (
+          <TechnicalSummary
             refreshTrigger={refreshTrigger}
             currentPage={currentPage}
             appliedFilters={appliedFilters}
             setCount={setCount}
-            setExportParams={setQualifiedProjectsParams}
+            setExportParams={setTechnicalSummaryParams}
             setExportType={setExportType}
             columnAnchorEl={columnAnchorEl}
             setColumnAnchorEl={setColumnAnchorEl}

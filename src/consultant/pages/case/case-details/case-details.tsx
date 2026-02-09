@@ -534,16 +534,11 @@ export const CaseDetails = () => {
       );
     } else if (
       (list === 'caseProjects' && exportType === 'cases_projects') ||
-      (list === 'dossier' && exportType === 'dossier-qualified-projects') ||
-      (list === 'dossier' && exportType === 'dossier-project-summary')
+      (list === 'dossier' && exportType === 'dossier-qualified-projects')
     ) {
       ExportAssignedList(
         caseProjectParams,
-        exportType === 'dossier-qualified-projects'
-          ? 'qualified-projects'
-          : exportType === 'dossier-project-summary'
-            ? 'project-summary'
-            : ''
+        exportType === 'dossier-qualified-projects' ? 'qualified-projects' : ''
       );
     } else if (exportType === 'case_task') {
       ExportCaseTaskList(caseTaskParams);
@@ -567,8 +562,11 @@ export const CaseDetails = () => {
       } else if (exportType === 'financial_resource_cost') {
         exportFinancialResourceCost(financialResCostParams);
       }
-    } else if (list === 'technicalSummary') {
-      if (exportType === 'technical_summary') {
+    } else if (list === 'technicalSummary' || list === 'dossier') {
+      if (
+        exportType === 'technical_summary' ||
+        exportType === 'dossier-technical-summary'
+      ) {
         exportCasesTechnicalSummary(technicalSummaryParams);
       }
     }
@@ -644,15 +642,14 @@ export const CaseDetails = () => {
       }
     } else if (list === 'dossier') {
       const dossierTab = searchParams.get('tab');
-      if (
-        dossierTab === 'qualified_projects' ||
-        dossierTab === 'project_summary'
-      ) {
+      if (dossierTab === 'qualified_projects') {
         return !isProjectExportEnable;
       } else if (dossierTab === 'project_documents') {
         return !isAttachmentExportEnable;
       } else if (dossierTab === 'resource_summary') {
         return !isProjectResourceExportEnable;
+      } else if (dossierTab === 'technical_summary') {
+        return !technicalSummaryExportEnable;
       }
       return true;
     } else if (searchParams.get('tab') === 'case_task') {
@@ -957,6 +954,7 @@ export const CaseDetails = () => {
             setQualifiedProjectsParams={setCaseProjectParams}
             setProjectDocumentsParams={setAttachmentParams}
             setResourceSummaryParams={setProjectResourceParams}
+            setTechnicalSummaryParams={setTechnicalSummaryParams}
           />
         );
       default:
