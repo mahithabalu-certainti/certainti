@@ -168,10 +168,10 @@ export class RdCreditCalculatorForCAN {
                 "Provincial ORDTC %": `${totalProvincialOrdtcPercent}%`,
                 "ORDTC Claimed" : Math.round(totalOrdtcClaimed),
                 "Federal ITC Amount after ORDTC" : Math.round(federalItcAmountAfterORDTC),
-                "Federal ITC %": `${federalItcPercent}%`,
+                "Federal ITC % (ORDTC)": `${federalItcPercent}%`,
                 "Federal ITC Credits after ORDTC": Math.round(federalItcCreditsAfterORDTC),
                 "Federal ITC Amount (No ORDTC)": Math.round(federalItcAmountNoORDTC),
-                "Federal ITC Percent": `${federalItcPercent}%`,
+                "Federal ITC % (No ORDTC)": `${federalItcPercent}%`,
                 "Federal ITC Credits (No ORDTC)": Math.round(federalItcCreditsNoORDTC),
                 "TOTAL Credit with ORDTC": Math.round(totalCreditWithORDTC),
                 "TOTAL Credit with No ORDTC": Math.round(totalCreditWithNoORDTC)
