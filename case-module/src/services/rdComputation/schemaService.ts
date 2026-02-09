@@ -430,7 +430,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any,final_credit : number) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any,final_credit : number, total_qre: number) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditStateCalculations.upsert(
             {
@@ -439,7 +439,8 @@ class RDCreditSchemaService {
                 input_params,
                 computed_fields,
                 state_rid,
-                final_credit
+                final_credit,
+                total_qre
             },
             {
                 returning: true
@@ -572,7 +573,7 @@ class RDCreditSchemaService {
         
         // Get state calculations with state_rid and final_credit
         const stateCalculations = await RdCreditStateCalculations.findAll({
-            attributes: ['state_rid', 'final_credit'],
+            attributes: ['state_rid', 'final_credit','total_qre'],
             where: {
                 case_rid
             },
@@ -639,12 +640,15 @@ class RDCreditSchemaService {
             const projectInfo = projectMap.get(calc.state_rid) || { total_projects: 0, total_resources: 0, total_qre: 0 };
             
             if (stateInfo && calc.final_credit != null) {
+                const totalQreValue = stateInfo.state_name?.toLowerCase() === "ontario"
+                    ? Number(calc.total_qre || 0)
+                    : projectInfo.total_qre;
                 const finalCredit = Number(calc.final_credit);
                 result[stateInfo.state_name] = {
                     state_code: stateInfo.state_code,
                     total_projects: projectInfo.total_projects.toString(),
                     total_resources: projectInfo.total_resources.toString(),
-                    total_QRE: projectInfo.total_qre,
+                    total_QRE: totalQreValue,
                     RD_credits: Number(calc.final_credit)
                 };
                 totalCredit += finalCredit;
