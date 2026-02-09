@@ -459,7 +459,7 @@ export class FederalComputationService {
                     let creditRRC = u["computed_fields"]["(Regular Credit)"]
                     let creditASC = u["computed_fields"]["(ASC Credit)"]
                     let creditASCKey = Object.keys(creditASC).find((v : string) => v.startsWith("Enter"))
-                    let creditRRCKey = Object.keys(creditRRC).find((d : string) => d.startsWith("10 Multiply line 5"))
+                    let creditRRCKey = Object.keys(creditRRC).find((d : string) => d.startsWith("[10] Multiply line 5"))
                     let refinedRRCKey = creditRRCKey + "%"
                     return {
                         ...u,
