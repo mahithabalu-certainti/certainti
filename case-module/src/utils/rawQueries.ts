@@ -2252,7 +2252,7 @@ export const signoffProjectTechSummary  = (schemaName : string, projectFiscalRid
 }
 
 export const getValidRegionIdsFromCases = (schemaName : string, accountId : string, caseId : string) => {
-  return `SELECT region_rid AS rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseId}' AND account_rid = '${accountId}' AND region_rid IS NOT NULL`
+  return `SELECT distinct region_rid AS rid FROM ${schemaName}.case_project_resource WHERE case_rid = '${caseId}' AND account_rid = '${accountId}' AND region_rid IS NOT NULL`
 }
 export const fetchAvailableConfigLevelQuery = () => {
    let query = `
