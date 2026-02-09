@@ -137,10 +137,10 @@ export class RdCreditCalculatorForCAN {
                 "Provincial ORDTC %",
                 "ORDTC Claimed",
                 "Federal ITC Amount after ORDTC",
-                "Federal ITC %",
+                "Federal ITC % (ORDTC)",
                 "Federal ITC Credits after ORDTC",
                 "Federal ITC Amount (No ORDTC)",
-                "Federal ITC Percent",
+                "Federal ITC % (No ORDTC)",
                 "Federal ITC Credits (No ORDTC)",
                 "TOTAL Credit with ORDTC",
                 "TOTAL Credit with No ORDTC"
