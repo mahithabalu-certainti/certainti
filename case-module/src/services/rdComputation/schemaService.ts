@@ -629,6 +629,7 @@ class RDCreditSchemaService {
             });
         });
 
+        
         // Build result object: { state_name: { state_code, final_credit, total_projects, total_resources, total_qre } }
         const result: { [key: string]: any } = {};
         let totalCredit = 0;
@@ -638,9 +639,7 @@ class RDCreditSchemaService {
             const projectInfo = projectMap.get(calc.state_rid) || { total_projects: 0, total_resources: 0, total_qre: 0 };
             
             if (stateInfo && calc.final_credit != null) {
-                const totalQreValue = stateInfo.state_name?.toLowerCase() === "ontario"
-                    ? Number(calc.total_qre || 0)
-                    : projectInfo.total_qre;
+                const totalQreValue = Number(calc.total_qre || 0);
                 const finalCredit = Number(calc.final_credit);
                 result[stateInfo.state_name] = {
                     state_code: stateInfo.state_code,

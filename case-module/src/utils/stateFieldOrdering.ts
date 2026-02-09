@@ -312,7 +312,7 @@ CA: {
         { pattern: "[12] Base amount. Multiply line 11 by the percentage on line 10", order: 8 },
         { pattern: "[13] Subtract line 12 from line 9. If zero or less, enter -0-", order: 9 },
         {
-            pattern: /^\[14\] Multiply line 9 by \d+(\.\d+)?%\. See instructions$/,
+            pattern: /^\[14\] Multiply line 9 by \d+(?:\.\d+)?\s*%\s*\(\d+(?:\.\d+)?\)\. See instructions$/,
             order: 10
         },
         { pattern: "[15] Enter the smaller of line 13 or line 14", order: 11 },
@@ -523,7 +523,7 @@ CA: {
             }
         ],
 
-        "Qualified Research Expenses Paid or Incurred for Research Conducted in Idaho": [
+        "Qualiﬁed Research Expenses Paid or Incurred for Research Conducted in Idaho": [
             { pattern: "[4] Wages for qualified services performed in Idaho", order: 1 },
             { pattern: "[5] Cost of supplies used in Idaho", order: 2 },
             { pattern: "[6] Rental or lease costs of computers in Idaho", order: 3 },
