@@ -174,7 +174,7 @@ interface FinancialWorkingUSAProps {
 const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
   data,
   onSuccess,
-  currencySymbol
+  currencySymbol,
 }) => {
   // Check if data is present
   const rawComputedFields = data?.data?.computed_fields as USAComputedFields;
@@ -417,7 +417,11 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                       }
                       return (
                         <td key={colKey} className='px-2 py-0 text-right'>
-                          {renderValue(reduction280c[colKey][rowKey], isBold, formatValue)}
+                          {renderValue(
+                            reduction280c[colKey][rowKey],
+                            isBold,
+                            formatValue
+                          )}
                         </td>
                       );
                     })}
@@ -840,11 +844,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                       <div key={`${key}_${index}`} className='mb-2'>
                         {renderCard(
                           tableName,
-                          renderTableSection(
-                            tableData,
-                            boldRows,
-                            formatValue
-                          ),
+                          renderTableSection(tableData, boldRows, formatValue),
                           false
                         )}
                       </div>
@@ -889,10 +889,17 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             const cardTitle = isYesSpilt ? 'NoTitle' : formatLabel(key);
 
             const disbleRowSplit = ['Input Information', 'NoTitle']; // Content (rows) split disabled for these
-            const disbleHeaderSplit = ['Input Information', 'NoTitle', 'Yes Spilt', 'yesSpilt']; // Header split disabled for these
+            const disbleHeaderSplit = [
+              'Input Information',
+              'NoTitle',
+              'Yes Spilt',
+              'yesSpilt',
+            ]; // Header split disabled for these
 
-            const isContentSplitEnabled = isYesSpilt || !disbleRowSplit.includes(cardTitle);
-            const isHeaderSplitEnabled = !isYesSpilt && !disbleHeaderSplit.includes(cardTitle);
+            const isContentSplitEnabled =
+              isYesSpilt || !disbleRowSplit.includes(cardTitle);
+            const isHeaderSplitEnabled =
+              !isYesSpilt && !disbleHeaderSplit.includes(cardTitle);
 
             return (
               <div key={key} className='mb-2'>

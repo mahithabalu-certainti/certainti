@@ -10,7 +10,11 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ComingSoon, DetailsKeyContactErrorIcon, DossierIcon } from '../../../../../assets';
+import {
+  ComingSoon,
+  DetailsKeyContactErrorIcon,
+  DossierIcon,
+} from '../../../../../assets';
 import {
   getProjectDocumentsFilterFields,
   getProjectSummaryFilterFields,
@@ -219,7 +223,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={
           tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
@@ -252,7 +256,8 @@ const Dossier: React.FC<DossierProps> = ({
         onTabChange={handleTabChange}
         defaultValue={tabParam}
       />
-      {caseDetails?.case_total_qualified_projects === 0 || caseDetails?.case_total_qualified_projects === '0' ? (
+      {caseDetails?.case_total_qualified_projects === 0 ||
+      caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>
@@ -260,9 +265,12 @@ const Dossier: React.FC<DossierProps> = ({
             </React.Suspense>
           </div>
           <div>
-            <span className='font-bold mr-1 capitalize'>Qualified Projects</span>-
+            <span className='font-bold mr-1 capitalize'>
+              Qualified Projects
+            </span>
+            -
             <span className='ml-1 font-medium'>
-              No  Qualified Projects assigned to this case
+              No Qualified Projects assigned to this case
             </span>
           </div>
         </div>
@@ -289,8 +297,8 @@ const Dossier: React.FC<DossierProps> = ({
               currentPage={currentPage}
               appliedFilters={appliedFilters}
               setCount={setCount}
-              setExportParams={() => { }}
-              setExportType={() => { }}
+              setExportParams={() => {}}
+              setExportType={() => {}}
               columnAnchorEl={columnAnchorEl}
               setColumnAnchorEl={setColumnAnchorEl}
               searchValue={searchText}

@@ -13,7 +13,7 @@ interface FinancialWorkingAustraliaProps {
 
 const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
   data,
-  currencySymbol
+  currencySymbol,
 }) => {
   // Check if data is present and has correct structure
   const computedFields = data?.data?.computed_fields as AustraliaComputedFields;
@@ -33,7 +33,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
   const boldRows = (computedFields as any)?.BOLD || [];
 
   const formatValue = (
-    value: string | number,
+    value: string | number
     // currency?: string
   ) => {
     if (value === 0 || value === '0') {
@@ -162,9 +162,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
               >
                 {label}
               </div>
-              <div className='text-right '>
-                {renderValue(value, isBold)}
-              </div>
+              <div className='text-right '>{renderValue(value, isBold)}</div>
             </div>
           </td>
         </tr>

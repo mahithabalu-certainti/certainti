@@ -57,7 +57,7 @@ const FinancialWorkingUKTable = ({
   const computedFields = data?.data?.computed_fields as any;
   const submissions =
     computedFields?.[
-    'Technical Submissions by Cost that are 50% or more of Total QRE'
+      'Technical Submissions by Cost that are 50% or more of Total QRE'
     ] || [];
   const hmrcTotal =
     computedFields?.['Total Project to be shared with HMRC']?.Total;
@@ -179,7 +179,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const { errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
-  const [isInitiatingStarted, setIsInitiatingStarted] = useState<boolean>(false);
+  const [isInitiatingStarted, setIsInitiatingStarted] =
+    useState<boolean>(false);
 
   const { data, isLoading } = useFetchCasesConfigFields(
     accountid as string,
@@ -523,7 +524,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                  !accountPermissionMap?.['country_rid']?.edit
+                !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -539,9 +540,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
+                errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-                }`}
+              }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -557,7 +559,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                    !accountPermissionMap?.['region_rid']?.edit
+                  !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -576,8 +578,9 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${
+                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={
@@ -629,8 +632,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         <div className=''>
           <div>
             {caseDetails?.country_name ===
-              FinancialWorkingCountries.Australia ? (
-              <FinancialWorkingAustralia data={financialData} currencySymbol={responseCurrencySymbol} />
+            FinancialWorkingCountries.Australia ? (
+              <FinancialWorkingAustralia
+                data={financialData}
+                currencySymbol={responseCurrencySymbol}
+              />
             ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
               <FinancialWorkingUSA
                 data={financialData}
