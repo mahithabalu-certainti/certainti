@@ -86,12 +86,11 @@ class RDCreditSchemaService {
                         SUM(cpr.total_cost_nonlabor_from_prj_res) AS total_supplies,
                         SUM(cpr.total_cost_subcon_from_prj_res) AS total_contract,
                         cs.tax_liability as business_tax_liability
-                    FROM ${schemaName}.case_projects cp
-                    JOIN ${schemaName}.project_fiscal pf
-                        ON cp.project_fiscal_rid = pf.rid
-                    JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
-                    JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = cp.project_fiscal_rid
-                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid
+                    FROM ${schemaName}.cases cs
+                    JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
+                    JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+                    JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid AND cpr.region_rid = pf.region_rid
+                    WHERE cs.rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid AND pf.is_qualified = true
                     GROUP BY cs.tax_liability
                 `,
                 {
@@ -99,7 +98,6 @@ class RDCreditSchemaService {
                     type: QueryTypes.SELECT,
                 }
             );
-
 
             return {
                 wages: Number(data?.total_wages || 0),
