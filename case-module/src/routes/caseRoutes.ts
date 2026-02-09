@@ -313,5 +313,5 @@ routes.get(
   controller.childCaseController.getClosedCasesList
 )
 
-routes.get('/regions/:accountId/:caseId', controller.childCaseController.RegionListForFinancialHighlights)
+routes.get('/regions/:accountId/:caseId', controller.childCaseController.regionListForFinancialHighlights)
 export default routes;

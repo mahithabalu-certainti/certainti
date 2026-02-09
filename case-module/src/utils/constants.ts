@@ -1114,7 +1114,7 @@ export const rawQueries = {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
   fetchStatesByIds() {
-    return `SELECT rid, state_name,state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`;
+    return `SELECT rid, state_name,state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids) order by state_name asc`;
   },
   GET_COUNTRIES: `
     SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)
@@ -1612,7 +1612,7 @@ export const rawQueries = {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
     return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state 
     WHERE 
-    rid IN (${formattedStateIds})`;
+    rid IN (${formattedStateIds}) order by state_name asc`;
   },
   fetchMilestoneDetails (rid : string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`

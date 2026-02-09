@@ -51,7 +51,7 @@ async function signOffFinancialWorking (req : Request, res : Response) {
   }
 }
 
-async function RegionListForFinancialHighlights (req : Request, res : Response) {
+async function regionListForFinancialHighlights (req : Request, res : Response) {
     const methodName = "RegionListForFinancialHighlights"
     try {
        const userId = req.headers["x-user-id"] as string;
@@ -132,6 +132,6 @@ async function getClosedCasesList(req: Request, res: Response): Promise<void> {
 
 export default {
     signOffFinancialWorking,
-    RegionListForFinancialHighlights,
+    regionListForFinancialHighlights,
     getClosedCasesList
 }

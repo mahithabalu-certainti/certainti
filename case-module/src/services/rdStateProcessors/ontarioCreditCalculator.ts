@@ -186,7 +186,8 @@ export class RdCreditCalculatorForON {
                 currency : this.currency
             },
             computedFields : finalData,
-            finalCredit : Math.round(totalCreditWithORDTC)
+            finalCredit : Math.round(totalCreditWithORDTC),
+            totalQre:totalQre
         }
     }
 }

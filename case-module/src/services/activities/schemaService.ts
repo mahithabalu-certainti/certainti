@@ -38,6 +38,7 @@ import {
 } from "../../utils/types";
 
 import {
+  fetchActivityAttachToDetails,
   fetchActivityDetails,
   fetchEmailActivityDetails,
 } from "../../utils/rawQueries";
@@ -2399,10 +2400,18 @@ class ActivitySchemaService {
       ""
     )}`;
     const [emailDetails]: any[] = await this.orgDbSequelize.query(
-      fetchEmailActivityDetails(schemaName, activityRid),
-      { type: "SELECT" }
-    );
-
+          fetchEmailActivityDetails(schemaName, activityRid),
+          { type: "SELECT" }
+        );
+    const [attachedtoDetails]: any[] = await this.orgDbSequelize.query(
+          fetchActivityAttachToDetails(
+            schemaName,
+            emailDetails.attach_to,
+            emailDetails.attachment_level,
+            activityRid
+          ),
+          { type: "SELECT" }
+        );
     if (!emailDetails) {
       throw new Error("Data not found");
     }
@@ -2430,7 +2439,8 @@ class ActivitySchemaService {
         type: "SELECT",
       }
     );
-    let attached_to = emailDetails?.attached_to ?? "";
+    let attached_to = attachedtoDetails?.name ?? "";
+    
     if (emailDetails?.attach_to === "case") {
       const [caseInfo]: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchCaseInfo(accountNumber, accountRid),
@@ -2462,7 +2472,7 @@ class ActivitySchemaService {
     const response: any = {
       attach_to: emailDetails?.attach_to ?? "",
       attachment_level: emailDetails?.attachment_level ?? "",
-      attached_to: attached_to ?? "",
+      attached_to: attachedtoDetails?.name ?? "",
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
