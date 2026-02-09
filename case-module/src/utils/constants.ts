@@ -1612,7 +1612,7 @@ export const rawQueries = {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
     return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state 
     WHERE 
-    rid IN (${formattedStateIds})`;
+    rid IN (${formattedStateIds}) order by state_name asc`;
   },
   fetchMilestoneDetails (rid : string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
