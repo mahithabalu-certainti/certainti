@@ -10,6 +10,7 @@ import {
 import { MenuItem, Select } from '@mui/material';
 import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { costDisplay } from '../../../../../../../common-utils';
 import { useUserPreference } from '../../../../../../services/case-dossier/cases-financial-services';
 import {
   formatLabel,
@@ -167,11 +168,13 @@ const Selection280C: React.FC<Selection280CProps> = ({
 interface FinancialWorkingUSAProps {
   data: FinancialHighlightsResponse | null;
   onSuccess: () => void;
+  currencySymbol: string;
 }
 
 const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
   data,
   onSuccess,
+  currencySymbol
 }) => {
   // Check if data is present
   const rawComputedFields = data?.data?.computed_fields as USAComputedFields;
@@ -209,76 +212,16 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
   const qreSummary = inputParams?.qreSummary;
 
-  const isValidCurrencyCode = (code: string): boolean => {
-    // Common ISO 4217 currency codes
-    const validCurrencyCodes = [
-      'USD',
-      'EUR',
-      'GBP',
-      'JPY',
-      'AUD',
-      'CAD',
-      'CHF',
-      'CNY',
-      'SEK',
-      'NZD',
-      'MXN',
-      'SGD',
-      'HKD',
-      'NOK',
-      'KRW',
-      'TRY',
-      'INR',
-      'RUB',
-      'BRL',
-      'ZAR',
-    ];
-    return validCurrencyCodes.includes(code.toUpperCase());
-  };
-
-  // Extract and validate currency code
-  const rawCurrencyCode =
-    (inputParams?.metadata?.currency as string) ||
-    (inputParams?.currency as string) ||
-    'USD';
-
-  // Validate currency code - if invalid, default to USD
-  const currencyCode = isValidCurrencyCode(rawCurrencyCode)
-    ? rawCurrencyCode.toUpperCase()
-    : 'USD';
-
-  const formatCurrency = (value: number | string | null | undefined) => {
-    if (value === null || value === undefined) return '';
-
-    // Check if it's a percentage (string ending with %)
-    if (typeof value === 'string' && value.trim().endsWith('%')) {
-      return value;
+  const formatValue = (value: string | number | null | undefined) => {
+    if (value === 0 || value === '0') {
+      return '-';
     }
-
-    // Check if it's a strictly numeric string (no non-numeric chars other than dot/minus)
-    // AND it doesn't look like a date or other code.
-    // The previous implementation was:
-    /*
-      const numValue =
-        typeof value === 'string'
-          ? parseFloat(value.replace(/[^0-9.-]/g, ''))
-          : value;
-    */
-    // This is too aggressive for strings like "Tier 1".
-
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
     if (typeof value === 'number') {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currencyCode,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 20,
-      }).format(value);
+      return costDisplay(value, currencySymbol as string);
     }
-
-    // If it's a string, we usually just return it, UNLESS we know for sure it's meant to be a number.
-    // The user said: "values comes number show $ symbol... string menas show text"
-    // So we should NOT try to parse strings as numbers unless they are purely numeric strings.
-
     return value;
   };
 
@@ -316,7 +259,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                       {valPrefix}
                     </td>
                     <td className='px-2 py-0 text-sm text-[#425A76] font-medium align-middle'>
-                      {valLabel}
+                      {formatValue(valLabel)}
                     </td>
                   </tr>
                 );
@@ -330,7 +273,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                     colSpan={2}
                     className='px-2 py-1 text-sm text-[#425A76] font-medium'
                   >
-                    {value}
+                    {formatValue(value)}
                   </td>
                 </tr>
               );
@@ -356,7 +299,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                         {label}
                       </div>
                       <div className='text-right'>
-                        {renderValue(value, isBold)}
+                        {renderValue(value, isBold, formatValue)}
                       </div>
                     </div>
                   </td>
@@ -375,7 +318,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                   {formatLabel(key)}
                 </td>
                 <td className='px-2 py-0 text-right align-middle'>
-                  {renderValue(value, isBold)}
+                  {renderValue(value, isBold, formatValue)}
                 </td>
               </tr>
             );
@@ -474,7 +417,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                       }
                       return (
                         <td key={colKey} className='px-2 py-0 text-right'>
-                          {renderValue(reduction280c[colKey][rowKey], isBold)}
+                          {renderValue(reduction280c[colKey][rowKey], isBold, formatValue)}
                         </td>
                       );
                     })}
@@ -533,7 +476,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
         table_rows,
       },
       boldRows,
-      formatCurrency,
+      formatValue,
       '450px',
       [1] // Left align columns at index 0 (Prefix) and 1 (Description)
     );
@@ -622,22 +565,12 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           // Check if it looks like a "Total" column
           const isTotal =
             key.toLowerCase() === 'total' || key.toLowerCase() === 'sum';
-          const isCurrency =
-            typeof val === 'number'
-              ? !isNaN(val)
-              : typeof val === 'string' &&
-              val.trim() !== '' &&
-              !isNaN(Number(val));
 
           return (
             <div
               className={`px-2 w-full flex justify-end  text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
             >
-              {val !== undefined && val !== null && val !== ''
-                ? isCurrency
-                  ? formatCurrency(val)
-                  : val
-                : '-'}
+              {formatValue(val) || '-'}
             </div>
           );
         },
@@ -684,7 +617,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                         {extractPrefix(formatLabel(key)).label}
                       </div>
                       <div className='text-right'>
-                        {renderValue(value, false, formatCurrency)}
+                        {renderValue(value, false, formatValue)}
                       </div>
                     </div>
                   </td>
@@ -702,7 +635,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                   {formatLabel(key)}
                 </td>
                 <td className='px-2 py-0 text-right align-middle'>
-                  {renderValue(value, false, formatCurrency)}
+                  {renderValue(value, false, formatValue)}
                 </td>
               </tr>
             </tbody>
@@ -711,7 +644,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       }
       return (
         <div className='h-[28px] flex justify-start items-center p-0 px-1.5'>
-          {renderValue(value, false, formatCurrency)}
+          {renderValue(value, false, formatValue)}
         </div>
       );
     }
@@ -748,7 +681,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                     {valPrefix}
                   </div>
                   <div className='flex-1 flex items-center pl-2 pr-2 py-1 text-sm text-[#425A76] font-medium'>
-                    {valLabel}
+                    {formatValue(valLabel)}
                   </div>
                 </div>
               );
@@ -758,7 +691,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 key={k}
                 className='min-h-[28px] px-2 py-1 flex items-center text-sm text-[#425A76] font-medium border-b border-[#CBD6E2] last:border-0'
               >
-                {v as string}
+                {formatValue(v as string)}
               </div>
             );
           }
@@ -829,7 +762,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                   >
                     {label}
                   </span>
-                  {renderValue(v, isBold, formatCurrency)}
+                  {renderValue(v, isBold, formatValue)}
                 </div>
               </div>
             );
@@ -845,7 +778,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               >
                 {formatLabel(k)}
               </span>
-              {renderValue(v, isBold, formatCurrency)}
+              {renderValue(v, isBold, formatValue)}
             </div>
           );
         })}
@@ -910,7 +843,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                           renderTableSection(
                             tableData,
                             boldRows,
-                            formatCurrency
+                            formatValue
                           ),
                           false
                         )}
@@ -945,7 +878,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                 <div key={key} className='mb-2'>
                   {renderCard(
                     'State Credit Summary',
-                    renderFederalTable(value, boldRows, formatCurrency),
+                    renderFederalTable(value, boldRows, formatValue),
                     false
                   )}
                 </div>

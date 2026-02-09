@@ -32,12 +32,7 @@ export const renderValue = (
         <span
           className={`text-[12px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
         >
-          {(() => {
-            const isStrictNumber = typeof value === 'number';
-            return isStrictNumber && formatCurrency
-              ? formatCurrency(value)
-              : value;
-          })()}
+          {formatCurrency ? formatCurrency(value) : value}
         </span>
       )}
       {isEmpty && <span>&nbsp;</span>}
