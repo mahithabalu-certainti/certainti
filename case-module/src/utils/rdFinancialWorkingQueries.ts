@@ -128,6 +128,32 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : Pro
     `
     return query;
 }
+export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string, regionRid : string) => {
+    let query = 
+    `SELECT
+        cp.project_code,
+        cp.project_name,
+        COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
+        COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
+        COALESCE(cp.total_cost_fte_prj, 0.00) AS total_cost_fte_prj,
+        COALESCE(cp.total_cost_subcon_prj, 0.00) AS total_cost_subcon_prj,
+        COALESCE(cp.total_cost_nonlabor_prj, 0.00) AS total_cost_nonlabor_prj,
+        COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
+    FROM
+        ${schemaName}.project_fiscal cp
+        LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = cp.rid
+    WHERE
+        cp.rid IN (${caseRid.map((d : any) => `'${d.project_fiscal_rid}'`).join(',')})
+        AND
+        cp.account_rid = '${accountRid}'
+        AND
+        cp.is_qualified = true
+        AND
+        pfr.region_rid = '${regionRid}'
+
+    `
+    return query;
+}
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
     return `SELECT COALESCE(COUNT(pf.rid), 0) AS total 
     FROM 
@@ -141,6 +167,9 @@ export const countAssignedProjects = (caseRid : string, schemaName : string) => 
 
 export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) => {
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+}
+export const fetchAssignedProjectIdsForOntRegions = (caseRid : string, schemaName : string, regionId : string) => {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND region_rid = '${regionId}'`
 }
 
 export const updateRRCASC280C = (caseRid : string, schemaName : string, userPreferenceASC : string, userPreferenceRRC : string) => {

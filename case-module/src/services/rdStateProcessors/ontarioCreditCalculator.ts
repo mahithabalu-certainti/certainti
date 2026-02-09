@@ -1,8 +1,10 @@
 import { QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorkingQueries";
+import { fetchAssignedProjectIds, fetchAssignedProjectIdsForOntRegions, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada, fetchRequiredPrjDataForCanadaOntRegion } from "../../utils/rdFinancialWorkingQueries";
 import { ProjectCalculatedDataCanada, ProjectComputeValue, ProjectFiscalIds } from "../../utils/types";
 import { Case } from "../../models/caseModel";
+import { initMainDbSequelize } from "../../config/mainDataSource";
+import { rawQueries } from "../../utils/constants";
 
 type extractConfig = {
     fte_proxy : number,
@@ -21,6 +23,7 @@ export class RdCreditCalculatorForON {
     currency = "CAD";
 
     private orgDbSequelize: Sequelize | null = null;
+    private mainDbSequelize: Sequelize | null = null;
 
     private async getOrgDb() {
         if (!this.orgDbSequelize) {
@@ -28,11 +31,20 @@ export class RdCreditCalculatorForON {
         }
         return this.orgDbSequelize;
     }
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initMainDbSequelize();
+        }
+        return this.mainDbSequelize;
+    }
 
     async compute(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
         const orgDb = await this.getOrgDb();
-        const fetchIds = await orgDb.query<ProjectFiscalIds>(fetchAssignedProjectIds(caseRid, schemaName), {type : QueryTypes.SELECT})
-        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, fetchIds, accountRid), {type : QueryTypes.SELECT})
+        const mainDb = await this.getMainDb();
+        const findOnatarioRegionId : any = await mainDb.query(rawQueries.fetchCanadaOntRegion());
+        const fetchIds = await orgDb.query<ProjectFiscalIds>(fetchAssignedProjectIdsForOntRegions(caseRid, schemaName, findOnatarioRegionId[0][0].rid), {type : QueryTypes.SELECT})
+        
+        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanadaOntRegion(schemaName, fetchIds, accountRid, findOnatarioRegionId[0][0].rid), {type : QueryTypes.SELECT})
         let fteQreAdjustment = extractConfig.fte_qre_adjustment;
         let subconQreAdjustment = extractConfig.subcon_qre_adjustment;
         let fteProxyPercent = `FTE Proxy (${extractConfig.fte_proxy}%)`
