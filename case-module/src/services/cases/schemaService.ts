@@ -1798,7 +1798,7 @@ class CaseSchemaService {
     isSorting: boolean,
     assignedApi: boolean,
     accessibleIds: string[],
-    isExport: boolean
+    isExport: boolean,
   ) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -1859,7 +1859,8 @@ class CaseSchemaService {
         assignedApi,
         accessibleIds,
         isExport,
-        projectTypes
+        projectTypes,
+        data.type
       )
     );
     return result[0];

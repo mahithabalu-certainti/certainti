@@ -13,7 +13,9 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
     ),
     fetch_project_count_cost AS (
-    SELECT NULLIF(COUNT(pf.rid), 0) AS total_projects, NULLIF(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
+    SELECT NULLIF(COUNT(pf.rid), 0) AS total_projects, NULLIF(SUM(pf.total_cost_prj), 0.00) AS total_project_cost, 
+    COUNT(CASE WHEN pf.is_qualified = true THEN pf.rid END) AS case_total_qualified_projects,
+    COALESCE(SUM(CASE WHEN pf.is_qualified THEN pf.total_cost_prj END), 0) AS case_total_qualified_project_cost
     FROM ${schemaName}.project_fiscal pf
     CROSS JOIN fetch_fiscal_year f
     WHERE
@@ -21,8 +23,8 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
-    c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,c.case_total_qualified_projects,
-    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, c.case_total_qualified_project_cost,
+    c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,f.case_total_qualified_projects,
+    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
@@ -61,7 +63,8 @@ export const fetchProjectsForCases = (
   assignedApi: boolean,
   accessibleIds: string[],
   isExport: boolean,
-  projectTypeRids: string[]
+  projectTypeRids: string[],
+  type? : string
 ) => {
   let pagination: string = ``
   if (!isExport) {
@@ -69,6 +72,14 @@ export const fetchProjectsForCases = (
     pagination = `LIMIT ${limit} OFFSET ${offset}`;
   } else {
     pagination = ` `
+  }
+  let joinKey : string;
+  let qualifiedConditions : string
+
+  if(type === 'qualifiedProjects') {
+    qualifiedConditions = `AND pf.is_qualified = true`
+  } else {
+    qualifiedConditions = ` `
   }
 
   let sortValue: string;
@@ -261,7 +272,10 @@ export const fetchProjectsForCases = (
     SELECT pf.rid 
     FROM ${schemaName}.project_fiscal pf
     WHERE
-    pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}
+    pf.account_rid = '${accountRid}'
+    AND pf.fiscal_year = ${fiscalYear} 
+    ${accessibleProjects}
+
     ),
     fetch_project_point_of_contact AS (
     SELECT pf.rid, kc.key_contact_name AS project_point_of_contact
@@ -296,7 +310,7 @@ export const fetchProjectsForCases = (
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified
+    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -309,6 +323,7 @@ export const fetchProjectsForCases = (
     ${subQueryConditions}
     AND
     (pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}' OR pf.r_number ILIKE '${searchValue}')
+    ${qualifiedConditions}
     ${and}
     ${combinedFilterQuery}
     ${sortValue}
