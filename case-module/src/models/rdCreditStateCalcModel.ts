@@ -11,6 +11,7 @@ export interface RdCreditStateCalcAttributes {
     input_params?: object | null;
     computed_fields?: object | null;
     final_credit?: number | null;
+    total_qre?: number | null;
     created_datetime?: Date;
     modified_datetime?: Date;
 }
@@ -34,6 +35,7 @@ export class RdCreditStateCalculations
     public final_credit?: number | null;
     public created_datetime?: Date;
     public modified_datetime?: Date;
+    public total_qre?: number | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditStateCalculations.init(
@@ -68,6 +70,10 @@ export class RdCreditStateCalculations
                     allowNull: true,
                 },
                 final_credit: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                total_qre: {
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },
