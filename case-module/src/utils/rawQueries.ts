@@ -63,7 +63,8 @@ export const fetchProjectsForCases = (
   assignedApi: boolean,
   accessibleIds: string[],
   isExport: boolean,
-  projectTypeRids: string[]
+  projectTypeRids: string[],
+  type? : string
 ) => {
   let pagination: string = ``
   if (!isExport) {
@@ -71,6 +72,14 @@ export const fetchProjectsForCases = (
     pagination = `LIMIT ${limit} OFFSET ${offset}`;
   } else {
     pagination = ` `
+  }
+  let joinKey : string;
+  let qualifiedConditions : string
+
+  if(type === 'qualifiedProjects') {
+    qualifiedConditions = `AND pf.is_qualified = true`
+  } else {
+    qualifiedConditions = ` `
   }
 
   let sortValue: string;
@@ -263,7 +272,10 @@ export const fetchProjectsForCases = (
     SELECT pf.rid 
     FROM ${schemaName}.project_fiscal pf
     WHERE
-    pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}
+    pf.account_rid = '${accountRid}'
+    AND pf.fiscal_year = ${fiscalYear} 
+    ${accessibleProjects}
+
     ),
     fetch_project_point_of_contact AS (
     SELECT pf.rid, kc.key_contact_name AS project_point_of_contact
@@ -298,7 +310,7 @@ export const fetchProjectsForCases = (
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified
+    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -311,6 +323,7 @@ export const fetchProjectsForCases = (
     ${subQueryConditions}
     AND
     (pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}' OR pf.r_number ILIKE '${searchValue}')
+    ${qualifiedConditions}
     ${and}
     ${combinedFilterQuery}
     ${sortValue}

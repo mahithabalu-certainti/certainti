@@ -1067,7 +1067,8 @@ export class CaseService {
             currency_rid: d.currency_rid || null,
             currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
             currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
-            is_rd_claim_qualified : d.is_rd_claim_qualified
+            is_rd_claim_qualified : d.is_rd_claim_qualified,
+            is_qualified : d.is_qualified
           };
         });
         return {
