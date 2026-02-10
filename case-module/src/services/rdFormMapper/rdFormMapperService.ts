@@ -245,13 +245,13 @@ export class RdFormMapperService {
         `State PDF form filling completed for ${state}. Filled form URL: ${filledFormUrl}`,
       );
 
-      // await this.rdFormMapperSchemaService.saveStateFilledFormUrl(
-      //   caseRid,
-      //   state,
-      //   filledFormUrl,
-      //   orgDb,
-      //   accountNumber,
-      // );
+      await this.rdFormMapperSchemaService.saveStateFilledFormUrl(
+        caseRid,
+        state,
+        filledFormUrl,
+        orgDb,
+        accountNumber,
+      );
       logMessage(`Successfully saved state form URL for state: ${state}`);
     }
 
