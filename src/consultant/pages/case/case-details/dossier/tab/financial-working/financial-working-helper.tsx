@@ -32,12 +32,7 @@ export const renderValue = (
         <span
           className={`text-[12px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
         >
-          {(() => {
-            const isStrictNumber = typeof value === 'number';
-            return isStrictNumber && formatCurrency
-              ? formatCurrency(value)
-              : value;
-          })()}
+          {formatCurrency ? formatCurrency(value) : value}
         </span>
       )}
       {isEmpty && <span>&nbsp;</span>}
@@ -134,16 +129,16 @@ export const renderTableSection = (
         sticky: isFirstColumn,
         sx: isFirstColumn
           ? {
-            position: 'sticky',
-            left: 0,
-            background: '#fff',
-            zIndex: 10,
-            borderRight: '1px solid #CBD6E2 !important',
-            borderBottom: '1px solid #CBD6E2 !important',
-          }
+              position: 'sticky',
+              left: 0,
+              background: '#fff',
+              zIndex: 10,
+              borderRight: '1px solid #CBD6E2 !important',
+              borderBottom: '1px solid #CBD6E2 !important',
+            }
           : {
-            textAlign: 'right',
-          },
+              textAlign: 'right',
+            },
         render: (row: TableRow) => {
           const value = row[headerId];
           const firstColHeaderId =
@@ -177,18 +172,18 @@ export const renderTableSection = (
   const tableDataRows: TableRow[] =
     table_rows && Array.isArray(table_rows)
       ? table_rows.map((rowObj: any, index: number) => {
-        const row: TableRow = {
-          id: `row_${index}`,
-        };
+          const row: TableRow = {
+            id: `row_${index}`,
+          };
 
-        table_headers.forEach((headerItem: any) => {
-          const headerId =
-            typeof headerItem === 'string' ? headerItem : headerItem.id;
-          row[headerId] = rowObj[headerId];
-        });
+          table_headers.forEach((headerItem: any) => {
+            const headerId =
+              typeof headerItem === 'string' ? headerItem : headerItem.id;
+            row[headerId] = rowObj[headerId];
+          });
 
-        return row;
-      })
+          return row;
+        })
       : [];
 
   if (Total !== undefined && Total !== null && table_headers.length > 0) {
