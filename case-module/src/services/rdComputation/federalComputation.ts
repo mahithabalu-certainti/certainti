@@ -423,7 +423,13 @@ export class FederalComputationService {
                            'Total notional R&D deductions': d.computed_fields["Non-refundable tax offset"]['Total notional R&D deductions'],
                            'R&D intensity' : d.computed_fields["Non-refundable tax offset"]['R&D intensity']
                         },
-                        "Tier of intensity" : d.computed_fields["Tier of intensity"],
+                        "Tier of intensity" : d.computed_fields["Tier of intensity"].map((d : any) => {
+                            return {
+                                name : d.name,
+                                "Notional deductions applied" : d["Notional deductions applied"],
+                                "offset Amount" : d["offset Amount"]
+                            }
+                        }),
                         "Non-refundable R&D tax offset" : d.computed_fields["Non-refundable R&D tax offset"]
                         }
                     }

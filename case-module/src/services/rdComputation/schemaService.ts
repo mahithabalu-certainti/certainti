@@ -82,9 +82,9 @@ class RDCreditSchemaService {
             const [data]: any[] = await this.orgDbSequelize.query(
                 `
                     SELECT 
-                        SUM(cpr.total_cost_fte_from_prj_res) AS total_wages,
-                        SUM(cpr.total_cost_nonlabor_from_prj_res) AS total_supplies,
-                        SUM(cpr.total_cost_subcon_from_prj_res) AS total_contract,
+                        CAST(SUM((cpr.total_cost_fte_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
+                        CAST(SUM((cpr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2))  AS total_supplies,
+                        CAST(SUM((cpr.total_cost_subcon_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
                         cs.tax_liability as business_tax_liability
                     FROM ${schemaName}.cases cs
                     JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
@@ -128,9 +128,9 @@ class RDCreditSchemaService {
             const [data]: any[] = await this.orgDbSequelize.query(
                 `
                     SELECT 
-                        SUM(pf.total_cost_fte_prj) AS total_wages,
-                        SUM(pf.total_cost_nonlabor_prj) AS total_supplies,
-                        SUM(pf.total_cost_subcon_prj) AS total_contract,
+                        CAST(SUM((pf.total_cost_fte_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
+                        CAST(SUM((pf.total_cost_nonlabor_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_supplies,
+                        CAST(SUM((pf.total_cost_subcon_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
                         cs.tax_liability as business_tax_liability
                     FROM ${schemaName}.case_projects cp
                     JOIN ${schemaName}.project_fiscal pf
