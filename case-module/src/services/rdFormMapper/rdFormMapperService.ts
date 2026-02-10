@@ -499,10 +499,11 @@ export class RdFormMapperService {
         logMessage(
           `Error parsing calculation_config for field ${configItem.field_label}: ${error}`,
         );
+        calcConfig = null;
       }
     }
 
-    if (typeof calcConfig === "object" && !Array.isArray(calcConfig)) {
+    if (calcConfig && typeof calcConfig === "object" && !Array.isArray(calcConfig)) {
       const orderedTokens = Object.keys(calcConfig)
         .sort((a, b) => Number(a) - Number(b))
         .map((key) => String(calcConfig[key]).trim());
