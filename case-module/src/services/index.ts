@@ -2,14 +2,16 @@ import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
 import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
-import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
-import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
+import { JurisdictionService }  from "./jurisdiction/jurisdictionServices";
+import { HistoricalSubmissionService }  from "./historicalSubmission/historicalSubmissionServices";
+import { ActivityService } from "./activities/activityService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
-import { ActivityService } from "./activities/activityService";
 import { ProjectService } from "./project/projectService";
+import { StateComputationService } from "./rdComputation/stateComputation";
+import { FederalComputationService } from "./rdComputation/federalComputation";
+import { ComputationService } from "./rdComputation/computation";
 import { ChildCaseService } from "./cases/childCaseService";
-import { CaseTaskSchemaService } from "./cases/caseTask/caseTaskSchemaService";
 import { CaseTaskService } from "./cases/caseTask/caseTaskService";
 import { ChecklistService } from "./cases/caseChecklist/checklistService";
 
@@ -23,6 +25,9 @@ class Services {
   projectTaskInjestionServices: ProjectInjestionTaskService;
   activityService: IActivityService;
   projectService: ProjectService
+  stateComputationService: StateComputationService;
+  federalComputationService: FederalComputationService;
+  computationService: ComputationService;
   caseTaskService : CaseTaskService
   checklistService : ChecklistService
 
@@ -36,6 +41,9 @@ class Services {
     this.projectTaskInjestionServices = new ProjectInjestionTaskService();
     this.activityService = new ActivityService(logger);
     this.projectService = new ProjectService(logger)
+    this.stateComputationService = new StateComputationService();
+    this.federalComputationService = new FederalComputationService();
+    this.computationService = new ComputationService();
     this.caseTaskService = new CaseTaskService()
     this.checklistService = new ChecklistService()
   }

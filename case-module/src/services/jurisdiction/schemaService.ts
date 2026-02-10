@@ -248,13 +248,14 @@ export class JurisdictionSchemaService {
       );
     }
   
+    
     // Build a map of config group rid to config_json
     const groupConfigMap = Object.fromEntries(
       paramValues.map((row) => [row.credit_config_group_rid, row.config_json])
     );
     if(configMeta[0]?.is_federal){
     [platformConfig] = await this.mainDbSequelize.query(
-      rawQueries.getPlatformJurisdictionConfig()
+      rawQueries.getPlatformJurisdictionConfig(configRequest.country_rid || configMeta[0]?.country_rid)
     );
     const platformGroupConfigMap = Object.fromEntries(
       platformConfigValues.map((row) => [row.credit_config_group_rid, row.config_json])

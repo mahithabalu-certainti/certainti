@@ -127,7 +127,7 @@ class GeoDataService {
    * - errorMessage (optional): The error message in case of a failure.
    * - data (optional): An object containing the list of states if the request is successful.
    */
-  async states(countryIds?: string[]): Promise<{
+  async states(statusScope: string, countryIds?: string[]): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -135,33 +135,24 @@ class GeoDataService {
   }> {
     try {
       let states;
-
-      if (countryIds && countryIds.length > 0) {
-        states = await States.findAll({
-          where: {
-            country_rid: countryIds, // Sequelize will automatically handle the IN query for arrays
-          },
-          include: [
-            {
-              model: Country,
-              as: "country",
-              attributes: ["country_name"],
-            },
-          ],
-          order: [["state_name", "ASC"]],
-        });
-      } else {
-        states = await States.findAll({
-          include: [
-            {
-              model: Country,
-              as: "country",
-              attributes: ["country_name"],
-            },
-          ],
-          order: [["state_name", "ASC"]],
-        });
+      let whereClause: any = {};
+      if (statusScope && statusScope.toLowerCase() !== 'all') {
+        whereClause.status = 'active';
       }
+      if (countryIds && countryIds.length > 0) {
+        whereClause.country_rid = countryIds;
+      }
+      states = await States.findAll({
+        where: whereClause,
+        include: [
+          {
+            model: Country,
+            as: "country",
+            attributes: ["country_name"],
+          },
+        ],
+        order: [["state_name", "ASC"]],
+      });
 
       return {
         statusCode: HttpStatus.SUCCESS,

@@ -1883,6 +1883,11 @@ export class InteractionService {
             checkObj(projectInfo) ??
             checkObj(accountInfo);
           if (val !== undefined) return val;
+          
+          // Special handling for name field - return empty string if null/undefined
+          if ((raw === "name" || normalized === "name" || raw === 'recipient name' || raw === 'Recipient Name') && emailInfo && "name" in emailInfo) {
+            return emailInfo.name ?? "";
+          }
           // Check for direct placeholders
           if (raw === "Interaction Id" || normalized === "interactionrid" || noUnderscore === "interactionrid") {
             return interactionRid ?? "";
@@ -3045,6 +3050,16 @@ export class InteractionService {
           }
         });
         projectTypes = groupedProjectTypes;
+        if(!projectTypes || (typeof projectTypes === 'object' && Object.keys(projectTypes).length === 0))
+        {
+           return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: `No active projects found for the account`,
+            data: null,
+            status: "error",
+            errorMessage: `No active projects found for the account`,
+          };
+        }
        
         // Pass as IN clause to fetchProjectsByAccount
         const [projects]: any[] = await this.orgDbSequelize.query(

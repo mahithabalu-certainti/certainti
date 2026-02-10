@@ -33,6 +33,28 @@ interface CaseAttributes {
   approved_datetime?: Date;
   tax_liability?: number;
   financial_working_signoff? : boolean
+  employers_pension_contribution? : number
+  other? : number
+  material_software_cost? : number;
+  sub_contracts? : number;
+  cloud_software?: number;
+  unpaid_amounts_paid? : number;
+  unpaid_amounts? : number;
+  aggregated_turnover? : number;
+  total_expenses ? : number;
+  taxable_income ? : number;
+  export_sales_revenue? : number;
+  lease_costs_of_computers? : number;
+  illinois_rd_credit_partnership_corp? : number;
+  illinois_research_payments_corp_only? : number;
+  basic_research_payments? : number
+  qualified_computer_rental_time_expenses? : number
+  credit_carry_forward_py?: number
+  current_year_gross_receipts?: number
+  other_credits_total?: number
+  rrc_credit_280_c? : string
+  asc_credit_280_c? : string
+
 }
 
 export interface CaseCreationAttributes
@@ -67,10 +89,31 @@ export class Case
   public case_total_qualified_project_cost?: number;
   public submitted_datetime?: Date;
   public approved_datetime?: Date;
-  public  total_nonlabor_cost?: number;
-  public  heat_light_power?: number;
+  public total_nonlabor_cost?: number;
+  public heat_light_power?: number;
   public tax_liability?: number;
   public financial_working_signoff? : boolean
+  public employers_pension_contribution? : number
+  public other? : number
+  public material_software_cost? : number;
+  public sub_contracts? : number;
+  public cloud_software?: number;
+  public unpaid_amounts_paid? : number;
+  public unpaid_amounts? : number;
+  public aggregated_turnover? : number;
+  public total_expenses ? : number;
+  public taxable_income ? : number;
+  public export_sales_revenue? : number;
+  public lease_costs_of_computers? : number;
+  public illinois_rd_credit_partnership_corp? : number;
+  public llinois_research_payments_corp_only? : number;
+  public basic_research_payments? : number
+  public qualified_computer_rental_time_expenses? : number;
+  public credit_carry_forward_py?: number
+  public current_year_gross_receipts?: number
+  public other_credits_total?: number
+  public rrc_credit_280_c? : string
+  public asc_credit_280_c? : string
 
   static initialize(
     sequelize: Sequelize,
@@ -120,7 +163,28 @@ export class Case
         total_nonlabor_cost: { type: DataTypes.DECIMAL, allowNull: true },
         heat_light_power: { type: DataTypes.DECIMAL, allowNull: true },
         tax_liability: { type: DataTypes.DECIMAL, allowNull: true },
-        financial_working_signoff : {type : DataTypes.BOOLEAN, defaultValue : false}
+        financial_working_signoff : {type : DataTypes.BOOLEAN, defaultValue : false},
+        employers_pension_contribution : {type : DataTypes.DECIMAL, allowNull : true},
+        other : {type : DataTypes.DECIMAL, allowNull : true},
+        material_software_cost : {type : DataTypes.DECIMAL, allowNull : true},
+        sub_contracts : {type : DataTypes.DECIMAL, allowNull : true},
+        cloud_software: {type : DataTypes.DECIMAL, allowNull : true},
+        unpaid_amounts_paid : {type : DataTypes.DECIMAL, allowNull : true},
+        unpaid_amounts : {type : DataTypes.DECIMAL, allowNull : true},
+        aggregated_turnover : {type : DataTypes.DECIMAL, allowNull : true},
+        total_expenses : {type : DataTypes.DECIMAL, allowNull : true},
+        taxable_income : {type : DataTypes.DECIMAL, allowNull : true},
+        export_sales_revenue : {type : DataTypes.DECIMAL, allowNull : true},
+        lease_costs_of_computers : {type : DataTypes.DECIMAL, allowNull : true},
+        illinois_rd_credit_partnership_corp : {type : DataTypes.DECIMAL, allowNull : true},
+        illinois_research_payments_corp_only : {type : DataTypes.DECIMAL, allowNull : true},
+        basic_research_payments : {type : DataTypes.DECIMAL, allowNull : true},
+        qualified_computer_rental_time_expenses : {type : DataTypes.DECIMAL, allowNull : true},
+        credit_carry_forward_py : {type : DataTypes.DECIMAL, allowNull : true},
+        current_year_gross_receipts: {type : DataTypes.DECIMAL, allowNull : true},
+        other_credits_total : {type : DataTypes.DECIMAL, allowNull : true},
+        rrc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
+        asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"}
       },
       {
         sequelize,

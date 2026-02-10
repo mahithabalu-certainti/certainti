@@ -503,11 +503,17 @@ export interface IActivityService {
 }
 
 export interface IChildCaseService extends ICaseService {
-  signOffFinancialWorking(data: any): Promise<{
+  signOffFinancialWorking(data: any, file : any): Promise<{
     statusCode: number;
     statusMessage: string;
   }>;
-  stateWiseRegionList(data : any) : Promise<any[]>
+  stateWiseRegionList(data : any) : Promise<any[]>;
+  getClosedCasesList(data: { account_rid: string }): Promise<{
+    statusCode: number;
+     message: string;
+    errorMessage?: string;
+    data?: { cases: any };
+  }>;
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;

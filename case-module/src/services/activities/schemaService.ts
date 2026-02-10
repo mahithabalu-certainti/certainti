@@ -38,6 +38,7 @@ import {
 } from "../../utils/types";
 
 import {
+  fetchActivityAttachToDetails,
   fetchActivityDetails,
   fetchEmailActivityDetails,
 } from "../../utils/rawQueries";
@@ -523,8 +524,10 @@ class ActivitySchemaService {
           return null;
         }
       } catch (error) {
-        logMessage(`Error creating checklist: ${error}`);
-        throw new Error("Error creating checklist: " + error);
+        console.log(error)
+         const errorMessage = error instanceof Error ? error.message : error;
+        logMessage(`Error creating checklist in task: ${errorMessage}`);
+        throw new Error("Error creating checklist: " + errorMessage);
       }
     }
 
@@ -1768,14 +1771,7 @@ class ActivitySchemaService {
     const existingActivity = await Activities.findOne({
         where: { rid: activityRequest.activity_rid }
       });
-    if (activityRequest.email_status === "Sent") {
-      await this.sendActivityEmail(
-        accountNumber,
-        activityRequest,
-        userId,
-        files
-      );
-    }
+   
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
@@ -1822,6 +1818,14 @@ class ActivitySchemaService {
       }
     }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+    if (activityRequest.email_status === "Sent") {
+      await this.sendActivityEmail(
+        accountNumber,
+        activityRequest,
+        userId,
+        files
+      );
+    }
     await this.addActivityHistory(
         accountNumber,
         activityRequest.activity_rid as string,
@@ -2260,14 +2264,27 @@ class ActivitySchemaService {
     };
    
     // Generate attachments array from uploaded files
-    let attachments: any[] = Array.isArray(files)
-      ? files.map((file) => ({
-          "@odata.type": "#microsoft.graph.fileAttachment",
-          name: file.originalname || file.filename,
-          contentBytes: file.buffer.toString("base64"),
-          contentType: file.mimetype,
-        }))
-      : [];
+    let attachments: any[] = []
+    const getContentTypeFromExtension = (format?: string) => {
+      if (!format) return "application/octet-stream";
+      const ext = format.startsWith(".") ? format.toLowerCase() : `.${format.toLowerCase()}`;
+      const contentTypeMap: Record<string, string> = {
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".doc": "application/msword",
+        ".pdf": "application/pdf",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".xls": "application/vnd.ms-excel",
+        ".csv": "text/csv",
+        ".txt": "text/plain",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".ppt": "application/vnd.ms-powerpoint",
+        ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      };
+      return contentTypeMap[ext] || "application/octet-stream";
+    };
 
     if (activityRequest.activity_rid) {
       const dbAttachments = await ActivityAttachments.findAll({
@@ -2278,13 +2295,14 @@ class ActivitySchemaService {
       });
       for (const dbFile of dbAttachments) {
         try {
-          const response = await fetch(dbFile.browse_file);
+          const fileUrl = await generateSasUrl(dbFile.browse_file);
+          const response = await fetch(fileUrl || dbFile.browse_file);
           const buffer = Buffer.from(await response.arrayBuffer());
           attachments.push({
             "@odata.type": "#microsoft.graph.fileAttachment",
-            name: dbFile.document_name,
+            name: dbFile.document_name+(dbFile.format ? `${dbFile.format}` : ""),
             contentBytes: buffer.toString("base64"),
-            contentType: dbFile.format || "application/octet-stream",
+            contentType: getContentTypeFromExtension(dbFile.format),
           });
         } catch (err) {
           logMessage(
@@ -2403,10 +2421,18 @@ class ActivitySchemaService {
       ""
     )}`;
     const [emailDetails]: any[] = await this.orgDbSequelize.query(
-      fetchEmailActivityDetails(schemaName, activityRid),
-      { type: "SELECT" }
-    );
-
+          fetchEmailActivityDetails(schemaName, activityRid),
+          { type: "SELECT" }
+        );
+    const [attachedtoDetails]: any[] = await this.orgDbSequelize.query(
+          fetchActivityAttachToDetails(
+            schemaName,
+            emailDetails.attach_to,
+            emailDetails.attachment_level,
+            activityRid
+          ),
+          { type: "SELECT" }
+        );
     if (!emailDetails) {
       throw new Error("Data not found");
     }
@@ -2434,7 +2460,8 @@ class ActivitySchemaService {
         type: "SELECT",
       }
     );
-    let attached_to = emailDetails?.attached_to ?? "";
+    let attached_to = attachedtoDetails?.name ?? "";
+    
     if (emailDetails?.attach_to === "case") {
       const [caseInfo]: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchCaseInfo(accountNumber, accountRid),
@@ -2466,7 +2493,7 @@ class ActivitySchemaService {
     const response: any = {
       attach_to: emailDetails?.attach_to ?? "",
       attachment_level: emailDetails?.attachment_level ?? "",
-      attached_to: attached_to ?? "",
+      attached_to: attachedtoDetails?.name ?? "",
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",

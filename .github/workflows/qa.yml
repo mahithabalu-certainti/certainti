@@ -1041,6 +1041,10 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           RULEBUILDER_BASE_URL='https://qa-thinkrd365-api-management.azure-api.net/rulebuilderService/api'
+          KAFKA_BROKER=${{ secrets.QA_KAFKA_BROKER }}
+          KAFKA_CLIENT_ID=rd-credit-service
+          KAFKA_TOPIC=rd_credit_processing
+          KAFKA_GROUP_ID=rd-credit-consumers
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -1090,7 +1094,7 @@ jobs:
     needs:
       - changes
     if: ${{ needs.changes.outputs.rule-builder-module == 'true' }}
-    name: Build and Deploy rule builder Module
+    name: Build and Deploy Rule Builder Module
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

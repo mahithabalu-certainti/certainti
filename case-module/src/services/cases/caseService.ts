@@ -28,6 +28,7 @@ import {
   ICreateChecklist,
   priorityTypes,
   ProjectFiscalType,
+  StateType,
   TagsTypes,
   TaskCardDetailsType,
   TaskCardResponse,
@@ -50,6 +51,7 @@ import {
   ruleNames,
   ruleTemplateNames,
   entityNames,
+  onlyFederals,
 } from "../../utils/constants";
 import currency from "currency.js";
 import moment from "moment";
@@ -60,9 +62,9 @@ import ActivitySchemaService from "../activities/schemaService";
 import { caseTaskMapping, reviewProjectsFieldMappings } from "../../utils/excelExportMapping";
 import { HelperMethods } from "./helperMethods";
 export class CaseService {
-  private caseSchemaService: CaseSchemaService;
+  protected caseSchemaService: CaseSchemaService;
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
-  private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
+  protected caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService: CaseManagementSchemaService
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
@@ -445,6 +447,7 @@ export class CaseService {
 
         let getCountryDetails: CountryType | undefined;
         let getCurrencyDetails: CurrencyType | undefined;
+        let getStateDetails : StateType | undefined;
         const [getAccountDetails] = await mainDb.query<AccountType>(
           rawQueries.fetchAccountDetails(queryResult.account_rid),
           { type: QueryTypes.SELECT }
@@ -456,6 +459,11 @@ export class CaseService {
         if (getAccountDetails?.country_rid != null)
           [getCountryDetails] = await mainDb.query<CountryType>(
             rawQueries.getCountryDetails(getAccountDetails.country_rid),
+            { type: QueryTypes.SELECT }
+          );
+        if (getAccountDetails?.country_rid != null)
+          [getStateDetails] = await mainDb.query<StateType>(
+            rawQueries.getCandaStateDetails(),
             { type: QueryTypes.SELECT }
           );
         if (getAccountDetails?.currency_rid !== null)
@@ -510,6 +518,19 @@ export class CaseService {
         } else {
           queryResult.currency_code = null;
           queryResult.currency_rid = null;
+        }
+        let isStateAvailable : boolean = false;
+        if(onlyFederals.usa == queryResult.country_code) {
+          isStateAvailable = true
+        } else if (onlyFederals.canada === queryResult.country_code) {
+          isStateAvailable = true
+        } else {
+          isStateAvailable = false;
+        }
+        queryResult.is_state_available = isStateAvailable
+        if(queryResult.country_code === "CAN") {
+          queryResult.state_rid = getStateDetails?.rid || null;
+          queryResult.state_name = getStateDetails?.state_name || null;
         }
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -1046,6 +1067,8 @@ export class CaseService {
             currency_rid: d.currency_rid || null,
             currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
             currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
+            is_rd_claim_qualified : d.is_rd_claim_qualified,
+            is_qualified : d.is_qualified
           };
         });
         return {
@@ -1474,6 +1497,7 @@ export class CaseService {
       const labelMap: Record<string, string> = {
         "Project Code": "Project Code",
         "Project Name": "Name",
+        "Qualified Status" : "Qualified Status",
         "Project Type": "Project Type",
         "Account Name": "Name",
         "Fiscal Year": "Fiscal Year",
@@ -1504,6 +1528,7 @@ export class CaseService {
             ? fiscal.project_code + " - FY" + fiscal.fiscal_year
             : "-",
           Name: fiscal.project_name || "-",
+          "Qualified Status" : fiscal.is_qualified === true ? "Yes" : "No",
           "Project Type": fiscal.project_type_name || "-",
           "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
           "Project Classification": fiscal.project_classification_name || "-",
