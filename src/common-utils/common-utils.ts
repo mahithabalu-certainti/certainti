@@ -764,13 +764,12 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${
-    errorData?.statusMessage
-      ? typeof errorData.statusMessage === 'object'
-        ? Object.values(errorData.statusMessage).join(', ')
-        : errorData.statusMessage || ''
-      : errorData?.message || data.message
-  }</p>`;
+  return `<p>${errorData?.statusMessage
+    ? typeof errorData.statusMessage === 'object'
+      ? Object.values(errorData.statusMessage).join(', ')
+      : errorData.statusMessage || ''
+    : errorData?.message || data.message
+    }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {
@@ -1070,16 +1069,22 @@ export const getFiscalDateBounds = (
 //   };
 // };
 
-export const formatCostValue = (value: string): string => {
-  if (value === null || value === undefined) return '';
+export const formatCostValue = (value: string | number | null | undefined): string => {
+  if (value === null || value === undefined || value === '') return '';
 
   const costStr = String(value);
-  const [whole, decimal] = costStr.split('.');
-  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const formattedCost =
-    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
+  const isNegative = costStr.startsWith('-');
+  const unsignedStr = isNegative ? costStr.slice(1) : costStr;
 
-  return `${formattedCost}`;
+  const [whole, decimal] = unsignedStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  let result = isNegative ? `-${formattedWhole}` : formattedWhole;
+  if (decimal !== undefined) {
+    result += `.${decimal}`;
+  }
+
+  return result;
 };
 
 export const removeFormatCostValue = (value: string): string => {
