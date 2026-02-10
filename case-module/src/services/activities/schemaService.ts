@@ -2279,7 +2279,7 @@ class ActivitySchemaService {
           const buffer = Buffer.from(await response.arrayBuffer());
           attachments.push({
             "@odata.type": "#microsoft.graph.fileAttachment",
-            name: dbFile.document_name+(dbFile.format ? `.${dbFile.format}` : ""),
+            name: dbFile.document_name+(dbFile.format ? `${dbFile.format}` : ""),
             contentBytes: buffer.toString("base64"),
             contentType: dbFile.format || "application/octet-stream",
           });

@@ -93,6 +93,11 @@ export class ChildCaseService extends CaseService {
                     state_name : mapStates.get(d.rid) || null
                 }
             });
+            result.sort((a : any, b : any) => {
+                const nameA = (a.state_name || "").toString();
+                const nameB = (b.state_name || "").toString();
+                return nameA.localeCompare(nameB);
+            });
             return result;
         } else {
             return []
