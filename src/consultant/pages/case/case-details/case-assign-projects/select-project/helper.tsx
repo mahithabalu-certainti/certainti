@@ -8,6 +8,8 @@ import {
 import {
   fiscalOptions,
   nonMadatoryOptions,
+  qualifiedEnumOptions,
+  qualifiedOptions,
 } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 import { requiredFieldFilterOptionsForText } from '../../../../project/project-details/project-task/filters/filter-fields';
 
@@ -34,6 +36,16 @@ export const selectProjectFilterFields = (
     hide:
       !projectPermissionMap?.['project_name']?.read &&
       !projectPermissionMap?.['project_name']?.edit,
+  },
+  {
+    name: 'Qualified Status',
+    value: 'is_qualified',
+    type: 'enum',
+    options: qualifiedOptions,
+    operatorOption: qualifiedEnumOptions,
+    hide:
+      !projectPermissionMap?.['is_qualified']?.read &&
+      !projectPermissionMap?.['is_qualified']?.edit,
   },
   {
     name: 'Project Type',
