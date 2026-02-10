@@ -433,7 +433,7 @@ class ActivitySchemaService {
             d.is_new_tag,
             accountNumber,
             taskRequest.created_by,
-            activeStatusRid,
+            activeStatusRid.rid,
             "activity"
           );
             }
@@ -2534,6 +2534,15 @@ class ActivitySchemaService {
       fetchActivityDetails(schemaName, activityRid,meetingFields),
       { type: "SELECT" }
     );
+    const [attachedtoDetails]: any[] = await this.orgDbSequelize.query(
+          fetchActivityAttachToDetails(
+            schemaName,
+            emailDetails.attach_to,
+            emailDetails.attachment_level,
+            activityRid
+          ),
+          { type: "SELECT" }
+        );
 
     if (!emailDetails) {
       throw new Error("Data not found");
@@ -2562,7 +2571,7 @@ class ActivitySchemaService {
         type: "SELECT",
       }
     );
-    let attached_to = emailDetails?.attached_to ?? "";
+    let attached_to = attachedtoDetails?.name ?? "";
     if (emailDetails?.attach_to === "case") {
       const [caseInfo]: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchCaseInfo(accountNumber, accountRid),
@@ -2646,6 +2655,15 @@ class ActivitySchemaService {
       fetchActivityDetails(schemaName, activityRid,callFields),
       { type: "SELECT" }
     );
+    const [attachedtoDetails]: any[] = await this.orgDbSequelize.query(
+          fetchActivityAttachToDetails(
+            schemaName,
+            emailDetails.attach_to,
+            emailDetails.attachment_level,
+            activityRid
+          ),
+          { type: "SELECT" }
+        );
 
     if (!emailDetails) {
       throw new Error("Data not found");
@@ -2674,7 +2692,7 @@ class ActivitySchemaService {
         type: "SELECT",
       }
     );
-    let attached_to = emailDetails?.attached_to ?? "";
+    let attached_to = attachedtoDetails?.name ?? "";
     if (emailDetails?.attach_to === "case") {
       const [caseInfo]: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchCaseInfo(accountNumber, accountRid),
