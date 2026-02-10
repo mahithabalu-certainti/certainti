@@ -427,7 +427,7 @@ export class FederalComputationService {
                             return {
                                 name : d.name,
                                 "Notional deductions applied" : d["Notional deductions applied"],
-                                "offset Amount" : d["offset Amount"]
+                                "Offset Amount" : d["offset Amount"]
                             }
                         }),
                         "Non-refundable R&D tax offset" : d.computed_fields["Non-refundable R&D tax offset"]
