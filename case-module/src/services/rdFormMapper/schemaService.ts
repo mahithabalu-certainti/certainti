@@ -201,6 +201,31 @@ class RdFormMapperSchemaService {
     return Number(results?.[0]?.top_15_qre_sum ?? 0);
   }
 
+  async fetchTop15ProjectSumByColumn(
+    caseRid: string,
+    schemaName: string,
+    columnName: string,
+  ): Promise<number> {
+    const allowedColumns = new Set([
+      "total_cost_fte_prj",
+      "total_cost_subcon_prj",
+      "total_cost_nonlabor_prj",
+      "qre_final",
+    ]);
+
+    if (!allowedColumns.has(columnName)) {
+      logMessage(`Rejected top-15 sum for unsupported column: ${columnName}`);
+      return 0;
+    }
+
+    const orgDb = await this.getOrgDb();
+    const [results]: any = await orgDb.query(
+      rawQueries.fetchTop15ProjectSumByColumn(schemaName, caseRid, columnName),
+      { raw: true },
+    );
+    return Number(results?.[0]?.top_15_sum ?? 0);
+  }
+
   async fetchPriorYearQreFromHistory(
     accountRid: string,
     schemaName: string,

@@ -745,22 +745,58 @@ export class RdFormMapperService {
     countryRid?: string,
   ): Promise<any[]> {
     const enhancedConfigs: any[] = [];
+    const cachedTop15Sums: Record<string, number> = {};
+
+    const getTop15SumByColumn = async (columnName: string) => {
+      if (cachedTop15Sums[columnName] === undefined) {
+        cachedTop15Sums[columnName] =
+          await this.rdFormMapperSchemaService.fetchTop15ProjectSumByColumn(
+            caseRid,
+            schemaName,
+            columnName,
+          );
+      }
+      return cachedTop15Sums[columnName];
+    };
 
     for (const configItem of mapperConfig) {
       let value = configItem.value;
+      const fieldLabel = configItem.field_label;
 
       if (
-        configItem.field_label ===
-        "Total from attachments -> 50 Direct research wages for qualified services"
+        fieldLabel ===
+          "Total from attachments -> 50 Direct research wages for qualified services" ||
+        fieldLabel ===
+          "Total from attachments -> 51 Direct supervision wages for qualified services" ||
+        fieldLabel ===
+          "Total from attachments -> 52 Direct support wages for qualified services"
       ) {
-        const top15QreSum =
-          await this.rdFormMapperSchemaService.fetchTop15ProjectQreSum(
-            caseRid,
-            schemaName,
-          );
-        value = top15QreSum;
+        const columnName =
+          fieldLabel ===
+          "Total from attachments -> 50 Direct research wages for qualified services"
+            ? "total_cost_fte_prj"
+            : fieldLabel ===
+                "Total from attachments -> 51 Direct supervision wages for qualified services"
+              ? "total_cost_subcon_prj"
+              : "total_cost_nonlabor_prj";
+        const top15Sum = await getTop15SumByColumn(columnName);
+        value = top15Sum;
         logMessage(
-          `Custom QRE sum applied for field ${configItem.field_label}: ${top15QreSum}`,
+          `Custom top-15 sum applied for field ${fieldLabel}: ${value}`,
+        );
+        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+        continue;
+      }
+      if (
+        fieldLabel ===
+        "Total from attachments -> 53 Total qualified wages (add line 50, line 51, and line 52)"
+      ) {
+        const line50 = await getTop15SumByColumn("total_cost_fte_prj");
+        const line51 = await getTop15SumByColumn("total_cost_subcon_prj");
+        const line52 = await getTop15SumByColumn("total_cost_nonlabor_prj");
+        value = line50 + line51 + line52;
+        logMessage(
+          `Custom total qualified wages applied for field ${fieldLabel}: ${value}`,
         );
         this.pushEnhancedConfig(enhancedConfigs, configItem, value);
         continue;

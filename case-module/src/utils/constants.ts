@@ -1911,6 +1911,24 @@ WHERE dmf.country_rid = '${countryRid}'
       ) t;
     `;
   },
+  fetchTop15ProjectSumByColumn(
+    schemaName: string,
+    caseRid: string,
+    columnName: string,
+  ) {
+    return `
+      SELECT COALESCE(SUM(${columnName}), 0) AS top_15_sum
+      FROM (
+        SELECT pf.${columnName}
+        FROM ${schemaName}.case_projects cp
+        JOIN ${schemaName}.project_fiscal pf
+          ON pf.rid = cp.project_fiscal_rid
+        WHERE cp.case_rid = '${caseRid}'
+        ORDER BY pf.${columnName} DESC NULLS LAST
+        LIMIT 15
+      ) t;
+    `;
+  },
   fetchPriorYearQreFromHistory(
     schemaName: string,
     stateRid?: string,
