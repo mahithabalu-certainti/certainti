@@ -50,6 +50,26 @@ export const STATUS_MESSAGE = {
   accountIdMissing: "Account RID missing",
 };
 
+export const TaskType = {
+  MILESTONE: 'Milestone',
+};
+
+export const TaskStatus = {
+  IN_PROGRESS: 'In Progress',
+  TO_DO: 'To Do',
+  BLOCKED: 'Blocked',
+  COMPLETED: 'Completed',
+};
+
+export const TaskCategory = {
+  REVIEWS: 'Reviews',
+  APPROVALS_SIGN_OFFS: 'Approvals & Sign-offs',
+};
+
+export const ActivityType = {
+  MEETING: 'Meeting',
+};
+
 export const constants = {
   SQL_GET_USER: `SELECT status_description as status, "user".rid, email, profile_rid FROM ${MAIN_SCHEMA_NAME}."user" as "user" ,${MAIN_SCHEMA_NAME}."status" as status WHERE  "user".status_rid = status.rid and {whereClause} LIMIT 1`,
   SQL_GET_PERMISSION: `SELECT rid FROM ${MAIN_SCHEMA_NAME}."module_permission" WHERE permission_name = :permissionName LIMIT 1`,
@@ -121,8 +141,8 @@ export const rawQueries = {
       ON a.attach_to = c.case_rid
     JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -143,8 +163,8 @@ export const rawQueries = {
       ON a.attach_to = c.case_rid
     JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -167,8 +187,8 @@ export const rawQueries = {
       ON a.attach_to = c.case_rid
     JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name = 'Blocked'`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name = '${TaskStatus.BLOCKED}'`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -192,8 +212,8 @@ export const rawQueries = {
       ON a.attach_to = c.case_rid
     JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -216,8 +236,8 @@ export const rawQueries = {
       ON a.attach_to = c.case_rid
     JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -244,8 +264,8 @@ export const rawQueries = {
       ON a.attach_to = c.case_rid
     JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -269,8 +289,8 @@ export const rawQueries = {
       ON a.attach_to = c.case_rid
     JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name = 'Completed'`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name = '${TaskStatus.COMPLETED}'`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -310,7 +330,7 @@ export const rawQueries = {
     SELECT 
     *
     FROM ${schemaName}.activities a
-    WHERE LOWER(a.activity_type) = 'meeting'
+    WHERE LOWER(a.activity_type) = '${ActivityType.MEETING}'
       AND a.status_rid = '${statusId}'`;
 
     if (userId) {
@@ -343,7 +363,7 @@ export const rawQueries = {
       ON a.task_type_rid = b.rid
     JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    WHERE b.task_type_name = 'Milestone'`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -362,7 +382,7 @@ export const rawQueries = {
     SELECT 
     count('x')
     FROM ${schemaName}.activities a
-    WHERE LOWER(a.activity_type) = 'meeting'
+    WHERE LOWER(a.activity_type) = '${ActivityType.MEETING}'
     `;
 
     if (statusIds && statusIds.length > 0) {
@@ -445,7 +465,8 @@ export const rawQueries = {
 	  e.priority_name,
 	  a.fiscal_year,
 	  f.account_name,
-	  concat(g.first_name, ' ', g.last_name) as assigned_to_name
+	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
+    g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -459,8 +480,8 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -489,7 +510,8 @@ export const rawQueries = {
 	  e.priority_name,
 	  a.fiscal_year,
 	  f.account_name,
-	  concat(g.first_name, ' ', g.last_name) as assigned_to_name
+	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
+    g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -503,8 +525,8 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -532,7 +554,8 @@ export const rawQueries = {
 	  e.priority_name,
 	  a.fiscal_year,
 	  f.account_name,
-	  concat(g.first_name, ' ', g.last_name) as assigned_to_name
+	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
+    g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -546,8 +569,8 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -577,7 +600,8 @@ export const rawQueries = {
 	  e.priority_name,
 	  a.fiscal_year,
 	  f.account_name,
-	  concat(g.first_name, ' ', g.last_name) as assigned_to_name
+	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
+    g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -591,8 +615,8 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name = 'Completed'`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name = '${TaskStatus.COMPLETED}'`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -622,7 +646,8 @@ export const rawQueries = {
 	  a.fiscal_year,
 	  f.account_name,
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
-	  h.category_name
+	  h.category_name,
+    g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -638,9 +663,9 @@ export const rawQueries = {
     on a.assigned_to = g.rid
     left join ${MAIN_SCHEMA_NAME}.task_category h
     on a.task_category_rid = h.rid
-    WHERE b.task_type_name = 'Milestone'
-      AND d.task_status_name IN ('In Progress', 'To Do')
-	  AND h.category_name = 'Reviews'`;
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')
+	  AND h.category_name = '${TaskCategory.REVIEWS}'`;
 
     if (accountIds && accountIds.length > 0) {
       query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
@@ -652,6 +677,54 @@ export const rawQueries = {
 
     query += ` AND a.effective_end_datetime::date >= date_trunc('week', CURRENT_DATE)::date
       AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days';`;
+    return query;
+  },
+  fetchOverdueApprovals(accountIds?: string[], userId?: string) {
+    let query = `
+    SELECT 
+      a.rid,
+      a.r_number,
+      a.task_name,
+      d.task_status_name as status,
+	a.effective_start_datetime,
+      a.effective_end_datetime,
+      c.r_number as case_r_number,
+      c.case_name,
+      a.assigned_to,
+	e.priority_name,
+	a.fiscal_year,
+	f.account_name,
+	concat(g.first_name, ' ', g.last_name) as assigned_to_name,
+	h.category_name,
+    g.profile_url
+    FROM ${MAIN_SCHEMA_NAME}.task_summary a
+    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+      ON a.task_type_rid = b.rid
+    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+      ON a.attach_to = c.case_rid
+    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+      ON a.status_rid = d.rid
+    left join ${MAIN_SCHEMA_NAME}.case_priority e
+    on a.priority_rid = e.rid
+    left join ${MAIN_SCHEMA_NAME}.account f
+    on a.account_rid = f.rid
+    left join ${MAIN_SCHEMA_NAME}.user g
+    on a.assigned_to = g.rid
+    left join ${MAIN_SCHEMA_NAME}.task_category h
+    on a.task_category_rid = h.rid
+    WHERE b.task_type_name = '${TaskType.MILESTONE}'
+      AND d.task_status_name IN ('${TaskStatus.IN_PROGRESS}', '${TaskStatus.TO_DO}')
+	  AND h.category_name = '${TaskCategory.APPROVALS_SIGN_OFFS}'`;
+
+    if (accountIds && accountIds.length > 0) {
+      query += ` AND c.account_rid in ('${accountIds.join("','")}')`;
+    }
+
+    if (userId) {
+      query += ` AND a.assigned_to = '${userId}'`;
+    }
+
+    query += ` AND a.effective_end_datetime::date <= CURRENT_DATE;`;
     return query;
   },
   checkTableExistence() {
@@ -666,13 +739,12 @@ export const rawQueries = {
   fetchOverallProjectValue(accountIds?: string[], fiscalYear?: string) {
     let query = `
       SELECT 
+        c.rid as country_rid,
         c.country_name,
+	      c.country_code, 
         COALESCE(SUM(p.total_cost_prj), 0) as total_project_cost,
-        COALESCE(SUM(p.effective_cost), 0) as qualified_project_cost,
-        COALESCE(SUM(p.qre_final), 0) as qre_cost,
-        COALESCE(SUM(p.rd_credits_total), 0) as rd_credits_computed,
-        COALESCE(SUM(CASE WHEN p.claim_status = 'Submitted' THEN p.rd_credits_total ELSE 0 END), 0) as rd_credits_submitted,
-        COALESCE(SUM(CASE WHEN p.claim_status = 'Approved' THEN p.rd_credits_total ELSE 0 END), 0) as rd_credits_approved
+        COALESCE(SUM(case when p.is_qualified = true then p.total_cost_prj else 0 end), 0) as qualified_project_cost,
+        COALESCE(SUM(p.qre_final), 0) as qre_cost
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
       LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON p.country_rid = c.rid
       WHERE 1=1
@@ -690,20 +762,24 @@ export const rawQueries = {
       replacements.fiscalYear = fiscalYear;
     }
 
-    query += ` GROUP BY c.country_name;`;
+    query += ` GROUP BY c.rid, c.country_name, c.country_code;`;
 
     return { query, replacements };
   },
   fetchGlobalAccountClaimedAmounts(accountIds?: string[], fiscalYear?: string, countryRid?: string) {
     let query = `
       SELECT 
+        a.rid as account_rid,
         a.account_name,
+        c.rid as country_rid,
         c.country_name,
-		    c.country_code,
-        COALESCE(SUM(p.total_project_cost), 0) as total_project_cost
-      FROM ${MAIN_SCHEMA_NAME}.account_fiscal_summary p
-      JOIN ${MAIN_SCHEMA_NAME}.account a ON p.account_rid = a.rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON a.country_rid = c.rid
+	      c.country_code, 
+        COALESCE(SUM(p.total_cost_prj), 0) as total_project_cost,
+        COALESCE(SUM(case when p.is_qualified = true then p.total_cost_prj else 0 end), 0) as qualified_project_cost,
+        COALESCE(SUM(p.qre_final), 0) as qre_cost
+      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON p.country_rid = c.rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON p.account_rid = a.rid
       WHERE 1=1
     `;
 
@@ -720,17 +796,18 @@ export const rawQueries = {
     }
 
     if (countryRid) {
-      query += ` AND a.country_rid = :countryRid`;
+      query += ` AND p.country_rid = :countryRid`;
       replacements.countryRid = countryRid;
     }
 
-    query += ` GROUP BY a.account_name, c.country_name, c.country_code;`;
+    query += ` GROUP BY a.rid, a.account_name, c.rid, c.country_name, c.country_code;`;
 
     return { query, replacements };
   },
   fetchCasesByHealthStatus(accountIds?: string[], fiscalYear?: string) {
     let query = `
       SELECT 
+        a.rid as account_rid,
         a.account_name,
         c.fiscal_year,
         COALESCE(ROUND(AVG(c.case_completion_percentage), 2),0) as progress
@@ -754,7 +831,7 @@ export const rawQueries = {
       query += ` AND c.fiscal_year::int >= (EXTRACT(YEAR FROM CURRENT_DATE)::int - 3)`;
     }
 
-    query += ` GROUP BY a.account_name, c.fiscal_year`;
+    query += ` GROUP BY a.account_name, c.fiscal_year, a.rid`;
     query += ` ORDER BY a.account_name, c.fiscal_year`;
 
     return { query, replacements };

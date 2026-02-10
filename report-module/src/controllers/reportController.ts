@@ -340,6 +340,14 @@ async function exportPendingFollowUps(req: Request, res: Response): Promise<void
     await handleTaskExport(req, res, reportService.getPendingFollowUpsList, "exportPendingFollowUps", "PendingFollowUps");
 }
 
+async function getOverdueApprovalsList(req: Request, res: Response): Promise<void> {
+    await handleTaskList(req, res, reportService.getOverdueApprovalsList, "getOverdueApprovalsList");
+}
+
+async function exportOverdueApprovals(req: Request, res: Response): Promise<void> {
+    await handleTaskExport(req, res, reportService.getOverdueApprovalsList, "exportOverdueApprovals", "OverdueApprovals");
+}
+
 async function getOverallProjectValue(req: Request, res: Response): Promise<void> {
     const methodName = "getOverallProjectValue";
     try {
@@ -457,6 +465,8 @@ export default {
     exportCompletedTasksThisWeek,
     getPendingFollowUpsList,
     exportPendingFollowUps,
+    getOverdueApprovalsList,
+    exportOverdueApprovals,
     getOverallProjectValue,
     getGlobalLevelChart,
     getCasesByHealthStatus

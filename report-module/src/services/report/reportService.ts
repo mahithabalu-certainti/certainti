@@ -1,7 +1,7 @@
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
 import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants";
-import { errorLog } from "../../utils/helpers";
+import { errorLog, generateSasUrl } from "../../utils/helpers";
 import SchemaService from "./schemaService";
 import { CaseSummary } from "../../models/caseSummaryModel";
 import { number } from "joi";
@@ -105,16 +105,48 @@ export class ReportService implements IReportService {
                     }
                 );
 
-                const result = {
-                    activeAccounts: childAccountIds.length,
-                    totalCases: totalCases,
-                    completedCases: completedCasesCount[0]?.count || 0,
-                    onHoldCases: onHoldCasesCount[0]?.count || 0,
-                    openTasks: openTasksCount[0]?.count || 0,
-                    overDueTasks: overDueTasksCount[0]?.count || 0,
-                    upcomingTasks: upcomingTasksCount[0]?.count || 0,
-                    weeklyCompletedTasks: weeklyCompletedTasksCount[0]?.count || 0,
-                }
+                const result: any = []
+
+                result.push({
+                    "name": "Active Accounts",
+                    "count": childAccountIds.length,
+                    "order": 1
+                })
+                result.push({
+                    "name": "Active Cases",
+                    "count": totalCases,
+                    "order": 2
+                })
+                result.push({
+                    "name": "Total Completed Cases",
+                    "count": completedCasesCount[0]?.count || 0,
+                    "order": 3
+                })
+                result.push({
+                    "name": "Stalled Cases",
+                    "count": onHoldCasesCount[0]?.count || 0,
+                    "order": 4
+                })
+                result.push({
+                    "name": "Open Tasks",
+                    "count": openTasksCount[0]?.count || 0,
+                    "order": 5
+                })
+                result.push({
+                    "name": "Due Today / Over Due Tasks",
+                    "count": overDueTasksCount[0]?.count || 0,
+                    "order": 6
+                })
+                result.push({
+                    "name": "Upcoming Tasks (7 Days)",
+                    "count": upcomingTasksCount[0]?.count || 0,
+                    "order": 7
+                })
+                result.push({
+                    "name": "Tasks Completed This Week",
+                    "count": weeklyCompletedTasksCount[0]?.count || 0,
+                    "order": 8
+                })
 
                 return {
                     statusCode: HttpStatus.SUCCESS,
@@ -178,16 +210,49 @@ export class ReportService implements IReportService {
                     { type: QueryTypes.SELECT }
                 );
 
-                const result = {
-                    activeAccounts: activeAccountsCount[0]?.count || 0,
-                    totalCases: totalCases,
-                    completedCases: completedCasesCount[0]?.count || 0,
-                    onHoldCases: onHoldCasesCount[0]?.count || 0,
-                    openTasks: openTasksCount[0]?.count || 0,
-                    overDueTasks: overDueTasksCount[0]?.count || 0,
-                    upcomingTasks: upcomingTasksCount[0]?.count || 0,
-                    weeklyCompletedTasks: weeklyCompletedTasksCount[0]?.count || 0,
-                }
+                const result: any = []
+
+                result.push({
+                    "name": "Active Accounts",
+                    "count": activeAccountsCount[0]?.count || 0,
+                    "order": 1
+                })
+                result.push({
+                    "name": "Active Cases",
+                    "count": totalCases,
+                    "order": 2
+                })
+                result.push({
+                    "name": "Total Completed Cases",
+                    "count": completedCasesCount[0]?.count || 0,
+                    "order": 3
+                })
+                result.push({
+                    "name": "Stalled Cases",
+                    "count": onHoldCasesCount[0]?.count || 0,
+                    "order": 4
+                })
+                result.push({
+                    "name": "Open Tasks",
+                    "count": openTasksCount[0]?.count || 0,
+                    "order": 5
+                })
+                result.push({
+                    "name": "Due Today / Over Due Tasks",
+                    "count": overDueTasksCount[0]?.count || 0,
+                    "order": 6
+                })
+                result.push({
+                    "name": "Upcoming Tasks (7 Days)",
+                    "count": upcomingTasksCount[0]?.count || 0,
+                    "order": 7
+                })
+                result.push({
+                    "name": "Tasks Completed This Week",
+                    "count": weeklyCompletedTasksCount[0]?.count || 0,
+                    "order": 8
+                })
+
 
                 return {
                     statusCode: HttpStatus.SUCCESS,
@@ -642,9 +707,15 @@ export class ReportService implements IReportService {
 
             // Fetch user details for assigned_to
             const assignedToIds = new Set<string>();
-            tasks.forEach(t => {
+            for (const t of tasks) {
                 if (t.assigned_to) assignedToIds.add(t.assigned_to);
-            });
+
+                if (t.profile_url) {
+                    t.profile_url = await generateSasUrl(t.profile_url);
+                } else {
+                    t.profile_url = null
+                }
+            }
 
             const userMap = new Map<string, string>();
             if (assignedToIds.size > 0) {
@@ -692,6 +763,10 @@ export class ReportService implements IReportService {
 
     async getPendingFollowUpsList(userId: string, flag: string) {
         return this.fetchTasksList(userId, flag, rawQueries.fetchWeeklyPendingFollowUps);
+    }
+
+    async getOverdueApprovalsList(userId: string, flag: string) {
+        return this.fetchTasksList(userId, flag, rawQueries.fetchOverdueApprovals);
     }
 
     async getOverallProjectValue(userId: string, flag: string, fiscalYear?: string): Promise<{ statusCode: number; message: string; data?: any }> {
