@@ -306,7 +306,7 @@ export const ProjectResourceFormData = (
             formatCostValue: true,
             onChange: true,
             regexErrorMessage:
-              'Cost must be a 18-digit number with up to 2 decimals',
+              'Cost must be a number allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Cost',
             disabled:
               isEditView &&
