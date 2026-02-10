@@ -25,9 +25,12 @@ router.get("/completedTasksThisWeekExport", checkUserStatusMiddleware("NA"), con
 router.get("/pendingFollowUpsList", checkUserStatusMiddleware("NA"), controller.reportController.getPendingFollowUpsList);
 router.get("/pendingFollowUpsExport", checkUserStatusMiddleware("NA"), controller.reportController.exportPendingFollowUps);
 
-
 router.get("/overallProjectValue", checkUserStatusMiddleware("NA"), controller.reportController.getOverallProjectValue);
+
 router.get("/globalLevelChart", checkUserStatusMiddleware("NA"), controller.reportController.getGlobalLevelChart);
+
+router.get("/casesByHealthStatus", checkUserStatusMiddleware("NA"), controller.reportController.getCasesByHealthStatus);
+
 
 
 export default router;

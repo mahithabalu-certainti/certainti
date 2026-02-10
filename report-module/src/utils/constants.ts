@@ -727,5 +727,36 @@ export const rawQueries = {
     query += ` GROUP BY a.account_name, c.country_name, c.country_code;`;
 
     return { query, replacements };
+  },
+  fetchCasesByHealthStatus(accountIds?: string[], fiscalYear?: string) {
+    let query = `
+      SELECT 
+        a.account_name,
+        c.fiscal_year,
+        COALESCE(ROUND(AVG(c.case_completion_percentage), 2),0) as progress
+      FROM ${MAIN_SCHEMA_NAME}.case_summary c
+      JOIN ${MAIN_SCHEMA_NAME}.account a ON c.account_rid = a.rid
+      WHERE 1=1
+    `;
+
+    const replacements: any = {};
+
+    if (accountIds && accountIds.length > 0) {
+      query += ` AND c.account_rid in (:accountIds)`;
+      replacements.accountIds = accountIds;
+    }
+
+    if (fiscalYear) {
+      query += ` AND c.fiscal_year = :fiscalYear`;
+      replacements.fiscalYear = fiscalYear;
+    } else {
+      // If no specific fiscal year, get last 4 years
+      query += ` AND c.fiscal_year::int >= (EXTRACT(YEAR FROM CURRENT_DATE)::int - 3)`;
+    }
+
+    query += ` GROUP BY a.account_name, c.fiscal_year`;
+    query += ` ORDER BY a.account_name, c.fiscal_year`;
+
+    return { query, replacements };
   }
 };

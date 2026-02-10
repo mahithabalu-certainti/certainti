@@ -108,7 +108,7 @@ def get_status_rid(conn, status_name):
         return None
 
 
-def update_extraction_status(conn, rid, status, error_message=None, extracted_data=None, user_id=None):
+def update_extraction_status(conn, rid, status, error_message=None, extracted_data=None, user_id=None, country_code=None, state_code=None):
     """
     Update data mapper form status.
     If extracted_data is provided, parse 'pdf_form_fields' and insert into data_mapper_form_mappings.
@@ -172,7 +172,7 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                         nonlocal extraction_order
                         if label and label not in processed_labels:
                             extraction_order += 1
-                            field_id = f"Field_ID_{extraction_order}" if form_type == "non-fillable" else None
+                            field_id = f"{country_code}-{state_code}-F{extraction_order:04d}" if state_code else f"{country_code}-F{extraction_order:04d}" if form_type == "non-fillable" else None
                             cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order, field_id))
                             processed_labels.add(label)
 

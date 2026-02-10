@@ -20,8 +20,14 @@ const globalLevelChartSchema = Joi.object({
     countryRid: Joi.string().optional()
 });
 
+const casesByHealthStatusSchema = Joi.object({
+    flag: Joi.string().valid("all", "user").required(),
+    fiscalYear: Joi.number().optional()
+});
+
 export {
     reportFlagSchema,
     getOverallProjectValueSchema,
-    globalLevelChartSchema
+    globalLevelChartSchema,
+    casesByHealthStatusSchema
 };

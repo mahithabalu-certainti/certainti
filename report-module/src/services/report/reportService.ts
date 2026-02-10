@@ -765,4 +765,39 @@ export class ReportService implements IReportService {
             throw error;
         }
     }
+    async getCasesByHealthStatus(userId: string, flag: string, fiscalYear?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+            let accountIds: string[] = [];
+
+            if (flag === "user") {
+                const childAccountIds = await this.getChildAccountIds(userId);
+
+                if (!childAccountIds) {
+                    return {
+                        statusCode: HttpStatus.SUCCESS,
+                        message: "No accessible accounts found",
+                        data: []
+                    };
+                }
+                accountIds = childAccountIds;
+            }
+
+            const { query, replacements } = rawQueries.fetchCasesByHealthStatus(flag === "user" ? accountIds : undefined, fiscalYear);
+            const result: any[] = await sequelize.query(query, {
+                replacements,
+                type: QueryTypes.SELECT
+            });
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Success",
+                data: result
+            };
+
+        } catch (error) {
+            errorLog("getCasesByHealthStatus", (error as Error).message);
+            throw error;
+        }
+    }
 }

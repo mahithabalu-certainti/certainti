@@ -29,6 +29,8 @@ def process_kafka_message(message):
         data_mapper_rid = msg_value.get("data_mapper_rid")
         file_url = msg_value.get("file_url")
         user_id = msg_value.get("userId")
+        country_code = msg_value.get("country_code")
+        state_code = msg_value.get("state_code")
         
         if not file_url:
             print("Error: No file_url in message")
@@ -62,7 +64,7 @@ def process_kafka_message(message):
             # Update DB on success
             if data_mapper_rid:
                 with DBPool.get_connection() as conn:
-                    update_extraction_status(conn, data_mapper_rid, 'Completed', extracted_data=extracted.model_dump_json(), user_id=user_id)
+                    update_extraction_status(conn, data_mapper_rid, 'Completed', extracted_data=extracted.model_dump_json(), user_id=user_id, country_code=country_code, state_code=state_code)
             
         except Exception as e:
             error_msg = f"Extraction failed: {e}"

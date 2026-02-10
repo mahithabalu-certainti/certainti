@@ -103,13 +103,32 @@ export class DataMapperService implements IDataMapperService {
 
             const sasUrl = await generateSasUrl(fileUrl)
 
+            // Fetch Country Code
+            const [countryResult]: any = await sequelize.query(rawQueries.fetchCountryById(), {
+                replacements: { id: data.country_rid },
+                type: QueryTypes.SELECT
+            });
+            const countryCode = countryResult ? countryResult.country_code : null;
+
+            // Fetch State Code
+            let stateCode = null;
+            if (data.state_rid) {
+                const stateResult: any = await sequelize.query(rawQueries.fetchStatesByIds(), {
+                    replacements: { ids: [data.state_rid] },
+                    type: QueryTypes.SELECT
+                });
+                stateCode = stateResult.length > 0 ? stateResult[0].state_code : null;
+            }
+
             // Send Kafka Message
             const payload = {
                 data_mapper_rid: newRecord.rid,
                 file_url: sasUrl,
                 form_name: data.form_name,
                 country_rid: data.country_rid,
+                country_code: countryCode,
                 state_rid: data.state_rid,
+                state_code: stateCode,
                 effective_from_date: data.effective_from_date,
                 effective_to_date: data.effective_to_date,
                 userId: userId
@@ -553,6 +572,23 @@ export class DataMapperService implements IDataMapperService {
                 const countryRid = data.country_rid || record.country_rid;
                 const stateRid = data.state_rid || record.state_rid;
 
+                // Fetch Country Code
+                const [countryResult]: any = await sequelize.query(rawQueries.fetchCountryById(), {
+                    replacements: { id: countryRid },
+                    type: QueryTypes.SELECT
+                });
+                const countryCode = countryResult ? countryResult.country_code : null;
+
+                // Fetch State Code
+                let stateCode = null;
+                if (stateRid) {
+                    const stateResult: any = await sequelize.query(rawQueries.fetchStatesByIds(), {
+                        replacements: { ids: [stateRid] },
+                        type: QueryTypes.SELECT
+                    });
+                    stateCode = stateResult.length > 0 ? stateResult[0].state_code : null;
+                }
+
                 const uploadResult = await uploadToAzureBlob(
                     file,
                     countryRid,
@@ -569,6 +605,8 @@ export class DataMapperService implements IDataMapperService {
                 updatePayload.document_name = uploadResult.name;
                 updatePayload.size_in_mb = uploadResult.size;
                 updatePayload.format = uploadResult.extension.replace('.', '');
+                updatePayload.state_code = stateCode;
+                updatePayload.country_code = countryCode;
 
                 // Reset status to Initiated
                 const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
