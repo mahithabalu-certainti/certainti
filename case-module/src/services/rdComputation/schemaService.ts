@@ -661,7 +661,7 @@ class RDCreditSchemaService {
 
         // Add total as a state-like structure
         result['Total'] = {
-            RD_credits: totalCredit
+            RD_credits: Number(totalCredit.toFixed(2))
         };
 
         return {
