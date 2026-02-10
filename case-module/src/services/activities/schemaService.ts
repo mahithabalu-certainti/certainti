@@ -433,7 +433,7 @@ class ActivitySchemaService {
             d.is_new_tag,
             accountNumber,
             taskRequest.created_by,
-            activeStatusRid,
+            activeStatusRid.rid,
             "activity"
           );
             }
