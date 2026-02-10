@@ -150,7 +150,7 @@ export class RdCreditCalculatorForNJ {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             contract: currentYearContract,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)
+            sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract))
         })
 
         prior3YearsQREs.forEach((item) => {
@@ -158,7 +158,7 @@ export class RdCreditCalculatorForNJ {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0)))
             })
         });
 
