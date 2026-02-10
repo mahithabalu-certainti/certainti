@@ -65,7 +65,7 @@ export const HomePage: React.FC = () => {
   if (!isDashboardEnable) return <AccessRestricted />;
 
   return (
-    <div className='relative h-full bg-slate-50 p-4 space-y-6'>
+    <div className='relative bg-slate-50 p-4 space-y-6'>
       <div className='space-y-2'>
         <h1 className='text-3xl font-bold text-[#2A2A2A]'>Dashboard</h1>
         <p className='text-[#425A76]'>
