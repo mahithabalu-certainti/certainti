@@ -632,31 +632,27 @@ export const CaseFormData = (
                   !permissionMap?.['credit_carry_forward_py']?.read),
             }
           ),
-          createTextField(
-            'other_credits_total',
-            'Other Credits Total',
-            {
-              required: false,
-              placeholder: 'Enter Other Credits Total',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Other Credits Total: your estimated other credits total.',
-              },
-              regexErrorMessage:
-                'Numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isEditView &&
+          createTextField('other_credits_total', 'Other Credits Total', {
+            required: false,
+            placeholder: 'Enter Other Credits Total',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Other Credits Total: your estimated other credits total.',
+            },
+            regexErrorMessage:
+              'Numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isEditView &&
+              !permissionMap?.['credit_carry_forward_py']?.edit &&
+              permissionMap?.['credit_carry_forward_py']?.read,
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
                 !permissionMap?.['credit_carry_forward_py']?.edit &&
-                permissionMap?.['credit_carry_forward_py']?.read,
-              hide:
-                CountryName !== FinancialWorkingCountries.US ||
-                (isEditView &&
-                  !permissionMap?.['credit_carry_forward_py']?.edit &&
-                  !permissionMap?.['credit_carry_forward_py']?.read),
-            }
-          ),
+                !permissionMap?.['credit_carry_forward_py']?.read),
+          }),
           createTextField('other', 'Other', {
             required: false,
             placeholder: 'Enter Other',
