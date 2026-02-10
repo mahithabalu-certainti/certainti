@@ -1646,6 +1646,9 @@ export const rawQueries = {
                     AND pfr.region_rid IN (:stateRids)
                 GROUP BY pfr.region_rid
             `
+  },
+  fetchCanadaOntRegion () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.state WHERE state_name ILIKE '%ontario%'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
