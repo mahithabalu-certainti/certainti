@@ -45,7 +45,8 @@ export class RdCreditCalculatorForGA {
         return {
             inputFields,
             computedFields,
-            finalCredit: this.round2(creditAndCarryForwardInfo.research_tax_credit)
+            finalCredit: this.round2(creditAndCarryForwardInfo.research_tax_credit),
+            totalQRE: this.round2(inputInfo.current_year_qre)
         }
     }
 

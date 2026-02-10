@@ -199,7 +199,7 @@ export class RdCreditCalculatorForON {
             },
             computedFields : finalData,
             finalCredit : Math.round(totalCreditWithORDTC),
-            totalQre:totalQre
+            totalQRE:totalQre
         }
     }
 }

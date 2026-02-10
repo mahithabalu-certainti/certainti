@@ -48,7 +48,8 @@ export class RdCreditCalculatorForMA {
         return {
             inputFields,
             computedFields,
-            finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit)
+            finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit),
+            totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre)
         }
 
     }

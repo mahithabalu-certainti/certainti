@@ -45,7 +45,8 @@ export class RdCreditCalculatorForNJ {
         return {
             inputFields,
             computedFields,
-            finalCredit: this.round2(part5DevelopmentTaxCreditCalculationInfo.tot_available_credit)
+            finalCredit: this.round2(part5DevelopmentTaxCreditCalculationInfo.tot_available_credit),
+            totalQRE: this.round2(part4ASCCreditCalculationInfo.total_current_year_qre)
         }
 
     }
