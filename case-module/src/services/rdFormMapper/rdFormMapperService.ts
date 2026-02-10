@@ -1186,8 +1186,17 @@ export class RdFormMapperService {
   }
 
   private async fetchUrlAsBase64(url: string): Promise<string> {
+    // Set reasonable defaults to avoid unbounded memory usage and long-hanging requests.
+    // Timeout in milliseconds (e.g., 30 seconds).
+    const REQUEST_TIMEOUT_MS = 30_000;
+    // Maximum response size in bytes (e.g., 50 MB).
+    const MAX_CONTENT_LENGTH_BYTES = 50 * 1024 * 1024;
+
     const response = await axios.get<ArrayBuffer>(url, {
       responseType: "arraybuffer",
+      timeout: REQUEST_TIMEOUT_MS,
+      maxContentLength: MAX_CONTENT_LENGTH_BYTES,
+      maxBodyLength: MAX_CONTENT_LENGTH_BYTES,
     });
     return Buffer.from(response.data).toString("base64");
   }
