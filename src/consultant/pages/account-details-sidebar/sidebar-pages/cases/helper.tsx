@@ -137,7 +137,7 @@ export const getCaseFilterFields = (
     },
     {
       name: 'Total Qualified Project Cost',
-      value: 'case_total_qualified_projects_cost',
+      value: 'case_total_qualified_project_cost',
       type: 'number',
       operatorOption: numberOptions,
       hide:
