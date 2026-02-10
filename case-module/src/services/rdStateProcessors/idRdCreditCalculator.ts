@@ -167,25 +167,25 @@ export class RdCreditCalculatorForID {
      */
     buildComputedFields(qretInfo: any, config: any) {
         let part1 = {
-            "[1] Basic research payments paid or incurred during the tax year to qualified organizations": qretInfo.basic_research_payments,
-            "[2] Qualified organization base period amount": "0",
-            "[3] Subtract line 2 from line 1. If less than zero, enter zero": qretInfo.line_3
+            "[1] Basic research payments paid or incurred during the tax year to qualified organizations": this.round2(qretInfo.basic_research_payments),
+            "[2] Qualified organization base period amount": 0,
+            "[3] Subtract line 2 from line 1. If less than zero, enter zero": this.round2(qretInfo.line_3)
         };
 
         let part2 = {
-        "[4] Wages for qualified services performed in Idaho": qretInfo.current_year_wages,
-        "[5] Cost of supplies used in Idaho": qretInfo.supplies || "",
-        "[6] Rental or lease costs of computers in Idaho": qretInfo.cost_to_rent,
-        "[7] Enter the applicable percentage of contract research expenses": qretInfo.current_year_contract,
-        "[8] Total qualified research expenses for research conducted in Idaho. Add lines 4 through 7": qretInfo.total_current_year_qre,
+        "[4] Wages for qualified services performed in Idaho": this.round2(qretInfo.current_year_wages),
+        "[5] Cost of supplies used in Idaho": this.round2(qretInfo.supplies) || "",
+        "[6] Rental or lease costs of computers in Idaho": this.round2(qretInfo.cost_to_rent),
+        "[7] Enter the applicable percentage of contract research expenses": this.round2(qretInfo.current_year_contract),
+        "[8] Total qualified research expenses for research conducted in Idaho. Add lines 4 through 7": this.round2(qretInfo.total_current_year_qre),
         "[9] Enter fixed-base percentage, but not more than 16%, from page 2, Part A or B": `${qretInfo.fixed_base_percentage}%`,
-        "[10] Enter average annual Idaho gross receipts from page 2, Part C": qretInfo.average_annual_gross_receipts,
-        "[11] Base amount. Multiply line 10 by the percentage on line 9": qretInfo.base_amount,
-        "[12] Subtract line 11 from line 8. If zero or less, enter zero": qretInfo.difference,
-        [`[13] Multiply line 8 by ${config.credit_rate || 0}%`]: qretInfo.credit_rate_percent,
-        "[14] Enter the smaller amount from line 12 or line 13": qretInfo.min_credit_rate,
-        "[15] Add lines 3 and 14": qretInfo.tot_base_amount,
-        [`[16] Credit earned. Multiply line 15 by ${config.credit_earned}%`]: qretInfo.credit_earned,
+        "[10] Enter average annual Idaho gross receipts from page 2, Part C": this.round2(qretInfo.average_annual_gross_receipts),
+        "[11] Base amount. Multiply line 10 by the percentage on line 9": this.round2(qretInfo.base_amount),
+        "[12] Subtract line 11 from line 8. If zero or less, enter zero": this.round2(qretInfo.difference),
+        [`[13] Multiply line 8 by ${config.credit_rate || 0}%`]: this.round2(qretInfo.credit_rate_percent),
+        "[14] Enter the smaller amount from line 12 or line 13": this.round2(qretInfo.min_credit_rate),
+        "[15] Add lines 3 and 14": this.round2(qretInfo.tot_base_amount),
+        [`[16] Credit earned. Multiply line 15 by ${config.credit_earned}%`]: this.round2(qretInfo.credit_earned),
 
         "[17] Pass-through share of credit from an S corporation, partnership, trust, or estate": "",
         "[18] Credit received through unitary sharing. Include a schedule": "",
@@ -193,7 +193,7 @@ export class RdCreditCalculatorForID {
         "[20] Credit distributed to shareholders, partners, or beneficiaries": "",
         "[21] Credit shared with unitary affiliates": "",
 
-        "[22] Total credit available subject to limitations. Add lines 16 through 19, then subtract lines 20 and 21": qretInfo.final_credit,
+        "[22] Total credit available subject to limitations. Add lines 16 through 19, then subtract lines 20 and 21": this.round2(qretInfo.final_credit),
         "[23] Enter the Idaho income tax from your tax return": "",
 
         "[24 a] Credit for income tax paid to other states": "",
@@ -206,7 +206,7 @@ export class RdCreditCalculatorForID {
         "[h] Add lines 24a through 24g": "",
 
         "[25] Net income tax after allowance of other credits. Subtract line 24h from line 23": "",
-        "[26] Total credit available subject to limitations. Enter the amount from line 22": qretInfo.tot_credit_avail,
+        "[26] Total credit available subject to limitations. Enter the amount from line 22": this.round2(qretInfo.tot_credit_avail),
         "[27] Credit for Idaho research activities allowed. Enter the smaller amount from line 25 or line 26 here and on Form 44, Part I, line 4": ""
         };
 

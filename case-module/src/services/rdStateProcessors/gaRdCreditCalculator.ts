@@ -72,7 +72,7 @@ export class RdCreditCalculatorForGA {
 
         //Enter current year - any other credit for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
-        const totalOfAllOtherCredits = new Decimal(0)
+        const totalOfAllOtherCredits = new Decimal(caseDetails.other_credits_total || 0) 
 
         //Enter any carry forward from prior years for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
