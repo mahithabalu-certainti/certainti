@@ -106,7 +106,7 @@ export class WebSocketService {
     console.log('✅ WebSocket connected');
     this.reconnectAttempts = 0;
     this.keepAliveFailureCount = 0; // Reset failure counter on new connection
-    
+
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -114,7 +114,7 @@ export class WebSocketService {
     if (this.keepAliveInterval) {
       clearInterval(this.keepAliveInterval);
     }
-    
+
     this.keepAliveInterval = setInterval(() => {
       try {
         this.send({ type: 'ping', data: 'keepalive' });
@@ -123,26 +123,31 @@ export class WebSocketService {
       } catch (error) {
         this.keepAliveFailureCount++;
         console.error('WebSocket keep-alive ping failed', error);
-        
+
         // If keep-alive fails 3 times consecutively, assume connection is broken
         if (this.keepAliveFailureCount >= 3) {
-          console.error('Keep-alive failed 3 times, closing connection to trigger reconnection');
-          
+          console.error(
+            'Keep-alive failed 3 times, closing connection to trigger reconnection'
+          );
+
           if (this.keepAliveInterval) {
             clearInterval(this.keepAliveInterval);
             this.keepAliveInterval = null;
           }
-          
+
           // Close the connection to trigger reconnection logic
           try {
             this.ws?.close();
           } catch (closeError) {
-            console.error('Error while closing WebSocket after keep-alive failures', closeError);
+            console.error(
+              'Error while closing WebSocket after keep-alive failures',
+              closeError
+            );
           }
         }
       }
     }, this.keepAlivePeriodMs);
-    
+
     this.onConnectionChange?.(true);
   }
 

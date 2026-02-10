@@ -96,6 +96,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       setResourceCostList(data.projectResourceFiscal || []);
       setCount(data.count || 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, data?.count, setCount]);
   useEffect(() => {
     setTableParams((prev) => ({

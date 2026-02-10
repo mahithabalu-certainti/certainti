@@ -6,12 +6,10 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
   CasesIcon,
   ChecklistIcon,
-  DetailsIcon,
   FinancialIcon,
   ImportsIcon,
   NotesSideIcon,
@@ -25,6 +23,11 @@ import {
   DraftEmailIcon,
   MeetingIcon,
   CallLogIcon,
+  ConfigRuleIcon,
+  AccountDeatilsIcon,
+  AccountsIcon,
+  ManageGroupAccount,
+  HistorySubmissionIcon,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -75,6 +78,7 @@ import {
   NotesListExportParams,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
+  ColorCode,
 } from '../../types';
 import { exportProjectData, ProjectTriggerAI } from '../../services/project';
 import {
@@ -108,6 +112,7 @@ import { ExportNotesList } from '../../services/notes/notes-service';
 import { ExportCaseList } from '../../services/cases/case-service';
 import { ExportChecklistList } from '../../services/checklist/checklist-service';
 import { ExportActivityList } from '../../services/activities/activities-service';
+import HistorySubmission from '../case/case-details/history-submission/history-submission';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -898,6 +903,16 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'historical_submission':
+        return (
+          <div className='w-full pr-4 pl-2 py-2'>
+            <HistorySubmission
+              activityMenuItems={activityMenuItems}
+              isDetailLoading={isPending}
+              accountDetails={{ ...data?.data } as accountDetailsProps}
+            />
+          </div>
+        );
       case 'activities':
         return (
           <Activities
@@ -987,7 +1002,7 @@ export const AccountDetails = () => {
         key: 'details',
         id: AllModules.ACCOUNTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: AccountDeatilsIcon,
       },
       {
         name: 'Resources',
@@ -1020,6 +1035,14 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: CasesIcon,
+      },
+      {
+        name: 'Historical Submission',
+        key: 'historical_submission',
+        id: AllModules.HISTORICAL_SUBMISSION,
+        disabled: disable,
+        hide: disable,
+        icon: HistorySubmissionIcon,
       },
       {
         name: 'Activities',
@@ -1083,7 +1106,7 @@ export const AccountDetails = () => {
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: disable,
             hide: disable,
-            icon: ResourcesIcon,
+            icon: ManageGroupAccount,
           },
           {
             name: 'Settings',
@@ -1097,9 +1120,9 @@ export const AccountDetails = () => {
             name: 'Jurisdiction Configuration',
             key: 'jurisdiction_configuration',
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
-            disabled: false,
-            hide: false,
-            icon: ResourcesIcon,
+            disabled: disable,
+            hide: disable,
+            icon: ConfigRuleIcon,
           },
         ],
       },
@@ -1129,9 +1152,9 @@ export const AccountDetails = () => {
           variant='sub'
           placeholder='Account Name'
           icon={
-            <AccountDetailsIcon
-              className='h-6 w-6 rounded'
-              style={{ backgroundColor: '#4B9BFF' }}
+            <AccountsIcon
+              alt='account-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
             />
           }
           title={data?.data?.accountById?.account_name ?? ''}

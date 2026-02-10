@@ -93,7 +93,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_name',
@@ -118,21 +124,22 @@ export const getAllProjectListColumns = (
       placeholder: 'Enter Name',
       validation: [
         {
-          regex: REGEX_PATTERNS.MIN_4,
-          errorMessage: 'Name must be more than 3 characters long',
+          regex: REGEX_PATTERNS.MIN_2,
+          errorMessage: 'Name must be at least 2 characters long.',
         },
         {
           regex: REGEX_PATTERNS.MAX_255,
           errorMessage: 'Max length exceeded',
         },
-        {
-          regex: REGEX_PATTERNS.PROJECT_NAME,
-          errorMessage:
-            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-        },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_type_name',
@@ -157,7 +164,13 @@ export const getAllProjectListColumns = (
       placeholder: '',
       options: projectTypeOption,
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'account_name',
@@ -205,6 +218,10 @@ export const getAllProjectListColumns = (
       { key: 'account_status_name', matchValue: ['Active'] },
       {
         key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,
       },
     ],
@@ -276,7 +293,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_client_group',
@@ -315,7 +338,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_group',
@@ -354,7 +383,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_effort',
@@ -392,6 +427,10 @@ export const getAllProjectListColumns = (
       {
         key: 'total_effort',
         matchValue: [null, '0.00'],
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
       },
     ],
   },
@@ -432,6 +471,10 @@ export const getAllProjectListColumns = (
         key: 'total_cost',
         matchValue: [null, '0.00'],
       },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
     ],
   },
   {
@@ -467,7 +510,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_subcon',
@@ -502,7 +551,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_nonlabor',
@@ -537,7 +592,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'assessment_status',
@@ -596,8 +657,8 @@ export const getAllProjectListColumns = (
       !permissionMap?.['key_contacts']?.edit,
     render: (row: Project & { _level?: number }) => {
       const isClickable =
-        !permissionMap?.['key_contacts']?.read &&
-        !permissionMap?.['key_contacts']?.edit &&
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
         row._level !== undefined &&
         row._level === 1;
       return isClickable ? (
@@ -607,7 +668,40 @@ export const getAllProjectListColumns = (
           }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
-          {row.project_point_of_contact}
+          {row.project_point_of_contact || '-'}
+        </div>
+      ) : (
+        '-'
+      );
+    },
+  },
+  {
+    id: 'project_point_of_contact_email',
+    label: 'Project Point of Contact Email',
+    sortable: true,
+    sortId: 'project_point_of_contact_email',
+    width: 230,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(
+              row,
+              row.project_point_of_contact_email,
+              'key_contacts_list'
+            )
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.project_point_of_contact_email || '-'}
         </div>
       ) : (
         '-'
@@ -640,7 +734,40 @@ export const getAllProjectListColumns = (
           }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
-          {row.technical_point_of_contact}
+          {row.technical_point_of_contact || '-'}
+        </div>
+      ) : (
+        '-'
+      );
+    },
+  },
+  {
+    id: 'technical_point_of_contact_email',
+    label: 'Technical Point of Contact Email',
+    sortable: true,
+    sortId: 'technical_point_of_contact_email',
+    width: 250,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(
+              row,
+              row?.technical_point_of_contact_email,
+              'key_contacts_list'
+            )
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.technical_point_of_contact_email || '-'}
         </div>
       ) : (
         '-'
@@ -673,7 +800,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: 'Active' }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: 'Active' },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'modified_datetime',

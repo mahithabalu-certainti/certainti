@@ -131,10 +131,11 @@ export const fetchClassification =
   };
 
 export const fetchState = async (
-  countryId: string | string[] | null
+  countryId: string | string[] | null,
+  status?: string
 ): Promise<StatesApiResponse> => {
   const { data } = await accountServiceApi.get<StatesApiResponse>(
-    StateUrl(countryId)
+    StateUrl(countryId, status)
   );
   return data;
 };

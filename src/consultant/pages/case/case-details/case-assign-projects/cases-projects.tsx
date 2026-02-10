@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
-import { InteractionDetailIcon } from '../../../../../assets';
+import { ProjectsSideIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
   AllPermissions,
@@ -42,6 +41,7 @@ import {
 import {
   ActivityDropdownItem,
   CaseAssignedExportParams,
+  ColorCode,
   ExportType,
 } from '../../../../types';
 import ProjectTab from './projects-tab';
@@ -69,6 +69,8 @@ interface casesProjectProps {
   setExportType?: (type: ExportType) => void;
   refetchCaseDetails: () => void;
   activityMenuItems: ActivityDropdownItem[];
+  isCaseTeamCreated: boolean;
+  isFinancialWorkingSignoff?: boolean;
 }
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -92,6 +94,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   setReviewProjectParams,
   refetchCaseDetails,
   activityMenuItems,
+  isCaseTeamCreated,
+  isFinancialWorkingSignoff,
 }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
@@ -203,6 +207,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
 
       navigate({ search: newParams.toString() }, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.get('list')]); // Run when the list parameter changes
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -308,7 +313,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: 'RD Assessment',
       variant: 'outlined' as const,
-      disabled: accountInActive || selectedRows.length === 0,
+      disabled:
+        accountInActive ||
+        selectedRows.length === 0 ||
+        !isCaseTeamCreated ||
+        isFinancialWorkingSignoff,
       onClick: () => handleTriggerAIBtn(),
       loading: triggerAIMutation.isPending,
       sx: { width: '115px', minWidth: '115px' },
@@ -320,7 +329,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: isAssignProject ? 'Assign' : 'Remove',
       variant: 'outlined' as const,
-      disabled: selectedRows.length === 0 || accountInActive,
+      disabled:
+        selectedRows.length === 0 ||
+        accountInActive ||
+        !isCaseTeamCreated ||
+        isFinancialWorkingSignoff,
       onClick: () =>
         isAssignProject ? handletoAssignprojects() : handleRemoveProjects(),
       sx: { width: '80px', minWidth: '80px' },
@@ -334,7 +347,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: isAssignProject ? 'Back to Assigned Projects' : 'Assign Projects',
       variant: 'outlined' as const,
-      disabled: false,
+      disabled: !isCaseTeamCreated || isFinancialWorkingSignoff,
       onClick: () =>
         isAssignProject
           ? handleBackToAssignedProjects()
@@ -669,9 +682,9 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       <SectionHeader
         title={isAssignProject ? 'Assign Projects' : 'Case Projects'}
         titleIcon={
-          <InteractionDetailIcon
+          <ProjectsSideIcon
             alt='financial-header-icon'
-            className={`w-7 h-7 p-1 bg-[#E25A32] 'rounded-[2px]' 'rounded-full'`}
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         count={count}
@@ -686,6 +699,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           ...btn,
           hide: Boolean(btn.hide),
         }))}
+        iconBg={ColorCode.caseBgColor}
+        bgType='circle'
       />
       {!isAssignProject && !projectDetailTab && (
         <SectionHeaderTab

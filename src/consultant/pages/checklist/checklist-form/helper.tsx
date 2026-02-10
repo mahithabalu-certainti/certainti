@@ -275,12 +275,25 @@ export const checklistItemsTransformPayload = (
   formItems.forEach((item) => {
     if (isEdit && item.rid) {
       retainedRids.add(item.rid);
+
+      // Find the corresponding existing item to compare
+      const existingItem = existingItems.find(
+        (existing) => existing.rid === item.rid
+      );
+
+      // Check if any field has changed
+      const hasChanged = existingItem
+        ? existingItem.checklist_item_name !== item.checklist_item_name ||
+          existingItem.checklist_item_description !== item.description ||
+          existingItem.status_rid !== (item.status || '')
+        : false;
+
       transformedItems.push({
         checklist_item_rid: item.rid,
         checklist_item_name: item.checklist_item_name,
         checklist_item_description: item.description,
         status_rid: item.status || '',
-        action_type: ItemActionType.Edit,
+        action_type: hasChanged ? ItemActionType.Edit : '',
       });
     } else if (!item.rid && item.checklist_item_name.trim()) {
       transformedItems.push({

@@ -1521,7 +1521,10 @@ const ListTable = <T extends RowData>({
                                 : {}),
                               padding: isEditing
                                 ? '0px 0px !important'
-                                : '0px 8px !important',
+                                : (typeof column.sx === 'function'
+                                    ? column.sx(row)?.padding
+                                    : (column.sx as React.CSSProperties)
+                                        ?.padding) || '0px 8px !important',
                               outline:
                                 isEditing && column.field?.type !== 'textarea'
                                   ? `1px solid ${

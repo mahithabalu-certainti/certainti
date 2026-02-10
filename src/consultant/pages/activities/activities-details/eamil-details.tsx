@@ -15,7 +15,7 @@ import DetailsSection, {
   DetailItem,
 } from '../../../../components/details-section/details';
 import SectionHeader from '../../../../components/details-section/section-header';
-import { DraftEmailIcon } from '../../../../assets';
+import { DocumentIcon, DownloadIcon, DraftEmailIcon } from '../../../../assets';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 import { ActivityType } from '../../../types';
 import { ACTIVITY_EDIT } from '../../../../routes';
@@ -26,6 +26,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { AllPermissions } from '../../../../common-service';
+import { TruncateWithTooltip } from '../../../../components';
 
 interface EmailDetailsProps {
   accountInActive: boolean;
@@ -206,12 +207,27 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     },
   ];
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const basicEmailInfo = applyHidePermission(
     emailInformation,
     emailPermissionMap
   );
   const emailBody = applyHidePermission(emailBodyBlock, emailPermissionMap);
   const auditInfo = applyHidePermission(auditDetails, emailPermissionMap);
+
+  const hideAttachments =
+    !emailPermissionMap?.['attachments']?.edit &&
+    !emailPermissionMap?.['attachments']?.read;
 
   return (
     <div>
@@ -250,6 +266,59 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
             fullColumn={true}
             customStyle='pt-[1px]'
           />
+
+          {/* Attachments Section */}
+          {!hideAttachments && data && data?.attachments?.length > 0 && (
+            <div className='flex flex-col h-full'>
+              <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+                Attachments
+              </div>
+              <div className='flex-1 p-3'>
+                <div
+                  className={`flex flex-col gap-1 max-h-[85px] ${
+                    data?.attachments?.length > 2
+                      ? 'overflow-auto'
+                      : 'overflow-visible'
+                  }`}
+                >
+                  {data?.attachments?.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                    >
+                      <div className='flex items-center gap-2 w-[95%]'>
+                        <React.Suspense fallback={null}>
+                          <DocumentIcon className='w-6 h-6' />
+                        </React.Suspense>
+                        <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
+                          <TruncateWithTooltip
+                            text={`${file.document_name}${file.format}`}
+                            maxWidth={'100%'}
+                          >
+                            {file.document_name}
+                            {file.format}
+                          </TruncateWithTooltip>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDownload(file.browse_file)}
+                        className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                        style={{
+                          boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                          background:
+                            'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                        }}
+                      >
+                        <React.Suspense fallback={null}>
+                          <DownloadIcon />
+                        </React.Suspense>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           <DetailsSection
             title='Audit Information'

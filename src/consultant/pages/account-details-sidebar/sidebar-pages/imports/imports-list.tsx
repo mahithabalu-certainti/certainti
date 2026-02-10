@@ -13,6 +13,7 @@ import {
 import {
   AccountDetailsResponse,
   ActivityDropdownItem,
+  ColorCode,
   ExportType,
 } from '../../../../types';
 import ImportFile from './import-file/import-file';
@@ -374,14 +375,14 @@ const Imports: React.FC<ImportsProps> = ({
             showItemCount={true}
             titleIcon={
               <ImportsIcon
-                className='[&>path]:stroke-white'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Imports-header-icon'
               />
             }
             ActionName='Download Templete'
             actionItems={menuItems}
             buttons={headerButtons}
-            iconBg='#af78ff'
+            iconBg={ColorCode.accountBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

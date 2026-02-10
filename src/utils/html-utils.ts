@@ -7,11 +7,11 @@ import DOMPurify from 'dompurify';
  */
 const cleanupHtml = (html: string): string => {
   if (!html) return '';
-  
+
   // Remove trailing <br/>, <br>, </br> tags and whitespace
   let cleaned = html.trim();
   cleaned = cleaned.replace(/(<br\s*\/?>|<\/br>|\s)+$/gi, '');
-  
+
   return cleaned;
 };
 
@@ -22,7 +22,7 @@ const cleanupHtml = (html: string): string => {
  */
 export const sanitizeHtml = (html: string): string => {
   if (!html) return '';
-  
+
   // Clean up trailing br tags and whitespace first
   const cleaned = cleanupHtml(html);
 
@@ -74,7 +74,7 @@ export const stripHtmlTags = (html: string): string => {
   // Use DOMParser to safely parse HTML and extract text content
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  
+
   // Get text content from the parsed document (automatically strips HTML tags)
   return doc.body.textContent || '';
 };

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   Suspense,
   useCallback,
@@ -30,6 +31,8 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
   TechnicalSummaryExportListParams,
+  ColorCode,
+  FinancialHighlightsResponse,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -45,25 +48,29 @@ import {
   SideMenuPanel,
 } from '../../../../components';
 import {
-  AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
   CallLogIcon,
-  CasesIcon,
+  CaseIcon,
+  CaseTeamIcon,
   ChecklistIcon,
   ComingSoon,
-  DetailsIcon,
+  ConfigRuleIcon,
   DetailsKeyContactErrorIcon,
+  DossierIcon,
   DraftEmailIcon,
   FinancialIcon,
   InteractionsIcon,
   MeetingIcon,
   NotesSideIcon,
   ProjectsSideIcon,
+  ProjectTaskIcon,
   ResourcesIcon,
+  ReviewProjectIcon,
   SettingIcon,
   TaskCreateIcon,
   TechSummaryIcon,
+  WorkBreakdownIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -78,7 +85,11 @@ import { RootState } from '../../../../store/store';
 
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useDispatch, useSelector } from 'react-redux';
-import { setTemporaryFiscalYear } from '../../../../store/slices/account-slice';
+import {
+  setTemporaryFiscalYear,
+  setDossierFinancialStatus as setDossierFinancialStatusAction,
+  setFinancialData as setFinancialDataAction,
+} from '../../../../store/slices/account-slice';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import Setting from './settings/setting';
@@ -87,7 +98,6 @@ import { Checklist } from './checklist';
 import { CaseInteractions } from './case-interactions';
 import { ExportReviewProjectList } from '../../../services/cases-assign-projects/review-project-service';
 import { ReviewProjectListURLParams } from '../../../types/assign-projects';
-import HistorySubmission from './history-submission/history-submission';
 import {
   exportInteractions,
   exportInteractionsHistory,
@@ -109,6 +119,7 @@ import {
 } from '../../../services/financial/financial-service';
 import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
 import { CircularProgress } from '@mui/material';
+import { Dossier } from './dossier';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -142,7 +153,17 @@ export const CaseDetails = () => {
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
   const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
+  const { dossierFinancialStatus, financialData } = useSelector(
+    (state: RootState) => state.account
+  );
 
+  const setDossierFinancialStatus = (status: boolean) => {
+    dispatch(setDossierFinancialStatusAction(status));
+  };
+
+  const setFinancialData = (data: FinancialHighlightsResponse | null) => {
+    dispatch(setFinancialDataAction(data));
+  };
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
@@ -156,9 +177,13 @@ export const CaseDetails = () => {
 
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+  const projectResourceDetails = searchParams.get('resourceId');
+  const caseProjectTaskDetails = searchParams.get('caseProjectTask');
+  const technicalSummaryDetails = searchParams.get('technical_summary_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
+  const isFinancialWorkingSignoff = caseData?.financial_working_signoff;
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -314,6 +339,12 @@ export const CaseDetails = () => {
       dispatch(setTemporaryFiscalYear(caseData.fiscal_year.toString()));
     }
   }, [caseData, dispatch]);
+
+  useEffect(() => {
+    // Reset dossier states when case changes to avoid showing stale data from previous case
+    setDossierFinancialStatus(false);
+    setFinancialData(null);
+  }, [caseId]);
 
   useEffect(() => {
     setIsActionItemsExpanded(false);
@@ -591,11 +622,11 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
-    } else if (list === 'projectTask') {
+    } else if (list === 'projectTask' && !caseProjectTaskDetails) {
       return !isProjectTaskExportEnable;
-    } else if (list === 'projectResource') {
+    } else if (list === 'projectResource' && !projectResourceDetails) {
       return !isProjectResourceExportEnable;
-    } else if (list === 'technicalSummary') {
+    } else if (list === 'technicalSummary' && !technicalSummaryDetails) {
       return !technicalSummaryExportEnable;
     } else if (list === 'financialHighlights') {
       const tab = searchParams.get('tab');
@@ -770,15 +801,6 @@ export const CaseDetails = () => {
             />
           </div>
         );
-      case 'historical_submission':
-        return (
-          <div className='w-full pr-4 pl-2 py-2'>
-            <HistorySubmission
-              activityMenuItems={activityMenuItems}
-              caseDetails={caseData}
-            />
-          </div>
-        );
       case 'caseProjects':
         return (
           <div>
@@ -790,6 +812,8 @@ export const CaseDetails = () => {
               setExportType={setExportType}
               refetchCaseDetails={refetchCaseDetails}
               activityMenuItems={activityMenuItems}
+              isCaseTeamCreated={!!isCaseTeamCreated}
+              isFinancialWorkingSignoff={isFinancialWorkingSignoff}
             />
           </div>
         );
@@ -822,6 +846,8 @@ export const CaseDetails = () => {
             setAttachmentParams={setAttachmentParams}
             caseDetails={caseData}
             activityMenuItems={activityMenuItems}
+            isCaseTeamCreated={!!isCaseTeamCreated}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
       case 'settings':
@@ -857,6 +883,8 @@ export const CaseDetails = () => {
             setInteractionsParams={setInteractionsParams}
             setExportType={setExportType}
             activityMenuItems={activityMenuItems}
+            isCaseTeamCreated={!!isCaseTeamCreated}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
       case 'projectResource':
@@ -874,6 +902,19 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
+          />
+        );
+      case 'dossier':
+        return (
+          <Dossier
+            activityMenuItems={activityMenuItems}
+            caseDetails={caseData}
+            setDossierFinancialStatus={setDossierFinancialStatus}
+            dossierFinancialStatus={dossierFinancialStatus}
+            financialData={financialData}
+            setFinancialData={setFinancialData}
+            refetchCaseDetails={refetchCaseDetails}
+            isDetailLoading={isPending}
           />
         );
       default:
@@ -922,7 +963,7 @@ export const CaseDetails = () => {
         key: 'workBreakdown',
         id: AllModules.WORKBREAKDOWN,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: WorkBreakdownIcon,
       },
       {
         name: 'Financial Highlights',
@@ -936,14 +977,14 @@ export const CaseDetails = () => {
         key: 'caseReview',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: CasesIcon,
+        icon: ReviewProjectIcon,
       },
       {
         name: 'Case Team',
         key: 'caseTeam',
         id: AllModules.CASES_TEAM,
         disabled: false,
-        icon: CasesIcon,
+        icon: CaseTeamIcon,
       },
       {
         name: 'Case Projects',
@@ -951,7 +992,7 @@ export const CaseDetails = () => {
         id: AllMenus.FALLBACK,
         hide: !isReviewProjectEnable && !isProjectEnable,
         disabled: false,
-        icon: CasesIcon,
+        icon: ProjectsSideIcon,
       },
       {
         name: 'Case Project Resource',
@@ -965,14 +1006,7 @@ export const CaseDetails = () => {
         key: 'projectTask',
         id: AllMenus.PROJECT_TASK,
         disabled: false,
-        icon: ProjectsSideIcon,
-      },
-      {
-        name: 'Historical Submission',
-        key: 'historical_submission',
-        id: AllModules.HISTORICAL_SUBMISSION,
-        disabled: false,
-        icon: InteractionsIcon,
+        icon: ProjectTaskIcon,
       },
       {
         name: 'Interactions',
@@ -989,18 +1023,11 @@ export const CaseDetails = () => {
         icon: TechSummaryIcon,
       },
       {
-        name: 'RD Credit Forms',
-        key: 'rd_credit_forms',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: DetailsIcon,
-      },
-      {
         name: 'Dossier',
         key: 'dossier',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.DOSSIER,
         disabled: false,
-        icon: DetailsIcon,
+        icon: DossierIcon,
       },
       {
         name: 'Activities',
@@ -1044,7 +1071,7 @@ export const CaseDetails = () => {
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: false,
             hide: false,
-            icon: ResourcesIcon,
+            icon: ConfigRuleIcon,
           },
         ],
       },
@@ -1078,9 +1105,9 @@ export const CaseDetails = () => {
           variant='sub'
           placeholder={'Case ID'}
           icon={
-            <AccountDetailsIcon
-              className='h-6 w-6 rounded'
-              style={{ backgroundColor: '#4B9BFF' }}
+            <CaseIcon
+              alt='case-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.caseTextColor}] bg-[${ColorCode.caseBgColor}]`}
             />
           }
           title={caseData?.r_number || ''}
@@ -1097,7 +1124,7 @@ export const CaseDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive,
+              disabled: accountInActive || isFinancialWorkingSignoff,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
@@ -1140,6 +1167,7 @@ export const CaseDetails = () => {
             onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
             maxHeight={isActionItemsExpanded ? 150 : 292}
+            isLoading={isLoading}
           />
         </div>
         <div
@@ -1161,8 +1189,23 @@ export const CaseDetails = () => {
               <div>
                 <span className='font-bold mr-1 capitalize'>Case Team</span>-
                 <span className='ml-1 font-medium'>
-                  Case team setup is missing. Please create a case team before
-                  marking the task as complete.
+                  Case activities are unavailable until the case team is setup.
+                </span>
+              </div>
+            </div>
+          )}
+          {isFinancialWorkingSignoff && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Case</span>-
+                <span className='ml-1 font-medium'>
+                  Financial workings of this Case is signed off. Project changes
+                  are no longer allowed.
                 </span>
               </div>
             </div>

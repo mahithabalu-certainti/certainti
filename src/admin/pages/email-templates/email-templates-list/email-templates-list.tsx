@@ -1,9 +1,9 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../types/manage-user';
 import {
+  EmailTemplateIcon,
   NewFilterIcon,
   RefreshIcon,
-  TemplateImportIcon,
 } from '../../../../assets';
 import { ActionsDropdown, FilterModal } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
@@ -25,6 +25,7 @@ import {
   useGetStatus,
 } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import { ColorCode } from '../../../../consultant/types';
 
 const EmailTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -178,9 +179,9 @@ const EmailTemplates: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <TemplateImportIcon
+            <EmailTemplateIcon
               alt='email-template-icon'
-              className='h-7 w-7 p-1.5 rounded [&>path]:fill-[#fff] [&>path]:stroke-[#EA0084] bg-[#EA0084]'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

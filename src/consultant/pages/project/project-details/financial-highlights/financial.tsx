@@ -17,6 +17,7 @@ import { FilterValue } from '../../../account-details-sidebar/components/filter/
 import { useGetResourceType } from '../../../../services/resource-list';
 import {
   ActivityDropdownItem,
+  ColorCode,
   ExportType,
   ProjectFinancialResourceExportParams,
 } from '../../../../types';
@@ -211,10 +212,15 @@ const Financial: React.FC<ProjectFinancialProps> = ({
       />
       <SectionHeader
         title='Financial Summary'
-        titleIcon={<FinancialIcon alt='financial-header-icon' />}
+        titleIcon={
+          <FinancialIcon
+            alt='financial-header-icon'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        }
         count={resourceCostCount}
         showItemCount={tabParam === 'resource_cost'}
-        iconBg='#D2E6FF'
+        iconBg={ColorCode.projectBgColor}
         bgType='circle'
         buttons={headerButtons}
       />

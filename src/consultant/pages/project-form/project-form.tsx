@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { EditIcon, ProjectCreateIcon } from '../../../assets';
+import { EditIcon, ProjectsSideIcon } from '../../../assets';
 import {
   AllModules,
   AllPermissions,
@@ -20,8 +20,10 @@ import {
   useKeyContactRoles,
 } from '../../services/account';
 import {
+  ColorCode,
   enumValue,
   FieldType,
+  FinancialWorkingCountries,
   KeyContactHeader,
   OthersEnum,
   ParentChildSelectOption,
@@ -81,6 +83,7 @@ const ProjectForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
   const [showOthersField, setShowOthersField] = useState(false);
   const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
+  const [isCustomerGroup, setIsCustomerGroup] = useState(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const dispatch = useAppDispatch();
@@ -496,6 +499,12 @@ const ProjectForm: React.FC = () => {
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
+      const selectedClassification = memoizedCountry.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+      setIsCustomerGroup(
+        selectedClassification?.label === FinancialWorkingCountries.UK
+      );
     }
     if (data.fieldName === 'industry_rid') {
       const selectedIndustry = memoizedIndustry.find(
@@ -642,7 +651,6 @@ const ProjectForm: React.FC = () => {
     costFinancials.total_cost && costFinancials.total_cost !== '0'
       ? costFinancials.total_cost
       : '';
-
   const formConfig = FormData(
     memoizedStatus,
     memoizedProjectTypes,
@@ -668,7 +676,8 @@ const ProjectForm: React.FC = () => {
     disableTotalCost,
     globalType,
     account?.is_project_exists,
-    isCaseExists
+    isCaseExists,
+    isCustomerGroup
   );
 
   const formLoading =
@@ -692,12 +701,12 @@ const ProjectForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
             />
           ) : (
-            <ProjectCreateIcon
-              alt='projrct-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+            <ProjectsSideIcon
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
             />
           )}
           <div className='w-[90%]'>

@@ -25,6 +25,9 @@ export const GeoBasedRuleFormFieldsData = (
     const dynamicSections = Object.values(configDetails).map((config: any) => {
       const items = config?.configItems || [];
       const title = config?.credit_program_name || 'Configuration';
+      const isTableView =
+        config?.credit_program_name?.toLowerCase() === 'federal r&d credit' ||
+        config?.credit_program_name?.toLowerCase() === 'state r&d credit';
 
       const formatLabel = (str: string) =>
         str
@@ -45,6 +48,7 @@ export const GeoBasedRuleFormFieldsData = (
             isEditView &&
             !permissionMap?.['configs']?.edit &&
             !permissionMap?.['configs']?.read,
+          ...(isTableView && { width: '250px' }),
         };
 
         // ✅ Date field
@@ -99,6 +103,7 @@ export const GeoBasedRuleFormFieldsData = (
         fillType: 'half' as const,
         hide: fields.length === 0,
         fields,
+        renderAsDetailTable: isTableView,
       };
     });
 
@@ -281,5 +286,6 @@ export const GeoBasedRuleFormFieldsData = (
     isFederal,
     regionLoading,
     caseNamePrefix,
+    projectTypeOptions,
   ]);
 };

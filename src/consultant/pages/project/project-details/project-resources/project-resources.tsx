@@ -1,12 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import {
-  AcceptIcon,
-  CreateResourceIcon,
-  RejectIcon,
-  ResourcesIcon,
-} from '../../../../../assets';
+import { AcceptIcon, RejectIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import {
@@ -51,6 +46,7 @@ import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import {
   ActivityDropdownItem,
+  ColorCode,
   ExportType,
   FormFiscalDateType,
   SelectOption,
@@ -94,6 +90,7 @@ export const ProjectResources = ({
   accountOrProjectInActive,
   projectFiscalYear,
   activityMenuItems,
+  isProjectSignedOff,
 }: {
   projectID?: string;
   accountData?: {
@@ -110,6 +107,7 @@ export const ProjectResources = ({
   accountOrProjectInActive?: boolean;
   projectFiscalYear?: number | string;
   activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -387,7 +385,7 @@ export const ProjectResources = ({
       onClick: (row: ProjectResourcesListType) =>
         handleEditProjectResource(row),
       hide: !isProjectResourceFieldsEditable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
   ];
   const isResourceCreateViewEnable = checkPermission(
@@ -512,7 +510,7 @@ export const ProjectResources = ({
       hide: viewDetails
         ? !isProjectResourceFieldsEditable
         : !isResourceCreateViewEnable,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
     },
     {
       label: 'Show/Hide Fields',
@@ -582,7 +580,8 @@ export const ProjectResources = ({
     handleCountry,
     region.isPending,
     permissionMap,
-    accountOrProjectInActive
+    accountOrProjectInActive,
+    isProjectSignedOff
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -844,21 +843,18 @@ export const ProjectResources = ({
               }
               title={viewDetails ? 'Project Resource' : 'Project Resources'}
               titleIcon={
-                viewDetails ? (
-                  <ResourcesIcon
-                    alt='resource header icon'
-                    className='[&>path]:stroke-white w-[14px] h-[14px]'
-                  />
-                ) : (
-                  <CreateResourceIcon />
-                )
+                <ResourcesIcon
+                  alt='project-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
               }
               count={totalItems}
               showBackArrow={viewDetails}
               headerButtons={headerButtons}
               projectResourceNumber={resourceData?.r_number}
               onBackClick={handleBackClick}
-              iconBg={viewDetails ? '#7785ff' : ''}
+              iconBg={ColorCode.projectBgColor}
+              bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {showProjectResourceDetails ? (

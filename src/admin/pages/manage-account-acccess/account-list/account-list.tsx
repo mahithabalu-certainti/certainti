@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NewFilterIcon, UserIcon } from '../../../../assets';
+import { ManageUserAccessIcon, NewFilterIcon } from '../../../../assets';
 import React, {
   Suspense,
   useEffect,
@@ -34,7 +34,7 @@ import {
   AllPermissions,
   useGetAllCountries,
 } from '../../../../common-service';
-import { SelectOption } from '../../../../consultant/types';
+import { ColorCode, SelectOption } from '../../../../consultant/types';
 import { useFetchIndustrys } from '../../../../consultant/services/account';
 import {
   clearFilters,
@@ -331,9 +331,9 @@ const AccountList = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex w-full justify-between h-[33px]'>
           <div className='flex items-center  justify-center'>
-            <UserIcon
+            <ManageUserAccessIcon
               alt='manage user'
-              className='h-7 w-7 rounded bg-[#BE3EB5] p-[7px]'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageAccountBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

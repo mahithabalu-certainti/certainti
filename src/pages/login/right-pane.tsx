@@ -10,6 +10,7 @@ import { certaintiLogo, loginBg } from '../../assets';
  */
 export const RightPane: React.FC = () => {
   const t = useAppTranslation();
+  const environment = import.meta.env.VITE_ENVIRONMENT;
 
   return (
     <Box
@@ -26,6 +27,15 @@ export const RightPane: React.FC = () => {
         <Box className='flex flex-col gap-2'>
           <Text className='text-[48px] text-primary font-bold'>
             {t('core', 'login.thinkR&D')}
+            {environment && ['Dev', 'QA', 'Pre-Prod'].includes(environment) ? (
+              <>
+                {' ('}
+                <span className='text-red-500'>{environment}</span>
+                {')'}
+              </>
+            ) : (
+              ''
+            )}
           </Text>
           <Box className='flex flex-wrap items-center gap-2'>
             <Text className='text-[12px] md:text-[18px] text-primary font-bold'>

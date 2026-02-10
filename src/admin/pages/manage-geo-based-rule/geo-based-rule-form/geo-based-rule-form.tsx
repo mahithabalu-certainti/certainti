@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { useLocation, useParams } from 'react-router-dom';
@@ -10,7 +11,7 @@ import {
   useGetStatus,
 } from '../../../../common-service';
 import { useFetchState } from '../../../../consultant/services/account';
-import { SelectOption, YesNo } from '../../../../consultant/types';
+import { ColorCode, SelectOption, YesNo } from '../../../../consultant/types';
 import TextButton from '../../../../components/button/text-button';
 import { GeoBasedRuleFormData } from '../types';
 import { GeoBasedRuleFormFieldsData } from './form-data';
@@ -32,7 +33,7 @@ import {
   CreateConfigPayload,
 } from '../../../types/geo-based-rule';
 import { useGetProjectType } from '../../../../consultant/services/project';
-import { ManageGeoIcon } from '../../../../assets';
+import { ManageRule } from '../../../../assets';
 
 const GeoBasedRuleForm: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -47,7 +48,7 @@ const GeoBasedRuleForm: React.FC = () => {
   const projectTypeOptions = useGetProjectType();
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
-  const states = useFetchState(currentCountry);
+  const states = useFetchState(currentCountry, 'active');
   const { data: formConfigList } = useFormConfigList(
     currentCountry,
     isFederal,
@@ -306,12 +307,12 @@ const GeoBasedRuleForm: React.FC = () => {
 
   return (
     <div>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
+      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           {/* Add Icon if needed */}
-          <ManageGeoIcon
+          <ManageRule
             alt='Manage Jurisdiction Rules '
-            className=' h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#9747FF]'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
           />
           <div className='w-[90%]'>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>

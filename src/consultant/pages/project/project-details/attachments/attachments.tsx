@@ -21,6 +21,7 @@ import {
 import { SectionTabPanel } from '../../../../../components';
 import {
   ActivityDropdownItem,
+  ColorCode,
   ExportType,
   SelectOption,
 } from '../../../../types';
@@ -70,6 +71,7 @@ interface AttachmentsProps {
   refetchProjectDetails: () => void;
   projectFiscalYear?: number | string;
   activityMenuItems: ActivityDropdownItem[];
+  isProjectSignedOff?: boolean;
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
@@ -79,6 +81,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   refetchProjectDetails,
   projectFiscalYear,
   activityMenuItems,
+  isProjectSignedOff,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -251,7 +254,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: accountOrProjectInActive,
+      disabled: accountOrProjectInActive || isProjectSignedOff,
       onClick: () => handleOpen(),
       sx: { width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
@@ -487,10 +490,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
             titleIcon={
               <AttachmentsSideIcon
                 alt='attachment-header-icon'
-                className='[&>path]:stroke-[#4B9BFF]'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
-            iconBg='#D8E9FF'
+            iconBg={ColorCode.projectBgColor}
             bgType='circle'
             headerButtons={headerButtons}
           />

@@ -7,7 +7,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { CreateResourceIcon, EditIcon } from '../../../assets';
+import { EditIcon, ResourcesIcon } from '../../../assets';
 import {
   AllPermissions,
   Layout,
@@ -39,7 +39,12 @@ import {
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
-import { FormFiscalDateType, OthersEnum, SelectOption } from '../../types';
+import {
+  ColorCode,
+  FormFiscalDateType,
+  OthersEnum,
+  SelectOption,
+} from '../../types';
 import { ResourceFormData } from './form-data';
 import {
   ResourceTypeEnum,
@@ -951,10 +956,13 @@ const ResourceForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='menu-icon'
-              className='bg-[#7D98B6] p-1.5 h-6 w-6 rounded'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
             />
           ) : (
-            <CreateResourceIcon alt='menu-icon' className='h-6 w-6 rounded' />
+            <ResourcesIcon
+              alt='account-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
+            />
           )}
           <div>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
