@@ -384,7 +384,7 @@ export class RdFormMapperService {
 
   private tryParseNumber(rawValue: any) {
     if (rawValue === null || rawValue === undefined || rawValue === "") {
-      return null;
+      return 0;
     }
     let rawString = String(rawValue);
     if (
