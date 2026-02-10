@@ -691,7 +691,7 @@ export const PROJECT_TASK_REGEX = {
 
   // Project resource cost regex
   // Updated regex to accept negative numbers
-  COST_REGEX: /^-?\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^-?\d{1,18}(\.\d{1,2})?$/,
+  COST_REGEX: /^-?\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^-?\d{1,16}(\.\d{1,2})?$/,
 
   // NON NEGATIVE POSTIVE INTEGER
   EFFORT: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
