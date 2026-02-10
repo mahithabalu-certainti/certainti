@@ -170,6 +170,13 @@ export class ResourceFiscal
         annual_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
+          validate: {
+            isPositive(value: number) {
+              if (value !== null && value < 0) {
+                throw new Error("Compensation must be a positive number");
+              }
+            },
+          },
         },
         monthly_cost: {
           type: DataTypes.DECIMAL(18, 2),
