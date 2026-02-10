@@ -193,11 +193,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-            state: {
-              field: fieldValue || '',
-              section: fieldValue ? '' : section,
-            },
-          }
+          state: {
+            field: fieldValue || '',
+            section: fieldValue ? '' : section,
+          },
+        }
         : undefined
     );
   };
@@ -378,12 +378,12 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
       // Validate total_cost
       const totalCostString = totalCost.toFixed(2);
-      if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
-        errorToast(
-          'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
-        );
-        return;
-      }
+      // if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
+      //   errorToast(
+      //     'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
+      //   );
+      //   return;
+      // }
 
       // Add total_cost to updateData
       updateData['total_cost'] = totalCostString;
