@@ -14,8 +14,8 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     ),
     calculate_cost AS (
     SELECT 
-    CAST(SUM(COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS employees,
-    CAST(SUM(COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS epw,
+    CAST(SUM((COALESCE(cp.total_cost_fte_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS employees,
+    CAST(SUM((COALESCE(cp.total_cost_subcon_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS epw,
     cp.project_name, cp.rid, cp.currency_rid
     FROM
     ${schemaName}.project_fiscal cp
@@ -57,8 +57,8 @@ export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accou
     ),
     calculate_cost AS (
     SELECT 
-    CAST(SUM(COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS employees,
-    CAST(SUM(COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS epw,
+    CAST(SUM((COALESCE(cp.total_cost_fte_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS employees,
+    CAST(SUM((COALESCE(cp.total_cost_subcon_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS epw,
     cp.project_client_group, COUNT(cp.rid) AS total_projects
     FROM
     ${schemaName}.project_fiscal cp
@@ -113,9 +113,9 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : Pro
         cp.project_name,
         COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
         COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        COALESCE(cp.total_cost_fte_prj, 0.00) AS total_cost_fte_prj,
-        COALESCE(cp.total_cost_subcon_prj, 0.00) AS total_cost_subcon_prj,
-        COALESCE(cp.total_cost_nonlabor_prj, 0.00) AS total_cost_nonlabor_prj,
+        CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * cp.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * cp.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * cp.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
     FROM
         ${schemaName}.project_fiscal cp
