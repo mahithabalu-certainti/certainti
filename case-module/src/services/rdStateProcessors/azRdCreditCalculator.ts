@@ -50,7 +50,8 @@ export class RdCreditCalculatorForAZ {
         return {
             inputFields,
             computedFields,
-            finalCredit: ascResult.total_az_final_credit
+            finalCredit: ascResult.total_az_final_credit,
+            totalQRE: rrcResult.total_current_year_qre,
         }
 
     }

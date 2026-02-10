@@ -50,7 +50,8 @@ export class RdCreditCalculatorForCA {
         return {
             inputFields,
             computedFields,
-            finalCredit: rrcResult?.reducedCreditAmountPercentageValue
+            finalCredit: rrcResult?.reducedCreditAmountPercentageValue,
+            totalQRE: rrcResult?.total_qre
         }
     }
 
