@@ -187,7 +187,10 @@ export const renderFields = <T extends RowData>({
 
               if (column.field?.formatCostNumber) {
                 const cleanValue = removeFormatCostValue(inputValue);
-                if (/^\d*\.?\d*$/.test(cleanValue)) {
+                const regex = column.field?.allowNegative
+                  ? /^-?\d*\.?\d*$/
+                  : /^\d*\.?\d*$/;
+                if (regex.test(cleanValue)) {
                   handleValueChange(cleanValue);
                 }
               } else {
@@ -318,7 +321,11 @@ export const renderFields = <T extends RowData>({
           {...commonProps}
           type='number'
           onKeyDown={(e) => {
-            if (e.key === '-' || e.key === 'e') e.preventDefault();
+            if (
+              (e.key === '-' && !column.field?.allowNegative) ||
+              e.key === 'e'
+            )
+              e.preventDefault();
             handleKeyDown(e);
           }}
         />

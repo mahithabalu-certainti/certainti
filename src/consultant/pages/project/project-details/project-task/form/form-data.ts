@@ -177,7 +177,7 @@ export const ProjectTaskFormData = (
             required: false,
             regex: PROJECT_TASK_REGEX.COST_REGEX,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              'cost must be a number allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Cost',
             formatCostValue: true,
             disabled:

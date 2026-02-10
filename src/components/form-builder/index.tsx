@@ -1045,7 +1045,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 if (field.formatCostValue) {
                   const cleanValue = removeFormatCostValue(inputValue);
                   // Only format if it's a valid number
-                  if (/^\d*\.?\d*$/.test(cleanValue)) {
+                  const regex = field.allowNegative
+                    ? /^-?\d*\.?\d*$/
+                    : /^\d*\.?\d*$/;
+                  if (regex.test(cleanValue)) {
                     const formattedValue = formatCostValue(cleanValue);
                     // Update the input display value
                     e.target.value = formattedValue;
@@ -1063,7 +1066,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   // Reformat on blur to ensure proper formatting
                   const inputValue = e.target.value;
                   const cleanValue = removeFormatCostValue(inputValue);
-                  if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                  const regex = field.allowNegative
+                    ? /^-?\d*\.?\d*$/
+                    : /^\d*\.?\d*$/;
+                  if (regex.test(cleanValue) && cleanValue !== '') {
                     const formattedValue = formatCostValue(cleanValue);
                     e.target.value = formattedValue;
                   }

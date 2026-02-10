@@ -31,806 +31,809 @@ export const getAllProjectListColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<Project>[] => [
-  {
-    id: 'project_code',
-    editId: 'project_code',
-    label: 'Project Code',
-    sortable: true,
-    sortId: 'project_code',
-    width: 260,
-    sticky: true,
-    editable:
-      permissionMap?.['project_code']?.read &&
-      permissionMap?.['project_code']?.edit,
-    hide:
-      !permissionMap?.['project_code']?.read &&
-      !permissionMap?.['project_code']?.edit,
-    sx: {
-      position: 'sticky',
-      left: 0,
-      background: '#fff',
-      zIndex: 10,
-      borderRight: '1px solid #CBD6E2 !important',
-      borderBottom: '1px solid #CBD6E2 !important',
-    },
-    render: (row: Project) => {
-      const displayCode = row.fiscal_year
-        ? `FY${row.fiscal_year} - ${row.project_code}`
-        : row.project_code;
-      const isClickable = row._level !== undefined && row._level === 1;
-      return isClickable ? (
-        <span
-          onClick={() => onClick(row)}
-          className={
-            row.fiscal_year
-              ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-              : ''
-          }
-        >
-          {displayCode}
-        </span>
-      ) : (
-        displayCode
-      );
-    },
-    field: {
-      type: 'text',
-      required: true,
-      placeholder: 'Enter Project Code',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_5,
-          errorMessage: 'Project code must be more than 4 characters long',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.PROJECT_NAME,
-          errorMessage:
-            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-        },
-      ],
-    },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+    {
+      id: 'project_code',
+      editId: 'project_code',
+      label: 'Project Code',
+      sortable: true,
+      sortId: 'project_code',
+      width: 260,
+      sticky: true,
+      editable:
+        permissionMap?.['project_code']?.read &&
+        permissionMap?.['project_code']?.edit,
+      hide:
+        !permissionMap?.['project_code']?.read &&
+        !permissionMap?.['project_code']?.edit,
+      sx: {
+        position: 'sticky',
+        left: 0,
+        background: '#fff',
+        zIndex: 10,
+        borderRight: '1px solid #CBD6E2 !important',
+        borderBottom: '1px solid #CBD6E2 !important',
       },
-    ],
-  },
-  {
-    id: 'project_name',
-    editId: 'project_name',
-    label: 'Name',
-    sortable: true,
-    editable:
-      permissionMap?.['project_name']?.read &&
-      permissionMap?.['project_name']?.edit,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-    sortId: 'project_name',
-    width: 160,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.project_name : '-';
-    },
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Name',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_2,
-          errorMessage: 'Name must be at least 2 characters long.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_255,
-          errorMessage: 'Max length exceeded',
-        },
-      ],
-    },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+      render: (row: Project) => {
+        const displayCode = row.fiscal_year
+          ? `FY${row.fiscal_year} - ${row.project_code}`
+          : row.project_code;
+        const isClickable = row._level !== undefined && row._level === 1;
+        return isClickable ? (
+          <span
+            onClick={() => onClick(row)}
+            className={
+              row.fiscal_year
+                ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+                : ''
+            }
+          >
+            {displayCode}
+          </span>
+        ) : (
+          displayCode
+        );
       },
-    ],
-  },
-  {
-    id: 'project_type_name',
-    editId: 'project_type_rid',
-    label: 'Project Type',
-    sortable: true,
-    editable:
-      permissionMap?.['project_type_rid']?.read &&
-      permissionMap?.['project_type_rid']?.edit,
-    hide:
-      !permissionMap?.['project_type_rid']?.read &&
-      !permissionMap?.['project_type_rid']?.edit,
-    sortId: 'project_type_name',
-    width: 160,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.project_type_name : '-';
-    },
-    field: {
-      type: 'select',
-      required: true,
-      placeholder: '',
-      options: projectTypeOption,
-    },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
-      },
-    ],
-  },
-  {
-    id: 'account_name',
-    label: 'Account Name',
-    sortable: true,
-    sortId: 'account_name',
-    width: 150,
-    hide:
-      !accountPermissionMap?.['account_name']?.read &&
-      !accountPermissionMap?.['account_name']?.edit,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.account_name : '-';
-    },
-  },
-  {
-    id: 'fiscal_year',
-    editId: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: true,
-    editable:
-      permissionMap?.['fiscal_year']?.read &&
-      permissionMap?.['fiscal_year']?.edit,
-    hide:
-      !permissionMap?.['fiscal_year']?.read &&
-      !permissionMap?.['fiscal_year']?.edit,
-    sortId: 'fiscal_year',
-    width: 130,
-    sx: {
-      textAlign: 'left',
-    },
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      if (!isChild) return '-';
-      const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
-      return <span>{displayYear}</span>;
-    },
-    field: {
-      type: 'select',
-      required: true,
-      placeholder: '',
-      options: fiscalYears,
-    },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_project_exists' as keyof Project,
-        matchValue: false,
-      },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
-      },
-    ],
-  },
-  {
-    id: 'classification_name',
-    editId: 'project_classification_rid',
-    label: 'Project Classification',
-    sortable: true,
-    editable:
-      permissionMap?.['project_classification_rid']?.read &&
-      permissionMap?.['project_classification_rid']?.edit,
-    hide:
-      !permissionMap?.['project_classification_rid']?.read &&
-      !permissionMap?.['project_classification_rid']?.edit,
-    sortId: 'classification_name',
-    width: 170,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      if (!isChild) return '-';
-      return row.project_classification_other
-        ? `${row.classification_name} - ${row.project_classification_other}`
-        : row.classification_name;
-    },
-    field: {
-      type: 'select',
-      required: false,
-      placeholder: 'Choose Classification',
-      options: projectClassificationOption,
-      getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.project_classification_rid || '');
-      },
-      dependencies: [
-        {
-          dependsOn: 'classification_name',
-          condition: (value) => {
-            const found = projectClassificationOption.find(
-              (opt) => String(opt.value) === String(value)
-            );
-            return found?.label.toLowerCase() === OthersEnum.Other;
+      field: {
+        type: 'text',
+        required: true,
+        placeholder: 'Enter Project Code',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.MIN_5,
+            errorMessage: 'Project code must be more than 4 characters long',
           },
-          action: 'show_modal',
-          modalFields: [
-            {
-              id: 'project_classification_other',
-              editId: 'project_classification_other',
-              label: 'Classification-Other',
-              type: 'text',
-              required: true,
-              placeholder: 'Enter Classification-Other',
-              validation: [
-                {
-                  regex: REGEX_PATTERNS.MIN_3,
-                  errorMessage:
-                    'Classification-Other must be more than 2 characters long',
-                },
-                {
-                  regex: REGEX_PATTERNS.MAX_255,
-                  errorMessage: 'Max length exceeded',
-                },
-                {
-                  regex: REGEX_PATTERNS.PROJECT_NAME,
-                  errorMessage:
-                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-                },
-              ],
+          {
+            regex: REGEX_PATTERNS.MAX_50,
+            errorMessage: 'Max length exceeded',
+          },
+          {
+            regex: REGEX_PATTERNS.PROJECT_NAME,
+            errorMessage:
+              "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
+        },
+      ],
+    },
+    {
+      id: 'project_name',
+      editId: 'project_name',
+      label: 'Name',
+      sortable: true,
+      editable:
+        permissionMap?.['project_name']?.read &&
+        permissionMap?.['project_name']?.edit,
+      hide:
+        !permissionMap?.['project_name']?.read &&
+        !permissionMap?.['project_name']?.edit,
+      sortId: 'project_name',
+      width: 160,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.project_name : '-';
+      },
+      field: {
+        type: 'text',
+        required: false,
+        placeholder: 'Enter Name',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.MIN_2,
+            errorMessage: 'Name must be at least 2 characters long.',
+          },
+          {
+            regex: REGEX_PATTERNS.MAX_255,
+            errorMessage: 'Max length exceeded',
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
+        },
+      ],
+    },
+    {
+      id: 'project_type_name',
+      editId: 'project_type_rid',
+      label: 'Project Type',
+      sortable: true,
+      editable:
+        permissionMap?.['project_type_rid']?.read &&
+        permissionMap?.['project_type_rid']?.edit,
+      hide:
+        !permissionMap?.['project_type_rid']?.read &&
+        !permissionMap?.['project_type_rid']?.edit,
+      sortId: 'project_type_name',
+      width: 160,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.project_type_name : '-';
+      },
+      field: {
+        type: 'select',
+        required: true,
+        placeholder: '',
+        options: projectTypeOption,
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
+        },
+      ],
+    },
+    {
+      id: 'account_name',
+      label: 'Account Name',
+      sortable: true,
+      sortId: 'account_name',
+      width: 150,
+      hide:
+        !accountPermissionMap?.['account_name']?.read &&
+        !accountPermissionMap?.['account_name']?.edit,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.account_name : '-';
+      },
+    },
+    {
+      id: 'fiscal_year',
+      editId: 'fiscal_year',
+      label: 'Fiscal Year',
+      sortable: true,
+      editable:
+        permissionMap?.['fiscal_year']?.read &&
+        permissionMap?.['fiscal_year']?.edit,
+      hide:
+        !permissionMap?.['fiscal_year']?.read &&
+        !permissionMap?.['fiscal_year']?.edit,
+      sortId: 'fiscal_year',
+      width: 130,
+      sx: {
+        textAlign: 'left',
+      },
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        if (!isChild) return '-';
+        const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
+        return <span>{displayYear}</span>;
+      },
+      field: {
+        type: 'select',
+        required: true,
+        placeholder: '',
+        options: fiscalYears,
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+        {
+          key: 'is_project_exists' as keyof Project,
+          matchValue: false,
+        },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
+        },
+      ],
+    },
+    {
+      id: 'classification_name',
+      editId: 'project_classification_rid',
+      label: 'Project Classification',
+      sortable: true,
+      editable:
+        permissionMap?.['project_classification_rid']?.read &&
+        permissionMap?.['project_classification_rid']?.edit,
+      hide:
+        !permissionMap?.['project_classification_rid']?.read &&
+        !permissionMap?.['project_classification_rid']?.edit,
+      sortId: 'classification_name',
+      width: 170,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        if (!isChild) return '-';
+        return row.project_classification_other
+          ? `${row.classification_name} - ${row.project_classification_other}`
+          : row.classification_name;
+      },
+      field: {
+        type: 'select',
+        required: false,
+        placeholder: 'Choose Classification',
+        options: projectClassificationOption,
+        getFieldData: (rowData: DependencyRowData) => {
+          return String(rowData.project_classification_rid || '');
+        },
+        dependencies: [
+          {
+            dependsOn: 'classification_name',
+            condition: (value) => {
+              const found = projectClassificationOption.find(
+                (opt) => String(opt.value) === String(value)
+              );
+              return found?.label.toLowerCase() === OthersEnum.Other;
             },
-          ],
+            action: 'show_modal',
+            modalFields: [
+              {
+                id: 'project_classification_other',
+                editId: 'project_classification_other',
+                label: 'Classification-Other',
+                type: 'text',
+                required: true,
+                placeholder: 'Enter Classification-Other',
+                validation: [
+                  {
+                    regex: REGEX_PATTERNS.MIN_3,
+                    errorMessage:
+                      'Classification-Other must be more than 2 characters long',
+                  },
+                  {
+                    regex: REGEX_PATTERNS.MAX_255,
+                    errorMessage: 'Max length exceeded',
+                  },
+                  {
+                    regex: REGEX_PATTERNS.PROJECT_NAME,
+                    errorMessage:
+                      "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+    {
+      id: 'project_client_group',
+      editId: 'project_client_group',
+      label: 'Customer Group',
+      sortable: true,
+      editable:
+        permissionMap?.['project_client_group']?.read &&
+        permissionMap?.['project_client_group']?.edit,
+      hide:
+        !permissionMap?.['project_client_group']?.read &&
+        !permissionMap?.['project_client_group']?.edit,
+      sortId: 'project_client_group',
+      width: 160,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.project_client_group : '-';
       },
-    ],
-  },
-  {
-    id: 'project_client_group',
-    editId: 'project_client_group',
-    label: 'Customer Group',
-    sortable: true,
-    editable:
-      permissionMap?.['project_client_group']?.read &&
-      permissionMap?.['project_client_group']?.edit,
-    hide:
-      !permissionMap?.['project_client_group']?.read &&
-      !permissionMap?.['project_client_group']?.edit,
-    sortId: 'project_client_group',
-    width: 160,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.project_client_group : '-';
-    },
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Customer Group',
-      validation: [
+      field: {
+        type: 'text',
+        required: false,
+        placeholder: 'Enter Customer Group',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.MIN_4,
+            errorMessage: 'Customer Group must be more than 3 characters long',
+          },
+          {
+            regex: REGEX_PATTERNS.MAX_255,
+            errorMessage: 'Max length exceeded',
+          },
+          {
+            regex: REGEX_PATTERNS.PROJECT_NAME,
+            errorMessage:
+              "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
         {
-          regex: REGEX_PATTERNS.MIN_4,
-          errorMessage: 'Customer Group must be more than 3 characters long',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_255,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.PROJECT_NAME,
-          errorMessage:
-            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+    {
+      id: 'project_group',
+      editId: 'project_group',
+      label: 'Project Group',
+      sortable: true,
+      editable:
+        permissionMap?.['project_group']?.read &&
+        permissionMap?.['project_group']?.edit,
+      hide:
+        !permissionMap?.['project_group']?.read &&
+        !permissionMap?.['project_group']?.edit,
+      sortId: 'project_group',
+      width: 160,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.project_group : '-';
       },
-    ],
-  },
-  {
-    id: 'project_group',
-    editId: 'project_group',
-    label: 'Project Group',
-    sortable: true,
-    editable:
-      permissionMap?.['project_group']?.read &&
-      permissionMap?.['project_group']?.edit,
-    hide:
-      !permissionMap?.['project_group']?.read &&
-      !permissionMap?.['project_group']?.edit,
-    sortId: 'project_group',
-    width: 160,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.project_group : '-';
-    },
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Project Group',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_4,
-          errorMessage: 'Project group must be more than 3 characters long',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_255,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.PROJECT_NAME,
-          errorMessage:
-            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-        },
-      ],
-    },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+      field: {
+        type: 'text',
+        required: false,
+        placeholder: 'Enter Project Group',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.MIN_4,
+            errorMessage: 'Project group must be more than 3 characters long',
+          },
+          {
+            regex: REGEX_PATTERNS.MAX_255,
+            errorMessage: 'Max length exceeded',
+          },
+          {
+            regex: REGEX_PATTERNS.PROJECT_NAME,
+            errorMessage:
+              "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+          },
+        ],
       },
-    ],
-  },
-  {
-    id: 'total_effort',
-    editId: 'total_effort',
-    label: 'Project Effort (Hours)',
-    sortable: true,
-    editable:
-      permissionMap?.['total_effort']?.read &&
-      permissionMap?.['total_effort']?.edit,
-    hide:
-      !permissionMap?.['total_effort']?.read &&
-      !permissionMap?.['total_effort']?.edit,
-    sortId: 'total_effort',
-    width: 170,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: Project) =>
-      row.total_effort ? valueDisplay(row.total_effort) : '-',
-    field: {
-      type: 'text',
-      required: false,
-      formatCostNumber: true,
-      placeholder: 'Enter Project Effort',
-      validation: [
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'total_effort',
-        matchValue: [null, '0.00'],
+    {
+      id: 'total_effort',
+      editId: 'total_effort',
+      label: 'Project Effort (Hours)',
+      sortable: true,
+      editable:
+        permissionMap?.['total_effort']?.read &&
+        permissionMap?.['total_effort']?.edit,
+      hide:
+        !permissionMap?.['total_effort']?.read &&
+        !permissionMap?.['total_effort']?.edit,
+      sortId: 'total_effort',
+      width: 170,
+      sx: {
+        textAlign: 'right',
       },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+      render: (row: Project) =>
+        row.total_effort ? valueDisplay(row.total_effort) : '-',
+      field: {
+        type: 'text',
+        required: false,
+        formatCostNumber: true,
+        placeholder: 'Enter Project Effort',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            errorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+          },
+        ],
       },
-    ],
-  },
-  {
-    id: 'total_cost',
-    editId: 'total_cost',
-    label: 'Project Cost',
-    sortable: true,
-    editable:
-      permissionMap?.['total_cost']?.read &&
-      permissionMap?.['total_cost']?.edit,
-    hide:
-      !permissionMap?.['total_cost']?.read &&
-      !permissionMap?.['total_cost']?.edit,
-    sortId: 'total_cost',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: Project) =>
-      row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
-    field: {
-      type: 'text',
-      required: false,
-      formatCostNumber: true,
-      placeholder: 'Enter Project Cost',
-      validation: [
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Project Cost must be a positive integer with up to 16 digits and 2 decimal places',
+          key: 'total_effort',
+          matchValue: [null, '0.00'],
+        },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'total_cost',
-        matchValue: [null, '0.00'],
+    {
+      id: 'total_cost',
+      editId: 'total_cost',
+      label: 'Project Cost',
+      sortable: true,
+      editable:
+        permissionMap?.['total_cost']?.read &&
+        permissionMap?.['total_cost']?.edit,
+      hide:
+        !permissionMap?.['total_cost']?.read &&
+        !permissionMap?.['total_cost']?.edit,
+      sortId: 'total_cost',
+      width: 130,
+      sx: {
+        textAlign: 'right',
       },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+      render: (row: Project) =>
+        row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
+      field: {
+        type: 'text',
+        required: false,
+        formatCostNumber: true,
+        placeholder: 'Enter Project Cost',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            errorMessage:
+              'Project Cost must be a positive integer with up to 16 digits and 2 decimal places',
+          },
+        ],
       },
-    ],
-  },
-  {
-    id: 'total_cost_fte',
-    editId: 'total_cost_fte',
-    label: 'FTE Cost',
-    sortable: true,
-    editable:
-      permissionMap?.['total_cost_fte']?.read &&
-      permissionMap?.['total_cost_fte']?.edit,
-    hide:
-      !permissionMap?.['total_cost_fte']?.read &&
-      !permissionMap?.['total_cost_fte']?.edit,
-    sortId: 'total_cost_fte',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: Project) =>
-      row.total_cost_fte
-        ? costDisplay(row.total_cost_fte, row.currency_symbol)
-        : '-',
-    field: {
-      type: 'text',
-      required: false,
-      formatCostNumber: true,
-      placeholder: 'Enter FTE Cost',
-      validation: [
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+          key: 'total_cost',
+          matchValue: [null, '0.00'],
+        },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+    {
+      id: 'total_cost_fte',
+      editId: 'total_cost_fte',
+      label: 'FTE Cost',
+      sortable: true,
+      editable:
+        permissionMap?.['total_cost_fte']?.read &&
+        permissionMap?.['total_cost_fte']?.edit,
+      hide:
+        !permissionMap?.['total_cost_fte']?.read &&
+        !permissionMap?.['total_cost_fte']?.edit,
+      sortId: 'total_cost_fte',
+      width: 140,
+      sx: {
+        textAlign: 'right',
       },
-    ],
-  },
-  {
-    id: 'total_cost_subcon',
-    editId: 'total_cost_subcon',
-    label: 'SubCon Cost',
-    sortable: true,
-    editable:
-      permissionMap?.['total_cost_subcon']?.read &&
-      permissionMap?.['total_cost_subcon']?.edit,
-    hide:
-      !permissionMap?.['total_cost_subcon']?.read &&
-      !permissionMap?.['total_cost_subcon']?.edit,
-    sortId: 'total_cost_subcon',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: Project) =>
-      row.total_cost_subcon
-        ? costDisplay(row.total_cost_subcon, row.currency_symbol)
-        : '-',
-    field: {
-      type: 'text',
-      required: false,
-      formatCostNumber: true,
-      placeholder: 'Enter Sub Con Cost',
-      validation: [
+      render: (row: Project) =>
+        row.total_cost_fte
+          ? costDisplay(row.total_cost_fte, row.currency_symbol)
+          : '-',
+      field: {
+        type: 'text',
+        required: false,
+        formatCostNumber: true,
+        placeholder: 'Enter FTE Cost',
+        allowNegative: true,
+        validation: [
+          {
+            regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
+            errorMessage:
+              'FTE Cost must be a number, up to 16 digits and 2 decimal places',
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+    {
+      id: 'total_cost_subcon',
+      editId: 'total_cost_subcon',
+      label: 'SubCon Cost',
+      sortable: true,
+      editable:
+        permissionMap?.['total_cost_subcon']?.read &&
+        permissionMap?.['total_cost_subcon']?.edit,
+      hide:
+        !permissionMap?.['total_cost_subcon']?.read &&
+        !permissionMap?.['total_cost_subcon']?.edit,
+      sortId: 'total_cost_subcon',
+      width: 140,
+      sx: {
+        textAlign: 'right',
       },
-    ],
-  },
-  {
-    id: 'total_cost_nonlabor',
-    editId: 'total_cost_nonlabor',
-    label: 'Non-Labor Cost',
-    sortable: true,
-    editable:
-      permissionMap?.['total_cost_nonlabor']?.read &&
-      permissionMap?.['total_cost_nonlabor']?.edit,
-    hide:
-      !permissionMap?.['total_cost_nonlabor']?.read &&
-      !permissionMap?.['total_cost_nonlabor']?.edit,
-    sortId: 'total_cost_nonlabor',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: Project) =>
-      row.total_cost_nonlabor
-        ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
-        : '-',
-    field: {
-      type: 'text',
-      required: false,
-      formatCostNumber: true,
-      placeholder: 'Enter Non Labor Cost',
-      validation: [
+      render: (row: Project) =>
+        row.total_cost_subcon
+          ? costDisplay(row.total_cost_subcon, row.currency_symbol)
+          : '-',
+      field: {
+        type: 'text',
+        required: false,
+        formatCostNumber: true,
+        placeholder: 'Enter Sub Con Cost',
+        allowNegative: true,
+        validation: [
+          {
+            regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
+            errorMessage:
+              'Sub Con Cost must be a number, up to 16 digits and 2 decimal places',
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+    {
+      id: 'total_cost_nonlabor',
+      editId: 'total_cost_nonlabor',
+      label: 'Non-Labor Cost',
+      sortable: true,
+      editable:
+        permissionMap?.['total_cost_nonlabor']?.read &&
+        permissionMap?.['total_cost_nonlabor']?.edit,
+      hide:
+        !permissionMap?.['total_cost_nonlabor']?.read &&
+        !permissionMap?.['total_cost_nonlabor']?.edit,
+      sortId: 'total_cost_nonlabor',
+      width: 140,
+      sx: {
+        textAlign: 'right',
       },
-    ],
-  },
-  {
-    id: 'assessment_status',
-    label: 'Assessment Status',
-    sortable: true,
-    sortId: 'assessment_status',
-    width: 180,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.assessment_status : '-';
-    },
-    hide:
-      !permissionMap?.['assessment_status']?.read &&
-      !permissionMap?.['assessment_status']?.edit,
-  },
-  {
-    id: 'rd_percent_final',
-    label: 'QRE Percent Final',
-    sortable: true,
-    sortId: 'rd_percent_final',
-    width: 150,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.rd_percent_final : '-';
-    },
-  },
-  {
-    id: 'qre_final',
-    label: 'QRE Final',
-    sortable: true,
-    sortId: 'qre_final',
-    width: 130,
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? costDisplay(row.qre_final, row.currency_symbol) : '-';
-    },
-  },
-  {
-    id: 'project_point_of_contact',
-    label: 'Project Point of Contact',
-    sortable: true,
-    sortId: 'project_point_of_contact',
-    width: 200,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: Project & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div
-          onDoubleClick={() =>
-            handleEdit(row, row.project_point_of_contact, 'key_contacts_list')
-          }
-          className='!h-[31px] !min-h[31px] pt-1.5'
-        >
-          {row.project_point_of_contact || '-'}
-        </div>
-      ) : (
-        '-'
-      );
-    },
-  },
-  {
-    id: 'project_point_of_contact_email',
-    label: 'Project Point of Contact Email',
-    sortable: true,
-    sortId: 'project_point_of_contact_email',
-    width: 230,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: Project & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div
-          onDoubleClick={() =>
-            handleEdit(
-              row,
-              row.project_point_of_contact_email,
-              'key_contacts_list'
-            )
-          }
-          className='!h-[31px] !min-h[31px] pt-1.5'
-        >
-          {row.project_point_of_contact_email || '-'}
-        </div>
-      ) : (
-        '-'
-      );
-    },
-  },
-  {
-    id: 'technical_point_of_contact',
-    label: 'Technical Point of Contact',
-    sortable: true,
-    sortId: 'technical_point_of_contact',
-    width: 210,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: Project & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div
-          onDoubleClick={() =>
-            handleEdit(
-              row,
-              row?.technical_point_of_contact,
-              'key_contacts_list'
-            )
-          }
-          className='!h-[31px] !min-h[31px] pt-1.5'
-        >
-          {row.technical_point_of_contact || '-'}
-        </div>
-      ) : (
-        '-'
-      );
-    },
-  },
-  {
-    id: 'technical_point_of_contact_email',
-    label: 'Technical Point of Contact Email',
-    sortable: true,
-    sortId: 'technical_point_of_contact_email',
-    width: 250,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: Project & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div
-          onDoubleClick={() =>
-            handleEdit(
-              row,
-              row?.technical_point_of_contact_email,
-              'key_contacts_list'
-            )
-          }
-          className='!h-[31px] !min-h[31px] pt-1.5'
-        >
-          {row.technical_point_of_contact_email || '-'}
-        </div>
-      ) : (
-        '-'
-      );
-    },
-  },
-  {
-    id: 'comments',
-    editId: 'comments',
-    label: 'Comments',
-    sortable: true,
-    editable:
-      permissionMap?.['comments']?.read && permissionMap?.['comments']?.edit,
-    hide:
-      !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.comments : '-';
-    },
-    sortId: 'comments',
-    width: 200,
-    field: {
-      type: 'textarea',
-      required: false,
-      placeholder: 'Enter Comments',
-      validation: [
+      render: (row: Project) =>
+        row.total_cost_nonlabor
+          ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
+          : '-',
+      field: {
+        type: 'text',
+        required: false,
+        formatCostNumber: true,
+        placeholder: 'Enter Non Labor Cost',
+        allowNegative: true,
+        validation: [
+          {
+            regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
+            errorMessage:
+              'Non Labor Cost must be a number, up to 16 digits and 2 decimal places',
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
         {
-          regex: REGEX_PATTERNS.MAX_2000,
-          errorMessage: 'Maximum 2000 characters allowed',
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
         },
       ],
     },
-    conditionallyEdit: [
-      { key: 'account_status_name', matchValue: 'Active' },
-      {
-        key: 'is_rd_claim_qualified' as keyof Project,
-        matchValue: false,
+    {
+      id: 'assessment_status',
+      label: 'Assessment Status',
+      sortable: true,
+      sortId: 'assessment_status',
+      width: 180,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.assessment_status : '-';
       },
-    ],
-  },
-  {
-    id: 'modified_datetime',
-    label: 'Last Modified',
-    sortable: true,
-    sortId: 'modified_datetime',
-    width: 190,
-    hide:
-      !permissionMap?.['modified_datetime']?.read &&
-      !permissionMap?.['modified_datetime']?.edit,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime) || '-'
-        : '-';
+      hide:
+        !permissionMap?.['assessment_status']?.read &&
+        !permissionMap?.['assessment_status']?.edit,
     },
-  },
-  {
-    id: 'r_number',
-    label: 'Project ID',
-    sortable: true,
-    sortId: 'r_number',
-    width: 140,
-    hide:
-      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
-  },
-];
+    {
+      id: 'rd_percent_final',
+      label: 'QRE Percent Final',
+      sortable: true,
+      sortId: 'rd_percent_final',
+      width: 150,
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['qre_final']?.read &&
+        !permissionMap?.['qre_final']?.edit,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.rd_percent_final : '-';
+      },
+    },
+    {
+      id: 'qre_final',
+      label: 'QRE Final',
+      sortable: true,
+      sortId: 'qre_final',
+      width: 130,
+      hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+      sx: {
+        textAlign: 'right',
+      },
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? costDisplay(row.qre_final, row.currency_symbol) : '-';
+      },
+    },
+    {
+      id: 'project_point_of_contact',
+      label: 'Project Point of Contact',
+      sortable: true,
+      sortId: 'project_point_of_contact',
+      width: 200,
+      hide:
+        !permissionMap?.['key_contacts']?.read &&
+        !permissionMap?.['key_contacts']?.edit,
+      render: (row: Project & { _level?: number }) => {
+        const isClickable =
+          permissionMap?.['key_contacts']?.read &&
+          permissionMap?.['key_contacts']?.edit &&
+          row._level !== undefined &&
+          row._level === 1;
+        return isClickable ? (
+          <div
+            onDoubleClick={() =>
+              handleEdit(row, row.project_point_of_contact, 'key_contacts_list')
+            }
+            className='!h-[31px] !min-h[31px] pt-1.5'
+          >
+            {row.project_point_of_contact || '-'}
+          </div>
+        ) : (
+          '-'
+        );
+      },
+    },
+    {
+      id: 'project_point_of_contact_email',
+      label: 'Project Point of Contact Email',
+      sortable: true,
+      sortId: 'project_point_of_contact_email',
+      width: 230,
+      hide:
+        !permissionMap?.['key_contacts']?.read &&
+        !permissionMap?.['key_contacts']?.edit,
+      render: (row: Project & { _level?: number }) => {
+        const isClickable =
+          permissionMap?.['key_contacts']?.read &&
+          permissionMap?.['key_contacts']?.edit &&
+          row._level !== undefined &&
+          row._level === 1;
+        return isClickable ? (
+          <div
+            onDoubleClick={() =>
+              handleEdit(
+                row,
+                row.project_point_of_contact_email,
+                'key_contacts_list'
+              )
+            }
+            className='!h-[31px] !min-h[31px] pt-1.5'
+          >
+            {row.project_point_of_contact_email || '-'}
+          </div>
+        ) : (
+          '-'
+        );
+      },
+    },
+    {
+      id: 'technical_point_of_contact',
+      label: 'Technical Point of Contact',
+      sortable: true,
+      sortId: 'technical_point_of_contact',
+      width: 210,
+      hide:
+        !permissionMap?.['key_contacts']?.read &&
+        !permissionMap?.['key_contacts']?.edit,
+      render: (row: Project & { _level?: number }) => {
+        const isClickable =
+          permissionMap?.['key_contacts']?.read &&
+          permissionMap?.['key_contacts']?.edit &&
+          row._level !== undefined &&
+          row._level === 1;
+        return isClickable ? (
+          <div
+            onDoubleClick={() =>
+              handleEdit(
+                row,
+                row?.technical_point_of_contact,
+                'key_contacts_list'
+              )
+            }
+            className='!h-[31px] !min-h[31px] pt-1.5'
+          >
+            {row.technical_point_of_contact || '-'}
+          </div>
+        ) : (
+          '-'
+        );
+      },
+    },
+    {
+      id: 'technical_point_of_contact_email',
+      label: 'Technical Point of Contact Email',
+      sortable: true,
+      sortId: 'technical_point_of_contact_email',
+      width: 250,
+      hide:
+        !permissionMap?.['key_contacts']?.read &&
+        !permissionMap?.['key_contacts']?.edit,
+      render: (row: Project & { _level?: number }) => {
+        const isClickable =
+          permissionMap?.['key_contacts']?.read &&
+          permissionMap?.['key_contacts']?.edit &&
+          row._level !== undefined &&
+          row._level === 1;
+        return isClickable ? (
+          <div
+            onDoubleClick={() =>
+              handleEdit(
+                row,
+                row?.technical_point_of_contact_email,
+                'key_contacts_list'
+              )
+            }
+            className='!h-[31px] !min-h[31px] pt-1.5'
+          >
+            {row.technical_point_of_contact_email || '-'}
+          </div>
+        ) : (
+          '-'
+        );
+      },
+    },
+    {
+      id: 'comments',
+      editId: 'comments',
+      label: 'Comments',
+      sortable: true,
+      editable:
+        permissionMap?.['comments']?.read && permissionMap?.['comments']?.edit,
+      hide:
+        !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild ? row.comments : '-';
+      },
+      sortId: 'comments',
+      width: 200,
+      field: {
+        type: 'textarea',
+        required: false,
+        placeholder: 'Enter Comments',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.MAX_2000,
+            errorMessage: 'Maximum 2000 characters allowed',
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: 'Active' },
+        {
+          key: 'is_rd_claim_qualified' as keyof Project,
+          matchValue: false,
+        },
+      ],
+    },
+    {
+      id: 'modified_datetime',
+      label: 'Last Modified',
+      sortable: true,
+      sortId: 'modified_datetime',
+      width: 190,
+      hide:
+        !permissionMap?.['modified_datetime']?.read &&
+        !permissionMap?.['modified_datetime']?.edit,
+      render: (row: Project) => {
+        const isChild = row._level !== undefined && row._level === 1;
+        return isChild
+          ? formatDateToYYYYMMDDWithTime(row.modified_datetime) || '-'
+          : '-';
+      },
+    },
+    {
+      id: 'r_number',
+      label: 'Project ID',
+      sortable: true,
+      sortId: 'r_number',
+      width: 140,
+      hide:
+        !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
+    },
+  ];
