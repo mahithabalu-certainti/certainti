@@ -9,6 +9,11 @@ export interface RdCreditCountryCalcAttributes {
     country_rid?: string;
     input_params?: object | null;
     computed_fields?: object | null;
+    total_qre?: number | null;
+    average_annual_gross_receipts?: number | null;
+    prev_year1_qre?: number | null;
+    prev_year2_qre?: number | null;
+    prev_year3_qre?: number | null;
     final_credit?: number | null;
     created_datetime?: Date;
     modified_datetime?: Date;
@@ -29,6 +34,11 @@ export class RdCreditCountryCalculations
     public country_rid?: string;
     public input_params?: object | null;
     public computed_fields?: object | null;
+    public total_qre?: number | null;
+    public average_annual_gross_receipts?: number | null;
+    public prev_year1_qre?: number | null;
+    public prev_year2_qre?: number | null;
+    public prev_year3_qre?: number | null;
     public final_credit?: number | null;
     public created_datetime?: Date;
     public modified_datetime?: Date;
@@ -62,6 +72,26 @@ export class RdCreditCountryCalculations
                     allowNull: true,
                 },
                 final_credit: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                total_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                average_annual_gross_receipts: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                prev_year1_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                prev_year2_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                prev_year3_qre: {
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },

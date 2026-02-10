@@ -1754,7 +1754,7 @@ WHERE dmf.country_rid = '${countryRid}'
        OR dmf.effective_from_date <= DATE '${effectiveEnd}')
   AND (dmf.effective_to_date IS NULL 
        OR dmf.effective_to_date >= DATE '${effectiveStart}')
-  AND is_active = true`
+  AND is_active = true limit 1`
   },
   checkFinancialSignOffDone(schemaName: string, caseRid: string) {
     return `
@@ -1858,12 +1858,17 @@ WHERE dmf.country_rid = '${countryRid}'
       SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
     `
   },
-  fetchDynamicFieldValues(schemaName:string, refTable:string, quotedJsonPath:string)
+  fetchDynamicFieldValues(
+    schemaName: string,
+    refTable: string,
+    quotedJsonPath: string,
+    stateRid?: string,
+  )
   {
     return `
           SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
           FROM ${schemaName}.${refTable}
-          WHERE case_rid = :case_rid
+          WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
   },
    fetchAssignedProjectIds (caseRid : string, schemaName : string){
@@ -1891,6 +1896,53 @@ WHERE dmf.country_rid = '${countryRid}'
         FROM trd365.data_mapper_table_mappings 
         WHERE rid = :columnId
         LIMIT 1`;
+  },
+  fetchTop15ProjectQreSum(schemaName: string, caseRid: string) {
+    return `
+      SELECT COALESCE(SUM(qre_final), 0) AS top_15_qre_sum
+      FROM (
+        SELECT pf.qre_final
+        FROM ${schemaName}.case_projects cp
+        JOIN ${schemaName}.project_fiscal pf
+          ON pf.rid = cp.project_fiscal_rid
+        WHERE cp.case_rid = '${caseRid}'
+        ORDER BY pf.qre_final DESC NULLS LAST
+        LIMIT 15
+      ) t;
+    `;
+  },
+  fetchTop15ProjectSumByColumn(
+    schemaName: string,
+    caseRid: string,
+    columnName: string,
+  ) {
+    return `
+      SELECT COALESCE(SUM(${columnName}), 0) AS top_15_sum
+      FROM (
+        SELECT pf.${columnName}
+        FROM ${schemaName}.case_projects cp
+        JOIN ${schemaName}.project_fiscal pf
+          ON pf.rid = cp.project_fiscal_rid
+        WHERE cp.case_rid = '${caseRid}'
+        ORDER BY pf.${columnName} DESC NULLS LAST
+        LIMIT 15
+      ) t;
+    `;
+  },
+  fetchPriorYearQreFromHistory(
+    schemaName: string,
+    stateRid?: string,
+    countryRid?: string,
+  ) {
+    return `
+      SELECT total_qre
+      FROM ${schemaName}.case_history_submission
+      WHERE account_rid = :account_rid
+      AND fiscal_year = :target_year
+      ${countryRid ? "AND country_rid = :country_rid" : ""}
+      ${stateRid ? "AND state_rid = :state_rid" : "AND (state_rid IS NULL OR state_rid = '')"}
+      LIMIT 1
+    `;
   }
 
 };

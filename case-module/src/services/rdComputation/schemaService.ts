@@ -405,7 +405,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any,finalCredit : number) {
+    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any,finalCredit : number,result: any) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditCountryCalculations.upsert(
             {
@@ -413,7 +413,12 @@ class RDCreditSchemaService {
                 country_rid,
                 input_params,
                 computed_fields,
-                final_credit : finalCredit
+                final_credit : finalCredit,
+                total_qre: result.totalQRE,
+                average_annual_gross_receipts: result.averageAnnualGrossReceipts,
+                prev_year1_qre: result.prev1yearQRE,
+                prev_year2_qre: result.prev2yearQRE,
+                prev_year3_qre: result.prev3yearQRE
             },
             {
                 returning: true
@@ -430,7 +435,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any,final_credit : number) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any,final_credit : number,result?: any) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditStateCalculations.upsert(
             {
@@ -439,7 +444,12 @@ class RDCreditSchemaService {
                 input_params,
                 computed_fields,
                 state_rid,
-                final_credit
+                final_credit,
+                total_qre: result?.totalQRE,
+                average_annual_gross_receipts: result?.averageAnnualGrossReceipts,
+                prev_year1_qre: result?.prev1yearQRE,
+                prev_year2_qre: result?.prev2yearQRE,
+                prev_year3_qre: result?.prev3yearQRE
             },
             {
                 returning: true

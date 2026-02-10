@@ -33,7 +33,7 @@ async function processRdFormMapperRequests(req: Request, res: Response) {
       statusCode: HttpStatus.SUCCESS,
       statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
       statusMessage: STATUS_MESSAGE.rdFormProcessInitiatedSuccess,
-      data: result,
+      data: result.data,
     });
   } catch (err) {
     const error = err as Error;

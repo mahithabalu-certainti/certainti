@@ -71,7 +71,7 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if (federalComputation) {
                 const result = await federalComputation.compute(extractConfig, federalRDData, annualGrossReceipts.length, date, caseDetails);
-                await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit);
+                await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit,result);
                 return {
                     statusCode: HttpStatus.SUCCESS,
                     message: STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
@@ -190,7 +190,7 @@ export class FederalComputationService {
                             "Technical Submissions by Cost that are 50% or more of Total QRE"
                         ]
                     }
-                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData,grossReduction); 
+                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData,grossReduction,result); 
                         return {
                             statusCode : HttpStatus.SUCCESS,
                             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -279,7 +279,7 @@ export class FederalComputationService {
                             }),
                             "BOLD" : ["Total Labour", "LABOUR", "Total QRE", dynamicRdCredit]
                         } 
-                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData,parseFloat(researchDevelopmentTaxCredit)); 
+                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData,parseFloat(researchDevelopmentTaxCredit),computedResult); 
                         return {
                             statusCode : HttpStatus.SUCCESS,
                             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -295,7 +295,7 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
                     const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
-                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields, federalComputation.finalCredit); 
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields, federalComputation.finalCredit,result); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
                         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -310,7 +310,7 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
                     const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
-                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit); 
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit,result); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
                         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
