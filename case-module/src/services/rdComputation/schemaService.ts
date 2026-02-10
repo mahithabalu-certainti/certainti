@@ -634,11 +634,18 @@ class RDCreditSchemaService {
         const result: { [key: string]: any } = {};
         let totalCredit = 0;
 
-        stateCalculations.forEach(calc => {
-            const stateInfo = stateInfoMap.get(calc.state_rid);
+        const sortedStateRows = stateCalculations
+            .map(calc => ({
+                calc,
+                stateInfo: stateInfoMap.get(calc.state_rid)
+            }))
+            .filter(item => item.stateInfo)
+            .sort((a, b) => a.stateInfo.state_name.localeCompare(b.stateInfo.state_name));
+
+        sortedStateRows.forEach(({ calc, stateInfo }) => {
             const projectInfo = projectMap.get(calc.state_rid) || { total_projects: 0, total_resources: 0, total_qre: 0 };
-            
-            if (stateInfo && calc.final_credit != null) {
+
+            if (calc.final_credit != null) {
                 const totalQreValue = Number(calc.total_qre || 0);
                 const finalCredit = Number(calc.final_credit);
                 result[stateInfo.state_name] = {
