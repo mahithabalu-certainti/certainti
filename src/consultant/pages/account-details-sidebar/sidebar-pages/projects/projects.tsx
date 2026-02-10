@@ -22,7 +22,7 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { checkPermission, REGEX_PATTERNS } from '../../../../../common-utils';
+import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import {
@@ -323,11 +323,11 @@ const Projects: React.FC<ProjectsProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-          state: {
-            field: fieldValue || '',
-            section: fieldValue ? '' : section,
-          },
-        }
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
         : undefined
     );
   };

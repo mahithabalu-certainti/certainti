@@ -20,10 +20,7 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
-import {
-  REGEX_PATTERNS,
-  reshapeGlobalFilter,
-} from '../../../../../common-utils';
+import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { ClassificationApiResponse, FilterState } from '../../../../types';
 import {
   ListTable,
@@ -193,11 +190,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-          state: {
-            field: fieldValue || '',
-            section: fieldValue ? '' : section,
-          },
-        }
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
         : undefined
     );
   };
