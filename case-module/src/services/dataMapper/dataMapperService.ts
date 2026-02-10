@@ -566,6 +566,8 @@ export class DataMapperService implements IDataMapperService {
 
             let shouldTriggerKafka = false;
             let fileSasUrl = "";
+            let countryCode = "";
+            let stateCode = "";
 
             if (file) {
                 // Determine country and state for upload path (use new values or fallback to existing)
@@ -577,10 +579,9 @@ export class DataMapperService implements IDataMapperService {
                     replacements: { id: countryRid },
                     type: QueryTypes.SELECT
                 });
-                const countryCode = countryResult ? countryResult.country_code : null;
+                countryCode = countryResult ? countryResult.country_code : null;
 
                 // Fetch State Code
-                let stateCode = null;
                 if (stateRid) {
                     const stateResult: any = await sequelize.query(rawQueries.fetchStatesByIds(), {
                         replacements: { ids: [stateRid] },
@@ -605,8 +606,6 @@ export class DataMapperService implements IDataMapperService {
                 updatePayload.document_name = uploadResult.name;
                 updatePayload.size_in_mb = uploadResult.size;
                 updatePayload.format = uploadResult.extension.replace('.', '');
-                updatePayload.state_code = stateCode;
-                updatePayload.country_code = countryCode;
 
                 // Reset status to Initiated
                 const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
@@ -635,7 +634,9 @@ export class DataMapperService implements IDataMapperService {
                     state_rid: updatedRecord?.state_rid,
                     effective_from_date: updatedRecord?.effective_from_date,
                     effective_to_date: updatedRecord?.effective_to_date,
-                    userId: userId
+                    userId: userId,
+                    state_code: stateCode,
+                    country_code: countryCode
                 };
 
                 await this.sendKafkaMessage(kafkaPayload);
