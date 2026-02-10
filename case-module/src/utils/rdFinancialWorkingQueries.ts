@@ -130,7 +130,8 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : Pro
 }
 export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string, regionRid : string) => {
     let query = 
-    `SELECT
+    `SELECT 
+        cp.rid,
         cp.project_code,
         cp.project_name,
         COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
@@ -143,15 +144,17 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         ${schemaName}.project_fiscal cp
         LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = cp.rid
     WHERE
-        cp.rid IN (${caseRid.map((d : any) => `'${d.project_fiscal_rid}'`).join(',')})
+        cp.rid IN (${caseRid.map((d : any) => `'${d.rid}'`).join(',')})
         AND
         cp.account_rid = '${accountRid}'
         AND
         cp.is_qualified = true
         AND
         pfr.region_rid = '${regionRid}'
-
+        GROUP BY
+        cp.rid
     `
+    console.log(query);
     return query;
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
@@ -169,7 +172,8 @@ export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) =
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
 }
 export const fetchAssignedProjectIdsForOntRegions = (caseRid : string, schemaName : string, regionId : string) => {
-    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND region_rid = '${regionId}'`
+    let query = `SELECT pf.rid FROM ${schemaName}.project_fiscal pf LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid WHERE cp.case_rid = '${caseRid}' AND pf.region_rid = '${regionId}' AND pf.is_qualified = true`
+    return query
 }
 
 export const updateRRCASC280C = (caseRid : string, schemaName : string, userPreferenceASC : string, userPreferenceRRC : string) => {
