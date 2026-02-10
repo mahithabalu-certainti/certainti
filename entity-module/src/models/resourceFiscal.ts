@@ -170,13 +170,6 @@ export class ResourceFiscal
         annual_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
         },
         monthly_cost: {
           type: DataTypes.DECIMAL(18, 2),
@@ -236,35 +229,14 @@ export class ResourceFiscal
         total_cost_for_year_project: {
           type: DataTypes.DECIMAL(14, 2),
           allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
         },
         total_cost_for_year_project_resource_level: {
           type: DataTypes.DECIMAL(14, 2),
           allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
         },
         total_cost_for_year_project_task_level: {
           type: DataTypes.DECIMAL(14, 2),
           allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
         },
         total_effort_for_year_project: {
           type: DataTypes.DECIMAL(14, 2),
