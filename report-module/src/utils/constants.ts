@@ -636,18 +636,24 @@ export const rawQueries = {
       a.rid,
       a.r_number,
       a.task_name,
-      d.task_status_name as status,
-	  a.effective_start_datetime,
+      a.status_rid,
+      d.task_status_name as status_name,
+      a.account_rid,
+      a.attach_to,
+      a.attachment_level,
+      a.task_rid,
+      b.task_type_name,
+	    a.effective_start_datetime,
       a.effective_end_datetime,
       c.r_number as case_r_number,
       c.case_name,
       a.assigned_to,
-	  e.priority_name,
-	  a.fiscal_year,
-	  f.account_name,
-	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
-	  h.category_name,
-    g.profile_url
+      e.priority_name,
+      a.fiscal_year,
+      f.account_name,
+      concat(g.first_name, ' ', g.last_name) as assigned_to_name,
+      h.category_name,
+      g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -736,6 +742,24 @@ export const rawQueries = {
       ) as "exists";
     `;
   },
+  fetchActiveCountries(countryRid?: string) {
+    const replacements: any = {};
+    let query = `
+      SELECT 
+        c.rid as country_rid,
+        c.country_name,
+        c.country_code
+      FROM ${MAIN_SCHEMA_NAME}.country c
+      WHERE c.status = 'active'
+    `;
+
+    if (countryRid) {
+      query += ` AND c.rid = :countryRid`;
+      replacements.countryRid = countryRid;
+    }
+
+    return { query, replacements };
+  },
   fetchOverallProjectValue(accountIds?: string[], fiscalYear?: string) {
     let query = `
       SELECT 
@@ -747,7 +771,7 @@ export const rawQueries = {
         COALESCE(SUM(p.qre_final), 0) as qre_cost
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
       LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON p.country_rid = c.rid
-      WHERE 1=1
+      WHERE c.status = 'active'
     `;
 
     const replacements: any = {};
@@ -766,7 +790,78 @@ export const rawQueries = {
 
     return { query, replacements };
   },
-  fetchGlobalAccountClaimedAmounts(accountIds?: string[], fiscalYear?: string, countryRid?: string) {
+  fetchCountryWiseRDAmounts(schemaName: string, accountIds?: string[], fiscalYear?: string, activeCountriesRidsSet?: Set<string>) {
+    let query = `
+      SELECT a.country_rid,
+       COALESCE(SUM(final_credit), 0) as final_credit_computed,
+       COALESCE(SUM(final_credit_submitted), 0) as final_credit_submitted,
+       COALESCE(SUM(final_credit_approved), 0) as final_credit_approved
+      FROM ${schemaName}.rd_credit_country_calculations a
+      join ${schemaName}.cases b
+      on a.case_rid = b.rid
+      join ${schemaName}.account_details c
+      on b.account_rid = c.account_rid
+      WHERE 1=1
+    `;
+
+    const replacements: any = {};
+
+    if (accountIds && accountIds.length > 0) {
+      query += ` AND b.account_rid in (:accountIds)`;
+      replacements.accountIds = accountIds;
+    }
+
+    if (fiscalYear) {
+      query += ` AND b.fiscal_year = :fiscalYear`;
+      replacements.fiscalYear = fiscalYear;
+    }
+
+    if (activeCountriesRidsSet) {
+      query += ` AND a.country_rid in (:activeCountriesRids)`;
+      replacements.activeCountriesRids = Array.from(activeCountriesRidsSet);
+    }
+
+    query += ` GROUP BY a.country_rid;`;
+
+    return { query, replacements };
+  },
+  fetchCountryAccountWiseRDAmounts(schemaName: string, accountIds?: string[], fiscalYear?: string, activeCountriesRidsSet?: Set<string>) {
+    let query = `
+      SELECT a.country_rid,
+       b.account_rid,
+       COALESCE(SUM(final_credit), 0) as final_credit_computed,
+       COALESCE(SUM(final_credit_submitted), 0) as final_credit_submitted,
+       COALESCE(SUM(final_credit_approved), 0) as final_credit_approved
+      FROM ${schemaName}.rd_credit_country_calculations a
+      join ${schemaName}.cases b
+      on a.case_rid = b.rid
+      join ${schemaName}.account_details c
+      on b.account_rid = c.account_rid
+      WHERE 1=1
+    `;
+
+    const replacements: any = {};
+
+    if (accountIds && accountIds.length > 0) {
+      query += ` AND b.account_rid in (:accountIds)`;
+      replacements.accountIds = accountIds;
+    }
+
+    if (fiscalYear) {
+      query += ` AND b.fiscal_year = :fiscalYear`;
+      replacements.fiscalYear = fiscalYear;
+    }
+
+    if (activeCountriesRidsSet) {
+      query += ` AND a.country_rid in (:activeCountriesRids)`;
+      replacements.activeCountriesRids = Array.from(activeCountriesRidsSet);
+    }
+
+    query += ` GROUP BY a.country_rid, b.account_rid`;
+
+    return { query, replacements };
+  },
+  fetchGlobalAccountClaimedAmounts(accountIds?: string[], fiscalYear?: string, activeCountriesRidsSet?: Set<string>) {
     let query = `
       SELECT 
         a.rid as account_rid,
@@ -795,9 +890,9 @@ export const rawQueries = {
       replacements.fiscalYear = fiscalYear;
     }
 
-    if (countryRid) {
-      query += ` AND p.country_rid = :countryRid`;
-      replacements.countryRid = countryRid;
+    if (activeCountriesRidsSet) {
+      query += ` AND p.country_rid in (:activeCountriesRids)`;
+      replacements.activeCountriesRids = Array.from(activeCountriesRidsSet);
     }
 
     query += ` GROUP BY a.rid, a.account_name, c.rid, c.country_name, c.country_code;`;

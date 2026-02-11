@@ -772,8 +772,12 @@ export class ReportService implements IReportService {
     async getOverallProjectValue(userId: string, flag: string, fiscalYear?: string): Promise<{ statusCode: number; message: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
-            let accountIds: string[] = [];
+            const orgDb = await initOrgSequelize();
 
+            let accountIds: string[] = [];
+            let uniqueSchemaNames = new Set<string>();
+
+            // 1. Resolve Accounts and Schemas based on flag
             if (flag === "user") {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
@@ -785,18 +789,92 @@ export class ReportService implements IReportService {
                     };
                 }
                 accountIds = childAccountIds;
+
+                // Resolve Schemas for Meetings
+                const accounts = await this.schemaService.fetchAccountsByIds(accountIds);
+
+                await Promise.all(
+                    accounts.map(async (account) => {
+                        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
+                        const { rid, storage_type, r_number, parent_account_rid } = acc;
+
+                        if (storage_type === "store_in_parent") {
+                            const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
+                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${parent.replace(/\D/g, "")}`);
+                        } else {
+                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${r_number.replace(/\D/g, "")}`);
+                        }
+                    })
+                );
+
+            } else {
+                // Admin/Else case: Use all schemas, empty accountIds means all accounts in fetch queries
+                const schemaList: any[] = await orgDb.query(rawQueries.fetchSchemas(), { type: QueryTypes.SELECT });
+                schemaList.forEach((s: any) => uniqueSchemaNames.add(s.schema_name));
             }
 
+            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries();
+            const activeCountriesRids: any[] = await sequelize.query(countryQuery, {
+                type: QueryTypes.SELECT
+            });
+
+            const activeCountriesRidsSet = new Set<string>();
+            activeCountriesRids.forEach((c: any) => activeCountriesRidsSet.add(c.country_rid));
+
+            const countryWiseAmounts = new Map<string, { computed: number, submitted: number, approved: number }>();
+
+            await Promise.all(
+                Array.from(uniqueSchemaNames).map(async (schemaName) => {
+                    try {
+                        const countryTableExists = await this.checkTableExistence(orgDb, schemaName, 'rd_credit_country_calculations');
+                        const casesTableExists = await this.checkTableExistence(orgDb, schemaName, 'cases');
+                        if (!countryTableExists || !casesTableExists) {
+                            return;
+                        }
+
+                        const { query, replacements } = rawQueries.fetchCountryWiseRDAmounts(schemaName, flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
+                        const results: any[] = await orgDb.query(query, {
+                            replacements,
+                            type: QueryTypes.SELECT
+                        });
+
+                        for (const row of results) {
+                            const rid = row.country_rid;
+                            if (!countryWiseAmounts.has(rid)) {
+                                countryWiseAmounts.set(rid, { computed: 0, submitted: 0, approved: 0 });
+                            }
+                            const entry = countryWiseAmounts.get(rid)!;
+                            entry.computed += Number(row.final_credit_computed || 0);
+                            entry.submitted += Number(row.final_credit_submitted || 0);
+                            entry.approved += Number(row.final_credit_approved || 0);
+                        }
+
+                    } catch (error) {
+                        errorLog(`Error fetching country wise amounts for schema ${schemaName}: ${(error as Error).message}`);
+                    }
+                })
+            );
+
             const { query, replacements } = rawQueries.fetchOverallProjectValue(flag === "user" ? accountIds : undefined, fiscalYear);
-            const result: any[] = await sequelize.query(query, {
+            const projectValueResults: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
+            });
+
+            const finalResult = projectValueResults.map(row => {
+                const amounts = countryWiseAmounts.get(row.country_rid) || { computed: 0, submitted: 0, approved: 0 };
+                return {
+                    ...row,
+                    final_credit_computed: amounts.computed,
+                    final_credit_submitted: amounts.submitted,
+                    final_credit_approved: amounts.approved
+                };
             });
 
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: "Success",
-                data: result
+                data: finalResult
             };
 
         } catch (error) {
@@ -808,7 +886,10 @@ export class ReportService implements IReportService {
     async getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string): Promise<{ statusCode: number; message: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
+            const orgDb = await initOrgSequelize();
+
             let accountIds: string[] = [];
+            let uniqueSchemaNames = new Set<string>();
 
             if (flag === "user") {
                 const childAccountIds = await this.getChildAccountIds(userId);
@@ -821,18 +902,113 @@ export class ReportService implements IReportService {
                     };
                 }
                 accountIds = childAccountIds;
+
+                // Resolve Schemas for Meetings
+                const accounts = await this.schemaService.fetchAccountsByIds(accountIds);
+
+                await Promise.all(
+                    accounts.map(async (account) => {
+                        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
+                        const { rid, storage_type, r_number, parent_account_rid } = acc;
+
+                        if (storage_type === "store_in_parent") {
+                            const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
+                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${parent.replace(/\D/g, "")}`);
+                        } else {
+                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${r_number.replace(/\D/g, "")}`);
+                        }
+                    })
+                );
+
+            } else {
+                // Admin/Else case: Use all schemas, empty accountIds means all accounts in fetch queries
+                const schemaList: any[] = await orgDb.query(rawQueries.fetchSchemas(), { type: QueryTypes.SELECT });
+                schemaList.forEach((s: any) => uniqueSchemaNames.add(s.schema_name));
             }
 
-            const { query, replacements } = rawQueries.fetchGlobalAccountClaimedAmounts(flag === "user" ? accountIds : undefined, fiscalYear, countryRid);
-            const result: any[] = await sequelize.query(query, {
+            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries(countryRid);
+            const activeCountriesRids: any[] = await sequelize.query(countryQuery, {
+                replacements: countryReplacements,
+                type: QueryTypes.SELECT
+            });
+
+            const activeCountriesMap = new Map<string, { country_rid: string, country_name: string, country_code: string }>();
+            activeCountriesRids.forEach((c: any) => activeCountriesMap.set(c.country_rid, c));
+
+            const activeCountriesRidsSet = new Set<string>();
+            activeCountriesRids.forEach((c: any) => activeCountriesRidsSet.add(c.country_rid));
+
+            const countryAccountWiseAmounts = new Map<string, { computed: number, submitted: number, approved: number }>();
+            const countryWiseApprovedAmount = new Map<string, { country_rid: string, country_name: string, country_code: string, approved: number }>();
+
+            await Promise.all(
+                Array.from(uniqueSchemaNames).map(async (schemaName) => {
+                    try {
+                        const countryTableExists = await this.checkTableExistence(orgDb, schemaName, 'rd_credit_country_calculations');
+                        const casesTableExists = await this.checkTableExistence(orgDb, schemaName, 'cases');
+                        if (!countryTableExists || !casesTableExists) {
+                            return;
+                        }
+
+                        const { query, replacements } = rawQueries.fetchCountryAccountWiseRDAmounts(schemaName, flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
+                        const results: any[] = await orgDb.query(query, {
+                            replacements,
+                            type: QueryTypes.SELECT
+                        });
+
+                        for (const row of results) {
+                            const key = `${row.country_rid}-${row.account_rid}`;
+                            if (!countryAccountWiseAmounts.has(key)) {
+                                countryAccountWiseAmounts.set(key, { computed: 0, submitted: 0, approved: 0 });
+                            }
+                            const entry = countryAccountWiseAmounts.get(key)!;
+                            entry.computed += Number(row.final_credit_computed || 0);
+                            entry.submitted += Number(row.final_credit_submitted || 0);
+                            entry.approved += Number(row.final_credit_approved || 0);
+
+                            const countryKey = row.country_rid || '';
+                            if (!countryWiseApprovedAmount.has(countryKey)) {
+                                const countryDetails = activeCountriesMap.get(countryKey);
+                                countryWiseApprovedAmount.set(countryKey, {
+                                    country_rid: countryDetails?.country_rid || '',
+                                    country_name: countryDetails?.country_name || '',
+                                    country_code: countryDetails?.country_code || '',
+                                    approved: 0
+                                });
+                            }
+                            const countryEntry = countryWiseApprovedAmount.get(countryKey)!;
+                            countryEntry.approved += Number(row.final_credit_approved || 0);
+                        }
+
+                    } catch (error) {
+                        errorLog(`Error fetching country account wise amounts for schema ${schemaName}: ${(error as Error).message}`);
+                    }
+                })
+            );
+
+            const { query, replacements } = rawQueries.fetchGlobalAccountClaimedAmounts(flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
+            const accountWiseConsolidationList: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
             });
 
+            const finalAccountWiseConsolidationList = accountWiseConsolidationList.map(row => {
+                const key = `${row.country_rid}-${row.account_rid}`;
+                const amounts = countryAccountWiseAmounts.get(key) || { computed: 0, submitted: 0, approved: 0 };
+                return {
+                    ...row,
+                    final_credit_computed: amounts.computed,
+                    final_credit_submitted: amounts.submitted,
+                    final_credit_approved: amounts.approved
+                };
+            });
+
+            const countryWiseConsolidation = Array.from(countryWiseApprovedAmount.values());
+
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: "Success",
-                data: result
+                data: { accountWiseConsolidationList: finalAccountWiseConsolidationList, countryWiseConsolidation }
             };
 
         } catch (error) {
