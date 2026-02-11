@@ -293,11 +293,12 @@ export const getProjectTaskColumns = (
       required: false,
       formatCostNumber: true,
       placeholder: 'Enter Cost',
+      allowNegative: true,
       validation: [
         {
           regex: PROJECT_TASK_REGEX.COST_REGEX,
           errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            'Cost must be a number allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },

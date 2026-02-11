@@ -645,13 +645,13 @@ export const CaseFormData = (
               'Numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
-              !permissionMap?.['credit_carry_forward_py']?.edit &&
-              permissionMap?.['credit_carry_forward_py']?.read,
+              !permissionMap?.['other_credits_total']?.edit &&
+              permissionMap?.['other_credits_total']?.read,
             hide:
               CountryName !== FinancialWorkingCountries.US ||
               (isEditView &&
-                !permissionMap?.['credit_carry_forward_py']?.edit &&
-                !permissionMap?.['credit_carry_forward_py']?.read),
+                !permissionMap?.['other_credits_total']?.edit &&
+                !permissionMap?.['other_credits_total']?.read),
           }),
           createTextField('other', 'Other', {
             required: false,
