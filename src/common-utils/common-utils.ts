@@ -649,9 +649,8 @@ export const PROJECT_RESOURCE_REGEX = {
   // Designation: Job titles with special chars, 4-100 chars
   DESIGNATION: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{1,62}[A-Za-z]$/,
 
-  // Project resource cost regex
-  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
-
+  // Updated regex to accept negative numbers
+  COST_REGEX: /^-?\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^-?\d{1,18}(\.\d{1,2})?$/,
   // NON NEGATIVE POSTIVE INTEGER
   EFFORT: /^[1-9][0-9]*$/,
 

@@ -4,13 +4,16 @@ import {
   FinancialHighlightsResponse,
   AustraliaComputedFields,
 } from '../../../../../../types/dossier';
+import { costDisplay } from '../../../../../../../common-utils';
 
 interface FinancialWorkingAustraliaProps {
   data: FinancialHighlightsResponse | null;
+  currencySymbol: string;
 }
 
 const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
   data,
+  currencySymbol,
 }) => {
   // Check if data is present and has correct structure
   const computedFields = data?.data?.computed_fields as AustraliaComputedFields;
@@ -29,19 +32,21 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
 
   const boldRows = (computedFields as any)?.BOLD || [];
 
-  const currencyCode = (data?.data?.input_params?.currency as string) || 'AUD';
-
-  const formatCurrency = (value: number | string | null | undefined) => {
+  const formatValue = (
+    value: string | number
+    // currency?: string
+  ) => {
+    if (value === 0 || value === '0') {
+      return '-';
+    }
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
     if (typeof value === 'number') {
-      return new Intl.NumberFormat('en-AU', {
-        style: 'currency',
-        currency: currencyCode,
-        minimumFractionDigits: 2,
-      }).format(value);
+      return costDisplay(value, currencySymbol as string);
     }
     return value;
   };
-
   const formatLabel = (key: string) => {
     return key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
@@ -66,7 +71,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
         <span
           className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
         >
-          {typeof value === 'number' ? formatCurrency(value) : (value ?? '--')}
+          {typeof value === 'number' ? formatValue(value) : (value ?? '--')}
         </span>
       </div>
     );
@@ -101,52 +106,74 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
     );
   };
 
-  const renderKeyValuePairs = (
-    obj: Record<string, number | string | null | undefined>
-  ) => {
+  const renderKeyValuePairsRows = (
+    obj: Record<string, any>,
+    depth: number = 0
+  ): React.ReactNode => {
     const entries = Object.entries(obj);
 
-    return (
-      <table className='w-full border-collapse'>
-        <tbody>
-          {entries.map(([key, value]) => {
-            if (
-              (typeof value === 'object' &&
-                value !== null &&
-                !Array.isArray(value)) ||
-              Array.isArray(value) ||
-              key === 'name' ||
-              key === 'Title'
-            )
-              return null;
+    return entries.map(([key, value]) => {
+      // Basic filtering
+      if (key === 'name' || key === 'Title' || key === 'BOLD') return null;
 
-            const isBold = boldRows.includes(key);
-            const { prefix, label } = extractPrefix(formatLabel(key));
+      // Handle nested object - Render a sub-header row
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value) &&
+        Object.keys(value).length > 0
+      ) {
+        const { prefix, label } = extractPrefix(formatLabel(key));
+        const hasVisibleHeader = prefix || label.trim() !== '';
 
-            return (
-              <tr
-                key={key}
-                className='h-[28px] border-b border-[#CBD6E2] last:border-0'
-              >
-                <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
+        return (
+          <React.Fragment key={key}>
+            {hasVisibleHeader && (
+              <tr className='bg-[#F9FAFB] border-y border-[#CBD6E2]'>
+                <td className='px-2 py-1 text-[13px] font-bold text-[#2D3E4F] w-[130px] border-r border-[#CBD6E2] text-right bg-[#f3f4f6]'>
                   {prefix}
                 </td>
-                <td className='align-middle px-2 py-0'>
-                  <div className='flex justify-between items-center py-[1.5px] w-full'>
-                    <div
-                      className={`text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76]  font-medium'}`}
-                    >
-                      {label}
-                    </div>
-                    <div className='text-right '>
-                      {renderValue(value, isBold)}
-                    </div>
-                  </div>
+                <td className='px-2 py-1 text-[13px] font-bold text-[#2D3E4F] bg-[#f3f4f6]'>
+                  {label}
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
+            )}
+            {renderKeyValuePairsRows(value, depth + 1)}
+          </React.Fragment>
+        );
+      }
+
+      // Handle primitive values or empty objects as regular rows
+      const isBold = boldRows.includes(key);
+      const { prefix, label } = extractPrefix(formatLabel(key));
+
+      return (
+        <tr
+          key={key}
+          className='h-[28px] border-b border-[#CBD6E2] last:border-0'
+        >
+          <td className='px-2 py-0 text-sm text-[#425A76] font-medium w-[130px] align-middle border-r border-[#CBD6E2] whitespace-nowrap text-right'>
+            {prefix}
+          </td>
+          <td className='align-middle px-2 py-0'>
+            <div className='flex justify-between items-center py-[1.5px] w-full'>
+              <div
+                className={`text-sm ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76]  font-medium'}`}
+              >
+                {label}
+              </div>
+              <div className='text-right '>{renderValue(value, isBold)}</div>
+            </div>
+          </td>
+        </tr>
+      );
+    });
+  };
+
+  const renderKeyValuePairs = (obj: Record<string, any>) => {
+    return (
+      <table className='w-full border-collapse'>
+        <tbody>{renderKeyValuePairsRows(obj)}</tbody>
       </table>
     );
   };
@@ -252,7 +279,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
               });
             }
 
-            // Handle Objects (e.g., R&D Expenditure)
+            // Handle Objects (e.g., R&D Expenditure, PART E, etc.)
             if (typeof value === 'object' && value !== null) {
               return (
                 <React.Fragment key={key}>
@@ -267,7 +294,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
                 {renderCard(
                   title,
                   <span className='font-bold text-[14px] text-[#2D3E4F]'>
-                    {formatCurrency(value)}
+                    {formatValue(value)}
                   </span>,
                   true
                 )}

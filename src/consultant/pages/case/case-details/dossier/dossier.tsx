@@ -13,7 +13,11 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ComingSoon, DossierIcon } from '../../../../../assets';
+import {
+  ComingSoon,
+  DetailsKeyContactErrorIcon,
+  DossierIcon,
+} from '../../../../../assets';
 import {
   DossierSummary,
   FinancialWorkingForm,
@@ -352,7 +356,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
           tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
@@ -386,117 +390,136 @@ const Dossier: React.FC<DossierProps> = ({
         onTabChange={handleTabChange}
         defaultValue={tabParam}
       />
-
-      <div className='border border-t-0 border-[#CBD6E2]'>
-        {tabParam === 'financial_workings' &&
-          (!isFinancialView ? (
-            <AccessRestricted />
-          ) : (
-            <FinancialWorkingForm
-              caseDetails={caseDetails}
-              setDossierFinancialStatus={setDossierFinancialStatus}
-              dossierFinancialStatus={dossierFinancialStatus}
-              financialData={financialData}
-              setFinancialData={setFinancialData}
-              refetchCaseDetails={refetchCaseDetails}
-              isDetailLoading={isDetailLoading}
-            />
-          ))}
-        {tabParam === 'summary' && <DossierSummary />}
-
-        {tabParam === 'qualified_projects' && (
-          <QualifiedProjects
-            refreshTrigger={refreshTrigger}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
-            columnAnchorEl={columnAnchorEl}
-            setColumnAnchorEl={setColumnAnchorEl}
-            searchValue={searchText}
-            fiscalYear={caseDetails?.fiscal_year ?? 0}
-          />
-        )}
-
-        {tabParam === 'financial_workings' &&
-          (!isFinancialView ? (
-            <AccessRestricted />
-          ) : (
-            <FinancialWorkingForm
-              caseDetails={caseDetails}
-              setDossierFinancialStatus={setDossierFinancialStatus}
-              dossierFinancialStatus={dossierFinancialStatus}
-              financialData={financialData}
-              setFinancialData={setFinancialData}
-              refetchCaseDetails={refetchCaseDetails}
-            />
-          ))}
-
-        {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
-
-        {tabParam === 'project_documents' && (
-          <ProjectDocuments
-            refreshTrigger={refreshTrigger}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setExportParams={() => {}}
-            setExportType={() => {}}
-            columnAnchorEl={columnAnchorEl}
-            setColumnAnchorEl={setColumnAnchorEl}
-            searchValue={searchText}
-          />
-        )}
-        {tabParam === 'project_summary' && (
-          <ProjectSummary
-            refreshTrigger={refreshTrigger}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
-            columnAnchorEl={columnAnchorEl}
-            setColumnAnchorEl={setColumnAnchorEl}
-            searchValue={searchText}
-            fiscalYear={caseDetails?.fiscal_year ?? 0}
-          />
-        )}
-
-        {tabParam === 'resource_summary' && (
-          <ResourceSummary
-            refreshTrigger={refreshTrigger}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
-            columnAnchorEl={columnAnchorEl}
-            setColumnAnchorEl={setColumnAnchorEl}
-            searchValue={searchText}
-          />
-        )}
-
-        {tabParam === 'closing_remarks' && (
-          <ClosingRemarks
-            refreshTrigger={refreshTrigger}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setExportParams={() => { }}
-            setExportType={() => { }}
-            columnAnchorEl={columnAnchorEl}
-            setColumnAnchorEl={setColumnAnchorEl}
-            searchValue={searchText}
-          />
-        )
-        }
-        {tabParam !== 'financial_workings' && (
-          <div className='flex items-center justify-center w-full h-full'>
-            <ComingSoon alt='comingSoon' />
+      {caseDetails?.case_total_qualified_projects === 0 ||
+        caseDetails?.case_total_qualified_projects === '0' ? (
+        <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+          <div>
+            <React.Suspense fallback={null}>
+              <DetailsKeyContactErrorIcon alt='key-contact' />
+            </React.Suspense>
           </div>
-        )}
-      </div>
+          <div>
+            <span className='font-bold mr-1 capitalize'>
+              Qualified Projects
+            </span>
+            -
+            <span className='ml-1 font-medium'>
+              No Qualified Projects assigned to this case
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className='border border-t-0 border-[#CBD6E2]'>
+          {tabParam === 'financial_workings' &&
+            (!isFinancialView ? (
+              <AccessRestricted />
+            ) : (
+              <FinancialWorkingForm
+                caseDetails={caseDetails}
+                setDossierFinancialStatus={setDossierFinancialStatus}
+                dossierFinancialStatus={dossierFinancialStatus}
+                financialData={financialData}
+                setFinancialData={setFinancialData}
+                refetchCaseDetails={refetchCaseDetails}
+                isDetailLoading={isDetailLoading}
+              />
+            ))}
+          {tabParam === 'summary' && <DossierSummary />}
+
+          {tabParam === 'qualified_projects' && (
+            <QualifiedProjects
+              refreshTrigger={refreshTrigger}
+              currentPage={currentPage}
+              appliedFilters={appliedFilters}
+              setCount={setCount}
+              setExportParams={() => { }}
+              setExportType={() => { }}
+              columnAnchorEl={columnAnchorEl}
+              setColumnAnchorEl={setColumnAnchorEl}
+              searchValue={searchText}
+              fiscalYear={caseDetails?.fiscal_year ?? 0}
+            />
+          )}
+
+          {tabParam === 'financial_workings' &&
+            (!isFinancialView ? (
+              <AccessRestricted />
+            ) : (
+              <FinancialWorkingForm
+                caseDetails={caseDetails}
+                setDossierFinancialStatus={setDossierFinancialStatus}
+                dossierFinancialStatus={dossierFinancialStatus}
+                financialData={financialData}
+                setFinancialData={setFinancialData}
+                refetchCaseDetails={refetchCaseDetails}
+              />
+            ))}
+
+          {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
+
+          {tabParam === 'project_documents' && (
+            <ProjectDocuments
+              refreshTrigger={refreshTrigger}
+              currentPage={currentPage}
+              appliedFilters={appliedFilters}
+              setCount={setCount}
+              setExportParams={() => { }}
+              setExportType={() => { }}
+              columnAnchorEl={columnAnchorEl}
+              setColumnAnchorEl={setColumnAnchorEl}
+              searchValue={searchText}
+            />
+          )}
+          {tabParam === 'project_summary' && (
+            <ProjectSummary
+              refreshTrigger={refreshTrigger}
+              currentPage={currentPage}
+              appliedFilters={appliedFilters}
+              setCount={setCount}
+              setExportParams={() => { }}
+              setExportType={() => { }}
+              columnAnchorEl={columnAnchorEl}
+              setColumnAnchorEl={setColumnAnchorEl}
+              searchValue={searchText}
+              fiscalYear={caseDetails?.fiscal_year ?? 0}
+            />
+          )}
+
+          {tabParam === 'resource_summary' && (
+            <ResourceSummary
+              refreshTrigger={refreshTrigger}
+              currentPage={currentPage}
+              appliedFilters={appliedFilters}
+              setCount={setCount}
+              setExportParams={() => { }}
+              setExportType={() => { }}
+              columnAnchorEl={columnAnchorEl}
+              setColumnAnchorEl={setColumnAnchorEl}
+              searchValue={searchText}
+            />
+          )}
+
+          {tabParam === 'closing_remarks' && (
+            <ClosingRemarks
+              refreshTrigger={refreshTrigger}
+              currentPage={currentPage}
+              appliedFilters={appliedFilters}
+              setCount={setCount}
+              setExportParams={() => { }}
+              setExportType={() => { }}
+              columnAnchorEl={columnAnchorEl}
+              setColumnAnchorEl={setColumnAnchorEl}
+              searchValue={searchText}
+            />
+          )
+          }
+          {tabParam !== 'financial_workings' && (
+            <div className='flex items-center justify-center w-full h-full'>
+              <ComingSoon alt='comingSoon' />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
