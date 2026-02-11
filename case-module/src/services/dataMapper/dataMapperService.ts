@@ -103,13 +103,32 @@ export class DataMapperService implements IDataMapperService {
 
             const sasUrl = await generateSasUrl(fileUrl)
 
+            // Fetch Country Code
+            const [countryResult]: any = await sequelize.query(rawQueries.fetchCountryById(), {
+                replacements: { id: data.country_rid },
+                type: QueryTypes.SELECT
+            });
+            const countryCode = countryResult ? countryResult.country_code : null;
+
+            // Fetch State Code
+            let stateCode = null;
+            if (data.state_rid) {
+                const stateResult: any = await sequelize.query(rawQueries.fetchStatesByIds(), {
+                    replacements: { ids: [data.state_rid] },
+                    type: QueryTypes.SELECT
+                });
+                stateCode = stateResult.length > 0 ? stateResult[0].state_code : null;
+            }
+
             // Send Kafka Message
             const payload = {
                 data_mapper_rid: newRecord.rid,
                 file_url: sasUrl,
                 form_name: data.form_name,
                 country_rid: data.country_rid,
+                country_code: countryCode,
                 state_rid: data.state_rid,
+                state_code: stateCode,
                 effective_from_date: data.effective_from_date,
                 effective_to_date: data.effective_to_date,
                 userId: userId
@@ -547,11 +566,29 @@ export class DataMapperService implements IDataMapperService {
 
             let shouldTriggerKafka = false;
             let fileSasUrl = "";
+            let countryCode = "";
+            let stateCode = "";
 
             if (file) {
                 // Determine country and state for upload path (use new values or fallback to existing)
                 const countryRid = data.country_rid || record.country_rid;
                 const stateRid = data.state_rid || record.state_rid;
+
+                // Fetch Country Code
+                const [countryResult]: any = await sequelize.query(rawQueries.fetchCountryById(), {
+                    replacements: { id: countryRid },
+                    type: QueryTypes.SELECT
+                });
+                countryCode = countryResult ? countryResult.country_code : null;
+
+                // Fetch State Code
+                if (stateRid) {
+                    const stateResult: any = await sequelize.query(rawQueries.fetchStatesByIds(), {
+                        replacements: { ids: [stateRid] },
+                        type: QueryTypes.SELECT
+                    });
+                    stateCode = stateResult.length > 0 ? stateResult[0].state_code : null;
+                }
 
                 const uploadResult = await uploadToAzureBlob(
                     file,
@@ -597,7 +634,9 @@ export class DataMapperService implements IDataMapperService {
                     state_rid: updatedRecord?.state_rid,
                     effective_from_date: updatedRecord?.effective_from_date,
                     effective_to_date: updatedRecord?.effective_to_date,
-                    userId: userId
+                    userId: userId,
+                    state_code: stateCode,
+                    country_code: countryCode
                 };
 
                 await this.sendKafkaMessage(kafkaPayload);
