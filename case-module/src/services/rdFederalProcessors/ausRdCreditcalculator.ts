@@ -70,7 +70,7 @@ export class RdCreditCalculatorForAus {
             "Notional deductions applied": notionalDeductionApplied,
           },
           {
-            name : `Tier 2 Intensity: > ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_2_rd_premium}%)`,
+            name : `Tier 2 (Intensity: > ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_2_rd_premium}%)`,
             "offset Amount" : parseFloat(Number(notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100))).toFixed(2)) || 0.00,
             "Notional deductions applied" : notionalDeductionAppliedForTier2,
           }
