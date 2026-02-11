@@ -20,10 +20,7 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
-import {
-  REGEX_PATTERNS,
-  reshapeGlobalFilter,
-} from '../../../../../common-utils';
+import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { ClassificationApiResponse, FilterState } from '../../../../types';
 import {
   ListTable,
@@ -378,12 +375,12 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
       // Validate total_cost
       const totalCostString = totalCost.toFixed(2);
-      if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
-        errorToast(
-          'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
-        );
-        return;
-      }
+      // if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
+      //   errorToast(
+      //     'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
+      //   );
+      //   return;
+      // }
 
       // Add total_cost to updateData
       updateData['total_cost'] = totalCostString;

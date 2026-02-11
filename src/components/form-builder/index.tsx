@@ -1044,15 +1044,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 const inputValue = e.target.value;
                 if (field.formatCostValue) {
                   const cleanValue = removeFormatCostValue(inputValue);
-                  // Only format if it's a valid number
-                  if (/^\d*\.?\d*$/.test(cleanValue)) {
-                    const formattedValue = formatCostValue(cleanValue);
-                    // Update the input display value
-                    e.target.value = formattedValue;
+                  // Only format if it's a valid number pattern
+                  const regex = field.allowNegative
+                    ? /^-?\d*\.?\d*$/
+                    : /^\d*\.?\d*$/;
+                  if (regex.test(cleanValue)) {
+                    // Only format if it contains at least one digit
+                    if (/\d/.test(cleanValue)) {
+                      const formattedValue = formatCostValue(cleanValue);
+                      // Update the input display value
+                      e.target.value = formattedValue;
+                    }
                     // Store the clean value in form data for processing
                     handleChange(cleanValue);
                   } else {
-                    handleChange(inputValue);
+                    handleChange(cleanValue);
                   }
                 } else {
                   handleChange(inputValue);
@@ -1063,7 +1069,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   // Reformat on blur to ensure proper formatting
                   const inputValue = e.target.value;
                   const cleanValue = removeFormatCostValue(inputValue);
-                  if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                  const regex = field.allowNegative
+                    ? /^-?\d*\.?\d*$/
+                    : /^\d*\.?\d*$/;
+
+                  // Clear the value if it's just a prefix (e.g., "-", ".", "-.")
+                  if (cleanValue !== '' && !/\d/.test(cleanValue)) {
+                    e.target.value = '';
+                    handleChange('');
+                  } else if (regex.test(cleanValue) && cleanValue !== '') {
                     const formattedValue = formatCostValue(cleanValue);
                     e.target.value = formattedValue;
                   }

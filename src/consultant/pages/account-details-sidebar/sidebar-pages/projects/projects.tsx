@@ -22,7 +22,7 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { checkPermission, REGEX_PATTERNS } from '../../../../../common-utils';
+import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import {
@@ -610,12 +610,12 @@ const Projects: React.FC<ProjectsProps> = ({
 
       // Validate total_cost
       const totalCostString = totalCost.toFixed(2);
-      if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
-        errorToast(
-          'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
-        );
-        return;
-      }
+      // if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
+      //   errorToast(
+      //     'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
+      //   );
+      //   return;
+      // }
 
       // Add total_cost to updateData
       updateData['total_cost'] = totalCostString;

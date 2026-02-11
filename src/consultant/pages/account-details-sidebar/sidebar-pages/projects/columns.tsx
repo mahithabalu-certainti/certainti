@@ -495,11 +495,12 @@ export const getProjectColumns = (
       required: false,
       formatCostNumber: true,
       placeholder: 'Enter FTE Cost',
+      allowNegative: true,
       validation: [
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
           errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            'FTE Cost must be a number allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -535,12 +536,13 @@ export const getProjectColumns = (
       type: 'text',
       required: false,
       formatCostNumber: true,
+      allowNegative: true,
       placeholder: 'Enter Sub Con Cost',
       validation: [
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
           errorMessage:
-            'Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
+            'Sub Con Cost must be a number allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -575,12 +577,13 @@ export const getProjectColumns = (
       type: 'text',
       required: false,
       formatCostNumber: true,
+      allowNegative: true,
       placeholder: 'Enter Non Labor Cost',
       validation: [
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
           errorMessage:
-            'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+            'Non Labor Cost must be a number allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },
