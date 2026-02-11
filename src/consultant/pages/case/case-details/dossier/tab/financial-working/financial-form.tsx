@@ -223,11 +223,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       caseDetails?.case_total_projects !== '0' &&
       !caseDetails?.financial_working_signoff
     ) {
-      setDossierFinancialStatus(true);
       handleInitiateFinancialHighlights();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseDetails]);
+  }, [caseDetails, dossierFinancialStatus]);
 
   // Call appropriate API when federal tab changes
 
@@ -366,7 +365,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       },
       onError: (error) => {
         console.error('Error initiating', error);
-        errorToast('Failed to initiate');
+        // errorToast('Failed to initiate');
       },
     });
   };
@@ -381,11 +380,11 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
     initiateProcess(payload, {
       onSuccess: () => {
-        handleViewFinancialHighlights();
+        setDossierFinancialStatus(true);
       },
       onError: (error: any) => {
         errorToast(
-          error?.response?.data?.statusMessage || 'Failed to initiate'
+          error?.response?.data?.statusMessage || 'Failed to Initiate'
         );
       },
     });
@@ -629,11 +628,15 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
           <div>
             {caseDetails?.country_name ===
             FinancialWorkingCountries.Australia ? (
-              <FinancialWorkingAustralia data={financialData} />
+              <FinancialWorkingAustralia
+                data={financialData}
+                currencySymbol={responseCurrencySymbol}
+              />
             ) : caseDetails?.country_name === FinancialWorkingCountries.US ? (
               <FinancialWorkingUSA
                 data={financialData}
                 onSuccess={handleInitiateFinancialHighlights}
+                currencySymbol={responseCurrencySymbol}
               />
             ) : (
               <FinancialWorking

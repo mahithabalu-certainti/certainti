@@ -33,6 +33,12 @@ interface ConditionalClause {
   autocompleteIndex?: number;
   result: string;
   error?: string; // Individual error message
+  // Return field support
+  returnExpressions?: FieldExpression[]; // Store chips for return field
+  returnInputValue?: string; // Store text input for return field
+  returnShowAutocomplete?: boolean;
+  returnAutocompleteIndex?: number;
+  returnError?: string; // Individual return field error message
 }
 
 interface ConditionalExpression {
@@ -100,6 +106,8 @@ const MappingTable: React.FC<MappingTableProps> = ({
   const functionPopoverInputRef = useRef<HTMLInputElement | null>(null);
   const clauseInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const clauseContainerRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const returnInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const returnContainerRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // Conditional popover state
   const [conditionalPopover, setConditionalPopover] = useState<{
@@ -227,146 +235,175 @@ const MappingTable: React.FC<MappingTableProps> = ({
                       str: string
                     ): ConditionalClause[] => {
                       const clauses: ConditionalClause[] = [];
-                      const regex = /(IF|ELSE IF|ELSE)\((.*?)\)/g;
-                      let match;
 
-                      while ((match = regex.exec(str)) !== null) {
+                      // Tokenizer that preserves #... manual values with spaces
+                      const tokenize = (input: string): string[] => {
+                        const tokens: string[] = [];
+                        let current = '';
+                        let inManualValue = false;
+
+                        for (let i = 0; i < input.length; i++) {
+                          const char = input[i];
+
+                          if (char === '#' && !inManualValue) {
+                            if (current.trim()) {
+                              tokens.push(current.trim());
+                              current = '';
+                            }
+                            inManualValue = true;
+                            current = char;
+                          } else if (char === ' ' && !inManualValue) {
+                            if (current.trim()) {
+                              tokens.push(current.trim());
+                              current = '';
+                            }
+                          } else if (char === ' ' && inManualValue) {
+                            const remaining = input.substring(i + 1);
+                            const nextToken = remaining.split(' ')[0];
+                            const isOperator = [
+                              '===',
+                              '!==',
+                              '&&',
+                              '||',
+                              '+',
+                              '-',
+                              '*',
+                              '/',
+                              '%',
+                              '>',
+                              '<',
+                              '>=',
+                              '<=',
+                            ].includes(nextToken);
+                            const isRid = objectsList.some(
+                              (obj) => obj.rid === nextToken
+                            );
+
+                            if (isOperator || isRid) {
+                              if (current.trim()) {
+                                tokens.push(current.trim());
+                                current = '';
+                              }
+                              inManualValue = false;
+                            } else {
+                              current += char;
+                            }
+                          } else {
+                            current += char;
+                          }
+                        }
+                        if (current.trim()) {
+                          tokens.push(current.trim());
+                        }
+                        return tokens;
+                      };
+
+                      const buildExpressions = (
+                        input: string
+                      ): FieldExpression[] => {
+                        const parts = tokenize(input);
+                        return parts
+                          .map((part) => {
+                            if (!part) return null;
+                            const objectItem = objectsList.find(
+                              (obj) => obj.rid === part
+                            );
+                            if (objectItem) {
+                              return {
+                                type: 'chip' as const,
+                                value: `${objectItem.parent_object}.${objectItem.object_name}`,
+                              };
+                            }
+                            const isOperator = [
+                              '===',
+                              '!==',
+                              '&&',
+                              '||',
+                              '+',
+                              '-',
+                              '*',
+                              '/',
+                              '%',
+                              '>',
+                              '<',
+                              '>=',
+                              '<=',
+                            ].includes(part);
+                            if (isOperator) {
+                              return { type: 'operator' as const, value: part };
+                            }
+                            if (!isNaN(Number(part)) && part.trim() !== '') {
+                              return { type: 'number' as const, value: part };
+                            }
+                            return { type: 'manual' as const, value: part };
+                          })
+                          .filter(Boolean) as FieldExpression[];
+                      };
+
+                      // Try new format: IF(...) { THEN ... } or IF(...) { RETURN ... }
+                      const newFormatRegex =
+                        /(IF|ELSE IF|ELSE)(?:\(([\s\S]*?)\))?\s*{\s*(?:RETURN|THEN)\s+([\s\S]*?)\s*}/g;
+                      let match;
+                      let hasNewFormat = false;
+
+                      while ((match = newFormatRegex.exec(str)) !== null) {
+                        hasNewFormat = true;
                         const type =
                           match[1] === 'ELSE IF'
                             ? 'ELSE_IF'
                             : (match[1] as 'IF' | 'ELSE');
-                        const content = match[2];
+                        const conditionContent = (match[2] || '').trim();
+                        const returnContent = (match[3] || '').trim();
 
-                        if (type === 'ELSE') {
-                          // Skip ELSE() suffix for the builder UI
-                          continue;
-                        } else {
-                          // Tokenizer that preserves #... manual values with spaces
-                          const tokenize = (input: string): string[] => {
-                            const tokens: string[] = [];
-                            let current = '';
-                            let inManualValue = false;
+                        clauses.push({
+                          type,
+                          condition: conditionContent,
+                          result: returnContent,
+                          expressions: buildExpressions(conditionContent),
+                          returnExpressions: buildExpressions(returnContent),
+                          inputValue: '',
+                        });
+                      }
 
-                            for (let i = 0; i < input.length; i++) {
-                              const char = input[i];
+                      // Fallback to old format: IF(cond, res)
+                      if (!hasNewFormat) {
+                        const oldFormatRegex = /(IF|ELSE IF|ELSE)\((.*?)\)/g;
+                        while ((match = oldFormatRegex.exec(str)) !== null) {
+                          const type =
+                            match[1] === 'ELSE IF'
+                              ? 'ELSE_IF'
+                              : (match[1] as 'IF' | 'ELSE');
+                          const content = match[2];
 
-                              if (char === '#' && !inManualValue) {
-                                // Start of manual value
-                                if (current.trim()) {
-                                  tokens.push(current.trim());
-                                  current = '';
-                                }
-                                inManualValue = true;
-                                current = char;
-                              } else if (char === ' ' && !inManualValue) {
-                                // Space outside manual value - token separator
-                                if (current.trim()) {
-                                  tokens.push(current.trim());
-                                  current = '';
-                                }
-                              } else if (char === ' ' && inManualValue) {
-                                // Check if next token is an operator or RID (end of manual value)
-                                const remaining = input.substring(i + 1);
-                                const nextToken = remaining.split(' ')[0];
-                                const isOperator = [
-                                  '===',
-                                  '!==',
-                                  '&&',
-                                  '||',
-                                  '+',
-                                  '-',
-                                  '*',
-                                  '/',
-                                  '%',
-                                  '>',
-                                  '<',
-                                  '>=',
-                                  '<=',
-                                ].includes(nextToken);
-                                const isRid = objectsList.some(
-                                  (obj) => obj.rid === nextToken
-                                );
-
-                                if (isOperator || isRid) {
-                                  // End manual value
-                                  if (current.trim()) {
-                                    tokens.push(current.trim());
-                                    current = '';
-                                  }
-                                  inManualValue = false;
-                                } else {
-                                  // Space is part of manual value
-                                  current += char;
-                                }
-                              } else {
-                                current += char;
-                              }
+                          if (type === 'ELSE') {
+                            clauses.push({
+                              type,
+                              result: content,
+                              returnExpressions: buildExpressions(content),
+                              inputValue: '',
+                            });
+                          } else {
+                            const lastCommaIndex = content.lastIndexOf(',');
+                            let cond = content;
+                            let res = '';
+                            if (lastCommaIndex !== -1) {
+                              cond = content
+                                .substring(0, lastCommaIndex)
+                                .trim();
+                              res = content
+                                .substring(lastCommaIndex + 1)
+                                .trim();
                             }
 
-                            // Push remaining token
-                            if (current.trim()) {
-                              tokens.push(current.trim());
-                            }
-
-                            return tokens;
-                          };
-
-                          const parts = tokenize(content);
-                          const expressions: FieldExpression[] = parts
-                            .map((part) => {
-                              if (!part) return null;
-
-                              // Check if part is an RID
-                              const objectItem = objectsList.find(
-                                (obj) => obj.rid === part
-                              );
-                              if (objectItem) {
-                                return {
-                                  type: 'chip',
-                                  value: `${objectItem.parent_object}.${objectItem.object_name}`,
-                                };
-                              }
-
-                              // Check for operators
-                              const isOperator = [
-                                '===',
-                                '!==',
-                                '&&',
-                                '||',
-                                '+',
-                                '-',
-                                '*',
-                                '/',
-                                '%',
-                                '>',
-                                '<',
-                                '>=',
-                                '<=',
-                              ].includes(part);
-                              if (isOperator) {
-                                return { type: 'operator', value: part };
-                              }
-
-                              // Check for numbers
-                              if (!isNaN(Number(part)) && part.trim() !== '') {
-                                return { type: 'number', value: part };
-                              }
-
-                              // Fallback to manual (includes #... values)
-                              return { type: 'manual', value: part };
-                            })
-                            .filter(Boolean) as FieldExpression[];
-
-                          clauses.push({
-                            type,
-                            condition: content,
-                            result: content,
-                            expressions:
-                              expressions.length > 0
-                                ? expressions
-                                : [{ type: 'manual', value: content }],
-                            inputValue: '',
-                          });
+                            clauses.push({
+                              type,
+                              condition: cond,
+                              result: res,
+                              expressions: buildExpressions(cond),
+                              returnExpressions: buildExpressions(res),
+                              inputValue: '',
+                            });
+                          }
                         }
                       }
                       return clauses;
@@ -749,6 +786,8 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 expressions: [],
                 inputValue: '',
                 result: '',
+                returnExpressions: [],
+                returnInputValue: '',
               },
             ],
             anchorEl: containerElement,
@@ -1389,6 +1428,25 @@ const MappingTable: React.FC<MappingTableProps> = ({
           expressions: [], // Initialize with empty expressions for the new input
           inputValue: '',
           result: '',
+          returnExpressions: [],
+          returnInputValue: '',
+        },
+      ],
+    });
+  };
+
+  const handleAddElse = (): void => {
+    if (!conditionalPopover) return;
+
+    setConditionalPopover({
+      ...conditionalPopover,
+      clauses: [
+        ...conditionalPopover.clauses,
+        {
+          type: 'ELSE',
+          result: '',
+          returnExpressions: [],
+          returnInputValue: '',
         },
       ],
     });
@@ -1404,6 +1462,227 @@ const MappingTable: React.FC<MappingTableProps> = ({
       ...conditionalPopover,
       clauses: newClauses,
     });
+  };
+
+  // Return field handlers - similar to condition field but focused on return value
+  const handleReturnInputChange = (index: number, value: string): void => {
+    if (!conditionalPopover) return;
+
+    const newClauses = [...conditionalPopover.clauses];
+    const clause = { ...newClauses[index] };
+
+    // Clear error on change
+    clause.returnError = undefined;
+
+    // Check for operators - IMPORTANT: Check longer operators first!
+    const operators = ['+', '-', '*', '/'];
+
+    const operatorMatch = operators.find((op) => value.endsWith(op));
+
+    if (operatorMatch && value.length > 0) {
+      // Extract everything before the operator
+      const beforeOperator = value.slice(0, -operatorMatch.length).trim();
+
+      if (beforeOperator) {
+        // Process pending input before operator
+        const atIndex = beforeOperator.lastIndexOf('@');
+
+        if (atIndex !== -1) {
+          // Incomplete autocomplete - add as text
+          const chipValue = beforeOperator.substring(atIndex);
+          const updated = [...(clause.returnExpressions || [])];
+          updated.push({ type: 'manual', value: chipValue });
+          clause.returnExpressions = updated;
+        } else if (
+          beforeOperator.trim() &&
+          !beforeOperator.trim().startsWith('@')
+        ) {
+          // Manual text or number
+          if (!isNaN(Number(beforeOperator.trim()))) {
+            clause.returnExpressions = [
+              ...(clause.returnExpressions || []),
+              { type: 'number', value: beforeOperator.trim() },
+            ];
+          } else {
+            clause.returnExpressions = [
+              ...(clause.returnExpressions || []),
+              { type: 'manual', value: beforeOperator.trim() },
+            ];
+          }
+        }
+      }
+
+      // Add operator
+      let operatorText = '';
+      switch (operatorMatch) {
+        case '+':
+          operatorText = '+';
+          break;
+        case '-':
+          operatorText = '-';
+          break;
+        case '*':
+          operatorText = '*';
+          break;
+        case '/':
+          operatorText = '/';
+          break;
+      }
+      clause.returnExpressions = [
+        ...(clause.returnExpressions || []),
+        { type: 'operator', value: operatorText },
+      ];
+      clause.returnInputValue = '';
+    } else {
+      clause.returnInputValue = value;
+    }
+
+    // Check for autocomplete trigger
+    const atIndex = (clause.returnInputValue || '').lastIndexOf('@');
+    const shouldShow = atIndex !== -1 && atIndex >= 0;
+
+    clause.returnShowAutocomplete = shouldShow;
+    if (shouldShow) {
+      clause.returnAutocompleteIndex = 0;
+    }
+
+    newClauses[index] = clause;
+    setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+  };
+
+  const handleReturnKeyDown = (
+    index: number,
+    event: React.KeyboardEvent
+  ): void => {
+    if (!conditionalPopover) return;
+
+    const newClauses = [...conditionalPopover.clauses];
+    const clause = { ...newClauses[index] };
+    clause.returnError = undefined;
+    const currentInput = clause.returnInputValue || '';
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+
+      // Handle autocomplete selection
+      if (clause.returnShowAutocomplete) {
+        const searchText = currentInput.substring(
+          currentInput.lastIndexOf('@') + 1
+        );
+        const options = getPopoverFilteredOptions(searchText);
+        const selectedOption = options[clause.returnAutocompleteIndex || 0];
+
+        if (selectedOption) {
+          handleReturnAutocompleteSelect(index, selectedOption);
+        }
+        return;
+      }
+
+      // Handle manual entry (#) or numbers
+      if (currentInput.trim().startsWith('#')) {
+        const manualValue = currentInput.trim().substring(1).trim();
+        if (manualValue) {
+          clause.returnExpressions = [
+            ...(clause.returnExpressions || []),
+            { type: 'manual', value: `#${manualValue}` },
+          ];
+          clause.returnInputValue = '';
+        }
+      } else if (currentInput.trim() && !isNaN(Number(currentInput.trim()))) {
+        // It's a number
+        clause.returnExpressions = [
+          ...(clause.returnExpressions || []),
+          { type: 'number', value: currentInput.trim() },
+        ];
+        clause.returnInputValue = '';
+      }
+
+      newClauses[index] = clause;
+      setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+      return;
+    }
+
+    // Autocomplete Navigation
+    if (clause.returnShowAutocomplete) {
+      const searchText = currentInput.substring(
+        currentInput.lastIndexOf('@') + 1
+      );
+      const options = getPopoverFilteredOptions(searchText);
+
+      switch (event.key) {
+        case 'ArrowDown':
+          event.preventDefault();
+          clause.returnAutocompleteIndex = Math.min(
+            (clause.returnAutocompleteIndex || 0) + 1,
+            options.length - 1
+          );
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          clause.returnAutocompleteIndex = Math.max(
+            (clause.returnAutocompleteIndex || 0) - 1,
+            0
+          );
+          break;
+        case 'Escape':
+          event.preventDefault();
+          clause.returnShowAutocomplete = false;
+          break;
+      }
+
+      newClauses[index] = clause;
+      setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+    }
+  };
+
+  const handleReturnAutocompleteSelect = (
+    index: number,
+    selectedValue: string
+  ): void => {
+    if (!conditionalPopover) return;
+    const newClauses = [...conditionalPopover.clauses];
+    const clause = { ...newClauses[index] };
+    clause.returnError = undefined;
+    const currentInput = clause.returnInputValue || '';
+
+    const atIndex = currentInput.lastIndexOf('@');
+    if (atIndex === -1) return;
+
+    const isCompleteProperty = selectedValue.includes('.');
+
+    if (!isCompleteProperty) {
+      // Parent selected - keep showing autocomplete with updated search
+      clause.returnInputValue =
+        currentInput.substring(0, atIndex) + '@' + selectedValue + '.';
+    } else {
+      // Complete selection - add as chip
+      clause.returnExpressions = [
+        ...(clause.returnExpressions || []),
+        { type: 'chip', value: selectedValue },
+      ];
+      clause.returnInputValue = '';
+      clause.returnShowAutocomplete = false;
+    }
+
+    newClauses[index] = clause;
+    setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+  };
+
+  const handleReturnRemoveChip = (
+    clauseIndex: number,
+    chipIndex: number
+  ): void => {
+    if (!conditionalPopover) return;
+    const newClauses = [...conditionalPopover.clauses];
+    const clause = { ...newClauses[clauseIndex] };
+    clause.returnError = undefined;
+
+    const newExpressions = [...(clause.returnExpressions || [])];
+    newExpressions.splice(chipIndex, 1);
+
+    clause.returnExpressions = newExpressions;
+    newClauses[clauseIndex] = clause;
+    setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
   };
 
   const handleConditionalPopoverSave = (): void => {
@@ -1428,141 +1707,221 @@ const MappingTable: React.FC<MappingTableProps> = ({
     // First pass: Validate ALL clauses and collect errors
     for (let i = 0; i < newClauses.length; i++) {
       const clause = { ...newClauses[i] };
-      // Clear previous error
+      // Clear previous errors
       clause.error = undefined;
+      clause.returnError = undefined;
 
-      // Rule: Invalid input validation (Check for uncommitted text)
-      if (clause.inputValue && clause.inputValue.trim()) {
-        clause.error = `Invalid text in input field. Use @ for fields or # for manual values.`;
-        hasValidationErrors = true;
-      }
-
-      // Validation Logic for Expressions
-      const expressions = clause.expressions || [];
-
-      if (expressions.length === 0 && !clause.inputValue) {
-        if (clause.type === 'IF') {
-          clause.error = 'The IF condition cannot be empty';
-          hasValidationErrors = true;
-        } else if (clause.type === 'ELSE_IF') {
-          clause.error =
-            'Please enter a condition or remove this ELSE IF block';
+      // ============ CONDITION VALIDATION (IF and ELSE_IF only) ============
+      if (clause.type !== 'ELSE') {
+        // Rule: Invalid input validation (Check for uncommitted text)
+        if (clause.inputValue && clause.inputValue.trim()) {
+          clause.error = `Invalid text in input field. Use @ for fields or # for manual values.`;
           hasValidationErrors = true;
         }
-      } else if (expressions.length > 0) {
-        // Rule: Number validation (Check for valid numbers in chips)
-        expressions.forEach((exp) => {
-          if (exp.type === 'number') {
-            if (isNaN(Number(exp.value)) || exp.value.trim() === '') {
-              clause.error = `Invalid number value: ${exp.value}`;
-              hasValidationErrors = true;
-            } else {
-              // Validate max 3 decimal places
-              const decimalMatch = exp.value.match(/\.(\d+)$/);
-              if (decimalMatch && decimalMatch[1].length > 3) {
-                clause.error = `Number entries has too many decimal places. Maximum of 3 allowed.`;
+
+        // Validation Logic for Expressions
+        const expressions = clause.expressions || [];
+
+        if (expressions.length === 0 && !clause.inputValue) {
+          if (clause.type === 'IF') {
+            clause.error = 'The IF condition cannot be empty';
+            hasValidationErrors = true;
+          } else if (clause.type === 'ELSE_IF') {
+            clause.error =
+              'Please enter a condition or remove this ELSE IF block';
+            hasValidationErrors = true;
+          }
+        } else if (expressions.length > 0) {
+          // Rule: Number validation (Check for valid numbers in chips)
+          expressions.forEach((exp) => {
+            if (exp.type === 'number') {
+              if (isNaN(Number(exp.value)) || exp.value.trim() === '') {
+                clause.error = `Invalid number value: ${exp.value}`;
                 hasValidationErrors = true;
+              } else {
+                // Validate max 3 decimal places
+                const decimalMatch = exp.value.match(/\.(\d+)$/);
+                if (decimalMatch && decimalMatch[1].length > 3) {
+                  clause.error = `Number entries has too many decimal places. Maximum of 3 allowed.`;
+                  hasValidationErrors = true;
+                }
               }
             }
+          });
+
+          if (hasValidationErrors) {
+            // Continue to collect other errors or stop? Let's keep checking for logic errors.
           }
-        });
 
-        if (hasValidationErrors) {
-          // Continue to collect other errors or stop? Let's keep checking for logic errors.
-        }
+          // Define operator categories
+          const comparisonOps = ['===', '!==', '>', '<', '>=', '<='];
+          const arithmeticOps = ['+', '-', '*', '/', '%'];
+          const logicalOps = ['&&', '||'];
 
-        // Define operator categories
-        const comparisonOps = ['===', '!==', '>', '<', '>=', '<='];
-        const arithmeticOps = ['+', '-', '*', '/', '%'];
-        const logicalOps = ['&&', '||'];
+          // Rule 0: Minimum 3 chips for each sub-condition (split by &&, ||)
+          const segments: FieldExpression[][] = [[]];
+          expressions.forEach((exp) => {
+            if (
+              exp.type === 'operator' &&
+              (exp.value === '&&' || exp.value === '||')
+            ) {
+              segments.push([]);
+            } else {
+              segments[segments.length - 1].push(exp);
+            }
+          });
 
-        // Rule 0: Minimum 3 chips for each sub-condition (split by &&, ||)
-        const segments: FieldExpression[][] = [[]];
-        expressions.forEach((exp) => {
-          if (
-            exp.type === 'operator' &&
-            (exp.value === '&&' || exp.value === '||')
-          ) {
-            segments.push([]);
+          if (segments.some((seg) => seg.length > 0 && seg.length < 3)) {
+            clause.error =
+              'Each part of the condition must be fully defined (e.g., value === 10)';
+            hasValidationErrors = true;
+          }
+          // Rule 1: Cannot start with operator
+          if (expressions[0].type === 'operator') {
+            clause.error =
+              'A condition cannot start with a operator or (&&, ||) symbol';
+            hasValidationErrors = true;
+          }
+          // Rule 2: Cannot end with operator
+          else if (expressions[expressions.length - 1].type === 'operator') {
+            clause.error =
+              'Condition cannot end with a operators or (&&, ||) symbol';
+            hasValidationErrors = true;
           } else {
-            segments[segments.length - 1].push(exp);
-          }
-        });
+            // Sequence Rules with strict operator validation
+            let conditionComplete = false; // Track when a complete condition exists (operand + operator + operand)
 
-        if (segments.some((seg) => seg.length > 0 && seg.length < 3)) {
-          clause.error =
-            'Each part of the condition must be fully defined (e.g., value === 10)';
-          hasValidationErrors = true;
-        }
-        // Rule 1: Cannot start with operator
-        if (expressions[0].type === 'operator') {
-          clause.error =
-            'A condition cannot start with a operator or (&&, ||) symbol';
-          hasValidationErrors = true;
-        }
-        // Rule 2: Cannot end with operator
-        else if (expressions[expressions.length - 1].type === 'operator') {
-          clause.error =
-            'Condition cannot end with a operators or (&&, ||) symbol';
-          hasValidationErrors = true;
-        } else {
-          // Sequence Rules with strict operator validation
-          let conditionComplete = false; // Track when a complete condition exists (operand + operator + operand)
+            for (let j = 0; j < expressions.length - 1; j++) {
+              const current = expressions[j];
+              const next = expressions[j + 1];
 
-          for (let j = 0; j < expressions.length - 1; j++) {
-            const current = expressions[j];
-            const next = expressions[j + 1];
+              const isCurrentOperator = current.type === 'operator';
+              const isNextOperator = next.type === 'operator';
 
-            const isCurrentOperator = current.type === 'operator';
-            const isNextOperator = next.type === 'operator';
+              const isCurrentOperand = !isCurrentOperator;
+              const isNextOperand = !isNextOperator;
 
-            const isCurrentOperand = !isCurrentOperator;
-            const isNextOperand = !isNextOperator;
+              // Rule 3: Operand followed by Operand (Missing Operator)
+              if (isCurrentOperand && isNextOperand) {
+                clause.error =
+                  'Please use && or || to connect multiple conditions';
+                hasValidationErrors = true;
+                break; // Stop checking this clause
+              }
 
-            // Rule 3: Operand followed by Operand (Missing Operator)
-            if (isCurrentOperand && isNextOperand) {
-              clause.error =
-                'Please use && or || to connect multiple conditions';
-              hasValidationErrors = true;
-              break; // Stop checking this clause
-            }
-
-            // Rule 4: Operator followed by Operator (Duplicate Operator)
-            if (isCurrentOperator && isNextOperator) {
-              clause.error = 'The symbol sequence in the condition is invalid';
-              hasValidationErrors = true;
-              break;
-            }
-
-            // NEW Rule 5: Track condition completion and validate operator usage
-            if (isCurrentOperator) {
-              const opValue = current.value;
-              const isComparison = comparisonOps.includes(opValue);
-              const isArithmetic = arithmeticOps.includes(opValue);
-              const isLogical = logicalOps.includes(opValue);
-
-              // If we already have a complete condition and next operator is not logical
-              if (conditionComplete && (isComparison || isArithmetic)) {
-                clause.error = `Invalid operator "${opValue}". Use && or || to connect conditions`;
+              // Rule 4: Operator followed by Operator (Duplicate Operator)
+              if (isCurrentOperator && isNextOperator) {
+                clause.error =
+                  'The symbol sequence in the condition is invalid';
                 hasValidationErrors = true;
                 break;
               }
 
-              // Mark condition as complete after: operand + (comparison/arithmetic) + operand
-              if ((isComparison || isArithmetic) && isNextOperand) {
-                // Check if operand after this operator completes the condition
-                if (
-                  j + 2 < expressions.length &&
-                  expressions[j + 2].type === 'operator'
-                ) {
-                  conditionComplete = true;
+              // NEW Rule 5: Track condition completion and validate operator usage
+              if (isCurrentOperator) {
+                const opValue = current.value;
+                const isComparison = comparisonOps.includes(opValue);
+                const isArithmetic = arithmeticOps.includes(opValue);
+                const isLogical = logicalOps.includes(opValue);
+
+                // If we already have a complete condition and next operator is not logical
+                if (conditionComplete && (isComparison || isArithmetic)) {
+                  clause.error = `Invalid operator "${opValue}". Use && or || to connect conditions`;
+                  hasValidationErrors = true;
+                  break;
+                }
+
+                // Mark condition as complete after: operand + (comparison/arithmetic) + operand
+                if ((isComparison || isArithmetic) && isNextOperand) {
+                  // Check if operand after this operator completes the condition
+                  if (
+                    j + 2 < expressions.length &&
+                    expressions[j + 2].type === 'operator'
+                  ) {
+                    conditionComplete = true;
+                  }
+                }
+
+                // Reset completion flag after logical operator
+                if (isLogical) {
+                  conditionComplete = false;
                 }
               }
+            }
+          }
+        }
+      }
 
-              // Reset completion flag after logical operator
-              if (isLogical) {
-                conditionComplete = false;
+      // ============ RETURN FIELD VALIDATION (ALL clause types) ============
+      // Return field is mandatory
+      const returnExpressions = clause.returnExpressions || [];
+      const returnInput = clause.returnInputValue || '';
+
+      // Check for uncommitted input
+      if (returnInput.trim()) {
+        clause.returnError = `Invalid text in then field. Use @ for fields or # for manual values.`;
+        hasValidationErrors = true;
+      }
+
+      // Return field cannot be empty
+      if (returnExpressions.length === 0 && !returnInput.trim()) {
+        clause.returnError = 'Then value is required';
+        hasValidationErrors = true;
+      } else if (returnExpressions.length > 0) {
+        // Validate return expressions (similar to Target field validation)
+
+        // Rule: Number validation
+        returnExpressions.forEach((exp) => {
+          if (exp.type === 'number') {
+            if (isNaN(Number(exp.value)) || exp.value.trim() === '') {
+              clause.returnError = `Invalid number value: ${exp.value}`;
+              hasValidationErrors = true;
+            } else {
+              const decimalMatch = exp.value.match(/\.(\d+)$/);
+              if (decimalMatch && decimalMatch[1].length > 3) {
+                clause.returnError = `Number has too many decimal places. Maximum of 3 allowed.`;
+                hasValidationErrors = true;
               }
+            }
+          }
+        });
+
+        // Rule: Cannot start with operator
+        if (returnExpressions[0].type === 'operator') {
+          clause.returnError = 'Then value cannot start with an operator';
+          hasValidationErrors = true;
+        }
+        // Rule: Cannot end with operator
+        else if (
+          returnExpressions[returnExpressions.length - 1].type === 'operator'
+        ) {
+          clause.returnError = 'Then value cannot end with an operator';
+          hasValidationErrors = true;
+        } else {
+          // Check for consecutive operators or consecutive values
+          for (let j = 0; j < returnExpressions.length - 1; j++) {
+            const current = returnExpressions[j];
+            const next = returnExpressions[j + 1];
+
+            if (current.type === 'operator' && next.type === 'operator') {
+              clause.returnError = 'Cannot have consecutive operators';
+              hasValidationErrors = true;
+              break;
+            }
+
+            const isCurrentValue =
+              current.type === 'chip' ||
+              current.type === 'manual' ||
+              current.type === 'number';
+            const isNextValue =
+              next.type === 'chip' ||
+              next.type === 'manual' ||
+              next.type === 'number';
+
+            if (isCurrentValue && isNextValue) {
+              clause.returnError = 'Missing operator between values';
+              hasValidationErrors = true;
+              break;
             }
           }
         }
@@ -1584,8 +1943,27 @@ const MappingTable: React.FC<MappingTableProps> = ({
     const validClauses: ConditionalClause[] = [];
     for (let i = 0; i < newClauses.length; i++) {
       const clause = newClauses[i];
-      // Build string from expressions
-      const conditionStr = (clause.expressions || [])
+
+      // Build condition string from expressions (for IF and ELSE_IF)
+      let conditionStr = '';
+      if (clause.type !== 'ELSE') {
+        conditionStr = (clause.expressions || [])
+          .map((exp) => {
+            if (exp.type === 'chip') {
+              const [parent, child] = exp.value.split('.', 2);
+              const objectId = targetOptions[parent]?.[child] || '';
+              return objectId;
+            } else if (exp.type === 'operator') {
+              return ` ${exp.value} `;
+            } else {
+              return exp.value;
+            }
+          })
+          .join('');
+      }
+
+      // Build return string from return expressions
+      const returnStr = (clause.returnExpressions || [])
         .map((exp) => {
           if (exp.type === 'chip') {
             const [parent, child] = exp.value.split('.', 2);
@@ -1599,25 +1977,29 @@ const MappingTable: React.FC<MappingTableProps> = ({
         })
         .join('');
 
-      if (!conditionStr.trim()) continue;
-
-      const validClause = {
+      const validClause: ConditionalClause = {
         ...clause,
         condition: conditionStr.trim(),
-        result: conditionStr.trim(),
+        result: returnStr.trim(), // This is the actual return value
         expressions: clause.expressions,
+        returnExpressions: clause.returnExpressions,
       };
       validClauses.push(validClause);
 
+      // Build payload string
       if (clause.type === 'IF') {
-        payloadParts.push(`IF(${conditionStr.trim()})`);
+        payloadParts.push(
+          `IF(${conditionStr.trim()}) { THEN ${returnStr.trim()} }`
+        );
       } else if (clause.type === 'ELSE_IF') {
-        payloadParts.push(`ELSE IF(${conditionStr.trim()})`);
+        payloadParts.push(
+          `ELSE IF(${conditionStr.trim()}) { THEN ${returnStr.trim()} }`
+        );
+      } else if (clause.type === 'ELSE') {
+        payloadParts.push(`ELSE { THEN ${returnStr.trim()} }`);
       }
     }
 
-    // Always append ELSE()
-    payloadParts.push('ELSE()');
     const payloadValue = payloadParts.join(' ');
 
     const conditionalExpression: ConditionalExpression = {
@@ -1631,7 +2013,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
 
           const conditionalExp: FieldExpression = {
             type: 'conditional' as const,
-            value: payloadValue, // This is the string representation like IF(...) ELSE IF(...)
+            value: payloadValue, // This is the string representation like IF(..., ...) ELSE IF(..., ...) ELSE(...)
             conditionalData: conditionalExpression,
           };
 
@@ -1673,7 +2055,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
 
     const containerElement = containerRefs.current[rid];
     if (containerElement) {
-      // Load clauses and ensure expressions exist
+      // Load clauses and ensure expressions and return expressions exist
       const loadedClauses = expression.conditionalData.clauses.map((c) => ({
         ...c,
         // If expressions missing (legacy), convert condition string to manual chip
@@ -1685,6 +2067,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
         inputValue: '',
         showAutocomplete: false,
         autocompleteIndex: 0,
+        // Load return expressions (if missing, try to parse from result)
+        returnExpressions: c.returnExpressions || [],
+        returnInputValue: '',
+        returnShowAutocomplete: false,
+        returnAutocompleteIndex: 0,
       }));
 
       setConditionalPopover({
@@ -1932,7 +2319,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               <span>
                 <Tooltip
                   title={
-                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for manual text entry, then press Enter (e.g., #Custom Value)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (IF/ELSE IF), then press Enter\n• Use operators: +, -, *, / between values'
+                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for manual text entry, then press Enter (e.g., #Custom Value)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
                   }
                   arrow
                   placement='top'
@@ -2097,6 +2484,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                     borderColor: '#0176D3',
                                     color: '#0176D3',
                                     margin: '1px',
+                                    borderRadius: '4px',
                                     '& .MuiChip-deleteIcon': {
                                       fontSize: '14px',
                                       color: '#0176D3',
@@ -2129,6 +2517,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                     borderColor: '#22c55e',
                                     color: '#16a34a',
                                     margin: '1px',
+                                    borderRadius: '4px',
                                     '& .MuiChip-deleteIcon': {
                                       fontSize: '14px',
                                       color: '#16a34a',
@@ -2164,6 +2553,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                     borderColor: '#9333ea',
                                     color: '#7e22ce',
                                     margin: '1px',
+                                    borderRadius: '4px',
                                     cursor: 'pointer',
                                     '&:hover': {
                                       backgroundColor: '#e9d5ff',
@@ -2200,6 +2590,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                     borderColor: '#f97316',
                                     color: '#ea580c',
                                     margin: '1px',
+                                    borderRadius: '4px',
                                     '& .MuiChip-deleteIcon': {
                                       fontSize: '14px',
                                       color: '#ea580c',
@@ -2235,6 +2626,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                     borderColor: '#f472b6',
                                     color: '#9d174d',
                                     margin: '1px',
+                                    borderRadius: '4px',
                                     cursor: 'pointer',
                                     '&:hover': {
                                       backgroundColor: '#cffafe',
@@ -2272,6 +2664,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                   borderColor: '#b9bb3dff',
                                   color: '#000',
                                   margin: '1px',
+                                  borderRadius: '4px',
                                   '& .MuiChip-deleteIcon': {
                                     fontSize: '14px',
                                     color: '#616220ff',
@@ -2307,7 +2700,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onBlur={() => handleInputBlur(mapping.rid)}
                           placeholder={
                             (mapping.fieldExpressions || []).length === 0
-                              ? 'Type @ fields, # manual, numbers, MIN/MAX, IF/ELSE IF or +, -, *, / for operators'
+                              ? 'Type @ fields, # manual, numbers, MIN/MAX, if/else/else if or +, -, *, / for operators'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -2451,6 +2844,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         fontSize: '11px',
                         height: '20px',
                         maxWidth: '200px',
+                        borderRadius: '4px',
                         backgroundColor:
                           arg.type === 'chip' ? '#f0f9ff' : '#f0fdf4',
                         borderColor:
@@ -2578,7 +2972,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               width: conditionalPopover?.anchorEl
                 ? conditionalPopover.anchorEl.clientWidth + 5
                 : '500px',
-              maxHeight: '600px',
+              maxHeight: '700px',
               overflow: 'visible',
               mt: '3px',
             },
@@ -2586,268 +2980,555 @@ const MappingTable: React.FC<MappingTableProps> = ({
         }}
       >
         {conditionalPopover && (
-          <div className='flex flex-col p-4 gap-3'>
+          <div className='flex flex-col p-4 gap-3 bg-[#fff]'>
             {/* Header */}
-            <div className='text-sm font-semibold text-gray-700'>
-              {`Build (IF / ELSE IF) Condition`}
+            <div className='text-sm font-semibold text-gray-700 mb-1'>
+              Build (if / else / else if) Condition
             </div>
 
-            <div className='max-h-[250px] overflow-y-auto flex flex-col gap-3 px-1'>
+            <div className='max-h-[250px] overflow-y-auto flex flex-col gap-0 px-1'>
               {conditionalPopover.clauses.map((clause, index) => (
                 <div
                   key={index}
-                  className={`flex flex-col gap-1 ${clause.showAutocomplete ? 'z-[100]' : 'z-[1]'}`}
+                  className={`flex flex-col gap-2 py-2 px-3 border border-[#CBD6E2] rounded-lg bg-white mb-1 shadow-sm relative ${
+                    clause.showAutocomplete || clause.returnShowAutocomplete
+                      ? 'z-[100]'
+                      : 'z-[1]'
+                  }`}
                 >
-                  <div className='flex items-center justify-between'>
-                    <label
-                      className={`text-xs font-bold text-gray-700 ${clause.type === 'IF' ? '' : 'mt-2'}`}
-                    >
-                      {clause.type === 'IF'
-                        ? 'IF'
-                        : clause.type === 'ELSE_IF'
-                          ? 'ELSE IF'
-                          : 'ELSE'}
-                    </label>
-                    {clause.type === 'ELSE_IF' && (
-                      <IconButton
-                        size='small'
-                        onClick={() => handleRemoveClause(index)}
-                        sx={{
-                          padding: '2px',
-                          color: '#dc2626',
-                          '&:hover': {
-                            backgroundColor: '#fee2e2',
-                          },
-                        }}
-                      >
-                        <React.Suspense fallback={null}>
-                          <CloseIcon className='w-4 h-4 p-0.5' />
-                        </React.Suspense>
-                      </IconButton>
-                    )}
-                  </div>
-
-                  <div
-                    className={`relative ${clause.showAutocomplete ? 'z-[100]' : 'z-[1]'}`}
-                  >
-                    <div
-                      ref={(el) => (clauseContainerRefs.current[index] = el)}
-                      className={`w-full min-h-[40px] max-h-[120px] overflow-y-auto px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${
-                        clause.error
-                          ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500'
-                          : 'border-gray-300 bg-white focus-within:border-blue-400'
-                      }`}
-                      onClick={() => {
-                        // Focus logic
+                  {/* Remove Button for ELSE IF / ELSE */}
+                  {clause.type !== 'IF' && (
+                    <IconButton
+                      size='small'
+                      onClick={() => handleRemoveClause(index)}
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        padding: '2px',
+                        color: '#dc2626',
+                        '&:hover': {
+                          backgroundColor: '#fee2e2',
+                        },
                       }}
                     >
-                      {/* Chips */}
-                      {(clause.expressions || []).map((item, chipIdx) => (
-                        <div key={chipIdx}>
-                          {item.type === 'chip' ? (
-                            <Tooltip title={item.value} arrow placement='top'>
-                              <Chip
-                                label={item.value}
-                                size='small'
-                                variant='outlined'
-                                onDelete={() =>
-                                  handleClauseRemoveChip(index, chipIdx)
-                                }
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '20px',
-                                  maxWidth: '150px',
-                                  backgroundColor: '#f0f9ff',
-                                  borderColor: '#3b82f6',
-                                  color: '#1e40af',
-                                  margin: '1px',
-                                  '& .MuiChip-deleteIcon': {
-                                    fontSize: '14px',
-                                    color: '#1e40af',
-                                    '&:hover': { color: '#ef4444' },
-                                  },
-                                }}
-                              />
-                            </Tooltip>
-                          ) : item.type === 'manual' ? (
-                            <Tooltip title={item.value} arrow placement='top'>
-                              <Chip
-                                label={item.value}
-                                size='small'
-                                variant='outlined'
-                                onDelete={() =>
-                                  handleClauseRemoveChip(index, chipIdx)
-                                }
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '20px',
-                                  maxWidth: '150px',
-                                  backgroundColor: '#f0fdf4',
-                                  borderColor: '#22c55e',
-                                  color: '#16a34a',
-                                  margin: '1px',
-                                  '& .MuiChip-deleteIcon': {
-                                    fontSize: '14px',
-                                    color: '#16a34a',
-                                    '&:hover': { color: '#ef4444' },
-                                  },
-                                }}
-                              />
-                            </Tooltip>
-                          ) : item.type === 'number' ? (
-                            <Tooltip title={item.value} arrow placement='top'>
-                              <Chip
-                                label={item.value}
-                                size='small'
-                                variant='outlined'
-                                onDelete={() =>
-                                  handleClauseRemoveChip(index, chipIdx)
-                                }
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '20px',
-                                  maxWidth: '150px',
-                                  backgroundColor: '#fff7ed',
-                                  borderColor: '#f97316',
-                                  color: '#ea580c',
-                                  margin: '1px',
-                                  '& .MuiChip-deleteIcon': {
-                                    fontSize: '14px',
-                                    color: '#ea580c',
-                                    '&:hover': { color: '#ef4444' },
-                                  },
-                                }}
-                              />
-                            </Tooltip>
-                          ) : item.type === 'operator' ? (
-                            <Chip
-                              label={item.value}
-                              size='small'
-                              variant='outlined'
-                              onDelete={() =>
-                                handleClauseRemoveChip(index, chipIdx)
-                              }
-                              sx={{
-                                fontSize: '11px',
-                                height: '20px',
-                                backgroundColor:
-                                  item.value === '&&' || item.value === '||'
-                                    ? '#fdf2f8'
-                                    : '#fef9c3',
-                                borderColor:
-                                  item.value === '&&' || item.value === '||'
-                                    ? '#f472b6'
-                                    : '#eab308',
-                                color:
-                                  item.value === '&&' || item.value === '||'
-                                    ? '#9d174d'
-                                    : '#a16207',
-                                margin: '1px',
-                                '& .MuiChip-deleteIcon': {
-                                  fontSize: '14px',
-                                  color:
-                                    item.value === '&&' || item.value === '||'
-                                      ? '#9d174d'
-                                      : '#a16207',
-                                  '&:hover': { color: '#ef4444' },
-                                },
-                                '& .MuiChip-label': {
-                                  paddingBottom:
-                                    item.value === '*' ? '0px' : '2px',
-                                  paddingTop:
-                                    item.value === '*' ? '6px' : '0px',
-                                },
-                              }}
-                            />
-                          ) : null}
-                        </div>
-                      ))}
+                      <React.Suspense fallback={null}>
+                        <CloseIcon className='w-4 h-4 p-0.5' />
+                      </React.Suspense>
+                    </IconButton>
+                  )}
 
-                      {/* Input */}
-                      <input
-                        ref={(el) => (clauseInputRefs.current[index] = el)}
-                        type='text'
-                        value={clause.inputValue || ''}
-                        onChange={(e) =>
-                          handleClauseInputChange(index, e.target.value)
-                        }
-                        onKeyDown={(e) => handleClauseKeyDown(index, e)}
-                        placeholder={
-                          (clause.expressions || []).length === 0
-                            ? 'Type @ fields, # manual, numbers, &&,|| for conditions or +, -, *, / for operators'
-                            : 'Add more...'
-                        }
-                        className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
-                        style={{ minWidth: '150px' }}
-                      />
-                    </div>
+                  {/* Condition Part (IF and ELSE_IF) */}
+                  {clause.type !== 'ELSE' && (
+                    <div className='flex flex-col gap-2'>
+                      <div className='text-sm font-bold text-gray-800'>
+                        {clause.type === 'IF' ? 'if (' : 'else if ('}
+                      </div>
 
-                    {/* Autocomplete */}
-                    {clause.showAutocomplete &&
-                      clauseContainerRefs.current[index] && (
-                        <Popover
-                          open={true}
-                          anchorEl={clauseContainerRefs.current[index]}
-                          onClose={() => {
-                            const newClauses = [...conditionalPopover.clauses];
-                            newClauses[index].showAutocomplete = false;
-                            setConditionalPopover({
-                              ...conditionalPopover,
-                              clauses: newClauses,
-                            });
-                          }}
-                          anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'left',
-                          }}
-                          transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'left',
-                          }}
-                          disableAutoFocus
-                          disableEnforceFocus
-                          slotProps={{
-                            paper: {
-                              sx: {
-                                maxHeight: '200px',
-                                width:
-                                  clauseContainerRefs.current[index]
-                                    ?.clientWidth + 2 || '300px',
-                                mt: '4px',
-                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                border: '1px solid #d1d5db',
-                                zIndex: 1300,
-                              },
-                            },
+                      <div
+                        className={`relative ${clause.showAutocomplete ? 'z-[100]' : 'z-[1]'}`}
+                      >
+                        <div
+                          ref={(el) =>
+                            (clauseContainerRefs.current[index] = el)
+                          }
+                          className={`w-full min-h-[40px] max-h-[80px] overflow-y-auto px-2 py-1 rounded-[2px] border flex flex-wrap items-start gap-1.5 cursor-text transition-all ${
+                            clause.error
+                              ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500'
+                              : 'border-gray-300 bg-white focus-within:border-blue-400'
+                          }`}
+                          onClick={() => {
+                            clauseInputRefs.current[index]?.focus();
                           }}
                         >
-                          <div className='bg-white max-h-[150px] overflow-y-auto'>
-                            {getPopoverFilteredOptions(
-                              (clause.inputValue || '').substring(
-                                (clause.inputValue || '').lastIndexOf('@') + 1
-                              )
-                            ).map((option, idx) => (
-                              <div
-                                key={idx}
-                                className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-100 hover:text-blue-800`}
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() =>
-                                  handleClauseAutocompleteSelect(index, option)
-                                }
-                              >
-                                {getPopoverDisplayName(option)}
-                              </div>
-                            ))}
-                          </div>
-                        </Popover>
-                      )}
+                          {/* Chips */}
+                          {(clause.expressions || []).map((item, chipIdx) => (
+                            <div key={chipIdx}>
+                              {item.type === 'chip' ? (
+                                <Tooltip
+                                  title={item.value}
+                                  arrow
+                                  placement='top'
+                                >
+                                  <Chip
+                                    label={item.value}
+                                    size='small'
+                                    variant='outlined'
+                                    onDelete={() =>
+                                      handleClauseRemoveChip(index, chipIdx)
+                                    }
+                                    sx={{
+                                      fontSize: '11px',
+                                      height: '20px',
+                                      maxWidth: '150px',
+                                      backgroundColor: '#eff6ff',
+                                      borderColor: '#3b82f6',
+                                      color: '#1d4ed8',
+                                      fontWeight: 500,
+                                      borderRadius: '4px',
+                                      '& .MuiChip-deleteIcon': {
+                                        fontSize: '14px',
+                                        color: '#1d4ed8',
+                                        '&:hover': { color: '#dc2626' },
+                                      },
+                                    }}
+                                  />
+                                </Tooltip>
+                              ) : item.type === 'manual' ? (
+                                <Tooltip
+                                  title={item.value}
+                                  arrow
+                                  placement='top'
+                                >
+                                  <Chip
+                                    label={item.value}
+                                    size='small'
+                                    variant='outlined'
+                                    onDelete={() =>
+                                      handleClauseRemoveChip(index, chipIdx)
+                                    }
+                                    sx={{
+                                      fontSize: '11px',
+                                      height: '20px',
+                                      maxWidth: '150px',
+                                      backgroundColor: '#f0fdf4',
+                                      borderColor: '#22c55e',
+                                      color: '#15803d',
+                                      fontWeight: 500,
+                                      borderRadius: '4px',
+                                      '& .MuiChip-deleteIcon': {
+                                        fontSize: '14px',
+                                        color: '#15803d',
+                                        '&:hover': { color: '#dc2626' },
+                                      },
+                                    }}
+                                  />
+                                </Tooltip>
+                              ) : item.type === 'number' ? (
+                                <Tooltip
+                                  title={item.value}
+                                  arrow
+                                  placement='top'
+                                >
+                                  <Chip
+                                    label={item.value}
+                                    size='small'
+                                    variant='outlined'
+                                    onDelete={() =>
+                                      handleClauseRemoveChip(index, chipIdx)
+                                    }
+                                    sx={{
+                                      fontSize: '11px',
+                                      height: '20px',
+                                      maxWidth: '150px',
+                                      backgroundColor: '#fff7ed',
+                                      borderColor: '#f97316',
+                                      color: '#c2410c',
+                                      fontWeight: 500,
+                                      borderRadius: '4px',
+                                      '& .MuiChip-deleteIcon': {
+                                        fontSize: '14px',
+                                        color: '#c2410c',
+                                        '&:hover': { color: '#dc2626' },
+                                      },
+                                    }}
+                                  />
+                                </Tooltip>
+                              ) : item.type === 'operator' ? (
+                                <Chip
+                                  label={item.value}
+                                  size='small'
+                                  variant='outlined'
+                                  onDelete={() =>
+                                    handleClauseRemoveChip(index, chipIdx)
+                                  }
+                                  sx={{
+                                    fontSize: '11px',
+                                    height: '20px',
+                                    fontWeight: 700,
+                                    backgroundColor:
+                                      item.value === '&&' || item.value === '||'
+                                        ? '#fdf2f8'
+                                        : '#fef9c3',
+                                    borderColor:
+                                      item.value === '&&' || item.value === '||'
+                                        ? '#f472b6'
+                                        : '#eab308',
+                                    color:
+                                      item.value === '&&' || item.value === '||'
+                                        ? '#9d174d'
+                                        : '#854d0e',
+                                    borderRadius: '4px',
+                                    '& .MuiChip-deleteIcon': {
+                                      fontSize: '14px',
+                                      color:
+                                        item.value === '&&' ||
+                                        item.value === '||'
+                                          ? '#9d174d'
+                                          : '#854d0e',
+                                      '&:hover': { color: '#dc2626' },
+                                    },
+                                    '& .MuiChip-label': {
+                                      paddingBottom:
+                                        item.value === '*' ? '0px' : '2px',
+                                      paddingTop:
+                                        item.value === '*' ? '6px' : '0px',
+                                    },
+                                  }}
+                                />
+                              ) : null}
+                            </div>
+                          ))}
 
-                    {/* Individual Clause Error */}
-                    {clause.error && (
-                      <div className='text-xs text-red-600 mt-1'>
-                        {clause.error}
+                          {/* Input */}
+                          <input
+                            ref={(el) => (clauseInputRefs.current[index] = el)}
+                            type='text'
+                            value={clause.inputValue || ''}
+                            onChange={(e) =>
+                              handleClauseInputChange(index, e.target.value)
+                            }
+                            onKeyDown={(e) => handleClauseKeyDown(index, e)}
+                            placeholder={
+                              (clause.expressions || []).length === 0
+                                ? 'Type @ fields, # manual, &&, ||, operators...'
+                                : 'Add more...'
+                            }
+                            className='flex-1 min-w-[120px] rounded-[2px] border-none outline-none bg-transparent text-sm placeholder-gray-400'
+                            autoComplete='off'
+                          />
+                        </div>
+
+                        {/* Autocomplete */}
+                        {clause.showAutocomplete &&
+                          clauseContainerRefs.current[index] && (
+                            <Popover
+                              open={true}
+                              anchorEl={clauseContainerRefs.current[index]}
+                              onClose={() => {
+                                const newClauses = [
+                                  ...conditionalPopover.clauses,
+                                ];
+                                newClauses[index].showAutocomplete = false;
+                                setConditionalPopover({
+                                  ...conditionalPopover,
+                                  clauses: newClauses,
+                                });
+                              }}
+                              anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                              }}
+                              transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'left',
+                              }}
+                              disableAutoFocus
+                              disableEnforceFocus
+                              slotProps={{
+                                paper: {
+                                  sx: {
+                                    maxHeight: '200px',
+                                    width:
+                                      clauseContainerRefs.current[index]
+                                        ?.clientWidth + 2 || '300px',
+                                    mt: '4px',
+                                    boxShadow:
+                                      '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                    border: '1px solid #d1d5db',
+                                    zIndex: 1300,
+                                  },
+                                },
+                              }}
+                            >
+                              <div className='bg-white max-h-[150px] overflow-y-auto'>
+                                {getPopoverFilteredOptions(
+                                  (clause.inputValue || '').substring(
+                                    (clause.inputValue || '').lastIndexOf('@') +
+                                      1
+                                  )
+                                ).map((option, idx) => (
+                                  <div
+                                    key={idx}
+                                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-50 last:border-0`}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() =>
+                                      handleClauseAutocompleteSelect(
+                                        index,
+                                        option
+                                      )
+                                    }
+                                  >
+                                    {getPopoverDisplayName(option)}
+                                  </div>
+                                ))}
+                              </div>
+                            </Popover>
+                          )}
+
+                        {/* Individual Clause Error */}
+                        {clause.error && (
+                          <div className='text-xs text-red-600 mt-1'>
+                            {clause.error}
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      <div className='text-sm font-bold text-gray-800 font-mono'>
+                        {` ) {`}
+                      </div>
+                    </div>
+                  )}
+
+                  {clause.type === 'ELSE' && (
+                    <div className='text-sm font-bold text-gray-800 font-mono mb-2'>
+                      else {'{'}
+                    </div>
+                  )}
+
+                  {/* Return Field - ALL clause types */}
+                  <div className='flex flex-col gap-2'>
+                    <label className='text-sm font-bold text-gray-800'>
+                      then
+                    </label>
+                    <div
+                      className={`relative ${clause.returnShowAutocomplete ? 'z-[100]' : 'z-[1]'}`}
+                    >
+                      <div
+                        ref={(el) => (returnContainerRefs.current[index] = el)}
+                        className={`w-full min-h-[40px] max-h-[80px] overflow-y-auto px-2 py-1 rounded-[2px] border flex flex-wrap items-start gap-1.5 cursor-text transition-all ${
+                          clause.returnError
+                            ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500'
+                            : 'border-gray-300 bg-white focus-within:border-blue-400'
+                        }`}
+                        onClick={() => {
+                          returnInputRefs.current[index]?.focus();
+                        }}
+                      >
+                        {/* Return Chips */}
+                        {(clause.returnExpressions || []).map(
+                          (item, chipIdx) => (
+                            <div key={chipIdx}>
+                              {item.type === 'chip' ? (
+                                <Tooltip
+                                  title={item.value}
+                                  arrow
+                                  placement='top'
+                                >
+                                  <Chip
+                                    label={item.value}
+                                    size='small'
+                                    variant='outlined'
+                                    onDelete={() =>
+                                      handleReturnRemoveChip(index, chipIdx)
+                                    }
+                                    sx={{
+                                      fontSize: '11px',
+                                      height: '20px',
+                                      maxWidth: '150px',
+                                      backgroundColor: '#eff6ff',
+                                      borderColor: '#0176D3',
+                                      color: '#0176D3',
+                                      fontWeight: 500,
+                                      borderRadius: '4px',
+                                      '& .MuiChip-deleteIcon': {
+                                        fontSize: '14px',
+                                        color: '#0176D3',
+                                        '&:hover': { color: '#dc2626' },
+                                      },
+                                    }}
+                                  />
+                                </Tooltip>
+                              ) : item.type === 'manual' ? (
+                                <Tooltip
+                                  title={item.value}
+                                  arrow
+                                  placement='top'
+                                >
+                                  <Chip
+                                    label={item.value}
+                                    size='small'
+                                    variant='outlined'
+                                    onDelete={() =>
+                                      handleReturnRemoveChip(index, chipIdx)
+                                    }
+                                    sx={{
+                                      fontSize: '11px',
+                                      height: '20px',
+                                      maxWidth: '150px',
+                                      backgroundColor: '#f0fdf4',
+                                      borderColor: '#22c55e',
+                                      color: '#15803d',
+                                      fontWeight: 500,
+                                      borderRadius: '4px',
+                                      '& .MuiChip-deleteIcon': {
+                                        fontSize: '14px',
+                                        color: '#15803d',
+                                        '&:hover': { color: '#dc2626' },
+                                      },
+                                    }}
+                                  />
+                                </Tooltip>
+                              ) : item.type === 'number' ? (
+                                <Tooltip
+                                  title={item.value}
+                                  arrow
+                                  placement='top'
+                                >
+                                  <Chip
+                                    label={item.value}
+                                    size='small'
+                                    variant='outlined'
+                                    onDelete={() =>
+                                      handleReturnRemoveChip(index, chipIdx)
+                                    }
+                                    sx={{
+                                      fontSize: '11px',
+                                      height: '20px',
+                                      maxWidth: '150px',
+                                      backgroundColor: '#fff7ed',
+                                      borderColor: '#f97316',
+                                      color: '#c2410c',
+                                      fontWeight: 500,
+                                      borderRadius: '4px',
+                                      '& .MuiChip-deleteIcon': {
+                                        fontSize: '14px',
+                                        color: '#c2410c',
+                                        '&:hover': { color: '#dc2626' },
+                                      },
+                                    }}
+                                  />
+                                </Tooltip>
+                              ) : item.type === 'operator' ? (
+                                <Chip
+                                  label={item.value}
+                                  size='small'
+                                  variant='outlined'
+                                  onDelete={() =>
+                                    handleReturnRemoveChip(index, chipIdx)
+                                  }
+                                  sx={{
+                                    fontSize: '11px',
+                                    height: '20px',
+                                    fontWeight: 700,
+                                    backgroundColor: '#fef9c3',
+                                    borderColor: '#eab308',
+                                    color: '#854d0e',
+                                    borderRadius: '4px',
+                                    '& .MuiChip-deleteIcon': {
+                                      fontSize: '14px',
+                                      color: '#854d0e',
+                                      '&:hover': { color: '#dc2626' },
+                                    },
+                                    '& .MuiChip-label': {
+                                      paddingBottom:
+                                        item.value === '*' ? '0px' : '2px',
+                                      paddingTop:
+                                        item.value === '*' ? '6px' : '0px',
+                                    },
+                                  }}
+                                />
+                              ) : null}
+                            </div>
+                          )
+                        )}
+
+                        {/* Return Input */}
+                        <input
+                          ref={(el) => (returnInputRefs.current[index] = el)}
+                          type='text'
+                          value={clause.returnInputValue || ''}
+                          onChange={(e) =>
+                            handleReturnInputChange(index, e.target.value)
+                          }
+                          onKeyDown={(e) => handleReturnKeyDown(index, e)}
+                          placeholder={
+                            (clause.returnExpressions || []).length === 0
+                              ? 'Type @ fields, # manual, numbers...'
+                              : 'Add more...'
+                          }
+                          className='flex-1 min-w-[120px] border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
+                        />
+                      </div>
+
+                      {/* Return Autocomplete */}
+                      {clause.returnShowAutocomplete &&
+                        returnContainerRefs.current[index] && (
+                          <Popover
+                            open={true}
+                            anchorEl={returnContainerRefs.current[index]}
+                            onClose={() => {
+                              const newClauses = [
+                                ...conditionalPopover.clauses,
+                              ];
+                              newClauses[index].returnShowAutocomplete = false;
+                              setConditionalPopover({
+                                ...conditionalPopover,
+                                clauses: newClauses,
+                              });
+                            }}
+                            anchorOrigin={{
+                              vertical: 'bottom',
+                              horizontal: 'left',
+                            }}
+                            transformOrigin={{
+                              vertical: 'top',
+                              horizontal: 'left',
+                            }}
+                            disableAutoFocus
+                            disableEnforceFocus
+                            slotProps={{
+                              paper: {
+                                sx: {
+                                  maxHeight: '200px',
+                                  width:
+                                    returnContainerRefs.current[index]
+                                      ?.clientWidth + 2 || '300px',
+                                  mt: '4px',
+                                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                  border: '1px solid #d1d5db',
+                                  zIndex: 1300,
+                                },
+                              },
+                            }}
+                          >
+                            <div className='bg-white max-h-[150px] overflow-y-auto'>
+                              {getPopoverFilteredOptions(
+                                (clause.returnInputValue || '').substring(
+                                  (clause.returnInputValue || '').lastIndexOf(
+                                    '@'
+                                  ) + 1
+                                )
+                              ).map((option, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-50 last:border-0`}
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() =>
+                                    handleReturnAutocompleteSelect(
+                                      index,
+                                      option
+                                    )
+                                  }
+                                >
+                                  {getPopoverDisplayName(option)}
+                                </div>
+                              ))}
+                            </div>
+                          </Popover>
+                        )}
+
+                      {/* Return Field Error */}
+                      {clause.returnError && (
+                        <div className='text-xs text-red-600 mt-1'>
+                          {clause.returnError}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className='text-sm font-bold text-gray-800 font-mono'>
+                      {'}'}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -2861,17 +3542,35 @@ const MappingTable: React.FC<MappingTableProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className='flex justify-between mt-2'>
-              <TextButton
-                label='Add ELSE IF'
-                onClick={handleAddElseIf}
-                sx={{
-                  width: 'auto',
-                  minWidth: '100px',
-                  fontSize: '13px',
-                  fontWeight: 400,
-                }}
-              />
+            <div className='flex justify-between items-center'>
+              <div className='flex gap-2'>
+                <TextButton
+                  label='else'
+                  onClick={handleAddElse}
+                  disabled={conditionalPopover.clauses.some(
+                    (c) => c.type === 'ELSE'
+                  )}
+                  sx={{
+                    width: '50px',
+                    minWidth: '50px',
+                    fontSize: '13px',
+                    fontWeight: 400,
+                  }}
+                />
+                <TextButton
+                  label='else if'
+                  onClick={handleAddElseIf}
+                  disabled={conditionalPopover.clauses.some(
+                    (c) => c.type === 'ELSE'
+                  )}
+                  sx={{
+                    width: '60px',
+                    minWidth: '60px',
+                    fontSize: '13px',
+                    fontWeight: 400,
+                  }}
+                />
+              </div>
               <div className='flex justify-end gap-2'>
                 <TextButton
                   label='Cancel'
