@@ -1043,8 +1043,15 @@ export const rawQueries = {
       LIMIT 1;
     `;
   },
-  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
-    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string, summaryType? : string) {
+    if(summaryType === 'qualifiedprojects') {
+      return `SELECT pf.rid AS project_fiscal_rid 
+       FROM ${schemaName}.project_fiscal pf
+       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+       WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true`
+    } else {
+        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+    }
   },
   fetchEmailTemplateByCategory (categoryName : string) {
     return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`

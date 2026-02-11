@@ -1633,7 +1633,7 @@ export const rawQueries = {
     return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = true WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
   getFinancialWorkingId () {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%financial_working%'`
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%Financial Computation%'`
   },
   updateClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
     let ids = ProjectRegionIds.filter((d: any) => d.region_rid !== null)
@@ -1874,8 +1874,15 @@ WHERE dmf.country_rid = '${countryRid}'
           WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
   },
-   fetchAssignedProjectIds (caseRid : string, schemaName : string){
-    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+   fetchAssignedProjectIds (caseRid : string, schemaName : string, type? : string){
+    if(type === DOSSIER_NAME) {
+      return `SELECT pf.rid AS project_fiscal_rid 
+       FROM ${schemaName}.project_fiscal pf
+       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+       WHERE cp.case_rid = '${caseRid}'`
+    } else {
+        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+    }
 },
   fetchDocumentByIds() {
     return `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`;
@@ -1886,8 +1893,16 @@ WHERE dmf.country_rid = '${countryRid}'
   fetchUserByIds() {
     return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`;
   },
-  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
-    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string, summaryType : string) {
+       if(summaryType === 'qualifiedprojects') {
+      return `SELECT pf.rid AS project_fiscal_rid 
+       FROM ${schemaName}.project_fiscal pf
+       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+       WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true
+       `
+    } else {
+        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+    }
   },
   fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
     return `
