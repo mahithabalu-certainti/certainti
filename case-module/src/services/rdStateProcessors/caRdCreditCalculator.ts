@@ -50,7 +50,8 @@ export class RdCreditCalculatorForCA {
         return {
             inputFields,
             computedFields,
-            finalCredit: rrcResult?.reducedCreditAmountPercentageValue
+            finalCredit: rrcResult?.reducedCreditAmountPercentageValue,
+            totalQRE: rrcResult?.total_qre
         }
     }
 
@@ -185,7 +186,7 @@ export class RdCreditCalculatorForCA {
             "[11] Enter average annual gross receipts. See instructions": creditRRC.average_gross_receipts,
             "[12] Base amount. Multiply line 11 by the percentage on line 10": creditRRC.base_amount,
             "[13] Subtract line 12 from line 9. If zero or less, enter -0-": creditRRC.excess_qre_over_base,
-            [`[14] Multiply line 9 by ${creditRRC.config.qre_cap_rate}. See instructions`]: creditRRC.half_total_qre,
+            [`[14] Multiply line 9 by ${creditRRC.config.qre_cap_rate}% (${creditRRC.config.qre_cap_rate / 100}). See instructions`]: creditRRC.half_total_qre,
             "[15] Enter the smaller of line 13 or line 14": creditRRC.smaller_of_excess_or_half,
             [`[16] Multiply line 15 by ${creditRRC.config.credit_rate}% (${creditRRC.config.credit_rate / 100})`]: creditRRC.credit_before_280c,
             "[17 a] Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach": creditRRC.regular_credit,
@@ -193,12 +194,12 @@ export class RdCreditCalculatorForCA {
             [`${creditRRC.config.individual}% (${(creditRRC.config.individual/100).toFixed(3)}) for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,
             [`${creditRRC.config.corporation}% (${(creditRRC.config.corporation/100).toFixed(3)}) for  corporations`]:creditRRC.reduced_credit_amount.s_corp,
             [`${creditRRC.config.s_corp}% (${(creditRRC.config.s_corp/100).toFixed(3)}) for S corporations`]:creditRRC.reduced_credit_amount.corporation,
-            "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b :":creditRRC.reducedCreditAmountPercentageValue
+            "Enter the reduced credit amount and write Section 280C(c) on the dotted line to the left of the entry space . . . . . . . . . . . . . . . . 17b":creditRRC.reducedCreditAmountPercentageValue
 
         }
         return {
             computed_fields: {
-                "Qualified research expenses paid or incurred.":finalData,
+                "(Line) Qualified research expenses paid or incurred.":finalData,
                 "BOLD":["[15] Total qualified research expenses. Add line 11 through line 14"]
                 
             }

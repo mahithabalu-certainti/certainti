@@ -147,7 +147,8 @@ export const validColumnsForSorting : any = {
   modified_datetime : "modified_datetime",
   r_number : "r_number",
   project_point_of_contact : "project_point_of_contact",
-  project_technical_point_of_contact : "project_technical_point_of_contact"
+  project_technical_point_of_contact : "project_technical_point_of_contact",
+  is_qualified : "is_qualified"
 }
 
 export const validColumns : any = {
@@ -172,7 +173,8 @@ export const validColumns : any = {
   modified_datetime : "modified_datetime",
   r_number : "r_number",
   project_point_of_contact : "project_point_of_contact",
-  project_technical_point_of_contact : "project_technical_point_of_contact"
+  project_technical_point_of_contact : "project_technical_point_of_contact",
+  is_qualified : "is_qualified"
 }
 
 export const columnType : any = {
@@ -196,7 +198,8 @@ export const columnType : any = {
   modified_datetime : "date",
   r_number : "string",
   project_point_of_contact : "string",
-  project_technical_point_of_contact : "string"
+  project_technical_point_of_contact : "string",
+  is_qualified : "string"
 }
 
 export type caseProjectsResponseType = {

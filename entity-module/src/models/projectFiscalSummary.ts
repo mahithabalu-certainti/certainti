@@ -346,7 +346,7 @@ export class ProjectFiscalSummary
         },
         project_type_rid: {
           type: DataTypes.STRING(50),
-          allowNull: false,
+          allowNull: true,
         },
         project_classification_rid: {
           type: DataTypes.STRING(50),

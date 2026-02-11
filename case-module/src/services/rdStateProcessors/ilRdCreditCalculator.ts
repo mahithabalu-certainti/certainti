@@ -39,7 +39,8 @@ export class RdCreditCalculatorForIL {
         return {
             inputFields,
             computedFields,
-            finalCredit: this.round2(columnBCurrentYearExpenseInfo.final_credit)
+            finalCredit: this.round2(columnBCurrentYearExpenseInfo.final_credit),
+            totalQRE: this.round2(columnBCurrentYearExpenseInfo.total_qre)
         }
     }
 
@@ -137,7 +138,7 @@ export class RdCreditCalculatorForIL {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             contract: currentYearContract,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)
+            sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract))
         })
 
         prior3YearsQREs.forEach((item) => {
@@ -145,7 +146,7 @@ export class RdCreditCalculatorForIL {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0)))
             })
         });
 
@@ -179,10 +180,10 @@ export class RdCreditCalculatorForIL {
                     columnABasePeriodExpenseInfo.average_prior_year_wages,
 
                 "[Line 24] Illinois cost of supplies":
-                    columnABasePeriodExpenseInfo.cost_of_supplies,
+                    this.round2(columnABasePeriodExpenseInfo.cost_of_supplies),
 
                 "[Line 25] Illinois rental or lease costs of computers":
-                    columnABasePeriodExpenseInfo.lease_costs_of_computers,
+                    this.round2(columnABasePeriodExpenseInfo.lease_costs_of_computers),
 
                 [`[Line 26] ${config.sub_con_percent}% of Illinois contract expenses`]:
                     columnABasePeriodExpenseInfo.average_prior_year_contract,
@@ -213,10 +214,10 @@ export class RdCreditCalculatorForIL {
                     columnBCurrentYearExpenseInfo.current_year_wages,
 
                 "[Line 24] Illinois cost of supplies":
-                    columnBCurrentYearExpenseInfo.cost_of_supplies,
+                    this.round2(columnBCurrentYearExpenseInfo.cost_of_supplies),
 
                 "[Line 25] Illinois rental or lease costs of computers":
-                    columnBCurrentYearExpenseInfo.lease_costs_of_computers,
+                    this.round2(columnBCurrentYearExpenseInfo.lease_costs_of_computers),
 
                 [`[Line 26] ${config.sub_con_percent}% of Illinois contract expenses`]:
                     columnBCurrentYearExpenseInfo.current_year_contract,

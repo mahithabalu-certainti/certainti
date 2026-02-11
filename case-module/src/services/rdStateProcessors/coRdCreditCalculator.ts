@@ -63,7 +63,8 @@ export class RdCreditCalculatorForCO {
         return {
             inputFields,
             computedFields,
-            finalCredit: allowableCredit.toNumber()
+            finalCredit: allowableCredit.toNumber(),
+            totalQRE: totalQREs.toNumber()
         }
     }
 
@@ -99,7 +100,7 @@ export class RdCreditCalculatorForCO {
     async buildComputedFields(data: any) {
         return {
             computed_fields: {
-                "(PART IV): Research and Experimental Activities Credit" : {
+                "(PART IV) Research and Experimental Activities Credit" : {
                     "text" : "In order to calculate any current year Research and Experimental Activities Credit in Part III, please use worksheet 3 below. Complete the remainder of the form following the instructions to claim allowable credit you earned in prior periods."
                 },
                 "Research and Experimental Activities Credit Do not send, keep for your records" : {

@@ -1,5 +1,5 @@
 import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
-import { AddCommentsType, CaseTaskQueryType, CaseTaskWorkFlowCreate, CreateCaseTaskType, DeleteCommentsType, FilterType, UpdateCaseTaskType, UpdateCommentsType } from "../../../utils/types";
+import { AddCommentsType, CaseTaskQueryType, CaseTaskWorkFlowCreate, CreateCaseTaskType, DeleteCommentsType, FilterType, UpdateCaseTaskType, UpdateCommentsType, WeightageType } from "../../../utils/types";
 import { CaseModelService } from "../../caseModelsService";
 import { v4 as uuidv4 } from 'uuid'
 import { entityNames, ENV_PREFIX, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, relationshipTypes, ruleNames, ruleTemplateNames, STATUS_MESSAGE } from "../../../utils/constants";
@@ -15,6 +15,8 @@ import { CaseTimeline } from "../../../models/caseTimeline";
 import { TaskCollaborators } from "../../../models/taskCollaboratorsModel";
 import { CaseTaskWorkflowConnector } from "../../../models/caseTaskWorkflowConnectorModel";
 import { CaseTask } from "../../../models/caseTaskModel";
+import { findTaskWeightageDetails, getCompletedTaskStatusId } from "../../../utils/rdFinancialWorkingQueries";
+import Decimal from "decimal.js";
 
 
 export class CaseTaskSchemaService {
@@ -208,7 +210,7 @@ export class CaseTaskSchemaService {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await initMainDbSequelize()
       }
-      const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem } = await this.caseModelService.getModels(accountNumber);
+      const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem, Case } = await this.caseModelService.getModels(accountNumber);
       const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
       if (!checkCaseExists) {
         return {
@@ -522,6 +524,45 @@ export class CaseTaskSchemaService {
               })
             }    
             await transaction.commit();
+            const findAllTaskByCaseIds = await CaseTask.findAll({
+            attributes : ['weightage_rid', 'task_status_rid'],
+            where : {
+              case_rid : data.case_rid
+            }, 
+            raw : true
+          });
+          if(findAllTaskByCaseIds.length > 0) {
+            const allTasksWeightageIds = [...new Set(findAllTaskByCaseIds.map((d : CaseTask) => d.weightage_rid!))];
+            const findCompletedTaskStatus : any = await this.mainDbSequelize.query(getCompletedTaskStatusId());
+            const completedTaskStatusId = findCompletedTaskStatus[0][0].rid
+            const allCompletedTaskWeightageIds = findAllTaskByCaseIds.filter((d : CaseTask) => d.task_status_rid === completedTaskStatusId).map((f : CaseTask) => f.weightage_rid!)
+            const findWeightageValues = await this.mainDbSequelize.query<WeightageType>(findTaskWeightageDetails(allTasksWeightageIds), {type : QueryTypes.SELECT});
+            if(findWeightageValues.length > 0) {
+              const mapAllWeightageWithValue = new Map(findWeightageValues.map((d : WeightageType) => [d.rid, d.weightage_value]));
+              let totalAllWeightageValues : Decimal = new Decimal(0)
+              let completedWeightValues : Decimal = new Decimal(0)
+              findAllTaskByCaseIds.forEach((data : CaseTask) => {
+                if(mapAllWeightageWithValue.get(data.weightage_rid!) !== undefined) {
+                  totalAllWeightageValues = totalAllWeightageValues.add(mapAllWeightageWithValue.get(data.weightage_rid!)!)
+                }
+              });
+              allCompletedTaskWeightageIds.forEach((data : any) => {
+                 if(mapAllWeightageWithValue.get(data!) !== undefined) {
+                  completedWeightValues = completedWeightValues.add(mapAllWeightageWithValue.get(data!)!)
+                }
+              })
+              console.log("completedWeightValues ===> ", completedWeightValues)
+              console.log("totalAllWeightageValues ===> ", totalAllWeightageValues)
+              const caseCompletionPercentage = (completedWeightValues.div(totalAllWeightageValues)).mul(100) || new Decimal(0)
+              await Case.update({
+                case_completion_percentage : parseFloat(caseCompletionPercentage.toFixed(2))
+              }, {
+                where : {
+                  rid : data.case_rid
+                }
+              })
+            }
+          }
            await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
                     newValue: "newValueString",
                     oldValue: "oldValueString"

@@ -6,7 +6,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { federalCalculators } from "../rdFederalProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
-import { fetchCountryData, updateRRCASC280C } from "../../utils/rdFinancialWorking.rawQueries";
+import { fetchCountryData, updateRRCASC280C } from "../../utils/rdFinancialWorkingQueries";
 
 export class FederalComputationService {
     private rdCreditSchemaService: RDCreditSchemaService;
@@ -409,9 +409,10 @@ export class FederalComputationService {
                         },
                         "Preliminary Calculation" : d.computed_fields["Preliminary Calculation"],
                         "[PART A] Calculation of notional R&D deductions" : {
-                            '[1] R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
-                            '[2] R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
-                            '[3] Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
+                            "[1] R&D expenditure - Research service provider (RSP)" : 0,
+                            '[2] R&D expenditure - Contract expenditure (not RSP)' : d.computed_fields["R&D Expenditure"]["R&D expenditure - Contract expenditure (not RSP)"],
+                            '[3] R&D expenditure - Salary expenditure' : d.computed_fields["R&D Expenditure"]['R&D expenditure - Salary expenditure'],
+                            '[10] Total of allocated notional deductions': d.computed_fields["R&D Expenditure"]['Total of allocated notional deductions'],
                             '[11] Total of notional R&D deductions (X plus Y)':d.computed_fields["R&D Expenditure"]['Total of notional R&D deductions (X plus Y)']
                         },
                         "[PART E] R&D tax offset calculation" : {
@@ -422,7 +423,13 @@ export class FederalComputationService {
                            'Total notional R&D deductions': d.computed_fields["Non-refundable tax offset"]['Total notional R&D deductions'],
                            'R&D intensity' : d.computed_fields["Non-refundable tax offset"]['R&D intensity']
                         },
-                        "Tier of intensity" : d.computed_fields["Tier of intensity"],
+                        "Tier of intensity" : d.computed_fields["Tier of intensity"].map((d : any) => {
+                            return {
+                                name : d.name,
+                                "Notional deductions applied" : d["Notional deductions applied"],
+                                "Offset Amount" : d["offset Amount"]
+                            }
+                        }),
                         "Non-refundable R&D tax offset" : d.computed_fields["Non-refundable R&D tax offset"]
                         }
                     }
@@ -459,7 +466,7 @@ export class FederalComputationService {
                     let creditRRC = u["computed_fields"]["(Regular Credit)"]
                     let creditASC = u["computed_fields"]["(ASC Credit)"]
                     let creditASCKey = Object.keys(creditASC).find((v : string) => v.startsWith("Enter"))
-                    let creditRRCKey = Object.keys(creditRRC).find((d : string) => d.startsWith("10 Multiply line 5"))
+                    let creditRRCKey = Object.keys(creditRRC).find((d : string) => d.startsWith("[10] Multiply line 5"))
                     let refinedRRCKey = creditRRCKey + "%"
                     return {
                         ...u,
