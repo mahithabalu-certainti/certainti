@@ -7,15 +7,15 @@ import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, DOSSIER_NAME, H
 import { CaseClosureRemarks, CaseData, ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadToAzureBlob } from "../../utils/helpers";
-import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossier-rawquery";
+import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { ProjectResourceService } from "../projectResource/projectResourceService";
 import moment from "moment";
-import {buildRawWhereClause, fetchProjectResourceById, getAttachmentDisplayNames, getProjectResourcesByProjectIds, getProjectsByAccountId, getProjectTasksByProjectIds, getResourceCostsByResourceIds, getResourcesByAccountId, getResourceSkillsByResourceIds, getSortParameters, mapAttachmentToCommonFormat, processDateFilter, processNumberFilter, processProjectCountFilter, processTextFilter} from '../../utils/attachments.helper'
+import {buildRawWhereClause, fetchProjectResourceById, getAttachmentDisplayNames, getProjectResourcesByProjectIds, getProjectsByAccountId, getProjectTasksByProjectIds, getResourceCostsByResourceIds, getResourcesByAccountId, getResourceSkillsByResourceIds, getSortParameters, mapAttachmentToCommonFormat, processDateFilter, processNumberFilter, processProjectCountFilter, processTextFilter} from '../../utils/attachmentsHelper'
 import { Attachment } from "../../models/attachments";
-import { createZipFile, uploadZipBufferToAzureBlob } from "../../utils/dossier.package";
+import { createZipFile, uploadZipBufferToAzureBlob } from "../../utils/dossierPackage";
 import { DossierForm } from "../../models/dossierForm";
 import { AiTechnicalSummary } from "../../models/aiTechnicalSummary";
 
