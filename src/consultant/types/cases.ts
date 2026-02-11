@@ -290,6 +290,7 @@ export interface CaseAssignedExportParams {
   search?: string;
   timezone?: string;
   account_id?: string;
+  type?: string;
 }
 export interface ExportCaseListResponse {
   statusCode: number;

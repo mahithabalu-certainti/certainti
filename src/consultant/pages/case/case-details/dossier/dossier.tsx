@@ -362,8 +362,8 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'Closing Remarks',
-      value: 'closing_remarks',
+      label: 'Audit Timeline',
+      value: 'audit_timeline',
       hide: false,
     },
   ];
@@ -535,7 +535,7 @@ const Dossier: React.FC<DossierProps> = ({
             />
           )}
 
-          {tabParam === 'closing_remarks' && (
+          {tabParam === 'audit_timeline' && (
             <ClosingRemarks
               refreshTrigger={refreshTrigger}
               currentPage={currentPage}

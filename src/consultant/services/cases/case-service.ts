@@ -244,7 +244,6 @@ export const ExportAssignedList = async (
       getCasesProjectExportUrl(),
       params
     );
-    console.log('response', response);
     const base64Data = response.data?.data;
 
     if (!base64Data) {

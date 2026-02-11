@@ -66,6 +66,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
       filters: appliedFilters,
       account_rid: accountId || '',
       case_rid: caseId || '',
+      type: "qualifiedProjects"
     },
     refreshTrigger,
     true
@@ -99,6 +100,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
       filters: appliedFilters,
       case_rid: caseId || '',
       account_rid: accountId || '',
+      summaryType: "qualifiedProjects"
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

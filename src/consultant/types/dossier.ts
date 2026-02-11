@@ -73,6 +73,7 @@ export interface QualifiedProjectsListURLParams {
   caseRid?: string;
   accountRid?: string;
   search?: string;
+  type?: string;
 }
 
 export interface QualifiedProjectsListExportParams {
@@ -163,6 +164,7 @@ export interface ResourceSummaryListURLParams {
   caseRid?: string;
   accountRid?: string;
   search?: string;
+  type?: string;
 }
 
 export interface ResourceSummaryListExportParams {
@@ -459,9 +461,9 @@ export interface FinancialHighlightsData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-    | FinancialHighlightsComputedFields
-    | AustraliaComputedFields
-    | USAComputedFields;
+  | FinancialHighlightsComputedFields
+  | AustraliaComputedFields
+  | USAComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -472,9 +474,9 @@ export interface CaseSummaryData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-    | FinancialHighlightsComputedFields
-    | AustraliaComputedFields
-    | USAComputedFields;
+  | FinancialHighlightsComputedFields
+  | AustraliaComputedFields
+  | USAComputedFields;
 }
 
 export interface AustraliaRdExpenditure {

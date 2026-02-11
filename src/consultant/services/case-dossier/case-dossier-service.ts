@@ -1,4 +1,4 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   ResourceSummaryItem,
   ResourceSummaryListURLParams,
@@ -185,6 +185,17 @@ export const useRDFormMapperGenerate = (
   });
 };
 
+export const useRDFormMapperGenerateMutation = () => {
+  return useMutation<
+    { statusCode: number; statusCodeValue: string; statusMessage: string },
+    Error,
+    { accountRid: string; caseRid: string; fiscalYear?: number }
+  >({
+    mutationFn: ({ accountRid, caseRid, fiscalYear }) =>
+      fetchRDFormMapperGenerate(accountRid, caseRid, fiscalYear),
+  });
+};
+
 export const fetchRDFormMapperPreview = async (
   accountRid: string,
   caseRid: string,
@@ -231,5 +242,28 @@ export const useRDFormMapperPreview = (
     retry: 0,
     gcTime: 0,
     enabled: !!accountRid && !!caseRid && !!countryRid && enabled,
+  });
+};
+
+export const useRDFormMapperPreviewMutation = () => {
+  return useMutation<
+    RDFormResponse,
+    Error,
+    {
+      accountRid: string;
+      caseRid: string;
+      countryRid: string;
+      isFederal: boolean;
+      stateRid?: string;
+    }
+  >({
+    mutationFn: ({ accountRid, caseRid, countryRid, isFederal, stateRid }) =>
+      fetchRDFormMapperPreview(
+        accountRid,
+        caseRid,
+        countryRid,
+        isFederal,
+        stateRid
+      ),
   });
 };

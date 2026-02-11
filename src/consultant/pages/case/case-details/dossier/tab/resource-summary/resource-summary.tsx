@@ -71,6 +71,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
       accountRid: accountId || '',
       case_rid: caseId || '',
       fiscalYear: 0,
+      type: "qualifiedProjects"
     },
     refreshTrigger
   );
@@ -105,6 +106,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       search: searchValue,
+      type: "qualifiedProjects"
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

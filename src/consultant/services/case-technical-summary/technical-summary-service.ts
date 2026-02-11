@@ -20,6 +20,7 @@ export const getCasesTechnicalSummaryListURL = ({
   account_rid,
   case_rid,
   filters,
+  type
 }: TechnicalSummaryListURLParams): string => {
   const baseUrl = '/api/interactions/technicalSummary/list';
   const searchParams = new URLSearchParams();
@@ -36,6 +37,7 @@ export const getCasesTechnicalSummaryListURL = ({
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
+  if (type !== undefined) searchParams.set('summaryType', type);
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
   const queryString = searchParams.toString();
@@ -50,6 +52,7 @@ export const getCaseTechnicalSummaryExportListURL = ({
   account_rid,
   case_rid,
   filters,
+  summaryType
 }: TechnicalSummaryExportListParams): string => {
   const baseUrl = '/api/interactions/technicalSummary/export';
   const searchParams = new URLSearchParams();
@@ -68,6 +71,8 @@ export const getCaseTechnicalSummaryExportListURL = ({
   }
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (summaryType !== undefined) searchParams.set('summaryType', summaryType);
+
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
