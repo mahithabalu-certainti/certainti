@@ -1204,7 +1204,8 @@ class InteractionSchemaService {
     sortOrder: string = "ASC",
     type: string = "list",
     caseRid? : string,
-    accountRid? : string
+    accountRid? : string,
+    summaryType? : string 
   ) {
     try {
       if(!this.orgDbSequelize) {
@@ -1273,7 +1274,7 @@ class InteractionSchemaService {
       // Fetch technical summaries and count
       let whereCondition;
       if(caseRid !== undefined && caseRid !== '') {
-        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
         whereCondition = {
           account_rid : accountRid,
           project_fiscal_rid: {

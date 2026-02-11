@@ -571,7 +571,7 @@ class RDCreditSchemaService {
         const result = await RdCreditProcess.findOne({
             where: { 
                 case_rid, 
-                request_type : "financial_computation" 
+                request_type : "dossier-form" 
             },
             order: [['created_datetime', 'DESC']],
             attributes: ['status'],

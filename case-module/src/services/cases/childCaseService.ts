@@ -287,13 +287,14 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseProjectsPayload.filter = {};
     caseProjectsPayload.search = "";
     caseProjectsPayload.fiscal_year = caseDetails!.fiscal_year;
-    caseProjectsPayload.userId = userId
+    caseProjectsPayload.userId = userId,
+    caseProjectsPayload.type = "qualifiedProjects"
     const getProjectQualifiedData = await this.exportAssignedProjects(caseProjectsPayload);
     const generateQualifiedProjectsCSV = await generateExcelBase64(
           getProjectQualifiedData.data,
           "Qualified-Projects"
     )
-    const getProjectResourceSummary = await this.projectResourceService.exportProjectResources(accountRid, caseRid,caseDetails!.fiscal_year, {}, "resource_code", "ASC", userId, "");
+    const getProjectResourceSummary = await this.projectResourceService.exportProjectResources(accountRid, caseRid,caseDetails!.fiscal_year, {}, "resource_code", "ASC", userId, "", "qualifiedProjects");
     const generateResourceSummaryCSV = await generateExcelBase64(
           getProjectResourceSummary.data?.projectResources,
           "Resource-Summary"
@@ -343,7 +344,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
           'ASC',
           "download",
           caseRid,
-          accountRid
+          accountRid,
+          "qualifedProjects"
         );
     const fields = await this.getAllowedExportFields(
       userId,
@@ -425,7 +427,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     },
     {
       name : "Closing-Remarks",
-      buffer : Buffer.from(closingRemarksData!,'base64'),
+      buffer : Buffer.from(closingRemarksData! || '','base64'),
       extension : ".xlsx"
     },
     {
@@ -711,7 +713,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
         let entityIds : string[]
         if(type === DOSSIER_NAME) {
           let orgSchemaName = rawQueries.fetchSchemaName(schemaNumber)
-          const caseProjectIds = await orgDbSequelize.query<string[]>(rawQueries.fetchAssignedProjectIds(entityId, orgSchemaName), {type : QueryTypes.SELECT})
+          const caseProjectIds = await orgDbSequelize.query<string[]>(rawQueries.fetchAssignedProjectIds(entityId, orgSchemaName, DOSSIER_NAME), {type : QueryTypes.SELECT})
           entityIds = caseProjectIds.map((d : any) => d.project_fiscal_rid)
         } else entityIds = [entityId]
         const projectAttachments = await fetchAttachments(
@@ -1182,7 +1184,8 @@ async listTechnicalSummary(
     sortOrder: string = "ASC",
     type: string = "list",
     caseRid? : string,
-    accountRid? : string
+    accountRid? : string,
+    summaryType? : string
   ) {
     try {
       const orgDbSequelize = await initOrgSequelize();
@@ -1251,7 +1254,7 @@ async listTechnicalSummary(
       // Fetch technical summaries and count
       let whereCondition;
       if(caseRid !== undefined && caseRid !== '') {
-        const projectFiscalIds : any = await orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        const projectFiscalIds : any = await orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType!))
         whereCondition = {
           account_rid : accountRid,
           project_fiscal_rid: {
