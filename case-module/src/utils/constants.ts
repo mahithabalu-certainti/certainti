@@ -1874,6 +1874,38 @@ WHERE dmf.country_rid = '${countryRid}'
           WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
   },
+  fetchJsonbFieldValue(
+    schemaName: string,
+    refTable: string,
+    quotedJsonPath: string,
+    includeStateRid: boolean,
+  ) {
+    return `
+          SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
+          FROM ${schemaName}.${refTable}
+          WHERE case_rid = :case_rid${includeStateRid ? " AND state_rid = :state_rid" : ""}
+          LIMIT 1`;
+  },
+  fetchRegularFieldValue(
+    schemaName: string,
+    refTable: string,
+    fieldName: string,
+    whereColumn: string,
+    includeStateRid: boolean,
+  ) {
+    if (includeStateRid) {
+      return `
+        SELECT ${fieldName} AS field_value
+        FROM ${schemaName}.${refTable}
+        WHERE case_rid = :case_rid AND state_rid = :state_rid
+        LIMIT 1`;
+    }
+    return `
+        SELECT ${fieldName} AS field_value
+        FROM ${schemaName}.${refTable}
+        WHERE ${whereColumn} = :case_rid
+        LIMIT 1`;
+  },
    fetchAssignedProjectIds (caseRid : string, schemaName : string, type? : string){
     if(type === DOSSIER_NAME) {
       return `SELECT pf.rid AS project_fiscal_rid 
