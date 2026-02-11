@@ -1868,11 +1868,10 @@ WHERE dmf.country_rid = '${countryRid}'
     stateRid?: string,
   )
   {
-    const requiresStateRid = refTable === "rd_credit_state_calculations";
     return `
           SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
           FROM ${schemaName}.${refTable}
-          WHERE case_rid = :case_rid${requiresStateRid || stateRid ? " AND state_rid = :state_rid" : ""}
+          WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
   },
    fetchAssignedProjectIds (caseRid : string, schemaName : string){

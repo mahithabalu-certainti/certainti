@@ -35,6 +35,10 @@ export class RdFormMapperService {
     this.rdCreditSchemaService = new RDCreditSchemaService();
   }
 
+  private roundToTwoDecimals(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
   private async getMainDb() {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize();
@@ -400,6 +404,14 @@ export class RdFormMapperService {
       .replace(/\$/g, "")
       .trim();
 
+    const normalizedLower = normalized.toLowerCase();
+    if (normalizedLower === "yes" || normalizedLower === "true") {
+      return 1;
+    }
+    if (normalizedLower === "no" || normalizedLower === "false") {
+      return 0;
+    }
+
     if (normalized.startsWith("(") && normalized.endsWith(")")) {
       normalized = `-${normalized.slice(1, -1)}`;
     }
@@ -411,103 +423,29 @@ export class RdFormMapperService {
     return Number.isFinite(num) ? num : null;
   }
 
-  private roundToTwo(value: number): number {
-    return Math.round((value + Number.EPSILON) * 100) / 100;
-  }
-
-  private normalizeIfThenElseBlocks(expression: string) {
+  private normalizeExpressionSyntax(expression: string) {
     let result = expression;
-    const ifRegex = /\bIF\s*\(/i;
-    let searchIndex = 0;
 
-    const findMatchingParen = (input: string, openIndex: number) => {
-      let depth = 0;
-      for (let i = openIndex; i < input.length; i++) {
-        const ch = input[i];
-        if (ch === "(") depth++;
-        if (ch === ")") {
-          depth--;
-          if (depth === 0) return i;
-        }
-      }
-      return -1;
-    };
+    result = result.replace(/===/g, "==").replace(/!==/g, "!=");
 
-    const findMatchingBrace = (input: string, openIndex: number) => {
-      let depth = 0;
-      for (let i = openIndex; i < input.length; i++) {
-        const ch = input[i];
-        if (ch === "{") depth++;
-        if (ch === "}") {
-          depth--;
-          if (depth === 0) return i;
-        }
-      }
-      return -1;
-    };
+    result = result.replace(/#YES\b/gi, "1").replace(/#NO\b/gi, "0");
 
-    while (searchIndex < result.length) {
-      const match = result.slice(searchIndex).match(ifRegex);
-      if (!match || match.index === undefined) break;
+    result = result.replace(
+      /IF\s*\(([^)]*)\)\s*\{\s*THEN\s*([^}]*)\}\s*ELSE\s*\{\s*THEN\s*([^}]*)\}/gi,
+      "IF($1, $2, $3)",
+    );
 
-      const ifIndex = searchIndex + match.index;
-      const openIndex = result.indexOf("(", ifIndex);
-      if (openIndex < 0) break;
-
-      const closeIndex = findMatchingParen(result, openIndex);
-      if (closeIndex < 0) break;
-
-      let cursor = closeIndex + 1;
-      while (cursor < result.length) {
-        const currentChar = result[cursor];
-        if (!currentChar || !/\s/.test(currentChar)) {
-          break;
-        }
-        cursor++;
-      }
-
-      if (result[cursor] !== "{") {
-        searchIndex = closeIndex + 1;
-        continue;
-      }
-
-      const braceOpenIndex = cursor;
-      const braceCloseIndex = findMatchingBrace(result, braceOpenIndex);
-      if (braceCloseIndex < 0) break;
-
-      const condition = result.slice(openIndex + 1, closeIndex).trim();
-      const blockContent = result
-        .slice(braceOpenIndex + 1, braceCloseIndex)
-        .trim();
-
-      const thenMatch = /\bTHEN\b/i.exec(blockContent);
-      if (!thenMatch) {
-        searchIndex = braceCloseIndex + 1;
-        continue;
-      }
-
-      const elseMatch = /\bELSE\b/i.exec(blockContent);
-      const thenStart = thenMatch.index + thenMatch[0].length;
-      const thenValue = elseMatch
-        ? blockContent.slice(thenStart, elseMatch.index).trim()
-        : blockContent.slice(thenStart).trim();
-      const elseValue = elseMatch
-        ? blockContent.slice(elseMatch.index + elseMatch[0].length).trim()
-        : "\"\"";
-
-      const replacement = `IF(${condition}, ${thenValue}, ${elseValue})`;
-      result =
-        result.slice(0, ifIndex) +
-        replacement +
-        result.slice(braceCloseIndex + 1);
-      searchIndex = ifIndex + replacement.length;
-    }
+    result = result.replace(
+      /\b[A-Za-z]\d{3}-[0-9a-fA-F-]{36}\b/g,
+      (match: string, offset: number, full: string) =>
+        offset > 0 && full[offset - 1] === "#" ? match : `#${match}`,
+    );
 
     return result;
   }
 
   private transformIfExpressions(expression: string) {
-    let result = this.normalizeIfThenElseBlocks(expression);
+    let result = expression;
     const ifRegex = /\bIF\s*\(/i;
 
     const splitTopLevel = (input: string) => {
@@ -699,6 +637,9 @@ export class RdFormMapperService {
       try {
         const mapperObject =
           await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rid);
+        logMessage(
+          `Data mapper lookup for field ${configItem.field_label} (rid=${rid}): ${JSON.stringify(mapperObject)}`,
+        );
         if (mapperObject?.ref_table && mapperObject?.field_name) {
           const dynamicValue =
             await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
@@ -709,6 +650,10 @@ export class RdFormMapperService {
               context.schemaName,
               context.stateRid || "",
             );
+
+          logMessage(
+            `DB value for field ${configItem.field_label} (ref_table=${mapperObject.ref_table}, field_name=${mapperObject.field_name}): ${JSON.stringify(dynamicValue)}`,
+          );
 
           if (dynamicValue !== null) {
             value = dynamicValue;
@@ -946,6 +891,67 @@ export class RdFormMapperService {
       }
     });
 
+    const resolveExpressionReferences = async () => {
+      const seen = new Set<string>();
+
+      for (const item of enhancedConfigs) {
+        if (typeof item.value !== "string") continue;
+        const expression = item.value.trim();
+        const normalizedExpression = this.normalizeExpressionSyntax(expression);
+
+        if (!normalizedExpression.includes("#")) continue;
+
+        const matches = normalizedExpression.matchAll(/#([^\s+*/(),]+)/g);
+        for (const match of matches) {
+          const rawKey = match[1];
+          if (!rawKey) continue;
+
+          const rawKeyUpper = rawKey.toUpperCase();
+          if (rawKeyUpper === "YES" || rawKeyUpper === "NO") continue;
+
+          const lookupKeys = [
+            rawKey,
+            this.stripIndexes(rawKey),
+            this.normalizeFieldRef(rawKey),
+          ];
+
+          if (lookupKeys.some((key) => valueMap.has(key))) continue;
+          if (seen.has(rawKey)) continue;
+          seen.add(rawKey);
+
+          if (!/^[A-Za-z]\d{3}-[0-9a-fA-F-]{36}$/.test(rawKey)) continue;
+
+          const mapperObject =
+            await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rawKey);
+          logMessage(
+            `Expression mapper lookup for field ${item.field_label || item.field_id} (rid=${rawKey}): ${JSON.stringify(mapperObject)}`,
+          );
+
+          if (!mapperObject?.ref_table || !mapperObject?.field_name) continue;
+
+          const dynamicValue =
+            await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
+              mapperObject.ref_table,
+              mapperObject.field_name,
+              mapperObject.is_json,
+              caseRid,
+              schemaName,
+              stateRid || "",
+            );
+
+          logMessage(
+            `Expression DB value for field ${item.field_label || item.field_id} (ref_table=${mapperObject.ref_table}, field_name=${mapperObject.field_name}): ${JSON.stringify(dynamicValue)}`,
+          );
+
+          if (dynamicValue !== null && dynamicValue !== undefined) {
+            addToValueMap(rawKey, dynamicValue);
+          }
+        }
+      }
+    };
+
+    await resolveExpressionReferences();
+
     const maxExpressionPasses = 3;
     for (let pass = 1; pass <= maxExpressionPasses; pass++) {
       let passUpdated = false;
@@ -954,17 +960,31 @@ export class RdFormMapperService {
         if (typeof item.value !== "string") return;
         const expression = item.value.trim();
 
-        if (!expression.includes("#")) return;
+        const normalizedExpression = this.normalizeExpressionSyntax(expression);
+
+        if (!normalizedExpression.includes("#")) return;
 
         logMessage(
           `Evaluating expression for field value ${item.field_label || item.field_id}: ${expression}`,
         );
 
-        let replaced = expression.replace(
-          /#([^\s+\-*/(),]+)/g,
+        const resolvedValues: Record<string, { rawValue: any; numeric: number }> = {};
+
+        let replaced = normalizedExpression.replace(
+          /#([^\s+*/(),]+)/g,
           (match: string) => {
             const rawKey = match.slice(1);
             if (!rawKey) return "NaN";
+
+            const rawKeyUpper = rawKey.toUpperCase();
+            if (rawKeyUpper === "YES") {
+              resolvedValues[rawKey] = { rawValue: "YES", numeric: 1 };
+              return "1";
+            }
+            if (rawKeyUpper === "NO") {
+              resolvedValues[rawKey] = { rawValue: "NO", numeric: 0 };
+              return "0";
+            }
 
             const lookupKeys = [
               rawKey,
@@ -981,6 +1001,14 @@ export class RdFormMapperService {
               }
               const num = this.tryParseNumber(valueMap.get(key));
               if (num !== null) {
+                const rawValue = valueMap.has(key) ? valueMap.get(key) : null;
+                resolvedValues[rawKey] = {
+                  rawValue: rawValue === undefined ? null : rawValue,
+                  numeric: num,
+                };
+                logMessage(
+                  `Expression reference for field ${item.field_label || item.field_id}: ${rawKey} -> ${JSON.stringify(valueMap.get(key))} (numeric=${num})`,
+                );
                 return String(num);
               }
             }
@@ -1004,9 +1032,14 @@ export class RdFormMapperService {
 
         replaced = this.transformIfExpressions(replaced);
 
-        const validationTarget = replaced
-          .replace(/Math\.(min|max)\(/g, "(")
-          .replace(/""/g, "0");
+        logMessage(
+          `Resolved expression for field ${item.field_label || item.field_id}: ${normalizedExpression} (resolved=${replaced})`,
+        );
+        logMessage(
+          `Resolved values for field ${item.field_label || item.field_id}: ${JSON.stringify(resolvedValues)}`,
+        );
+
+        const validationTarget = replaced.replace(/Math\.(min|max)\(/g, "(");
         if (!/^[0-9+\-*/().,\sNaN?:<>=!&|]+$/.test(validationTarget)) {
           logMessage(
             `Blocked invalid expression for field ${item.field_label || item.field_id}: ${expression}`,
@@ -1022,12 +1055,15 @@ export class RdFormMapperService {
               lowerExpression.includes("-") ||
               lowerExpression.includes(" sub ") ||
               lowerExpression.includes("subtract");
-            const finalValue = this.roundToTwo(
-              hasSubtraction && computed < 0 ? 0 : computed,
-            );
+            const finalValueRaw = hasSubtraction && computed < 0 ? 0 : computed;
+            const finalValue = this.roundToTwoDecimals(finalValueRaw);
 
             item.value = finalValue;
             passUpdated = true;
+
+            logMessage(
+              `Final computed value for field ${item.field_label || item.field_id}: ${finalValue}`,
+            );
 
             if (item.value_field_id) {
               addToValueMap(String(item.value_field_id), item.value);
@@ -1041,23 +1077,6 @@ export class RdFormMapperService {
 
             logMessage(
               `Computed expression for field ${item.field_label || item.field_id}: ${expression} = ${finalValue}`,
-            );
-          } else if (typeof computed === "string" && computed.trim() === "") {
-            item.value = "";
-            passUpdated = true;
-
-            if (item.value_field_id) {
-              addToValueMap(String(item.value_field_id), item.value);
-            }
-            if (item.field_id) {
-              addToValueMap(String(item.field_id), item.value);
-            }
-            if (item.field_name) {
-              addToValueMap(String(item.field_name), item.value);
-            }
-
-            logMessage(
-              `Computed empty expression for field ${item.field_label || item.field_id}: ${expression}`,
             );
           } else {
             logMessage(
@@ -1118,7 +1137,7 @@ export class RdFormMapperService {
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
-      configLevelKey = ConfigType.STATE_ONLY;
+
       logMessage(`Config Level Key determined: ${configLevelKey}`);
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {

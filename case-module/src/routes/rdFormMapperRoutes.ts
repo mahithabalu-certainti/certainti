@@ -4,7 +4,7 @@ import { checkUserStatusMiddleware } from '../middlewares/authmiddleware'
 
 const routes : Router = Router()
 
-routes.get('/rdForms/generate', checkUserStatusMiddleware("NA"), controller.rdFormMapperController.processRdFormMapperRequests)
+routes.get('/generate', checkUserStatusMiddleware("NA"), controller.rdFormMapperController.processRdFormMapperRequests)
 //routes.post("/rdForms/generate", checkUserStatusMiddleware("NA"), controller.rdFormMapperController.initiateRDFormFillerProcess);
 routes.get("/preview", checkUserStatusMiddleware("NA"), controller.rdFormMapperController.getRdFormMapperResults);
 
