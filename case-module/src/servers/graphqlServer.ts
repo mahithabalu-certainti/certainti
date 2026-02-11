@@ -18,6 +18,8 @@ import { emailTemplateTypeDefs } from '../graphql/emailTemplateSchema';
 import { emailTemplateResolver } from '../resolvers/emailTemplateResolver';
 import { jurisdictionResolver } from '../resolvers/jurisdictionResolver';
 import { jurisdictionTypeDefs } from '../graphql/jurisdictionSchema';
+import { dataMapperSchema } from '../graphql/dataMapperSchema';
+import { dataMapperResolver } from '../resolvers/dataMapperResolver';
 
 const GRAPHQL_PATH = '/graphql';
 
@@ -28,10 +30,10 @@ interface GraphQLServer {
 
 const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
   // Merge type definitions from multiple schemas
-  const mergedTypeDefs = mergeTypeDefs([typeDefs, adminChecklistTypeDefs, taskTemplateDefs, checkListTypeDefs,emailTemplateTypeDefs, jurisdictionTypeDefs]);
-  
+  const mergedTypeDefs = mergeTypeDefs([typeDefs, adminChecklistTypeDefs, taskTemplateDefs, checkListTypeDefs, emailTemplateTypeDefs, jurisdictionTypeDefs, dataMapperSchema]);
+
   // Merge resolvers from multiple resolver files
-  const mergedResolvers = mergeResolvers([caseResolver, adminChecklistResolver, adminTaskTemplateResolver, checkListResolver,emailTemplateResolver, jurisdictionResolver]);
+  const mergedResolvers = mergeResolvers([caseResolver, adminChecklistResolver, adminTaskTemplateResolver, checkListResolver, emailTemplateResolver, jurisdictionResolver, dataMapperResolver]);
 
   const schema = makeExecutableSchema({
     typeDefs: mergedTypeDefs,
@@ -40,7 +42,7 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
 
   const server = new ApolloServer({
     schema,
-    introspection : true
+    introspection: true
   });
 
   await server.start();
