@@ -64,3 +64,11 @@ export const getCompletedTasksThisWeekListURL = (
 ): string => {
   return `/api/report/completedTasksThisWeekList?flag=${flag}`;
 };
+
+export const getMeetingListURL = (flag: string = 'all'): string => {
+  return `/api/report/meetingList?flag=${flag}`;
+};
+
+export const getPendingFollowUpsURL = (flag: string = 'all'): string => {
+  return `/api/report/pendingFollowUpsList?flag=${flag}`;
+};

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { checkPermission } from '../../../common-utils';
@@ -14,27 +14,53 @@ import {
   useGetDueTodayOverdueTasks,
   useGetOpenTasks,
   useGetCompletedTasksThisWeek,
+  useGetMeetingList,
+  useGetPendingFollowUps,
 } from '../../services/dashboard/dashboard-service';
+import { useMutation } from '@apollo/client';
+import { taskClient } from '../../../api/graphql/clients/client';
+import { UPDATE_TASK_SUMMARY_INLINE } from '../../../api/graphql/queries/task-query';
+import { useGetTaskStatuses } from '../../services/work-breakdown/work-breakdown-service';
 import { PROJECT_COLORS } from '../../../admin/pages/workflow-builder/form/helper';
 import {
   AccountYearData,
   DashboardTaskDetail,
   OverdueApprovalsDetail,
   WeeklyProductivityDetail,
+  DashboardMeetingDetail,
+  PendingFollowUpDetail,
 } from '../../types/dashboard';
 import { CardList, ReportCard, TaskCard } from './components/cards';
-import { AccountChart, DonutChartsGroup } from './components/charts';
+import {
+  AccountChart,
+  DonutChartsGroup,
+  WorldMapChart,
+} from './components/charts';
 import {
   DONUT_COLORS,
   formatDate,
   getTrendColor,
   getTrendIcon,
+  getPriorityBadge,
+  getStatusBadge,
 } from './helpers';
 import { ClockIcon } from '@mui/x-date-pickers';
+import { Tooltip } from '@mui/material';
+import { TickIcon } from '../../../assets';
+import { useToast } from '../../../hooks';
 
 export const HomePage: React.FC = () => {
-  const [selectedYear, setSelectedYear] = React.useState('all');
-  const [donutFiscalYear, setDonutFiscalYear] = React.useState('all');
+  const { errorToast } = useToast();
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [donutFiscalYear, setDonutFiscalYear] = useState<string>('all');
+  const [followUpsList, setFollowUpsList] = useState<PendingFollowUpDetail[]>(
+    []
+  );
+
+  // GraphQL mutation
+  const [updateTaskSummaryInline] = useMutation(UPDATE_TASK_SUMMARY_INLINE, {
+    client: taskClient,
+  });
 
   // Permission Mangement
   const { menus } = useSelector((state: RootState) => state.permission);
@@ -66,6 +92,100 @@ export const HomePage: React.FC = () => {
     useGetOpenTasks('all');
   const { data: completedTasks, isLoading: isCompletedLoading } =
     useGetCompletedTasksThisWeek('all');
+  const { data: meetingList, isLoading: isMeetingsLoading } =
+    useGetMeetingList('all');
+  const { data: pendingFollowUps, isLoading: isPendingFollowUpsLoading } =
+    useGetPendingFollowUps('all');
+
+  const { data: taskStatuses } = useGetTaskStatuses();
+
+  // Update local state when API data changes
+  React.useEffect(() => {
+    if (pendingFollowUps) {
+      setFollowUpsList(pendingFollowUps);
+    }
+  }, [pendingFollowUps]);
+
+  // Find "Completed" status RID
+  const completedStatusRid = useMemo(() => {
+    if (!taskStatuses) return null;
+    const completedStatus = taskStatuses.find(
+      (status) => status.task_status_name.toLowerCase() === 'completed'
+    );
+    return completedStatus?.rid || null;
+  }, [taskStatuses]);
+
+  // Handler to mark task as completed
+  const handleMarkCompleted = useCallback(
+    async (taskRid: string) => {
+      const previousList = [...followUpsList];
+      const selectedTask = followUpsList.find((task) => task.rid === taskRid);
+
+      if (!selectedTask) {
+        errorToast('Task not found');
+        return;
+      }
+      if (!completedStatusRid) {
+        errorToast('Completed status not found');
+        return;
+      }
+
+      // Optimistic update - immediately mark as completed
+      setFollowUpsList((prev) =>
+        prev.map((task) =>
+          task.rid === taskRid
+            ? {
+                ...task,
+                status_rid: completedStatusRid,
+                status_name: 'Completed',
+              }
+            : task
+        )
+      );
+
+      const updateData = {
+        rid: selectedTask.rid,
+        status_rid: completedStatusRid,
+        account_rid: selectedTask.account_rid,
+        task_rid: selectedTask.task_rid,
+        attachment_level: selectedTask.attachment_level,
+        attach_to: selectedTask.attach_to || '',
+        task_type_name: selectedTask.task_type_name,
+      };
+
+      try {
+        const res = await updateTaskSummaryInline({
+          variables: { data: updateData },
+        });
+        const result = res.data?.updateTaskSummaryInline;
+        if (result?.statusCode === 200 && result.data) {
+          const updatedTask = result.data;
+          // Confirm update with actual API response
+          setFollowUpsList((prev) =>
+            prev.map((task) =>
+              task.rid === taskRid
+                ? {
+                    ...task,
+                    status_rid: updatedTask.status_rid,
+                    status_name: updatedTask.status_name,
+                  }
+                : task
+            )
+          );
+        } else {
+          // Revert on failure
+          errorToast(result?.statusMessage || 'Failed to update task status');
+          setFollowUpsList(previousList);
+        }
+      } catch (error) {
+        // Revert on error
+        errorToast((error as Error)?.message || 'Failed to update task status');
+        setFollowUpsList(previousList);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [followUpsList, completedStatusRid]
+  );
 
   const transformedHealthData = React.useMemo<AccountYearData[]>(() => {
     if (!healthStatusData) return [];
@@ -128,6 +248,59 @@ export const HomePage: React.FC = () => {
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
         />
+
+        <CardList
+          title='My Meetings'
+          subtitle={`${meetingList?.length || 0} Meetings scheduled or recently completed`}
+          items={meetingList || []}
+          isLoading={isMeetingsLoading}
+          itemRenderer={(item: DashboardMeetingDetail) => {
+            const priorityBadge = getPriorityBadge(
+              item.priority_name || 'Normal'
+            );
+            const statusBadge = getStatusBadge(item.status_name);
+
+            return (
+              <div className='flex items-start justify-between gap-3'>
+                <div className='flex-1'>
+                  <p className='text-sm font-semibold text-[#2A2A2A]'>
+                    {item.subject}
+                  </p>
+                  <div className='flex items-center gap-4 mt-1 text-[11px] text-[#425a76cf]'>
+                    <span>
+                      {formatDate(item.effective_start_datetime)} at{' '}
+                      {item.effective_start_time}
+                    </span>
+                    <span
+                      className='px-2 py-0.5 rounded text-[10px] font-medium capitalize'
+                      style={{
+                        backgroundColor: priorityBadge.bg,
+                        color: priorityBadge.text,
+                      }}
+                    >
+                      {item.priority_name || 'Normal'}
+                    </span>
+                  </div>
+                  <p className='text-[11px] text-[#425A76] font-medium mt-1'>
+                    <span className='text-[#2a2a2a]'>Attendees:</span>{' '}
+                    {item.meeting_participants?.map((p) => p.name).join(', ') ||
+                      'None'}
+                  </p>
+                </div>
+                <div
+                  className='px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap capitalize'
+                  style={{
+                    backgroundColor: statusBadge.bg,
+                    color: statusBadge.text,
+                  }}
+                >
+                  {item.status_name}
+                </div>
+              </div>
+            );
+          }}
+        />
+
         <CardList
           title='Weekly Productivity'
           subtitle={`${weeklyProductivity?.length || 0} Productivity items tracked this week`}
@@ -171,6 +344,100 @@ export const HomePage: React.FC = () => {
             );
           }}
         />
+
+        <CardList
+          title='Pending Follow-ups'
+          subtitle={`${followUpsList?.filter((task) => task.status_name?.toLowerCase() !== 'completed').length || 0} Follow-ups awaiting response`}
+          items={followUpsList || []}
+          isLoading={isPendingFollowUpsLoading}
+          itemRenderer={(item) => {
+            const priorityBadge = getPriorityBadge(
+              item.priority_name || 'Normal'
+            );
+            const isCompleted = item.status_name?.toLowerCase() === 'completed';
+
+            return (
+              <div className={isCompleted ? 'opacity-60' : ''}>
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='flex-1'>
+                    <p
+                      className={`text-sm font-semibold text-[#2A2A2A] ${
+                        isCompleted ? 'line-through' : ''
+                      }`}
+                    >
+                      {item.task_name}
+                    </p>
+
+                    <div
+                      className={`text-[11px] mt-0.5 text-[#425a76cf] ${
+                        isCompleted ? 'line-through' : ''
+                      }`}
+                    >
+                      Due: {formatDate(item.effective_end_datetime)}
+                    </div>
+                  </div>
+
+                  {/* Priority Badge */}
+                  <div
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium capitalize ${
+                      isCompleted ? 'line-through' : ''
+                    }`}
+                    style={{
+                      backgroundColor: priorityBadge.bg,
+                      color: priorityBadge.text,
+                    }}
+                  >
+                    {item.priority_name || 'Normal'}
+                  </div>
+
+                  {/* Complete Button */}
+                  <Tooltip
+                    title={isCompleted ? 'Completed' : 'Mark as complete'}
+                    arrow
+                    placement='top'
+                  >
+                    <button
+                      onClick={() => handleMarkCompleted(item.rid)}
+                      disabled={isCompleted}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        marginTop: '2px',
+                        cursor: isCompleted ? 'default' : 'pointer',
+                      }}
+                    >
+                      {isCompleted ? (
+                        <React.Suspense fallback={null}>
+                          <TickIcon className='w-[16px] h-[16px] [&_*]:!fill-[#00A63E]' />
+                        </React.Suspense>
+                      ) : (
+                        <div className='w-[15px] h-[15px] border border-gray-400 rounded-[2px] cursor-pointer'></div>
+                      )}
+                    </button>
+                  </Tooltip>
+                </div>
+
+                {/* Footer Row */}
+                <div className='w-full flex items-center justify-between mt-1 text-[11px]'>
+                  <span
+                    className={`text-[#425a76cf] ${isCompleted ? 'line-through' : ''}`}
+                  >
+                    <strong>Assigned:</strong> {item.assigned_to_name}
+                  </span>
+
+                  <span
+                    className={`text-[#425a76cf] font-bold ${
+                      isCompleted ? 'line-through' : ''
+                    }`}
+                  >
+                    {item.account_name} / FY-{item.fiscal_year}
+                  </span>
+                </div>
+              </div>
+            );
+          }}
+        />
+
         <CardList
           title='Overdue Approvals'
           subtitle={`${overdueApprovals?.length || 0} Approvals requests overdue`}
@@ -188,27 +455,27 @@ export const HomePage: React.FC = () => {
             return (
               <div>
                 <div className='flex items-start justify-between gap-3 mb-1'>
-                  <div className='flex-1'>
-                    <p className='text-sm font-semibold text-[#2A2A2A]'>
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-sm font-semibold text-[#2A2A2A] truncate'>
                       {item.task_name}
                     </p>
                     <p className='text-[11px] text-[#425a76cf] mt-1'>
                       By: {item.assigned_to_name || 'N/A'}
                     </p>
                   </div>
-                  <div className='flex items-center gap-1 bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap'>
+                  <div className='flex items-center gap-1 bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap flex-shrink-0'>
                     <ClockIcon className='w-3 h-3 p-0.5' />
                     {daysOverdue}d overdue
                   </div>
                 </div>
-                <div className='flex items-start justify-between text-[11px] text-[#425a76cf]'>
-                  <div className='flex items-center gap-2 flex-1'>
-                    <p className='text-[11px] mt-0.5 font-semibold text-[#425a76cf]'>
+                <div className='flex items-start justify-between text-[11px] text-[#425a76cf] gap-2'>
+                  <div className='flex items-center gap-2 flex-1 min-w-0'>
+                    <p className='text-[11px] mt-0.5 font-semibold text-[#425a76cf] truncate'>
                       <span className='text-[#425A76]'>Submitted On:</span>{' '}
                       {formatDate(item.effective_start_datetime)}
                     </p>
                   </div>
-                  <span className='font-bold'>
+                  <span className='font-bold whitespace-nowrap flex-shrink-0'>
                     {item.account_name} / FY-{`${item.fiscal_year}`}
                   </span>
                 </div>
@@ -218,8 +485,27 @@ export const HomePage: React.FC = () => {
         />
 
         <TaskCard
-          title='Tasks Due Today / Overdue'
-          subtitle={`${dueTodayOverdueTasks?.length || 0} Tasks due today or overdue`}
+          title='Upcoming Tasks (Next 7 Days)'
+          subtitle={`${upcomingTasks?.length || 0} Tasks starting soon`}
+          items={upcomingTasks || []}
+          isLoading={isUpcomingLoading}
+          mapItem={(t: DashboardTaskDetail) => ({
+            title: t.task_name,
+            description: t.case_name,
+            assignee: t.assigned_to_name,
+            priority: t.priority_name || 'Normal',
+            status: t.status,
+            date: formatDate(t.effective_end_datetime),
+            highlightDate: false,
+            account: t.account_name,
+            fiscalYear: t.fiscal_year,
+            avatar: t.profile_url || undefined,
+          })}
+        />
+
+        <TaskCard
+          title='Due Today / Overdue Tasks'
+          subtitle={`${dueTodayOverdueTasks?.length || 0} Tasks need immediate attention`}
           items={dueTodayOverdueTasks || []}
           isLoading={isDueTodayLoading}
           mapItem={(t: DashboardTaskDetail) => ({
@@ -238,24 +524,7 @@ export const HomePage: React.FC = () => {
               new Date().toDateString(),
             account: t.account_name,
             fiscalYear: t.fiscal_year,
-          })}
-        />
-
-        <TaskCard
-          title='Upcoming Tasks'
-          subtitle={`${upcomingTasks?.length || 0} Tasks starting soon`}
-          items={upcomingTasks || []}
-          isLoading={isUpcomingLoading}
-          mapItem={(t: DashboardTaskDetail) => ({
-            title: t.task_name,
-            description: t.case_name,
-            assignee: t.assigned_to_name,
-            priority: t.priority_name || 'Normal',
-            status: t.status,
-            date: formatDate(t.effective_end_datetime),
-            highlightDate: false,
-            account: t.account_name,
-            fiscalYear: t.fiscal_year,
+            avatar: t.profile_url || undefined,
           })}
         />
 
@@ -274,12 +543,13 @@ export const HomePage: React.FC = () => {
             highlightDate: false,
             account: t.account_name,
             fiscalYear: t.fiscal_year,
+            avatar: t.profile_url || undefined,
           })}
         />
 
         <TaskCard
           title='Completed Tasks This Week'
-          subtitle={`${completedTasks?.length || 0} Tasks finished recently`}
+          subtitle={`${completedTasks?.length || 0} Tasks completed this week`}
           items={completedTasks || []}
           isLoading={isCompletedLoading}
           mapItem={(t: DashboardTaskDetail) => ({
@@ -292,6 +562,7 @@ export const HomePage: React.FC = () => {
             highlightDate: false,
             account: t.account_name,
             fiscalYear: t.fiscal_year,
+            avatar: t.profile_url || undefined,
           })}
         />
       </div>
@@ -304,6 +575,11 @@ export const HomePage: React.FC = () => {
         isLoading={isProjectValueLoading}
         selectedYear={donutFiscalYear}
         onYearChange={setDonutFiscalYear}
+      />
+
+      <WorldMapChart
+        title='Global Level'
+        subtitle='Click on any country to view detailed account information'
       />
     </div>
   );

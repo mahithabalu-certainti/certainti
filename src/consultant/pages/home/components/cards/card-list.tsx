@@ -41,7 +41,7 @@ const CardList = <T,>({
         {/* Content Skeleton */}
         <div
           className='px-4 py-3 overflow-y-auto space-y-3'
-          style={{ maxHeight: `${maxHeight}px` }}
+          style={{ maxHeight: `${maxHeight}px`, minHeight: `${maxHeight}px` }}
         >
           {Array.from({ length: 4 }).map((_, index) => (
             <div
@@ -80,7 +80,7 @@ const CardList = <T,>({
       {/* Content */}
       <div
         className={`px-4 py-3 overflow-y-auto space-y-3`}
-        style={{ maxHeight: `${maxHeight}px` }}
+        style={{ maxHeight: `${maxHeight}px`, minHeight: `${maxHeight}px` }}
       >
         {items.length === 0 ? (
           <div className='flex justify-center items-center h-[360px] text-sm text-[#425A76] italic'>
@@ -90,7 +90,7 @@ const CardList = <T,>({
           items.map((item, index) => (
             <div
               key={index}
-              className='border-l-4 rounded p-3 bg-white hover:bg-gray-100 space-y-1'
+              className='border-l-4 rounded p-3 bg-white hover:bg-gray-100 space-y-1 overflow-x-hidden'
               style={{
                 borderLeftColor: '#CBD6E2',
                 boxShadow:

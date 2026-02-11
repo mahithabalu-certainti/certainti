@@ -50,9 +50,9 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
       projectCost: Number(item.total_project_cost),
       qualifiedCost: Number(item.qualified_project_cost),
       qreCost: Number(item.qre_cost),
-      computed: Number(item.rd_credits_computed),
-      submitted: Number(item.rd_credits_submitted),
-      approved: Number(item.rd_credits_approved),
+      computed: Number(item.final_credit_computed),
+      submitted: Number(item.final_credit_submitted),
+      approved: Number(item.final_credit_approved),
     }));
   }, [data]);
 

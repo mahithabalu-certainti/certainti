@@ -3,6 +3,7 @@ import {
   getPriorityBadge,
   getPriorityColor,
   getStatusBadge,
+  getInitials,
 } from '../../helpers';
 import CardList from './card-list';
 
@@ -18,6 +19,7 @@ interface DefaultItemData {
   highlightDate?: boolean;
   account?: string;
   fiscalYear?: number;
+  avatar?: string;
 }
 
 interface TaskCardProps<T> {
@@ -37,7 +39,7 @@ const TaskCard = <T,>({
   items,
   renderItem,
   mapItem,
-  maxHeight = 350,
+  maxHeight = 400,
   className = '',
   isLoading = false,
 }: TaskCardProps<T>) => {
@@ -50,21 +52,32 @@ const TaskCard = <T,>({
     const statusBadge = getStatusBadge(data.status);
 
     return (
-      <React.Fragment>
+      <div>
         {/* Row 1: Avatar + Name + Badges */}
         <div className='flex justify-between items-center'>
           <div className='flex items-center gap-2'>
-            <img
-              src={''}
-              alt='User avatar'
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-              }}
-            />
+            {data.avatar ? (
+              <img
+                src={data.avatar}
+                alt='User avatar'
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '1px solid #E2E8F0',
+                }}
+              />
+            ) : (
+              <div
+                className='flex items-center justify-center bg-gray-100 rounded-full text-[10px] font-bold text-gray-500'
+                style={{ width: '28px', height: '28px' }}
+              >
+                {getInitials(data.assignee) || 'UA'}
+              </div>
+            )}
             <span className='text-sm font-medium text-[#2A2A2A]'>
-              {data.assignee}
+              {data.assignee || 'Unassigned'}
             </span>
           </div>
 
@@ -105,7 +118,7 @@ const TaskCard = <T,>({
               </p>
             )}
           </div>
-          <div className='text-[11px]'>
+          <div className='text-[11px] whitespace-nowrap flex-shrink-0'>
             <span
               style={{
                 color:
@@ -131,7 +144,7 @@ const TaskCard = <T,>({
         <div className='text-[11px] font-semibold text-[#425a76cf]'>
           {data.account} / FY-{`${data.fiscalYear}`}
         </div>
-      </React.Fragment>
+      </div>
     );
   };
 

@@ -496,28 +496,30 @@ export const formatDate = (dateString: string): string => {
 };
 
 export const getPriorityColor = (priority?: string) => {
-  switch (priority) {
+  const normalized = (priority || '').toLowerCase().trim();
+  switch (normalized) {
     case 'high':
       return { border: '#EF4444', bg: '#EF444412' };
     case 'medium':
       return { border: '#F59E0B', bg: '#F59E0B12' };
     case 'low':
-      return { border: '#10B981', bg: '#10B98112' };
+      return { border: '#8B5CF6', bg: '#8B5CF612' };
     default:
       return { border: '#64748B', bg: '#64748B12' };
   }
 };
 
 export const getPriorityBadge = (priority?: string) => {
-  switch (priority) {
+  const normalized = (priority || '').toLowerCase().trim();
+  switch (normalized) {
     case 'high': // red-500
       return { bg: '#EF44442E', text: '#7F1D1D' };
 
     case 'medium': // amber-500
       return { bg: '#F59E0B2E', text: '#78350F' };
 
-    case 'low': // emerald-500
-      return { bg: '#10B9812E', text: '#064E3B' };
+    case 'low': // purple-500
+      return { bg: '#8B5CF62E', text: '#4C1D95' };
 
     default: // slate-500
       return { bg: '#64748B2E', text: '#1E293B' };
@@ -525,12 +527,22 @@ export const getPriorityBadge = (priority?: string) => {
 };
 
 export const getStatusBadge = (status?: string) => {
-  switch (status) {
+  const normalized = (status || '').toLowerCase().trim().replace(/\s+/g, '-');
+  switch (normalized) {
     case 'in-progress': // blue-500
       return { bg: '#3B82F62E', text: '#1E3A8A' };
 
     case 'completed': // green-500
       return { bg: '#10B9812E', text: '#064E3B' };
+
+    case 'overdue': // red-500
+      return { bg: '#EF44442E', text: '#7F1D1D' };
+
+    case 'due-today': // amber-500
+      return { bg: '#F59E0B2E', text: '#78350F' };
+
+    case 'to-do': // slate-500
+      return { bg: '#64748B2E', text: '#1E293B' };
 
     default: // slate-500
       return { bg: '#64748B2E', text: '#1E293B' };

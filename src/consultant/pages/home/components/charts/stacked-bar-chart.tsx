@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useMemo } from 'react';
 import Chart from 'react-google-charts';
-import {
-  formatAmount,
-  getDynamicSvgIcon,
-  blendWithWhite,
-} from '../../utils/helpers';
+import { formatAmount, getDynamicSvgIcon, blendWithWhite } from '../../helpers';
 
 interface SummaryItem {
   label: string;
@@ -35,6 +32,7 @@ interface StackedBarChartProps {
   YAxis?: string;
   customTooltip?: boolean;
   getTooltipData?: (item: any) => TooltipItem[];
+  itemsPerPage?: number; // New prop for pagination
 }
 
 const StackedBarChart: React.FC<StackedBarChartProps> = ({
@@ -51,7 +49,32 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
   YAxis = '',
   customTooltip = false,
   getTooltipData,
+  itemsPerPage = 5, // Default 5 items per page
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = useMemo(
+    () => data.slice(startIndex, endIndex),
+    [data, startIndex, endIndex]
+  );
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  // Reset to page 1 when data changes
+  useMemo(() => {
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.length]);
   const prepareChartData = () => {
     if (series.length === 1) {
       const valueSeries = series[0];
@@ -66,7 +89,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
         headers.push({ role: 'tooltip', type: 'string', p: { html: true } });
       }
 
-      const rows = data.map((item) => {
+      const rows = paginatedData.map((item) => {
         const label = getLabel(item);
         const value = Number(item[valueSeries.key] ?? 0);
         const annotation = formatAmount(value);
@@ -105,7 +128,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
     }
 
     const headers = ['Account', ...series.map((s) => s.name)];
-    const rows = data.map((item) => [
+    const rows = paginatedData.map((item) => [
       getLabel(item),
       ...series.map((s) => item[s.key]),
     ]);
@@ -187,7 +210,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
         <Chart
           chartType='BarChart'
           width='100%'
-          height={data.length * 40 + 100}
+          height={paginatedData.length * 40 + 100}
           data={chartData}
           options={chartOptions}
           loader={
@@ -200,6 +223,41 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
           }
         />
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className='flex items-center justify-center mb-3 bg-white'>
+          <div className='flex items-center gap-3'>
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className={`text-lg font-medium ${
+                currentPage === 1
+                  ? 'text-gray-300 cursor-default'
+                  : 'text-gray-600 hover:text-gray-900 cursor-pointer'
+              }`}
+            >
+              ◄
+            </button>
+
+            <span className='text-sm font-medium text-gray-700 min-w-[80px] text-center'>
+              Page {currentPage}
+            </span>
+
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={`text-lg font-medium ${
+                currentPage === totalPages
+                  ? 'text-gray-300 cursor-default'
+                  : 'text-gray-600 hover:text-gray-900 cursor-pointer'
+              }`}
+            >
+              ►
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
