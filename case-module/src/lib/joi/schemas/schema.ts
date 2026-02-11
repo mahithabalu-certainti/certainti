@@ -1001,6 +1001,7 @@ const listResourceSchema = Joi.object({
   ).optional(),
   apiSource: Joi.string().optional().default("Project"),
   accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
+  type : Joi.string().optional().allow("")
 });
 
 const exportListProjectTasksSchema = Joi.object({

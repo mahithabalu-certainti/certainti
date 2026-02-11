@@ -87,7 +87,8 @@ async function listProjectResource(req: Request, res: Response): Promise<void> {
         parsedFilters,
         value.sortBy,
         value.sortOrder,
-        value.search
+        value.search,
+        value.type
       );
 
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
