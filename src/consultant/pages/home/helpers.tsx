@@ -609,6 +609,64 @@ export const getSelectStyles = (hasError: boolean, isEmpty: boolean) => ({
     borderRadius: '2px',
   },
   '&:hover .MuiOutlinedInput-notchedOutline': {
-    border: hasError ? '1px solid #ef4444' : '1px solid #CBD6E2',
+    borderRadius: '2px',
   },
 });
+
+export const getTrendIcon = (trend?: string, size = 16): JSX.Element => {
+  const getIconContent = () => {
+    switch (trend) {
+      case 'up':
+        return (
+          <>
+            <polyline points='7 7 17 7 17 17' />
+            <line x1='7' y1='17' x2='17' y2='7' />
+          </>
+        );
+      case 'down':
+        return (
+          <>
+            <polyline points='17 7 17 17 7 17' />
+            <line x1='7' y1='7' x2='17' y2='17' />
+          </>
+        );
+      case 'stable':
+        return (
+          <>
+            <line x1='5' y1='12' x2='19' y2='12' />
+            <polyline points='12 5 19 12 12 19' />
+          </>
+        );
+      default:
+        return <circle cx='12' cy='12' r='1' />;
+    }
+  };
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    >
+      {getIconContent()}
+    </svg>
+  );
+};
+
+export const getTrendColor = (trend?: string): string => {
+  switch (trend) {
+    case 'up':
+      return 'text-green-600';
+    case 'down':
+      return 'text-red-600';
+    case 'stable':
+      return 'text-blue-600';
+    default:
+      return 'text-gray-600';
+  }
+};
