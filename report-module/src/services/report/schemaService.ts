@@ -141,9 +141,11 @@ class SchemaService {
         try {
             const sequelize = await initMainDbSequelize();
 
+            const accountDetailsQuery = rawQueries.fetchAccountDetailsByRid(parentAccountId);
             const [account]: any[] = await sequelize.query(
-                rawQueries.fetchAccountDetailsByRid(parentAccountId),
+                accountDetailsQuery.query,
                 {
+                    replacements: accountDetailsQuery.replacements,
                     type: QueryTypes.SELECT,
                 }
             );

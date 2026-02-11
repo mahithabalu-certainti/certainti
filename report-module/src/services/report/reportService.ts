@@ -77,30 +77,38 @@ export class ReportService implements IReportService {
                     }
                 );
 
+                const openTasksQuery = rawQueries.fetchOpenTaskCount(childAccountIds, userId);
                 const openTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchOpenTaskCount(childAccountIds, userId),
+                    openTasksQuery.query,
                     {
+                        replacements: openTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const overDueTasksQuery = rawQueries.fetchOverDueTaskCount(childAccountIds, userId);
                 const overDueTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchOverDueTaskCount(childAccountIds, userId),
+                    overDueTasksQuery.query,
                     {
+                        replacements: overDueTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const upcomingTasksQuery = rawQueries.fetchUpcomingTaskCount(childAccountIds, userId);
                 const upcomingTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchUpcomingTaskCount(childAccountIds, userId),
+                    upcomingTasksQuery.query,
                     {
+                        replacements: upcomingTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const weeklyCompletedTasksQuery = rawQueries.fetchWeeklyCompletedTaskCount(childAccountIds, userId);
                 const weeklyCompletedTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchWeeklyCompletedTaskCount(childAccountIds, userId),
+                    weeklyCompletedTasksQuery.query,
                     {
+                        replacements: weeklyCompletedTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
@@ -176,30 +184,38 @@ export class ReportService implements IReportService {
                     }
                 );
 
+                const openTasksQuery = rawQueries.fetchOpenTaskCount();
                 const openTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchOpenTaskCount(),
+                    openTasksQuery.query,
                     {
+                        replacements: openTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const overDueTasksQuery = rawQueries.fetchOverDueTaskCount();
                 const overDueTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchOverDueTaskCount(),
+                    overDueTasksQuery.query,
                     {
+                        replacements: overDueTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const upcomingTasksQuery = rawQueries.fetchUpcomingTaskCount();
                 const upcomingTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchUpcomingTaskCount(),
+                    upcomingTasksQuery.query,
                     {
+                        replacements: upcomingTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
 
+                const weeklyCompletedTasksQuery = rawQueries.fetchWeeklyCompletedTaskCount();
                 const weeklyCompletedTasksCount: { count: number }[] = await sequelize.query(
-                    rawQueries.fetchWeeklyCompletedTaskCount(),
+                    weeklyCompletedTasksQuery.query,
                     {
+                        replacements: weeklyCompletedTasksQuery.replacements,
                         type: QueryTypes.SELECT,
                     }
                 );
@@ -311,7 +327,11 @@ export class ReportService implements IReportService {
                 const scheduledStatus = activityStatuses.find((s) => s.status_name === 'Scheduled');
                 const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
 
-                const userEmailResult: any[] = await sequelize.query(rawQueries.fetchUserEmail(userId), { type: QueryTypes.SELECT });
+                const userEmailQuery = rawQueries.fetchUserEmail(userId);
+                const userEmailResult: any[] = await sequelize.query(userEmailQuery.query, {
+                    replacements: userEmailQuery.replacements,
+                    type: QueryTypes.SELECT
+                });
                 const userEmail = userEmailResult[0]?.email || '';
 
                 const uniqueSchemaNames = new Set<string>();
@@ -330,9 +350,11 @@ export class ReportService implements IReportService {
                                 return;
                             }
                             // Get unique RIDs for this schema
+                            const weeklyMeetingListQuery = rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId, userEmail);
                             const result: any[] = await orgDb.query(
-                                rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId, userEmail),
+                                weeklyMeetingListQuery.query,
                                 {
+                                    replacements: weeklyMeetingListQuery.replacements,
                                     type: QueryTypes.SELECT,
                                 }
                             );
@@ -351,9 +373,21 @@ export class ReportService implements IReportService {
 
                 const allEmailSet = new Set<string>();
                 finalMeetingList.forEach((meeting) => {
-                    const participants = typeof meeting.meeting_participants === 'string'
-                        ? JSON.parse(meeting.meeting_participants)
-                        : meeting.meeting_participants || [];
+                    let participants: any[] = [];
+                    if (typeof meeting.meeting_participants === 'string') {
+                        const rawParticipants = meeting.meeting_participants.trim();
+                        if (rawParticipants) {
+                            try {
+                                const parsed = JSON.parse(rawParticipants);
+                                participants = Array.isArray(parsed) ? parsed : [];
+                            } catch (e) {
+                                participants = [];
+                            }
+                        }
+                    } else if (Array.isArray(meeting.meeting_participants)) {
+                        participants = meeting.meeting_participants;
+                    }
+
                     const invitedBy = meeting.invited_by;
                     if (invitedBy) allEmailSet.add(invitedBy);
                     participants.forEach((p: string) => allEmailSet.add(p));
@@ -362,9 +396,13 @@ export class ReportService implements IReportService {
                 const emailNameMap = new Map<string, string>();
                 if (allEmailSet.size > 0) {
                     try {
+                        const usersByEmailsQuery = rawQueries.fetchUsersByEmails(Array.from(allEmailSet));
                         const users: any[] = await sequelize.query(
-                            rawQueries.fetchUsersByEmails(Array.from(allEmailSet)),
-                            { type: QueryTypes.SELECT }
+                            usersByEmailsQuery.query,
+                            {
+                                replacements: usersByEmailsQuery.replacements,
+                                type: QueryTypes.SELECT
+                            }
                         );
                         users.forEach((u) => {
                             emailNameMap.set(u.email, `${u.first_name || ''} ${u.last_name || ''}`.trim());
@@ -375,9 +413,20 @@ export class ReportService implements IReportService {
                 }
 
                 const finalMeetingListWithUsers = finalMeetingList.map((meeting) => {
-                    const participants = typeof meeting.meeting_participants === 'string'
-                        ? JSON.parse(meeting.meeting_participants)
-                        : meeting.meeting_participants || [];
+                    let participants: any[] = [];
+                    if (typeof meeting.meeting_participants === 'string') {
+                        const rawParticipants = meeting.meeting_participants.trim();
+                        if (rawParticipants) {
+                            try {
+                                const parsed = JSON.parse(rawParticipants);
+                                participants = Array.isArray(parsed) ? parsed : [];
+                            } catch (e) {
+                                participants = [];
+                            }
+                        }
+                    } else if (Array.isArray(meeting.meeting_participants)) {
+                        participants = meeting.meeting_participants;
+                    }
                     const invitedBy = meeting.invited_by;
 
                     return {
@@ -427,9 +476,11 @@ export class ReportService implements IReportService {
                             if (!tableExists) {
                                 return;
                             }
+                            const weeklyMeetingListQuery = rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId);
                             const result: any[] = await orgDb.query(
-                                rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId),
+                                weeklyMeetingListQuery.query,
                                 {
+                                    replacements: weeklyMeetingListQuery.replacements,
                                     type: QueryTypes.SELECT,
                                 }
                             );
@@ -448,9 +499,21 @@ export class ReportService implements IReportService {
 
                 const allEmailSet = new Set<string>();
                 finalMeetingList.forEach((meeting) => {
-                    const participants = typeof meeting.meeting_participants === 'string'
-                        ? JSON.parse(meeting.meeting_participants)
-                        : meeting.meeting_participants || [];
+                    let participants: any[] = [];
+                    if (typeof meeting.meeting_participants === 'string') {
+                        const rawParticipants = meeting.meeting_participants.trim();
+                        if (rawParticipants) {
+                            try {
+                                const parsed = JSON.parse(rawParticipants);
+                                participants = Array.isArray(parsed) ? parsed : [];
+                            } catch (e) {
+                                participants = [];
+                            }
+                        }
+                    } else if (Array.isArray(meeting.meeting_participants)) {
+                        participants = meeting.meeting_participants;
+                    }
+
                     const invitedBy = meeting.invited_by;
                     if (invitedBy) allEmailSet.add(invitedBy);
                     participants.forEach((p: string) => allEmailSet.add(p));
@@ -459,9 +522,13 @@ export class ReportService implements IReportService {
                 const emailNameMap = new Map<string, string>();
                 if (allEmailSet.size > 0) {
                     try {
+                        const usersByEmailsQuery = rawQueries.fetchUsersByEmails(Array.from(allEmailSet));
                         const users: any[] = await sequelize.query(
-                            rawQueries.fetchUsersByEmails(Array.from(allEmailSet)),
-                            { type: QueryTypes.SELECT }
+                            usersByEmailsQuery.query,
+                            {
+                                replacements: usersByEmailsQuery.replacements,
+                                type: QueryTypes.SELECT
+                            }
                         );
                         users.forEach((u) => {
                             emailNameMap.set(u.email, `${u.first_name || ''} ${u.last_name || ''}`.trim());
@@ -472,9 +539,20 @@ export class ReportService implements IReportService {
                 }
 
                 const finalMeetingListWithUsers = finalMeetingList.map((meeting) => {
-                    const participants = typeof meeting.meeting_participants === 'string'
-                        ? JSON.parse(meeting.meeting_participants)
-                        : meeting.meeting_participants || [];
+                    let participants: any[] = [];
+                    if (typeof meeting.meeting_participants === 'string') {
+                        const rawParticipants = meeting.meeting_participants.trim();
+                        if (rawParticipants) {
+                            try {
+                                const parsed = JSON.parse(rawParticipants);
+                                participants = Array.isArray(parsed) ? parsed : [];
+                            } catch (e) {
+                                participants = [];
+                            }
+                        }
+                    } else if (Array.isArray(meeting.meeting_participants)) {
+                        participants = meeting.meeting_participants;
+                    }
                     const invitedBy = meeting.invited_by;
 
                     return {
@@ -572,17 +650,23 @@ export class ReportService implements IReportService {
             }
 
             // 2. Fetch Tasks Stats (Main DB)
+            const weeklyCompletedQuery = rawQueries.fetchWeeklyCompletedTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+            const weeklyTotalQuery = rawQueries.fetchWeeklyTotalTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+            const weeklyOpenQuery = rawQueries.fetchWeeklyOpenTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+            const weeklyOverdueQuery = rawQueries.fetchWeeklyOverDueTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+            const weeklyBlockedQuery = rawQueries.fetchWeeklyBlockedTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+
             const tasksPromises = [
                 // Completed Tasks (Weekly)
-                sequelize.query<{ count: number }>(rawQueries.fetchWeeklyCompletedTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined), { type: QueryTypes.SELECT }),
+                sequelize.query<{ count: number }>(weeklyCompletedQuery.query, { replacements: weeklyCompletedQuery.replacements, type: QueryTypes.SELECT }),
                 // Total Tasks (Weekly)
-                sequelize.query<{ count: number }>(rawQueries.fetchWeeklyTotalTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined), { type: QueryTypes.SELECT }),
+                sequelize.query<{ count: number }>(weeklyTotalQuery.query, { replacements: weeklyTotalQuery.replacements, type: QueryTypes.SELECT }),
                 // Open Tasks (Pending)
-                sequelize.query<{ count: number }>(rawQueries.fetchWeeklyOpenTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined), { type: QueryTypes.SELECT }),
+                sequelize.query<{ count: number }>(weeklyOpenQuery.query, { replacements: weeklyOpenQuery.replacements, type: QueryTypes.SELECT }),
                 // Overdue Tasks
-                sequelize.query<{ count: number }>(rawQueries.fetchWeeklyOverDueTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined), { type: QueryTypes.SELECT }),
+                sequelize.query<{ count: number }>(weeklyOverdueQuery.query, { replacements: weeklyOverdueQuery.replacements, type: QueryTypes.SELECT }),
                 // Blocked (On Hold Cases)
-                sequelize.query<{ count: number }>(rawQueries.fetchWeeklyBlockedTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined), { type: QueryTypes.SELECT })
+                sequelize.query<{ count: number }>(weeklyBlockedQuery.query, { replacements: weeklyBlockedQuery.replacements, type: QueryTypes.SELECT })
             ];
 
             const tasksResults = await Promise.all(tasksPromises);
@@ -612,36 +696,55 @@ export class ReportService implements IReportService {
             let totalMeetingsCount = 0;
             let attendedMeetingsCount = 0;
 
-            const userEmailResult: any[] = await sequelize.query(rawQueries.fetchUserEmail(userId), { type: QueryTypes.SELECT });
+            const userEmailQuery = rawQueries.fetchUserEmail(userId);
+            const userEmailResult: any[] = await sequelize.query(userEmailQuery.query, {
+                replacements: userEmailQuery.replacements,
+                type: QueryTypes.SELECT
+            });
             const userEmail = userEmailResult[0]?.email || '';
 
-            await Promise.all(
+            const meetingCounts = await Promise.all(
                 Array.from(uniqueSchemaNames).map(async (schemaName) => {
                     try {
                         const tableExists = await this.checkTableExistence(orgDb, schemaName, 'activities');
                         if (!tableExists) {
-                            return;
+                            return { total: 0, attended: 0 };
                         }
+
+                        const weeklyTotalMeetingQuery = rawQueries.fetchWeeklyMeetingCount(schemaName, totalStatuses, flag === "user" ? userEmail : undefined);
+                        const weeklyAttendedMeetingQuery = rawQueries.fetchWeeklyMeetingCount(schemaName, attendedStatuses, flag === "user" ? userEmail : undefined);
 
                         const [totalRes, attendedRes] = await Promise.all([
                             orgDb.query<{ count: number }>(
-                                rawQueries.fetchWeeklyMeetingCount(schemaName, totalStatuses, flag === "user" ? userEmail : undefined),
-                                { type: QueryTypes.SELECT }
+                                weeklyTotalMeetingQuery.query,
+                                {
+                                    replacements: weeklyTotalMeetingQuery.replacements,
+                                    type: QueryTypes.SELECT
+                                }
                             ),
                             orgDb.query<{ count: number }>(
-                                rawQueries.fetchWeeklyMeetingCount(schemaName, attendedStatuses, flag === "user" ? userEmail : undefined),
-                                { type: QueryTypes.SELECT }
+                                weeklyAttendedMeetingQuery.query,
+                                {
+                                    replacements: weeklyAttendedMeetingQuery.replacements,
+                                    type: QueryTypes.SELECT
+                                }
                             )
                         ]);
 
-                        totalMeetingsCount += Number(totalRes[0]?.count || 0);
-                        attendedMeetingsCount += Number(attendedRes[0]?.count || 0);
+                        return {
+                            total: Number(totalRes[0]?.count || 0),
+                            attended: Number(attendedRes[0]?.count || 0)
+                        };
 
                     } catch (error) {
                         errorLog(`Error fetching meetings for schema ${schemaName}: ${error}`);
+                        return { total: 0, attended: 0 };
                     }
                 })
             );
+
+            totalMeetingsCount = meetingCounts.reduce((acc, curr) => acc + curr.total, 0);
+            attendedMeetingsCount = meetingCounts.reduce((acc, curr) => acc + curr.attended, 0);
 
             // 4. Construct Response
             const data = [
@@ -684,7 +787,7 @@ export class ReportService implements IReportService {
     }
 
 
-    private async fetchTasksList(userId: string, flag: string, queryGenerator: (accountIds?: string[], userId?: string) => string): Promise<{ statusCode: number; message: string; data?: any }> {
+    private async fetchTasksList(userId: string, flag: string, queryGenerator: (accountIds?: string[], userId?: string) => { query: string, replacements: any }): Promise<{ statusCode: number; message: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
             let accountIds: string[] = [];
@@ -702,26 +805,37 @@ export class ReportService implements IReportService {
                 accountIds = childAccountIds;
             }
 
-            const query = queryGenerator(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
-            const tasks: any[] = await sequelize.query(query, { type: QueryTypes.SELECT });
+            const { query, replacements } = queryGenerator(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+            const tasks: any[] = await sequelize.query(query, {
+                replacements,
+                type: QueryTypes.SELECT
+            });
 
             // Fetch user details for assigned_to
             const assignedToIds = new Set<string>();
             for (const t of tasks) {
                 if (t.assigned_to) assignedToIds.add(t.assigned_to);
-
-                if (t.profile_url) {
-                    t.profile_url = await generateSasUrl(t.profile_url);
-                } else {
-                    t.profile_url = null
-                }
             }
+
+            await Promise.all(
+                tasks.map(async (t: any) => {
+                    if (t.profile_url) {
+                        t.profile_url = await generateSasUrl(t.profile_url);
+                    } else {
+                        t.profile_url = null;
+                    }
+                })
+            );
 
             const userMap = new Map<string, string>();
             if (assignedToIds.size > 0) {
+                const usersByRidsQuery = rawQueries.fetchUsersByRids(Array.from(assignedToIds));
                 const users: any[] = await sequelize.query(
-                    rawQueries.fetchUsersByRids(Array.from(assignedToIds)),
-                    { type: QueryTypes.SELECT }
+                    usersByRidsQuery.query,
+                    {
+                        replacements: usersByRidsQuery.replacements,
+                        type: QueryTypes.SELECT
+                    }
                 );
                 users.forEach(u => {
                     userMap.set(u.rid, `${u.first_name || ''} ${u.last_name || ''}`.trim());

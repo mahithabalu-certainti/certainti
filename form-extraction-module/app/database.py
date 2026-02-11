@@ -172,7 +172,13 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                         nonlocal extraction_order
                         if label and label not in processed_labels:
                             extraction_order += 1
-                            field_id = f"{country_code}-{state_code}-F{extraction_order:04d}" if state_code else f"{country_code}-F{extraction_order:04d}" if form_type == "non-fillable" else None
+                            field_id = None
+                            if form_type == "non-fillable" and country_code:
+                                if state_code:
+                                    field_id = f"{country_code}-{state_code}-F{extraction_order:04d}"
+                                else:
+                                    field_id = f"{country_code}-F{extraction_order:04d}"
+
                             cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order, field_id))
                             processed_labels.add(label)
 

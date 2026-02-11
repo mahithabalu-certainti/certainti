@@ -11,7 +11,6 @@ import {
     BlobSASPermissions,
     SASProtocol
 } from "@azure/storage-blob";
-import { parse } from "url";
 import { getSecret } from "./azureSecrets";
 import moment from "moment-timezone";
 
@@ -241,16 +240,14 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
             throw new Error("Azure storage connection string is required");
         }
 
-        const parsedUrl = parse(blobUrl);
-        const hostnameParts = parsedUrl.hostname?.split(".") || [];
-        const accountName = hostnameParts[0];
-        const pathParts = parsedUrl.pathname?.replace(/^\/+/, "").split("/") || [];
+        const url = new URL(blobUrl);
+        const pathParts = url.pathname.replace(/^\/+/, "").split("/");
 
         if (pathParts.length < 2) {
             throw new Error("Invalid blob URL format");
         }
 
-        const containerName: any = pathParts[0];
+        const containerName = pathParts[0] as string;
         const blobName = pathParts.slice(1).join("/");
 
         const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
@@ -263,7 +260,7 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
         const expiresOn = new Date();
         expiresOn.setMinutes(expiresOn.getMinutes() + expiryMinutes);
 
-        const sasToken = generateBlobSASQueryParameters(
+        const sasQueryParameters = generateBlobSASQueryParameters(
             {
                 containerName,
                 blobName,
@@ -272,10 +269,15 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
                 protocol: SASProtocol.Https
             },
             credential
-        ).toString();
+        );
 
-        const sasUrl = `${blobUrl}?${sasToken}`;
-        return sasUrl;
+        const sasToken = sasQueryParameters.toString();
+        const sasParams = new URLSearchParams(sasToken);
+        sasParams.forEach((value, key) => {
+            url.searchParams.append(key, value);
+        });
+
+        return url.toString();
     } catch (error) {
         logMessage(`Error generating SAS URL: ${error}`);
         throw new Error(`SAS URL generation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
