@@ -448,25 +448,35 @@ class RdFormMapperSchemaService {
       }
 
       const quotedJsonPathFallback = quoteJsonPath(jsonPath);
+      const stateRidClause =
+        refTable === "rd_credit_state_calculations" ? " AND state_rid = :state_rid" : "";
       query = `
         SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPathFallback}')::text AS field_value
         FROM ${schemaName}.${refTable}
-        WHERE case_rid = :case_rid
+        WHERE case_rid = :case_rid${stateRidClause}
         LIMIT 1`;
     } else {
       // Regular field
       const whereColumn =
         refTable === "rd_credit_country_calculations" ? "case_rid" : "rid";
+      if (refTable === "rd_credit_state_calculations") {
+        query = `
+        SELECT ${fieldName} AS field_value
+        FROM ${schemaName}.${refTable}
+        WHERE case_rid = :case_rid AND state_rid = :state_rid
+        LIMIT 1`;
+      } else {
       query = `
         SELECT ${fieldName} AS field_value
         FROM ${schemaName}.${refTable}
         WHERE ${whereColumn} = :case_rid
         LIMIT 1`;
+      }
     }
 
     try {
       const [results] = await orgDb.query(query, {
-        replacements: { case_rid },
+        replacements: { case_rid, state_rid: stateRid },
         raw: true,
       });
       const resultsArray = results as any[];

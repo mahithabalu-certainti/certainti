@@ -411,8 +411,103 @@ export class RdFormMapperService {
     return Number.isFinite(num) ? num : null;
   }
 
-  private transformIfExpressions(expression: string) {
+  private roundToTwo(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
+  private normalizeIfThenElseBlocks(expression: string) {
     let result = expression;
+    const ifRegex = /\bIF\s*\(/i;
+    let searchIndex = 0;
+
+    const findMatchingParen = (input: string, openIndex: number) => {
+      let depth = 0;
+      for (let i = openIndex; i < input.length; i++) {
+        const ch = input[i];
+        if (ch === "(") depth++;
+        if (ch === ")") {
+          depth--;
+          if (depth === 0) return i;
+        }
+      }
+      return -1;
+    };
+
+    const findMatchingBrace = (input: string, openIndex: number) => {
+      let depth = 0;
+      for (let i = openIndex; i < input.length; i++) {
+        const ch = input[i];
+        if (ch === "{") depth++;
+        if (ch === "}") {
+          depth--;
+          if (depth === 0) return i;
+        }
+      }
+      return -1;
+    };
+
+    while (searchIndex < result.length) {
+      const match = result.slice(searchIndex).match(ifRegex);
+      if (!match || match.index === undefined) break;
+
+      const ifIndex = searchIndex + match.index;
+      const openIndex = result.indexOf("(", ifIndex);
+      if (openIndex < 0) break;
+
+      const closeIndex = findMatchingParen(result, openIndex);
+      if (closeIndex < 0) break;
+
+      let cursor = closeIndex + 1;
+      while (cursor < result.length) {
+        const currentChar = result[cursor];
+        if (!currentChar || !/\s/.test(currentChar)) {
+          break;
+        }
+        cursor++;
+      }
+
+      if (result[cursor] !== "{") {
+        searchIndex = closeIndex + 1;
+        continue;
+      }
+
+      const braceOpenIndex = cursor;
+      const braceCloseIndex = findMatchingBrace(result, braceOpenIndex);
+      if (braceCloseIndex < 0) break;
+
+      const condition = result.slice(openIndex + 1, closeIndex).trim();
+      const blockContent = result
+        .slice(braceOpenIndex + 1, braceCloseIndex)
+        .trim();
+
+      const thenMatch = /\bTHEN\b/i.exec(blockContent);
+      if (!thenMatch) {
+        searchIndex = braceCloseIndex + 1;
+        continue;
+      }
+
+      const elseMatch = /\bELSE\b/i.exec(blockContent);
+      const thenStart = thenMatch.index + thenMatch[0].length;
+      const thenValue = elseMatch
+        ? blockContent.slice(thenStart, elseMatch.index).trim()
+        : blockContent.slice(thenStart).trim();
+      const elseValue = elseMatch
+        ? blockContent.slice(elseMatch.index + elseMatch[0].length).trim()
+        : "\"\"";
+
+      const replacement = `IF(${condition}, ${thenValue}, ${elseValue})`;
+      result =
+        result.slice(0, ifIndex) +
+        replacement +
+        result.slice(braceCloseIndex + 1);
+      searchIndex = ifIndex + replacement.length;
+    }
+
+    return result;
+  }
+
+  private transformIfExpressions(expression: string) {
+    let result = this.normalizeIfThenElseBlocks(expression);
     const ifRegex = /\bIF\s*\(/i;
 
     const splitTopLevel = (input: string) => {
@@ -909,7 +1004,9 @@ export class RdFormMapperService {
 
         replaced = this.transformIfExpressions(replaced);
 
-        const validationTarget = replaced.replace(/Math\.(min|max)\(/g, "(");
+        const validationTarget = replaced
+          .replace(/Math\.(min|max)\(/g, "(")
+          .replace(/""/g, "0");
         if (!/^[0-9+\-*/().,\sNaN?:<>=!&|]+$/.test(validationTarget)) {
           logMessage(
             `Blocked invalid expression for field ${item.field_label || item.field_id}: ${expression}`,
@@ -925,7 +1022,9 @@ export class RdFormMapperService {
               lowerExpression.includes("-") ||
               lowerExpression.includes(" sub ") ||
               lowerExpression.includes("subtract");
-            const finalValue = hasSubtraction && computed < 0 ? 0 : computed;
+            const finalValue = this.roundToTwo(
+              hasSubtraction && computed < 0 ? 0 : computed,
+            );
 
             item.value = finalValue;
             passUpdated = true;
@@ -942,6 +1041,23 @@ export class RdFormMapperService {
 
             logMessage(
               `Computed expression for field ${item.field_label || item.field_id}: ${expression} = ${finalValue}`,
+            );
+          } else if (typeof computed === "string" && computed.trim() === "") {
+            item.value = "";
+            passUpdated = true;
+
+            if (item.value_field_id) {
+              addToValueMap(String(item.value_field_id), item.value);
+            }
+            if (item.field_id) {
+              addToValueMap(String(item.field_id), item.value);
+            }
+            if (item.field_name) {
+              addToValueMap(String(item.field_name), item.value);
+            }
+
+            logMessage(
+              `Computed empty expression for field ${item.field_label || item.field_id}: ${expression}`,
             );
           } else {
             logMessage(
@@ -1002,7 +1118,7 @@ export class RdFormMapperService {
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
-
+      configLevelKey = ConfigType.STATE_ONLY;
       logMessage(`Config Level Key determined: ${configLevelKey}`);
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
