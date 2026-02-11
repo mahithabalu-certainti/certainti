@@ -292,10 +292,10 @@ async function getDossierPackage (req : Request, res : Response) {
 }
 export default {
     signOffFinancialWorking,
+    regionListForFinancialHighlights,
     getClosedCasesList,
     fetchCaseClosingRemarks,
     initiateCreateDossierForm,
     exportSignOffDetails,
-    getDossierPackage,
-    regionListForFinancialHighlights
+    getDossierPackage
 }
