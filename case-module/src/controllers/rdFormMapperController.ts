@@ -20,13 +20,20 @@ async function processRdFormMapperRequests(req: Request, res: Response) {
   const methodName = "processKafkaMessages";
   try {
     //  logMessage(`[${methodName}] Processing Kafka messages data: ${JSON.stringify(req)}`);
-    const result = await rdFormService.processRdFormMapperRequests(req.body);
-    // Implement your Kafka message processing logic here
+    const result = await rdFormService.initiateRDFormFillerProcess(req.body.account_rid, req.body.case_rid, req.body.fiscal_year);
+    if(result.statusCode !== HttpStatus.SUCCESS){
+      return res.status(result.statusCode).json({
+        statusCode: result.statusCode,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.errorMessage,
+        data: {}
+      });
+    }
     return res.status(HttpStatus.SUCCESS).json({
       statusCode: HttpStatus.SUCCESS,
       statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-      statusMessage: STATUS_MESSAGE.caseBreakdownSuccess,
-      data: result,
+      statusMessage: STATUS_MESSAGE.rdFormProcessInitiatedSuccess,
+      data: result.data,
     });
   } catch (err) {
     const error = err as Error;
@@ -34,71 +41,7 @@ async function processRdFormMapperRequests(req: Request, res: Response) {
   }
 }
 
-async function initiateRDFormFillerProcess(
-  req: Request,
-  res: Response,
-): Promise<any> {
-  const methodName = "initiateRDFormFillerProcess";
-  try {
-    // Step 1: Log request
-    logMessage(
-      `[${methodName}] Request received: ${JSON.stringify(
-        req.body,
-      )}, userId: ${req.headers["x-user-id"]}`,
-    );
-    // Step 2: Validate request body
-    const value = await validateRequest(req, rdFormGenerationSchema, res);
-    if (!value) {
-      errorLog(methodName, "Invalid request body");
-      return;
-    }
 
-    // Step 3: Validate userId
-    const userId = req.headers["x-user-id"] as string;
-    if (!userId) {
-      errorLog(methodName, "User ID missing in headers");
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User ID is required in headers",
-      );
-      return;
-    }
-
-    logMessage(JSON.stringify(value));
-    const resultState = await rdFormService.initiateRDFormFillerProcess(
-      value.account_rid,
-      value.case_rid,
-      value.fiscal_year,
-    );
-    if (resultState.statusCode === HttpStatus.SUCCESS) {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: resultState.message,
-        data: {},
-      });
-    } else {
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode: HttpStatus.NOT_FOUND,
-        statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
-        statusMessage: resultState.errorMessage,
-        data: {},
-      });
-    }
-  } catch (err) {
-    // Step 6: Catch unexpected errors
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.FAILED,
-      HttpStatus.FAILED_MESSAGE,
-      error.message,
-    );
-  }
-}
 
 async function getRdFormMapperResults(
   req: Request,
@@ -165,6 +108,5 @@ async function getRdFormMapperResults(
 
 export default {
   processRdFormMapperRequests,
-  initiateRDFormFillerProcess,
   getRdFormMapperResults
 };

@@ -66,7 +66,7 @@ export class CaseService {
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
   protected caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService: CaseManagementSchemaService
-  private logger: Logger;
+  protected logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private helperMethod: HelperMethods
@@ -1067,7 +1067,8 @@ export class CaseService {
             currency_rid: d.currency_rid || null,
             currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
             currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
-            is_rd_claim_qualified : d.is_rd_claim_qualified
+            is_rd_claim_qualified : d.is_rd_claim_qualified,
+            is_qualified : d.is_qualified
           };
         });
         return {
@@ -1496,6 +1497,7 @@ export class CaseService {
       const labelMap: Record<string, string> = {
         "Project Code": "Project Code",
         "Project Name": "Name",
+        "Qualified Status" : "Qualified Status",
         "Project Type": "Project Type",
         "Account Name": "Name",
         "Fiscal Year": "Fiscal Year",
@@ -1526,6 +1528,7 @@ export class CaseService {
             ? fiscal.project_code + " - FY" + fiscal.fiscal_year
             : "-",
           Name: fiscal.project_name || "-",
+          "Qualified Status" : fiscal.is_qualified === true ? "Yes" : "No",
           "Project Type": fiscal.project_type_name || "-",
           "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
           "Project Classification": fiscal.project_classification_name || "-",

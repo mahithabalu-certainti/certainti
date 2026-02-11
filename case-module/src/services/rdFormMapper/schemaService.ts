@@ -189,6 +189,99 @@ class RdFormMapperSchemaService {
     }
   }
 
+  async fetchTop15ProjectQreSum(
+    caseRid: string,
+    schemaName: string,
+  ): Promise<number> {
+    const orgDb = await this.getOrgDb();
+    const [results]: any = await orgDb.query(
+      rawQueries.fetchTop15ProjectQreSum(schemaName, caseRid),
+      { raw: true },
+    );
+    return Number(results?.[0]?.top_15_qre_sum ?? 0);
+  }
+
+  async fetchTop15ProjectSumByColumn(
+    caseRid: string,
+    schemaName: string,
+    columnName: string,
+  ): Promise<number> {
+    const allowedColumns = new Set([
+      "total_cost_fte_prj",
+      "total_cost_subcon_prj",
+      "total_cost_nonlabor_prj",
+      "qre_final",
+    ]);
+
+    if (!allowedColumns.has(columnName)) {
+      logMessage(`Rejected top-15 sum for unsupported column: ${columnName}`);
+      return 0;
+    }
+
+    const orgDb = await this.getOrgDb();
+    const [results]: any = await orgDb.query(
+      rawQueries.fetchTop15ProjectSumByColumn(schemaName, caseRid, columnName),
+      { raw: true },
+    );
+    return Number(results?.[0]?.top_15_sum ?? 0);
+  }
+
+  async fetchPriorYearQreFromHistory(
+    accountRid: string,
+    schemaName: string,
+    yearIndex: number,
+    effectiveStart?: string,
+    stateRid?: string,
+    countryRid?: string,
+  ): Promise<number | null> {
+    const orgDb = await this.getOrgDb();
+
+    const normalizedIndex = Math.max(1, Math.min(4, yearIndex));
+    let currentYear: number | null = null;
+
+    if (effectiveStart) {
+      const parsedYear = Number(String(effectiveStart).slice(0, 4));
+      if (Number.isFinite(parsedYear)) {
+        currentYear = parsedYear;
+      } else {
+        const parsedDate = new Date(effectiveStart);
+        if (!Number.isNaN(parsedDate.getTime())) {
+          currentYear = parsedDate.getFullYear();
+        }
+      }
+    }
+
+    if (!currentYear) {
+      logMessage("Unable to resolve current fiscal year for prior-year QRE lookup");
+      return null;
+    }
+
+    const targetYear = currentYear - normalizedIndex;
+    const query = rawQueries.fetchPriorYearQreFromHistory(
+      schemaName,
+      stateRid,
+      countryRid,
+    );
+
+    const [results]: any = await orgDb.query(query, {
+      replacements: {
+        account_rid: accountRid,
+        state_rid: stateRid,
+        country_rid: countryRid,
+        target_year: targetYear,
+      },
+      raw: true,
+    });
+
+    const row = Array.isArray(results) && results.length > 0 ? results[0] : null;
+    if (!row) {
+      return null;
+    }
+
+    const qreValue = Number(row.total_qre ?? 0);
+    return Number.isFinite(qreValue) ? qreValue : null;
+  }
+
   /**
    * Fetch field value from reference table dynamically
    */
@@ -196,9 +289,9 @@ class RdFormMapperSchemaService {
     refTable: string,
     fieldName: string,
     is_json: boolean,
-    account_rid: string,
     case_rid: string,
     schemaName: string,
+    stateRid?: string,
   ): Promise<any> {
     const orgDb = await this.getOrgDb();
     logMessage(
@@ -208,14 +301,18 @@ class RdFormMapperSchemaService {
     let query: string;
 
     if (is_json) {
-      // Remove leading $.
-      let jsonPath = fieldName.replace(/^\$\.computed_fields\./, "$.");
+      // Normalize leading path segments
+      let jsonPath = fieldName
+        .replace(/^\$\.computed_fields\.computed_fields\./, "$.computed_fields.")
+        .replace(/^\$\.computed_fields\./, "$.computed_fields.");
 
       // Quote only property names, leave filters/wildcards untouched
       function quoteJsonPath(path: string): string {
         const parts: string[] = [];
         let buffer = "";
         let bracketDepth = 0;
+        let inQuotes = false;
+        let quoteChar = "";
 
         // Remove leading $. if present
         let processPath = path.startsWith("$.") ? path.substring(2) : path;
@@ -223,10 +320,24 @@ class RdFormMapperSchemaService {
         for (let i = 0; i < processPath.length; i++) {
           const ch = processPath[i];
 
+          if ((ch === '"' || ch === "'") && !inQuotes) {
+            inQuotes = true;
+            quoteChar = ch;
+            buffer += ch;
+            continue;
+          }
+
+          if (ch === quoteChar && inQuotes) {
+            inQuotes = false;
+            quoteChar = "";
+            buffer += ch;
+            continue;
+          }
+
           if (ch === "[") bracketDepth++;
           if (ch === "]") bracketDepth--;
 
-          if (ch === "." && bracketDepth === 0) {
+          if (ch === "." && bracketDepth === 0 && !inQuotes) {
             if (buffer) {
               parts.push(buffer);
               buffer = "";
@@ -251,7 +362,8 @@ class RdFormMapperSchemaService {
           return part;
         });
 
-        return "$." + quotedParts.join(".");
+        const filteredParts = quotedParts.filter((part) => part.length > 0);
+        return "$." + filteredParts.join(".");
       }
 
       // First, try direct value retrieval
@@ -264,9 +376,10 @@ class RdFormMapperSchemaService {
             schemaName,
             refTable,
             quotedJsonPath,
+            stateRid,
           ),
           {
-            replacements: { case_rid },
+            replacements: { case_rid, state_rid: stateRid },
             raw: true,
           },
         );
@@ -288,8 +401,41 @@ class RdFormMapperSchemaService {
           return directValue;
         }
 
-        // If direct value is null, return empty string instead of continuing to pattern matching
+        // If direct value is null, attempt fallback without computed_fields prefix
         if (directValue === null || directValue === "null") {
+          const fallbackPath = jsonPath.replace(/^\$\.computed_fields\./, "$." );
+          if (fallbackPath !== jsonPath) {
+            const quotedFallbackPath = quoteJsonPath(fallbackPath);
+            const [fallbackResults] = await orgDb.query(
+              rawQueries.fetchDynamicFieldValues(
+                schemaName,
+                refTable,
+                quotedFallbackPath,
+                stateRid,
+              ),
+              {
+                replacements: { case_rid, state_rid: stateRid },
+                raw: true,
+              },
+            );
+            const fallbackResultsArray = fallbackResults as any[];
+            const fallbackValue =
+              fallbackResultsArray.length > 0
+                ? fallbackResultsArray[0].field_value
+                : null;
+
+            if (
+              fallbackValue !== null &&
+              fallbackValue !== "null" &&
+              fallbackValue !== undefined
+            ) {
+              logMessage(
+                `Fallback field retrieval successful for ${refTable}.${fieldName}: ${fallbackValue}`,
+              );
+              return fallbackValue;
+            }
+          }
+
           logMessage(
             `Field ${fieldName} has null value, returning empty string`,
           );
@@ -297,199 +443,24 @@ class RdFormMapperSchemaService {
         }
       } catch (error) {
         logMessage(
-          `Direct query failed for ${fieldName}, attempting pattern matching: ${error}`,
+          `Direct query failed for ${fieldName}: ${error}`,
         );
       }
 
-      // If direct query failed or returned null, try pattern matching
-      // First check if this is a regex filter pattern like "$.Regular Credit.creditRRC.* ? (@key like_regex "^10 Multiply line 5 by")"
-      const regexFilterPattern = /\?\s*\(@key\s+like_regex\s+"([^"]+)"\)/i;
-      const regexMatch = jsonPath.match(regexFilterPattern);
-
-      if (regexMatch) {
-        const regexPattern = regexMatch[1];
-        logMessage(
-          `Processing regex filter pattern: ${regexPattern} for ${fieldName}`,
-        );
-
-        // Extract the base path (everything before the filter)
-        const splitResult = jsonPath.split(" ?");
-        const basePath =
-          splitResult.length > 0 && splitResult[0] !== undefined
-            ? splitResult[0].trim()
-            : jsonPath;
-
-        // Remove the leading $. and handle the remaining path
-        let pathWithoutDollar = basePath.replace(/^\$\./, "");
-
-        // Split by dots, but be careful with quoted strings
-        const parts = [];
-        let current = "";
-        let inQuotes = false;
-        let quoteChar = "";
-
-        for (let i = 0; i < pathWithoutDollar.length; i++) {
-          const char = pathWithoutDollar[i];
-
-          if ((char === '"' || char === "'") && !inQuotes) {
-            inQuotes = true;
-            quoteChar = char;
-            current += char;
-          } else if (char === quoteChar && inQuotes) {
-            inQuotes = false;
-            quoteChar = "";
-            current += char;
-          } else if (char === "." && !inQuotes) {
-            if (current) {
-              parts.push(current);
-              current = "";
-            }
-          } else {
-            current += char;
-          }
-        }
-
-        if (current) {
-          parts.push(current);
-        }
-
-        // Process each part
-        const processedParts = parts.map((part) => {
-          // If it ends with .*, handle it specially
-          if (part.endsWith(".*")) {
-            const basePart = part.slice(0, -2);
-            if (/[^a-zA-Z0-9_]/.test(basePart)) {
-              return `"${basePart}".*`;
-            }
-            return `${basePart}.*`;
-          }
-
-          // If it ends with just *, handle it specially
-          if (part.endsWith("*") && !part.endsWith(".*")) {
-            const basePart = part.slice(0, -1);
-            if (/[^a-zA-Z0-9_]/.test(basePart)) {
-              return `"${basePart}".*`;
-            }
-            return `${basePart}.*`;
-          }
-
-          // If already quoted, keep as is
-          if (
-            (part.startsWith('"') && part.endsWith('"')) ||
-            (part.startsWith("'") && part.endsWith("'"))
-          ) {
-            return part;
-          }
-
-          // Quote if contains spaces or special characters
-          if (/[^a-zA-Z0-9_]/.test(part)) {
-            return `"${part}"`;
-          }
-
-          return part;
-        });
-
-        // Build the path to the object containing the keys we want to search
-        const objectPath = "$." + processedParts.slice(0, -1).join(".");
-
-        query = `
-          WITH matched_pairs AS (
-            SELECT 
-              jsonb_each(jsonb_path_query_first(computed_fields, '${objectPath}')) as kv
-            FROM ${schemaName}.${refTable}
-            WHERE case_rid = :case_rid
-          )
-          SELECT 
-            (kv).value::text as field_value
-          FROM matched_pairs
-          WHERE (kv).key ~ '${regexPattern}'
-          LIMIT 1`;
-      } else {
-        // Pattern matching for mathematical operations (only if not a regex filter)
-        const patterns = [
-          // "Multiply line 15 by 20% (0.2). Enter the result"
-          {
-            pattern:
-              /^Multiply\s+line\s+(\d+)\s+by\s+([0-9.]+)%\s*\([0-9.]+\)\.\s*Enter\s+the\s+result$/i,
-            operation: "multiplyByPercentageWithText",
-          },
-          // "13 Multiply line 8 by 25%"
-          {
-            pattern: /^(\d+)\s+Multiply\s+line\s+(\d+)\s+by\s+([0-9.]+)%$/i,
-            operation: "multiplyByPercentage",
-          },
-          // "10 Multiply line 5 by 30" - must be exact match at start of string
-          {
-            pattern: /^(\d+)\s+Multiply\s+line\s+(\d+)\s+by\s+(\d+)$/i,
-            operation: "multiply",
-          },
-          // "10 Multiply line 5 by" (dynamic multiplier) - must be at start and end of string
-          {
-            pattern: /^(\d+)\s+Multiply\s+line\s+(\d+)\s+by$/i,
-            operation: "multiplyDynamic",
-          },
-        ];
-
-        let patternMatch = null;
-        let matchedPattern = null;
-
-        // Check if this is a direct pattern matching expression
-        for (const patternObj of patterns) {
-          const match = jsonPath.match(patternObj.pattern);
-          if (match) {
-            patternMatch = match;
-            matchedPattern = patternObj;
-            break;
-          }
-        }
-
-        if (patternMatch && matchedPattern) {
-          let expectedResult, lineNumber;
-
-          // Handle different pattern structures
-          if (matchedPattern.operation === "multiplyByPercentageWithText") {
-            // For "Multiply line 15 by 20% (0.2). Enter the result" - no expected result, just line and percentage
-            lineNumber = patternMatch[1];
-            expectedResult = null;
-          } else {
-            // For patterns like "13 Multiply line 8 by 25%" - has expected result
-            expectedResult = patternMatch[1];
-            lineNumber = patternMatch[2];
-          }
-
-          logMessage(
-            `Processing ${matchedPattern.operation}: Line=${lineNumber}, Expected=${expectedResult || "N/A"}`,
-          );
-
-          // Get the value from the specified line/field - just extract without multiplication
-          const lineFieldPath = `$."Regular Credit"."creditRRC"."line_${lineNumber}"`;
-
-          logMessage(
-            `Extracting field value from: line_${lineNumber} (no multiplication applied)`,
-          );
-
-          // Query to get the line value without performing multiplication
-          query = `
-            SELECT 
-              jsonb_path_query_first(computed_fields, '${lineFieldPath}')::text as field_value 
-            FROM ${schemaName}.${refTable} 
-            WHERE case_rid = :case_rid
-            LIMIT 1`;
-        } else {
-          const quotedJsonPath = quoteJsonPath(jsonPath);
-          query = `
-            SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
-            FROM ${schemaName}.${refTable}
-            WHERE case_rid = :case_rid
-            LIMIT 1`;
-        }
-      }
+      const quotedJsonPathFallback = quoteJsonPath(jsonPath);
+      query = `
+        SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPathFallback}')::text AS field_value
+        FROM ${schemaName}.${refTable}
+        WHERE case_rid = :case_rid
+        LIMIT 1`;
     } else {
       // Regular field
+      const whereColumn =
+        refTable === "rd_credit_country_calculations" ? "case_rid" : "rid";
       query = `
         SELECT ${fieldName} AS field_value
         FROM ${schemaName}.${refTable}
-        WHERE rid = :case_rid
+        WHERE ${whereColumn} = :case_rid
         LIMIT 1`;
     }
 
@@ -608,6 +579,8 @@ class RdFormMapperSchemaService {
           const parts: string[] = [];
           let buffer = "";
           let bracketDepth = 0;
+          let inQuotes = false;
+          let quoteChar = "";
 
           // Remove leading $. if present
           let processPath = path.startsWith("$.") ? path.substring(2) : path;
@@ -615,10 +588,24 @@ class RdFormMapperSchemaService {
           for (let i = 0; i < processPath.length; i++) {
             const ch = processPath[i];
 
+            if ((ch === '"' || ch === "'") && !inQuotes) {
+              inQuotes = true;
+              quoteChar = ch;
+              buffer += ch;
+              continue;
+            }
+
+            if (ch === quoteChar && inQuotes) {
+              inQuotes = false;
+              quoteChar = "";
+              buffer += ch;
+              continue;
+            }
+
             if (ch === "[") bracketDepth++;
             if (ch === "]") bracketDepth--;
 
-            if (ch === "." && bracketDepth === 0) {
+            if (ch === "." && bracketDepth === 0 && !inQuotes) {
               if (buffer) {
                 parts.push(buffer);
                 buffer = "";
@@ -643,7 +630,8 @@ class RdFormMapperSchemaService {
             return part;
           });
 
-          return "$." + quotedParts.join(".");
+          const filteredParts = quotedParts.filter((part) => part.length > 0);
+          return "$." + filteredParts.join(".");
         }
 
         const quotedJsonPath = quoteJsonPath(jsonPath);

@@ -52,6 +52,8 @@ interface CaseAttributes {
   credit_carry_forward_py?: number
   current_year_gross_receipts?: number
   other_credits_total?: number
+  rrc_credit_280_c? : string
+  asc_credit_280_c? : string
 
 }
 
@@ -110,6 +112,8 @@ export class Case
   public credit_carry_forward_py?: number
   public current_year_gross_receipts?: number
   public other_credits_total?: number
+  public rrc_credit_280_c? : string
+  public asc_credit_280_c? : string
 
   static initialize(
     sequelize: Sequelize,
@@ -178,7 +182,9 @@ export class Case
         qualified_computer_rental_time_expenses : {type : DataTypes.DECIMAL, allowNull : true},
         credit_carry_forward_py : {type : DataTypes.DECIMAL, allowNull : true},
         current_year_gross_receipts: {type : DataTypes.DECIMAL, allowNull : true},
-        other_credits_total : {type : DataTypes.DECIMAL, allowNull : true}
+        other_credits_total : {type : DataTypes.DECIMAL, allowNull : true},
+        rrc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
+        asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"}
       },
       {
         sequelize,

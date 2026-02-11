@@ -51,7 +51,7 @@ async function signOffFinancialWorking (req : Request, res : Response) {
   }
 }
 
-async function RegionListForFinancialHighlights (req : Request, res : Response) {
+async function regionListForFinancialHighlights (req : Request, res : Response) {
     const methodName = "RegionListForFinancialHighlights"
     try {
        const userId = req.headers["x-user-id"] as string;
@@ -156,10 +156,7 @@ async function fetchCaseClosingRemarks (req : Request, res : Response) {
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
             return;
         }
-        const { accountId, caseId } = req.params;
-        const data: any = {};
-        data.account_rid = accountId;
-        data.case_rid = caseId;
+        const data = req.body;
         const result = await childCaseService.getCaseClosureRemarks(data);
         if(result?.closing_remarks.length! > 0) {
           return res.status(HttpStatus.SUCCESS).json({
@@ -188,10 +185,117 @@ async function fetchCaseClosingRemarks (req : Request, res : Response) {
     return;
   }
 }
+  async function initiateCreateDossierForm (req : Request, res : Response) {
+    const methodName = "initiateCreateDossierForm"
+    try {
+       const userId = req.headers["x-user-id"] as string;
+        if (!userId) {
+            errorLog(methodName, "User ID is required in headers");
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+            return;
+        }
+        const data = req.body;
+        data.userId = userId;
+        const result = await childCaseService.initiateCreateDossierForm(data);
+        if(result) {
+          return res.status(HttpStatus.SUCCESS).send({
+            statusCode : HttpStatus.SUCCESS,
+            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+            statusMessage : result
+          })
+        }
+    }catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+async function exportSignOffDetails (req : Request, res : Response) {
+  const methodName = "Export Signoff Details"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+        if (!userId) {
+            errorLog(methodName, "User ID is required in headers");
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+            return;
+        }
+        const data = req.body;
+        const result = await childCaseService.exportCaseClosingRemarks(data);
+        if(result) {
+           return res.status(HttpStatus.SUCCESS).send({
+            statusCode : HttpStatus.SUCCESS,
+            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+            statusMessage : STATUS_MESSAGE.closureRemarksExportedSuccess,
+            data : result
+          })
+        } else {
+          return res.status(HttpStatus.NOT_FOUND).send({
+            statusCode : HttpStatus.NOT_FOUND,
+            statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+            statusMessage : STATUS_MESSAGE.dataNotAvailable,
+            data : null
+          })
+        }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 
+async function getDossierPackage (req : Request, res : Response) {
+  const methodName = "getDossierPackage";
+  try {
+    const {accountId, caseId} = req.params;
+    const data : any = {};
+    data.account_rid = accountId;
+    data.case_rid = caseId;
+    const result = await childCaseService.fetchDossierPackage(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dossierPackageFetchedSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.NOT_FOUND).send({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : null
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
     signOffFinancialWorking,
-    RegionListForFinancialHighlights,
+    regionListForFinancialHighlights,
     getClosedCasesList,
-    fetchCaseClosingRemarks
+    fetchCaseClosingRemarks,
+    initiateCreateDossierForm,
+    exportSignOffDetails,
+    getDossierPackage
 }

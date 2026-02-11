@@ -1118,7 +1118,8 @@ export const rawQueries = {
       qre_subcon = ${data.qre_subcon},
       qre_nonlabor = ${data.qre_nonlabor},
       modified_by = '${data.modified_by}',
-      modified_datetime = '${new Date().toISOString()}'
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
     WHERE
       rid = '${data.rid}'
     `;
@@ -1134,7 +1135,8 @@ export const rawQueries = {
       qre_subcon = ${data.qre_subcon},
       qre_nonlabor = ${data.qre_nonlabor},
       modified_by = '${data.modified_by}',
-      modified_datetime = '${new Date().toISOString()}'
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
     WHERE
       project_fiscal_rid = '${data.rid}'
     `;
@@ -2373,7 +2375,15 @@ export const rawQueries = {
   ORDER BY rv.effective_start_date DESC`;
   },
   fetchAssignedProjectIds (caseRid : string, schemaName : string){
-    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+    return `
+    SELECT pf.rid AS project_fiscal_rid 
+    FROM ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE 
+    cp.case_rid = '${caseRid}'
+    AND
+    pf.is_qualified = true
+    `
 }
 };
 

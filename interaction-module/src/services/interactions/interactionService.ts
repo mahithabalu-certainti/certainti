@@ -956,7 +956,8 @@ export class InteractionService {
           data.sortOrder,
           "list",
           data?.case_rid,
-          data.account_rid
+          data.account_rid,
+          data.summaryType
         );
 
       if (!techSummary) {

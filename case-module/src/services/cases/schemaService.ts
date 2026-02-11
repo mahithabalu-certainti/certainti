@@ -82,7 +82,7 @@ import { HelperMethods } from "./helperMethods";
 import { RdCreditCountryCalculations, setupRdCreditCountryCalculationSequence } from "../../models/rdCreditCountryCalcModel";
 import { RdCreditProcess, setupRdCreditProcessSequence } from "../../models/rdCreditProcessModel";
 import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
-import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { setupSignoffDetailsSequence, SignoffDetails } from "../../models/signoffDetails";
 
 class CaseSchemaService {
@@ -1409,6 +1409,7 @@ class CaseSchemaService {
       "fiscal_year",
       "case_total_projects",
       "case_total_qualified_projects",
+      "case_total_qualified_project_cost",
 
       "case_total_project_cost",
       "case_total_rd_cost",
@@ -1483,6 +1484,12 @@ class CaseSchemaService {
         case_total_project_cost: (value: any) =>
           this.processNumberFilter(
             "case_total_project_cost",
+            value,
+            whereClause
+          ),
+        case_total_qualified_project_cost: (value: any) =>
+          this.processNumberFilter(
+            "case_total_qualified_project_cost",
             value,
             whereClause
           ),
@@ -1791,7 +1798,7 @@ class CaseSchemaService {
     isSorting: boolean,
     assignedApi: boolean,
     accessibleIds: string[],
-    isExport: boolean
+    isExport: boolean,
   ) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -1852,7 +1859,8 @@ class CaseSchemaService {
         assignedApi,
         accessibleIds,
         isExport,
-        projectTypes
+        projectTypes,
+        data.type
       )
     );
     return result[0];
@@ -2570,8 +2578,6 @@ class CaseSchemaService {
 
       const projectFiscal = projectFiscalRecords.length > 0 ? projectFiscalRecords[0] : null;
 
-      console.log("yoki", projectFiscal);
-
       const createdCaseProject = await CaseProject.create({
         case_rid: data.case_rid,
         account_rid: data.account_rid,
@@ -2687,13 +2693,17 @@ class CaseSchemaService {
       const totalProjects = getTotalProjects[0][0].total_projects === 0 ? null : getTotalProjects[0][0].total_projects;
       const totalProjectsCost = getTotalProjects[0][0].total_projects_cost === 0 ? null : getTotalProjects[0][0].total_projects_cost;
       const totalProjectsQreCost = getTotalProjects[0][0].total_projects_qre_cost === 0 ? null : getTotalProjects[0][0].total_projects_qre_cost;
+      const totalQualifiedProjects = getTotalProjects[0][0].total_qualified_projects
+      const totalQualifiedProjectCost = getTotalProjects[0][0].total_qualified_project_cost
       await this.orgDbSequelize.query(
         rawQueries.updateCostCountInCase(
           schemaName,
           data.case_rid,
           totalProjects,
           totalProjectsCost,
-          totalProjectsQreCost
+          totalProjectsQreCost,
+          totalQualifiedProjects,
+          totalQualifiedProjectCost
         )
       );
       await this.mainDbSequelize.query(
@@ -2701,7 +2711,9 @@ class CaseSchemaService {
           data.case_rid,
           getTotalProjects[0][0].total_projects,
           getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          getTotalProjects[0][0].total_projects_qre_cost,
+          totalQualifiedProjects,
+          totalQualifiedProjectCost
         )
       );
       if (totalCount === 1) {
@@ -2863,7 +2875,9 @@ class CaseSchemaService {
           data.case_rid,
           getTotalProjects[0][0].total_projects,
           getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          getTotalProjects[0][0].total_projects_qre_cost,
+          getTotalProjects[0][0].total_qualified_projects,
+          getTotalProjects[0][0].total_qualified_project_cost
         )
       );
       await this.mainDbSequelize.query(
@@ -2871,7 +2885,9 @@ class CaseSchemaService {
           data.case_rid,
           getTotalProjects[0][0].total_projects,
           getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          getTotalProjects[0][0].total_projects_qre_cost,
+          getTotalProjects[0][0].total_qualified_projects,
+          getTotalProjects[0][0].total_qualified_project_cost
         )
       );
       if (totalCount === 1) {

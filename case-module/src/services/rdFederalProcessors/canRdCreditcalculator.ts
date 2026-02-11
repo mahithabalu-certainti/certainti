@@ -1,6 +1,6 @@
 import { QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorking.rawQueries";
+import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorkingQueries";
 import { ProjectCalculatedDataCanada, ProjectComputeValue, ProjectFiscalIds } from "../../utils/types";
 import { Case } from "../../models/caseModel";
 
@@ -137,10 +137,10 @@ export class RdCreditCalculatorForCAN {
                 "Provincial ORDTC %",
                 "ORDTC Claimed",
                 "Federal ITC Amount after ORDTC",
-                "Federal ITC %",
+                "Federal ITC % (ORDTC)",
                 "Federal ITC Credits after ORDTC",
                 "Federal ITC Amount (No ORDTC)",
-                "Federal ITC Percent",
+                "Federal ITC % (No ORDTC)",
                 "Federal ITC Credits (No ORDTC)",
                 "TOTAL Credit with ORDTC",
                 "TOTAL Credit with No ORDTC"
@@ -168,15 +168,24 @@ export class RdCreditCalculatorForCAN {
                 "Provincial ORDTC %": `${totalProvincialOrdtcPercent}%`,
                 "ORDTC Claimed" : Math.round(totalOrdtcClaimed),
                 "Federal ITC Amount after ORDTC" : Math.round(federalItcAmountAfterORDTC),
-                "Federal ITC %": `${federalItcPercent}%`,
+                "Federal ITC % (ORDTC)": `${federalItcPercent}%`,
                 "Federal ITC Credits after ORDTC": Math.round(federalItcCreditsAfterORDTC),
                 "Federal ITC Amount (No ORDTC)": Math.round(federalItcAmountNoORDTC),
-                "Federal ITC Percent": `${federalItcPercent}%`,
+                "Federal ITC % (No ORDTC)": `${federalItcPercent}%`,
                 "Federal ITC Credits (No ORDTC)": Math.round(federalItcCreditsNoORDTC),
                 "TOTAL Credit with ORDTC": Math.round(totalCreditWithORDTC),
                 "TOTAL Credit with No ORDTC": Math.round(totalCreditWithNoORDTC)
             },
-            "Projects" : calculatedNewComputedValues,
+            "Projects" : calculatedNewComputedValues.map((d : any) => {
+                return Object.fromEntries(
+                    Object.entries(d).map(([key, value]) => {
+                        if(key === 'Total Hours') {
+                            return [key, JSON.stringify(value)];
+                        } 
+                        return [key, value]
+                    })
+                )
+            }),
             BOLD : ["TOTAL Credit with ORDTC", "TOTAL Credit with No ORDTC", "Total Cost"]
         }
         return {
@@ -185,7 +194,8 @@ export class RdCreditCalculatorForCAN {
                 credit_type : this.creditType,
                 currency : this.currency
             },
-            computedFields : finalData
+            computedFields : finalData,
+            finalCredit : Math.round(totalCreditWithORDTC)
         }
     }
 }

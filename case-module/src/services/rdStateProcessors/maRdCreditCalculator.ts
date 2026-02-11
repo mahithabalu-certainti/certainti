@@ -47,7 +47,9 @@ export class RdCreditCalculatorForMA {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit),
+            totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre)
         }
 
     }
@@ -210,7 +212,7 @@ export class RdCreditCalculatorForMA {
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract),
+            sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)),
             contract: currentYearContract
 
         })
@@ -226,7 +228,7 @@ export class RdCreditCalculatorForMA {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0)))
             })
         });
 
@@ -255,34 +257,80 @@ export class RdCreditCalculatorForMA {
      */
     buildComputedFields(part1QualifiedResearchExpenseInfo: any, part2ASCCreditCalculationInfo: any, part3CreditCalInfo: any, extractConfig : ConfigJson) {
         let part1QualifiedResearchExpense = {
-            "1 Qualified wage expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
-            "2 Qualified supply expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.current_year_supply),
-            "3 Qualified computer rental time expenses for this corporation": this.round2(part1QualifiedResearchExpenseInfo.qualified_computer_rental_time_expenses),
-            [`4 Enter ${extractConfig.sub_con_percent}% of qualified contract expenses for this corporation`]: this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
-            "5 Total qualified research expenses for this corporation. Add lines 1 through 4": this.round2(part1QualifiedResearchExpenseInfo.total_qre),
-            "6 Total qualified research expenses for this aggregate group": this.round2(part1QualifiedResearchExpenseInfo.total_qre_aggregate)
-        }
+            "[1] Qualified wage expenses for this corporation":
+                this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
+
+            "[2] Qualified supply expenses for this corporation":
+                this.round2(part1QualifiedResearchExpenseInfo.current_year_supply),
+
+            "[3] Qualified computer rental time expenses for this corporation":
+                this.round2(part1QualifiedResearchExpenseInfo.qualified_computer_rental_time_expenses),
+
+            [`[4] Enter ${extractConfig.sub_con_percent}% of qualified contract expenses for this corporation`]:
+                this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
+
+            "[5] Total qualified research expenses for this corporation. Add lines 1 through 4":
+                this.round2(part1QualifiedResearchExpenseInfo.total_qre),
+
+            "[6] Total qualified research expenses for this aggregate group":
+                this.round2(part1QualifiedResearchExpenseInfo.total_qre_aggregate)
+            }
+
         let part2ASCCreditCalculation = {
-            "text" : "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10",
-            "7 Average qualified research expenses for the 3 most recent prior years":part2ASCCreditCalculationInfo.average_qre,
-            [`8 Enter ${extractConfig.qre_cap_rate}% of line 7`]:part2ASCCreditCalculationInfo.fifty_percent_qre,
-            "9 Subtract the amount on line 8 from current year expenses on line 6. Not less than 0":part2ASCCreditCalculationInfo.final_excess_qre,
-            "10 Applicable rate for Alternative Simplified Method":`${part2ASCCreditCalculationInfo.applicable_credit_rate}%`,   
-            "11 Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10":part2ASCCreditCalculationInfo.total_credit_group,
-            "12 Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6":`${part2ASCCreditCalculationInfo.aggregate_group_credit_percent}%`,
-            "13 Amount of group credit for this corporation. Multiply line 11 by line 12":part2ASCCreditCalculationInfo.amount_group_credit
+        "text":
+            "If using the Alternative Simplified Method and you did not have qualified research expenses in each of the three prior years, fill in oval Also skip lines 7 through 10",
+
+        "[7] Average qualified research expenses for the 3 most recent prior years":
+            part2ASCCreditCalculationInfo.average_qre,
+
+        [`[8] Enter ${extractConfig.qre_cap_rate}% of line 7`]:
+            part2ASCCreditCalculationInfo.fifty_percent_qre,
+
+        "[9] Subtract the amount on line 8 from current year expenses on line 6. Not less than 0":
+            part2ASCCreditCalculationInfo.final_excess_qre,
+
+        "[10] Applicable rate for Alternative Simplified Method":
+            `${part2ASCCreditCalculationInfo.applicable_credit_rate}%`,
+
+        "[11] Total credit for the group. if the taxpayer did not have qualified research expenses in each of the three prior years,enter 5% of the amount on line 6; otherwise, multiply line 9 by line 10":
+            part2ASCCreditCalculationInfo.total_credit_group,
+
+        "[12] Percentage of aggregate group credit attributable to this corporation. Line 5 divided by line 6":
+            `${part2ASCCreditCalculationInfo.aggregate_group_credit_percent}%`,
+
+        "[13] Amount of group credit for this corporation. Multiply line 11 by line 12":
+            part2ASCCreditCalculationInfo.amount_group_credit
         }
+
         let part3CreditCal = {
-            "14 Fixed-base ratio (see instructions)":`${part3CreditCalInfo.fixed_base_ratio}%`,
-            "15 Average annual gross receipts from the 4 most recent taxable years":part3CreditCalInfo.avg_total_previous_receipts,
-            [`16 Base amount. Multiply line 14 by line 15. Not less than ${extractConfig.fixed_base_ratio}% of line 6`]:part3CreditCalInfo.base_amount,
-            "17 Subtract line 16 from current year expenses on line 6. Not less than 0" : part3CreditCalInfo.line17,
-            [`18 Total group credit for qualified research expenses. Multiply line 17 by ${extractConfig.total_group_qre_percent}%`]: part3CreditCalInfo.line18,
-            "19 Total group credit for basic research payments (see instructions)" : part3CreditCalInfo.line19,
-            "20 Total Research Credit for aggregate group. Combine line 18 and 19" : part3CreditCalInfo.line20,
-            "21 Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.": `${part3CreditCalInfo.line21Final}%`,
-            "22 Amount of credit for this corporation. Multiply line 20 by line 21." : part3CreditCalInfo.line22
+        "[14] Fixed-base ratio (see instructions)":
+            `${part3CreditCalInfo.fixed_base_ratio}%`,
+
+        "[15] Average annual gross receipts from the 4 most recent taxable years":
+            part3CreditCalInfo.avg_total_previous_receipts,
+
+        [`[16] Base amount. Multiply line 14 by line 15. Not less than ${extractConfig.fixed_base_ratio}% of line 6`]:
+            part3CreditCalInfo.base_amount,
+
+        "[17] Subtract line 16 from current year expenses on line 6. Not less than 0":
+            part3CreditCalInfo.line17,
+
+        [`[18] Total group credit for qualified research expenses. Multiply line 17 by ${extractConfig.total_group_qre_percent}%`]:
+            part3CreditCalInfo.line18,
+
+        "[19] Total group credit for basic research payments (see instructions)":
+            part3CreditCalInfo.line19,
+
+        "[20] Total Research Credit for aggregate group. Combine line 18 and 19":
+            part3CreditCalInfo.line20,
+
+        "[21] Percentage of aggregated group credit attributable to this corporation. Line 5 divided by line 6.":
+            `${part3CreditCalInfo.line21Final}%`,
+
+        "[22] Amount of credit for this corporation. Multiply line 20 by line 21.":
+            part3CreditCalInfo.line22
         }
+
 
         return {
             computed_fields: {

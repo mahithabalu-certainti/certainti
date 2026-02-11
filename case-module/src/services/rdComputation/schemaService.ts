@@ -3,7 +3,7 @@ import { CaseModelService } from "../caseModelsService";
 import { logMessage } from "../../utils/helpers";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { QRE, AnnualGrossReceipt } from "./rdCreditTypes";
 import { fetchAvailableConfigLevelQuery, fetchRdCreditConfigQuery, fetchRdCreditConfigStateLevelQuery } from "../../utils/rawQueries";
 
@@ -82,16 +82,15 @@ class RDCreditSchemaService {
             const [data]: any[] = await this.orgDbSequelize.query(
                 `
                     SELECT 
-                        SUM(cpr.total_cost_fte_from_prj_res) AS total_wages,
-                        SUM(cpr.total_cost_nonlabor_from_prj_res) AS total_supplies,
-                        SUM(cpr.total_cost_subcon_from_prj_res) AS total_contract,
+                        CAST(SUM((cpr.total_cost_fte_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
+                        CAST(SUM((cpr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2))  AS total_supplies,
+                        CAST(SUM((cpr.total_cost_subcon_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
                         cs.tax_liability as business_tax_liability
-                    FROM ${schemaName}.case_projects cp
-                    JOIN ${schemaName}.project_fiscal pf
-                        ON cp.project_fiscal_rid = pf.rid
-                    JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
-                    JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = cp.project_fiscal_rid
-                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid
+                    FROM ${schemaName}.cases cs
+                    JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
+                    JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+                    JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid
+                    WHERE cs.rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid AND pf.is_qualified = true
                     GROUP BY cs.tax_liability
                 `,
                 {
@@ -99,7 +98,6 @@ class RDCreditSchemaService {
                     type: QueryTypes.SELECT,
                 }
             );
-
 
             return {
                 wages: Number(data?.total_wages || 0),
@@ -130,15 +128,15 @@ class RDCreditSchemaService {
             const [data]: any[] = await this.orgDbSequelize.query(
                 `
                     SELECT 
-                        SUM(pf.total_cost_fte_prj) AS total_wages,
-                        SUM(pf.total_cost_nonlabor_prj) AS total_supplies,
-                        SUM(pf.total_cost_subcon_prj) AS total_contract,
+                        CAST(SUM((pf.total_cost_fte_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
+                        CAST(SUM((pf.total_cost_nonlabor_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_supplies,
+                        CAST(SUM((pf.total_cost_subcon_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
                         cs.tax_liability as business_tax_liability
                     FROM ${schemaName}.case_projects cp
                     JOIN ${schemaName}.project_fiscal pf
                         ON cp.project_fiscal_rid = pf.rid
                     JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
-                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = pf.fiscal_year AND pf.country_rid = :countryRid
+                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = pf.fiscal_year AND pf.country_rid = :countryRid AND pf.is_qualified = true
                     GROUP BY cs.tax_liability
                 `,
                 {
@@ -405,14 +403,20 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any) {
+    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any,finalCredit : number,result: any) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditCountryCalculations.upsert(
             {
                 case_rid,
                 country_rid,
                 input_params,
-                computed_fields
+                computed_fields,
+                final_credit : finalCredit,
+                total_qre: result.totalQRE,
+                average_annual_gross_receipts: result.averageAnnualGrossReceipts,
+                prev_year1_qre: result.prev1yearQRE,
+                prev_year2_qre: result.prev2yearQRE,
+                prev_year3_qre: result.prev3yearQRE
             },
             {
                 returning: true
@@ -429,7 +433,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any,final_credit : number,total_qre: number, result?: any) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditStateCalculations.upsert(
             {
@@ -437,7 +441,13 @@ class RDCreditSchemaService {
                 country_rid,
                 input_params,
                 computed_fields,
-                state_rid
+                state_rid,
+                final_credit,
+                total_qre: result?.totalQRE,
+                average_annual_gross_receipts: result?.averageAnnualGrossReceipts,
+                prev_year1_qre: result?.prev1yearQRE,
+                prev_year2_qre: result?.prev2yearQRE,
+                prev_year3_qre: result?.prev3yearQRE
             },
             {
                 returning: true
@@ -529,7 +539,7 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'Financial workings are being computed. Refresh the page to check the status' },
+            { status: 'Dossier Packages is Inprogress. Refresh the page to check the status' },
             { where: { rid, request_type: type } }
         );
     }
@@ -559,11 +569,117 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         const result = await RdCreditProcess.findOne({
-            where: { case_rid },
+            where: { 
+                case_rid, 
+                request_type : "dossier-form" 
+            },
             order: [['created_datetime', 'DESC']],
             attributes: ['status'],
         });
         return result?.status || null;
+    }
+
+    async getStateSummaryResults(accountNumber: string, case_rid: string,schemaName : string): Promise<{ [key: string]: any }> {
+        const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
+        
+        // Get state calculations with state_rid and final_credit
+        const stateCalculations = await RdCreditStateCalculations.findAll({
+            attributes: ['state_rid', 'final_credit','total_qre'],
+            where: {
+                case_rid
+            },
+            order: [['created_datetime', 'DESC']],
+            raw: true
+        });
+
+        // Initialize databases
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initMainDbSequelize();
+        }
+        if (!this.orgDbSequelize) {
+            this.orgDbSequelize = await initOrgSequelize();
+        }
+
+        // Get unique state_rids
+        const stateRids = [...new Set(stateCalculations.map(calc => calc.state_rid))];
+        
+        if (stateRids.length === 0) {
+            return {};
+        }
+
+        // Fetch state codes from main database
+        const stateData: any[] = await this.mainDbSequelize.query(
+            rawQueries.fetchStatesByIds(),
+            {
+                replacements: { ids: stateRids },
+                type: QueryTypes.SELECT,
+            }
+        );
+        // Get project counts, QRE totals, and resource counts by state
+        const projectData: any[] = await this.orgDbSequelize.query(
+           rawQueries.fetchProjectCountsAndQreByState(schemaName),
+            {
+                replacements: { case_rid, stateRids },
+                type: QueryTypes.SELECT,
+            }
+        );
+
+        // Create maps
+        const stateInfoMap = new Map();
+        stateData.forEach(state => {
+            stateInfoMap.set(state.rid, {
+                state_code: state.state_code,
+                state_name: state.state_name
+            });
+        });
+
+        const projectMap = new Map();
+        projectData.forEach(data => {
+            projectMap.set(data.state_rid, {
+                total_projects: Number(data.total_projects || 0),
+                total_resources: Number(data.total_resources || 0),
+                total_qre: Number(data.total_qre || 0)
+            });
+        });
+
+        
+        // Build result object: { state_name: { state_code, final_credit, total_projects, total_resources, total_qre } }
+        const result: { [key: string]: any } = {};
+        let totalCredit = 0;
+
+        const sortedStateRows = stateCalculations
+            .map(calc => ({
+                calc,
+                stateInfo: stateInfoMap.get(calc.state_rid)
+            }))
+            .filter(item => item.stateInfo)
+            .sort((a, b) => a.stateInfo.state_name.localeCompare(b.stateInfo.state_name));
+
+        sortedStateRows.forEach(({ calc, stateInfo }) => {
+            const projectInfo = projectMap.get(calc.state_rid) || { total_projects: 0, total_resources: 0, total_qre: 0 };
+
+            if (calc.final_credit != null) {
+                const totalQreValue = Number(calc.total_qre || 0);
+                const finalCredit = Number(calc.final_credit);
+                result[stateInfo.state_name] = {
+                    state_code: stateInfo.state_code,
+                    total_projects: projectInfo.total_projects.toString(),
+                    total_resources: projectInfo.total_resources.toString(),
+                    total_QRE: totalQreValue,
+                    RD_credits: Number(calc.final_credit)
+                };
+                totalCredit += finalCredit;
+            }
+        });
+
+        // Add total as a state-like structure
+        result['Total'] = {
+            RD_credits: Number(totalCredit.toFixed(2))
+        };
+
+        return {
+            federal: result
+        };
     }
 
 

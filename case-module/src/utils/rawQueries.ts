@@ -13,7 +13,9 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
     ),
     fetch_project_count_cost AS (
-    SELECT NULLIF(COUNT(pf.rid), 0) AS total_projects, NULLIF(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
+    SELECT NULLIF(COUNT(pf.rid), 0) AS total_projects, NULLIF(SUM(pf.total_cost_prj), 0.00) AS total_project_cost, 
+    COUNT(CASE WHEN pf.is_qualified = true THEN pf.rid END) AS case_total_qualified_projects,
+    COALESCE(SUM(CASE WHEN pf.is_qualified THEN pf.total_cost_prj END), 0) AS case_total_qualified_project_cost
     FROM ${schemaName}.project_fiscal pf
     CROSS JOIN fetch_fiscal_year f
     WHERE
@@ -21,8 +23,8 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
-    c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,c.case_total_qualified_projects,
-    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, c.case_total_qualified_project_cost,
+    c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,f.case_total_qualified_projects,
+    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
@@ -30,11 +32,13 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.sub_contracts, c.cloud_software,c.unpaid_amounts_paid, c.unpaid_amounts,
     c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,
     c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
+    rcc.final_credit,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
     ELSE FALSE END AS is_case_team_created
     FROM
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
+    LEFT JOIN ${schemaName}.rd_credit_country_calculations rcc ON rcc.case_rid = c.rid
     CROSS JOIN fetch_project_count_cost f
     WHERE
     c.rid = '${caseRid}'
@@ -59,7 +63,8 @@ export const fetchProjectsForCases = (
   assignedApi: boolean,
   accessibleIds: string[],
   isExport: boolean,
-  projectTypeRids: string[]
+  projectTypeRids: string[],
+  type? : string
 ) => {
   let pagination: string = ``
   if (!isExport) {
@@ -67,6 +72,14 @@ export const fetchProjectsForCases = (
     pagination = `LIMIT ${limit} OFFSET ${offset}`;
   } else {
     pagination = ` `
+  }
+  let joinKey : string;
+  let qualifiedConditions : string
+
+  if(type === 'qualifiedProjects') {
+    qualifiedConditions = `AND pf.is_qualified = true`
+  } else {
+    qualifiedConditions = ` `
   }
 
   let sortValue: string;
@@ -259,7 +272,10 @@ export const fetchProjectsForCases = (
     SELECT pf.rid 
     FROM ${schemaName}.project_fiscal pf
     WHERE
-    pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}
+    pf.account_rid = '${accountRid}'
+    AND pf.fiscal_year = ${fiscalYear} 
+    ${accessibleProjects}
+
     ),
     fetch_project_point_of_contact AS (
     SELECT pf.rid, kc.key_contact_name AS project_point_of_contact
@@ -294,7 +310,7 @@ export const fetchProjectsForCases = (
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified
+    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -307,6 +323,7 @@ export const fetchProjectsForCases = (
     ${subQueryConditions}
     AND
     (pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}' OR pf.r_number ILIKE '${searchValue}')
+    ${qualifiedConditions}
     ${and}
     ${combinedFilterQuery}
     ${sortValue}
@@ -1070,10 +1087,62 @@ export const fetchCaseDetails = (schemaName: string, rid: string) => {
     c.rid = '${rid}'
     `
 }
+export const fetchEmailActivityDetails = (schemaName: string, rid: string) => {
+  return `
+    SELECT 
+    a.rid, a.subject, a.body_html,
+    a.created_by, a.modified_by, a.account_rid, 
+    a.created_datetime, a.modified_datetime,
+    a.fiscal_year,
+    a.attachment_level, a.r_number, a.attach_to, a.status_rid,
+    a.to_email,a.cc_email,a.sender_email,a.activity_type
+    FROM
+    ${schemaName}.activities a
+    WHERE
+    a.rid = '${rid}'
+    `
+}
+
+export const fetchActivityDetails = (schemaName: string, rid: string,selectedFields: any) => {
+  return `
+    SELECT 
+    a.rid, ${selectedFields}
+    FROM
+    ${schemaName}.activities a
+    WHERE
+    a.rid = '${rid}'
+    `
+}
 /**
 * Returns the query to fetch attach_to details based on attachment level.
 */
 export function fetchChecklistAttachToDetails(schemaName: string, attachTo: string, attachmentLevel: string, checklistId: string): string {
+  switch (attachmentLevel.toLowerCase()) {
+    case 'account':
+      return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
+    case 'project':
+      return `SELECT pf.rid, pf.project_code AS name  FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+    case 'case':
+      return `SELECT cd.rid, cd.case_name AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+    case 'resource':
+      return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
+    case 'resource_cost':
+      return `SELECT rc.rid, rc.r_number AS name FROM ${schemaName}.resource_cost rc WHERE rc.rid = '${attachTo}'`;
+    case 'resource_skill':
+      return `SELECT rs.rid, rs.r_number AS name FROM ${schemaName}.resource_skill rs WHERE rs.rid = '${attachTo}'`;
+    case 'project_task':
+      return `SELECT pt.rid, pt.r_number AS name FROM ${schemaName}.project_task pt WHERE pt.rid = '${attachTo}'`;
+    case 'project_resource':
+      return `SELECT pr.rid, pr.r_number AS name FROM ${schemaName}.project_resource pr WHERE pr.rid = '${attachTo}'`;
+    default:
+      return `SELECT NULL AS name`;
+  }
+}
+
+/**
+* Returns the query to fetch attach_to details based on attachment level.
+*/
+export function fetchActivityAttachToDetails(schemaName: string, attachTo: string, attachmentLevel: string, checklistId: string): string {
   switch (attachmentLevel.toLowerCase()) {
     case 'account':
       return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
@@ -1568,186 +1637,6 @@ export const getCurrencyDetailsQuery = (
 
   return { query, replacements };
 };
-export const fetchEmailActivityDetails = (schemaName: string, rid: string) => {
-  return `
-    SELECT 
-    a.rid, a.subject, a.body_html,
-    a.created_by, a.modified_by, a.account_rid, 
-    a.created_datetime, a.modified_datetime,
-    a.fiscal_year, e.name AS attached_to, 
-    a.attachment_level, a.r_number, a.attach_to, a.status_rid,
-    a.to_email,a.cc_email,a.sender_email,a.activity_type
-    FROM
-    ${schemaName}.activities a
-    LEFT JOIN LATERAL (
-    SELECT ad.account_rid, ad.account_name AS name 
-    FROM ${schemaName}.account_details ad 
-    WHERE
-    LOWER(a.attachment_level) = 'account'
-    AND
-    ad.account_rid = a.attach_to
-
-    UNION ALL
-
-    SELECT pf.rid, pf.project_code AS name 
-    FROM
-    ${schemaName}.project_fiscal pf
-    WHERE
-    LOWER(a.attachment_level) = 'project'
-    AND
-    pf.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT cd.rid, cd.case_name AS name 
-    FROM
-    ${schemaName}.cases cd
-    WHERE
-    LOWER(a.attachment_level) = 'case'
-    AND
-    cd.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT r.rid, r.resource_code AS name
-    FROM
-    ${schemaName}.resources r
-    WHERE
-    LOWER(a.attachment_level) = 'resource'
-    AND
-    r.rid = a.attach_to
-    
-    UNION ALL
-
-    SELECT rc.rid, rc.r_number AS name
-    FROM
-    ${schemaName}.resource_cost rc
-    WHERE
-    LOWER(a.attachment_level) = 'resource_cost'
-    AND
-    rc.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT rs.rid, rs.r_number AS name
-    FROM
-    ${schemaName}.resource_skill rs
-    WHERE
-    LOWER(a.attachment_level) = 'resource_skill'
-    AND
-    rs.rid = a.attach_to
-    UNION ALL
-
-    SELECT pt.rid, pt.r_number AS name
-    FROM
-    ${schemaName}.project_task pt
-    WHERE
-    LOWER(a.attachment_level) = 'project_task'
-    AND
-    pt.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT pr.rid, pr.r_number AS name
-    FROM
-    ${schemaName}.project_resource pr
-    WHERE
-    LOWER(a.attachment_level) = 'project_resource'
-    AND
-    pr.rid = a.attach_to
-    ) e ON true
-    WHERE
-    a.rid = '${rid}'
-    `
-}
-
-export const fetchActivityDetails = (schemaName: string, rid: string, selectColumns: string[]) => {
-  return `
-    SELECT 
-    a.rid, ${selectColumns}
-    FROM
-    ${schemaName}.activities a
-    LEFT JOIN LATERAL (
-    SELECT ad.account_rid, ad.account_name AS name 
-    FROM ${schemaName}.account_details ad 
-    WHERE
-    LOWER(a.attachment_level) = 'account'
-    AND
-    ad.account_rid = a.attach_to
-
-    UNION ALL
-
-    SELECT pf.rid, pf.project_code AS name 
-    FROM
-    ${schemaName}.project_fiscal pf
-    WHERE
-    LOWER(a.attachment_level) = 'project'
-    AND
-    pf.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT cd.rid, cd.case_name AS name 
-    FROM
-    ${schemaName}.cases cd
-    WHERE
-    LOWER(a.attachment_level) = 'case'
-    AND
-    cd.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT r.rid, r.resource_code AS name
-    FROM
-    ${schemaName}.resources r
-    WHERE
-    LOWER(a.attachment_level) = 'resource'
-    AND
-    r.rid = a.attach_to
-    
-    UNION ALL
-
-    SELECT rc.rid, rc.r_number AS name
-    FROM
-    ${schemaName}.resource_cost rc
-    WHERE
-    LOWER(a.attachment_level) = 'resource_cost'
-    AND
-    rc.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT rs.rid, rs.r_number AS name
-    FROM
-    ${schemaName}.resource_skill rs
-    WHERE
-    LOWER(a.attachment_level) = 'resource_skill'
-    AND
-    rs.rid = a.attach_to
-    UNION ALL
-
-    SELECT pt.rid, pt.r_number AS name
-    FROM
-    ${schemaName}.project_task pt
-    WHERE
-    LOWER(a.attachment_level) = 'project_task'
-    AND
-    pt.rid = a.attach_to
-
-    UNION ALL
-
-    SELECT pr.rid, pr.r_number AS name
-    FROM
-    ${schemaName}.project_resource pr
-    WHERE
-    LOWER(a.attachment_level) = 'project_resource'
-    AND
-    pr.rid = a.attach_to
-    ) e ON true
-    WHERE
-    a.rid = '${rid}'
-    `
-}
 
 export const fetchTaskWeightage = () => {
   return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage ORDER BY weightage_value ASC`
@@ -2363,7 +2252,7 @@ export const signoffProjectTechSummary  = (schemaName : string, projectFiscalRid
 }
 
 export const getValidRegionIdsFromCases = (schemaName : string, accountId : string, caseId : string) => {
-  return `SELECT region_rid AS rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseId}' AND account_rid = '${accountId}' AND region_rid IS NOT NULL`
+  return `SELECT distinct region_rid AS rid FROM ${schemaName}.case_project_resource WHERE case_rid = '${caseId}' AND account_rid = '${accountId}' AND region_rid IS NOT NULL`
 }
 export const fetchAvailableConfigLevelQuery = () => {
    let query = `

@@ -7,11 +7,12 @@ import { generateSasUrl, logMessage, uploadBufferToAzureBlob } from "../../utils
 import { pdfFiller } from "../../utils/pdfFiller";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
-import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
 import { Kafka, Producer } from "kafkajs";
 import * as fs from "fs";
 import * as path from "path";
+import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -61,7 +62,8 @@ export class RdFormMapperService {
     mainDb: Sequelize,
     orgDb: Sequelize,
     schemaName: string,
-  ): Promise<void> {
+    fiscalYear:string
+  ): Promise<any> {
     logMessage("Processing Federal form computation.");
 
     const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
@@ -105,6 +107,9 @@ export class RdFormMapperService {
         effectiveStart,
         caseRid,
         schemaName,
+        fiscalYear,
+        null,
+        countryRid,
       );
 
     // Add debugging for form type
@@ -139,17 +144,22 @@ export class RdFormMapperService {
       `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
     );
 
-    await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
-      caseRid,
-      countryRid,
-      filledFormUrl,
-      orgDb,
-      accountNumber,
-    );
+     await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
+       caseRid,
+       countryRid,
+       filledFormUrl,
+       orgDb,
+       accountNumber,
+     );
 
     logMessage(
       `Successfully saved federal filled form URL for case: ${caseRid}`,
-    );
+    ); 
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: "Federal form processed successfully",
+      data:filledFormUrl
+    }
   }
 
   /**
@@ -219,6 +229,9 @@ export class RdFormMapperService {
           effectiveStart,
           caseRid,
           schemaName,
+          undefined,
+          state,
+          countryRid,
         );
 
       const filledFormUrl = await pdfFiller(
@@ -344,6 +357,384 @@ export class RdFormMapperService {
   /**
    * Enhance mapper configuration with dynamic values from reference tables
    */
+  private pushEnhancedConfig(
+    enhancedConfigs: any[],
+    configItem: any,
+    value: any,
+    overrides?: any,
+  ) {
+    enhancedConfigs.push({
+      ...configItem,
+      label: configItem.field_label,
+      value_field_id: configItem.field_id,
+      value,
+      ...overrides,
+    });
+  }
+
+  private stripIndexes(fieldRef: string) {
+    return fieldRef.replace(/\[\d+\]/g, "");
+  }
+
+  private normalizeFieldRef(fieldRef: string) {
+    const trimmed = fieldRef.trim();
+    const lastSegment = trimmed.split(".").pop() || trimmed;
+    return lastSegment.replace(/\[\d+\]$/, "");
+  }
+
+  private tryParseNumber(rawValue: any) {
+    if (rawValue === null || rawValue === undefined || rawValue === "") {
+      return 0;
+    }
+    let rawString = String(rawValue);
+    if (
+      (rawString.startsWith("\"") && rawString.endsWith("\"")) ||
+      (rawString.startsWith("'") && rawString.endsWith("'"))
+    ) {
+      rawString = rawString.slice(1, -1);
+    }
+    const hasPercent = rawString.includes("%");
+    let normalized = rawString
+      .replace(/,/g, "")
+      .replace(/%/g, "")
+      .replace(/\$/g, "")
+      .trim();
+
+    if (normalized.startsWith("(") && normalized.endsWith(")")) {
+      normalized = `-${normalized.slice(1, -1)}`;
+    }
+
+    let num = Number(normalized);
+    if (Number.isFinite(num) && hasPercent) {
+      num = num / 100;
+    }
+    return Number.isFinite(num) ? num : null;
+  }
+
+  private transformIfExpressions(expression: string) {
+    let result = expression;
+    const ifRegex = /\bIF\s*\(/i;
+
+    const splitTopLevel = (input: string) => {
+      const parts: string[] = [];
+      let buffer = "";
+      let depth = 0;
+
+      for (let i = 0; i < input.length; i++) {
+        const ch = input[i];
+        if (ch === "(") depth++;
+        if (ch === ")") depth--;
+
+        if (ch === "," && depth === 0) {
+          parts.push(buffer.trim());
+          buffer = "";
+        } else {
+          buffer += ch;
+        }
+      }
+
+      if (buffer.length > 0) {
+        parts.push(buffer.trim());
+      }
+
+      return parts;
+    };
+
+    while (true) {
+      const match = ifRegex.exec(result);
+      if (!match) break;
+
+      const ifIndex = match.index;
+      const openIndex = result.indexOf("(", ifIndex);
+      if (openIndex < 0) break;
+
+      let depth = 0;
+      let closeIndex = -1;
+      for (let i = openIndex; i < result.length; i++) {
+        const ch = result[i];
+        if (ch === "(") depth++;
+        if (ch === ")") {
+          depth--;
+          if (depth === 0) {
+            closeIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (closeIndex < 0) break;
+
+      const inner = result.slice(openIndex + 1, closeIndex);
+      const parts = splitTopLevel(inner);
+      if (parts.length !== 3) break;
+
+      const [condition, whenTrue, whenFalse] = parts;
+      const replacement = `(${condition} ? ${whenTrue} : ${whenFalse})`;
+      result =
+        result.slice(0, ifIndex) + replacement + result.slice(closeIndex + 1);
+    }
+
+    return result;
+  }
+
+  private async handleLineItemConfig(
+    configItem: any,
+    enhancedConfigs: any[],
+    context: {
+      accountRid: string;
+      effectiveStart: string;
+      caseRid: string;
+      schemaName: string;
+      stateRid?: string | null;
+      countryRid?: string;
+    },
+  ) {
+    let value = configItem.value;
+    let calcConfig: any = configItem.calculation_config;
+
+    if (typeof calcConfig === "string") {
+      try {
+        calcConfig = JSON.parse(calcConfig);
+      } catch (error) {
+        logMessage(
+          `Error parsing calculation_config for field ${configItem.field_label}: ${error}`,
+        );
+        calcConfig = null;
+      }
+    }
+
+    if (calcConfig && typeof calcConfig === "object" && !Array.isArray(calcConfig)) {
+      const orderedTokens = Object.keys(calcConfig)
+        .sort((a, b) => Number(a) - Number(b))
+        .map((key) => String(calcConfig[key]).trim());
+
+      const hasOperator = orderedTokens.some((token) =>
+        [
+          "add",
+          "sub",
+          "subtract",
+          "mul",
+          "div",
+          "multiply",
+          "divide",
+          "min",
+          "max",
+        ].includes(token.toLowerCase()),
+      );
+
+      if (hasOperator) {
+        const minMaxToken = orderedTokens.find((token) =>
+          ["min", "max"].includes(token.toLowerCase()),
+        );
+
+        const expression = minMaxToken
+          ? `${minMaxToken.toLowerCase()}(${orderedTokens
+              .filter(
+                (token) => !["min", "max"].includes(token.toLowerCase()),
+              )
+              .join(", ")})`
+          : orderedTokens
+              .map((token) => {
+                switch (token.toLowerCase()) {
+                  case "add":
+                    return "+";
+                  case "sub":
+                  case "subtract":
+                    return "-";
+                  case "mul":
+                  case "multiply":
+                    return "*";
+                  case "div":
+                  case "divide":
+                    return "/";
+                  default:
+                    return token;
+                }
+              })
+              .join(" ");
+
+        value = expression;
+        logMessage(
+          `Built expression for field ${configItem.field_label}: ${expression}`,
+        );
+
+        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+        return;
+      }
+    }
+
+    for (const key in calcConfig) {
+      const rid = calcConfig[key];
+
+      if (typeof rid === "number") {
+        value = rid;
+        logMessage(
+          `Using numeric literal for field ${configItem.field_label}: ${rid}`,
+        );
+        continue;
+      }
+
+      if (typeof rid === "string") {
+        const parsedLiteral = this.tryParseNumber(rid);
+        if (parsedLiteral !== null && /[0-9]/.test(rid)) {
+          value = parsedLiteral;
+          logMessage(
+            `Using numeric literal for field ${configItem.field_label}: ${parsedLiteral}`,
+          );
+          continue;
+        }
+
+        if (/^\s*(min|max)\s*\(/i.test(rid)) {
+          value = rid;
+          logMessage(
+            `Using expression literal for field ${configItem.field_label}: ${rid}`,
+          );
+          continue;
+        }
+
+        if (rid.includes("#")) {
+          value = rid;
+          logMessage(
+            `Using reference expression for field ${configItem.field_label}: ${rid}`,
+          );
+          continue;
+        }
+      }
+
+      try {
+        const mapperObject =
+          await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rid);
+        if (mapperObject?.ref_table && mapperObject?.field_name) {
+          const dynamicValue =
+            await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
+              mapperObject.ref_table,
+              mapperObject.field_name,
+              mapperObject.is_json,
+              context.caseRid,
+              context.schemaName,
+              context.stateRid || "",
+            );
+
+          if (dynamicValue !== null) {
+            value = dynamicValue;
+            logMessage(
+              `Fetched dynamic value for field ${configItem.field_label}: ${dynamicValue}`,
+            );
+          } else {
+            logMessage(
+              `No dynamic value for field ${configItem.field_label} (ref_table=${mapperObject.ref_table}, field_name=${mapperObject.field_name})`,
+            );
+          }
+        } else {
+          logMessage(
+            `Missing mapperObject ref_table/field_name for field ${configItem.field_label} (rid=${rid})`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `Error fetching dynamic value for ${configItem.field_label}:`,
+          error,
+        );
+      }
+    }
+
+    if (value === null || value === undefined || value === "") {
+      logMessage(
+        `Empty value resolved for field ${configItem.field_label} (field_id=${configItem.field_id})`,
+      );
+    }
+
+    this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+  }
+
+  private async handleTableConfig(
+    configItem: any,
+    enhancedConfigs: any[],
+    context: {
+      accountRid: string;
+      caseRid: string;
+      schemaName: string;
+      fiscalYear?: string;
+    },
+  ) {
+    if (configItem.column_id && configItem.calculation_config) {
+      try {
+        let mapperObject: any = null;
+        for (const key in configItem.calculation_config) {
+          const rid = configItem.calculation_config[key];
+          mapperObject =
+            await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rid);
+          break;
+        }
+
+        const columnIdList =
+          await this.rdFormMapperSchemaService.getColumnIdListFromTableMappings(
+            configItem.column_id,
+          );
+
+        if (columnIdList && mapperObject?.ref_table && mapperObject?.field_name) {
+          let fieldMappings: any = {};
+
+          try {
+            if (typeof columnIdList === "string") {
+              fieldMappings = JSON.parse(columnIdList);
+            } else if (
+              typeof columnIdList === "object" &&
+              !Array.isArray(columnIdList)
+            ) {
+              fieldMappings = columnIdList;
+            }
+          } catch (parseError) {
+            logMessage(`Error parsing column ID list as JSON: ${parseError}`);
+            fieldMappings = {};
+          }
+
+          if (Object.keys(fieldMappings).length > 0) {
+            const tableValues =
+              await this.rdFormMapperSchemaService.fetchTableValues(
+                mapperObject.ref_table,
+                mapperObject.field_name,
+                mapperObject.is_json || false,
+                mapperObject.data_order_by,
+                context.accountRid,
+                context.caseRid,
+                context.schemaName,
+                context.fiscalYear,
+              );
+
+            Object.entries(fieldMappings).forEach(([rowNumber, fieldPath]) => {
+              if (typeof fieldPath === "string") {
+                const rowIndex = parseInt(rowNumber, 10) - 1;
+                const rowValue = tableValues[rowIndex]?.value || "";
+                this.pushEnhancedConfig(enhancedConfigs, configItem, rowValue, {
+                  label: `${configItem.field_label}[row_${rowNumber}]`,
+                  field_name: configItem.field_name,
+                  value_field_id: fieldPath,
+                });
+              }
+            });
+
+            logMessage(
+              `Created ${Object.keys(fieldMappings).length} table row mappings for field ${configItem.field_label}`,
+            );
+            return;
+          }
+        }
+
+        this.pushEnhancedConfig(enhancedConfigs, configItem, "");
+      } catch (error) {
+        this.logger.error(
+          `Error fetching table values for ${configItem.field_label}:`,
+          error,
+        );
+        this.pushEnhancedConfig(enhancedConfigs, configItem, "");
+      }
+      return;
+    }
+
+    this.pushEnhancedConfig(enhancedConfigs, configItem, configItem.value);
+  }
+
   private async enhanceMapperConfigWithDynamicValues(
     mapperConfig: any[],
     accountRid: string,
@@ -351,190 +742,232 @@ export class RdFormMapperService {
     caseRid: string,
     schemaName: string,
     fiscalYear?: string,
+    stateRid?: string | null,
+    countryRid?: string,
   ): Promise<any[]> {
     const enhancedConfigs: any[] = [];
+    const cachedTop15Sums: Record<string, number> = {};
+
+    const getTop15SumByColumn = async (columnName: string) => {
+      if (cachedTop15Sums[columnName] === undefined) {
+        cachedTop15Sums[columnName] =
+          await this.rdFormMapperSchemaService.fetchTop15ProjectSumByColumn(
+            caseRid,
+            schemaName,
+            columnName,
+          );
+      }
+      return cachedTop15Sums[columnName];
+    };
 
     for (const configItem of mapperConfig) {
       let value = configItem.value;
+      const fieldLabel = configItem.field_label;
+
+      if (
+        fieldLabel ===
+          "Total from attachments -> 50 Direct research wages for qualified services" ||
+        fieldLabel ===
+          "Total from attachments -> 51 Direct supervision wages for qualified services" ||
+        fieldLabel ===
+          "Total from attachments -> 52 Direct support wages for qualified services"
+      ) {
+        const columnName =
+          fieldLabel ===
+          "Total from attachments -> 50 Direct research wages for qualified services"
+            ? "total_cost_fte_prj"
+            : fieldLabel ===
+                "Total from attachments -> 51 Direct supervision wages for qualified services"
+              ? "total_cost_subcon_prj"
+              : "total_cost_nonlabor_prj";
+        const top15Sum = await getTop15SumByColumn(columnName);
+        value = top15Sum;
+        logMessage(
+          `Custom top-15 sum applied for field ${fieldLabel}: ${value}`,
+        );
+        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+        continue;
+      }
+      if (
+        fieldLabel ===
+        "Total from attachments -> 53 Total qualified wages (add line 50, line 51, and line 52)"
+      ) {
+        const line50 = await getTop15SumByColumn("total_cost_fte_prj");
+        const line51 = await getTop15SumByColumn("total_cost_subcon_prj");
+        const line52 = await getTop15SumByColumn("total_cost_nonlabor_prj");
+        value = line50 + line51 + line52;
+        logMessage(
+          `Custom total qualified wages applied for field ${fieldLabel}: ${value}`,
+        );
+        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+        continue;
+      }
       if (
         configItem.calculation_config &&
         configItem.field_type == "line-item"
       ) {
-        for (const key in configItem.calculation_config) {
-          const rid = configItem.calculation_config[key];
-
-          try {
-            const mapperObject =
-              await this.rdFormMapperSchemaService.getDataMapperObjectByRid(
-                rid,
-              );
-            if (mapperObject?.ref_table && mapperObject?.field_name) {
-              const dynamicValue =
-                await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
-                  mapperObject.ref_table,
-                  mapperObject.field_name,
-                  mapperObject.is_json,
-                  accountRid,
-                  caseRid,
-                  schemaName,
-                );
-
-              if (dynamicValue !== null) {
-                value = dynamicValue;
-                logMessage(
-                  `Fetched dynamic value for field ${configItem.field_label}: ${dynamicValue}`,
-                );
-              }
-            }
-          } catch (error) {
-            this.logger.error(
-              `Error fetching dynamic value for ${configItem.field_label}:`,
-              error,
-            );
-          }
-        }
-
-        // Add the single enhanced config item
-        enhancedConfigs.push({
-          ...configItem,
-          label: configItem.field_label,
-          value_field_id: configItem.field_id,
-          value,
+        await this.handleLineItemConfig(configItem, enhancedConfigs, {
+          accountRid,
+          effectiveStart,
+          caseRid,
+          schemaName,
+          stateRid,
+          countryRid,
         });
       } else if (configItem.field_type == "table") {
-        // Fetch column ID list from data_mapper_table_mappings for table field types
-        if (configItem.column_id && configItem.calculation_config) {
-          try {
-            // Get mapper object from calculation config (same as line-item)
-            let mapperObject: any = null;
-            for (const key in configItem.calculation_config) {
-              const rid = configItem.calculation_config[key];
-              mapperObject =
-                await this.rdFormMapperSchemaService.getDataMapperObjectByRid(
-                  rid,
-                );
-              break; // Use first calculation config entry
-            }
-
-            // Get column ID list from data_mapper_table_mappings using the column_id
-            const columnIdList =
-              await this.rdFormMapperSchemaService.getColumnIdListFromTableMappings(
-                configItem.column_id,
-              );
-
-            if (
-              columnIdList &&
-              mapperObject?.ref_table &&
-              mapperObject?.field_name
-            ) {
-              // Check if columnIdList is a JSON object with row mappings
-              let fieldMappings: any = {};
-
-              try {
-                // If it's a string, try to parse it as JSON
-                if (typeof columnIdList === "string") {
-                  fieldMappings = JSON.parse(columnIdList);
-                } else if (
-                  typeof columnIdList === "object" &&
-                  !Array.isArray(columnIdList)
-                ) {
-                  fieldMappings = columnIdList;
-                }
-              } catch (parseError) {
-                logMessage(
-                  `Error parsing column ID list as JSON: ${parseError}`,
-                );
-                fieldMappings = {};
-              }
-
-              // Handle JSON object field mappings (new format)
-              if (Object.keys(fieldMappings).length > 0) {
-                // Fetch table data
-                const tableValues =
-                  await this.rdFormMapperSchemaService.fetchTableValues(
-                    mapperObject.ref_table,
-                    mapperObject.field_name,
-                    mapperObject.is_json || false,
-                    mapperObject.data_order_by,
-                    accountRid,
-                    caseRid,
-                    schemaName,
-                    fiscalYear,
-                  );
-
-                // Create individual field entries for each table row
-                Object.entries(fieldMappings).forEach(
-                  ([rowNumber, fieldPath]) => {
-                    if (typeof fieldPath === "string") {
-                      const rowIndex = parseInt(rowNumber, 10) - 1; // Convert 1-based to 0-based
-                      const rowValue = tableValues[rowIndex]?.value || "";
-                      enhancedConfigs.push({
-                        ...configItem,
-                        label: `${configItem.field_label}[row_${rowNumber}]`,
-                        field_name: configItem.field_name, // Keep original field_name
-                        value_field_id: fieldPath, // Use PDF field path as value_field_id
-                        value: rowValue,
-                      });
-                    }
-                  },
-                );
-
-                logMessage(
-                  `Created ${Object.keys(fieldMappings).length} table row mappings for field ${configItem.field_label}`,
-                );
-              } else {
-                // Fallback for legacy or empty mappings
-                enhancedConfigs.push({
-                  ...configItem,
-                  label: configItem.field_label,
-                  value_field_id: configItem.field_id,
-                  value: "",
-                });
-              }
-            } else {
-              // No valid mappings found
-              enhancedConfigs.push({
-                ...configItem,
-                label: configItem.field_label,
-                value_field_id: configItem.field_id,
-                value: "",
-              });
-            }
-          } catch (error) {
-            this.logger.error(
-              `Error fetching table values for ${configItem.field_label}:`,
-              error,
-            );
-            enhancedConfigs.push({
-              ...configItem,
-              label: configItem.field_label,
-              value_field_id: configItem.field_id,
-              value: "",
-            });
-          }
-        } else {
-          // No column_id or calculation_config
-          enhancedConfigs.push({
-            ...configItem,
-            label: configItem.field_label,
-            value_field_id: configItem.field_id,
-            value: configItem.value,
-          });
-        }
+        await this.handleTableConfig(configItem, enhancedConfigs, {
+          accountRid,
+          caseRid,
+          schemaName,
+          fiscalYear,
+        });
       } else {
         // Default case for other field types
-        enhancedConfigs.push({
-          ...configItem,
-          label: configItem.field_label,
-          value_field_id: configItem.field_id,
-          value,
-        });
+        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+      }
+    }
+
+    const valueMap = new Map<string, any>();
+    const addToValueMap = (rawKey: string, value: any) => {
+      if (!rawKey) return;
+      valueMap.set(rawKey, value);
+
+      const noIndexKey = this.stripIndexes(rawKey);
+      valueMap.set(noIndexKey, value);
+
+      const normalizedKey = this.normalizeFieldRef(rawKey);
+      valueMap.set(normalizedKey, value);
+    };
+
+    enhancedConfigs.forEach((item) => {
+      if (item.value_field_id) {
+        addToValueMap(String(item.value_field_id), item.value);
+      }
+      if (item.field_id) {
+        addToValueMap(String(item.field_id), item.value);
+      }
+      if (item.field_name) {
+        addToValueMap(String(item.field_name), item.value);
+      }
+    });
+
+    const maxExpressionPasses = 3;
+    for (let pass = 1; pass <= maxExpressionPasses; pass++) {
+      let passUpdated = false;
+
+      enhancedConfigs.forEach((item) => {
+        if (typeof item.value !== "string") return;
+        const expression = item.value.trim();
+
+        if (!expression.includes("#")) return;
+
+        logMessage(
+          `Evaluating expression for field value ${item.field_label || item.field_id}: ${expression}`,
+        );
+
+        let replaced = expression.replace(
+          /#([^\s+\-*/(),]+)/g,
+          (match: string) => {
+            const rawKey = match.slice(1);
+            if (!rawKey) return "NaN";
+
+            const lookupKeys = [
+              rawKey,
+              this.stripIndexes(rawKey),
+              this.normalizeFieldRef(rawKey),
+            ];
+
+            let hadKey = false;
+            let hadValue: any = undefined;
+            for (const key of lookupKeys) {
+              if (valueMap.has(key)) {
+                hadKey = true;
+                hadValue = valueMap.get(key);
+              }
+              const num = this.tryParseNumber(valueMap.get(key));
+              if (num !== null) {
+                return String(num);
+              }
+            }
+
+            if (hadKey) {
+              logMessage(
+                `Non-numeric expression reference for field ${item.field_label || item.field_id}: ${rawKey} (value=${JSON.stringify(hadValue)})`,
+              );
+            } else {
+              logMessage(
+                `Missing expression reference for field ${item.field_label || item.field_id}: ${rawKey}`,
+              );
+            }
+            return "NaN";
+          },
+        );
+
+        replaced = replaced
+          .replace(/\bmin\s*\(/gi, "Math.min(")
+          .replace(/\bmax\s*\(/gi, "Math.max(");
+
+        replaced = this.transformIfExpressions(replaced);
+
+        const validationTarget = replaced.replace(/Math\.(min|max)\(/g, "(");
+        if (!/^[0-9+\-*/().,\sNaN?:<>=!&|]+$/.test(validationTarget)) {
+          logMessage(
+            `Blocked invalid expression for field ${item.field_label || item.field_id}: ${expression}`,
+          );
+          return;
+        }
+
+        try {
+          const computed = Function(`"use strict"; return (${replaced});`)();
+          if (typeof computed === "number" && Number.isFinite(computed)) {
+            const lowerExpression = expression.toLowerCase();
+            const hasSubtraction =
+              lowerExpression.includes("-") ||
+              lowerExpression.includes(" sub ") ||
+              lowerExpression.includes("subtract");
+            const finalValue = hasSubtraction && computed < 0 ? 0 : computed;
+
+            item.value = finalValue;
+            passUpdated = true;
+
+            if (item.value_field_id) {
+              addToValueMap(String(item.value_field_id), item.value);
+            }
+            if (item.field_id) {
+              addToValueMap(String(item.field_id), item.value);
+            }
+            if (item.field_name) {
+              addToValueMap(String(item.field_name), item.value);
+            }
+
+            logMessage(
+              `Computed expression for field ${item.field_label || item.field_id}: ${expression} = ${finalValue}`,
+            );
+          } else {
+            logMessage(
+              `Could not compute expression for field ${item.field_label || item.field_id}: ${expression} (resolved=${replaced})`,
+            );
+          }
+        } catch (error) {
+          logMessage(
+            `Error computing expression for field ${item.field_label || item.field_id}: ${expression} (resolved=${replaced})`,
+          );
+        }
+      });
+
+      if (!passUpdated) {
+        break;
       }
     }
     return enhancedConfigs;
   }
 
-  async processRdFormMapperRequests(message: any): Promise<any[]> {
+  async processRdFormMapperRequests(message: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { task: any };
+  }> {
     try {
       const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
@@ -546,6 +979,7 @@ export class RdFormMapperService {
         effectiveEnd,
         accountNumber,
         schemaName,
+        fiscalYear
       } = parsedMessage;
       const mainDb = await this.getMainDb();
       const orgDb = await this.getOrgDb();
@@ -560,7 +994,7 @@ export class RdFormMapperService {
         );
       const hasFederal = availableConfig.hasFederal;
       const hasState = availableConfig.hasState;
-      const configLevelKey =
+      let configLevelKey =
         hasFederal && hasState
           ? ConfigType.BOTH
           : hasFederal
@@ -570,11 +1004,10 @@ export class RdFormMapperService {
               : ConfigType.NONE;
 
       logMessage(`Config Level Key determined: ${configLevelKey}`);
-
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
           logMessage("Processing both Federal and State forms.");
-          await this.processFederalForms(
+          const federalResult = await this.processFederalForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -584,8 +1017,9 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             schemaName,
+            fiscalYear
           );
-          await this.processStateForms(
+          this.processStateForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -596,11 +1030,17 @@ export class RdFormMapperService {
             orgDb,
             availableConfig.states || [],
             schemaName,
-          );
+          ).catch((error) => {
+            this.logger.error(
+              `Error processing state forms in background for case ${caseRid}:`,
+              error,
+            );
+          });
+          return federalResult;
         },
         [ConfigType.FEDERAL_ONLY]: async () => {
           logMessage("Processing Federal forms only.");
-          await this.processFederalForms(
+          return await this.processFederalForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -610,6 +1050,7 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             schemaName,
+            fiscalYear
           );
         },
         [ConfigType.STATE_ONLY]: async () => {
@@ -626,6 +1067,11 @@ export class RdFormMapperService {
             availableConfig.states || [],
             schemaName,
           );
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: "State forms processed successfully",
+            data: {},
+          };
         },
         [ConfigType.NONE]: async () => {
           throw new Error(
@@ -639,16 +1085,19 @@ export class RdFormMapperService {
         throw new Error(`Invalid ConfigType: ${configLevelKey}`);
       }
 
-      await executeComputation();
+      const result = await executeComputation();
       logMessage(
         `Successfully completed form mapper processing for case: ${caseRid}`,
       );
-
-      return [];
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : err;
       logMessage(`Error processing RD Mapper requests: ${errorMessage}`);
-      return [];
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage:"Failed to process RD form mapper requests",
+      };
     }
   }
 
@@ -656,7 +1105,12 @@ export class RdFormMapperService {
     accountRid: string,
     caseRid: string,
     fiscalYear: number,
-  ) {
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }> {
     try {
       const mainDb = await this.getMainDb();
       const orgDb = await this.getOrgDb();
@@ -670,7 +1124,10 @@ export class RdFormMapperService {
         rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
         { type: "SELECT" },
       );
-      if (!isFinancialSignOffDone[0].financial_working_signoff) {
+      if (
+        !isFinancialSignOffDone ||
+        !isFinancialSignOffDone.financial_working_signoff
+      ) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -694,14 +1151,15 @@ export class RdFormMapperService {
       );
       let effectiveStart = fetchedStartEndDate.startDate;
       let effectiveEnd = fetchedStartEndDate.endDate;
-      return await this.initiateRDFormFiller(
+      let payload = {
         accountRid,
         caseRid,
         effectiveStart,
         effectiveEnd,
         schemaName,
-        fetchParentAccountRnumber[0][0].r_number,
-      );
+        accountNumber: fetchParentAccountRnumber[0][0].r_number
+      }
+      return await this.processRdFormMapperRequests(payload);
     } catch (error) {
       logMessage(`Error initiating RD Credit Process: ${error}`);
 
@@ -726,6 +1184,22 @@ export class RdFormMapperService {
       await this.producer.connect();
     }
     return this.producer;
+  }
+
+  private async fetchUrlAsBase64(url: string): Promise<string> {
+    // Set reasonable defaults to avoid unbounded memory usage and long-hanging requests.
+    // Timeout in milliseconds (e.g., 30 seconds).
+    const REQUEST_TIMEOUT_MS = 30_000;
+    // Maximum response size in bytes (e.g., 50 MB).
+    const MAX_CONTENT_LENGTH_BYTES = 50 * 1024 * 1024;
+
+    const response = await axios.get<ArrayBuffer>(url, {
+      responseType: "arraybuffer",
+      timeout: REQUEST_TIMEOUT_MS,
+      maxContentLength: MAX_CONTENT_LENGTH_BYTES,
+      maxBodyLength: MAX_CONTENT_LENGTH_BYTES,
+    });
+    return Buffer.from(response.data).toString("base64");
   }
 
   /**
@@ -795,7 +1269,12 @@ export class RdFormMapperService {
     is_federal: boolean;
     country_rid: string;
     state_rid?: string;
-  }) {
+  }): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }> {
     try {
       // Validate input parameters
       if (!value.is_federal && !value.state_rid) {
@@ -838,9 +1317,16 @@ export class RdFormMapperService {
             orgDb,
             accountNumber,
           );
-      if (results?.filled_form_url != null) {
-        results.filled_form_url =
-          (await generateSasUrl(results.filled_form_url, 300)) || null;
+      if (results?.filled_form_url) {
+        try {
+          const sasUrl = await generateSasUrl(results.filled_form_url, 300);
+          results.filled_form_url = sasUrl
+            ? await this.fetchUrlAsBase64(sasUrl)
+            : null;
+        } catch (error) {
+          logMessage(`Error generating SAS URL: ${error}`);
+          results.filled_form_url = null;
+        }
       }
 
       return this.createSuccessResponse({

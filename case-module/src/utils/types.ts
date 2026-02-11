@@ -147,7 +147,8 @@ export const validColumnsForSorting : any = {
   modified_datetime : "modified_datetime",
   r_number : "r_number",
   project_point_of_contact : "project_point_of_contact",
-  project_technical_point_of_contact : "project_technical_point_of_contact"
+  project_technical_point_of_contact : "project_technical_point_of_contact",
+  is_qualified : "is_qualified"
 }
 
 export const validColumns : any = {
@@ -172,7 +173,8 @@ export const validColumns : any = {
   modified_datetime : "modified_datetime",
   r_number : "r_number",
   project_point_of_contact : "project_point_of_contact",
-  project_technical_point_of_contact : "project_technical_point_of_contact"
+  project_technical_point_of_contact : "project_technical_point_of_contact",
+  is_qualified : "is_qualified"
 }
 
 export const columnType : any = {
@@ -196,7 +198,8 @@ export const columnType : any = {
   modified_datetime : "date",
   r_number : "string",
   project_point_of_contact : "string",
-  project_technical_point_of_contact : "string"
+  project_technical_point_of_contact : "string",
+  is_qualified : "string"
 }
 
 export type caseProjectsResponseType = {
@@ -1007,4 +1010,43 @@ export interface FieldData {
     value_field_id: string;
     section_id?: string;
     id?: string;
+}
+
+export interface CaseData {
+  rid: string;
+  r_number: string;
+  case_name: string;
+  account_rid: string;
+
+  fiscal_year: number;
+
+  material_software_cost: number | null;
+  heat_light_power: number | null;
+  total_nonlabor_cost: number | null;
+
+  employers_pension_contribution: number | null;
+  other: number | null;
+
+  total_expenses: number | null;
+  sub_contracts: number | null;
+  cloud_software: number | null;
+
+  unpaid_amounts_paid: number | null;
+  unpaid_amounts: number | null;
+
+  aggregated_turnover: number | null;
+  taxable_income: number | null;
+  export_sales_revenue: number | null;
+
+  lease_costs_of_computers: number | null;
+
+  illinois_rd_credit_partnership_corp: number | null;
+  illinois_research_payments_corp_only: number | null;
+  basic_research_payments: number | null;
+
+  qualified_computer_rental_time_expenses: number | null;
+
+  credit_carry_forward_py: number | null;
+  current_year_gross_receipts: number | null;
+  other_credits_total: number | null;
 }

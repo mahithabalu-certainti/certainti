@@ -207,11 +207,54 @@ export const STATUS_MESSAGE = {
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
   regionsFetchedSuccess : "Regions listed successfully",
+  userPreferenceUpdatedSuccess : "UserPreference updated successfully",
+  userPreferenceUpdationFailed : "UserPreference updation failed",
   rdCreditFinancialSignOffPending:"Financial working sign-off is pending. Cannot initiate RD Form Filler process.",
   rdFormProcessInitiatedSuccess : "RD form filler process initiated successfully",
   rdFormPreview : "RD form retrieved successfully",
   financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
-  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully"
+  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully",
+  dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully",
+  closureRemarksExportedSuccess : "Closing Remarks Exported Successfully",
+  dossierPackageFetchedSuccess : "Dossier Package fetched successfully"
+};
+
+export const R_NUMBER_PREFIX = {
+  ACCOUNT_FISCAL_REGION: "ACFR",
+  ACCOUNT_FISCAL: "ACF",
+  PROJECT: "PRJ",
+  PROJECT_FISCAL: "PFI",
+  PROJECT_FISCAL_REGION: "PFIR",
+  PROJECT_HISTORY: "PRH",
+  PROJECT_TIMELINE: "PRT",
+  RESOURCE: "RES",
+  RESOURCE_HISTORY: "REH",
+  RESOURCE_TIMELINE: "RTL",
+  RESOURCE_SKILL: "RSK",
+  RESOURCE_SKILL_HISTORY: "RSH",
+  RESOURCE_SKILL_TIMELINE: "RST",
+  RESOURCE_COST: "RCO",
+  RESOURCE_COST_HISTORY: "RCH",
+  RESOURCE_COST_TIMELINE: "RCT",
+  RESOURCE_FISCAL: "RSF",
+  RESOURCE_FISCAL_REGION: "RSFR",
+  PROJECT_FISCAL_SUMMARY: "PFS",
+  CLASSIFICATION: "CSF",
+  KEY_CONTACT_DETAILS: "KEY",
+  ATTACHMENT: "ATT",
+  ATTACHMENT_TIMELINE: "ATI",
+  PROJECT_RESOURCE: "PRS",
+  PROJECT_RESOURCE_FISCAL: "PRSF",
+  PROJECT_RESOURCE_FISCAL_REGION: "PRSFR",
+  PROJECT_RESOURCE_HISTORY: "PRSH",
+  PROJECT_RESOURCE_TIMELINE: "PRST",
+  PROJECT_TASK: `PTA`,
+  PROJECT_TASK_FISCAL: "PTAF",
+  PROJECT_TASK_TIMELINE: "PTAT",
+  PROJECT_TASK_HISTORY: "PTAH",
+  NOTES: "NTE",
+  NOTES_TIMELINE: "NTETI",
+  NOTES_SUMMARY: "NOTS",
 };
 
 export const caseStatuses = {
@@ -504,36 +547,40 @@ export const rawQueries = {
     accountRid: string,
     caseRid: string
   ) {
-    return `SELECT 
-    CASE 
-        WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL 
-        ELSE COUNT(cp.project_fiscal_rid) 
-    END AS total_projects,
+    let query = `SELECT 
+    CASE WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL ELSE COUNT(cp.project_fiscal_rid) END AS total_projects,
     SUM(pf.total_cost_prj) AS total_projects_cost,
-    SUM(pf.qre_final) AS total_projects_qre_cost
+    COUNT(CASE WHEN pf.is_qualified = true THEN pf.rid END) AS total_qualified_projects,
+    COALESCE(SUM(CASE WHEN pf.is_qualified = true THEN pf.total_cost_prj END), 0) AS total_qualified_project_cost,
+    COALESCE(SUM(pf.qre_final), 0) AS total_projects_qre_cost
     FROM ${schemaName}.project_fiscal pf
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
     cp.case_rid = '${caseRid}'
     AND
     cp.account_rid = '${accountRid}'`;
+    return query;
   },
   updateCostCountInCase(
     schemaName: string,
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    total_projects_qre_cost: any
+    total_projects_qre_cost: any,
+    totalQualifiedProjects : any,
+    totalQualifiedProjectCost : any
   ) {
-    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE rid = '${caseRid}'`;
+    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE rid = '${caseRid}'`;
   },
   updateCostCountInCaseSummary(
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    total_projects_qre_cost: any
+    total_projects_qre_cost: any,
+    totalQualifiedProjects : any,
+    totalQualifiedProjectCost : any
   ) {
-    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE case_rid = '${caseRid}'`;
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE case_rid = '${caseRid}'`;
   },
   updateCostCountInCaseForDelete(
     schemaName: string,
@@ -981,7 +1028,8 @@ export const rawQueries = {
     employers_pension_contribution,other, total_expenses, other, sub_contracts, cloud_software, unpaid_amounts_paid,
     unpaid_amounts, aggregated_turnover, taxable_income, export_sales_revenue,
     lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
-    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total
+    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total,
+    rrc_credit_280_c, asc_credit_280_c
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
@@ -1111,7 +1159,7 @@ export const rawQueries = {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
   fetchStatesByIds() {
-    return `SELECT rid, state_name,state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`;
+    return `SELECT rid, state_name,state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids) order by state_name asc`;
   },
   GET_COUNTRIES: `
     SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)
@@ -1603,7 +1651,7 @@ export const rawQueries = {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
     return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state 
     WHERE 
-    rid IN (${formattedStateIds})`;
+    rid IN (${formattedStateIds}) order by state_name asc`;
   },
   fetchMilestoneDetails(rid: string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
@@ -1662,8 +1710,29 @@ export const rawQueries = {
   fetchFiscalEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   },
-  insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string) {
-    return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}')`
+  fetchProjectCountsAndQreByState(schemaName: string) {
+    return  `
+                SELECT 
+                    pfr.region_rid as state_rid,
+                    COUNT(DISTINCT cp.project_fiscal_rid) as total_projects,
+                    COUNT(DISTINCT pr.rid) as total_resources,
+                    SUM(pfr.total_cost_fte_from_prj_res + pfr.total_cost_nonlabor_from_prj_res + pfr.total_cost_subcon_from_prj_res) as total_qre
+                FROM ${schemaName}.case_projects cp
+                JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+                JOIN ${schemaName}.project_fiscal_region pfr ON pf.rid = pfr.project_fiscal_rid
+                LEFT JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid 
+                    AND pr.region_rid = pfr.region_rid
+                WHERE cp.case_rid = :case_rid 
+                    AND pf.fiscal_year = cp.fiscal_year
+                    AND pfr.region_rid IN (:stateRids)
+                GROUP BY pfr.region_rid
+            `
+  },
+  fetchCanadaOntRegion () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.state WHERE state_name ILIKE '%ontario%'`
+  },
+  insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string, comments : string) {
+    return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid, comments) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}', '${comments.replace(/'/g, '')}')`
   },
   findSignOffTypes (rids : string[]) {
     return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d : any) => `'${d}'`).join(',')})`
@@ -1688,13 +1757,14 @@ WHERE dmf.country_rid = '${countryRid}'
        OR dmf.effective_from_date <= DATE '${effectiveEnd}')
   AND (dmf.effective_to_date IS NULL 
        OR dmf.effective_to_date >= DATE '${effectiveStart}')
-  AND is_active = true`
+  AND is_active = true limit 1`
   },
   checkFinancialSignOffDone(schemaName: string, caseRid: string) {
     return `
-    SELECT financial_working_signoff FROM ${schemaName}.cases 
-    WHERE
-    rid = '${caseRid}'
+    SELECT COALESCE(
+      (SELECT financial_working_signoff FROM ${schemaName}.cases WHERE rid = '${caseRid}'),
+      false
+    ) AS financial_working_signoff
     `
   },
   fetchRdFormMapperConfigurations(formId: string){
@@ -1791,13 +1861,52 @@ WHERE dmf.country_rid = '${countryRid}'
       SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
     `
   },
-  fetchDynamicFieldValues(schemaName:string, refTable:string, quotedJsonPath:string)
+  fetchDynamicFieldValues(
+    schemaName: string,
+    refTable: string,
+    quotedJsonPath: string,
+    stateRid?: string,
+  )
   {
     return `
           SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
           FROM ${schemaName}.${refTable}
-          WHERE case_rid = :case_rid
+          WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
+  },
+   fetchAssignedProjectIds (caseRid : string, schemaName : string, type? : string){
+    if(type === DOSSIER_NAME) {
+      return `SELECT pf.rid AS project_fiscal_rid 
+       FROM ${schemaName}.project_fiscal pf
+       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+       WHERE cp.case_rid = '${caseRid}'`
+    } else {
+        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+    }
+},
+  fetchDocumentByIds() {
+    return `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`;
+  },
+  fetchDocumentCategory() {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`;
+  },
+  fetchUserByIds() {
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`;
+  },
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string, summaryType : string) {
+       if(summaryType === 'qualifiedprojects') {
+      return `SELECT pf.rid AS project_fiscal_rid 
+       FROM ${schemaName}.project_fiscal pf
+       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+       WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true
+       `
+    } else {
+        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+    }
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
   },
   getTableMappings() {
     return `
@@ -1805,6 +1914,53 @@ WHERE dmf.country_rid = '${countryRid}'
         FROM trd365.data_mapper_table_mappings 
         WHERE rid = :columnId
         LIMIT 1`;
+  },
+  fetchTop15ProjectQreSum(schemaName: string, caseRid: string) {
+    return `
+      SELECT COALESCE(SUM(qre_final), 0) AS top_15_qre_sum
+      FROM (
+        SELECT pf.qre_final
+        FROM ${schemaName}.case_projects cp
+        JOIN ${schemaName}.project_fiscal pf
+          ON pf.rid = cp.project_fiscal_rid
+        WHERE cp.case_rid = '${caseRid}'
+        ORDER BY pf.qre_final DESC NULLS LAST
+        LIMIT 15
+      ) t;
+    `;
+  },
+  fetchTop15ProjectSumByColumn(
+    schemaName: string,
+    caseRid: string,
+    columnName: string,
+  ) {
+    return `
+      SELECT COALESCE(SUM(${columnName}), 0) AS top_15_sum
+      FROM (
+        SELECT pf.${columnName}
+        FROM ${schemaName}.case_projects cp
+        JOIN ${schemaName}.project_fiscal pf
+          ON pf.rid = cp.project_fiscal_rid
+        WHERE cp.case_rid = '${caseRid}'
+        ORDER BY pf.${columnName} DESC NULLS LAST
+        LIMIT 15
+      ) t;
+    `;
+  },
+  fetchPriorYearQreFromHistory(
+    schemaName: string,
+    stateRid?: string,
+    countryRid?: string,
+  ) {
+    return `
+      SELECT total_qre
+      FROM ${schemaName}.case_history_submission
+      WHERE account_rid = :account_rid
+      AND fiscal_year = :target_year
+      ${countryRid ? "AND country_rid = :country_rid" : ""}
+      ${stateRid ? "AND state_rid = :state_rid" : "AND (state_rid IS NULL OR state_rid = '')"}
+      LIMIT 1
+    `;
   }
 
 };
@@ -2120,6 +2276,11 @@ export const activityStatus = {
   completed: "Completed",
   scheduled: "Scheduled",
 };
+export const computationStatus = {
+  pending: "Pending",
+  completed: "Completed",
+  failed: "Failed",
+}
 
 export const ruleTemplateNames = {
   caseCreated: "case_create",
@@ -2158,7 +2319,6 @@ export const meetingFields = [
   "a.created_datetime",
   "a.modified_datetime",
   "a.fiscal_year",
-  "e.name AS attached_to",
   "a.attachment_level",
   "a.r_number",
   "a.attach_to",
@@ -2188,7 +2348,6 @@ export const callFields = [
   "a.created_datetime",
   "a.modified_datetime",
   "a.fiscal_year",
-  "e.name AS attached_to",
   "a.attachment_level",
   "a.r_number",
   "a.attach_to",
@@ -2213,3 +2372,14 @@ export const onlyFederals = {
   usa: "USA",
   canada: "CAN"
 }
+export const DOSSIER_NAME = 'dossier_project_document'
+   export const techSummaryFieldMappings = [
+     
+    { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+    { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+   
+  ];

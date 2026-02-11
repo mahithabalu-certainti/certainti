@@ -38,7 +38,9 @@ export class RdCreditCalculatorForIL {
 
         return {
             inputFields,
-            computedFields
+            computedFields,
+            finalCredit: this.round2(columnBCurrentYearExpenseInfo.final_credit),
+            totalQRE: this.round2(columnBCurrentYearExpenseInfo.total_qre)
         }
     }
 
@@ -136,7 +138,7 @@ export class RdCreditCalculatorForIL {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             contract: currentYearContract,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)
+            sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract))
         })
 
         prior3YearsQREs.forEach((item) => {
@@ -144,7 +146,7 @@ export class RdCreditCalculatorForIL {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0)))
             })
         });
 
@@ -170,33 +172,73 @@ export class RdCreditCalculatorForIL {
     buildComputedFields(columnABasePeriodExpenseInfo: any, columnBCurrentYearExpenseInfo: any, caseData : Case, config : ConfigJson) {
         return {
             "computed_fields" : [
-                {
-                    "Column Name" : "Column A",
-                    "SubColumn Name " : `Base Period avg. expenses (${caseData.fiscal_year - 3}-${caseData.fiscal_year - 1})`,
-                    "Line 23. Illinois wages for qualified services" : columnABasePeriodExpenseInfo.average_prior_year_wages,
-                    "Line 24. Illinois cost of supplies" : columnABasePeriodExpenseInfo.cost_of_supplies,
-                    "Line 25. Illinois rental or lease costs of computers" : columnABasePeriodExpenseInfo.lease_costs_of_computers,
-                    [`Line 26. ${config.sub_con_percent}% of Illinois contract expenses`] : columnABasePeriodExpenseInfo.average_prior_year_contract,
-                    "Line 27. Illinois basic research payments to qualified organizations (corporations only)" : columnABasePeriodExpenseInfo.llinois_research_payments_corp_only,
-                    "Line 28. Add lines 23 through 27 of each column. Total Illinois qualifying expenses" : columnABasePeriodExpenseInfo.total_qres,
-                    "Line 29. Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero" : "",
-                    [`Line 30. Multiply Line 29 by ${config.credit_rate}%`] : "",
-                    "Line 31. Enter any distributive share of R&D Credit from partnerships and S corporations" : "",
-                    "Line 32. IL Research and Development Credit" : ""
+            {
+                "Column Name": "Column A",
+                "SubColumn Name": `Base Period avg. expenses (${caseData.fiscal_year - 3}-${caseData.fiscal_year - 1})`,
+
+                "[Line 23] Illinois wages for qualified services":
+                    columnABasePeriodExpenseInfo.average_prior_year_wages,
+
+                "[Line 24] Illinois cost of supplies":
+                    this.round2(columnABasePeriodExpenseInfo.cost_of_supplies),
+
+                "[Line 25] Illinois rental or lease costs of computers":
+                    this.round2(columnABasePeriodExpenseInfo.lease_costs_of_computers),
+
+                [`[Line 26] ${config.sub_con_percent}% of Illinois contract expenses`]:
+                    columnABasePeriodExpenseInfo.average_prior_year_contract,
+
+                "[Line 27] Illinois basic research payments to qualified organizations (corporations only)":
+                    columnABasePeriodExpenseInfo.llinois_research_payments_corp_only,
+
+                "[Line 28] Add lines 23 through 27 of each column. Total Illinois qualifying expenses":
+                    columnABasePeriodExpenseInfo.total_qres,
+
+                "[Line 29] Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero":
+                    "",
+
+                [`[Line 30] Multiply Line 29 by ${config.credit_rate}%`]:
+                    "",
+
+                "[Line 31] Enter any distributive share of R&D Credit from partnerships and S corporations":
+                    "",
+
+                "[Line 32] IL Research and Development Credit":
+                    ""
                 },
                 {
-                    "Column Name" : "Column B",
-                    "SubColumn Name" : `${caseData.fiscal_year} Expenses`,
-                    "Line 23. Illinois wages for qualified services" : columnBCurrentYearExpenseInfo.current_year_wages,
-                    "Line 24. Illinois cost of supplies" : columnBCurrentYearExpenseInfo.cost_of_supplies,
-                    "Line 25. Illinois rental or lease costs of computers" : columnBCurrentYearExpenseInfo.lease_costs_of_computers,
-                    [`Line 26. ${config.sub_con_percent}% of Illinois contract expenses`] : columnBCurrentYearExpenseInfo.current_year_contract,
-                    "Line 27. Illinois basic research payments to qualified organizations (corporations only)" : columnBCurrentYearExpenseInfo.llinois_research_payments_corp_only,
-                    "Line 28. Add lines 23 through 27 of each column. Total Illinois qualifying expenses" : columnBCurrentYearExpenseInfo.total_qre,
-                    "Line 29. Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero" : columnBCurrentYearExpenseInfo.final_excess_qre,
-                    [`Line 30. Multiply Line 29 by ${config.credit_rate}%`] : columnBCurrentYearExpenseInfo.final_credit,
-                    "Line 31. Enter any distributive share of R&D Credit from partnerships and S corporations" : columnBCurrentYearExpenseInfo.illinois_rd_credit_partnership_corp,
-                    "Line 32. IL Research and Development Credit" : columnBCurrentYearExpenseInfo.il_research_development_credit
+                "Column Name": "Column B",
+                "SubColumn Name": `${caseData.fiscal_year} Expenses`,
+
+                "[Line 23] Illinois wages for qualified services":
+                    columnBCurrentYearExpenseInfo.current_year_wages,
+
+                "[Line 24] Illinois cost of supplies":
+                    this.round2(columnBCurrentYearExpenseInfo.cost_of_supplies),
+
+                "[Line 25] Illinois rental or lease costs of computers":
+                    this.round2(columnBCurrentYearExpenseInfo.lease_costs_of_computers),
+
+                [`[Line 26] ${config.sub_con_percent}% of Illinois contract expenses`]:
+                    columnBCurrentYearExpenseInfo.current_year_contract,
+
+                "[Line 27] Illinois basic research payments to qualified organizations (corporations only)":
+                    columnBCurrentYearExpenseInfo.llinois_research_payments_corp_only,
+
+                "[Line 28] Add lines 23 through 27 of each column. Total Illinois qualifying expenses":
+                    columnBCurrentYearExpenseInfo.total_qre,
+
+                "[Line 29] Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero":
+                    columnBCurrentYearExpenseInfo.final_excess_qre,
+
+                [`[Line 30] Multiply Line 29 by ${config.credit_rate}%`]:
+                    columnBCurrentYearExpenseInfo.final_credit,
+
+                "[Line 31] Enter any distributive share of R&D Credit from partnerships and S corporations":
+                    columnBCurrentYearExpenseInfo.illinois_rd_credit_partnership_corp,
+
+                "[Line 32] IL Research and Development Credit":
+                    columnBCurrentYearExpenseInfo.il_research_development_credit
                 }
             ]
         }

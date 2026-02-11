@@ -6,8 +6,9 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { stateCalculators } from "../rdStateProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
-import { kafkaProducerService } from "../../kafka/producer.service";
-import FederalComputationService from "./federal.computation.service";
+import { kafkaProducerService } from "../../kafka/producerService";
+import FederalComputationService from "./federalComputation";
+import Decimal from "decimal.js";
 
 enum ConfigType {
     NONE = "NONE",
@@ -115,16 +116,11 @@ export class StateComputationService {
             const executionConfigMap: Record<string, () => Promise<any>> = {
                 [ConfigType.BOTH]: async () => {
                     logMessage("Both Federal and State computations to be executed.");
-                    await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                    await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
-                },
-                [ConfigType.FEDERAL_ONLY]: async () => {
-                    logMessage("Only Federal computation to be executed.");
-                    return await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                    return await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
                 },
                 [ConfigType.STATE_ONLY]: async () => {
                     logMessage("Only State computation to be executed.");
-                    await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
+                    return await this.runComputationState(accountRid, caseRid, effectiveStart, effectiveEnd)
                 },
                 [ConfigType.NONE]: async () => ({
                     statusCode: HttpStatus.FAILED,
@@ -134,11 +130,12 @@ export class StateComputationService {
             };
             const executeComputation = executionConfigMap[configLevelKey];
             if (executeComputation) {
-                await executeComputation();
+                return await executeComputation();
             } else {
                 throw new Error(`Invalid ConfigType: ${configLevelKey}`);
             }
-            console.log("Computation Completed.......!")
+          
+            
 
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);
@@ -212,11 +209,11 @@ export class StateComputationService {
                         result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
                     } else {
                         result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
-                    }
+                    }                  
                     
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                         fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
-                        result.inputFields, result.computedFields
+                        result.inputFields, result.computedFields, result.finalCredit,result?.totalQRE ?? null, result
                     );
                 }
             } catch (err) {

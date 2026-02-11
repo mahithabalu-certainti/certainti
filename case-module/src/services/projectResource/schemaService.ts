@@ -878,7 +878,8 @@ export class ProjectResourceSchemaService {
     order: Order,
     sortBy: string,
     sortOrder: string,
-    userId: string
+    userId: string,
+    type? : string
   ) {
     const { CaseProjectResource } = await this.getModels(accountNumber);
 
@@ -924,6 +925,11 @@ export class ProjectResourceSchemaService {
           attributes: [],
           required: false,
           as: "project_resource_fiscal_project_fiscal",
+          ...(type === 'qualifiedProjects' && {
+            where : {
+              is_qualified : true
+            }
+          })
         },]
     });
 

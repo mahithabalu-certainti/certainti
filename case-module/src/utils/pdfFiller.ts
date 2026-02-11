@@ -34,6 +34,20 @@ function processFieldData(data: FieldData[]): {
 } {
   const fieldMapping: { [key: string]: string | boolean } = {};
 
+  const normalizeValue = (value: any): string => {
+    let stringValue = String(value).trim();
+    if (
+      (stringValue.startsWith('"') && stringValue.endsWith('"')) ||
+      (stringValue.startsWith("'") && stringValue.endsWith("'"))
+    ) {
+      stringValue = stringValue.slice(1, -1);
+    }
+    if (stringValue.endsWith("%")) {
+      stringValue = stringValue.slice(0, -1).trim();
+    }
+    return stringValue;
+  };
+
   data.forEach((item: FieldData) => {
     const fieldId = item.value_field_id;
     const value = item.value;
@@ -41,9 +55,10 @@ function processFieldData(data: FieldData[]): {
 
     if (fieldId && value !== null && value !== undefined) {
       if (fieldType === "yes_no") {
-        fieldMapping[fieldId] = String(value).toLowerCase() === "yes";
+        fieldMapping[fieldId] =
+          normalizeValue(value).toLowerCase() === "yes";
       } else {
-        fieldMapping[fieldId] = String(value);
+        fieldMapping[fieldId] = normalizeValue(value);
       }
     }
   });

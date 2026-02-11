@@ -1,12 +1,12 @@
 import { Sequelize } from "sequelize";
-import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, computationStatus, rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import RDCreditSchemaService from "./schemaService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import StateComputationService from "./state.computation.service";
-import FederalComputationService from "./federal.computation.service";
-import { calculateFiscalYearDateRange } from "../../utils/dateFunction.utils";
+import StateComputationService from "./stateComputation";
+import FederalComputationService from "./federalComputation";
+import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { reorderComputedFieldsForState, hasFieldOrderingConfig, IL_LINE_ORDER } from "../../utils/stateFieldOrdering";
 
 enum ConfigType {
@@ -71,7 +71,7 @@ export class ComputationService {
             const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
             const hasFederal = findAvailableConfigLevels.includes(true);
             const hasState = findAvailableConfigLevels.includes(false);
-            const configLevelKey =
+            let configLevelKey =
                 hasFederal && hasState ? ConfigType.BOTH :
                     hasFederal ? ConfigType.FEDERAL_ONLY :
                         hasState ? ConfigType.STATE_ONLY :
@@ -80,17 +80,54 @@ export class ComputationService {
             const executionConfigMap: Record<string, () => Promise<any>> = {
                 [ConfigType.BOTH]: async () => {
                     logMessage("Both Federal and State computations to be executed.");
-                    // await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                    return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
+                     await this.stateComputationService.runComputation(accountRid,caseRid,effectiveStart,effectiveEnd);
+                     const federalResult =  await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                     return {
+                        statusCode: federalResult.statusCode,
+                        message: federalResult.message,
+                        data: {
+                            computed_fields: federalResult.data,
+                            status:computationStatus.completed,
+                        }
+                      }
                 },
                 [ConfigType.FEDERAL_ONLY]: async () => {
                     logMessage("Only Federal computation to be executed.");
-                    return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
-                    // return await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
-                },
+                    const federalResult = await this.federalComputationService.runFederalComputation(accountRid, caseRid, effectiveStart, effectiveEnd);
+                     return {
+                        statusCode: federalResult.statusCode,
+                        message: federalResult.message,
+                        data: {
+                            computed_fields: federalResult.data,
+                             status:computationStatus.completed,
+                        }
+                      }
+                    },
                 [ConfigType.STATE_ONLY]: async () => {
                     logMessage("Only State computation to be executed.");
-                    return await this.stateComputationService.initiateRDCreditStateProcess(accountRid, caseRid, effectiveStart, effectiveEnd);
+                     await this.stateComputationService.runComputation(accountRid,caseRid,effectiveStart,effectiveEnd);
+                     const [stateResult]:any[] = await orgDb.query(rawQueries.fetchConfiguration(schemaName,caseRid),{type: "SELECT"});
+                     if(!stateResult.is_state_level || !stateResult || stateResult.length === 0){
+                        return {
+                            statusCode: HttpStatus.FAILED,
+                            message: HttpStatus.FAILED_MESSAGE,
+                            errorMessage: "No State configuration found",
+                            data:{
+                                computed_fields: {},
+                                 status:computationStatus.failed,
+                            }
+                          
+                        }
+                     }
+                    const stateWiseResult = await this.getStateSummaryResults(accountRid!, caseRid!,schemaName)
+                     return {
+                        statusCode: stateWiseResult.statusCode,
+                        message: stateWiseResult.message,
+                        data: {
+                            status:computationStatus.completed,
+                            computed_fields: stateWiseResult.data
+                        }
+                      }
                 },
                 [ConfigType.NONE]: async () => ({
                     statusCode: HttpStatus.FAILED,
@@ -102,7 +139,6 @@ export class ComputationService {
             const result =
                 executionConfigMap[configLevelKey] ??
                 executionConfigMap[ConfigType.NONE];
-
             return (result as () => Promise<any>)();
 
         } catch (error) {
@@ -123,12 +159,17 @@ export class ComputationService {
      * @param stateCode 
      * @returns 
      */
-    async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateRid: string) {
+    async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateRid: string,type: string) {
         try {
             const mainDb = await this.getMainDb();
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
+            if(type === 'summary'){
+                let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number);
+                return this.getStateSummaryResults(accountRid, caseRid,schemaName);
+            }
+            else{
             const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(fetchParentAccountRnumber[0][0].r_number, caseRid, stateRid);
              //statecode
             const [stateCode]:any[] = await mainDb.query(rawQueries.fetchStatesByIds(),
@@ -193,6 +234,47 @@ export class ComputationService {
                 statusCode: HttpStatus.SUCCESS,
                 message: STATUS_MESSAGE.rdCreditPreview,
                 data: results,
+            };
+        }
+        } catch (error) {
+            logMessage(`Error fetching RD Credit : ${error}`);
+
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: HttpStatus.FAILED_MESSAGE,
+                errorMessage: STATUS_MESSAGE.jurisdictionFetchedFailed || "Failed to fetch",
+            };
+        }
+    }
+
+     /**
+     * 
+     * @param accountRid 
+     * @param caseRid 
+     * @param stateCode 
+     * @returns 
+     */
+    async getStateSummaryResults(accountRid: string, caseRid: string,schemaName:string) {
+        try {
+            const mainDb = await this.getMainDb();
+            const fetchParentAccountRnumber: any = await mainDb.query(
+                await rawQueries.fetchParentAccount(accountRid, mainDb)
+            );
+            let metaInfo = {
+                stateDetails : "State Credit Summary"
+            }
+
+            const results = await this.rdCreditSchemaService.getStateSummaryResults(fetchParentAccountRnumber[0][0].r_number, caseRid, schemaName);
+            let finalData = {
+                computed_fields: results,
+                input_params: {
+                    metadata: metaInfo
+                }
+            }
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.rdCreditPreview,
+                data: finalData,
             };
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);

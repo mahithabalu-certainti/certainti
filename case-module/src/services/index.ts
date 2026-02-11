@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
-import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService, IDataMapperService } from "./interfaces/interface";
+import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService, IDataMapperService, IRDFormMapperService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
@@ -8,9 +8,9 @@ import { ActivityService } from "./activities/activityService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import { ProjectService } from "./project/projectService";
-import { StateComputationService } from "../services/rdComputation/state.computation.service";
-import { FederalComputationService } from "../services/rdComputation/federal.computation.service";
-import { ComputationService } from "./rdComputation/computation.service";
+import { StateComputationService } from "./rdComputation/stateComputation";
+import { FederalComputationService } from "./rdComputation/federalComputation";
+import { ComputationService } from "./rdComputation/computation";
 import { ChildCaseService } from "./cases/childCaseService";
 import { CaseTaskService } from "./cases/caseTask/caseTaskService";
 import { ChecklistService } from "./cases/caseChecklist/checklistService";
@@ -33,7 +33,7 @@ class Services {
   stateComputationService: StateComputationService;
   federalComputationService: FederalComputationService;
   computationService: ComputationService;
-  rdFormMapperService : RdFormMapperService
+  rdFormMapperService : IRDFormMapperService
 
   constructor(logger: Logger) {
     this.logger = logger;
