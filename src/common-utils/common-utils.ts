@@ -55,6 +55,7 @@ export const createTextField = (
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    allowNegative?: boolean;
     labelTooltip?: {
       showTooltip: boolean;
       tooltipMessage: string;
@@ -89,6 +90,7 @@ export const createTextField = (
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
+  allowNegative: options.allowNegative,
   prefixValue: options.prefixValue,
   maxLength: options.maxLength,
 });
@@ -546,6 +548,7 @@ export const REGEX_PATTERNS = {
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   BLENDED_NUMBER: /^(?:[0-9]{1,3})(?:\.[0-9]{1,2})?$/,
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
+  EFFORTS_NEGATIVE_NUMBER: /^-?(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
   NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
@@ -687,7 +690,8 @@ export const PROJECT_TASK_REGEX = {
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
 
   // Project resource cost regex
-  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
+  // Updated regex to accept negative numbers
+  COST_REGEX: /^-?\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^-?\d{1,16}(\.\d{1,2})?$/,
 
   // NON NEGATIVE POSTIVE INTEGER
   EFFORT: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
@@ -1066,16 +1070,24 @@ export const getFiscalDateBounds = (
 //   };
 // };
 
-export const formatCostValue = (value: string): string => {
-  if (value === null || value === undefined) return '';
+export const formatCostValue = (
+  value: string | number | null | undefined
+): string => {
+  if (value === null || value === undefined || value === '') return '';
 
   const costStr = String(value);
-  const [whole, decimal] = costStr.split('.');
-  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const formattedCost =
-    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
+  const isNegative = costStr.startsWith('-');
+  const unsignedStr = isNegative ? costStr.slice(1) : costStr;
 
-  return `${formattedCost}`;
+  const [whole, decimal] = unsignedStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  let result = isNegative ? `-${formattedWhole}` : formattedWhole;
+  if (decimal !== undefined) {
+    result += `.${decimal}`;
+  }
+
+  return result;
 };
 
 export const removeFormatCostValue = (value: string): string => {

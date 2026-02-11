@@ -179,8 +179,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const { errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
-  const [isInitiatingStarted, setIsInitiatingStarted] =
-    useState<boolean>(false);
 
   const { data, isLoading } = useFetchCasesConfigFields(
     accountid as string,
@@ -220,17 +218,15 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   useEffect(() => {
     if (
       !dossierFinancialStatus &&
-      !isInitiatingStarted &&
       caseDetails?.case_total_projects &&
       caseDetails?.case_total_projects !== 0 &&
       caseDetails?.case_total_projects !== '0' &&
       !caseDetails?.financial_working_signoff
     ) {
-      setIsInitiatingStarted(true);
       handleInitiateFinancialHighlights();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseDetails, dossierFinancialStatus, isInitiatingStarted]);
+  }, [caseDetails, dossierFinancialStatus]);
 
   // Call appropriate API when federal tab changes
 
@@ -387,7 +383,6 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         setDossierFinancialStatus(true);
       },
       onError: (error: any) => {
-        setIsInitiatingStarted(false);
         errorToast(
           error?.response?.data?.statusMessage || 'Failed to Initiate'
         );

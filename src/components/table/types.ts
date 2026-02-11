@@ -109,6 +109,7 @@ export interface TableField {
   disabled?: boolean;
   placeholder?: string;
   formatCostNumber?: boolean;
+  allowNegative?: boolean;
   prefix?: string;
   prefixRegex?: RegExp;
   options?: ListOption[];
