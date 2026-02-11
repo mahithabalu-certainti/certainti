@@ -318,7 +318,7 @@ routes.post(
   controller.childCaseController.fetchCaseClosingRemarks
 )
 
-routes.get('/regions/:accountId/:caseId', controller.childCaseController.RegionListForFinancialHighlights)
+routes.get('/regions/:accountId/:caseId', controller.childCaseController.regionListForFinancialHighlights)
 routes.post('/dossier/create', checkUserStatusMiddleware("NA"), controller.childCaseController.initiateCreateDossierForm)
 routes.post(
   '/closureRemarks/export',

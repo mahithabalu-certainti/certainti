@@ -44,6 +44,7 @@ export class RdCreditStateCalculations
     public prev_year3_qre?: number | null;
     public created_datetime?: Date;
     public modified_datetime?: Date;
+    public total_qre?: number | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditStateCalculations.init(

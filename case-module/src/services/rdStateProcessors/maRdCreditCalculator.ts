@@ -48,7 +48,8 @@ export class RdCreditCalculatorForMA {
         return {
             inputFields,
             computedFields,
-            finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit)
+            finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit),
+            totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre)
         }
 
     }
@@ -211,7 +212,7 @@ export class RdCreditCalculatorForMA {
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            sum: new Decimal(currentYearQREs.wages || 0).plus(currentYearContract),
+            sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)),
             contract: currentYearContract
 
         })
@@ -227,7 +228,7 @@ export class RdCreditCalculatorForMA {
                 year : item.fiscalYear,
                 wages: item.wages,
                 contract: item.contract,
-                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0)))
             })
         });
 

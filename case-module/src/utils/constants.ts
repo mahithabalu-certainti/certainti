@@ -1159,7 +1159,7 @@ export const rawQueries = {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
   fetchStatesByIds() {
-    return `SELECT rid, state_name,state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`;
+    return `SELECT rid, state_name,state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids) order by state_name asc`;
   },
   GET_COUNTRIES: `
     SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)
@@ -1651,7 +1651,7 @@ export const rawQueries = {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
     return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state 
     WHERE 
-    rid IN (${formattedStateIds})`;
+    rid IN (${formattedStateIds}) order by state_name asc`;
   },
   fetchMilestoneDetails(rid: string) {
     return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
@@ -1727,6 +1727,9 @@ export const rawQueries = {
                     AND pfr.region_rid IN (:stateRids)
                 GROUP BY pfr.region_rid
             `
+  },
+  fetchCanadaOntRegion () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.state WHERE state_name ILIKE '%ontario%'`
   },
   insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string, comments : string) {
     return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid, comments) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}', '${comments.replace(/'/g, '')}')`
@@ -2301,7 +2304,6 @@ export const meetingFields = [
   "a.created_datetime",
   "a.modified_datetime",
   "a.fiscal_year",
-  "e.name AS attached_to",
   "a.attachment_level",
   "a.r_number",
   "a.attach_to",
@@ -2331,7 +2333,6 @@ export const callFields = [
   "a.created_datetime",
   "a.modified_datetime",
   "a.fiscal_year",
-  "e.name AS attached_to",
   "a.attachment_level",
   "a.r_number",
   "a.attach_to",
