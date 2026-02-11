@@ -8,6 +8,7 @@ import { stateCalculators } from "../rdStateProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 import { kafkaProducerService } from "../../kafka/producerService";
 import FederalComputationService from "./federalComputation";
+import Decimal from "decimal.js";
 
 enum ConfigType {
     NONE = "NONE",
@@ -208,11 +209,11 @@ export class StateComputationService {
                         result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
                     } else {
                         result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
-                    }
+                    }                  
                     
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                         fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
-                        result.inputFields, result.computedFields,result.finalCredit
+                        result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null
                     );
                 }
             } catch (err) {

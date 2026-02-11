@@ -209,35 +209,14 @@ export class ResourceFiscalRegion
         total_cost_for_year_project: {
           type: DataTypes.DECIMAL(14, 2),
           allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
         },
         total_cost_for_year_project_resource_level: {
           type: DataTypes.DECIMAL(14, 2),
-          allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
+          allowNull: true
         },
         total_cost_for_year_project_task_level: {
           type: DataTypes.DECIMAL(14, 2),
           allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
         },
         total_effort_for_year_project: {
           type: DataTypes.DECIMAL(14, 2),

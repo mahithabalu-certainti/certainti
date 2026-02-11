@@ -1,6 +1,6 @@
 import { QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { calculateRDExpenditureQuery } from "../../utils/rdFinancialWorking.rawQueries";
+import { calculateRDExpenditureQuery } from "../../utils/rdFinancialWorkingQueries";
 import { CalculateQreCostType } from "../../utils/types";
 import { Case } from "../../models/caseModel";
 
@@ -66,13 +66,13 @@ export class RdCreditCalculatorForAus {
         let calculateCredit = [
           {
             name : `Tier 1 (Intensity: 0 to ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_1_rd_premium}%)`,
+            "offset Amount" : parseFloat(Number(notionalDeductionApplied * ((taxRate/100) + (extractConfig.tier_1_rd_premium/100))).toFixed(2)) || 0.00,
             "Notional deductions applied": notionalDeductionApplied,
-            "offset Amount" : parseFloat(Number(notionalDeductionApplied * ((taxRate/100) + (extractConfig.tier_1_rd_premium/100))).toFixed(2)) || 0.00
           },
           {
             name : `Tier 2 Intensity: > ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_2_rd_premium}%)`,
+            "offset Amount" : parseFloat(Number(notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100))).toFixed(2)) || 0.00,
             "Notional deductions applied" : notionalDeductionAppliedForTier2,
-            "offset Amount" : parseFloat(Number(notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100))).toFixed(2)) || 0.00
           }
         ]
         let nonRefundableRdTaxOffset = parseFloat(Number(calculateCredit[0]?.["offset Amount"]! + calculateCredit[1]?.["offset Amount"]!).toFixed(2));
@@ -87,6 +87,7 @@ export class RdCreditCalculatorForAus {
             "Add-back of R&D accounting expenditure (Item 7D)" : preliminaryCalculation
           },
           "R&D Expenditure" : {
+            "R&D expenditure - Research service provider (RSP)" : 0,
             "R&D expenditure - Contract expenditure (not RSP)": totalSubconQreCost,
             "R&D expenditure - Salary expenditure": totalFteQreCost,
             "Total of allocated notional deductions" : totalAllocatedNotionalDections,

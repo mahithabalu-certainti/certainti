@@ -45,7 +45,8 @@ export class RdCreditCalculatorForGA {
         return {
             inputFields,
             computedFields,
-            finalCredit: this.round2(creditAndCarryForwardInfo.research_tax_credit)
+            finalCredit: this.round2(creditAndCarryForwardInfo.research_tax_credit),
+            totalQRE: this.round2(inputInfo.current_year_qre)
         }
     }
 
@@ -71,7 +72,7 @@ export class RdCreditCalculatorForGA {
 
         //Enter current year - any other credit for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
-        const totalOfAllOtherCredits = new Decimal(0)
+        const totalOfAllOtherCredits = new Decimal(caseDetails.other_credits_total || 0) 
 
         //Enter any carry forward from prior years for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
@@ -310,15 +311,15 @@ export class RdCreditCalculatorForGA {
                 }
             },
             "Application of Credit and Carry-Forward": {
-                "1) Current Tax Liability w/o applied credits - E" : this.round2(creditAndCarryForwardInfo.current_year_tax_liability)  || 0,
-                "2) Value of all Other Credits Claimed - C" : this.round2(creditAndCarryForwardInfo.value_of_other_credit_claimed) || 0,
-                "3) Remaining Tax Liability (C-E)" : this.round2(creditAndCarryForwardInfo.remaining_tax_liability) || 0,
-                [`4) Maximum Credit Allowed (Line 3 * ${config.max_credit_cap_percent}%)`] : this.round2(creditAndCarryForwardInfo.max_credits_allowed) || 0,
-                "5) Research Tax Credit - J" : this.round2(creditAndCarryForwardInfo.research_tax_credit) || 0,
-                "5a)Tax Carryover from PY - D": this.round2(creditAndCarryForwardInfo.tax_carryover_py) || 0    ,
-                "6) Total available Research Tax Credit (J+D)" : this.round2(creditAndCarryForwardInfo.total_tax_credit) || 0,
-                "7) Credit to be claimed on return  (lesser of line 4 or 6)" : this.round2(creditAndCarryForwardInfo.credit_claimed_return) || 0,
-                "8) Unused Credit or Carry-Forward" : this.round2(creditAndCarryForwardInfo.unused_credit) || 0
+                "[1] Current Tax Liability w/o applied credits - E" : this.round2(creditAndCarryForwardInfo.current_year_tax_liability)  || 0,
+                "[2] Value of all Other Credits Claimed - C" : this.round2(creditAndCarryForwardInfo.value_of_other_credit_claimed) || 0,
+                "[3] Remaining Tax Liability (C-E)" : this.round2(creditAndCarryForwardInfo.remaining_tax_liability) || 0,
+                [`[4] Maximum Credit Allowed (Line 3 * ${config.max_credit_cap_percent}%)`] : this.round2(creditAndCarryForwardInfo.max_credits_allowed) || 0,
+                "[5] Research Tax Credit - J" : this.round2(creditAndCarryForwardInfo.research_tax_credit) || 0,
+                "[5a] Tax Carryover from PY - D": this.round2(creditAndCarryForwardInfo.tax_carryover_py) || 0    ,
+                "[6] Total available Research Tax Credit (J+D)" : this.round2(creditAndCarryForwardInfo.total_tax_credit) || 0,
+                "[7] Credit to be claimed on return  (lesser of line 4 or 6)" : this.round2(creditAndCarryForwardInfo.credit_claimed_return) || 0,
+                "[8] Unused Credit or Carry-Forward" : this.round2(creditAndCarryForwardInfo.unused_credit) || 0
             }
         }
     }

@@ -51,7 +51,7 @@ async function signOffFinancialWorking (req : Request, res : Response) {
   }
 }
 
-async function RegionListForFinancialHighlights (req : Request, res : Response) {
+async function regionListForFinancialHighlights (req : Request, res : Response) {
     const methodName = "RegionListForFinancialHighlights"
     try {
        const userId = req.headers["x-user-id"] as string;
@@ -292,10 +292,10 @@ async function getDossierPackage (req : Request, res : Response) {
 }
 export default {
     signOffFinancialWorking,
-    RegionListForFinancialHighlights,
     getClosedCasesList,
     fetchCaseClosingRemarks,
     initiateCreateDossierForm,
     exportSignOffDetails,
-    getDossierPackage
+    getDossierPackage,
+    regionListForFinancialHighlights
 }
