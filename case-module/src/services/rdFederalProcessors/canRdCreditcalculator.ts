@@ -3,6 +3,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequiredPrjDataForCanada } from "../../utils/rdFinancialWorkingQueries";
 import { ProjectCalculatedDataCanada, ProjectComputeValue, ProjectFiscalIds } from "../../utils/types";
 import { Case } from "../../models/caseModel";
+import Decimal from "decimal.js";
 
 type extractConfig = {
     fte_proxy : number,
@@ -42,11 +43,11 @@ export class RdCreditCalculatorForCAN {
                 "Project Code":projectData.project_code,
                 "Project Name" : projectData.project_name,
                 "Total Hours" : parseFloat(Number(projectData.total_effort_prj).toFixed(1)) || 0.00,
-                "Project Total Cost": parseFloat(Number(projectData.total_cost_prj).toFixed(1)) || 0.00,
+                "Project Total Cost": parseFloat(Number(new Decimal(projectData.total_cost_fte_prj || 0).add(projectData.total_cost_subcon_prj || 0).add(projectData.total_cost_nonlabor_prj || 0)).toFixed(1)) || 0.00,
                 "FTE Cost": parseFloat(Number(projectData.total_cost_fte_prj).toFixed(1)) || 0.00,
                 "SubCon Cost": parseFloat(Number(projectData.total_cost_subcon_prj).toFixed(1)) || 0.00,
-                "Other Cost": parseFloat(Number(projectData.total_cost_nonlabor_prj).toFixed(1)) || 0.00,
-                "Total Cost": parseFloat(Number(projectData.total_cost_prj).toFixed(1)) || 0.00,
+                "Other Cost": parseFloat(Number(caseDetails.other).toFixed(1)) || 0.00,
+                "Total Cost": parseFloat(Number(new Decimal(projectData.total_cost_fte_prj || 0).add(projectData.total_cost_subcon_prj || 0).add(caseDetails.other || 0)).toFixed(1)) || 0.00,
                 "Net QRE %": `${projectData.rd_percent_final}%`,
                 "FTE QRE Adjustment": `${fteQreAdjustment}%`,
                 "Subcon QRE Adjustment": `${subconQreAdjustment}%`,
@@ -81,6 +82,7 @@ export class RdCreditCalculatorForCAN {
         let federalItcCreditsNoORDTC = 0.00;
         let totalCreditWithORDTC = 0.00;
         let totalCreditWithNoORDTC = 0.00;
+        let totalProjectCost = 0.00
 
         calculatedNewComputedValues.forEach((projectData : any) => {
             totalFteCost = parseFloat(Number(totalFteCost + projectData["FTE Cost"]).toFixed(1)) || 0.00
@@ -92,6 +94,7 @@ export class RdCreditCalculatorForCAN {
             totalSubconQre = parseFloat(Number(totalSubconQre + projectData["Subcon QRE"]).toFixed(1)) || 0.00
             totalContractorsAmount = parseFloat(Number(totalContractorsAmount + projectData[contractorsAmt]).toFixed(1)) || 0.00
             totalHours = parseFloat(Number(totalHours + projectData["Total Hours"]).toFixed(1)) || 0.00
+            totalProjectCost = parseFloat(Number(totalProjectCost + projectData["Project Total Cost"]).toFixed(1)) || 0.00
         });
         totalQre = parseFloat(Number((totalQre + totalFteQre + totalfteProxy + totalSubconQre) - totalContractorsAmount).toFixed(1)) || 0.00
         if(totalQre < extractConfig.provincial_oitc_amount) {
@@ -149,7 +152,7 @@ export class RdCreditCalculatorForCAN {
                "Project Code" : "-",
                 "Project Name" : "-",
                 "Total Hours" : JSON.stringify(totalHours),
-                "Project Total Cost" : Math.round(totalCost),
+                "Project Total Cost" : Math.round(totalProjectCost),
                 "FTE Cost" : Math.round(totalFteCost),
                 "SubCon Cost" : Math.round(totalSubconCost),
                 "Other Cost" : Math.round(totalOtherCost),
