@@ -960,6 +960,7 @@ const exportListProjectResourceSchema = Joi.object({
     .optional()
     .allow(""),
   timezone: Joi.string().optional(),
+  type : Joi.string().optional().allow(null),
   search: Joi.string()
     .max(255)
     .allow('')
@@ -1001,6 +1002,7 @@ const listResourceSchema = Joi.object({
   ).optional(),
   apiSource: Joi.string().optional().default("Project"),
   accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
+  type : Joi.string().optional().allow("")
 });
 
 const exportListProjectTasksSchema = Joi.object({

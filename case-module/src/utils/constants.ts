@@ -204,7 +204,7 @@ export const STATUS_MESSAGE = {
   rdCreditProcessInitiatedSuccess: "RD credit calculation initiated successfully",
   rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
-  financialWorkingSignedOff : "Financial Working has been successfully signed off",
+  financialWorkingSignedOff : "Financial Working has been successfully approved",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
   rdFormSignedOff : "RD Form has been successfully approved",
   rdFormSignOffFailed : "Failed to approve RD Form",

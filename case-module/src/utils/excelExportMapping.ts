@@ -817,22 +817,17 @@ export const jurisdictionRuleMapping = [
 ];
 
 export const dataMapperFieldMappings = [
-  { permissionField: "rid", exportField: "Record ID", dataField: "rid" },
   { permissionField: "r_number", exportField: "Form ID", dataField: "r_number" },
-  { permissionField: "created_datetime", exportField: "Created On", dataField: "created_datetime" },
-  { permissionField: "created_by", exportField: "Created By", dataField: "created_by" },
-  { permissionField: "modified_datetime", exportField: "Updated On", dataField: "modified_datetime" },
-  { permissionField: "modified_by", exportField: "Updated By", dataField: "modified_by" },
   { permissionField: "form_name", exportField: "Form Name", dataField: "form_name" },
-  { permissionField: "browse_file", exportField: "Browse File", dataField: "browse_file" },
-  { permissionField: "document_name", exportField: "Document Name", dataField: "document_name" },
+  { permissionField: "country_rid", exportField: "Country", dataField: "country_name" },
+  { permissionField: "state_rid", exportField: "Region", dataField: "state_name" },
   { permissionField: "effective_from_date", exportField: "Effective From Date", dataField: "effective_from_date" },
   { permissionField: "effective_to_date", exportField: "Effective To Date", dataField: "effective_to_date" },
-  { permissionField: "country_rid", exportField: "Country", dataField: "country_name" },
-  { permissionField: "state_rid", exportField: "State", dataField: "state_name" },
-  { permissionField: "format", exportField: "File Format", dataField: "format" },
-  { permissionField: "size_in_mb", exportField: "File Size (MB)", dataField: "size_in_mb" },
   { permissionField: "status_rid", exportField: "Status", dataField: "status_name" },
-  { permissionField: "is_active", exportField: "Active Status", dataField: "is_active" },
+  { permissionField: "document_name", exportField: "Document Name", dataField: "document_name" },
+  { permissionField: "created_by", exportField: "Created By", dataField: "created_by" },
+  { permissionField: "created_datetime", exportField: "Created On", dataField: "created_datetime" },
+  { permissionField: "modified_by", exportField: "Updated By", dataField: "modified_by" },
+  { permissionField: "modified_datetime", exportField: "Updated On", dataField: "modified_datetime" },
   { permissionField: "error_message", exportField: "Error Message", dataField: "error_message" }
 ];
