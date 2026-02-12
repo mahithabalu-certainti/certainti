@@ -74,12 +74,22 @@ export async function pdfFiller(
   accountRid: string,
   blobUrl: string,
   accountNumber: string,
+  countryCode: string,
+  stateCode: string,
+  caseRid: string
+
 ): Promise<string> {
   try {
     logMessage("Starting PDF form filling process...");
     // Download input PDF from Azure Blob Storage
-    let inputContainer = "d001-e66380cd-d24c-4581-8e29-07ada063acdb";
     const parsedBlobUrl = new URL(blobUrl);
+    const [containerFromUrl] = parsedBlobUrl.pathname
+      .split("/")
+      .filter(Boolean);
+    const inputContainer = containerFromUrl;
+    if(!inputContainer) {
+      throw new Error("Invalid blob URL: Container name not found");
+    }
     const blobName = decodeURIComponent(
       parsedBlobUrl.pathname.split("/").slice(2).join("/"),
     );
@@ -90,7 +100,9 @@ export async function pdfFiller(
       inputContainer,
       blobName,
     );
-    const pdfDoc: PDFDocument = await PDFDocument.load(inputPdfBuffer);
+    const pdfDoc: PDFDocument = await PDFDocument.load(inputPdfBuffer, {
+      ignoreEncryption: true,
+    });
     const form: PDFForm = pdfDoc.getForm();
     const allFields = form.getFields();
     const fieldMapping = processFieldData(formData);
@@ -169,7 +181,10 @@ export async function pdfFiller(
     form.updateFieldAppearances();
     const pdfBytesOut = await pdfDoc.save();
     const timestamp = Date.now();
-    const outputFileName = `filled_form_${timestamp}.pdf`;
+    const normalizedStateCode = stateCode?.trim();
+    const stateSuffix = normalizedStateCode ? `_${normalizedStateCode}` : "";
+    const outputFileName = `rd_form_${countryCode}${stateSuffix}_${timestamp}.pdf`;
+    const outputBlobName = `cases/${caseRid}/rdForms/${outputFileName}`;
 
     // Save to local file for testing purposes
     /*const timestamp = Date.now();
@@ -186,7 +201,7 @@ export async function pdfFiller(
     // TODO: Uncomment for production - upload to Azure Blob
     const url = await uploadBufferToAzureBlob(
       Buffer.from(pdfBytesOut),
-      outputFileName,
+      outputBlobName,
       accountNumber.toLowerCase(),
     );
     logMessage(`PDF uploaded to Azure Blob: ${url}`);

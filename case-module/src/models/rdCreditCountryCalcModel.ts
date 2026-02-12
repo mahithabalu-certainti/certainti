@@ -14,6 +14,9 @@ export interface RdCreditCountryCalcAttributes {
     prev_year1_qre?: number | null;
     prev_year2_qre?: number | null;
     prev_year3_qre?: number | null;
+    total_wages?: number | null;
+    total_supplies?: number | null;
+    total_subcontract?: number | null;
     final_credit?: number | null;
     created_datetime?: Date;
     modified_datetime?: Date;
@@ -39,6 +42,9 @@ export class RdCreditCountryCalculations
     public prev_year1_qre?: number | null;
     public prev_year2_qre?: number | null;
     public prev_year3_qre?: number | null;
+    public total_wages?: number | null;
+    public total_supplies?: number | null;
+    public total_subcontract?: number | null;
     public final_credit?: number | null;
     public created_datetime?: Date;
     public modified_datetime?: Date;
@@ -92,6 +98,18 @@ export class RdCreditCountryCalculations
                     allowNull: true,
                 },
                 prev_year3_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                total_wages: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                total_supplies: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                total_subcontract: {
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },

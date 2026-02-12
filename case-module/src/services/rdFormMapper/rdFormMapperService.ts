@@ -1,11 +1,11 @@
-import { or, Sequelize } from "sequelize";
+import { or, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import RdFormMapperSchemaService from "./schemaService";
-import { generateSasUrl, logMessage, uploadBufferToAzureBlob } from "../../utils/helpers";
+import { generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
-import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE } from "../../utils/constants";
+import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { Kafka, Producer } from "kafkajs";
 import * as fs from "fs";
@@ -51,6 +51,32 @@ export class RdFormMapperService {
       this.orgDbSequelize = await initOrgSequelize();
     }
     return this.orgDbSequelize;
+  }
+
+  private async getCurrencySymbolByCountry(
+    countryName: string,
+    mainDb: Sequelize,
+  ): Promise<string | null> {
+    const normalized = countryName?.trim();
+    if (!normalized) return null;
+
+    const currencyCode = Object.entries(COUNTRY_CURRENCY_CODE).find(
+      ([key]) => key.toLowerCase() === normalized.toLowerCase(),
+    )?.[1];
+
+    if (!currencyCode) return null;
+
+    try {
+      const [currencyRows]: any[] = await mainDb.query(
+        rawQueries.getCurrencyByCode(currencyCode),
+      );
+      return currencyRows?.[0]?.currency_symbol || null;
+    } catch (error) {
+      logMessage(
+        `Error fetching currency symbol for ${currencyCode}: ${error}`,
+      );
+      return null;
+    }
   }
 
   /**
@@ -132,12 +158,22 @@ export class RdFormMapperService {
       formInfo?.form_type === "nonfillable"
     ) {
       logMessage("Federal form is non-fillable. Generate PDF.");
+      const currencySymbol = await this.getCurrencySymbolByCountry(
+        countryName,
+        mainDb,
+      );
       filledFormUrl = await this.generatePDFNonFillable(
         enhancedMapperConfig,
         accountRid,
         formInfo.browse_file,
         accountNumber,
-        caseRid,countryCode,true,countryName,stateName,fiscalYear
+        caseRid,
+        countryCode,
+        true,
+        countryName,
+        stateName,
+        fiscalYear,
+        currencySymbol,
       );
     } else {
       logMessage("Federal form is fillable. Using PDF filler.");
@@ -146,6 +182,9 @@ export class RdFormMapperService {
         accountRid,
         formInfo.browse_file,
         accountNumber,
+        countryCode,
+        stateCode || '',
+        caseRid,
       );
     }
 
@@ -252,6 +291,9 @@ export class RdFormMapperService {
         accountRid,
         formInfo.browse_file,
         accountNumber,
+        countryCode,
+        stateCode || '',
+        caseRid,
       );
 
       logMessage(
@@ -287,21 +329,80 @@ export class RdFormMapperService {
     countryName: string,
     stateName: string,
     fiscalYear: string,
+    currencySymbol?: string | null,
   ): Promise<string> {
     try {
-      // Transform mapper config to extract data for PDF generation
-      const formData = enhancedMapperConfig.reduce((acc: any, config: any) => {
-        const label = config.field_name || config.field_label || "-";
-        acc[label] = config.value ?? "-";
-        return acc;
-      }, {});
+      const tableGroups = new Map<
+        string,
+        {
+          columnOrder: string[];
+          columns: Map<string, Map<number, any>>;
+          rowIndexes: Set<number>;
+        }
+      >();
+      const normalRows: { label: string; value: any }[] = [];
+
+      enhancedMapperConfig.forEach((config: any) => {
+        const columnLabel =
+          config.field_label || config.field_name || config.label || "-";
+        const value = config.value ?? "-";
+        const labelText = String(config.label ?? columnLabel);
+        const rowMatch = labelText.match(/\[row_(\d+)\]/i);
+        const isTableRow =
+          config.field_type === "table" ||
+          (rowMatch && rowMatch.length > 1) ||
+          config.column_id;
+
+        if (isTableRow) {
+          const baseLabel =
+            labelText.replace(/\[row_\d+\]/i, "").trim() ||
+            String(columnLabel);
+          const rowIndex = rowMatch ? Number(rowMatch[1]) : 0;
+          const tableKey =
+            config.column_id !== undefined && config.column_id !== null
+              ? String(config.column_id)
+              : baseLabel;
+
+          const group = tableGroups.get(tableKey) || {
+            columnOrder: [],
+            columns: new Map<string, Map<number, any>>(),
+            rowIndexes: new Set<number>(),
+          };
+
+          const normalizedColumnLabel = String(columnLabel).trim() || "-";
+          if (!group.columns.has(normalizedColumnLabel)) {
+            group.columns.set(normalizedColumnLabel, new Map<number, any>());
+            group.columnOrder.push(normalizedColumnLabel);
+          }
+
+          group.columns
+            .get(normalizedColumnLabel)!
+            .set(rowIndex, value);
+          group.rowIndexes.add(rowIndex);
+          tableGroups.set(tableKey, group);
+          return;
+        }
+
+        normalRows.push({ label: labelText, value });
+      });
+
+      const tableCellCount = Array.from(tableGroups.values()).reduce(
+        (total, group) => {
+          let groupCells = 0;
+          group.columns.forEach((rows) => {
+            groupCells += rows.size;
+          });
+          return total + groupCells;
+        },
+        0,
+      );
 
       logMessage(
-        `Prepared form data with ${Object.keys(formData).length} fields for PDF generation`,
+        `Prepared form data with ${normalRows.length + tableCellCount} fields for PDF generation`,
       );
 
       // Generate unique filename
-      const fileName = `rd_form_${countryCode}_${Date.now()}_${uuidv4().slice(0, 8)}.pdf`;
+      const fileName = `rd_form_${countryCode}_${Date.now()}.pdf`;
 
       // Create PDF document in memory
       const doc = new PDFDocument({ margin: 50 });
@@ -328,6 +429,7 @@ export class RdFormMapperService {
 
         // Add header
         const normalizedCountryName = countryName?.trim();
+        const isAustralia = normalizedCountryName?.toLowerCase() === "australia";
         const headerTitle = normalizedCountryName
           ? RD_FORM_HEADER_BY_COUNTRY[normalizedCountryName] ||
             `R&D Tax Credit Form - ${normalizedCountryName}`
@@ -369,8 +471,24 @@ export class RdFormMapperService {
 
       //  drawHeader();
 
-        Object.entries(formData).forEach(([fieldName, value]) => {
-          const displayValue = value ?? "N/A";
+        const formatValue = (rawValue: any) => {
+          if (rawValue === null || rawValue === undefined || rawValue === "") {
+            return "N/A";
+          }
+
+          const rawText = String(rawValue);
+          if (!currencySymbol) return rawText;
+
+          const numeric = this.tryParseNumber(rawValue);
+          if (numeric !== null && /[0-9]/.test(rawText)) {
+            return `${currencySymbol}${rawText}`;
+          }
+
+          return rawText;
+        };
+
+        const renderRow = (fieldName: string, value: any) => {
+          const displayValue = formatValue(value);
           const fieldHeight = doc.heightOfString(String(fieldName), {
             width: colFieldWidth - rowPadding * 2,
           });
@@ -391,6 +509,88 @@ export class RdFormMapperService {
           });
           drawRowBorders(y, rowHeight);
           doc.y = y + rowHeight;
+        };
+
+        const renderGridRow = (
+          cells: any[],
+          align: "left" | "center" | "right",
+          applyCurrency: boolean = false,
+        ) => {
+          const columnCount = cells.length;
+          if (columnCount === 0) return;
+
+          const baseWidth = Math.floor(usableWidth / columnCount);
+          const colWidths = Array.from({ length: columnCount }, () => baseWidth);
+          colWidths[columnCount - 1] =
+            usableWidth - baseWidth * (columnCount - 1);
+
+          const cellHeights = cells.map((cell, index) =>
+            doc.heightOfString(
+              String(applyCurrency ? formatValue(cell) : cell ?? ""),
+              {
+              width: (colWidths[index] ?? baseWidth) - rowPadding * 2,
+              align,
+            }),
+          );
+          const rowHeight = Math.max(...cellHeights, 0) + rowPadding * 2;
+
+          ensureSpace(rowHeight);
+
+          const y = doc.y;
+          let x = left;
+          cells.forEach((cell, index) => {
+            const width = colWidths[index] ?? baseWidth;
+            doc.rect(x, y, width, rowHeight).stroke();
+            doc.text(
+              String(applyCurrency ? formatValue(cell) : cell ?? ""),
+              x + rowPadding,
+              y + rowPadding,
+              {
+              width: width - rowPadding * 2,
+              align,
+            },
+            );
+            x += width;
+          });
+
+          doc.y = y + rowHeight;
+        };
+
+        normalRows.forEach((row) => {
+          renderRow(row.label, row.value);
+        });
+
+        tableGroups.forEach((group) => {
+          const headers = group.columnOrder.length
+            ? group.columnOrder
+            : ["-"];
+
+          const rowIndexes = Array.from(group.rowIndexes).sort(
+            (a, b) => a - b,
+          );
+
+          if (rowIndexes.length === 0) return;
+
+          const normalizeHeader = (header: string) =>
+            header.toLowerCase().replace(/\s+/g, " ").trim();
+          const normalizedHeaders = headers.map(normalizeHeader);
+          const isAustraliaTierTable =
+            isAustralia &&
+            normalizedHeaders.some((h) => h.includes("tier of intensity")) &&
+            normalizedHeaders.some((h) => h.includes("notional")) &&
+            normalizedHeaders.some((h) => h.includes("offset"));
+
+          doc.moveDown(0.5);
+          doc.fontSize(10);
+          renderGridRow(headers, "center", false);
+          rowIndexes.forEach((rowIndex) => {
+            const rowValues = headers.map((header) => {
+              const column = group.columns.get(header);
+              if (!column) return "N/A";
+              return column.has(rowIndex) ? column.get(rowIndex) : "N/A";
+            });
+            renderGridRow(rowValues, "right", true);
+          });
         });
 
         // Add footer
@@ -1591,4 +1791,38 @@ export class RdFormMapperService {
       ...(details && { details }),
     };
   }
+  async signOffRdForms(data : any, file : any) {
+          const mainDb = await this.getMainDb();
+          const orgDb = await this.getOrgDb();
+          const parentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+          if(parentAccount[0].length > 0) {
+              let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
+              const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+              if(file !== undefined) {
+                  const fileUploadedResult = await uploadToAzureBlob(file, data.account_rid, '', parentAccount[0][0].r_number, 'signoff')
+                  await orgDb.query(rawQueries.insertDataIntoAttachments(schemaName, data.case_rid, data.userId, data.account_rid, fileUploadedResult.url, fileUploadedResult.name, caseDetails?.fiscal_year, fileUploadedResult.extension, fileUploadedResult.size, data.comments))
+              }
+              const caseResult : any = await orgDb.query(rawQueries.updateRdFormSignOff(schemaName, data.case_rid, data.sign_off));
+              if(caseResult[1].rowCount) {
+                  const findRdFormSignOffId : any = await mainDb.query(rawQueries.getRdFormSignOffId());
+                  await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findRdFormSignOffId[0][0].rid, data.case_rid, data.account_rid, schemaName, data.comments))
+                  return {
+                      statusCode : HttpStatus.SUCCESS,
+                      statusMessage : STATUS_MESSAGE.rdFormSignedOff
+                  }
+              } else {
+                  return {
+                      statusCode : HttpStatus.FAILED,
+                      statusMessage : STATUS_MESSAGE.rdFormSignOffFailed
+                  }
+              }
+          } else {
+              return {
+                      statusCode : HttpStatus.FAILED,
+                      statusMessage : STATUS_MESSAGE.accountNoFound
+                  }
+          }
+      }
 }
+
+
