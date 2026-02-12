@@ -2262,56 +2262,54 @@ const MappingTable: React.FC<MappingTableProps> = ({
           <TableRow>
             <TableCell
               sx={{
-                width: formType === 'non-fillable' ? '35%' : '30%',
+                width: '30%',
               }}
             >
               Field Label
             </TableCell>
-            {formType !== 'non-fillable' && (
-              <TableCell
-                sx={{
-                  width: '20%',
-                }}
-                className='flex items-center justify-between'
-              >
-                <span>Field ID</span>
-                <span>
-                  <Tooltip
-                    title={
-                      'Go to "Original Form" tab, select a field to copy its Field ID, then paste it here to map the field.'
-                    }
-                    arrow
-                    placement='top'
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          mr: 1,
-                        },
-                      },
-                    }}
-                  >
-                    <span className='h-[21px] w-5 flex items-center justify-center absolute top-1 right-[4px] cursor-pointer'>
-                      <React.Suspense fallback={null}>
-                        <ErrorInfoIcon
-                          alt='error'
-                          className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]'
-                        />
-                      </React.Suspense>
-                    </span>
-                  </Tooltip>
-                </span>
-              </TableCell>
-            )}
             <TableCell
               sx={{
-                width: formType === 'non-fillable' ? '15%' : '10%',
+                width: '20%',
+              }}
+              className='flex items-center justify-between'
+            >
+              <span>Field ID</span>
+              <span>
+                <Tooltip
+                  title={
+                    'Go to "Original Form" tab, select a field to copy its Field ID, then paste it here to map the field.'
+                  }
+                  arrow
+                  placement='top'
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        mr: 1,
+                      },
+                    },
+                  }}
+                >
+                  <span className='h-[21px] w-5 flex items-center justify-center absolute top-1 right-[4px] cursor-pointer'>
+                    <React.Suspense fallback={null}>
+                      <ErrorInfoIcon
+                        alt='error'
+                        className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]'
+                      />
+                    </React.Suspense>
+                  </span>
+                </Tooltip>
+              </span>
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '10%',
               }}
             >
               Field Type
             </TableCell>
             <TableCell
               sx={{
-                width: formType === 'non-fillable' ? '50%' : '40%',
+                width: '40%',
               }}
               className='flex items-center justify-between'
             >
@@ -2385,53 +2383,49 @@ const MappingTable: React.FC<MappingTableProps> = ({
                     }
                   />
                 </TableCell>
-                {formType !== 'non-fillable' && (
-                  <TableCell sx={{ p: '8px' }}>
-                    <div
-                      className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
-                    >
-                      <textarea
-                        value={mapping.field_id || ''}
-                        onChange={(e) => {
-                          handleFieldIdChange(mapping.rid, e.target.value);
-                          // auto-grow height
-                          e.target.style.height = 'auto';
-                          e.target.style.height = `${e.target.scrollHeight}px`;
-                        }}
-                        placeholder='Enter Field ID'
-                        className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
-                          mapping.fieldIdError
-                            ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
-                            : 'border-gray-300 focus:border-blue-400'
-                        }`}
-                      />
-                      {mapping.fieldIdError && (
-                        <Tooltip
-                          title={mapping.fieldIdError}
-                          arrow
-                          placement='top'
-                          slotProps={{
-                            tooltip: {
-                              sx: {
-                                backgroundColor: '#FEF2F2',
-                                mr: 1,
-                              },
+                <TableCell sx={{ p: '8px' }}>
+                  <div
+                    className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                  >
+                    <textarea
+                      value={mapping.field_id || ''}
+                      onChange={(e) => {
+                        handleFieldIdChange(mapping.rid, e.target.value);
+                        // auto-grow height
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      disabled={formType === 'non-fillable'}
+                      placeholder='Enter Field ID'
+                      className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] disabled:bg-gray-100 text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
+                        mapping.fieldIdError
+                          ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
+                          : 'border-gray-300 focus:border-blue-400'
+                      }`}
+                    />
+                    {mapping.fieldIdError && (
+                      <Tooltip
+                        title={mapping.fieldIdError}
+                        arrow
+                        placement='top'
+                        slotProps={{
+                          tooltip: {
+                            sx: {
+                              backgroundColor: '#FEF2F2',
+                              mr: 1,
                             },
-                          }}
-                        >
-                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[1px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
-                            <React.Suspense fallback={null}>
-                              <ErrorInfoIcon
-                                alt='error'
-                                className='w-5 h-3.5'
-                              />
-                            </React.Suspense>
-                          </span>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </TableCell>
-                )}
+                          },
+                        }}
+                      >
+                        <span className='h-[26px] w-5 flex items-center justify-center absolute top-[1px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
+                          <React.Suspense fallback={null}>
+                            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+                          </React.Suspense>
+                        </span>
+                      </Tooltip>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell sx={{ p: '8px' }}>
                   <span className='text-[13px] font-medium text-[#425A76] capitalize'>
                     {mapping.field_type}
