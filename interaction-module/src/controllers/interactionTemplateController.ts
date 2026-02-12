@@ -255,7 +255,7 @@ async function updateInteractionTemplate(
  * - Logs all key steps and errors.
  */
 async function getInteractionTemplateDetailsById(
-  req: Request,
+  req: Request<{templateRid : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "Get interaction template details";

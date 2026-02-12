@@ -195,7 +195,7 @@ async function userProfiles(req: Request, res: Response): Promise<void> {
  * 6. On error, logs and returns an appropriate failure response.
  */
 async function userPermissionFields(
-  req: Request,
+  req: Request<{userId : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "User permission fields";
@@ -256,7 +256,7 @@ async function userPermissionFields(
  * @throws {Error} - Throws an error if the process fails during validation or data retrieval.
  */
 
-async function userPermissionById(req: Request, res: Response): Promise<void> {
+async function userPermissionById(req: Request<{id : string}>, res: Response): Promise<void> {
   const methodName = "User permission by ID";
   try {
     const validatedData = await validateRequest(
@@ -370,7 +370,7 @@ async function createProfile(req: Request, res: Response): Promise<void> {
  * @returns {Promise<void>} - Returns permissions data based on filters
  */
 async function getProfilePermissions(
-  req: Request,
+  req: Request<{profileId : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "Get profile permissions";
@@ -621,7 +621,7 @@ async function updateUserExtendedPermissions(
  */
 
 async function getUserExtendedPermissions(
-  req: Request,
+  req: Request<{userId : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "Get User extended permission";
@@ -663,7 +663,7 @@ async function getUserExtendedPermissions(
  *
  * @throws {Error} - Throws an error if the request to fetch profiles fails at any step.
  */
-async function exportUserProfiles(req: Request, res: Response): Promise<void> {
+async function exportUserProfiles(req: Request<{profileId : string}>, res: Response): Promise<void> {
   const methodName = "Export user profiles";
   try {
     //  const validatedData = await validateRequest(req, exportUserProfilesSchema,"ENV_TRD365", res, "GET");

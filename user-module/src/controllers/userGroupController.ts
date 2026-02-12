@@ -267,7 +267,7 @@ async function getActiveUsersForGrouping(
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Promise representing the completion of the operation
  */
-async function getAccountUsers(req: Request, res: Response): Promise<void> {
+async function getAccountUsers(req: Request<{accountid : string}>, res: Response): Promise<void> {
   const methodName = "List Account Users";
   try {
     const validatedData = await validateRequest(
@@ -469,7 +469,7 @@ async function getProjectOfAccounts(
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Promise representing the completion of the operation
  */
-async function getAccountGroups(req: Request, res: Response): Promise<void> {
+async function getAccountGroups(req: Request<{accountid : string}>, res: Response): Promise<void> {
   const methodName = "List Account Groups";
   try {
     const validatedData = await validateRequest(
@@ -671,7 +671,7 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
  * @returns {Promise<void>} - Promise representing the completion of the operation
  */
 async function listGroupDetailsById(
-  req: Request,
+  req: Request<{groupId : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "List User Group Details By Id";
@@ -920,7 +920,7 @@ async function getUserGroupType(req: Request, res: Response): Promise<void> {
  * - Logs and returns an error response if validation or the service call fails.
  * - Handles malformed filter JSON gracefully by logging an error without breaking the flow.
  */
-async function listUserGroupUser(req: Request, res: Response): Promise<void> {
+async function listUserGroupUser(req: Request<{accountid : string, userGroupId: string}>, res: Response): Promise<void> {
   const methodName = "List User Group User";
   try {
     const { accountid, userGroupId } = req.params;
