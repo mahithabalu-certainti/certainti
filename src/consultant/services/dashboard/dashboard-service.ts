@@ -21,22 +21,8 @@ import {
   CompletedTasksThisWeekResponse,
   DashboardMeetingListResponse,
   PendingFollowUpListResponse,
+  ExportReportType,
 } from '../../types/dashboard';
-// import {
-//   completedTasksThisWeekMock,
-//   countryLevelChartMock,
-//   dashboardCountDetailsMock,
-//   dueTodayOverdueTasksMock,
-//   globalLevelChartMock,
-//   healthStatusDetailMock,
-//   meetingListMock,
-//   openTasksMock,
-//   overallProjectValueMock,
-//   overdueApprovalsMock,
-//   pendingFollowUpsMock,
-//   upcomingTasksMock,
-//   weeklyProductivityMock,
-// } from '../../mockdata/dashboard-mock';
 import { reportServiceApi } from '../../../api/api';
 import {
   getCasesByHealthStatusURL,
@@ -61,9 +47,6 @@ export const fetchDashboardCountDetails = async (
       getDashboardCountDetailsURL(flag)
     );
     return response.data.data;
-    // console.log('dashboard-count', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return dashboardCountDetailsMock.data;
   } catch (error) {
     console.error('Error fetching dashboard count details:', error);
     throw error;
@@ -90,11 +73,7 @@ export const fetchCasesByHealthStatus = async (
     const response = await reportServiceApi.get<HealthStatusResponse>(
       getCasesByHealthStatusURL(flag, fiscalYear)
     );
-
     return response.data.data;
-    // console.log('case-health-status', flag, fiscalYear);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return healthStatusDetailMock.data;
   } catch (error) {
     console.error('Error fetching cases by health status:', error);
     throw error;
@@ -123,10 +102,6 @@ export const fetchOverallProjectValue = async (
       getOverallProjectValueURL(flag, fiscalYear)
     );
     return response.data.data;
-
-    // console.log('overall-project-value', flag, fiscalYear);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return overallProjectValueMock.data;
   } catch (error) {
     console.error('Error fetching overall project value:', error);
     throw error;
@@ -156,13 +131,6 @@ export const fetchGlobalLevelChart = async (
       getGlobalLevelChartURL(flag, fiscalYear, countryRid)
     );
     return response.data.data;
-    // console.log('global-level-chart', flag, fiscalYear, countryRid);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // if (countryRid) {
-    //   return countryLevelChartMock.data;
-    // } else {
-    //   return globalLevelChartMock.data;
-    // }
   } catch (error) {
     console.error('Error fetching global level chart:', error);
     throw error;
@@ -191,10 +159,6 @@ export const fetchWeeklyProductivity = async (
       getWeeklyProductivityListURL(flag)
     );
     return response.data.data;
-
-    // console.log('weekly-productivity', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return weeklyProductivityMock.data;
   } catch (error) {
     console.error('Error fetching weekly productivity:', error);
     throw error;
@@ -221,9 +185,6 @@ export const fetchOverdueApprovals = async (
       getOverdueApprovalsListURL(flag)
     );
     return response.data.data;
-    // console.log('overdue-approvals', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return overdueApprovalsMock.data;
   } catch (error) {
     console.error('Error fetching overdue approvals:', error);
     throw error;
@@ -250,9 +211,6 @@ export const fetchUpcomingTasks = async (
       getUpcomingTasksListURL(flag)
     );
     return response.data.data;
-    // console.log('upcoming-tasks', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return upcomingTasksMock.data;
   } catch (error) {
     console.error('Error fetching upcoming tasks:', error);
     throw error;
@@ -279,9 +237,6 @@ export const fetchDueTodayOverdueTasks = async (
       getDueTodayOverdueTasksListURL(flag)
     );
     return response.data.data;
-    // console.log('due-today-overdue-tasks', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return dueTodayOverdueTasksMock.data;
   } catch (error) {
     console.error('Error fetching due today/overdue tasks:', error);
     throw error;
@@ -308,9 +263,6 @@ export const fetchOpenTasks = async (
       getOpenTasksListURL(flag)
     );
     return response.data.data;
-    // console.log('open-tasks', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return openTasksMock.data;
   } catch (error) {
     console.error('Error fetching open tasks:', error);
     throw error;
@@ -337,9 +289,6 @@ export const fetchCompletedTasksThisWeek = async (
       getCompletedTasksThisWeekListURL(flag)
     );
     return response.data.data;
-    // console.log('completed-tasks-this-week', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return completedTasksThisWeekMock.data;
   } catch (error) {
     console.error('Error fetching completed tasks this week:', error);
     throw error;
@@ -366,9 +315,6 @@ export const fetchMeetingList = async (
       getMeetingListURL(flag)
     );
     return response.data.data;
-    // console.log('meeting-list', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return meetingListMock.data;
   } catch (error) {
     console.error('Error fetching meeting list:', error);
     throw error;
@@ -395,9 +341,6 @@ export const fetchPendingFollowUps = async (
       getPendingFollowUpsURL(flag)
     );
     return response.data.data;
-    // console.log('pending-follow-ups', flag);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return pendingFollowUpsMock.data;
   } catch (error) {
     console.error('Error fetching pending follow ups:', error);
     throw error;
@@ -414,4 +357,64 @@ export const useGetPendingFollowUps = (
     retry: 0,
     enabled: isEnable,
   });
+};
+
+export const ExportDashboardReport = async (
+  type: ExportReportType,
+  flag: string = 'all'
+) => {
+  const getFilename = (type: ExportReportType) => {
+    switch (type) {
+      case 'dueTodayOverdueTasks':
+        return 'due_today_overdue_tasks_report.xlsx';
+      case 'openTasks':
+        return 'open_tasks_report.xlsx';
+      case 'pendingFollowUps':
+        return 'pending_followups_report.xlsx';
+      case 'completedTasksThisWeek':
+        return 'completed_tasks_this_week_report.xlsx';
+      case 'upcomingTasks':
+        return 'upcoming_tasks_report.xlsx';
+      case 'weeklyProductivity':
+        return 'weekly_productivity_report.xlsx';
+      case 'meetingList':
+        return 'meeting_list_report.xlsx';
+      case 'overdueApprovals':
+        return 'overdue_approvals_report.xlsx';
+      default:
+        return 'dashboard_report.xlsx';
+    }
+  };
+
+  try {
+    // Construct the URL dynamically as all reports follow the same pattern
+    const url = `api/report/${type}Export?flag=${flag}`;
+
+    const response = await reportServiceApi.get(url);
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = getFilename(type);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
 };

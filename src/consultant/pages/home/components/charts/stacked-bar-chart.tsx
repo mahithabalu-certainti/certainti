@@ -226,12 +226,12 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className='flex items-center justify-center mb-3 bg-white'>
-          <div className='flex items-center gap-3'>
+        <div className='flex items-center justify-center mb-4 bg-white'>
+          <div className='flex items-center gap-1'>
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              className={`text-lg font-medium ${
+              className={`text-[12px] font-medium ${
                 currentPage === 1
                   ? 'text-gray-300 cursor-default'
                   : 'text-gray-600 hover:text-gray-900 cursor-pointer'
@@ -247,7 +247,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className={`text-lg font-medium ${
+              className={`text-[12px] font-medium ${
                 currentPage === totalPages
                   ? 'text-gray-300 cursor-default'
                   : 'text-gray-600 hover:text-gray-900 cursor-pointer'

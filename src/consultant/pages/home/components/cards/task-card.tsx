@@ -4,8 +4,10 @@ import {
   getPriorityColor,
   getStatusBadge,
   getInitials,
+  getAvatarColor,
 } from '../../helpers';
 import CardList from './card-list';
+import { ExportReportType } from '../../../../types';
 
 interface DefaultItemData {
   title: string;
@@ -31,6 +33,9 @@ interface TaskCardProps<T> {
   maxHeight?: number;
   className?: string;
   isLoading?: boolean;
+  exportEnable?: boolean;
+  exportKey?: ExportReportType;
+  handleExport?: (key: ExportReportType) => void;
 }
 
 const TaskCard = <T,>({
@@ -42,6 +47,9 @@ const TaskCard = <T,>({
   maxHeight = 400,
   className = '',
   isLoading = false,
+  exportEnable = false,
+  exportKey,
+  handleExport,
 }: TaskCardProps<T>) => {
   const itemRenderer = (item: T) => {
     if (renderItem) return renderItem(item);
@@ -70,10 +78,16 @@ const TaskCard = <T,>({
               />
             ) : (
               <div
-                className='flex items-center justify-center bg-gray-100 rounded-full text-[10px] font-bold text-gray-500'
-                style={{ width: '28px', height: '28px' }}
+                className='flex items-center justify-center rounded-full text-[10px] font-bold text-[#2D3E4F]'
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  backgroundColor: getAvatarColor(data.assignee),
+                }}
               >
-                {getInitials(data.assignee) || 'UA'}
+                {data.assignee?.toLowerCase() === 'unassigned'
+                  ? 'UA'
+                  : getInitials(data.assignee) || 'UA'}
               </div>
             )}
             <span className='text-sm font-medium text-[#2A2A2A]'>
@@ -167,6 +181,9 @@ const TaskCard = <T,>({
       className={className}
       itemRenderer={itemRenderer}
       getItemStyle={getItemStyle}
+      exportEnable={exportEnable}
+      exportKey={exportKey}
+      handleExport={handleExport}
     />
   );
 };

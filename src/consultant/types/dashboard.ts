@@ -241,3 +241,14 @@ export interface PendingFollowUpListResponse {
   statusMessage: string;
   data: PendingFollowUpDetail[];
 }
+
+// Export type
+export type ExportReportType =
+  | 'dueTodayOverdueTasks'
+  | 'openTasks'
+  | 'pendingFollowUps'
+  | 'completedTasksThisWeek'
+  | 'upcomingTasks'
+  | 'weeklyProductivity'
+  | 'meetingList'
+  | 'overdueApprovals';

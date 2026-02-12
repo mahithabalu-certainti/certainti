@@ -7,10 +7,12 @@ import {
   getDynamicSvgIcon,
   COMMON_MENU_PROPS,
   getSelectStyles,
+  blendWithWhite,
 } from '../../helpers';
 import { MenuItem, Select } from '@mui/material';
 import { useGetGlobalLevelChart } from '../../../../services/dashboard/dashboard-service';
 import { AccountWiseConsolidation } from '../../../../types/dashboard';
+import { PROJECT_COLORS } from '../../../../../admin/pages/workflow-builder/form/helper';
 
 interface MapChartProps {
   title: string;
@@ -45,7 +47,7 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
 
     const data: any[] = [['Country', 'R&D Cost Approved (Millions)']];
 
-    apiData.countryWiseConsolidation.forEach((country) => {
+    apiData.countryWiseConsolidation.forEach((country, index) => {
       if (selectedCountry) {
         // Highlight only selected country, gray others
         data.push([
@@ -54,7 +56,10 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
         ]);
       } else {
         // Global view normal values
-        data.push([country.country_name, country.approved]);
+        data.push([
+          country.country_name,
+          { v: index + 1, f: formatAmount(country.approved) },
+        ]);
       }
     });
 
@@ -119,7 +124,17 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
     displayMode: 'regions',
     colorAxis: selectedCountry
       ? { colors: ['#e5e7eb', '#4A90E2'] }
-      : { colors: ['#A2CD5A', '#CDB5CD'] },
+      : {
+          colors: apiData?.countryWiseConsolidation
+            ? apiData.countryWiseConsolidation.map((_, index) =>
+                blendWithWhite(
+                  PROJECT_COLORS[index % PROJECT_COLORS.length],
+                  0.4
+                )
+              )
+            : ['#A2CD5A'],
+        },
+    legend: 'none',
     backgroundColor: '#fff',
     datalessRegionColor: '#e5e7eb',
     defaultColor: '#e5e7eb',
@@ -223,8 +238,8 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
           </div>
         </div>
       ) : !apiData || chartData.length === 0 ? (
-        <div className='flex items-center justify-center h-96 text-gray-500 border border-gray-200 rounded-lg'>
-          <p className='text-sm'>No data available</p>
+        <div className='flex justify-center items-center h-[200px] text-sm text-[#425A76] border border-gray-200 rounded-lg'>
+          No data available
         </div>
       ) : (
         <div className='flex flex-col lg:flex-row gap-6 lg:gap-0 border border-gray-200 rounded-lg overflow-hidden'>

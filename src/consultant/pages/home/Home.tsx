@@ -29,6 +29,7 @@ import {
   WeeklyProductivityDetail,
   DashboardMeetingDetail,
   PendingFollowUpDetail,
+  ExportReportType,
 } from '../../types/dashboard';
 import { CardList, ReportCard, TaskCard } from './components/cards';
 import {
@@ -44,6 +45,7 @@ import {
   getPriorityBadge,
   getStatusBadge,
 } from './helpers';
+import { ExportDashboardReport } from '../../services/dashboard/dashboard-service';
 import { ClockIcon } from '@mui/x-date-pickers';
 import { Tooltip } from '@mui/material';
 import { TickIcon } from '../../../assets';
@@ -211,6 +213,10 @@ export const HomePage: React.FC = () => {
     return Object.values(grouped);
   }, [healthStatusData]);
 
+  const handleExport = async (key: ExportReportType) => {
+    await ExportDashboardReport(key);
+  };
+
   if (!isDashboardEnable) return <AccessRestricted />;
 
   return (
@@ -254,10 +260,13 @@ export const HomePage: React.FC = () => {
           subtitle={`${meetingList?.length || 0} Meetings scheduled or recently completed`}
           items={meetingList || []}
           isLoading={isMeetingsLoading}
+          exportEnable={true}
+          exportKey='meetingList'
+          handleExport={handleExport}
           itemRenderer={(item: DashboardMeetingDetail) => {
-            const priorityBadge = getPriorityBadge(
-              item.priority_name || 'Normal'
-            );
+            const priorityBadge = item.priority_name
+              ? getPriorityBadge(item.priority_name)
+              : null;
             const statusBadge = getStatusBadge(item.status_name);
 
             return (
@@ -271,15 +280,17 @@ export const HomePage: React.FC = () => {
                       {formatDate(item.effective_start_datetime)} at{' '}
                       {item.effective_start_time}
                     </span>
-                    <span
-                      className='px-2 py-0.5 rounded text-[10px] font-medium capitalize'
-                      style={{
-                        backgroundColor: priorityBadge.bg,
-                        color: priorityBadge.text,
-                      }}
-                    >
-                      {item.priority_name || 'Normal'}
-                    </span>
+                    {item.priority_name && priorityBadge && (
+                      <span
+                        className='px-2 py-0.5 rounded text-[10px] font-medium capitalize'
+                        style={{
+                          backgroundColor: priorityBadge.bg,
+                          color: priorityBadge.text,
+                        }}
+                      >
+                        {item.priority_name}
+                      </span>
+                    )}
                   </div>
                   <p className='text-[11px] text-[#425A76] font-medium mt-1'>
                     <span className='text-[#2a2a2a]'>Attendees:</span>{' '}
@@ -306,6 +317,9 @@ export const HomePage: React.FC = () => {
           subtitle={`${weeklyProductivity?.length || 0} Productivity items tracked this week`}
           items={weeklyProductivity || []}
           isLoading={isWeeklyProductivityLoading}
+          exportEnable={true}
+          exportKey='weeklyProductivity'
+          handleExport={handleExport}
           itemRenderer={(item: WeeklyProductivityDetail) => {
             const percentage =
               (Number(item.count) / Number(item.total)) * 100 || 0;
@@ -350,10 +364,13 @@ export const HomePage: React.FC = () => {
           subtitle={`${followUpsList?.filter((task) => task.status_name?.toLowerCase() !== 'completed').length || 0} Follow-ups awaiting response`}
           items={followUpsList || []}
           isLoading={isPendingFollowUpsLoading}
+          exportEnable={true}
+          exportKey='pendingFollowUps'
+          handleExport={handleExport}
           itemRenderer={(item) => {
-            const priorityBadge = getPriorityBadge(
-              item.priority_name || 'Normal'
-            );
+            const priorityBadge = item.priority_name
+              ? getPriorityBadge(item.priority_name)
+              : null;
             const isCompleted = item.status_name?.toLowerCase() === 'completed';
 
             return (
@@ -378,17 +395,19 @@ export const HomePage: React.FC = () => {
                   </div>
 
                   {/* Priority Badge */}
-                  <div
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium capitalize ${
-                      isCompleted ? 'line-through' : ''
-                    }`}
-                    style={{
-                      backgroundColor: priorityBadge.bg,
-                      color: priorityBadge.text,
-                    }}
-                  >
-                    {item.priority_name || 'Normal'}
-                  </div>
+                  {item.priority_name && priorityBadge && (
+                    <div
+                      className={`px-2 py-0.5 rounded text-[10px] font-medium capitalize ${
+                        isCompleted ? 'line-through' : ''
+                      }`}
+                      style={{
+                        backgroundColor: priorityBadge.bg,
+                        color: priorityBadge.text,
+                      }}
+                    >
+                      {item.priority_name}
+                    </div>
+                  )}
 
                   {/* Complete Button */}
                   <Tooltip
@@ -443,6 +462,9 @@ export const HomePage: React.FC = () => {
           subtitle={`${overdueApprovals?.length || 0} Approvals requests overdue`}
           items={overdueApprovals || []}
           isLoading={isOverdueLoading}
+          exportEnable={true}
+          exportKey='overdueApprovals'
+          handleExport={handleExport}
           itemRenderer={(item: OverdueApprovalsDetail) => {
             const daysOverdue = Math.max(
               0,
@@ -489,11 +511,14 @@ export const HomePage: React.FC = () => {
           subtitle={`${upcomingTasks?.length || 0} Tasks starting soon`}
           items={upcomingTasks || []}
           isLoading={isUpcomingLoading}
+          exportEnable={true}
+          exportKey='upcomingTasks'
+          handleExport={handleExport}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
             assignee: t.assigned_to_name,
-            priority: t.priority_name || 'Normal',
+            priority: t.priority_name || undefined,
             status: t.status,
             date: formatDate(t.effective_end_datetime),
             highlightDate: false,
@@ -508,11 +533,14 @@ export const HomePage: React.FC = () => {
           subtitle={`${dueTodayOverdueTasks?.length || 0} Tasks need immediate attention`}
           items={dueTodayOverdueTasks || []}
           isLoading={isDueTodayLoading}
+          exportEnable={true}
+          exportKey='dueTodayOverdueTasks'
+          handleExport={handleExport}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
             assignee: t.assigned_to_name,
-            priority: t.priority_name || 'Normal',
+            priority: t.priority_name || undefined,
             status: t.status,
             date: formatDate(t.effective_end_datetime),
             highlightDate: true,
@@ -533,11 +561,14 @@ export const HomePage: React.FC = () => {
           subtitle={`${openTasks?.length || 0} Currently active tasks`}
           items={openTasks || []}
           isLoading={isOpenTasksLoading}
+          exportEnable={true}
+          exportKey='openTasks'
+          handleExport={handleExport}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
             assignee: t.assigned_to_name,
-            priority: t.priority_name || 'Normal',
+            priority: t.priority_name || undefined,
             status: t.status,
             date: formatDate(t.effective_end_datetime),
             highlightDate: false,
@@ -552,11 +583,14 @@ export const HomePage: React.FC = () => {
           subtitle={`${completedTasks?.length || 0} Tasks completed this week`}
           items={completedTasks || []}
           isLoading={isCompletedLoading}
+          exportEnable={true}
+          exportKey='completedTasksThisWeek'
+          handleExport={handleExport}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
             assignee: t.assigned_to_name,
-            priority: t.priority_name || 'Normal',
+            priority: t.priority_name || undefined,
             status: t.status,
             date: formatDate(t.effective_end_datetime),
             highlightDate: false,

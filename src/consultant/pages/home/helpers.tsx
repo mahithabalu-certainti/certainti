@@ -1,3 +1,5 @@
+import { PROJECT_COLORS } from '../../../admin/pages/workflow-builder/form/helper';
+
 const getHash = (str: string): number => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -681,4 +683,18 @@ export const getTrendColor = (trend?: string): string => {
     default:
       return 'text-gray-600';
   }
+};
+
+export const getAvatarColor = (name?: string) => {
+  if (!name || name.toLowerCase() === 'unassigned') {
+    return '#D1D5DB';
+  }
+
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const index = Math.abs(hash) % PROJECT_COLORS.length;
+  return PROJECT_COLORS[index];
 };

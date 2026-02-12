@@ -166,66 +166,67 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
         </div>
       ) : (
         <>
-          {/* Donut Charts Grid */}
-          <div
-            className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4'
-            style={{ minHeight }}
-          >
-            {transformedData.map((country, idx) => {
-              const chartData = [
-                ['Metric', 'Value'],
-                ...metrics.map((m) => [
-                  m.label,
-                  country[m.key as keyof DonutMetricItem] as number,
-                ]),
-              ];
+          {transformedData.length > 0 ? (
+            <>
+              {/* Donut Charts Grid */}
+              <div
+                className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4'
+                style={{ minHeight }}
+              >
+                {transformedData.map((country, idx) => {
+                  const chartData = [
+                    ['Metric', 'Value'],
+                    ...metrics.map((m) => [
+                      m.label,
+                      country[m.key as keyof DonutMetricItem] as number,
+                    ]),
+                  ];
 
-              const colorList = metrics.map((m) =>
-                blendWithWhite(colors[m.key], 0.5)
-              );
+                  const colorList = metrics.map((m) =>
+                    blendWithWhite(colors[m.key], 0.5)
+                  );
 
-              return (
-                <div
-                  key={idx}
-                  className='flex flex-col items-center text-center'
-                >
-                  <Chart
-                    chartType='PieChart'
-                    width={'100%'}
-                    height={'180px'}
-                    data={chartData}
-                    options={{ ...chartOptions, colors: colorList }}
-                  />
-                  <p className='font-semibold text-sm text-[#2A2A2A] mt-2'>
-                    {country.country}
-                  </p>
-                  <p className='text-xs text-[#425A76] mt-1'>
-                    {selectedYear === 'all' ? '' : `FY-${selectedYear}`}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+                  return (
+                    <div
+                      key={idx}
+                      className='flex flex-col items-center text-center'
+                    >
+                      <Chart
+                        chartType='PieChart'
+                        width={'100%'}
+                        height={'180px'}
+                        data={chartData}
+                        options={{ ...chartOptions, colors: colorList }}
+                      />
+                      <p className='font-semibold text-sm text-[#2A2A2A] mt-2'>
+                        {country.country}
+                      </p>
+                      <p className='text-xs text-[#425A76] mt-1'>
+                        {selectedYear === 'all' ? '' : `FY-${selectedYear}`}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
 
-          {/* No Data Message */}
-          {transformedData.length === 0 && (
-            <div className='flex items-center justify-center h-32 text-gray-500'>
+              {/* Shared Legend */}
+              <div className='px-4 pb-4 flex flex-wrap justify-center gap-4 border-t border-gray-200 pt-3'>
+                {metrics.map((m) => (
+                  <div key={m.key} className='flex items-center gap-2'>
+                    <span
+                      className='inline-block h-3 w-3 rounded-full'
+                      style={{ backgroundColor: colors[m.key] }}
+                    />
+                    <span className='text-sm text-[#2A2A2A]'>{m.label}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className='flex justify-center items-center h-[200px] text-sm text-[#425A76]'>
               No data available
             </div>
           )}
-
-          {/* Shared Legend */}
-          <div className='px-4 pb-4 flex flex-wrap justify-center gap-4 border-t border-gray-200 pt-3'>
-            {metrics.map((m) => (
-              <div key={m.key} className='flex items-center gap-2'>
-                <span
-                  className='inline-block h-3 w-3 rounded-full'
-                  style={{ backgroundColor: colors[m.key] }}
-                />
-                <span className='text-sm text-[#2A2A2A]'>{m.label}</span>
-              </div>
-            ))}
-          </div>
         </>
       )}
     </div>

@@ -194,7 +194,7 @@ const AccountChart: React.FC<Props> = ({
           </div>
         </div>
       ) : data.length === 0 ? (
-        <div className='flex items-center justify-center h-64 text-gray-500'>
+        <div className='flex justify-center items-center h-[200px] text-sm text-[#425A76]'>
           No data available
         </div>
       ) : (
