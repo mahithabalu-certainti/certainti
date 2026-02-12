@@ -960,6 +960,7 @@ const exportListProjectResourceSchema = Joi.object({
     .optional()
     .allow(""),
   timezone: Joi.string().optional(),
+  type : Joi.string().optional().allow(null),
   search: Joi.string()
     .max(255)
     .allow('')
