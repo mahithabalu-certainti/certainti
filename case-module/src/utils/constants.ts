@@ -226,9 +226,14 @@ export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
 };
 
 export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
-  Australia: "AUD",
+  "Australia": "AUD",
   "United States": "USD",
 };
+
+export const FORM_TYPE = {
+  "Fillable": "fillable",
+  "Non-Fillable": "non-fillable",
+};  
 
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",

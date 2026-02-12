@@ -5,7 +5,7 @@ import { Logger } from "winston";
 import RdFormMapperSchemaService from "./schemaService";
 import { generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
-import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE } from "../../utils/constants";
+import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE, FORM_TYPE } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { Kafka, Producer } from "kafkajs";
 import * as fs from "fs";
@@ -108,7 +108,7 @@ export class RdFormMapperService {
       effectiveEnd,
     );
 
-    if (!formInfo?.browse_file && formInfo?.form_type === "fillable") {
+    if (!formInfo?.browse_file && formInfo?.form_type === FORM_TYPE.Fillable) {
       await this.rdFormMapperSchemaService.updateFederalFormError(
         caseRid,
         countryRid,
@@ -153,9 +153,7 @@ export class RdFormMapperService {
     let filledFormUrl: string;
 
     if (
-      formInfo?.form_type === "non-fillable" ||
-      formInfo?.form_type === "non_fillable" ||
-      formInfo?.form_type === "nonfillable"
+      formInfo?.form_type === FORM_TYPE["Non-Fillable"]
     ) {
       logMessage("Federal form is non-fillable. Generate PDF.");
       const currencySymbol = await this.getCurrencySymbolByCountry(
@@ -257,7 +255,35 @@ export class RdFormMapperService {
       `Processing State form computation for states: ${states.join(", ")}`,
     );
 
+    const stateInfoMap = new Map<
+      string,
+      { state_name?: string; state_code?: string }
+    >();
+
+    if (states.length > 0) {
+      const stateRows: any[] = await mainDb.query(
+        rawQueries.fetchStatesByIds(),
+        {
+          replacements: { ids: states },
+          type: QueryTypes.SELECT,
+        },
+      );
+      stateRows.forEach((stateRow: any) => {
+        stateInfoMap.set(stateRow.rid, {
+          state_name: stateRow.state_name,
+          state_code: stateRow.state_code,
+        });
+      });
+    }
+
     for (const state of states) {
+      const stateInfo = stateInfoMap.get(state) || {};
+      const resolvedStateName = stateInfo.state_name || stateName || state;
+      const resolvedStateCode = stateInfo.state_code || stateCode || "";
+
+      logMessage(
+        `Resolved state info for ${state}: ${JSON.stringify(stateInfo)}`,
+      );
       logMessage(`Starting state form processing for state: ${state}`);
       logMessage(`Processing form for state: ${state}`);
 
@@ -317,11 +343,9 @@ export class RdFormMapperService {
 
       let filledFormUrl: string;
       if (
-      formInfo?.form_type === "non-fillable" ||
-      formInfo?.form_type === "non_fillable" ||
-      formInfo?.form_type === "nonfillable"
+      formInfo?.form_type === FORM_TYPE["Non-Fillable"]
     ) {
-      logMessage("Federal form is non-fillable. Generate PDF.");
+      logMessage("State form is non-fillable. Generate PDF.");
       const currencySymbol = await this.getCurrencySymbolByCountry(
         countryName,
         mainDb,
@@ -333,9 +357,9 @@ export class RdFormMapperService {
         accountNumber,
         caseRid,
         countryCode,
-        true,
+        false,
         countryName,
-        stateName,
+        resolvedStateName,
         fiscalYear,
         currencySymbol,
       );
@@ -347,7 +371,7 @@ export class RdFormMapperService {
           formInfo.browse_file,
           accountNumber,
           countryCode,
-          stateCode || '',
+          resolvedStateCode,
           caseRid,
         );
       } catch (error) {
@@ -367,7 +391,7 @@ export class RdFormMapperService {
           countryCode,
           false,
           countryName,
-          stateName || state,
+          resolvedStateName,
           fiscalYear,
           currencySymbol,
         );
@@ -689,6 +713,7 @@ export class RdFormMapperService {
       // Wait for PDF generation to complete and get buffer
       const pdfBuffer = await pdfBufferPromise;
       let blobName = `cases/${caseRid}/rdForms/${fileName}`;
+    
 
       // Upload directly to blob storage from buffer
       const blobUrl = await uploadBufferToAzureBlob(
