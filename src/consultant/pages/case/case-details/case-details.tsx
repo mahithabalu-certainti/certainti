@@ -1241,7 +1241,7 @@ export const CaseDetails = () => {
               <div>
                 <span className='font-bold mr-1 capitalize'>Case</span>-
                 <span className='ml-1 font-medium'>
-                  Financial workings of this Case is signed off. Project changes
+                  Financial workings of this Case is approved. Project changes
                   are no longer allowed.
                 </span>
               </div>

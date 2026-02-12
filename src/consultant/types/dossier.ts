@@ -427,6 +427,7 @@ export interface SignOffFinancialHighlightsPayload {
   sign_off: boolean;
   file: File | null;
   comments: string;
+  isRdform: boolean;
 }
 export interface InputParams {
   country: string;

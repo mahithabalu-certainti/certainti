@@ -407,7 +407,7 @@ const Dossier: React.FC<DossierProps> = ({
       disabled: false,
       onClick: handleGenerateDossierSheet,
       sx: { width: '125px', minWidth: '125px' },
-      hide: !showTableControls,
+      // hide: !showTableControls,
     },
   ];
 
@@ -516,6 +516,7 @@ const Dossier: React.FC<DossierProps> = ({
               caseDetails={caseDetails}
               isFinancialWorkingSignoff={isFinancialWorkingSignoff}
               isDetailLoading={isDetailLoading}
+              refetchCaseDetails={refetchCaseDetails}
             />
           )}
 

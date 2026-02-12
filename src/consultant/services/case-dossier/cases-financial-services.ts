@@ -121,7 +121,7 @@ export const useFinancialHighlights = () => {
 export const signOffFinancialHighlights = async (
   payload: SignOffFinancialHighlightsPayload
 ): Promise<RDCreditInitiateResponse> => {
-  const url = getSignOffFinancialHighlightsURL();
+  const url = getSignOffFinancialHighlightsURL(payload.isRdform);
   const formData = new FormData();
   formData.append('case_rid', payload.case_rid);
   formData.append('account_rid', payload.account_rid);

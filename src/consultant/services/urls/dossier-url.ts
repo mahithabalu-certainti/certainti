@@ -65,8 +65,8 @@ export const getFinancialHighlightsURL = (): string => {
   return `/api/rd-credit/federal/calculate`;
 };
 
-export const getSignOffFinancialHighlightsURL = (): string => {
-  return `/api/cases/financialWorking/signoff`;
+export const getSignOffFinancialHighlightsURL = (isRdform: boolean): string => {
+  return `/api/cases/${isRdform ? 'rdformMapper' : 'financialWorking'}/signoff`;
 };
 export const getUserPreferenceURL = (): string => {
   return `/api/rd-credit/federal/userPreference`;

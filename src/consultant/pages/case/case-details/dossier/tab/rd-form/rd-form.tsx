@@ -18,11 +18,15 @@ import { setRdformGenerateStatus as setRdformGenerateStatusAction } from '../../
 import { useToast } from '../../../../../../../hooks';
 import { RDFormResponse } from '../../../../../../types';
 import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
+import TextButton from '../../../../../../../components/button/text-button';
+import { checkPermission } from '../../../../../../../common-utils';
+import SignOffModal from '../financial-working/sign-off-modal';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
   isFinancialWorkingSignoff?: boolean;
   isDetailLoading?: boolean;
+  refetchCaseDetails: () => void;
 }
 
 interface FormErrors {
@@ -34,6 +38,7 @@ const RDForm: React.FC<RDFormProps> = ({
   caseDetails,
   isFinancialWorkingSignoff,
   isDetailLoading,
+  refetchCaseDetails,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('federal');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
@@ -42,6 +47,7 @@ const RDForm: React.FC<RDFormProps> = ({
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
+  const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -96,6 +102,9 @@ const RDForm: React.FC<RDFormProps> = ({
   };
 
   const handleRDFormMapperPreview = async () => {
+    if (activeTab === 'state_wise' && !selectedRegion) {
+      return;
+    }
     setIsPreviewError(false);
     previewRDForm(
       {
@@ -184,6 +193,11 @@ const RDForm: React.FC<RDFormProps> = ({
         ?.fields ?? [],
     [permission]
   );
+  const isSignoffVisible = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_SIGNOFF
+  );
+
   const accountPermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     accountViewEditFields.forEach((item) => {
@@ -214,6 +228,8 @@ const RDForm: React.FC<RDFormProps> = ({
     setActiveTab(value);
     if (value === 'federal') {
       setSelectedRegion('');
+    } else {
+      setPreviewData(null);
     }
   };
 
@@ -237,6 +253,23 @@ const RDForm: React.FC<RDFormProps> = ({
 
   return (
     <div className='w-full'>
+      <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+        <div>{caseDetails?.country_name} RD Form Information</div>
+        <div>
+          <TextButton
+            label={'Approve'}
+            onClick={() => setIsSignOffModalOpen(true)}
+            disabled={!previewData?.data?.rdformUrl || !isFinancialWorkingSignoff}
+            hide={!isSignoffVisible}
+            sx={{
+              width: 'auto',
+              minWidth: '65px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+        </div>
+      </div>
       <SectionHeaderTab
         tabs={tabs}
         onTabChange={handleTabChange}
@@ -250,7 +283,7 @@ const RDForm: React.FC<RDFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                !accountPermissionMap?.['country_rid']?.edit
+                  !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -266,10 +299,9 @@ const RDForm: React.FC<RDFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
-                errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-              }`}
+                }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -285,7 +317,7 @@ const RDForm: React.FC<RDFormProps> = ({
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
+                    !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -304,9 +336,8 @@ const RDForm: React.FC<RDFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
               >
@@ -351,14 +382,29 @@ const RDForm: React.FC<RDFormProps> = ({
             PDF Viewer
           </div>
           <div className='max-h-[600px] overflow-auto p-3'>
-            <PdfViewer
-              base64={previewData.data.rdformUrl}
-              isLoadingPdf={isPreviewLoading}
-              isPdfError={isPreviewError}
-            />
+            {previewData.data.rdformUrl ? (
+              <PdfViewer
+                base64={previewData.data.rdformUrl}
+                isLoadingPdf={isPreviewLoading}
+                isPdfError={isPreviewError}
+              />
+            ) : (
+              <div className='flex items-center justify-center h-[100px] text-[#7D98B6] text-[13px]'>
+                {previewData.data.rdErrorMessage || 'No data available'}
+              </div>
+            )}
           </div>
         </div>
       )}
+      <SignOffModal
+        isOpen={isSignOffModalOpen}
+        onClose={() => setIsSignOffModalOpen(false)}
+        caseId={caseId ?? ''}
+        accountId={accountid}
+        refetchCaseDetails={refetchCaseDetails}
+        title='RD Form'
+        isRdform={true}
+      />
     </div>
   );
 };

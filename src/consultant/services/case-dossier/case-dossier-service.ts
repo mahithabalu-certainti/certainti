@@ -242,7 +242,7 @@ export const useRDFormMapperPreview = (
       ),
     retry: 0,
     gcTime: 0,
-    enabled: !!accountRid && !!caseRid && !!countryRid && enabled,
+    enabled: !!accountRid && !!caseRid && !!countryRid && (isFederal || !!stateRid) && enabled,
   });
 };
 
