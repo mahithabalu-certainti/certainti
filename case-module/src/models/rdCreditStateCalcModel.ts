@@ -45,7 +45,7 @@ export class RdCreditStateCalculations
     public prev_year1_qre?: number | null;
     public prev_year2_qre?: number | null
     public prev_year3_qre?: number | null;
-    public total_wages?: number | null; 
+    public total_wages?: number | null;
     public total_supplies?: number | null;
     public total_subcontract?: number | null;
     public created_datetime?: Date;
