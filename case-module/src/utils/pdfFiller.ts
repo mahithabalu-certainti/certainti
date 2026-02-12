@@ -184,7 +184,7 @@ export async function pdfFiller(
     const normalizedStateCode = stateCode?.trim();
     const stateSuffix = normalizedStateCode ? `_${normalizedStateCode}` : "";
     const outputFileName = `rd_form_${countryCode}${stateSuffix}_${timestamp}.pdf`;
-     let outputblobName = `cases/${caseRid}/rdForms/${outputFileName}`;
+    const outputBlobName = `cases/${caseRid}/rdForms/${outputFileName}`;
 
     // Save to local file for testing purposes
     /*const timestamp = Date.now();
@@ -201,7 +201,7 @@ export async function pdfFiller(
     // TODO: Uncomment for production - upload to Azure Blob
     const url = await uploadBufferToAzureBlob(
       Buffer.from(pdfBytesOut),
-      outputblobName,
+      outputBlobName,
       accountNumber.toLowerCase(),
     );
     logMessage(`PDF uploaded to Azure Blob: ${url}`);
