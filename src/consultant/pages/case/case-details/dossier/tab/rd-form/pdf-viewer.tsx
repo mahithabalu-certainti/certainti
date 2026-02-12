@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box,
@@ -16,7 +17,6 @@ import { ArrowBackIcon } from '../../../../../../../assets';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface PdfViewerProps {
-  pdfUrl?: string; // Can be a URL
   base64?: string; // Can be base64 string
   isLoadingPdf?: boolean;
   isPdfError?: boolean;
@@ -37,18 +37,9 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return bytes;
 };
 
-// Helper function to detect if string is base64
-const isBase64 = (str: string): boolean => {
-  return (
-    str.startsWith('data:application/pdf;base64,') ||
-    /^[A-Za-z0-9+/=]+$/.test(str.substring(0, 100))
-  );
-};
-
 const ZOOM_LEVELS = [50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300];
 
 const PdfViewer: React.FC<PdfViewerProps> = ({
-  pdfUrl,
   base64,
   isLoadingPdf,
   isPdfError,
@@ -61,32 +52,21 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    // Use base64 if available, otherwise use pdfUrl
-    const dataSource = base64 || pdfUrl;
-    if (!dataSource) return;
+  const renderTaskRef = useRef<any>(null);
 
+  useEffect(() => {
     const loadPDF = async () => {
+      if (!base64) return;
+
       setIsLoading(true);
       setError('');
 
       try {
-        let loadingTask;
-
-        // Check if dataSource is base64 or a URL
-        if (base64 || isBase64(dataSource)) {
-          // Convert base64 to Uint8Array
-          const pdfData = base64ToUint8Array(dataSource);
-          loadingTask = pdfjsLib.getDocument({ data: pdfData });
-        } else {
-          // Load from URL
-          loadingTask = pdfjsLib.getDocument(dataSource);
-        }
-
-        const pdf = await loadingTask.promise;
+        const pdfData = base64ToUint8Array(base64);
+        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
         setPdfDoc(pdf);
         setIsLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading PDF:', err);
         setError('Failed to load PDF. Please try again.');
         setIsLoading(false);
@@ -94,18 +74,21 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     };
 
     loadPDF();
-
-    return () => {
-      if (pdfDoc) {
-        pdfDoc.destroy();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfUrl, base64]);
+  }, [base64]);
 
   const renderPage = useCallback(
     async (pageNum: number) => {
       if (!pdfDoc || !canvasRef.current) return;
+
+      // Cancel any ongoing render task
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+        } catch {
+          // Ignore cancellation errors
+        }
+        renderTaskRef.current = null;
+      }
 
       try {
         const page = await pdfDoc.getPage(pageNum);
@@ -124,10 +107,20 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           canvas: canvas,
         };
 
-        await page.render(renderContext).promise;
-      } catch (err) {
-        console.error('Error rendering page:', err);
-        setError('Failed to load PDF. Please try again.');
+        const renderTask = page.render(renderContext);
+        renderTaskRef.current = renderTask;
+        await renderTask.promise;
+        renderTaskRef.current = null;
+      } catch (err: any) {
+        // Ignore cancellation errors
+        const isCancelled =
+          err?.name === 'RenderingCancelledException' ||
+          err?.name === 'TransportException';
+
+        if (!isCancelled) {
+          console.error('Error rendering page:', err);
+          setError('Failed to load PDF. Please try again.');
+        }
       }
     },
     [pdfDoc, scale]
