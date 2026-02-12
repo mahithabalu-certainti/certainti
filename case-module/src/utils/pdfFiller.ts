@@ -34,6 +34,9 @@ function processFieldData(data: FieldData[]): {
 } {
   const fieldMapping: { [key: string]: string | boolean } = {};
 
+  const looksLikeExpression = (value: string) =>
+    /#|\bIF\s*\(|\bTHEN\b|\bELSE\b/i.test(value);
+
   const normalizeValue = (value: any): string => {
     let stringValue = String(value).trim();
     if (
@@ -54,6 +57,11 @@ function processFieldData(data: FieldData[]): {
     const fieldType = item.field_type;
 
     if (fieldId && value !== null && value !== undefined) {
+      if (typeof value === "string" && looksLikeExpression(value)) {
+        logMessage(`Skipping unresolved expression for field: ${fieldId}`);
+        return;
+      }
+
       if (fieldType === "yes_no") {
         fieldMapping[fieldId] =
           normalizeValue(value).toLowerCase() === "yes";
