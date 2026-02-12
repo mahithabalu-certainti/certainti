@@ -219,6 +219,10 @@ export const STATUS_MESSAGE = {
   dossierPackageFetchedSuccess : "Dossier Package fetched successfully"
 };
 
+export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
+   "Australia":  `R&D Tax Incentive Schedule`
+};
+
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",
   ACCOUNT_FISCAL: "ACF",
@@ -319,7 +323,7 @@ export const rawQueries = {
     SELECT rid, first_name, last_name, email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${data}'`;
   },
   fetchAccountAndCountryDetails(accountRid: string) {
-    return `SELECT r_number, account_name, country_rid,c.country_code, currency_rid FROM ${MAIN_SCHEMA_NAME}.account 
+    return `SELECT r_number, account_name, country_rid,c.country_code,c.country_name, currency_rid FROM ${MAIN_SCHEMA_NAME}.account 
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON c.rid = account.country_rid
     WHERE account.rid = '${accountRid}'`;
   },

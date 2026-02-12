@@ -5,7 +5,7 @@ import { Logger } from "winston";
 import RdFormMapperSchemaService from "./schemaService";
 import { generateSasUrl, logMessage, uploadBufferToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
-import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { Kafka, Producer } from "kafkajs";
 import * as fs from "fs";
@@ -66,7 +66,11 @@ export class RdFormMapperService {
     mainDb: Sequelize,
     orgDb: Sequelize,
     schemaName: string,
-    fiscalYear:string
+    fiscalYear:string,
+    countryCode: string,
+    countryName: string,
+    stateName: string,
+    stateCode: string
   ): Promise<any> {
     logMessage("Processing Federal form computation.");
 
@@ -133,6 +137,7 @@ export class RdFormMapperService {
         accountRid,
         formInfo.browse_file,
         accountNumber,
+        caseRid,countryCode,true,countryName,stateName,fiscalYear
       );
     } else {
       logMessage("Federal form is fillable. Using PDF filler.");
@@ -180,6 +185,10 @@ export class RdFormMapperService {
     orgDb: Sequelize,
     states: string[],
     schemaName: string,
+    countryCode: string,
+    countryName: string,
+    stateName: string,
+    stateCode: string
   ): Promise<void> {
     logMessage(
       `Processing State form computation for states: ${states.join(", ")}`,
@@ -272,11 +281,18 @@ export class RdFormMapperService {
     accountRid: string,
     browseFile: string,
     accountNumber: string,
+    caseRid: string,
+    countryCode: string,
+    isFederal: boolean = false,
+    countryName: string,
+    stateName: string,
+    fiscalYear: string,
   ): Promise<string> {
     try {
       // Transform mapper config to extract data for PDF generation
       const formData = enhancedMapperConfig.reduce((acc: any, config: any) => {
-        acc[config.field_name || config.field_label] = config.value;
+        const label = config.field_name || config.field_label || "-";
+        acc[label] = config.value ?? "-";
         return acc;
       }, {});
 
@@ -285,7 +301,7 @@ export class RdFormMapperService {
       );
 
       // Generate unique filename
-      const fileName = `rd_form_${accountNumber}_${Date.now()}_${uuidv4().slice(0, 8)}.pdf`;
+      const fileName = `rd_form_${countryCode}_${Date.now()}_${uuidv4().slice(0, 8)}.pdf`;
 
       // Create PDF document in memory
       const doc = new PDFDocument({ margin: 50 });
@@ -305,24 +321,76 @@ export class RdFormMapperService {
       });
 
       try {
+        const pageWidth = doc.page.width;
+        const left = doc.page.margins.left;
+        const right = doc.page.margins.right;
+        const usableWidth = pageWidth - left - right;
+
         // Add header
-        doc.fontSize(16).text("R&D Tax Credit Form", { align: "center" });
+        const normalizedCountryName = countryName?.trim();
+        const headerTitle = normalizedCountryName
+          ? RD_FORM_HEADER_BY_COUNTRY[normalizedCountryName] ||
+            `R&D Tax Credit Form - ${normalizedCountryName}`
+          : "R&D Tax Credit Form";
+        doc.fontSize(16).text(headerTitle + '-' + fiscalYear, { align: "center" });
 
         doc.moveDown(1);
 
         // Add account information
-        doc.fontSize(12).text(`Account: ${accountNumber}`);
-        doc.text(`Account RID: ${accountRid}`);
+        doc.fontSize(12).text(`Country: ${countryName}`);
+        
+        if (!isFederal) {
+          doc.text(`State: ${stateName}`);
+        }
         doc.moveDown(1);
+        const colGap = 0;
+        const colFieldWidth = Math.floor(usableWidth * 0.65);
+        const colValueWidth = usableWidth - colFieldWidth - colGap;
+        const rowPadding = 2;
+        const headerHeight = doc.heightOfString("Field", {
+          width: colFieldWidth - rowPadding * 2,
+        }) + rowPadding * 2;
 
-        // Add form data
-        doc.fontSize(10).text("Form Data:", { underline: true });
-        doc.moveDown(0.5);
+        const drawRowBorders = (y: number, rowHeight: number) => {
+          const x1 = left;
+          const x2 = left + colFieldWidth;
+          doc.rect(x1, y, colFieldWidth, rowHeight).stroke();
+          doc.rect(x2 + colGap, y, colValueWidth, rowHeight).stroke();
+          doc.moveTo(x2, y).lineTo(x2, y + rowHeight).stroke();
+        };
 
-        // Add each field with its value
+
+        const ensureSpace = (neededHeight: number) => {
+          if (doc.y + neededHeight > doc.page.height - doc.page.margins.bottom) {
+            doc.addPage();
+          //  drawHeader();
+          }
+        };
+
+      //  drawHeader();
+
         Object.entries(formData).forEach(([fieldName, value]) => {
-          doc.text(`${fieldName}: ${value || "N/A"}`);
-          doc.moveDown(0.3);
+          const displayValue = value ?? "N/A";
+          const fieldHeight = doc.heightOfString(String(fieldName), {
+            width: colFieldWidth - rowPadding * 2,
+          });
+          const valueHeight = doc.heightOfString(String(displayValue), {
+            width: colValueWidth - rowPadding * 2,
+          });
+          const rowHeight = Math.max(fieldHeight, valueHeight) + rowPadding * 2;
+
+          ensureSpace(rowHeight);
+
+          const y = doc.y;
+          doc.text(String(fieldName), left + rowPadding, y + rowPadding, {
+            width: colFieldWidth - rowPadding * 2,
+          });
+          doc.text(String(displayValue), left + colFieldWidth + colGap + rowPadding, y + rowPadding, {
+            width: colValueWidth - rowPadding * 2,
+            align: "right",
+          });
+          drawRowBorders(y, rowHeight);
+          doc.y = y + rowHeight;
         });
 
         // Add footer
@@ -342,8 +410,14 @@ export class RdFormMapperService {
 
       // Wait for PDF generation to complete and get buffer
       const pdfBuffer = await pdfBufferPromise;
+      let blobName = `cases/${caseRid}/rdForms/${fileName}`;
+
       // Upload directly to blob storage from buffer
-      const blobUrl = await uploadBufferToAzureBlob(pdfBuffer, fileName, accountNumber);
+      const blobUrl = await uploadBufferToAzureBlob(
+        pdfBuffer,
+        blobName,
+        accountNumber,
+      );
 
       logMessage(`Non-fillable PDF generation completed. URL: ${blobUrl}`);
       return blobUrl;
@@ -1152,7 +1226,11 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             schemaName,
-            fiscalYear
+            fiscalYear,
+            fetchAccountCountryId[0].country_code,
+            fetchAccountCountryId[0].country_name,
+            '',
+            ''
           );
           this.processStateForms(
             accountRid,
@@ -1165,6 +1243,10 @@ export class RdFormMapperService {
             orgDb,
             availableConfig.states || [],
             schemaName,
+            fetchAccountCountryId[0].country_code,
+            fetchAccountCountryId[0].country_name,
+            '',
+            ''
           ).catch((error) => {
             this.logger.error(
               `Error processing state forms in background for case ${caseRid}:`,
@@ -1176,7 +1258,7 @@ export class RdFormMapperService {
         [ConfigType.FEDERAL_ONLY]: async () => {
           logMessage("Processing Federal forms only.");
           return await this.processFederalForms(
-            accountRid,
+              accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
             effectiveStart,
@@ -1185,7 +1267,11 @@ export class RdFormMapperService {
             mainDb,
             orgDb,
             schemaName,
-            fiscalYear
+            fiscalYear,
+            fetchAccountCountryId[0].country_code,
+            fetchAccountCountryId[0].country_name,
+            '',
+            ''
           );
         },
         [ConfigType.STATE_ONLY]: async () => {
@@ -1201,6 +1287,10 @@ export class RdFormMapperService {
             orgDb,
             availableConfig.states || [],
             schemaName,
+             fetchAccountCountryId[0].country_code,
+            fetchAccountCountryId[0].country_name,
+            '',
+            ''
           );
           return {
             statusCode: HttpStatus.SUCCESS,
@@ -1259,16 +1349,16 @@ export class RdFormMapperService {
         rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
         { type: "SELECT" },
       );
-      if (
-        !isFinancialSignOffDone ||
-        !isFinancialSignOffDone.financial_working_signoff
-      ) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-        };
-      }
+      // if (
+      //   !isFinancialSignOffDone ||
+      //   !isFinancialSignOffDone.financial_working_signoff
+      // ) {
+      //   return {
+      //     statusCode: HttpStatus.FAILED,
+      //     message: HttpStatus.FAILED_MESSAGE,
+      //     errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+      //   };
+      // }
 
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
@@ -1292,7 +1382,8 @@ export class RdFormMapperService {
         effectiveStart,
         effectiveEnd,
         schemaName,
-        accountNumber: fetchParentAccountRnumber[0][0].r_number
+        accountNumber: fetchParentAccountRnumber[0][0].r_number,
+        fiscalYear
       }
       return await this.processRdFormMapperRequests(payload);
     } catch (error) {
