@@ -1246,6 +1246,13 @@ const rdFormPreviewSchema = Joi.object({
   state_rid : Joi.string().max(255).optional().allow("", null)
 });
 
+const rdFormSignOffSchema = Joi.object({
+  account_rid : Joi.string().max(255).required(),
+  case_rid : Joi.string().max(255).required(),
+  comments: Joi.string().max(2000).optional().allow("", null),
+  sign_off: Joi.boolean().required()
+});
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -1313,5 +1320,6 @@ export {
   getObjectsListSchema,
   caseClosedListSchema,
   rdFormGenerationSchema,
-  rdFormPreviewSchema
+  rdFormPreviewSchema,
+  rdFormSignOffSchema
 };

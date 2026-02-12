@@ -206,6 +206,8 @@ export const STATUS_MESSAGE = {
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
+  rdFormSignedOff : "RD Form has been successfully approved",
+  rdFormSignOffFailed : "Failed to approve RD Form",
   regionsFetchedSuccess : "Regions listed successfully",
   userPreferenceUpdatedSuccess : "UserPreference updated successfully",
   userPreferenceUpdationFailed : "UserPreference updation failed",
@@ -221,6 +223,10 @@ export const STATUS_MESSAGE = {
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
    "Australia":  `R&D Tax Incentive Schedule`
+};
+
+export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
+  Australia: "AUD",
 };
 
 export const R_NUMBER_PREFIX = {
@@ -520,6 +526,9 @@ export const rawQueries = {
   },
   getCurrencyDetails(currencyRid: string) {
     return `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = '${currencyRid}'`;
+  },
+  getCurrencyByCode(currencyCode: string) {
+    return `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE currency_code = '${currencyCode}'`;
   },
   getPointOfContactId() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRole.pocName}'`;
@@ -1624,6 +1633,9 @@ export const rawQueries = {
   getProjectsForCases(caseRid: string, accountRid: string, schemaName: string) {
     return `SELECT rid, project_fiscal_rid, region_rid, fiscal_year FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
   },
+  updateRdFormSignOff(schemaName: string, caseRid: string, signOff: boolean) {
+    return `UPDATE ${schemaName}.cases SET rd_form_signoff = ${signOff} WHERE rid = '${caseRid}'`
+  },
   updateSignoffInCase(schemaName: string, caseRid: string, signOff: boolean) {
     return `UPDATE ${schemaName}.cases SET financial_working_signoff = ${signOff} WHERE rid = '${caseRid}'`
   },
@@ -1638,6 +1650,9 @@ export const rawQueries = {
   },
   getFinancialWorkingId () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%Financial Computation%'`
+  },
+  getRdFormSignOffId () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%RD Forms%'`
   },
   updateClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
     let ids = ProjectRegionIds.filter((d: any) => d.region_rid !== null)

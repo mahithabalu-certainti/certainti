@@ -416,7 +416,10 @@ class RDCreditSchemaService {
                 average_annual_gross_receipts: result.averageAnnualGrossReceipts,
                 prev_year1_qre: result.prev1yearQRE,
                 prev_year2_qre: result.prev2yearQRE,
-                prev_year3_qre: result.prev3yearQRE
+                prev_year3_qre: result.prev3yearQRE,
+                total_wages: result?.totalFTE,
+                total_supplies: result?.totalSubCon,
+                total_subcontract: result?.totalSubCon
             },
             {
                 returning: true

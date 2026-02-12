@@ -12,7 +12,7 @@ import {
 } from "../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import Configurations from "../config/config";
-import { rdFormGenerationSchema, rdFormPreviewSchema } from "../lib/joi/schemas/schema";
+import { rdFormGenerationSchema, rdFormPreviewSchema, rdFormSignOffSchema } from "../lib/joi/schemas/schema";
 const Services = Configurations.getInstance().getServices();
 const rdFormService = Services.rdFormMapperService;
 
@@ -20,7 +20,8 @@ async function processRdFormMapperRequests(req: Request, res: Response) {
   const methodName = "processKafkaMessages";
   try {
     //  logMessage(`[${methodName}] Processing Kafka messages data: ${JSON.stringify(req)}`);
-    const result = await rdFormService.initiateRDFormFillerProcess(req.body.account_rid, req.body.case_rid, req.body.fiscal_year);
+    const value = await validateRequest(req, rdFormGenerationSchema, res);
+    const result = await rdFormService.initiateRDFormFillerProcess(value.account_rid, value.case_rid, value.fiscal_year);
     if(result.statusCode !== HttpStatus.SUCCESS){
       return res.status(result.statusCode).json({
         statusCode: result.statusCode,
@@ -41,6 +42,50 @@ async function processRdFormMapperRequests(req: Request, res: Response) {
   }
 }
 
+async function signOffRdForms(req : Request, res : Response) {
+    const methodName = "signOffRdForms";
+    try {
+       const value = await validateRequest(req, rdFormSignOffSchema, res);
+       const userId = req.headers["x-user-id"] as string;
+        if (!userId) {
+            errorLog(methodName, "User ID is required in headers");
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+            return;
+        }
+        const data = value;
+        data.userId = userId;
+        const result = await rdFormService.signOffRdForms(data, req.file);
+        if(result.statusCode === HttpStatus.SUCCESS) {
+            return res.status(HttpStatus.SUCCESS).json({
+                statusCode : HttpStatus.SUCCESS,
+                statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+                statusMessage : result.statusMessage
+            })
+        } else if (result.statusCode === HttpStatus.FAILED) {
+            return res.status(HttpStatus.FAILED).json({
+                statusCode : HttpStatus.FAILED,
+                statusCodeValue : HttpStatus.FAILED_MESSAGE,
+                statusMessage : result.statusMessage
+            })
+        } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                statusCode : HttpStatus.BAD_REQUEST,
+                statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+                statusMessage : result.statusMessage
+            })
+        }
+    } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 
 
 async function getRdFormMapperResults(
@@ -108,5 +153,6 @@ async function getRdFormMapperResults(
 
 export default {
   processRdFormMapperRequests,
-  getRdFormMapperResults
+  getRdFormMapperResults,
+  signOffRdForms
 };

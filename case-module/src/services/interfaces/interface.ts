@@ -829,5 +829,9 @@ export interface IRDFormMapperService {
     errorMessage?: string;
     data?: any;
   }>;
+  signOffRdForms(data: any, file: any): Promise<{
+    statusCode: number;
+    statusMessage: string;
+  }>;
 
 }
