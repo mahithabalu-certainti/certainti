@@ -83,7 +83,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
 
   useEffect(() => {
     if (setExportType) {
-      setExportType('dossier-resource-summary');
+      setExportType('dossier-audit-timeline');
     }
     setExportParams?.({
       sortBy: tableParams.sortBy,

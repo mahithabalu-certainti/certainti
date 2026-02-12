@@ -484,13 +484,13 @@ export interface FormField {
   id: string;
   label: string;
   type:
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'select'
-    | 'textarea'
-    | 'checkbox'
-    | 'date';
+  | 'text'
+  | 'number'
+  | 'email'
+  | 'select'
+  | 'textarea'
+  | 'checkbox'
+  | 'date';
   required?: boolean;
   editable?: boolean;
   hide?: boolean;
@@ -536,7 +536,8 @@ export type ExportType =
   | 'dossier-technical-summary'
   | 'dossier-resource-summary'
   | 'dossier-project-documents'
-  | 'dossier-qualified-projects';
+  | 'dossier-qualified-projects'
+  | 'dossier-audit-timeline';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

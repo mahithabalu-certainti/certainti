@@ -232,6 +232,9 @@ export const ExportCaseList = async (
 export const getCasesProjectExportUrl = () =>
   '/api/cases/assignedProjects/export';
 
+export const getAuditTimelineExportUrl = () =>
+  '/api/cases/closureRemarks/export';
+
 export const getCaseTaskExportUrl = () => '/api/cases/task/export';
 
 export const ExportAssignedList = async (
@@ -242,6 +245,46 @@ export const ExportAssignedList = async (
     const filename = `${fileName || 'case-projects'}.xlsx`;
     const response = await caseServiceApi.post<CaseExportResponse>(
       getCasesProjectExportUrl(),
+      params
+    );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+    if (typeof base64Data !== 'string' || !base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+export const ExportAuditTimelineList = async (
+  params: CaseAssignedExportParams,
+  fileName?: string
+): Promise<void> => {
+  try {
+    const filename = `${fileName || 'audit-timeline'}.xlsx`;
+    const response = await caseServiceApi.post<CaseExportResponse>(
+      getAuditTimelineExportUrl(),
       params
     );
     const base64Data = response.data?.data;

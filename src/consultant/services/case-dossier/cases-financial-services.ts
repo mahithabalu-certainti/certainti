@@ -188,13 +188,14 @@ export const fetchDossierInitiate = async (
 export const useDossierInitiate = (
   accountRid: string,
   caseRid: string,
+  enabled: boolean = true
 ): UseQueryResult<RDCreditStatusResponse, Error> => {
   return useQuery<RDCreditStatusResponse, Error>({
     queryKey: ['dossierInitiate', accountRid, caseRid],
     queryFn: () => fetchDossierInitiate(accountRid, caseRid),
     retry: 0,
     gcTime: 0,
-    enabled: !!accountRid && !!caseRid,
+    enabled: !!accountRid && !!caseRid && enabled,
   });
 };
 export const fetchDossierSheetStatus = async (
@@ -209,12 +210,13 @@ export const fetchDossierSheetStatus = async (
 export const useDossierSheetStatus = (
   accountRid: string,
   caseRid: string,
+  enabled: boolean = true
 ): UseQueryResult<RDCreditStatusResponse, Error> => {
   return useQuery<RDCreditStatusResponse, Error>({
     queryKey: ['dossierSheetStatus', accountRid, caseRid],
     queryFn: () => fetchDossierSheetStatus(accountRid, caseRid),
     retry: 0,
     gcTime: 0,
-    enabled: !!accountRid && !!caseRid,
+    enabled: !!accountRid && !!caseRid && enabled,
   });
 };

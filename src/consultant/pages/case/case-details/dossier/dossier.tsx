@@ -89,6 +89,7 @@ interface DossierProps {
   setTechnicalSummaryParams?: (
     params: TechnicalSummaryExportListParams
   ) => void;
+  setAuditTimelineParams?: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -106,6 +107,7 @@ const Dossier: React.FC<DossierProps> = ({
   setProjectDocumentsParams,
   setResourceSummaryParams,
   setTechnicalSummaryParams,
+  setAuditTimelineParams,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -206,10 +208,12 @@ const Dossier: React.FC<DossierProps> = ({
   const { refetch: refetchDossierInitiate } = useDossierInitiate(
     accountid,
     caseId ?? '',
+    false
   );
   const { refetch: refetchDossierSheetStatus } = useDossierSheetStatus(
     accountid,
     caseId ?? '',
+    false
   );
 
   const handleStatusUpdate = (
@@ -569,7 +573,7 @@ const Dossier: React.FC<DossierProps> = ({
               currentPage={currentPage}
               appliedFilters={appliedFilters}
               setCount={setCount}
-              setExportParams={() => { }}
+              setExportParams={setAuditTimelineParams}
               setExportType={setExportType}
               columnAnchorEl={columnAnchorEl}
               setColumnAnchorEl={setColumnAnchorEl}

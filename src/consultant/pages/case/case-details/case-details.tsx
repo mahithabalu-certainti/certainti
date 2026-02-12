@@ -14,6 +14,7 @@ import {
 } from 'react-router-dom';
 import {
   ExportAssignedList,
+  ExportAuditTimelineList,
   ExportCaseTaskList,
   useCaseDetails,
 } from '../../../services/cases/case-service';
@@ -196,6 +197,17 @@ export const CaseDetails = () => {
       case_rid: caseId ?? '',
       account_id: accountId ?? '',
     });
+  const [auditTimelineParams, setAuditTimelineParams] = useState({
+    sort: 'signoff_date',
+    sort_by: 'ASC' as 'ASC' | 'DESC',
+    filter: {},
+    timezone: '',
+    page: 1,
+    limit: 10,
+    search: '',
+    case_rid: caseId ?? '',
+    account_id: accountId ?? '',
+  });
   const [caseTaskParams, setCaseTaskParams] = useState({
     sort: 'task_name',
     sort_by: 'ASC' as 'ASC' | 'DESC',
@@ -556,7 +568,11 @@ export const CaseDetails = () => {
         caseId,
         exportType === 'dossier-resource-summary' ? 'resource-summary' : ''
       );
-    } else if (list === 'financialHighlights') {
+    }
+    else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
+      ExportAuditTimelineList(auditTimelineParams);
+    }
+    else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
         exportFinancialProjectCost(financialProjectCostParams);
       } else if (exportType === 'financial_resource_cost') {
@@ -650,6 +666,8 @@ export const CaseDetails = () => {
         return !isProjectResourceExportEnable;
       } else if (dossierTab === 'technical_summary') {
         return !technicalSummaryExportEnable;
+      } else if (dossierTab === 'audit_timeline') {
+        return false;
       }
       return true;
     } else if (searchParams.get('tab') === 'case_task') {
@@ -954,6 +972,7 @@ export const CaseDetails = () => {
             setProjectDocumentsParams={setAttachmentParams}
             setResourceSummaryParams={setProjectResourceParams}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
+            setAuditTimelineParams={setAuditTimelineParams}
           />
         );
       default:
