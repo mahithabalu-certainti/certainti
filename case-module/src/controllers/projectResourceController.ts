@@ -260,7 +260,8 @@ async function exportProjectResource(
         value.sortBy,
         value.sortOrder,
         userId,
-        value.search
+        value.search,
+        value.type
       );
 
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
