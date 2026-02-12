@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Select, MenuItem } from '@mui/material';
 import { CaseDetails } from '../../../../../../types';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { useFetchState } from '../../../../../../services/account';
 import { AllPermissions } from '../../../../../../../common-service';
@@ -10,10 +10,14 @@ import PdfViewer from './pdf-viewer';
 import { useParams, useSearchParams } from 'react-router';
 import { SectionHeaderTab } from '../../../../../../../components';
 import {
-  useRDFormMapperGenerate,
-  useRDFormMapperPreview,
+  useRDFormMapperGenerateMutation,
+  useRDFormMapperPreviewMutation,
 } from '../../../../../../services/case-dossier/case-dossier-service';
 import DetailsSectionSkeleton from '../../../../../../../components/skeleton-component/detailsskeleton';
+import { setRdformGenerateStatus as setRdformGenerateStatusAction } from '../../../../../../../store/slices/account-slice';
+import { useToast } from '../../../../../../../hooks';
+import { RDFormResponse } from '../../../../../../types';
+import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
@@ -44,39 +48,123 @@ const RDForm: React.FC<RDFormProps> = ({
     country_code: caseDetails?.country_code || '',
     country_id: caseDetails?.country_rid || '',
   };
-
-  const { isLoading, isSuccess: isGenerateSuccess } = useRDFormMapperGenerate(
-    accountid,
-    caseId ?? '',
-    caseDetails?.fiscal_year,
-    !!isFinancialWorkingSignoff
+  const dispatch = useDispatch();
+  const { rdformGenerateStatus } = useSelector(
+    (state: RootState) => state.account
   );
-
-  const isFederal = activeTab === 'federal';
-  const {
-    data: previewData,
-    isLoading: isPreviewLoading,
-    isError: isPreviewError,
-  } = useRDFormMapperPreview(
-    accountid,
-    caseId ?? '',
-    caseCountryDetails.country_id,
-    isFederal,
-    selectedRegion || undefined,
-    isGenerateSuccess
+  const { data } = useFetchCasesConfigFields(
+    accountid as string,
+    'case',
+    caseId as string
   );
+  const configDetails = data?.data.states;
+  const [previewData, setPreviewData] = useState<RDFormResponse | null>(null);
+  const [isPreviewError, setIsPreviewError] = useState<boolean>(false);
+  const { successToast, errorToast } = useToast();
 
-  const region = useFetchState(caseDetails?.country_rid || '');
+  const setRdformGenerateStatus = (status: boolean) => {
+    dispatch(setRdformGenerateStatusAction(status));
+  };
 
-  const regionListOptions = useMemo(
-    () =>
-      region.data?.data.states.map((state) => ({
+  const { mutate: generateRDForm, isPending: isGenerating } =
+    useRDFormMapperGenerateMutation();
+  const { mutate: previewRDForm, isPending: isPreviewLoading } =
+    useRDFormMapperPreviewMutation();
+
+  const handleRDFormMapperGenerate = async () => {
+    generateRDForm(
+      {
+        accountRid: accountid,
+        caseRid: caseId ?? '',
+        fiscalYear: Number(caseDetails?.fiscal_year || 0),
+      },
+      {
+        onSuccess: (data) => {
+          if (data.statusCode === 200) {
+            setRdformGenerateStatus(true);
+            successToast(data.statusMessage || 'RD Form generated successfully');
+          }
+        },
+        onError: (error) => {
+          console.error('Error generating RD form', error);
+          errorToast('Failed to generate RD form');
+        },
+      }
+    );
+  };
+
+  const handleRDFormMapperPreview = async () => {
+    setIsPreviewError(false);
+    previewRDForm(
+      {
+        accountRid: accountid,
+        caseRid: caseId ?? '',
+        countryRid: caseCountryDetails.country_id,
+        isFederal: activeTab === 'federal',
+        stateRid: selectedRegion || undefined,
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.data) {
+            setPreviewData(response);
+          } else {
+            setPreviewData(null);
+            setIsPreviewError(true);
+            errorToast('No preview available');
+          }
+        },
+        onError: (error) => {
+          console.error(error);
+          setPreviewData(null);
+          setIsPreviewError(true);
+          errorToast('Failed to fetch RD form preview');
+        },
+      }
+    );
+  };
+
+  // Auto-initiate Generate if not already done
+  useEffect(() => {
+    if (
+      !rdformGenerateStatus &&
+      isFinancialWorkingSignoff &&
+      caseDetails?.case_total_projects &&
+      caseDetails?.case_total_projects !== 0 &&
+      caseDetails?.case_total_projects !== '0'
+    ) {
+      handleRDFormMapperGenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFinancialWorkingSignoff, rdformGenerateStatus, caseDetails]);
+
+  // Call Preview when status is true or tab/region changes
+  useEffect(() => {
+    if (rdformGenerateStatus) {
+      handleRDFormMapperPreview();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rdformGenerateStatus, activeTab, selectedRegion]);
+
+
+  const region = useFetchState(caseDetails?.country_rid || '', 'active');
+
+  const regionListOptions = useMemo(() => {
+    const states = region.data?.data.states || [];
+    if (Array.isArray(configDetails) && configDetails.length > 0) {
+      return states
+        .filter((state) => configDetails.includes(state.rid))
+        .map((state) => ({
+          label: state.state_name,
+          value: state.rid,
+        }));
+    }
+    return (
+      states.map((state) => ({
         label: state.state_name,
         value: state.rid,
-      })) || [],
-    [region.data?.data.states]
-  );
-
+      })) || []
+    );
+  }, [region.data?.data.states, configDetails]);
   // Auto-select first region when switching to state-wise tab
   useEffect(() => {
     if (
@@ -128,7 +216,7 @@ const RDForm: React.FC<RDFormProps> = ({
     }
   };
 
-  if (isDetailLoading || isLoading) {
+  if (isDetailLoading || isGenerating) {
     return <DetailsSectionSkeleton sectionCount={2} />;
   }
 
@@ -161,7 +249,7 @@ const RDForm: React.FC<RDFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                !accountPermissionMap?.['country_rid']?.edit
+                  !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -177,10 +265,9 @@ const RDForm: React.FC<RDFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
-                errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-              }`}
+                }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -196,7 +283,7 @@ const RDForm: React.FC<RDFormProps> = ({
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
+                    !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -215,9 +302,8 @@ const RDForm: React.FC<RDFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
               >

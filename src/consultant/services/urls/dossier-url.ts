@@ -73,10 +73,10 @@ export const getUserPreferenceURL = (): string => {
 };
 
 export const getClosingRemarksListURL = (
-  accountRid: string,
-  caseRid: string
+  // accountRid: string,
+  // caseRid: string
 ): string => {
-  return `/api/cases/closureRemarks/${accountRid}/${caseRid}`;
+  return `/api/cases/closureRemarks`;
 };
 
 export const getRDFormMapperURL = (): string => {
@@ -103,4 +103,18 @@ export const getRDFormMapperPreviewURL = (
     url += `&state_rid=${stateRid}`;
   }
   return url;
+};
+
+
+export const getDossierInitiateURL = (
+  accountRid: string,
+  caseRid: string
+): string => {
+  return `/api/dossier/initiate/${accountRid}/${caseRid}`;
+};
+export const getDossierSheetStatusURL = (
+  accountRid: string,
+  caseRid: string
+): string => {
+  return `/api/cases/dossierPackage/${accountRid}/${caseRid}`;
 };

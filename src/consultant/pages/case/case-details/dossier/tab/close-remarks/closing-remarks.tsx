@@ -48,13 +48,17 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
   const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'resource_code',
+    sortBy: 'signoff_at',
     sortOrder: 'ASC',
   });
 
   const { data, isLoading, isError } = useClosingRemarksList(
-    accountId,
-    caseId ?? '',
+    {
+      case_rid: caseId ?? '',
+      account_rid: accountId ?? '',
+      sort: tableParams.sortBy,
+      sort_by: tableParams.sortOrder,
+    },
     refreshTrigger
   );
 

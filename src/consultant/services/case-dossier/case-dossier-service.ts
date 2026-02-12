@@ -6,6 +6,7 @@ import {
   ClosingRemarksItems,
   ClosingRemarksResponse,
   RDFormResponse,
+  ClosingRemarksParams,
 } from '../../types';
 import {
   ResourceSummaryMockData,
@@ -116,11 +117,11 @@ export const downloadPdfFromBase64 = (
 
 // closing remarks list
 export const fetchClosingRemarksList = async (
-  accountid: string,
-  caseid: string
+  params: ClosingRemarksParams,
 ): Promise<{ closingRemarks: ClosingRemarksItems[]; count: number }> => {
-  const response = await caseServiceApi.get<ClosingRemarksResponse>(
-    getClosingRemarksListURL(accountid, caseid)
+  const response = await caseServiceApi.post<ClosingRemarksResponse>(
+    getClosingRemarksListURL(),
+    params
   );
   return {
     closingRemarks: response.data.data.closing_remarks,
@@ -129,8 +130,7 @@ export const fetchClosingRemarksList = async (
 };
 
 export const useClosingRemarksList = (
-  accountId: string,
-  caseId: string,
+  params: ClosingRemarksParams,
   refreshList?: number
 ): UseQueryResult<
   { closingRemarks: ClosingRemarksItems[]; count: number },
@@ -140,11 +140,11 @@ export const useClosingRemarksList = (
     { closingRemarks: ClosingRemarksItems[]; count: number },
     Error
   >({
-    queryKey: ['closing-remarks-list', accountId, caseId, refreshList],
-    queryFn: () => fetchClosingRemarksList(accountId, caseId),
+    queryKey: ['closing-remarks-list', params, refreshList],
+    queryFn: () => fetchClosingRemarksList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!accountId && !!caseId,
+    enabled: !!params.case_rid && !!params.account_rid,
   });
 };
 
@@ -158,8 +158,9 @@ export const fetchRDFormMapperGenerate = async (
   statusCodeValue: string;
   statusMessage: string;
 }> => {
-  const response = await caseServiceApi.get(
-    `/api/rdFormMapper/rdForms/generate?account_rid=${accountRid}&case_rid=${caseRid}&fiscal_year=${fiscalYear}`
+  const response = await caseServiceApi.post(
+    `/api/rdFormMapper/generate`,
+    { account_rid: accountRid, case_rid: caseRid, fiscal_year: fiscalYear } // moved to payload
   );
   return response.data;
 };

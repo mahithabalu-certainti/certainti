@@ -14,5 +14,6 @@ export interface AccountState {
   fiscalYear: string;
   refetchGlobalAccounts: boolean;
   dossierFinancialStatus: boolean;
+  rdformGenerateStatus: boolean;
   financialData: FinancialHighlightsResponse | null;
 }

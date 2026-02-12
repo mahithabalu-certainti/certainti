@@ -265,6 +265,14 @@ export type ClosingRemarksItems = {
   signoff_at: string;
   rid: string;
 };
+
+export interface ClosingRemarksParams {
+  case_rid: string;
+  account_rid: string;
+  sort: string;
+  sort_by: string;
+}
+
 export interface ClosingRemarksResponse {
   statusCode: number;
   statusCodeValue: string;

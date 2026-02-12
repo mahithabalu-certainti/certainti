@@ -16,6 +16,8 @@ import {
   getSignOffFinancialHighlightsURL,
   getUserPreferenceURL,
   getRDFormMapperURL,
+  getDossierInitiateURL,
+  getDossierSheetStatusURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -170,5 +172,49 @@ export const getUserPreference = async (
 export const useUserPreference = () => {
   return useMutation<RDCreditInitiateResponse, Error, UserPreferencePayload>({
     mutationFn: (payload: UserPreferencePayload) => getUserPreference(payload),
+  });
+};
+
+
+export const fetchDossierInitiate = async (
+  accountRid: string,
+  caseRid: string
+): Promise<RDCreditStatusResponse> => {
+  const url = getDossierInitiateURL(accountRid, caseRid);
+  const response = await caseServiceApi.get(url);
+  return response.data;
+};
+
+export const useDossierInitiate = (
+  accountRid: string,
+  caseRid: string,
+): UseQueryResult<RDCreditStatusResponse, Error> => {
+  return useQuery<RDCreditStatusResponse, Error>({
+    queryKey: ['dossierInitiate', accountRid, caseRid],
+    queryFn: () => fetchDossierInitiate(accountRid, caseRid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid,
+  });
+};
+export const fetchDossierSheetStatus = async (
+  accountRid: string,
+  caseRid: string
+): Promise<RDCreditStatusResponse> => {
+  const url = getDossierSheetStatusURL(accountRid, caseRid);
+  const response = await caseServiceApi.get(url);
+  return response.data;
+};
+
+export const useDossierSheetStatus = (
+  accountRid: string,
+  caseRid: string,
+): UseQueryResult<RDCreditStatusResponse, Error> => {
+  return useQuery<RDCreditStatusResponse, Error>({
+    queryKey: ['dossierSheetStatus', accountRid, caseRid],
+    queryFn: () => fetchDossierSheetStatus(accountRid, caseRid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid,
   });
 };

@@ -39,7 +39,7 @@ import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { useToast } from '../../../../../hooks';
-import { useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
+import { useDossierInitiate, useDossierSheetStatus, useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
 import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
 import { useFetchState } from '../../../../services/account';
 import {
@@ -124,7 +124,7 @@ const Dossier: React.FC<DossierProps> = ({
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
-
+  const [dossierCreditStatus, setDossierCreditStatus] = useState<string>('');
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -203,6 +203,14 @@ const Dossier: React.FC<DossierProps> = ({
     caseId ?? '',
     false
   );
+  const { refetch: refetchDossierInitiate } = useDossierInitiate(
+    accountid,
+    caseId ?? '',
+  );
+  const { refetch: refetchDossierSheetStatus } = useDossierSheetStatus(
+    accountid,
+    caseId ?? '',
+  );
 
   const handleStatusUpdate = (
     statusData: RDCreditStatusResponse,
@@ -219,10 +227,10 @@ const Dossier: React.FC<DossierProps> = ({
   };
 
   const handleRefresh = async () => {
-    if (tabParam === 'financial_workings') {
+    if (dossierCreditStatus === 'COMPLETED') {
       const result = await refetchRDCreditStatus();
       if (result.data) {
-        handleStatusUpdate(result.data, 'refresh');
+        handleStatusUpdate(result.data);
       }
     } else {
       setRefreshTrigger(Date.now());
@@ -276,6 +284,17 @@ const Dossier: React.FC<DossierProps> = ({
       })) || [],
     [resourceStatusOptions?.data?.data?.resourceStatus]
   );
+
+  const handleGenerateDossierSheet = async () => {
+    if (dossierCreditStatus === 'COMPLETED') {
+      refetchDossierSheetStatus();
+    } else {
+      const result = await refetchDossierInitiate();
+      if (result.data) {
+        setDossierCreditStatus('COMPLETED');
+      }
+    }
+  };
 
   const technicalSummaryViewEditFields = useMemo(
     () =>
@@ -379,6 +398,14 @@ const Dossier: React.FC<DossierProps> = ({
       variant: 'outlined' as const,
       disabled: false,
       onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: !showTableControls,
+    },
+    {
+      label: dossierCreditStatus === 'COMPLETED' ? 'Download Dossier' : 'Initiate Dossier',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleGenerateDossierSheet,
       sx: { width: '125px', minWidth: '125px' },
       hide: !showTableControls,
     },
