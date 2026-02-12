@@ -49,7 +49,12 @@ export class RdCreditCalculatorForMA {
             inputFields,
             computedFields,
             finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit),
-            totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre)
+            totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre),
+            totalSubCon: this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
+            totalFTE: this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
+            prev1yearQRE: this.round2(stateRdData.prior3YearsQREs[0]?.qre || 0),
+            prev2yearQRE: this.round2(stateRdData.prior3YearsQREs[1]?.qre || 0),
+            prev3yearQRE: this.round2(stateRdData.prior3YearsQREs[2]?.qre || 0), averageAnnualGrossReceipts: this.round2(part3CreditCalInfo.avg_total_previous_receipts)
         }
 
     }

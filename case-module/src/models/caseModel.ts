@@ -32,7 +32,8 @@ interface CaseAttributes {
   submitted_datetime?: Date;
   approved_datetime?: Date;
   tax_liability?: number;
-  financial_working_signoff? : boolean
+  financial_working_signoff? : boolean;
+  rd_form_signoff?:boolean;
   employers_pension_contribution? : number
   other? : number
   material_software_cost? : number;
@@ -92,7 +93,8 @@ export class Case
   public total_nonlabor_cost?: number;
   public heat_light_power?: number;
   public tax_liability?: number;
-  public financial_working_signoff? : boolean
+  public financial_working_signoff? : boolean;
+  public rd_form_signoff?: boolean;
   public employers_pension_contribution? : number
   public other? : number
   public material_software_cost? : number;
@@ -164,6 +166,7 @@ export class Case
         heat_light_power: { type: DataTypes.DECIMAL, allowNull: true },
         tax_liability: { type: DataTypes.DECIMAL, allowNull: true },
         financial_working_signoff : {type : DataTypes.BOOLEAN, defaultValue : false},
+        rd_form_signoff : {type : DataTypes.BOOLEAN, defaultValue : false},
         employers_pension_contribution : {type : DataTypes.DECIMAL, allowNull : true},
         other : {type : DataTypes.DECIMAL, allowNull : true},
         material_software_cost : {type : DataTypes.DECIMAL, allowNull : true},

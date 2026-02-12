@@ -177,15 +177,38 @@ export class RdFormMapperService {
       );
     } else {
       logMessage("Federal form is fillable. Using PDF filler.");
-      filledFormUrl = await pdfFiller(
-        enhancedMapperConfig,
-        accountRid,
-        formInfo.browse_file,
-        accountNumber,
-        countryCode,
-        stateCode || '',
-        caseRid,
-      );
+      try {
+        filledFormUrl = await pdfFiller(
+          enhancedMapperConfig,
+          accountRid,
+          formInfo.browse_file,
+          accountNumber,
+          countryCode,
+          stateCode || '',
+          caseRid,
+        );
+      } catch (error) {
+        logMessage(
+          `Federal PDF fill failed. Falling back to non-fillable PDF generation. Error: ${error}`,
+        );
+        const currencySymbol = await this.getCurrencySymbolByCountry(
+          countryName,
+          mainDb,
+        );
+        filledFormUrl = await this.generatePDFNonFillable(
+          enhancedMapperConfig,
+          accountRid,
+          formInfo.browse_file,
+          accountNumber,
+          caseRid,
+          countryCode,
+          true,
+          countryName,
+          stateName,
+          fiscalYear,
+          currencySymbol,
+        );
+      }
     }
 
     logMessage(
@@ -224,6 +247,7 @@ export class RdFormMapperService {
     orgDb: Sequelize,
     states: string[],
     schemaName: string,
+    fiscalYear: string,
     countryCode: string,
     countryName: string,
     stateName: string,
@@ -234,6 +258,7 @@ export class RdFormMapperService {
     );
 
     for (const state of states) {
+      logMessage(`Starting state form processing for state: ${state}`);
       logMessage(`Processing form for state: ${state}`);
 
       const formInfo = await this.rdFormMapperSchemaService.getStateForms(
@@ -245,7 +270,7 @@ export class RdFormMapperService {
         effectiveEnd,
       );
 
-      if (!formInfo?.browse_file) {
+      if (!formInfo?.browse_file || !formInfo?.rid) {
         await this.rdFormMapperSchemaService.updateStateFormError(
           caseRid,
           countryRid,
@@ -253,6 +278,10 @@ export class RdFormMapperService {
           orgDb,
           accountNumber,
         );
+        logMessage(
+          `No state form found for ${state}. Browse file URL: ${formInfo?.browse_file}`,
+        );
+        continue;
       }
 
       logMessage(
@@ -286,19 +315,68 @@ export class RdFormMapperService {
           countryRid,
         );
 
-      const filledFormUrl = await pdfFiller(
+      let filledFormUrl: string;
+      if (
+      formInfo?.form_type === "non-fillable" ||
+      formInfo?.form_type === "non_fillable" ||
+      formInfo?.form_type === "nonfillable"
+    ) {
+      logMessage("Federal form is non-fillable. Generate PDF.");
+      const currencySymbol = await this.getCurrencySymbolByCountry(
+        countryName,
+        mainDb,
+      );
+      filledFormUrl = await this.generatePDFNonFillable(
         enhancedMapperConfig,
         accountRid,
         formInfo.browse_file,
         accountNumber,
-        countryCode,
-        stateCode || '',
         caseRid,
+        countryCode,
+        true,
+        countryName,
+        stateName,
+        fiscalYear,
+        currencySymbol,
       );
+    } else {
+      try {
+        filledFormUrl = await pdfFiller(
+          enhancedMapperConfig,
+          accountRid,
+          formInfo.browse_file,
+          accountNumber,
+          countryCode,
+          stateCode || '',
+          caseRid,
+        );
+      } catch (error) {
+        logMessage(
+          `PDF fill failed for state ${state}. Falling back to non-fillable PDF generation. Error: ${error}`,
+        );
+        const currencySymbol = await this.getCurrencySymbolByCountry(
+          countryName,
+          mainDb,
+        );
+        filledFormUrl = await this.generatePDFNonFillable(
+          enhancedMapperConfig,
+          accountRid,
+          formInfo.browse_file,
+          accountNumber,
+          caseRid,
+          countryCode,
+          false,
+          countryName,
+          stateName || state,
+          fiscalYear,
+          currencySymbol,
+        );
+      }
 
       logMessage(
         `State PDF form filling completed for ${state}. Filled form URL: ${filledFormUrl}`,
       );
+    }
 
       await this.rdFormMapperSchemaService.saveStateFilledFormUrl(
         caseRid,
@@ -812,7 +890,6 @@ export class RdFormMapperService {
 
     if (calcConfig && typeof calcConfig === "object" && !Array.isArray(calcConfig)) {
       const orderedTokens = Object.keys(calcConfig)
-        .sort((a, b) => Number(a) - Number(b))
         .map((key) => String(calcConfig[key]).trim());
 
       const hasOperator = orderedTokens.some((token) =>
@@ -834,30 +911,45 @@ export class RdFormMapperService {
           ["min", "max"].includes(token.toLowerCase()),
         );
 
+        const operatorMap: Record<string, string> = {
+          add: "+",
+          sub: "-",
+          subtract: "-",
+          mul: "*",
+          multiply: "*",
+          div: "/",
+          divide: "/",
+        };
+
+        const buildLeftToRight = (tokens: string[]) => {
+          if (tokens.length < 3 || tokens.length % 2 === 0) {
+            return null;
+          }
+          let expr = tokens[0];
+          for (let i = 1; i < tokens.length; i += 2) {
+            const opToken = tokens[i];
+            const rhs = tokens[i + 1];
+            if (!opToken || !rhs) {
+              return null;
+            }
+            const op = operatorMap[opToken.toLowerCase()];
+            if (!op) {
+              return null;
+            }
+            expr = `(${expr} ${op} ${rhs})`;
+          }
+          return expr;
+        };
+
         const expression = minMaxToken
           ? `${minMaxToken.toLowerCase()}(${orderedTokens
               .filter(
                 (token) => !["min", "max"].includes(token.toLowerCase()),
               )
               .join(", ")})`
-          : orderedTokens
-              .map((token) => {
-                switch (token.toLowerCase()) {
-                  case "add":
-                    return "+";
-                  case "sub":
-                  case "subtract":
-                    return "-";
-                  case "mul":
-                  case "multiply":
-                    return "*";
-                  case "div":
-                  case "divide":
-                    return "/";
-                  default:
-                    return token;
-                }
-              })
+          : buildLeftToRight(orderedTokens) ||
+            orderedTokens
+              .map((token) => operatorMap[token.toLowerCase()] || token)
               .join(" ");
 
         value = expression;
@@ -1368,6 +1460,19 @@ export class RdFormMapperService {
         break;
       }
     }
+
+    const looksLikeExpression = (value: string) =>
+      /#|\bIF\s*\(|\bTHEN\b|\bELSE\b/i.test(value);
+
+    enhancedConfigs.forEach((item) => {
+      if (typeof item.value !== "string") return;
+      if (!looksLikeExpression(item.value)) return;
+
+      logMessage(
+        `Clearing unresolved expression for field ${item.field_label || item.field_id}: ${item.value}`,
+      );
+      item.value = "";
+    });
     return enhancedConfigs;
   }
 
@@ -1443,6 +1548,7 @@ export class RdFormMapperService {
             orgDb,
             availableConfig.states || [],
             schemaName,
+            fiscalYear,
             fetchAccountCountryId[0].country_code,
             fetchAccountCountryId[0].country_name,
             '',
@@ -1487,6 +1593,7 @@ export class RdFormMapperService {
             orgDb,
             availableConfig.states || [],
             schemaName,
+            fiscalYear,
              fetchAccountCountryId[0].country_code,
             fetchAccountCountryId[0].country_name,
             '',
