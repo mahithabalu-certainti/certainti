@@ -5,39 +5,39 @@ import {
 } from '../../../../../common-service';
 import {
   ActivityDropdownItem,
+  CaseAssignedExportParams,
   CaseDetails,
   ColorCode,
+  ExportType,
   FinancialHighlightsResponse,
-  RDCreditStatusResponse,
+  TechnicalSummaryExportListParams,
 } from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import {
-  ComingSoon,
-  DetailsKeyContactErrorIcon,
-  DossierIcon,
-} from '../../../../../assets';
+import { DetailsKeyContactErrorIcon, DossierIcon } from '../../../../../assets';
 import {
   DossierSummary,
   FinancialWorkingForm,
   ProjectDocuments,
-  ProjectSummary,
+  TechnicalSummary,
   QualifiedProjects,
   RDForm,
   ResourceSummary,
 } from './tab';
 import {
   getProjectDocumentsFilterFields,
-  getProjectSummaryFilterFields,
   getQualifiedProjectsFilterFields,
 } from './helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { useToast } from '../../../../../hooks';
-import { useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
+import {
+  useDossierInitiate,
+  useDossierSheetStatus,
+  useRDCreditStatus,
+} from '../../../../services/case-dossier/cases-financial-services';
 import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
 import { useFetchState } from '../../../../services/account';
 import {
@@ -46,6 +46,9 @@ import {
 } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
 import ClosingRemarks from './tab/close-remarks/closing-remarks';
+import { AttachmentsListExportParams } from '../../../../types/attachment';
+import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
+import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
 
 const DossierTabs = [
   {
@@ -70,6 +73,23 @@ interface DossierProps {
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
   isDetailLoading?: boolean;
+  isFinancialWorkingSignoff?: boolean;
+  dossierCreditStatus: string;
+  setDossierCreditStatus: (status: string) => void;
+  setExportType: (type: ExportType) => void;
+  setQualifiedProjectsParams?: React.Dispatch<
+    React.SetStateAction<CaseAssignedExportParams>
+  >;
+  setProjectDocumentsParams?: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
+  setResourceSummaryParams?: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
+  >;
+  setTechnicalSummaryParams?: (
+    params: TechnicalSummaryExportListParams
+  ) => void;
+  setAuditTimelineParams?: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -81,12 +101,20 @@ const Dossier: React.FC<DossierProps> = ({
   setFinancialData,
   refetchCaseDetails,
   isDetailLoading,
+  isFinancialWorkingSignoff,
+  dossierCreditStatus,
+  setDossierCreditStatus,
+  setExportType,
+  setQualifiedProjectsParams,
+  setProjectDocumentsParams,
+  setResourceSummaryParams,
+  setTechnicalSummaryParams,
+  setAuditTimelineParams,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
-  const { successToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
@@ -99,7 +127,6 @@ const Dossier: React.FC<DossierProps> = ({
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
-
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -178,29 +205,24 @@ const Dossier: React.FC<DossierProps> = ({
     caseId ?? '',
     false
   );
-
-  const handleStatusUpdate = (
-    statusData: RDCreditStatusResponse,
-    actionType?: 'initiate' | 'regenerate' | 'refresh'
-  ) => {
-    setRefreshTrigger(Date.now());
-    if (statusData?.data === 'COMPLETED') {
-      if (actionType === 'initiate' || actionType === 'refresh') {
-        successToast('Initiated successfully');
-      } else if (actionType === 'regenerate') {
-        successToast('Re-Generated successfully');
-      }
-    }
-  };
-
+  const { mutate: refetchDossierInitiate } = useDossierInitiate();
+  const { mutate: refetchDossierSheetStatus } = useDossierSheetStatus();
   const handleRefresh = async () => {
-    if (tabParam === 'financial_workings') {
-      const result = await refetchRDCreditStatus();
-      if (result.data) {
-        handleStatusUpdate(result.data, 'refresh');
-      }
-    } else {
+    // Skip API call for COMPLETED or any empty/undefined value
+    if (
+      dossierCreditStatus === 'COMPLETED' ||
+      dossierCreditStatus === null ||
+      dossierCreditStatus === undefined ||
+      dossierCreditStatus === ''
+    ) {
       setRefreshTrigger(Date.now());
+      return;
+    }
+
+    // Call API only for valid status values (e.g., 'PENDING', 'PROCESSING', etc.)
+    const result = await refetchRDCreditStatus();
+    if (result.data) {
+      setDossierCreditStatus(result.data?.data);
     }
   };
   const handleFilter = () => setShowFilter(!showFilter);
@@ -252,14 +274,57 @@ const Dossier: React.FC<DossierProps> = ({
     [resourceStatusOptions?.data?.data?.resourceStatus]
   );
 
+  const handleGenerateDossierSheet = async () => {
+    if (dossierCreditStatus === 'COMPLETED') {
+      refetchDossierSheetStatus({
+        accountRid: accountid,
+        caseRid: caseId ?? '',
+      });
+    } else {
+      const payload = {
+        account_rid: accountid,
+        case_rid: caseId ?? '',
+      };
+      refetchDossierInitiate(payload, {
+        onSuccess: () => {
+          setDossierCreditStatus(
+            'Dossier Package is Inprogress. Refresh the page to check the status'
+          );
+          // handleStatusUpdate(data);
+        },
+        onError: (error) => {
+          console.error('Error initiating', error);
+          // errorToast('Failed to initiate');
+        },
+      });
+    }
+  };
+
+  const technicalSummaryViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) =>
+          item.name === AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const technicalSummarypermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    technicalSummaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [technicalSummaryViewEditFields]);
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'qualified_projects':
         return getQualifiedProjectsFilterFields();
       case 'project_documents':
         return getProjectDocumentsFilterFields();
-      case 'project_summary':
-        return getProjectSummaryFilterFields();
+      case 'technical_summary':
+        return getTechnicalSummaryFilterFields(technicalSummarypermissionMap);
       case 'resource_summary':
         return caseProjectResourceFilterFields(
           permissionMap,
@@ -280,6 +345,7 @@ const Dossier: React.FC<DossierProps> = ({
     projectPermissionMap,
     regionOptions,
     tabParam,
+    technicalSummarypermissionMap,
   ]);
 
   const tabs = [
@@ -309,8 +375,8 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'Project Summary',
-      value: 'project_summary',
+      label: 'Technical Summary',
+      value: 'technical_summary',
       hide: false,
     },
     {
@@ -319,8 +385,8 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'Closing Remarks',
-      value: 'closing_remarks',
+      label: 'Audit Timeline',
+      value: 'audit_timeline',
       hide: false,
     },
   ];
@@ -329,7 +395,6 @@ const Dossier: React.FC<DossierProps> = ({
     tabParam !== 'summary' &&
     tabParam !== 'rd_form' &&
     tabParam !== 'financial_workings';
-
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
@@ -338,6 +403,19 @@ const Dossier: React.FC<DossierProps> = ({
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
       hide: !showTableControls,
+    },
+    {
+      label:
+        dossierCreditStatus === 'COMPLETED'
+          ? 'Download Dossier'
+          : 'Initiate Dossier',
+      variant: 'outlined' as const,
+      disabled:
+        !caseDetails?.rd_form_signoff ||
+        (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),
+      onClick: handleGenerateDossierSheet,
+      sx: { width: '125px', minWidth: '125px' },
+      // hide: !showTableControls,
     },
   ];
 
@@ -348,7 +426,7 @@ const Dossier: React.FC<DossierProps> = ({
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={showTableControls}
+        filterVisibility={showTableControls && tabParam !== 'audit_timeline'}
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -358,14 +436,19 @@ const Dossier: React.FC<DossierProps> = ({
         sortFilterCount={0}
         setSortFilterCount={() => { }}
         showRefresh={
-          tabParam !== 'rd_form' && tabParam !== 'financial_workings'
+          (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
+          (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
         }
         onRefreshClick={handleRefresh}
-        showSearch={showTableControls}
+        showSearch={
+          showTableControls &&
+          tabParam !== 'technical_summary' &&
+          tabParam !== 'audit_timeline'
+        }
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
-        showAddActivity={true}
+        showAddActivity={tabParam !== 'technical_summary'}
         activityMenuItems={activityMenuItems}
         onFilterChange={handleFilterChange}
       />
@@ -432,30 +515,22 @@ const Dossier: React.FC<DossierProps> = ({
               currentPage={currentPage}
               appliedFilters={appliedFilters}
               setCount={setCount}
-              setExportParams={() => { }}
-              setExportType={() => { }}
+              setExportParams={setQualifiedProjectsParams}
+              setExportType={setExportType}
               columnAnchorEl={columnAnchorEl}
               setColumnAnchorEl={setColumnAnchorEl}
               searchValue={searchText}
               fiscalYear={caseDetails?.fiscal_year ?? 0}
             />
           )}
-
-          {tabParam === 'financial_workings' &&
-            (!isFinancialView ? (
-              <AccessRestricted />
-            ) : (
-              <FinancialWorkingForm
-                caseDetails={caseDetails}
-                setDossierFinancialStatus={setDossierFinancialStatus}
-                dossierFinancialStatus={dossierFinancialStatus}
-                financialData={financialData}
-                setFinancialData={setFinancialData}
-                refetchCaseDetails={refetchCaseDetails}
-              />
-            ))}
-
-          {tabParam === 'rd_form' && <RDForm caseDetails={caseDetails} />}
+          {tabParam === 'rd_form' && (
+            <RDForm
+              caseDetails={caseDetails}
+              isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+              isDetailLoading={isDetailLoading}
+              refetchCaseDetails={refetchCaseDetails}
+            />
+          )}
 
           {tabParam === 'project_documents' && (
             <ProjectDocuments
@@ -463,21 +538,22 @@ const Dossier: React.FC<DossierProps> = ({
               currentPage={currentPage}
               appliedFilters={appliedFilters}
               setCount={setCount}
-              setExportParams={() => { }}
-              setExportType={() => { }}
+              setExportParams={setProjectDocumentsParams}
+              setExportType={setExportType}
               columnAnchorEl={columnAnchorEl}
               setColumnAnchorEl={setColumnAnchorEl}
               searchValue={searchText}
             />
           )}
-          {tabParam === 'project_summary' && (
-            <ProjectSummary
+
+          {tabParam === 'technical_summary' && (
+            <TechnicalSummary
               refreshTrigger={refreshTrigger}
               currentPage={currentPage}
               appliedFilters={appliedFilters}
               setCount={setCount}
-              setExportParams={() => { }}
-              setExportType={() => { }}
+              setExportParams={setTechnicalSummaryParams}
+              setExportType={setExportType}
               columnAnchorEl={columnAnchorEl}
               setColumnAnchorEl={setColumnAnchorEl}
               searchValue={searchText}
@@ -491,32 +567,26 @@ const Dossier: React.FC<DossierProps> = ({
               currentPage={currentPage}
               appliedFilters={appliedFilters}
               setCount={setCount}
-              setExportParams={() => { }}
-              setExportType={() => { }}
+              setExportParams={setResourceSummaryParams}
+              setExportType={setExportType}
               columnAnchorEl={columnAnchorEl}
               setColumnAnchorEl={setColumnAnchorEl}
               searchValue={searchText}
             />
           )}
 
-          {tabParam === 'closing_remarks' && (
+          {tabParam === 'audit_timeline' && (
             <ClosingRemarks
               refreshTrigger={refreshTrigger}
               currentPage={currentPage}
               appliedFilters={appliedFilters}
               setCount={setCount}
-              setExportParams={() => { }}
-              setExportType={() => { }}
+              setExportParams={setAuditTimelineParams}
+              setExportType={setExportType}
               columnAnchorEl={columnAnchorEl}
               setColumnAnchorEl={setColumnAnchorEl}
               searchValue={searchText}
             />
-          )
-          }
-          {tabParam !== 'financial_workings' && (
-            <div className='flex items-center justify-center w-full h-full'>
-              <ComingSoon alt='comingSoon' />
-            </div>
           )}
         </div>
       )}

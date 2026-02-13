@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExportType,
-  ResourceSummaryListExportParams,
   ResourceSummaryListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -18,13 +17,16 @@ import {
   CaseProjectResourceRowType,
   getCaseProjectResourceColumns,
 } from '../../../case-project-resource/columns';
+import { ReviewProjectListURLParams } from '../../../../../../types/assign-projects';
 
 interface ResourceSummaryProps {
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ResourceSummaryListExportParams) => void;
+  setExportParams?: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
+  >;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -69,6 +71,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
       accountRid: accountId || '',
       case_rid: caseId || '',
       fiscalYear: 0,
+      type: 'qualifiedProjects',
     },
     refreshTrigger
   );
@@ -97,13 +100,22 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
       setExportType('dossier-resource-summary');
     }
     setExportParams?.({
+      page: 1,
+      limit: tableParams.limit,
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       search: searchValue,
+      type: 'qualifiedProjects',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
+  }, [
+    appliedFilters,
+    searchValue,
+    tableParams.sortBy,
+    tableParams.sortOrder,
+    tableParams.limit,
+  ]);
 
   // Permission Management
   const projectViewEditFields = useMemo(

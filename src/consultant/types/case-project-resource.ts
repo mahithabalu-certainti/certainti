@@ -79,6 +79,7 @@ export interface CaseProjectResourceListURLParams {
   case_rid: string;
   accountRid: string;
   fiscalYear: number;
+  type?: string;
 }
 
 export type CaseProjectResourceList = CaseProjectResourceRow;

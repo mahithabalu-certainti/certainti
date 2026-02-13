@@ -14,6 +14,7 @@ import {
 } from 'react-router-dom';
 import {
   ExportAssignedList,
+  ExportAuditTimelineList,
   ExportCaseTaskList,
   useCaseDetails,
 } from '../../../services/cases/case-service';
@@ -33,6 +34,7 @@ import {
   TechnicalSummaryExportListParams,
   ColorCode,
   FinancialHighlightsResponse,
+  AuditTimelineListExportParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -188,13 +190,21 @@ export const CaseDetails = () => {
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
       sort_by: 'ASC',
-      filter: {},
+      // filter: {},
       timezone: '',
       page: 1,
       limit: 10,
-      search: '',
+      // search: '',
       case_rid: caseId ?? '',
-      account_id: accountId ?? '',
+      account_rid: accountId ?? '',
+    });
+  const [auditTimelineParams, setAuditTimelineParams] =
+    useState<AuditTimelineListExportParams>({
+      sort: 'signoff_date',
+      sort_by: 'ASC' as 'ASC' | 'DESC',
+      timezone: '',
+      case_rid: caseId ?? '',
+      account_rid: accountId ?? '',
     });
   const [caseTaskParams, setCaseTaskParams] = useState({
     sort: 'task_name',
@@ -205,7 +215,7 @@ export const CaseDetails = () => {
     limit: 10,
     search: '',
     case_rid: caseId ?? '',
-    account_id: accountId ?? '',
+    account_rid: accountId ?? '',
   });
   const [reviewProjectParams, setReviewProjectParams] =
     useState<ReviewProjectListURLParams>({
@@ -291,7 +301,7 @@ export const CaseDetails = () => {
       fiscalYear: 0,
       caseRid: caseId,
     });
-
+  const [dossierCreditStatus, setDossierCreditStatus] = useState<string>('');
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
@@ -471,6 +481,7 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'activities' &&
       searchParams.get('list') !== 'caseProjects' &&
+      searchParams.get('list') !== 'dossier' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
       searchParams.get('list') !== 'interactions' &&
@@ -504,11 +515,18 @@ export const CaseDetails = () => {
 
     if (exportType === 'notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
-    } else if (exportType === 'attachments') {
-      exportAttachmentsData('attachments', {
-        ...attachmentParams,
-        ...attachmentPayload,
-      });
+    } else if (
+      exportType === 'attachments' ||
+      exportType === 'dossier-project-documents'
+    ) {
+      exportAttachmentsData(
+        'attachments',
+        {
+          ...attachmentParams,
+          ...attachmentPayload,
+        },
+        exportType === 'dossier-project-documents' ? 'project-documents' : ''
+      );
     } else if (exportType === 'checklist') {
       const checklistPayload = {
         accountRid: accountId,
@@ -524,28 +542,64 @@ export const CaseDetails = () => {
         { ...activityParams, ...activityPayload },
         activityType as ActivityType
       );
-    } else if (list === 'caseProjects' && exportType === 'cases_projects') {
-      ExportAssignedList(caseProjectParams);
+    } else if (
+      (list === 'caseProjects' && exportType === 'cases_projects') ||
+      (list === 'dossier' && exportType === 'dossier-qualified-projects')
+    ) {
+      ExportAssignedList(
+        { ...caseProjectParams, account_rid: accountId, case_rid: caseId },
+        exportType === 'dossier-qualified-projects' ? 'qualified-projects' : ''
+      );
     } else if (exportType === 'case_task') {
-      ExportCaseTaskList(caseTaskParams);
+      ExportCaseTaskList({
+        ...caseTaskParams,
+        account_rid: accountId,
+        case_rid: caseId,
+      });
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
     } else if (list === 'projectTask' && exportType === 'projectTask') {
       ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
     } else if (
-      list === 'projectResource' &&
-      exportType === 'project_resource'
+      (list === 'projectResource' && exportType === 'project_resource') ||
+      (list === 'dossier' && exportType === 'dossier-resource-summary')
     ) {
-      ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
+      ExportCaseProjectResourceList(
+        projectResourceParams,
+        accountId,
+        caseId,
+        exportType === 'dossier-resource-summary' ? 'resource-summary' : ''
+      );
+    } else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
+      ExportAuditTimelineList({
+        ...auditTimelineParams,
+        account_rid: accountId,
+        case_rid: caseId,
+      });
     } else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
-        exportFinancialProjectCost(financialProjectCostParams);
+        exportFinancialProjectCost({
+          ...financialProjectCostParams,
+          accountRid: accountId,
+          caseRid: caseId,
+        });
       } else if (exportType === 'financial_resource_cost') {
-        exportFinancialResourceCost(financialResCostParams);
+        exportFinancialResourceCost({
+          ...financialResCostParams,
+          accountRid: accountId,
+          caseRid: caseId,
+        });
       }
-    } else if (list === 'technicalSummary') {
-      if (exportType === 'technical_summary') {
-        exportCasesTechnicalSummary(technicalSummaryParams);
+    } else if (list === 'technicalSummary' || list === 'dossier') {
+      if (
+        exportType === 'technical_summary' ||
+        exportType === 'dossier-technical-summary'
+      ) {
+        exportCasesTechnicalSummary({
+          ...technicalSummaryParams,
+          account_rid: accountId,
+          case_rid: caseId,
+        });
       }
     }
     if (list === 'interactions') {
@@ -618,6 +672,20 @@ export const CaseDetails = () => {
       } else {
         return !isProjectExportEnable;
       }
+    } else if (list === 'dossier') {
+      const dossierTab = searchParams.get('tab');
+      if (dossierTab === 'qualified_projects') {
+        return !isProjectExportEnable;
+      } else if (dossierTab === 'project_documents') {
+        return !isAttachmentExportEnable;
+      } else if (dossierTab === 'resource_summary') {
+        return !isProjectResourceExportEnable;
+      } else if (dossierTab === 'technical_summary') {
+        return !technicalSummaryExportEnable;
+      } else if (dossierTab === 'audit_timeline') {
+        return false;
+      }
+      return true;
     } else if (searchParams.get('tab') === 'case_task') {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
@@ -722,7 +790,6 @@ export const CaseDetails = () => {
       return newState;
     });
   };
-
   const renderContent = () => {
     // Check if current activeKey has permission
     const currentMenuItem = sideMenuItems.find(
@@ -915,6 +982,15 @@ export const CaseDetails = () => {
             setFinancialData={setFinancialData}
             refetchCaseDetails={refetchCaseDetails}
             isDetailLoading={isPending}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+            dossierCreditStatus={dossierCreditStatus}
+            setDossierCreditStatus={setDossierCreditStatus}
+            setExportType={setExportType}
+            setQualifiedProjectsParams={setCaseProjectParams}
+            setProjectDocumentsParams={setAttachmentParams}
+            setResourceSummaryParams={setProjectResourceParams}
+            setTechnicalSummaryParams={setTechnicalSummaryParams}
+            setAuditTimelineParams={setAuditTimelineParams}
           />
         );
       default:
@@ -1204,12 +1280,31 @@ export const CaseDetails = () => {
               <div>
                 <span className='font-bold mr-1 capitalize'>Case</span>-
                 <span className='ml-1 font-medium'>
-                  Financial workings of this Case is signed off. Project changes
+                  Financial workings of this Case is approved. Project changes
                   are no longer allowed.
                 </span>
               </div>
             </div>
           )}
+          {!dossierCreditStatus ||
+            (dossierCreditStatus !== 'COMPLETED' && (
+              <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+                <div>
+                  <React.Suspense fallback={null}>
+                    <DetailsKeyContactErrorIcon alt='key-contact' />
+                  </React.Suspense>
+                </div>
+                <div>
+                  <span className='font-bold mr-1 capitalize'>
+                    Initiate Dossier Status
+                  </span>
+                  -
+                  <span className='ml-1 font-medium'>
+                    {dossierCreditStatus}
+                  </span>
+                </div>
+              </div>
+            ))}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>

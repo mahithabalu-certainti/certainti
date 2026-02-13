@@ -220,8 +220,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       !dossierFinancialStatus &&
       caseDetails?.case_total_projects &&
       caseDetails?.case_total_projects !== 0 &&
-      caseDetails?.case_total_projects !== '0' &&
-      !caseDetails?.financial_working_signoff
+      caseDetails?.case_total_projects !== '0'
+      // !caseDetails?.financial_working_signoff
     ) {
       handleInitiateFinancialHighlights();
     }

@@ -20,7 +20,7 @@ const returnURL = (
   baseURL: string,
   params: CaseProjectResourceListURLParams
 ): string => {
-  const { page, limit, sortBy, sortOrder, filters, fiscalYear, search } =
+  const { page, limit, sortBy, sortOrder, filters, fiscalYear, search, type } =
     params;
 
   const searchParams = new URLSearchParams();
@@ -35,7 +35,7 @@ const returnURL = (
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
-
+  if (type !== undefined) searchParams.set('type', type);
   return `${baseURL}?${searchParams.toString()}`;
 };
 
@@ -49,6 +49,7 @@ export const CaseProjectResourcesURL = ({
   fiscalYear,
   search,
   accountRid,
+  type,
 }: CaseProjectResourceListURLParams): string => {
   const base = getCaseProjectResourcesUrl(accountRid ?? '', case_rid ?? '');
 
@@ -62,6 +63,7 @@ export const CaseProjectResourcesURL = ({
     search,
     case_rid,
     accountRid,
+    type,
   });
 };
 
@@ -90,7 +92,7 @@ export const useCaseProjectResourceList = (
 };
 
 export const getCasePorjectResourceExportListURL = (
-  { sortBy, sortOrder, filters, search }: ProjectResourcesListParams,
+  { sortBy, sortOrder, filters, search, type }: ProjectResourcesListParams,
   accountRid?: string,
   caseRid?: string
 ): string => {
@@ -110,7 +112,9 @@ export const getCasePorjectResourceExportListURL = (
   if (search) {
     searchParams.set('search', search);
   }
-
+  if (type !== undefined) {
+    searchParams.set('type', type);
+  }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
@@ -118,10 +122,11 @@ export const getCasePorjectResourceExportListURL = (
 export const ExportCaseProjectResourceList = async (
   params: ProjectResourcesListParams,
   accountId?: string,
-  caseId?: string
+  caseId?: string,
+  fileName?: string
 ): Promise<void> => {
   try {
-    const filename = `cases_projects_resource_list.xlsx`;
+    const filename = fileName || `cases_projects_resource_list.xlsx`;
 
     const response = await caseServiceApi.get<ExportCaseListResponse>(
       getCasePorjectResourceExportListURL({ ...params }, accountId, caseId)

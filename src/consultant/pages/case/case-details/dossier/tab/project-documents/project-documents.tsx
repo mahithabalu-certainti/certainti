@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   ExportType,
-  ProjectDocumentsListExportParams,
   ProjectDocumentsListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -12,14 +11,19 @@ import {
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
 import { getProjectDocumentsColumns } from './columns';
 import { useAttachmentList } from '../../../../../../services/attachments/attachments-service';
-import { AttachmentList } from '../../../../../../types/attachment';
+import {
+  AttachmentList,
+  AttachmentsListExportParams,
+} from '../../../../../../types/attachment';
 
 interface ProjectDocumentsProps {
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ProjectDocumentsListExportParams) => void;
+  setExportParams?: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -66,7 +70,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       entityId: caseId || '',
       search: searchValue,
       fiscalYear: 0,
-      type: 'dossier_project_document',
+      type: 'qualifiedProjects',
     },
     refreshTrigger
   );
@@ -87,6 +91,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       page: currentPage + 1,
       filters: appliedFilters,
       search: searchValue,
+      type: 'qualifiedProjects',
     }));
   }, [currentPage, appliedFilters, searchValue]);
 
@@ -99,6 +104,8 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       search: searchValue,
+      fiscalYear: 0,
+      type: 'qualifiedProjects',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);

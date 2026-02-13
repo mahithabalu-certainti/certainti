@@ -148,6 +148,7 @@ export interface CaseDetails {
   is_state_available?: boolean;
   state_rid?: string;
   financial_working_signoff?: boolean;
+  rd_form_signoff?: boolean;
   final_credit?: string | number | null;
 }
 
@@ -290,6 +291,7 @@ export interface CaseAssignedExportParams {
   search?: string;
   timezone?: string;
   account_id?: string;
+  type?: string;
 }
 export interface ExportCaseListResponse {
   statusCode: number;
