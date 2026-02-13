@@ -73,7 +73,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       case_rid: caseId,
       account_rid: accountId,
       fiscal_year: fiscalYear,
-      type: "qualifiedProjects"
+      type: 'qualifiedProjects',
     },
     refreshTrigger
   );
@@ -109,7 +109,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       case_rid: caseId,
       account_rid: accountId,
       fiscal_year: fiscalYear,
-      type: "qualifiedProjects"
+      type: 'qualifiedProjects',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

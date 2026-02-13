@@ -117,7 +117,7 @@ export const downloadPdfFromBase64 = (
 
 // closing remarks list
 export const fetchClosingRemarksList = async (
-  params: ClosingRemarksParams,
+  params: ClosingRemarksParams
 ): Promise<{ closingRemarks: ClosingRemarksItems[]; count: number }> => {
   const response = await caseServiceApi.post<ClosingRemarksResponse>(
     getClosingRemarksListURL(),
@@ -242,7 +242,12 @@ export const useRDFormMapperPreview = (
       ),
     retry: 0,
     gcTime: 0,
-    enabled: !!accountRid && !!caseRid && !!countryRid && (isFederal || !!stateRid) && enabled,
+    enabled:
+      !!accountRid &&
+      !!caseRid &&
+      !!countryRid &&
+      (isFederal || !!stateRid) &&
+      enabled,
   });
 };
 

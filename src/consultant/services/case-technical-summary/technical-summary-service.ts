@@ -20,7 +20,7 @@ export const getCasesTechnicalSummaryListURL = ({
   account_rid,
   case_rid,
   filters,
-  type
+  type,
 }: TechnicalSummaryListURLParams): string => {
   const baseUrl = '/api/interactions/technicalSummary/list';
   const searchParams = new URLSearchParams();
@@ -52,7 +52,7 @@ export const getCaseTechnicalSummaryExportListURL = ({
   account_rid,
   case_rid,
   filters,
-  summaryType
+  summaryType,
 }: TechnicalSummaryExportListParams): string => {
   const baseUrl = '/api/interactions/technicalSummary/export';
   const searchParams = new URLSearchParams();

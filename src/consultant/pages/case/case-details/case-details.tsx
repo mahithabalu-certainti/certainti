@@ -198,13 +198,14 @@ export const CaseDetails = () => {
       case_rid: caseId ?? '',
       account_rid: accountId ?? '',
     });
-  const [auditTimelineParams, setAuditTimelineParams] = useState<AuditTimelineListExportParams>({
-    sort: 'signoff_date',
-    sort_by: 'ASC' as 'ASC' | 'DESC',
-    timezone: '',
-    case_rid: caseId ?? '',
-    account_rid: accountId ?? '',
-  });
+  const [auditTimelineParams, setAuditTimelineParams] =
+    useState<AuditTimelineListExportParams>({
+      sort: 'signoff_date',
+      sort_by: 'ASC' as 'ASC' | 'DESC',
+      timezone: '',
+      case_rid: caseId ?? '',
+      account_rid: accountId ?? '',
+    });
   const [caseTaskParams, setCaseTaskParams] = useState({
     sort: 'task_name',
     sort_by: 'ASC' as 'ASC' | 'DESC',
@@ -550,7 +551,11 @@ export const CaseDetails = () => {
         exportType === 'dossier-qualified-projects' ? 'qualified-projects' : ''
       );
     } else if (exportType === 'case_task') {
-      ExportCaseTaskList({ ...caseTaskParams, account_rid: accountId, case_rid: caseId });
+      ExportCaseTaskList({
+        ...caseTaskParams,
+        account_rid: accountId,
+        case_rid: caseId,
+      });
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
     } else if (list === 'projectTask' && exportType === 'projectTask') {
@@ -565,15 +570,13 @@ export const CaseDetails = () => {
         caseId,
         exportType === 'dossier-resource-summary' ? 'resource-summary' : ''
       );
-    }
-    else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
+    } else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
       ExportAuditTimelineList({
         ...auditTimelineParams,
         account_rid: accountId,
         case_rid: caseId,
       });
-    }
-    else if (list === 'financialHighlights') {
+    } else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
         exportFinancialProjectCost({
           ...financialProjectCostParams,
@@ -1206,12 +1209,13 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
-          ? 'max-h-0 opacity-0'
-          : isError
-            ? 'max-h-[60px] opacity-100'
-            : 'max-h-[140px] opacity-100'
-          }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1223,10 +1227,11 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -1281,21 +1286,25 @@ export const CaseDetails = () => {
               </div>
             </div>
           )}
-          {!dossierCreditStatus || dossierCreditStatus !== 'Completed' && (
-            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
-              <div>
-                <React.Suspense fallback={null}>
-                  <DetailsKeyContactErrorIcon alt='key-contact' />
-                </React.Suspense>
+          {!dossierCreditStatus ||
+            (dossierCreditStatus !== 'COMPLETED' && (
+              <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+                <div>
+                  <React.Suspense fallback={null}>
+                    <DetailsKeyContactErrorIcon alt='key-contact' />
+                  </React.Suspense>
+                </div>
+                <div>
+                  <span className='font-bold mr-1 capitalize'>
+                    Initiate Dossier Status
+                  </span>
+                  -
+                  <span className='ml-1 font-medium'>
+                    {dossierCreditStatus}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className='font-bold mr-1 capitalize'>Intiate Dossier Status</span>-
-                <span className='ml-1 font-medium'>
-                  {dossierCreditStatus}
-                </span>
-              </div>
-            </div>
-          )}
+            ))}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>

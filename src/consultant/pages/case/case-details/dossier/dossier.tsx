@@ -15,11 +15,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import {
-
-  DetailsKeyContactErrorIcon,
-  DossierIcon,
-} from '../../../../../assets';
+import { DetailsKeyContactErrorIcon, DossierIcon } from '../../../../../assets';
 import {
   DossierSummary,
   FinancialWorkingForm,
@@ -37,7 +33,11 @@ import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { useDossierInitiate, useDossierSheetStatus, useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
+import {
+  useDossierInitiate,
+  useDossierSheetStatus,
+  useRDCreditStatus,
+} from '../../../../services/case-dossier/cases-financial-services';
 import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
 import { useFetchState } from '../../../../services/account';
 import {
@@ -115,7 +115,6 @@ const Dossier: React.FC<DossierProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
-  // const { successToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
@@ -209,10 +208,8 @@ const Dossier: React.FC<DossierProps> = ({
   const { mutate: refetchDossierInitiate } = useDossierInitiate();
   const { mutate: refetchDossierSheetStatus } = useDossierSheetStatus();
 
-
-
   const handleRefresh = async () => {
-    if (dossierCreditStatus !== 'Completed' || !dossierCreditStatus) {
+    if (dossierCreditStatus !== 'COMPLETED' || !dossierCreditStatus) {
       const result = await refetchRDCreditStatus();
       if (result.data) {
         setDossierCreditStatus(result.data?.data);
@@ -271,16 +268,21 @@ const Dossier: React.FC<DossierProps> = ({
   );
 
   const handleGenerateDossierSheet = async () => {
-    if (dossierCreditStatus === 'Completed') {
-      refetchDossierSheetStatus({ accountRid: accountid, caseRid: caseId ?? '' });
+    if (dossierCreditStatus === 'COMPLETED') {
+      refetchDossierSheetStatus({
+        accountRid: accountid,
+        caseRid: caseId ?? '',
+      });
     } else {
       const payload = {
         account_rid: accountid,
         case_rid: caseId ?? '',
-      }
+      };
       refetchDossierInitiate(payload, {
         onSuccess: () => {
-          setDossierCreditStatus('Dossier Packages is Inprogress. Refresh the page to check the status');
+          setDossierCreditStatus(
+            'Dossier Package is Inprogress. Refresh the page to check the status'
+          );
           // handleStatusUpdate(data);
         },
         onError: (error) => {
@@ -288,7 +290,6 @@ const Dossier: React.FC<DossierProps> = ({
           // errorToast('Failed to initiate');
         },
       });
-
     }
   };
 
@@ -398,13 +399,13 @@ const Dossier: React.FC<DossierProps> = ({
     },
     {
       label:
-        dossierCreditStatus === 'Completed'
+        dossierCreditStatus === 'COMPLETED'
           ? 'Download Dossier'
           : 'Initiate Dossier',
       variant: 'outlined' as const,
       disabled:
         !caseDetails?.rd_form_signoff ||
-        (dossierCreditStatus !== 'Completed' && dossierCreditStatus !== ''),
+        (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),
       onClick: handleGenerateDossierSheet,
       sx: { width: '125px', minWidth: '125px' },
       // hide: !showTableControls,
@@ -426,12 +427,17 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={
-          tabParam !== 'rd_form' && tabParam !== 'financial_workings'
+          (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
+          (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
         }
         onRefreshClick={handleRefresh}
-        showSearch={showTableControls && tabParam !== 'technical_summary' && tabParam !== 'audit_timeline'}
+        showSearch={
+          showTableControls &&
+          tabParam !== 'technical_summary' &&
+          tabParam !== 'audit_timeline'
+        }
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
@@ -461,7 +467,7 @@ const Dossier: React.FC<DossierProps> = ({
         defaultValue={tabParam}
       />
       {caseDetails?.case_total_qualified_projects === 0 ||
-        caseDetails?.case_total_qualified_projects === '0' ? (
+      caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>
@@ -478,7 +484,6 @@ const Dossier: React.FC<DossierProps> = ({
             </span>
           </div>
         </div>
-
       ) : (
         <div className='border border-t-0 border-[#CBD6E2]'>
           {tabParam === 'financial_workings' &&

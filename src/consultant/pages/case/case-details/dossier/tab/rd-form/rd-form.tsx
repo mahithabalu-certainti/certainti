@@ -259,7 +259,11 @@ const RDForm: React.FC<RDFormProps> = ({
           <TextButton
             label={'Approve'}
             onClick={() => setIsSignOffModalOpen(true)}
-            disabled={!previewData?.data?.rdformUrl || !isFinancialWorkingSignoff || caseDetails?.rd_form_signoff}
+            disabled={
+              !isFinancialWorkingSignoff ||
+              !previewData?.data?.rdformUrl ||
+              caseDetails?.rd_form_signoff === true
+            }
             hide={!isSignoffVisible}
             sx={{
               width: 'auto',
@@ -283,7 +287,7 @@ const RDForm: React.FC<RDFormProps> = ({
             style={{
               display:
                 !accountPermissionMap?.['country_rid']?.read &&
-                  !accountPermissionMap?.['country_rid']?.edit
+                !accountPermissionMap?.['country_rid']?.edit
                   ? 'none'
                   : 'block',
             }}
@@ -299,9 +303,10 @@ const RDForm: React.FC<RDFormProps> = ({
               name='country_name'
               placeholder='-'
               autoComplete='off'
-              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country &&
+              className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
+                errors?.country &&
                 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-                }`}
+              }`}
               disabled={true}
               value={caseCountryDetails.country_name}
             />
@@ -317,7 +322,7 @@ const RDForm: React.FC<RDFormProps> = ({
               style={{
                 display:
                   !accountPermissionMap?.['region_rid']?.read &&
-                    !accountPermissionMap?.['region_rid']?.edit
+                  !accountPermissionMap?.['region_rid']?.edit
                     ? 'none'
                     : 'block',
               }}
@@ -336,8 +341,9 @@ const RDForm: React.FC<RDFormProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${
+                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
               >

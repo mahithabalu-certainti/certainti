@@ -88,8 +88,6 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
     setExportParams?.({
       sort: tableParams.sortBy,
       sort_by: tableParams.sortOrder,
-      // filters: appliedFilters,
-      // search: searchValue,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);

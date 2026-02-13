@@ -72,10 +72,9 @@ export const getUserPreferenceURL = (): string => {
   return `/api/rd-credit/federal/userPreference`;
 };
 
-export const getClosingRemarksListURL = (
-  // accountRid: string,
-  // caseRid: string
-): string => {
+export const getClosingRemarksListURL = () // accountRid: string,
+// caseRid: string
+: string => {
   return `/api/cases/closureRemarks`;
 };
 
@@ -104,7 +103,6 @@ export const getRDFormMapperPreviewURL = (
   }
   return url;
 };
-
 
 export const getDossierInitiateURL = (): string => {
   return `/api/cases/dossier/create`;

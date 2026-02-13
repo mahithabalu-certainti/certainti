@@ -176,7 +176,6 @@ export const useUserPreference = () => {
   });
 };
 
-
 export const fetchDossierInitiate = async (
   accountRid: string,
   caseRid: string
@@ -214,7 +213,9 @@ export const ExportDossierPackage = async (
       return status;
     }
 
-    const filename = `${status.data.document_name}${status.data.extension}` || 'dossier-sheet.zip';
+    const filename =
+      `${status.data.document_name}${status.data.extension}` ||
+      'dossier-sheet.zip';
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = filename;

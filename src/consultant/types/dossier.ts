@@ -477,9 +477,9 @@ export interface FinancialHighlightsData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-  | FinancialHighlightsComputedFields
-  | AustraliaComputedFields
-  | USAComputedFields;
+    | FinancialHighlightsComputedFields
+    | AustraliaComputedFields
+    | USAComputedFields;
 }
 
 export interface CaseSummaryData {
@@ -490,9 +490,9 @@ export interface CaseSummaryData {
   country_rid: string;
   input_params: Record<string, string | number | unknown | null>;
   computed_fields:
-  | FinancialHighlightsComputedFields
-  | AustraliaComputedFields
-  | USAComputedFields;
+    | FinancialHighlightsComputedFields
+    | AustraliaComputedFields
+    | USAComputedFields;
 }
 
 export interface AustraliaRdExpenditure {
