@@ -55,6 +55,7 @@ export const createTextField = (
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    allowNegative?: boolean;
     labelTooltip?: {
       showTooltip: boolean;
       tooltipMessage: string;
@@ -89,6 +90,7 @@ export const createTextField = (
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
+  allowNegative: options.allowNegative,
   prefixValue: options.prefixValue,
   maxLength: options.maxLength,
 });
@@ -546,6 +548,7 @@ export const REGEX_PATTERNS = {
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   BLENDED_NUMBER: /^(?:[0-9]{1,3})(?:\.[0-9]{1,2})?$/,
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
+  EFFORTS_NEGATIVE_NUMBER: /^-?(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
   NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
@@ -597,7 +600,7 @@ export const REGEX_PATTERNS = {
   NAME_LENGTH_2_TO_64_REGEX: /^.{2,64}$/,
   NAME_LENGTH_3_TO_64_REGEX: /^.{3,64}$/,
   NO_LEADING_OR_TRAILING_SPECIAL_REGEX: /^(?!^[-' ]|.*[-' ]$)/,
-  ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z-' ]+$/,
+  ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z.,' -]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[-' ]{2})/,
   NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
   ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
@@ -649,9 +652,8 @@ export const PROJECT_RESOURCE_REGEX = {
   // Designation: Job titles with special chars, 4-100 chars
   DESIGNATION: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{1,62}[A-Za-z]$/,
 
-  // Project resource cost regex
-  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
-
+  // Updated regex to accept negative numbers
+  COST_REGEX: /^-?\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^-?\d{1,18}(\.\d{1,2})?$/,
   // NON NEGATIVE POSTIVE INTEGER
   EFFORT: /^[1-9][0-9]*$/,
 
@@ -688,7 +690,8 @@ export const PROJECT_TASK_REGEX = {
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
 
   // Project resource cost regex
-  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
+  // Updated regex to accept negative numbers
+  COST_REGEX: /^-?\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^-?\d{1,16}(\.\d{1,2})?$/,
 
   // NON NEGATIVE POSTIVE INTEGER
   EFFORT: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
@@ -725,6 +728,8 @@ export const RESOURCE_REGEX = {
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
   ROLE: /^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
+  NUMBER_ONLY: /^(?=.*\D).+$/,
+  ROLE_WITH_NUMBER: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s\-'. ,]+$/,
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -1065,16 +1070,24 @@ export const getFiscalDateBounds = (
 //   };
 // };
 
-export const formatCostValue = (value: string): string => {
-  if (value === null || value === undefined) return '';
+export const formatCostValue = (
+  value: string | number | null | undefined
+): string => {
+  if (value === null || value === undefined || value === '') return '';
 
   const costStr = String(value);
-  const [whole, decimal] = costStr.split('.');
-  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const formattedCost =
-    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
+  const isNegative = costStr.startsWith('-');
+  const unsignedStr = isNegative ? costStr.slice(1) : costStr;
 
-  return `${formattedCost}`;
+  const [whole, decimal] = unsignedStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  let result = isNegative ? `-${formattedWhole}` : formattedWhole;
+  if (decimal !== undefined) {
+    result += `.${decimal}`;
+  }
+
+  return result;
 };
 
 export const removeFormatCostValue = (value: string): string => {

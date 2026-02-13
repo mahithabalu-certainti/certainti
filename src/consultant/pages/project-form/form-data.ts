@@ -205,7 +205,8 @@ export const FormData = (
   disableTotalCost?: boolean,
   globalType?: boolean,
   isProjectExists?: boolean,
-  isCaseExists?: boolean
+  isCaseExists?: boolean,
+  isCustomerGroup?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -278,17 +279,12 @@ export const FormData = (
               !permissionMap?.['project_name']?.edit,
             errorHandling: [
               {
-                regex: REGEX_PATTERNS.MIN_4,
-                errorMessage: 'Name must be more than 3 characters long',
+                regex: REGEX_PATTERNS.MIN_2,
+                errorMessage: 'Name must be at least 2 characters long.',
               },
               {
                 regex: REGEX_PATTERNS.MAX_255,
                 errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.PROJECT_NAME,
-                errorMessage:
-                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
               },
             ],
           }),
@@ -403,6 +399,7 @@ export const FormData = (
           }),
           createTextField('project_client_group', 'Client Group', {
             placeholder: 'Enter Client Group',
+            required: isCustomerGroup,
             disabled:
               isEditView &&
               permissionMap?.['project_client_group']?.read &&
@@ -725,10 +722,10 @@ export const FormData = (
               !permissionMap?.['total_effort']?.edit,
           }),
           createTextField('total_cost_fte', 'Total FTE Cost', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
             resetDependsFields: ['total_cost'],
             regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              'FTE Cost must be a number, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Cost',
             onChange: true,
             formatCostValue: true,
@@ -742,10 +739,10 @@ export const FormData = (
               !permissionMap?.['total_cost_fte']?.edit,
           }),
           createTextField('total_cost_subcon', 'Total Sub Con Cost', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
             resetDependsFields: ['total_cost'],
             regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              'Sub Con Cost must be a number, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
             onChange: true,
             formatCostValue: true,
@@ -759,10 +756,10 @@ export const FormData = (
               !permissionMap?.['total_cost_subcon']?.edit,
           }),
           createTextField('total_cost_nonlabor', 'Total Non Labor Cost', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
             resetDependsFields: ['total_cost'],
             regexErrorMessage:
-              'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+              'Non Labor Cost must be a number, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Non Labor Cost',
             onChange: true,
             formatCostValue: true,
@@ -776,9 +773,9 @@ export const FormData = (
               !permissionMap?.['total_cost_nonlabor']?.edit,
           }),
           createTextField('total_cost', 'Total Cost', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
             regexErrorMessage:
-              'Total Cost must be a positive integer with up to 16 digits and 2 decimal places',
+              'Total Cost must be a number, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Cost',
             onChange: true,
             formatCostValue: true,
@@ -901,6 +898,8 @@ export const FormData = (
       calculatedTotalCost,
       disableTotalCost,
       removeKeyContact,
+      isCustomerGroup,
+      isCaseExists,
     ]
   );
 };

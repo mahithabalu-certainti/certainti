@@ -6,7 +6,7 @@ import {
   EmailTemplateIcon,
   ImportTemplateIcon,
   InteractionTemplateIcon,
-  ManageGeoIcon,
+  ManageRule,
   ManageGroupIcon,
   ManageProfileIcon,
   ManagerUserIcon,
@@ -83,7 +83,7 @@ export const sideNavAdminItems: AdminNavItem[] = [
       {
         id: MenuOption.MANAGE_GEO_BASED_RULE,
         name: 'Manage Jurisdiction Rules',
-        icon: ManageGeoIcon,
+        icon: ManageRule,
         link: MANAGE_GEO_BASED_RULE,
         matchLink: MANAGE_GEO_BASED_RULE,
       },

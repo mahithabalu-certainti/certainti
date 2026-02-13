@@ -6,6 +6,8 @@ export interface FormType {
   fields: FormTypeFields[];
   from?: string;
   hide?: boolean;
+  renderAsTable?: boolean;
+  renderAsDetailTable?: boolean;
 }
 
 export interface FormTypeFields {
@@ -65,6 +67,7 @@ export interface FormTypeFields {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
+  allowNegative?: boolean;
   clearDate?: string;
   customDateOpen?: Date;
   disableDatesBefore?: Date;
@@ -174,6 +177,7 @@ export interface FieldType {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
+  allowNegative?: boolean;
   clearDate?: string;
   customDateOpen?: Date;
   disableDatesBefore?: Date;

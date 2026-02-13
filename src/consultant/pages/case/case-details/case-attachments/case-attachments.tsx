@@ -18,6 +18,7 @@ import {
   ActivityDropdownItem,
   ExportType,
   SelectOption,
+  ColorCode,
 } from '../../../../types';
 import {
   AttachmentList,
@@ -70,6 +71,8 @@ interface AttachmentsProps {
   accountInActive: boolean;
   caseDetails?: CaseDetails;
   activityMenuItems: ActivityDropdownItem[];
+  isCaseTeamCreated?: boolean;
+  isFinancialWorkingSignoff?: boolean;
 }
 
 export const Attachments: React.FC<AttachmentsProps> = ({
@@ -78,6 +81,8 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   accountInActive,
   caseDetails,
   activityMenuItems,
+  isCaseTeamCreated,
+  isFinancialWorkingSignoff,
 }) => {
   const { errorToast } = useToast();
   const { caseId } = useParams();
@@ -218,7 +223,11 @@ export const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: accountInActive || !caseFiscalYear,
+      disabled:
+        accountInActive ||
+        !caseFiscalYear ||
+        !isCaseTeamCreated ||
+        isFinancialWorkingSignoff,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
@@ -480,11 +489,11 @@ export const Attachments: React.FC<AttachmentsProps> = ({
             titleIcon={
               <AttachmentsSideIcon
                 alt='attachment-header-icon'
-                className='[&>path]:stroke-[#4B9BFF]'
+                className={`[&>path]:stroke-[${ColorCode.attachmentBgColor}] w-[14px] h-[14px]`}
               />
             }
             headerButtons={headerButtons}
-            iconBg='#D8E9FF'
+            iconBg={ColorCode.caseBgColor}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

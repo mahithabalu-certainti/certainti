@@ -61,6 +61,7 @@ interface InteractionQuesProps {
   formData?: Record<string, string>;
   className?: string;
   responseDate?: string;
+  isProjectSignedOff?: boolean;
 }
 
 const Font = Quill.import('formats/font');
@@ -81,6 +82,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
   responseDate,
+  isProjectSignedOff = false,
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -410,58 +412,58 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
 
   const buttons: SectionHeaderButton[] = isEditing
     ? [
-      {
-        label: 'Save as Draft',
-        variant: 'contained' as const,
-        onClick: () => handleSave(FlagTypeEnum.draft),
-        sx: { width: '110px', minWidth: '110px' },
-        loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
-        disabled:
-          (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
-          uploadFileMutation.isPending,
-      },
-      {
-        label: 'Submit',
-        variant: 'contained' as const,
-        onClick: () => handleSave(FlagTypeEnum.submit),
-        sx: { width: '64px', minWidth: '64px' },
-        loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
-        disabled:
-          (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
-          uploadFileMutation.isPending,
-      },
-      {
-        label: 'Upload Files',
-        variant: 'outlined' as const,
-        onClick: () => globalFileInputRef.current?.click(),
-        sx: { width: '100px', minWidth: '100px' },
-        disabled: isUpdateLoading || uploadFileMutation.isPending,
-      },
-      {
-        label: 'Cancel',
-        variant: 'outlined' as const,
-        onClick: handleCancel,
-        sx: { width: '75px', minWidth: '75px' },
-        disabled: isUpdateLoading || uploadFileMutation.isPending,
-      },
-    ]
+        {
+          label: 'Save as Draft',
+          variant: 'contained' as const,
+          onClick: () => handleSave(FlagTypeEnum.draft),
+          sx: { width: '110px', minWidth: '110px' },
+          loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
+          disabled:
+            (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
+            uploadFileMutation.isPending,
+        },
+        {
+          label: 'Submit',
+          variant: 'contained' as const,
+          onClick: () => handleSave(FlagTypeEnum.submit),
+          sx: { width: '64px', minWidth: '64px' },
+          loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
+          disabled:
+            (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
+            uploadFileMutation.isPending,
+        },
+        {
+          label: 'Upload Files',
+          variant: 'outlined' as const,
+          onClick: () => globalFileInputRef.current?.click(),
+          sx: { width: '100px', minWidth: '100px' },
+          disabled: isUpdateLoading || uploadFileMutation.isPending,
+        },
+        {
+          label: 'Cancel',
+          variant: 'outlined' as const,
+          onClick: handleCancel,
+          sx: { width: '75px', minWidth: '75px' },
+          disabled: isUpdateLoading || uploadFileMutation.isPending,
+        },
+      ]
     : [
-      {
-        label: 'Edit Response',
-        variant: 'outlined' as const,
-        disabled: !isEditEnable,
-        onClick: handleEditClick,
-        sx: { width: '110px', minWidth: '110px' },
-        hide: !actionButtonEnable,
-      },
-      {
-        label: 'Response History',
-        variant: 'outlined' as const,
-        onClick: () => handleResponseHistory?.(),
-        sx: { width: '130px', minWidth: '130px' },
-        hide: !actionButtonEnable,
-      },
-    ];
+        {
+          label: 'Edit Response',
+          variant: 'outlined' as const,
+          disabled: !isEditEnable || isProjectSignedOff,
+          onClick: handleEditClick,
+          sx: { width: '110px', minWidth: '110px' },
+          hide: !actionButtonEnable,
+        },
+        {
+          label: 'Response History',
+          variant: 'outlined' as const,
+          onClick: () => handleResponseHistory?.(),
+          sx: { width: '130px', minWidth: '130px' },
+          hide: !actionButtonEnable,
+        },
+      ];
 
   const toggleQuestionOptions = (questionId: string) => {
     setShowOptionsPerQuestion((prev) => ({
@@ -645,60 +647,61 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             {/* Question-specific attachments */}
             {(isEditing ? questionAttachments[q.rid] : q.attachments)?.length >
               0 && (
-                <div
-                  className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[96.5%]' : 'w-full'} max-h-[85px] ${(isEditing ? questionAttachments[q.rid] : q.attachments)
-                      .length > 2
-                      ? 'overflow-auto'
-                      : 'overflow-visible'
-                    }`}
-                >
-                  {(isEditing ? questionAttachments[q.rid] : q.attachments).map(
-                    (file, index) => (
-                      <div
-                        key={index}
-                        className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
-                      >
-                        <div className='flex items-center gap-2 w-[95%]'>
-                          <DocumentIcon className='w-6 h-6' />
-                          <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
-                            <TruncateWithTooltip
-                              text={`${file.fileName}${file.fileType}`}
-                              maxWidth={'100%'}
-                            >
-                              {file.fileName}
-                              {file.fileType}
-                            </TruncateWithTooltip>
-                          </div>
-                        </div>
-                        {isEditing ? (
-                          <Tooltip title='Remove file' arrow placement='top'>
-                            <button
-                              onClick={() =>
-                                removeQuestionAttachment(q.rid, index)
-                              }
-                              className='cursor-pointer p-[4px]'
-                            >
-                              <KeyContactRemoveIcon />
-                            </button>
-                          </Tooltip>
-                        ) : (
-                          <button
-                            onClick={() => handleDownload(file.fileUrl)}
-                            className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
-                            style={{
-                              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                              background:
-                                'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                            }}
+              <div
+                className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[96.5%]' : 'w-full'} max-h-[85px] ${
+                  (isEditing ? questionAttachments[q.rid] : q.attachments)
+                    .length > 2
+                    ? 'overflow-auto'
+                    : 'overflow-visible'
+                }`}
+              >
+                {(isEditing ? questionAttachments[q.rid] : q.attachments).map(
+                  (file, index) => (
+                    <div
+                      key={index}
+                      className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                    >
+                      <div className='flex items-center gap-2 w-[95%]'>
+                        <DocumentIcon className='w-6 h-6' />
+                        <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
+                          <TruncateWithTooltip
+                            text={`${file.fileName}${file.fileType}`}
+                            maxWidth={'100%'}
                           >
-                            <DownloadIcon />
-                          </button>
-                        )}
+                            {file.fileName}
+                            {file.fileType}
+                          </TruncateWithTooltip>
+                        </div>
                       </div>
-                    )
-                  )}
-                </div>
-              )}
+                      {isEditing ? (
+                        <Tooltip title='Remove file' arrow placement='top'>
+                          <button
+                            onClick={() =>
+                              removeQuestionAttachment(q.rid, index)
+                            }
+                            className='cursor-pointer p-[4px]'
+                          >
+                            <KeyContactRemoveIcon />
+                          </button>
+                        </Tooltip>
+                      ) : (
+                        <button
+                          onClick={() => handleDownload(file.fileUrl)}
+                          className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                          style={{
+                            boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                            background:
+                              'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                          }}
+                        >
+                          <DownloadIcon />
+                        </button>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+            )}
 
             {!isEditing && !responseDate && q.response_on_datetime && (
               <div className='py-1 w-full flex justify-end items-center gap-2 text-[12px] text-[#425A76]'>
@@ -717,10 +720,11 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             Uploaded Files
           </div>
           <div
-            className={`flex flex-col gap-1 max-h-[85px] ${(isEditing ? newGlobalAttachments : globalAttachments).length > 2
+            className={`flex flex-col gap-1 max-h-[85px] ${
+              (isEditing ? newGlobalAttachments : globalAttachments).length > 2
                 ? 'overflow-auto'
                 : 'overflow-visible'
-              }`}
+            }`}
           >
             {(isEditing ? newGlobalAttachments : globalAttachments).map(
               (file, idx) => (

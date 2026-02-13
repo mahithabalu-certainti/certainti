@@ -15,6 +15,7 @@ import {
   ActivityDropdownItem,
   ChecklistList,
   ChecklistListExportParams,
+  ColorCode,
   ExportType,
 } from '../../../../types';
 import { useChecklistList } from '../../../../services/checklist/checklist-service';
@@ -415,12 +416,12 @@ const Checklist: React.FC<ChecklistProps> = ({
             showItemCount={true}
             titleIcon={
               <ChecklistIcon
-                className='[&>path]:stroke-white'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Checklist-header-icon'
               />
             }
             buttons={headerButtons}
-            iconBg='#FFB46E'
+            iconBg={ColorCode.projectBgColor}
             bgType='circle'
           />
 

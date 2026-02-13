@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -16,11 +16,9 @@ import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
   ChecklistIcon,
-  DetailsIcon,
   FinancialIcon,
   InteractionsIcon,
   NotesSideIcon,
-  ProjectDetailsIcon,
   ProjectsSideIcon,
   ResourcesIcon,
   SettingIcon,
@@ -31,6 +29,10 @@ import {
   DraftEmailIcon,
   MeetingIcon,
   CallLogIcon,
+  HistorySubmissionIcon,
+  ProjectTaskIcon,
+  ManageGroupAccount,
+  DetailsKeyContactErrorIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -48,6 +50,7 @@ import {
   ActivityListExportURLParams,
   ActivityType,
   ChecklistListExportParams,
+  ColorCode,
   ExportType,
   FiscalDates,
   FormFiscalDateType,
@@ -248,6 +251,7 @@ export const ProjectDetails = () => {
   const projectInActive =
     data?.data?.project?.status_name?.toLowerCase() === 'in-active';
   const rdQualified = data?.data?.project?.is_rd_trigger_qualified;
+  const isProjectSignedOff = data?.data?.project?.is_rd_claim_qualified;
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -751,6 +755,7 @@ export const ProjectDetails = () => {
             projectCode={projectData?.project_code}
             projectFiscalYear={projectData?.fiscal_year}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'projectsTask':
@@ -769,6 +774,7 @@ export const ProjectDetails = () => {
             projectCode={projectData?.project_code}
             projectFiscalYear={projectData?.fiscal_year}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'rd-assessment-history':
@@ -790,6 +796,7 @@ export const ProjectDetails = () => {
             rdQualified={!rdQualified}
             loading={isPending}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'technicalSummary':
@@ -834,6 +841,7 @@ export const ProjectDetails = () => {
             refetchProjectDetails={refetch}
             projectFiscalYear={projectData?.fiscal_year}
             activityMenuItems={activityMenuItems}
+            isProjectSignedOff={isProjectSignedOff}
           />
         );
       case 'checklist':
@@ -882,7 +890,7 @@ export const ProjectDetails = () => {
         key: 'projectDetails',
         id: AllModules.PROJECTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: ProjectsSideIcon,
       },
       {
         name: 'Project Resources',
@@ -896,7 +904,7 @@ export const ProjectDetails = () => {
         key: 'projectsTask',
         id: AllModules.PROJECT_TASK,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: ProjectTaskIcon,
       },
       {
         name: 'Interactions',
@@ -924,7 +932,7 @@ export const ProjectDetails = () => {
         key: 'rd-assessment-history',
         id: AllModules.ACTIVITIES,
         disabled: false,
-        icon: ActivitiesIcon,
+        icon: HistorySubmissionIcon,
       },
       {
         name: 'Notes',
@@ -959,7 +967,7 @@ export const ProjectDetails = () => {
             key: 'users',
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: false,
-            icon: ResourcesIcon,
+            icon: ManageGroupAccount,
           },
           {
             name: 'Settings',
@@ -994,9 +1002,9 @@ export const ProjectDetails = () => {
           variant='sub'
           placeholder='Project Code'
           icon={
-            <ProjectDetailsIcon
-              className='h-6 w-6 rounded p-[4px]'
-              style={{ backgroundColor: '#AF78FF' }}
+            <ProjectsSideIcon
+              alt='menu-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.projectTextColor}] bg-[${ColorCode.projectBgColor}]`}
             />
           }
           title={data?.data?.project?.project_code}
@@ -1006,7 +1014,11 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive || projectInActive || !rdQualified,
+              disabled:
+                accountInActive ||
+                projectInActive ||
+                !rdQualified ||
+                isProjectSignedOff,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
@@ -1062,6 +1074,25 @@ export const ProjectDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 283px)', overflow: 'auto' }}
         >
+          {isProjectSignedOff && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>
+                  {projectData?.project_code || ''}
+                </span>
+                -
+                <span className='ml-1 font-medium'>
+                  Financial workings of this Case is signed off. Project changes
+                  are no longer allowed.
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>

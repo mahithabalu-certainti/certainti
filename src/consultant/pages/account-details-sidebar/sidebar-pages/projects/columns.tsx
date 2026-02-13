@@ -101,6 +101,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_name',
@@ -126,20 +132,21 @@ export const getProjectColumns = (
       placeholder: 'Enter Name',
       validation: [
         {
-          regex: REGEX_PATTERNS.MIN_4,
-          errorMessage: 'Name must be more than 3 characters long',
+          regex: REGEX_PATTERNS.MIN_2,
+          errorMessage: 'Name must be at least 2 characters long.',
         },
         {
           regex: REGEX_PATTERNS.MAX_255,
           errorMessage: 'Max length exceeded',
         },
-        {
-          regex: REGEX_PATTERNS.PROJECT_NAME,
-          errorMessage:
-            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-        },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_type_name',
@@ -165,6 +172,12 @@ export const getProjectColumns = (
       placeholder: '',
       options: memoizedProjectTypes,
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'fiscal_year',
@@ -198,6 +211,10 @@ export const getProjectColumns = (
     conditionallyEdit: [
       {
         key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,
       },
     ],
@@ -269,6 +286,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_client_group',
@@ -308,6 +331,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_group',
@@ -347,6 +376,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_effort',
@@ -366,6 +401,10 @@ export const getProjectColumns = (
       {
         key: 'total_effort',
         matchValue: [null, '0.00'],
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
       },
     ],
     sx: {
@@ -408,6 +447,10 @@ export const getProjectColumns = (
       {
         key: 'total_cost',
         matchValue: [null, '0.00'],
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
       },
     ],
     render: (row: Project) =>
@@ -452,14 +495,21 @@ export const getProjectColumns = (
       required: false,
       formatCostNumber: true,
       placeholder: 'Enter FTE Cost',
+      allowNegative: true,
       validation: [
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
           errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            'FTE Cost must be a number allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_subcon',
@@ -486,15 +536,22 @@ export const getProjectColumns = (
       type: 'text',
       required: false,
       formatCostNumber: true,
+      allowNegative: true,
       placeholder: 'Enter Sub Con Cost',
       validation: [
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
           errorMessage:
-            'Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
+            'Sub Con Cost must be a number allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'total_cost_nonlabor',
@@ -520,15 +577,22 @@ export const getProjectColumns = (
       type: 'text',
       required: false,
       formatCostNumber: true,
+      allowNegative: true,
       placeholder: 'Enter Non Labor Cost',
       validation: [
         {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          regex: REGEX_PATTERNS.EFFORTS_NEGATIVE_NUMBER,
           errorMessage:
-            'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+            'Non Labor Cost must be a number allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'project_point_of_contact',
@@ -552,7 +616,40 @@ export const getProjectColumns = (
           }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
-          {row.project_point_of_contact}
+          {row.project_point_of_contact || '-'}
+        </div>
+      ) : (
+        '-'
+      );
+    },
+  },
+  {
+    id: 'project_point_of_contact_email',
+    label: 'Project Point of Contact Email',
+    sortable: true,
+    sortId: 'project_point_of_contact_email',
+    width: 230,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(
+              row,
+              row.project_point_of_contact_email,
+              'key_contacts_list'
+            )
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.project_point_of_contact_email || '-'}
         </div>
       ) : (
         '-'
@@ -582,6 +679,39 @@ export const getProjectColumns = (
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.technical_point_of_contact}
+        </div>
+      ) : (
+        '-'
+      );
+    },
+  },
+  {
+    id: 'technical_point_of_contact_email',
+    label: 'Technical Point of Contact Email',
+    sortable: true,
+    sortId: 'technical_point_of_contact_email',
+    width: 250,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(
+              row,
+              row.technical_point_of_contact_email,
+              'key_contacts_list'
+            )
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.technical_point_of_contact_email || '-'}
         </div>
       ) : (
         '-'
@@ -664,6 +794,12 @@ export const getProjectColumns = (
         },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'modified_datetime',

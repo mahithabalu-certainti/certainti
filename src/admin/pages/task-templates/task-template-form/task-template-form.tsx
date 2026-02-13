@@ -284,7 +284,7 @@ const TaskTemplateForm: React.FC = () => {
     if (taskTemplateData?.workflow_connector?.relationship_connector_rid) {
       setIsLinkedType(true);
     }
-  }, [taskTemplateData, isEditView]);
+  }, [taskTemplateData, isEditView, taskTemplateTypesOptions]);
 
   const formConfig = TaskTemplateFormFieldsData(
     isEditView,

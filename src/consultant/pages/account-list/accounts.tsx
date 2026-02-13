@@ -2,8 +2,8 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  AccountHomeIcon,
   AccountSettingsIcon,
+  AccountsIcon,
   ActionIcon,
   NewFilterIcon,
   RefreshIcon,
@@ -28,7 +28,7 @@ import {
   reshapeGlobalFilter,
 } from '../../../common-utils';
 import { AccessRestricted } from '../../../components/account-restricted';
-import { AccountList, FilterEntry, SelectOption } from '../../types';
+import { AccountList, ColorCode, FilterEntry, SelectOption } from '../../types';
 import {
   formatFilterForApi,
   getStoredFilters,
@@ -235,9 +235,9 @@ export const Accounts: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <AccountHomeIcon
-              alt='menu-icon'
-              className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
+            <AccountsIcon
+              alt='account-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.accountTextColor}] bg-[${ColorCode.accountBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>

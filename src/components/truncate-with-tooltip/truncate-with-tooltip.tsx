@@ -116,6 +116,11 @@ const TruncateWithTooltip = ({
       title={tooltipContent}
       arrow
       placement={placement}
+      PopperProps={{
+        sx: {
+          zIndex: 10000, // Ensure it's above the modal (9999)
+        },
+      }}
       componentsProps={{
         tooltip: {
           sx: {

@@ -27,6 +27,43 @@ export enum StatusTypeEnum {
   inqueue = 'in-queue',
 }
 
+export enum ColorCode {
+  manageTemplateBgcolor = '#9747FF',
+  manageAccountBgcolor = '#BE3EB5',
+  manageAccountTextColor = '#FFFFFF',
+  accountBgColor = '#3992ec',
+  accountTextColor = '#fff',
+  projectBgColor = '#ba60eb',
+  projectTextColor = accountTextColor,
+  caseBgColor = '#3EBEB5',
+  caseTextColor = accountTextColor,
+  notesBgColor = '#7F81F4',
+  attachmentBgColor = '#d16dd3',
+  taskBgColor = '#e64c94',
+}
+
+export enum FinancialWorkingCountries {
+  Australia = 'Australia',
+  Canada = 'Canada',
+  Ireland = 'Ireland',
+  UK = 'United Kingdom',
+  US = 'United States',
+}
+export enum FinancialWorkingStates {
+  Arizona = 'Arizona',
+  California = 'California',
+  Colorado = 'Colorado',
+  Connecticut = 'Connecticut',
+  Georgia = 'Georgia',
+  Idaho = 'Idaho',
+  Illinois = 'Illinois',
+  Massachusetts = 'Massachusetts',
+  NewJersey = 'New Jersey',
+  Ohio = 'Ohio',
+  SouthCarolina = 'South Carolina',
+  Texas = 'Texas',
+}
+
 export interface globalFiltersType {
   [key: string]: string[];
 }
@@ -175,6 +212,8 @@ export type InteractionList = {
   interaction_level_name?: string;
   project_code?: string;
   project_name?: string;
+  key_contact_name?: string | null;
+  key_contact_email?: string | null;
 };
 
 export type InteractionTemplateList = {

@@ -29,7 +29,7 @@ export type CaseList = {
   case_owner_name: string;
   case_total_projects: number | null;
   case_total_project_cost: string | null;
-  case_total_qualified_projects_cost: string | null;
+  case_total_qualified_project_cost: string | null;
   case_total_rd_cost: string | null;
   case_total_qre_cost: string | null;
   filing_type_rid: string;
@@ -145,6 +145,10 @@ export interface CaseDetails {
   account_status_rid?: string;
   is_send_interaction?: boolean;
   is_case_team_created?: boolean;
+  is_state_available?: boolean;
+  state_rid?: string;
+  financial_working_signoff?: boolean;
+  final_credit?: string | number | null;
 }
 
 export interface CaseDetailsResponse {
@@ -172,6 +176,25 @@ export interface CaseFormFields {
   total_nonlabor_cost?: string;
   tax_liability?: string;
   status_rid?: string;
+  total_expenses?: string | null;
+  aggregated_turnover: string | null;
+  unpaid_amounts_paid: string | null;
+  unpaid_amounts: string | null;
+  cloud_software: string | null;
+  sub_contracts: string | null;
+  public_sub_contracts: string | null;
+  material_software_cost: string | null;
+  employers_pension_contribution: string | null;
+  taxable_income: string | null;
+  export_sales_revenue: string | null;
+  other: string | null;
+  illinois_research_payments_corp_only: string | null;
+  lease_costs_of_computers: string | null;
+  qualified_computer_rental_time_expenses: string | null;
+  basic_research_payments: string | null;
+  illinois_rd_credit_partnership_corp: string | null;
+  credit_carry_forward_py: string | null;
+  current_year_gross_receipts: string | null;
 }
 
 export interface CaseFormPayload {
@@ -190,6 +213,25 @@ export interface CaseFormPayload {
   total_nonlabor_cost?: string | null;
   tax_liability?: string | null;
   status_rid?: string;
+  total_expenses?: string | null;
+  aggregated_turnover: string | null;
+  unpaid_amounts_paid: string | null;
+  unpaid_amounts: string | null;
+  cloud_software: string | null;
+  sub_contracts: string | null;
+  public_sub_contracts: string | null;
+  material_software_cost: string | null;
+  employers_pension_contribution: string | null;
+  taxable_income: string | null;
+  export_sales_revenue: string | null;
+  other: string | null;
+  illinois_research_payments_corp_only: string | null;
+  lease_costs_of_computers: string | null;
+  qualified_computer_rental_time_expenses: string | null;
+  basic_research_payments: string | null;
+  illinois_rd_credit_partnership_corp: string | null;
+  credit_carry_forward_py: string | null;
+  current_year_gross_receipts: string | null;
 }
 
 export interface updateCaseJurisdictionPayload {

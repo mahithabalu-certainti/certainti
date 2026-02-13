@@ -19,8 +19,8 @@ import {
   TextField,
 } from '@mui/material';
 import {
-  ActionItemsIcon,
   ErrorInfoIcon,
+  HistorySubmissionIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
 } from '../../../../../assets';
@@ -29,11 +29,11 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityMenuItem, CaseDetails } from '../../../../types';
+import { ActivityMenuItem, ColorCode } from '../../../../types';
 import {
   useGetHistoricalSubmission,
   useUpdateHistorySubmission,
@@ -56,6 +56,7 @@ import {
   valueDisplay,
 } from '../../../../../common-utils/common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { accountDetailsProps } from '../../../account-details/utils';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -67,19 +68,22 @@ const ConfigTabs: ResourceTabs[] = [
 
 interface CaseTeamProps {
   activityMenuItems: ActivityMenuItem[];
-  caseDetails?: CaseDetails;
+  isDetailLoading?: boolean;
+  accountDetails?: accountDetailsProps;
 }
 
 // Generate years from 1950 to current year
 const generateYearOptions = () => {
   const currentYear = new Date().getFullYear();
   const years = [];
-  for (let year = 1950; year <= currentYear; year++) {
+
+  for (let year = 1950; year < currentYear; year++) {
     years.push({
       value: year,
       label: `FY-${year}`,
     });
   }
+
   return years.reverse();
 };
 
@@ -95,10 +99,13 @@ const removeCommas = (value: string): string => {
 
 const HistorySubmission: React.FC<CaseTeamProps> = ({
   activityMenuItems,
-  caseDetails,
+  isDetailLoading,
+  accountDetails,
 }) => {
+  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast, errorToast } = useToast();
+  const accountId = searchParams.get('accountID') || accountid || '';
   const [formData, setFormData] = useState<HistoryFormData>({
     historicalSubmissions: [],
     region: '', // Region selection - empty initially for country-based data
@@ -118,14 +125,17 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
     (state: RootState) => state.permission
   );
 
-  const caseCountryDetails = {
-    country_name: caseDetails?.country_name || '',
-    country_code: caseDetails?.country_code || '',
-    country_id: caseDetails?.country_rid || '',
+  const accountCountryDetails = {
+    country_name: accountDetails?.accountById?.country?.country_name || '',
+    country_code: accountDetails?.accountById?.country?.country_code || '',
+    country_id: accountDetails?.accountById?.country_rid || '',
   };
 
   const regionsOptions = useFetchState(
-    caseDetails?.country_rid || caseCountryDetails?.country_id || ''
+    accountDetails?.accountById?.country_rid ||
+      accountCountryDetails?.country_id ||
+      '',
+    'active'
   );
 
   const regionListOptions = useMemo(
@@ -214,22 +224,19 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
     setIsFormChanged(false);
   }, [formData, originalSubmissions]);
 
-  const accountId = searchParams.get('accountID') || '';
-
   // Fetch historical data based on account ID and selected region
   const {
     data,
     isLoading: isDataLoading,
-    isPending: isDataPending,
     refetch,
   } = useGetHistoricalSubmission(
     accountId,
-    caseDetails?.country_rid || '',
+    accountDetails?.accountById?.country_rid || '',
     selectedRegion
   );
 
   const updateHistorySubmissionMutation = useUpdateHistorySubmission();
-  const formLoading = isDataLoading;
+  const formLoading = isDataLoading || isDetailLoading;
   const yearOptions = generateYearOptions();
 
   // Handle region selection change
@@ -378,7 +385,54 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
 
         setOriginalSubmissions(apiData);
       } else if (apiData.length === 0) {
-        // Initialize with empty data if no API data
+        // Only initialize with empty row if country_rid is available
+        if (accountDetails?.accountById?.country_rid) {
+          const initialSubmissions: FormSubmission[] = [
+            {
+              user_id: 'MEM_1',
+              rid: '',
+              r_number: '',
+              eid: null,
+              created_by: '',
+              modified_by: null,
+              created_datetime: '',
+              modified_datetime: null,
+              account_rid: accountId,
+              fiscal_year: '',
+              total_project: 0,
+              total_qualified_project: 0,
+              total_project_cost: '',
+              total_qualified_project_cost: '',
+              total_qre: '',
+              total_rd_credits: '',
+              annual_gross_receipts: '',
+              total_nonlabor_cost: '', // Initialize new fields
+              total_subcon_cost: '',
+              total_fte_cost: '',
+              // Add fields from API response
+              country_rid: null,
+              state_rid: null,
+              currency_rid: '',
+              currency_symbol: '',
+            },
+          ];
+          setFormData({
+            historicalSubmissions: initialSubmissions,
+            region: selectedRegion, // Set the selected region
+          });
+        } else {
+          // If country_rid is not available, set empty array to show "No data available"
+          setFormData({
+            historicalSubmissions: [],
+            region: selectedRegion,
+          });
+        }
+        setOriginalSubmissions([]);
+      }
+      setIsDataLoaded(true);
+    } else if (!data && !formLoading && !isDataLoaded && accountId) {
+      // Only initialize with empty row if country_rid is available
+      if (accountDetails?.accountById?.country_rid) {
         const initialSubmissions: FormSubmission[] = [
           {
             user_id: 'MEM_1',
@@ -412,48 +466,24 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
           historicalSubmissions: initialSubmissions,
           region: selectedRegion, // Set the selected region
         });
-        setOriginalSubmissions([]);
+      } else {
+        // If country_rid is not available, set empty array to show "No data available"
+        setFormData({
+          historicalSubmissions: [],
+          region: selectedRegion,
+        });
       }
-      setIsDataLoaded(true);
-    } else if (!data && !formLoading && !isDataLoaded && accountId) {
-      // Initialize with empty data if no API data available
-      const initialSubmissions: FormSubmission[] = [
-        {
-          user_id: 'MEM_1',
-          rid: '',
-          r_number: '',
-          eid: null,
-          created_by: '',
-          modified_by: null,
-          created_datetime: '',
-          modified_datetime: null,
-          account_rid: accountId,
-          fiscal_year: '',
-          total_project: 0,
-          total_qualified_project: 0,
-          total_project_cost: '',
-          total_qualified_project_cost: '',
-          total_qre: '',
-          total_rd_credits: '',
-          annual_gross_receipts: '',
-          total_nonlabor_cost: '', // Initialize new fields
-          total_subcon_cost: '',
-          total_fte_cost: '',
-          // Add fields from API response
-          country_rid: null,
-          state_rid: null,
-          currency_rid: '',
-          currency_symbol: '',
-        },
-      ];
-      setFormData({
-        historicalSubmissions: initialSubmissions,
-        region: selectedRegion, // Set the selected region
-      });
       setOriginalSubmissions([]);
       setIsDataLoaded(true);
     }
-  }, [data, isDataLoaded, formLoading, accountId, selectedRegion]);
+  }, [
+    data,
+    isDataLoaded,
+    formLoading,
+    accountId,
+    selectedRegion,
+    accountDetails?.accountById?.country_rid,
+  ]);
 
   useLayoutEffect(() => {
     const calculateCellWidths = () => {
@@ -598,13 +628,59 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
     // Regex: 1–16 digits, optional . with up to 2 decimal places
     const amountRegex = /^\d{1,16}(\.\d{1,2})?$/;
 
+    // Check for duplicate fiscal years in new records
+    const newRecords = formData.historicalSubmissions.filter((s) => !s.rid);
+    const allFiscalYears = formData.historicalSubmissions
+      .map((s) => s.fiscal_year?.toString())
+      .filter((year) => year && year !== '');
+
+    // Collect duplicate years from new records
+    const duplicateYearsSet = new Set<string>();
+    newRecords.forEach((newRecord) => {
+      const year = newRecord.fiscal_year?.toString();
+      if (year && year !== '') {
+        // Count how many times this year appears in all records
+        const yearCount = allFiscalYears.filter((y) => y === year).length;
+        if (yearCount > 1) {
+          duplicateYearsSet.add(year);
+        }
+      }
+    });
+
+    if (duplicateYearsSet.size > 0) {
+      const uniqueDuplicates = Array.from(duplicateYearsSet).sort();
+      // Show all duplicate years in a single error message
+      if (uniqueDuplicates.length === 1) {
+        errorToast(
+          `Fiscal year FY-${uniqueDuplicates[0]} already exists. Please select a different year.`
+        );
+      } else {
+        const yearsList = uniqueDuplicates.map((y) => `FY-${y}`).join(', ');
+        errorToast(
+          `Fiscal years ${yearsList} already exist. Please select different years.`
+        );
+      }
+      isValid = false;
+    }
+
     formData.historicalSubmissions.forEach((submission, index) => {
       const submissionError: HistoryErrors = {};
+      const isNewRecord = !submission.rid;
 
       // Fiscal Year validation
       if (!submission.fiscal_year) {
         submissionError.fiscal_year = 'Fiscal Year is required';
         isValid = false;
+      } else if (isNewRecord) {
+        // Only check for duplicates in new records against all records
+        const yearCount = formData.historicalSubmissions.filter(
+          (s) =>
+            s.fiscal_year?.toString() === submission.fiscal_year?.toString()
+        ).length;
+        if (yearCount > 1) {
+          submissionError.fiscal_year = 'Duplicate fiscal year';
+          isValid = false;
+        }
       }
 
       // Total FTE Cost validation
@@ -778,7 +854,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
           parseFloat(removeCommas(submission.annual_gross_receipts || '0')) ||
           0,
         action_type: actionType,
-        country_rid: caseCountryDetails.country_id, // Always include country_rid
+        country_rid: accountCountryDetails.country_id, // Always include country_rid
         state_rid: selectedRegion || '', // Include region_rid if selected, otherwise empty
       };
 
@@ -818,7 +894,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
           annual_gross_receipts: parseFloat(
             originalSubmission.annual_gross_receipts
           ),
-          country_rid: caseCountryDetails.country_id,
+          country_rid: accountCountryDetails.country_id,
           state_rid: selectedRegion || '',
           action_type: 'delete',
         });
@@ -873,13 +949,21 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
       variant: 'contained' as const,
       onClick: handleSave,
       hide: !isHistoricalSubmissionCreate,
-      disabled: !isFormChanged || isLoading,
+      disabled:
+        !isFormChanged ||
+        isLoading ||
+        !accountDetails?.accountById?.country_rid,
       loading: isLoading,
     },
   ];
 
   const getTitleIcon = () => {
-    return <ActionItemsIcon alt='action-items-icon' />;
+    return (
+      <HistorySubmissionIcon
+        alt='action-items-icon'
+        className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      />
+    );
   };
 
   // Add this function to check if a field should be visible
@@ -892,7 +976,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
   };
 
   const isFieldEditable = (
-    fieldName: string,
+    _fieldName: string,
     isNewRow: boolean = false
   ): boolean => {
     // If it's a newly created row, always return true (editable)
@@ -901,12 +985,12 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
     }
 
     // For existing rows, check permission
-    if (permissionMap && permissionMap[fieldName]) {
-      return permissionMap[fieldName].edit;
-    }
+    // if (permissionMap && permissionMap[fieldName]) {
+    //   return permissionMap[fieldName].edit;
+    // }
 
-    // If no permission found, default to editable
-    return true;
+    // If existing rows, default to non editable
+    return false;
   };
 
   // Filtered fields based on permissions
@@ -945,6 +1029,8 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
         count={formData.historicalSubmissions.length}
         showItemCount={true}
         hideSection={false}
+        iconBg={ColorCode.accountBgColor}
+        bgType='circle'
       />
 
       <div className='flex flex-col gap-0 border border-[#CBD6E2]'>
@@ -975,7 +1061,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                 autoComplete='off'
                 className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
                 disabled={true}
-                value={caseCountryDetails.country_name}
+                value={accountCountryDetails.country_name}
               />
               {errors?.country && (
                 <span className='text-[12px] text-red-400 col-span-full'>
@@ -1160,7 +1246,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                     },
                   }}
                 >
-                  {formLoading || isDataPending || !caseDetails?.country_rid ? (
+                  {formLoading ? (
                     <TableSkeleton
                       rowsPerPage={4}
                       columnsCount={visibleHistoricalFields.length + 1}
@@ -2005,7 +2091,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               <Tooltip
                                 title={'Remove Entry'}
                                 disableHoverListener={
-                                  !isHistoricalSubmissionDelete && !isNewRow
+                                  (!isHistoricalSubmissionDelete &&
+                                    !isNewRow) ||
+                                  !isNewRow
                                 }
                                 arrow
                                 placement='top'
@@ -2016,19 +2104,23 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                     handleRemoveSubmission(rowIndex)
                                   }
                                   style={{
-                                    cursor:
-                                      !isHistoricalSubmissionDelete && !isNewRow
+                                    cursor: !isNewRow
+                                      ? 'default'
+                                      : !isHistoricalSubmissionDelete &&
+                                          !isNewRow
                                         ? 'default'
                                         : 'pointer',
                                     background: 'transparent',
                                     border: 'none',
                                     padding: 0,
                                     marginTop: '6px',
+                                    opacity: !isNewRow ? 0.5 : 1,
                                   }}
                                   aria-label='Remove entry'
                                   className='ml-4'
                                   disabled={
-                                    !isHistoricalSubmissionDelete && !isNewRow
+                                    !isNewRow ||
+                                    (!isHistoricalSubmissionDelete && !isNewRow)
                                   }
                                 >
                                   <React.Suspense fallback={null}>
@@ -2077,8 +2169,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
               disabled={
                 formLoading ||
                 !isHistoricalSubmissionCreate ||
-                isDataPending ||
-                !caseDetails?.country_rid
+                !accountDetails?.accountById?.country_rid
               }
             >
               <span>

@@ -22,6 +22,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { useToast } from '../../../../hooks';
+import { ColorCode } from '../../../../consultant/types';
 
 interface WorkflowBuilderProps {
   isLoadingRuleDetails: boolean;
@@ -133,7 +134,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
             <React.Suspense fallback={null}>
               <WorkflowIcon
                 alt='workflow-icon'
-                className='h-7 w-7 p-1 rounded bg-[#3992ec]'
+                className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${ColorCode.manageAccountTextColor}] bg-[${ColorCode.manageTemplateBgcolor}]`}
               />
             </React.Suspense>
             <div className='w-[90%]'>

@@ -1,5 +1,8 @@
 import React from 'react';
-import { DetailsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
+import {
+  DetailsKeyContactErrorIcon,
+  ProjectsSideIcon,
+} from '../../../../../assets';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import { NewProjectData } from '../../../../types/project';
@@ -9,7 +12,7 @@ import {
   Permissions,
 } from '../../../../../common-service';
 import { Box } from '@mui/material';
-import { ActivityDropdownItem } from '../../../../types';
+import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { SectionTabPanel } from '../../../../../components';
 
 const BUTTON_STYLES = {
@@ -92,12 +95,12 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
     if (sourceTab) newSearchParams.set('tab', sourceTab);
     navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
   };
-
+  const isProjectSignedOff = projectDetails?.is_rd_claim_qualified;
   const headerButtons = [
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || isProjectSignedOff,
       onClick: () => handleEdit(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !projectEditIsEnable,
@@ -163,9 +166,9 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
         <ProjectOverview
           title='Projects'
           titleIcon={
-            <DetailsIcon
+            <ProjectsSideIcon
               alt='project-header-icon'
-              className='[&>path]:stroke-white'
+              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           headerButtons={headerButtons}
@@ -174,7 +177,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           detailsError={detailsError}
           isKeyContactAvailable={isKeyContactAvailable}
           permission={permission}
-          iconBg='#AF78FF'
+          iconBg={ColorCode.projectBgColor}
           bgType='circle'
         />
       </Box>

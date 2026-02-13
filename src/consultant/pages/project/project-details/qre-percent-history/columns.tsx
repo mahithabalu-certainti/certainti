@@ -10,6 +10,7 @@ interface ContentCellProps {
   qrePercent?: number;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const ContentCell: React.FC<ContentCellProps> = ({ content, qrePercent }) => {
   const [modalOpen, setModalOpen] = useState(false);
 

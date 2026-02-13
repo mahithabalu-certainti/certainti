@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CircularProgress, SxProps, Tooltip } from '@mui/material';
+import { Alert, CircularProgress, SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
 import ReactQuill, { Quill } from 'react-quill';
 import {
@@ -192,6 +192,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         ? true
         : false
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerData]);
   // const handleEditClick = () => {
   //   setIsEditing(true);
@@ -565,6 +566,15 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         </div>
       </div>
 
+      {headerData?.statusName?.toLowerCase() ===
+        StatusTypeEnum.response_received && (
+        <Alert severity='success' sx={{ mt: 2 }}>
+          Your earlier response is available for your review. If you wish to add
+          more information, Think R&D 365 will send you an updated set of
+          interaction questions for additional inputs.
+        </Alert>
+      )}
+
       <div
         className={`my-3 border border-[#CBD6E2] rounded-[2px] ${isUpdateLoading ? 'pointer-events-none' : ''}`}
       >
@@ -730,92 +740,18 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               {/* Question-specific attachments */}
               {(isEditing ? questionAttachments[q.rid] : q.attachments).length >
                 0 && (
-                  <div
-                    className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[96.5%]' : 'w-full'} max-h-[85px] ${(isEditing ? questionAttachments[q.rid] : q.attachments)
+                <div
+                  className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[96.5%]' : 'w-full'} max-h-[85px] ${
+                    (isEditing ? questionAttachments[q.rid] : q.attachments)
                       .length > 2
                       ? 'overflow-auto'
                       : 'overflow-visible'
-                      }`}
-                  >
-                    {(isEditing ? questionAttachments[q.rid] : q.attachments).map(
-                      (file, index) => (
-                        <div
-                          key={index}
-                          className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
-                        >
-                          <div className='flex items-center gap-2'>
-                            <React.Suspense fallback={null}>
-                              <DocumentIcon className='w-6 h-6' />
-                            </React.Suspense>
-                            <div className='text-[14px] text-[#425A76] font-normal'>
-                              {file.fileName}.{file.fileType}
-                            </div>
-                          </div>
-                          {isEditing ? (
-                            removingQuestionAttachment[q.rid] === index &&
-                              deleteAttachment.isPending ? (
-                              <CircularProgress size={24} />
-                            ) : (
-                              <Tooltip title='Remove file' arrow placement='top'>
-                                <button
-                                  onClick={() =>
-                                    removeQuestionAttachment(q.rid, index)
-                                  }
-                                  className='cursor-pointer p-[4px]'
-                                  disabled={deleteAttachment.isPending}
-                                >
-                                  <React.Suspense fallback={null}>
-                                    <KeyContactRemoveIcon />
-                                  </React.Suspense>
-                                </button>
-                              </Tooltip>
-                            )
-                          ) : (
-                            <button
-                              onClick={() => handleDownload(file.fileUrl)}
-                              className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
-                              style={{
-                                boxShadow:
-                                  '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                                background:
-                                  'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                              }}
-                            >
-                              <React.Suspense fallback={null}>
-                                <DownloadIcon />
-                              </React.Suspense>
-                            </button>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-
-              {!isEditing && q.response_on_datetime && (
-                <div className='py-1 w-full flex justify-end items-center gap-2 text-[12px] text-[#425A76]'>
-                  <span className='text-[#7D98B6]'>Response Received on:</span>
-                  {formatDateToYYYYMMDDWithTime(q.response_on_datetime)}
-                </div>
-              )}
-            </div>
-          ))}
-          {/* Global Attachments Section */}
-          {(isEditing ? newGlobalAttachments : globalAttachments).length >
-            0 && (
-              <div className='p-3 border border-[#CBD6E2] mb-4'>
-                <div className='font-semibold text-sm mb-2'>Uploaded Files</div>
-                <div
-                  className={`flex flex-col gap-1 ${(isEditing ? newGlobalAttachments : globalAttachments)
-                    .length > 2
-                    ? 'overflow-auto'
-                    : 'overflow-visible'
-                    }`}
+                  }`}
                 >
-                  {(isEditing ? newGlobalAttachments : globalAttachments).map(
-                    (file, idx) => (
+                  {(isEditing ? questionAttachments[q.rid] : q.attachments).map(
+                    (file, index) => (
                       <div
-                        key={idx}
+                        key={index}
                         className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                       >
                         <div className='flex items-center gap-2'>
@@ -827,13 +763,15 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                           </div>
                         </div>
                         {isEditing ? (
-                          removingGlobalIdx === idx &&
-                            deleteAttachment.isPending ? (
+                          removingQuestionAttachment[q.rid] === index &&
+                          deleteAttachment.isPending ? (
                             <CircularProgress size={24} />
                           ) : (
                             <Tooltip title='Remove file' arrow placement='top'>
                               <button
-                                onClick={() => removeGlobalAttachment(idx)}
+                                onClick={() =>
+                                  removeQuestionAttachment(q.rid, index)
+                                }
                                 className='cursor-pointer p-[4px]'
                                 disabled={deleteAttachment.isPending}
                               >
@@ -848,7 +786,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                             onClick={() => handleDownload(file.fileUrl)}
                             className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
                             style={{
-                              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                              boxShadow:
+                                '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
                               background:
                                 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
                             }}
@@ -862,8 +801,81 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                     )
                   )}
                 </div>
+              )}
+
+              {!isEditing && q.response_on_datetime && (
+                <div className='py-1 w-full flex justify-end items-center gap-2 text-[12px] text-[#425A76]'>
+                  <span className='text-[#7D98B6]'>Response Received on:</span>
+                  {formatDateToYYYYMMDDWithTime(q.response_on_datetime)}
+                </div>
+              )}
+            </div>
+          ))}
+          {/* Global Attachments Section */}
+          {(isEditing ? newGlobalAttachments : globalAttachments).length >
+            0 && (
+            <div className='p-3 border border-[#CBD6E2] mb-4'>
+              <div className='font-semibold text-sm mb-2'>Uploaded Files</div>
+              <div
+                className={`flex flex-col gap-1 ${
+                  (isEditing ? newGlobalAttachments : globalAttachments)
+                    .length > 2
+                    ? 'overflow-auto'
+                    : 'overflow-visible'
+                }`}
+              >
+                {(isEditing ? newGlobalAttachments : globalAttachments).map(
+                  (file, idx) => (
+                    <div
+                      key={idx}
+                      className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                    >
+                      <div className='flex items-center gap-2'>
+                        <React.Suspense fallback={null}>
+                          <DocumentIcon className='w-6 h-6' />
+                        </React.Suspense>
+                        <div className='text-[14px] text-[#425A76] font-normal'>
+                          {file.fileName}.{file.fileType}
+                        </div>
+                      </div>
+                      {isEditing ? (
+                        removingGlobalIdx === idx &&
+                        deleteAttachment.isPending ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          <Tooltip title='Remove file' arrow placement='top'>
+                            <button
+                              onClick={() => removeGlobalAttachment(idx)}
+                              className='cursor-pointer p-[4px]'
+                              disabled={deleteAttachment.isPending}
+                            >
+                              <React.Suspense fallback={null}>
+                                <KeyContactRemoveIcon />
+                              </React.Suspense>
+                            </button>
+                          </Tooltip>
+                        )
+                      ) : (
+                        <button
+                          onClick={() => handleDownload(file.fileUrl)}
+                          className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                          style={{
+                            boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                            background:
+                              'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                          }}
+                        >
+                          <React.Suspense fallback={null}>
+                            <DownloadIcon />
+                          </React.Suspense>
+                        </button>
+                      )}
+                    </div>
+                  )
+                )}
               </div>
-            )}
+            </div>
+          )}
         </div>
       </div>
     </>
