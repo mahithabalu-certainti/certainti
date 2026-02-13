@@ -10,7 +10,6 @@ import {
   ColorCode,
   ExportType,
   FinancialHighlightsResponse,
-  RDCreditStatusResponse,
   TechnicalSummaryExportListParams,
 } from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -38,7 +37,6 @@ import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { useToast } from '../../../../../hooks';
 import { useDossierInitiate, useDossierSheetStatus, useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
 import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
 import { useFetchState } from '../../../../services/account';
@@ -76,6 +74,8 @@ interface DossierProps {
   refetchCaseDetails: () => void;
   isDetailLoading?: boolean;
   isFinancialWorkingSignoff?: boolean;
+  dossierCreditStatus: string;
+  setDossierCreditStatus: (status: string) => void;
   setExportType: (type: ExportType) => void;
   setQualifiedProjectsParams?: React.Dispatch<
     React.SetStateAction<CaseAssignedExportParams>
@@ -102,6 +102,8 @@ const Dossier: React.FC<DossierProps> = ({
   refetchCaseDetails,
   isDetailLoading,
   isFinancialWorkingSignoff,
+  dossierCreditStatus,
+  setDossierCreditStatus,
   setExportType,
   setQualifiedProjectsParams,
   setProjectDocumentsParams,
@@ -113,7 +115,7 @@ const Dossier: React.FC<DossierProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
-  const { successToast } = useToast();
+  // const { successToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
@@ -126,7 +128,6 @@ const Dossier: React.FC<DossierProps> = ({
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
-  const [dossierCreditStatus, setDossierCreditStatus] = useState<string>('');
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -205,36 +206,16 @@ const Dossier: React.FC<DossierProps> = ({
     caseId ?? '',
     false
   );
-  const { refetch: refetchDossierInitiate } = useDossierInitiate(
-    accountid,
-    caseId ?? '',
-    false
-  );
-  const { refetch: refetchDossierSheetStatus } = useDossierSheetStatus(
-    accountid,
-    caseId ?? '',
-    false
-  );
+  const { mutate: refetchDossierInitiate } = useDossierInitiate();
+  const { mutate: refetchDossierSheetStatus } = useDossierSheetStatus();
 
-  const handleStatusUpdate = (
-    statusData: RDCreditStatusResponse,
-    actionType?: 'initiate' | 'regenerate' | 'refresh'
-  ) => {
-    setRefreshTrigger(Date.now());
-    if (statusData?.data === 'COMPLETED') {
-      if (actionType === 'initiate' || actionType === 'refresh') {
-        successToast('Initiated successfully');
-      } else if (actionType === 'regenerate') {
-        successToast('Re-Generated successfully');
-      }
-    }
-  };
+
 
   const handleRefresh = async () => {
-    if (dossierCreditStatus === 'COMPLETED') {
+    if (dossierCreditStatus !== 'Completed' || !dossierCreditStatus) {
       const result = await refetchRDCreditStatus();
       if (result.data) {
-        handleStatusUpdate(result.data);
+        setDossierCreditStatus(result.data?.data);
       }
     } else {
       setRefreshTrigger(Date.now());
@@ -290,13 +271,24 @@ const Dossier: React.FC<DossierProps> = ({
   );
 
   const handleGenerateDossierSheet = async () => {
-    if (dossierCreditStatus === 'COMPLETED') {
-      refetchDossierSheetStatus();
+    if (dossierCreditStatus === 'Completed') {
+      refetchDossierSheetStatus({ accountRid: accountid, caseRid: caseId ?? '' });
     } else {
-      const result = await refetchDossierInitiate();
-      if (result.data) {
-        setDossierCreditStatus('COMPLETED');
+      const payload = {
+        account_rid: accountid,
+        case_rid: caseId ?? '',
       }
+      refetchDossierInitiate(payload, {
+        onSuccess: () => {
+          setDossierCreditStatus('Dossier Packages is Inprogress. Refresh the page to check the status');
+          // handleStatusUpdate(data);
+        },
+        onError: (error) => {
+          console.error('Error initiating', error);
+          // errorToast('Failed to initiate');
+        },
+      });
+
     }
   };
 
@@ -395,7 +387,6 @@ const Dossier: React.FC<DossierProps> = ({
     tabParam !== 'summary' &&
     tabParam !== 'rd_form' &&
     tabParam !== 'financial_workings';
-
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
@@ -406,9 +397,14 @@ const Dossier: React.FC<DossierProps> = ({
       hide: !showTableControls,
     },
     {
-      label: dossierCreditStatus === 'COMPLETED' ? 'Download Dossier' : 'Initiate Dossier',
+      label:
+        dossierCreditStatus === 'Completed'
+          ? 'Download Dossier'
+          : 'Initiate Dossier',
       variant: 'outlined' as const,
-      disabled: false,
+      disabled:
+        !caseDetails?.rd_form_signoff ||
+        (dossierCreditStatus !== 'Completed' && dossierCreditStatus !== ''),
       onClick: handleGenerateDossierSheet,
       sx: { width: '125px', minWidth: '125px' },
       // hide: !showTableControls,
@@ -422,7 +418,7 @@ const Dossier: React.FC<DossierProps> = ({
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={showTableControls}
+        filterVisibility={showTableControls && tabParam !== 'audit_timeline'}
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -435,7 +431,7 @@ const Dossier: React.FC<DossierProps> = ({
           tabParam !== 'rd_form' && tabParam !== 'financial_workings'
         }
         onRefreshClick={handleRefresh}
-        showSearch={showTableControls && tabParam !== 'technical_summary'}
+        showSearch={showTableControls && tabParam !== 'technical_summary' && tabParam !== 'audit_timeline'}
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}

@@ -66,7 +66,7 @@ export const getFinancialHighlightsURL = (): string => {
 };
 
 export const getSignOffFinancialHighlightsURL = (isRdform: boolean): string => {
-  return `/api/cases/${isRdform ? 'rdformMapper' : 'financialWorking'}/signoff`;
+  return `/api/${isRdform ? 'rdformMapper' : 'cases/financialWorking'}/signoff`;
 };
 export const getUserPreferenceURL = (): string => {
   return `/api/rd-credit/federal/userPreference`;
@@ -106,11 +106,8 @@ export const getRDFormMapperPreviewURL = (
 };
 
 
-export const getDossierInitiateURL = (
-  accountRid: string,
-  caseRid: string
-): string => {
-  return `/api/dossier/initiate/${accountRid}/${caseRid}`;
+export const getDossierInitiateURL = (): string => {
+  return `/api/cases/dossier/create`;
 };
 export const getDossierSheetStatusURL = (
   accountRid: string,

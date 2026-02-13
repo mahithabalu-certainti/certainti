@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
+  AuditTimelineListExportParams,
   ClosingRemarksItems,
   ExportType,
-  ResourceSummaryListExportParams,
   ResourceSummaryListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -19,7 +19,7 @@ interface ClosingRemarksProps {
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ResourceSummaryListExportParams) => void;
+  setExportParams?: (params: AuditTimelineListExportParams) => void;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -86,10 +86,10 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
       setExportType('dossier-audit-timeline');
     }
     setExportParams?.({
-      sortBy: tableParams.sortBy,
-      sortOrder: tableParams.sortOrder,
-      filters: appliedFilters,
-      search: searchValue,
+      sort: tableParams.sortBy,
+      sort_by: tableParams.sortOrder,
+      // filters: appliedFilters,
+      // search: searchValue,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);

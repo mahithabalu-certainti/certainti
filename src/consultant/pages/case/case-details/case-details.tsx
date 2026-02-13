@@ -34,6 +34,7 @@ import {
   TechnicalSummaryExportListParams,
   ColorCode,
   FinancialHighlightsResponse,
+  AuditTimelineListExportParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -189,24 +190,20 @@ export const CaseDetails = () => {
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
       sort_by: 'ASC',
-      filter: {},
+      // filter: {},
       timezone: '',
       page: 1,
       limit: 10,
-      search: '',
+      // search: '',
       case_rid: caseId ?? '',
-      account_id: accountId ?? '',
+      account_rid: accountId ?? '',
     });
-  const [auditTimelineParams, setAuditTimelineParams] = useState({
+  const [auditTimelineParams, setAuditTimelineParams] = useState<AuditTimelineListExportParams>({
     sort: 'signoff_date',
     sort_by: 'ASC' as 'ASC' | 'DESC',
-    filter: {},
     timezone: '',
-    page: 1,
-    limit: 10,
-    search: '',
     case_rid: caseId ?? '',
-    account_id: accountId ?? '',
+    account_rid: accountId ?? '',
   });
   const [caseTaskParams, setCaseTaskParams] = useState({
     sort: 'task_name',
@@ -217,7 +214,7 @@ export const CaseDetails = () => {
     limit: 10,
     search: '',
     case_rid: caseId ?? '',
-    account_id: accountId ?? '',
+    account_rid: accountId ?? '',
   });
   const [reviewProjectParams, setReviewProjectParams] =
     useState<ReviewProjectListURLParams>({
@@ -303,7 +300,7 @@ export const CaseDetails = () => {
       fiscalYear: 0,
       caseRid: caseId,
     });
-
+  const [dossierCreditStatus, setDossierCreditStatus] = useState<string>('');
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
@@ -549,11 +546,11 @@ export const CaseDetails = () => {
       (list === 'dossier' && exportType === 'dossier-qualified-projects')
     ) {
       ExportAssignedList(
-        caseProjectParams,
+        { ...caseProjectParams, account_rid: accountId, case_rid: caseId },
         exportType === 'dossier-qualified-projects' ? 'qualified-projects' : ''
       );
     } else if (exportType === 'case_task') {
-      ExportCaseTaskList(caseTaskParams);
+      ExportCaseTaskList({ ...caseTaskParams, account_rid: accountId, case_rid: caseId });
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
     } else if (list === 'projectTask' && exportType === 'projectTask') {
@@ -570,20 +567,36 @@ export const CaseDetails = () => {
       );
     }
     else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
-      ExportAuditTimelineList(auditTimelineParams);
+      ExportAuditTimelineList({
+        ...auditTimelineParams,
+        account_rid: accountId,
+        case_rid: caseId,
+      });
     }
     else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
-        exportFinancialProjectCost(financialProjectCostParams);
+        exportFinancialProjectCost({
+          ...financialProjectCostParams,
+          accountRid: accountId,
+          caseRid: caseId,
+        });
       } else if (exportType === 'financial_resource_cost') {
-        exportFinancialResourceCost(financialResCostParams);
+        exportFinancialResourceCost({
+          ...financialResCostParams,
+          accountRid: accountId,
+          caseRid: caseId,
+        });
       }
     } else if (list === 'technicalSummary' || list === 'dossier') {
       if (
         exportType === 'technical_summary' ||
         exportType === 'dossier-technical-summary'
       ) {
-        exportCasesTechnicalSummary(technicalSummaryParams);
+        exportCasesTechnicalSummary({
+          ...technicalSummaryParams,
+          account_rid: accountId,
+          case_rid: caseId,
+        });
       }
     }
     if (list === 'interactions') {
@@ -967,6 +980,8 @@ export const CaseDetails = () => {
             refetchCaseDetails={refetchCaseDetails}
             isDetailLoading={isPending}
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+            dossierCreditStatus={dossierCreditStatus}
+            setDossierCreditStatus={setDossierCreditStatus}
             setExportType={setExportType}
             setQualifiedProjectsParams={setCaseProjectParams}
             setProjectDocumentsParams={setAttachmentParams}
@@ -1262,6 +1277,21 @@ export const CaseDetails = () => {
                 <span className='ml-1 font-medium'>
                   Financial workings of this Case is approved. Project changes
                   are no longer allowed.
+                </span>
+              </div>
+            </div>
+          )}
+          {!dossierCreditStatus || dossierCreditStatus !== 'Completed' && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Intiate Dossier Status</span>-
+                <span className='ml-1 font-medium'>
+                  {dossierCreditStatus}
                 </span>
               </div>
             </div>

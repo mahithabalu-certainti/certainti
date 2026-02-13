@@ -259,7 +259,7 @@ const RDForm: React.FC<RDFormProps> = ({
           <TextButton
             label={'Approve'}
             onClick={() => setIsSignOffModalOpen(true)}
-            disabled={!previewData?.data?.rdformUrl || !isFinancialWorkingSignoff}
+            disabled={!previewData?.data?.rdformUrl || !isFinancialWorkingSignoff || caseDetails?.rd_form_signoff}
             hide={!isSignoffVisible}
             sx={{
               width: 'auto',

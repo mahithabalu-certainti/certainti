@@ -177,6 +177,13 @@ export interface ResourceSummaryListExportParams {
   search?: string;
   timezone?: string;
 }
+export interface AuditTimelineListExportParams {
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  timezone?: string;
+  case_rid?: string;
+  account_rid?: string;
+}
 
 export type ResourceSummaryItem = {
   rid: string;
@@ -577,4 +584,24 @@ export interface RDCreditInitiateResponse {
   statusMessage: string;
   status: string;
   data: CaseSummaryData | string; // Adjusted to allow string (from previous usage or just flexible)
+}
+
+export interface DossierPackageResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    rid: string;
+    r_number: string | null;
+    created_by: string;
+    modified_by: string;
+    created_datetime: string;
+    modified_datetime: string;
+    case_rid: string;
+    account_rid: string;
+    browse_url: string;
+    document_name: string;
+    size: string;
+    extension: string;
+  };
 }

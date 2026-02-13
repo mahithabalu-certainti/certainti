@@ -7,6 +7,7 @@ import {
   RDCreditInitiateResponse,
   SignOffFinancialHighlightsPayload,
   UserPreferencePayload,
+  DossierPackageResponse,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -180,43 +181,71 @@ export const fetchDossierInitiate = async (
   accountRid: string,
   caseRid: string
 ): Promise<RDCreditStatusResponse> => {
-  const url = getDossierInitiateURL(accountRid, caseRid);
-  const response = await caseServiceApi.get(url);
+  const url = getDossierInitiateURL();
+  const response = await caseServiceApi.post(url, {
+    account_rid: accountRid,
+    case_rid: caseRid,
+  });
   return response.data;
 };
 
-export const useDossierInitiate = (
-  accountRid: string,
-  caseRid: string,
-  enabled: boolean = true
-): UseQueryResult<RDCreditStatusResponse, Error> => {
-  return useQuery<RDCreditStatusResponse, Error>({
-    queryKey: ['dossierInitiate', accountRid, caseRid],
-    queryFn: () => fetchDossierInitiate(accountRid, caseRid),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!accountRid && !!caseRid && enabled,
+export const useDossierInitiate = () => {
+  return useMutation<
+    RDCreditStatusResponse,
+    Error,
+    { account_rid: string; case_rid: string }
+  >({
+    mutationFn: ({ account_rid, case_rid }) =>
+      fetchDossierInitiate(account_rid, case_rid),
   });
 };
+export const ExportDossierPackage = async (
+  accountRid: string,
+  caseRid: string
+): Promise<DossierPackageResponse | undefined> => {
+  try {
+    const url = getDossierSheetStatusURL(accountRid, caseRid);
+    const response = await caseServiceApi.get<DossierPackageResponse>(url);
+    const status = response.data;
+    const downloadUrl = status?.data?.browse_url;
+
+    if (!downloadUrl) {
+      console.error('No download URL available');
+      return status;
+    }
+
+    const filename = `${status.data.document_name}${status.data.extension}` || 'dossier-sheet.zip';
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    // link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    return status;
+  } catch (error) {
+    console.error('Export failed:', error);
+    throw error;
+  }
+};
+
 export const fetchDossierSheetStatus = async (
   accountRid: string,
   caseRid: string
-): Promise<RDCreditStatusResponse> => {
+): Promise<DossierPackageResponse> => {
   const url = getDossierSheetStatusURL(accountRid, caseRid);
-  const response = await caseServiceApi.get(url);
+  const response = await caseServiceApi.get<DossierPackageResponse>(url);
   return response.data;
 };
 
-export const useDossierSheetStatus = (
-  accountRid: string,
-  caseRid: string,
-  enabled: boolean = true
-): UseQueryResult<RDCreditStatusResponse, Error> => {
-  return useQuery<RDCreditStatusResponse, Error>({
-    queryKey: ['dossierSheetStatus', accountRid, caseRid],
-    queryFn: () => fetchDossierSheetStatus(accountRid, caseRid),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!accountRid && !!caseRid && enabled,
+export const useDossierSheetStatus = () => {
+  return useMutation<
+    DossierPackageResponse | undefined,
+    Error,
+    { accountRid: string; caseRid: string }
+  >({
+    mutationFn: ({ accountRid, caseRid }) =>
+      ExportDossierPackage(accountRid, caseRid),
   });
 };

@@ -21,6 +21,7 @@ import {
 } from '../../types/cases';
 import { CommonApiResponse } from '../../../common-service';
 import { getCaseExportListURL, getCaseListURL } from '../urls';
+import { AuditTimelineListExportParams } from '../../types';
 
 // List
 export const fetchCaseList = async (
@@ -278,7 +279,7 @@ export const ExportAssignedList = async (
   }
 };
 export const ExportAuditTimelineList = async (
-  params: CaseAssignedExportParams,
+  params: AuditTimelineListExportParams,
   fileName?: string
 ): Promise<void> => {
   try {
