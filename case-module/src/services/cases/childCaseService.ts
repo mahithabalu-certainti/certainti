@@ -803,7 +803,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       }
       const attachmentDisplayNames = await getAttachmentDisplayNames(
         allAttachments,
-        schemaNumber
+        schemaName
       );
 
       // 🔷 Apply attached_to filter if present
