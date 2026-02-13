@@ -51,6 +51,7 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
   // Fetch data from API
   const { data: apiData, isLoading } = useGetGlobalLevelChart(
     'all',
+    'active',
     selectedYear === 'all' ? undefined : Number(selectedYear),
     selectedCountry || undefined
   );
