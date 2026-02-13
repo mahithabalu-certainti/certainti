@@ -226,8 +226,14 @@ export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
 };
 
 export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
-  Australia: "AUD",
+  "Australia": "AUD",
+  "United States": "USD",
 };
+
+export const FORM_TYPE = {
+  "Fillable": "fillable",
+  "Non-Fillable": "non-fillable",
+};  
 
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",
@@ -1770,7 +1776,7 @@ export const rawQueries = {
   AND is_active = true`
   },
   fetchStateForms(countryRid: string,stateRid: string, effectiveStart: string, effectiveEnd: string){
-    return `SELECT dmf.browse_file,dmf.rid
+    return `SELECT dmf.browse_file,dmf.rid,dmf.form_type
 FROM trd365.data_mapper_forms dmf
 WHERE dmf.country_rid = '${countryRid}'
   AND dmf.state_rid = '${stateRid}'
