@@ -95,11 +95,12 @@ export const useGetCasesByHealthStatus = (
 
 export const fetchOverallProjectValue = async (
   flag: string,
+  countryType: 'all' | 'active',
   fiscalYear?: number
 ): Promise<OverallProjectValueDetail[]> => {
   try {
     const response = await reportServiceApi.get<OverallProjectValueResponse>(
-      getOverallProjectValueURL(flag, fiscalYear)
+      getOverallProjectValueURL(flag, countryType, fiscalYear)
     );
     return response.data.data;
   } catch (error) {
@@ -110,12 +111,13 @@ export const fetchOverallProjectValue = async (
 
 export const useGetOverallProjectValue = (
   flag: string = 'all',
+  countryType: 'all' | 'active',
   fiscalYear?: number,
   isEnable: boolean = true
 ): UseQueryResult<OverallProjectValueDetail[], Error> => {
   return useQuery<OverallProjectValueDetail[], Error>({
-    queryKey: ['overall-project-value', flag, fiscalYear],
-    queryFn: () => fetchOverallProjectValue(flag, fiscalYear),
+    queryKey: ['overall-project-value', flag, fiscalYear, countryType],
+    queryFn: () => fetchOverallProjectValue(flag, countryType, fiscalYear),
     retry: 0,
     enabled: isEnable,
   });
@@ -123,12 +125,13 @@ export const useGetOverallProjectValue = (
 
 export const fetchGlobalLevelChart = async (
   flag: string,
+  countryType: 'all' | 'active',
   fiscalYear?: number,
   countryRid?: string
 ): Promise<GlobalLevelChartData> => {
   try {
     const response = await reportServiceApi.get<GlobalLevelChartResponse>(
-      getGlobalLevelChartURL(flag, fiscalYear, countryRid)
+      getGlobalLevelChartURL(flag, countryType, fiscalYear, countryRid)
     );
     return response.data.data;
   } catch (error) {
@@ -139,13 +142,15 @@ export const fetchGlobalLevelChart = async (
 
 export const useGetGlobalLevelChart = (
   flag: string = 'all',
+  countryType: 'all' | 'active',
   fiscalYear?: number,
   countryRid?: string,
   isEnable: boolean = true
 ): UseQueryResult<GlobalLevelChartData, Error> => {
   return useQuery<GlobalLevelChartData, Error>({
-    queryKey: ['global-level-chart', flag, fiscalYear, countryRid],
-    queryFn: () => fetchGlobalLevelChart(flag, fiscalYear, countryRid),
+    queryKey: ['global-level-chart', flag, fiscalYear, countryRid, countryType],
+    queryFn: () =>
+      fetchGlobalLevelChart(flag, countryType, fiscalYear, countryRid),
     retry: 0,
     enabled: isEnable,
   });

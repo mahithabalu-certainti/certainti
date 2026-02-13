@@ -75,6 +75,8 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
     tooltip: {
       text: 'percentage',
       showColorCode: true,
+      isHtml: false,
+      trigger: 'focus',
     },
   };
 

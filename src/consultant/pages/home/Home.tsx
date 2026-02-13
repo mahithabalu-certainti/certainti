@@ -81,6 +81,7 @@ export const HomePage: React.FC = () => {
   const { data: overallProjectValue, isLoading: isProjectValueLoading } =
     useGetOverallProjectValue(
       'all',
+      'active',
       donutFiscalYear === 'all' ? undefined : Number(donutFiscalYear)
     );
   const { data: weeklyProductivity, isLoading: isWeeklyProductivityLoading } =

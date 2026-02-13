@@ -158,35 +158,21 @@ export interface DashboardMeetingDetail {
   modified_by: string | null;
   created_datetime: string;
   modified_datetime: string | null;
+  activity_rid: string;
   account_rid: string;
   attach_to: string;
   attachment_level: string;
-  activity_type: string;
-  fiscal_year: number | null;
   status_rid: string;
   effective_start_datetime: string;
   effective_end_datetime: string;
   subject: string;
-  body_html: string | null;
-  to_email: string | null;
-  cc_email: string | null;
-  description: string | null;
-  priority_rid: string | null;
-  assigned_to: string | null;
-  task_name: string | null;
-  task_template_rid: string | null;
-  attendees_list: string | null;
-  sender_email: string | null;
   meeting_participants: {
     email: string;
     name: string;
   }[];
   meeting_invite: string;
   meeting_id: string;
-  call_platform: string | null;
   minutes_of_meeting: string | null;
-  caller_id: string | null;
-  call_participants: string | null;
   recurrence_days: string[];
   recurrence_interval: number;
   recurrence_type: string;
@@ -199,9 +185,8 @@ export interface DashboardMeetingDetail {
   };
   recurrence_day_of_month: number | null;
   recurrence_monthly_index: number | null;
-  checklist_rid: string | null;
   status_name: string;
-  priority_name: string | null;
+  priority_name?: string | null;
 }
 
 export interface DashboardMeetingListResponse {
