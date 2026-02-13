@@ -791,7 +791,7 @@ export const rawQueries = {
       ) as "exists";
     `;
   },
-  fetchActiveCountries(countryRid?: string, countryType?: string) {
+  fetchCountries(countryRid?: string, countryType?: string) {
     const replacements: any = {};
     let query = `
       SELECT 
@@ -1014,7 +1014,7 @@ export const rawQueries = {
 
     return { query, replacements };
   },
-  fetchMeetingSummaryList(accountRids: string[], statusId?: string, userId?: string) {
+  fetchMeetingSummaryList(accountRids: string[], statusId?: string, userEmail?: string) {
     let query = `
     SELECT 
       *
@@ -1031,15 +1031,15 @@ export const rawQueries = {
       replacements.statusId = statusId;
     }
 
-    if (userId) {
+    if (userEmail) {
       query += `
         AND (
-            a.meeting_participants::jsonb @> :userIdJson
-            OR a.invited_by = :userId
+            a.meeting_participants::jsonb @> :userEmailJson
+            OR a.invited_by = :userEmail
           )
         `;
-      replacements.userIdJson = JSON.stringify([userId]);
-      replacements.userId = userId;
+      replacements.userEmailJson = JSON.stringify([userEmail]);
+      replacements.userEmail = userEmail;
     }
 
     query += `
@@ -1056,7 +1056,7 @@ export const rawQueries = {
     `;
     return { query, replacements };
   },
-  fetchMeetingSummaryCount(accountRids: string[], statusIds?: string[], userId?: string) {
+  fetchMeetingSummaryCount(accountRids: string[], statusIds?: string[], userEmail?: string) {
     let query = `
     SELECT 
       count('x')
@@ -1073,15 +1073,15 @@ export const rawQueries = {
       replacements.statusIds = statusIds;
     }
 
-    if (userId) {
+    if (userEmail) {
       query += `
         AND (
-            a.meeting_participants::jsonb @> :userIdJson
-            OR a.invited_by = :userId
+            a.meeting_participants::jsonb @> :userEmailJson
+            OR a.invited_by = :userEmail
           )
         `;
-      replacements.userIdJson = JSON.stringify([userId]);
-      replacements.userId = userId;
+      replacements.userEmailJson = JSON.stringify([userEmail]);
+      replacements.userEmail = userEmail;
     }
 
     query += `

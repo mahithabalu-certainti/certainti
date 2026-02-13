@@ -1795,11 +1795,11 @@ class ActivitySchemaService {
         });
         if (findAllDeletedDetails.length > 0) {
           const mapAttachments = new Map(findAllDeletedDetails.map((f: any) => [f.rid, f.browse_url]));
-          let iterationCount = 0
+          let iterationCount = 0;
           let totalIteraction = activityData.deleted_file_ids.length;
           for (let id of activityData.deleted_file_ids) {
             await deleteFromAzureBlob(mapAttachments.get(id));
-            iterationCount += 1
+            iterationCount += 1;
           }
           if (totalIteraction === iterationCount) {
             await ActivityAttachments.destroy({
@@ -1924,7 +1924,7 @@ class ActivitySchemaService {
       }
     }
 
-    await MeetingSummary.update(
+    const [affectedCount] = await MeetingSummary.update(
       {
         subject: activityRequest.subject,
         meeting_participants: meetingParticipants,
@@ -1953,6 +1953,10 @@ class ActivitySchemaService {
         where: { activity_rid: activityRequest.activity_rid },
       }
     );
+
+    if (affectedCount === 0) {
+      await this.addMeetingSummary(accountNumber, activityRequest, activityRequest.activity_rid as string);
+    }
   }
 
   async createActivityMeeting(
@@ -2034,10 +2038,18 @@ class ActivitySchemaService {
         activityData.invited_by = userInfo.email;
         activityData.meeting_invite = scheduleResponse.webLink;
         activityData.meeting_id = scheduleResponse.meetingId;
-        activityData.effective_start_datetime = activityData.effective_start_date
-        activityData.effective_end_datetime = activityData.effective_end_date
+        activityData.effective_start_datetime = activityData.effective_start_date;
+        activityData.effective_end_datetime = activityData.effective_end_date;
         const response = await Activities.create(activityData);
         activityRequest.activity_rid = response.rid;
+
+        // Sync authoritative data from activityData to activityRequest
+        (activityRequest as any).invited_by = activityData.invited_by;
+        (activityRequest as any).meeting_invite = activityData.meeting_invite;
+        (activityRequest as any).meeting_id = activityData.meeting_id;
+        (activityRequest as any).effective_start_datetime = activityData.effective_start_datetime;
+        (activityRequest as any).effective_end_datetime = activityData.effective_end_datetime;
+
         await this.addMeetingSummary(accountNumber, activityRequest, response.rid);
         await this.uploadActivityFiles(files, activityRequest, accountNumber);
         await this.addTaskTimeline(
@@ -2157,11 +2169,11 @@ class ActivitySchemaService {
         });
         if (findAllDeletedDetails.length > 0) {
           const mapAttachments = new Map(findAllDeletedDetails.map((f: any) => [f.rid, f.browse_url]));
-          let iterationCount = 0
+          let iterationCount = 0;
           let totalIteraction = activityData.deleted_file_ids.length;
           for (let id of activityData.deleted_file_ids) {
             await deleteFromAzureBlob(mapAttachments.get(id));
-            iterationCount += 1
+            iterationCount += 1;
           }
           if (totalIteraction === iterationCount) {
             await ActivityAttachments.destroy({
@@ -2267,11 +2279,11 @@ class ActivitySchemaService {
         });
         if (findAllDeletedDetails.length > 0) {
           const mapAttachments = new Map(findAllDeletedDetails.map((f: any) => [f.rid, f.browse_url]));
-          let iterationCount = 0
+          let iterationCount = 0;
           let totalIteraction = activityData.deleted_file_ids.length;
           for (let id of activityData.deleted_file_ids) {
             await deleteFromAzureBlob(mapAttachments.get(id));
-            iterationCount += 1
+            iterationCount += 1;
           }
           if (totalIteraction === iterationCount) {
             await ActivityAttachments.destroy({
@@ -2373,7 +2385,7 @@ class ActivitySchemaService {
     };
 
     // Generate attachments array from uploaded files
-    let attachments: any[] = []
+    let attachments: any[] = [];
     const getContentTypeFromExtension = (format?: string) => {
       if (!format) return "application/octet-stream";
       const ext = format.startsWith(".") ? format.toLowerCase() : `.${format.toLowerCase()}`;
@@ -2602,7 +2614,7 @@ class ActivitySchemaService {
     const response: any = {
       attach_to: emailDetails?.attach_to ?? "",
       attachment_level: emailDetails?.attachment_level ?? "",
-      attached_to: attachedtoDetails?.name ?? "",
+      attached_to: attached_to,
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
@@ -3259,7 +3271,7 @@ class ActivitySchemaService {
             newValueStr = checklistNewValueString ?? newValueStr;
           }
           else if (key === 'task_name') {
-            mappedKey = "Task Name"
+            mappedKey = "Task Name";
           } else if (key === 'task_description' || key === 'description') {
             mappedKey = "Task Description";
           }

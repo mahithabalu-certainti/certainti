@@ -154,7 +154,6 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                     form_type = ""
                     extraction_order = 0
 
-                    pdf_form_fields = []
                     pdf_form_fields = data_obj.get("pdf_form_fields", [])
                     if pdf_form_fields and isinstance(pdf_form_fields, list):
                         if len(pdf_form_fields) > 1:

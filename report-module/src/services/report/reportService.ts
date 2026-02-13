@@ -319,8 +319,18 @@ export class ReportService implements IReportService {
             const scheduledStatus = activityStatuses.find((s) => s.status_name === 'Scheduled');
             const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
 
+            let userEmail: string | undefined;
+            if (flag === "user") {
+                const userEmailQuery = rawQueries.fetchUserEmail(userId);
+                const userEmailResult: { email: string }[] = await sequelize.query(userEmailQuery.query, {
+                    replacements: userEmailQuery.replacements,
+                    type: QueryTypes.SELECT
+                });
+                userEmail = userEmailResult[0]?.email;
+            }
+
             // Fetch Meetings
-            const meetingListQuery = rawQueries.fetchMeetingSummaryList(accountIds, scheduledStatusId, flag === "user" ? userId : undefined);
+            const meetingListQuery = rawQueries.fetchMeetingSummaryList(accountIds, scheduledStatusId, userEmail);
             const meetings: any[] = await sequelize.query(meetingListQuery.query, {
                 replacements: meetingListQuery.replacements,
                 type: QueryTypes.SELECT
@@ -485,8 +495,18 @@ export class ReportService implements IReportService {
             let totalMeetingsCount = 0;
             let attendedMeetingsCount = 0;
 
-            const weeklyTotalMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, totalStatuses, flag === "user" ? userId : undefined);
-            const weeklyAttendedMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, attendedStatuses, flag === "user" ? userId : undefined);
+            let userEmail: string | undefined;
+            if (flag === "user") {
+                const userEmailQuery = rawQueries.fetchUserEmail(userId);
+                const userEmailResult: { email: string }[] = await sequelize.query(userEmailQuery.query, {
+                    replacements: userEmailQuery.replacements,
+                    type: QueryTypes.SELECT
+                });
+                userEmail = userEmailResult[0]?.email;
+            }
+
+            const weeklyTotalMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, totalStatuses, userEmail);
+            const weeklyAttendedMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, attendedStatuses, userEmail);
 
             const [totalRes, attendedRes] = await Promise.all([
                 sequelize.query<{ count: number }>(
@@ -666,8 +686,9 @@ export class ReportService implements IReportService {
                 accountIds = childAccountIds;
             }
 
-            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries(undefined, countryType);
+            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchCountries(undefined, countryType);
             const activeCountriesRids: any[] = await sequelize.query(countryQuery, {
+                replacements: countryReplacements,
                 type: QueryTypes.SELECT
             });
 
@@ -714,7 +735,7 @@ export class ReportService implements IReportService {
                 accountIds = childAccountIds;
             }
 
-            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries(countryRid, countryType);
+            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchCountries(countryRid, countryType);
             const activeCountriesRids: any[] = await sequelize.query(countryQuery, {
                 replacements: countryReplacements,
                 type: QueryTypes.SELECT
@@ -729,14 +750,14 @@ export class ReportService implements IReportService {
             const countryWiseApprovedAmount = new Map<string, { country_rid: string, country_name: string, country_code: string, approved: number }>();
 
             const { query, replacements } = rawQueries.fetchGlobalAccountClaimedAmounts(flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
-            const AccountWiseConsolidationList: any[] = await sequelize.query(query, {
+            const accountWiseConsolidationList: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
             });
 
-            const finalAccountWiseConsolidationList = AccountWiseConsolidationList.filter((row) => row.final_credit_submitted > 0);
+            const finalAccountWiseConsolidationList = accountWiseConsolidationList.filter((row) => row.final_credit_submitted > 0);
 
-            AccountWiseConsolidationList.forEach((row) => {
+            accountWiseConsolidationList.forEach((row) => {
                 const countryKey = row.country_rid || '';
                 if (!countryWiseApprovedAmount.has(countryKey)) {
                     const countryDetails = activeCountriesMap.get(countryKey);
