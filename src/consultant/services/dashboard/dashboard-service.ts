@@ -388,7 +388,7 @@ export const ExportDashboardReport = async (
 
   try {
     // Construct the URL dynamically as all reports follow the same pattern
-    const url = `api/report/${type}Export?flag=${flag}`;
+    const url = `/api/report/${type}Export?flag=${flag}`;
 
     const response = await reportServiceApi.get(url);
     const base64Data = response.data?.data;

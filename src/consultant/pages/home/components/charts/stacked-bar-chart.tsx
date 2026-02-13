@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-google-charts';
 import { formatAmount, getDynamicSvgIcon, blendWithWhite } from '../../helpers';
 
@@ -71,10 +71,10 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
   };
 
   // Reset to page 1 when data changes
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.length]);
+  }, [data.length, itemsPerPage]);
+
   const prepareChartData = () => {
     if (series.length === 1) {
       const valueSeries = series[0];

@@ -462,7 +462,7 @@ export const HomePage: React.FC = () => {
 
         <CardList
           title='Overdue Approvals'
-          subtitle={`${overdueApprovals?.length || 0} Approvals requests overdue`}
+          subtitle={`${overdueApprovals?.length || 0} Approval requests overdue`}
           items={overdueApprovals || []}
           isLoading={isOverdueLoading}
           exportEnable={true}

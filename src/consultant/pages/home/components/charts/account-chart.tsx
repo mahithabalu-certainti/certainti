@@ -109,7 +109,7 @@ const AccountChart: React.FC<Props> = ({
         <Select
           name='fiscal_year'
           value={selectedYear}
-          onChange={(e) => onYearChange(e.target.value)}
+          onChange={(e) => onYearChange(e.target.value as string)}
           displayEmpty
           size='small'
           className={`custom-select-no-arrow w-[150px] max-w-[150px] sm:text-sm ${
