@@ -741,6 +741,10 @@ export class WebHookService {
       where: {
         interaction_rid: interactionId,
       },
+       order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"],
+        ],
     });
 
     return interaction;

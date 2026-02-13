@@ -312,7 +312,8 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'task_name', data_type: 'String',required:false },
         { column_name: 'task_type', data_type: 'String',required:false },
         { column_name: 'task_classification', data_type: 'String',required:false },
-        { column_name: 'task_description', data_type: 'String',required:false }
+        { column_name: 'task_description', data_type: 'String',required:false },
+        { column_name: 'currency', data_type: 'String',required:false },
       ];
 
     case 'resource_skill':
@@ -343,7 +344,6 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'currency', data_type: 'String',required:false },
         { column_name: 'industry', data_type: 'String',required:false },
         { column_name: 'program_name', data_type: 'String',required:false },
-        { column_name: 'client_organization', data_type: 'String',required:false },
         { column_name: 'country', data_type: 'String',required:false },
         { column_name: 'city', data_type: 'String' ,required:false},
         { column_name: 'region', data_type: 'String' ,required:false},
@@ -363,6 +363,8 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'total_sub_con_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_non_labor_count', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'project_delivery_head_name', data_type: 'String',required:false },
+        { column_name: 'project_delivery_head_email', data_type: 'email',required:false },
       ];
 
     case 'project_resource':
@@ -385,6 +387,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'resource_state_province', data_type: 'String' ,required:false},
         { column_name: 'resource_country', data_type: 'String',required:false },
         { column_name: 'currency', data_type: 'String',required:false },
+        { column_name: 'project_type', data_type: 'String',required:false },
       ];
 
     default:

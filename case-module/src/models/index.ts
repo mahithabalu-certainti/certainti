@@ -16,6 +16,7 @@ import { TaskAttachments } from "./taskAttachmentModel";
 import { CaseTaskWorkflowConnector } from "./caseTaskWorkflowConnectorModel";
 import { ProjectResourceFiscal } from "./projectResourceFiscal";
 import { ProjectTask } from "./projectTask";
+import { SignoffDetails } from "./signoffDetails";
 
 export const models = {
   Case,
@@ -33,7 +34,8 @@ export const models = {
   CaseProjectResource,
   CaseProjectTask,
   ProjectResourceFiscal,
-  ProjectTask,  
+  ProjectTask,
+  SignoffDetails
 };
 
 export async function initModels() {

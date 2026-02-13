@@ -161,12 +161,7 @@ export class CaseHistorySubmission
           {
             fields: ["account_rid"],
             name: "idx_case_history_submission_account_rid",
-          },
-          {
-            fields: ["account_rid", "fiscal_year"],
-            unique: true,
-            name: "case_history_submission_account_year_ukey",
-          },
+          }
         ],
       }
     );

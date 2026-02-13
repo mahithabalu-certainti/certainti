@@ -220,8 +220,10 @@ export class HelperMethods {
         return null;
       }
     } catch (error) {
-      logMessage(`Error creating checklist: ${error}`);
-      throw new Error("Error creating checklist: " + error);
+      console.log(error);
+      const errorMessage = error instanceof Error ? error.message : error;
+      logMessage(`Error creating checklist: ${errorMessage}`);
+      throw new Error("Error creating checklist: " + errorMessage);
     }
   }
   async manageCheckListItems(
@@ -314,13 +316,9 @@ export class HelperMethods {
           item,
           transaction
         );
-
       default:
         logMessage(
           `Warning: Unknown action type '${item.action_type}' for checklist item: ${item.checklist_item_name}`
-        );
-        throw new Error(
-          `Invalid action type: ${item.action_type}. Supported types are: add, edit, delete`
         );
     }
   }

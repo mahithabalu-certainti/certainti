@@ -1024,8 +1024,10 @@ export class ChecklistSchemaService {
       );
       return createdChecklist;
     } catch (error) {
-      logMessage(`Error creating checklist: ${error}`);
-      throw new Error("Error creating checklist: " + error);
+       console.log(error)
+       const errorMessage = error instanceof Error ? error.message : error;
+      logMessage(`Error creating checklist: ${errorMessage}`);
+      throw new Error("Error creating checklist: " + errorMessage);
     }
   }
 
@@ -1072,6 +1074,7 @@ export class ChecklistSchemaService {
         return null;
       }
     } catch (error) {
+      console.log(error)
       logMessage(`Error creating checklist: ${error}`);
       throw new Error("Error creating checklist: " + error);
     }

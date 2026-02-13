@@ -1014,7 +1014,7 @@ export const rawQueries = {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
     return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state 
     WHERE 
-    rid IN (${formattedStateIds})`;
+    rid IN (${formattedStateIds}) order by state_name ASC`;
   },
   fetchStatesIds(schemaName: string, account_rid: string, fiscal_year: number) {
     return `
@@ -1023,6 +1023,8 @@ export const rawQueries = {
     account_rid = '${account_rid}'
     AND
     fiscal_year = ${fiscal_year}
+    AND 
+    region_rid in (select region_rid from ${schemaName}.project_resource)
     `;
   },
   updateProjectFiscalEffectiveDatas(schemaName: string, data: any) {
@@ -1115,7 +1117,8 @@ export const rawQueries = {
       qre_subcon = ${data.qre_subcon},
       qre_nonlabor = ${data.qre_nonlabor},
       modified_by = '${data.modified_by}',
-      modified_datetime = '${new Date().toISOString()}'
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
     WHERE
       rid = '${data.rid}'
     `;
@@ -1131,7 +1134,8 @@ export const rawQueries = {
       qre_subcon = ${data.qre_subcon},
       qre_nonlabor = ${data.qre_nonlabor},
       modified_by = '${data.modified_by}',
-      modified_datetime = '${new Date().toISOString()}'
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
     WHERE
       project_fiscal_rid = '${data.rid}'
     `;
@@ -1931,7 +1935,9 @@ export const rawQueries = {
           pfs.created_datetime,
           pfs.qre_final, 
           pfs.project_point_of_contact, 
-          pfs.technical_point_of_contact, 
+          pfs.technical_point_of_contact,
+          pfs.project_point_of_contact_email, 
+          pfs.technical_point_of_contact_email, 
           pfs.comments, 
           pfs.modified_datetime, 
           pfs.project_rid, 
@@ -1940,7 +1946,8 @@ export const rawQueries = {
           pfs.account_rid,
           COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
           COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
-          pfs.rd_percent_final
+          pfs.rd_percent_final,
+          pfs.is_rd_claim_qualified
         FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid

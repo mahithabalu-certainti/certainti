@@ -177,7 +177,13 @@ async function states(req: Request, res: Response): Promise<void> {
           .filter(Boolean);
       }
     }
-    const states = await services.geoDataServices.states(countryIds);
+
+    let statusScope = req.query.statusScope;
+    if (!statusScope)
+    {
+      statusScope = "all";
+    }
+    const states = await services.geoDataServices.states(statusScope as string,countryIds);
 
     if (states.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

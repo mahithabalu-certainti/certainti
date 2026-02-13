@@ -3,9 +3,10 @@ import { CaseService } from "./caseService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
-import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { caseFilingTypes, caseStatuses, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
+import { uploadToAzureBlob } from "../../utils/helpers";
 
 export class ChildCaseService extends CaseService {
 
@@ -18,7 +19,7 @@ export class ChildCaseService extends CaseService {
         return orgDb;
     }
 
-    async signOffFinancialWorking (data : any) {
+    async signOffFinancialWorking (data : any, file : any) {
         const mainDb = await this.mainDbConfiguration();
         const orgDb = await this.orgDbConfiguration();
         const parentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -36,16 +37,27 @@ export class ChildCaseService extends CaseService {
                     statusMessage : STATUS_MESSAGE.noProjectsAssignedToCase
                 }
             }
+            const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+            if(file !== undefined) {
+                const fileUploadedResult = await uploadToAzureBlob(file, data.account_rid, '', parentAccount[0][0].r_number, 'signoff')
+                await orgDb.query(rawQueries.insertDataIntoAttachments(schemaName, data.case_rid, data.userId, data.account_rid, fileUploadedResult.url, fileUploadedResult.name, caseDetails?.fiscal_year, fileUploadedResult.extension, fileUploadedResult.size, data.comments))
+            }
             const caseResult : any = await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, data.sign_off));
             if(caseResult[1].rowCount) {
+                const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId());
+                await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findFinancialWorkingId[0][0].rid, data.case_rid, data.account_rid, schemaName))
                 await orgDb.query(rawQueries.updateClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName));
                 await orgDb.query(rawQueries.updateClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName));
+                await mainDb.query(rawQueries.updateClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid))
                 let mapIdsForCaseProjectregions : any[] = []
                 let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
                 caseProjectIds.forEach((d) => {
                     mapIdsForCaseProjectregions.push(mappedValuesForCasesRegions.get(d))
                 })
-                await orgDb.query(rawQueries.updateClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName))
+                let query = rawQueries.updateClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName)
+                if(query) {
+                    await orgDb.query(query)
+                }
                 return {
                     statusCode : HttpStatus.SUCCESS,
                     statusMessage : STATUS_MESSAGE.financialWorkingSignedOff
@@ -81,9 +93,70 @@ export class ChildCaseService extends CaseService {
                     state_name : mapStates.get(d.rid) || null
                 }
             });
+            result.sort((a : any, b : any) => {
+                const nameA = (a.state_name || "").toString();
+                const nameB = (b.state_name || "").toString();
+                return nameA.localeCompare(nameB);
+            });
             return result;
         } else {
             return []
         }
     }
+
+    async getClosedCasesList(data: { account_rid: string }): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { cases: any };
+      }> {
+        const orgDb = await this.getOrgDb();
+        const mainDb = await this.getMainDb();
+        try {
+          const [caseStatus]: any = await mainDb.query(rawQueries.fetchCaseStatusByType(caseStatuses.CLOSED));
+          if (caseStatus.length === 0) {
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: STATUS_MESSAGE.dataNotAvailable,
+                errorMessage: "Closed case status not found",
+            };
+          } 
+           const [caseFilingType]: any = await mainDb.query(rawQueries.fetchFilingTypeByName(caseFilingTypes.regular));
+           if (caseFilingType.length === 0) {
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: STATUS_MESSAGE.dataNotAvailable,
+                errorMessage: "Regular filing type not found",
+            };
+          } 
+        const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+            if (!accountNumber) {
+                throw new Error("Invalid account ID");
+            }
+          const { Case } = await this.caseModelService.getModels(accountNumber);
+            const closedCases = await Case.findAll({
+                attributes: ['rid', 'case_name'],
+                where: {
+                    account_rid: data.account_rid,
+                    status_rid: caseStatus[0].rid,
+                    filing_type_rid: caseFilingType[0].rid
+                }
+            });
+            return {
+            statusCode: HttpStatus.SUCCESS,
+            message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
+            data: { cases: closedCases },
+          };
+        } catch (error) {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: STATUS_MESSAGE.dataNotAvailable,
+            errorMessage: (error as Error).message,
+          };
+        }
+}
 }

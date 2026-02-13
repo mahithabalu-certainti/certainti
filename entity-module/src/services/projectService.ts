@@ -570,7 +570,7 @@ export class ProjectService {
     existingRegionId = existingFiscalData?.region_rid!
 
     let findProjectFiscal: any = await orgDb.query(rawQueries.findProjectFiscal(schemaName, projectData.project_id, accountData.rid, projectData.project_fiscal_id))
-    if (findProjectFiscal[0][0].is_qualified) {
+    if (findProjectFiscal[0][0].is_rd_claim_qualified) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         statusMessage: STATUS_MESSAGE.qualifiedProject
@@ -1757,7 +1757,9 @@ export class ProjectService {
         "QRE Percent Final": "QRE Percent Final",
         "QRE Final": "QRE Final",
         "Project Point of Contact": "Key Contacts List",
+        "Project Point of Contact Email": "Key Contacts List",
         "Technical Point of Contact": "Key Contacts List",
+        "Technical Point of Contact Email": "Key Contacts List",
         Comments: "Comments",
         "Last Modified": "Updated On",
         "Project ID": "Project ID",
@@ -1799,7 +1801,9 @@ export class ProjectService {
           "QRE Percent Final": "-",
           "QRE Final": "-",
           "Project Point of Contact": "-",
+          "Project Point of Contact Email": "-",
           "Technical Point of Contact": "-",
+          "Technical Point of Contact Email": "-",
           Comments: "-",
           "Last Modified": "-",
           "Project ID": project.r_number || "-",
@@ -1855,8 +1859,10 @@ export class ProjectService {
                 fiscal.qre_final || "-", //formatNumberForExport(fiscal.qre_final,project.currency_symbol)
               "Project Point of Contact":
                 fiscal.project_point_of_contact || "-",
+              "Project Point of Contact Email": fiscal.project_point_of_contact_email || "-",
               "Technical Point of Contact":
                 fiscal.technical_point_of_contact || "-",
+              "Technical Point of Contact Email": fiscal.technical_point_of_contact_email || "-",
               Comments: fiscal.comments || "-",
               "Last Modified": fiscal.modified_datetime
                 ? timezone && isValidTimezone(timezone)
@@ -2311,6 +2317,8 @@ export class ProjectService {
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
+      "project_point_of_contact_email",
+      "technical_point_of_contact_email",
       "classification_name",
       "industry_name",
       "project_type_name",

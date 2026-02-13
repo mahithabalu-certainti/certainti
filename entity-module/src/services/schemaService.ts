@@ -1993,9 +1993,17 @@ class SchemaService {
           parent: "project_point_of_contact",
           child: "project_point_of_contact",
         },
+        project_point_of_contact_email: {
+          parent: "project_point_of_contact_email",
+          child: "project_point_of_contact_email",
+        },
         technical_point_of_contact: {
           parent: "technical_point_of_contact",
           child: "technical_point_of_contact",
+        },
+        technical_point_of_contact_email: {
+          parent: "technical_point_of_contact_email",
+          child: "technical_point_of_contact_email",
         },
         fiscal_year: { parent: "", child: "fiscal_year" },
         qre_final: { parent: "", child: "qre_final" },
@@ -2657,7 +2665,9 @@ class SchemaService {
       project_code: `${tablePrefix}.project_code`,
       assessment_status: `${tablePrefix}.assessment_status`,
       project_point_of_contact: `${tablePrefix}.project_point_of_contact`,
+      project_point_of_contact_email: `${tablePrefix}.project_point_of_contact_email`,
       technical_point_of_contact: `${tablePrefix}.technical_point_of_contact`,
+      technical_point_of_contact_email: `${tablePrefix}.technical_point_of_contact_email`,
       rd_percent_final: `pfs.rd_percent_final`,
       qre_final : `pfs.qre_final`
       // financial_consultant: `${tablePrefix}.financial_consultant`,
@@ -3967,6 +3977,10 @@ class SchemaService {
       const qreSubconCost = totalSubconCost * (netQre / 100);
       const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
 
+      let isQualifiedFlag : boolean = false;
+      if(qreAdjustment !== 0) isQualifiedFlag = true
+      else isQualifiedFlag = false;
+
       await sequelize.query(
         rawQueries.updateProjectFiscalQre(schemaName, 
           {
@@ -3978,7 +3992,8 @@ class SchemaService {
             qre_nonlabor: qreNonlaborCost,
             modified_by: userId,
             modified_datetime: new Date(),
-            rid: projectFiscalId
+            rid: projectFiscalId,
+            is_qualified : isQualifiedFlag
           }
         ),
         {
@@ -3998,7 +4013,8 @@ class SchemaService {
             qre_nonlabor: qreNonlaborCost,
             modified_by: userId,
             modified_datetime: new Date(),
-            rid: projectFiscalId
+            rid: projectFiscalId,
+            is_qualified : isQualifiedFlag
           }
         ),
         {

@@ -16,7 +16,27 @@ export interface ICreateCases {
   status_rid?: string;
   heat_light_power?: number;
   total_nonlabor_cost?: number;
-  tax_liability?: number
+  tax_liability?: number;
+  employers_pension_contribution? : number
+  other? : number
+  material_software_cost? : number;
+  sub_contracts? : number;
+  cloud_software?: number;
+  unpaid_amounts_paid? : number;
+  unpaid_amounts? : number;
+  aggregated_turnover? : number;
+  total_expenses ? : number;
+  taxable_income ? : number;
+  export_sales_revenue? : number;
+  lease_costs_of_computers? : number;
+  illinois_rd_credit_partnership_corp? : number
+  illinois_research_payments_corp_only? : number
+  basic_research_payments? : number
+  qualified_computer_rental_time_expenses? : number
+  credit_carry_forward_py?: number
+  current_year_gross_receipts?: number
+  other_credits_total?: number
+  parent_case_rid?: string;
 }
 
 export type CaseHeadersColumns = {
@@ -56,6 +76,10 @@ export type CaseHeadersColumns = {
   account_status_rid : string,
   account_status_name : string
   is_send_interaction : boolean
+  is_state_available : boolean
+  state_rid : string | null,
+  state_name : string | null
+  financial_working_signoff : boolean
 }
 
 export type FilingType = {
@@ -67,6 +91,10 @@ export type CountryType = {
   rid : string,
   country_name : string
   country_code: string
+}
+export type StateType = {
+  rid : string,
+  state_name : string
 }
 
 export type AccountType = {
@@ -119,7 +147,8 @@ export const validColumnsForSorting : any = {
   modified_datetime : "modified_datetime",
   r_number : "r_number",
   project_point_of_contact : "project_point_of_contact",
-  project_technical_point_of_contact : "project_technical_point_of_contact"
+  project_technical_point_of_contact : "project_technical_point_of_contact",
+  is_qualified : "is_qualified"
 }
 
 export const validColumns : any = {
@@ -144,7 +173,8 @@ export const validColumns : any = {
   modified_datetime : "modified_datetime",
   r_number : "r_number",
   project_point_of_contact : "project_point_of_contact",
-  project_technical_point_of_contact : "project_technical_point_of_contact"
+  project_technical_point_of_contact : "project_technical_point_of_contact",
+  is_qualified : "is_qualified"
 }
 
 export const columnType : any = {
@@ -168,7 +198,8 @@ export const columnType : any = {
   modified_datetime : "date",
   r_number : "string",
   project_point_of_contact : "string",
-  project_technical_point_of_contact : "string"
+  project_technical_point_of_contact : "string",
+  is_qualified : "string"
 }
 
 export type caseProjectsResponseType = {
@@ -934,4 +965,28 @@ export type RegionIds = {
 export type RegionDetails = {
   rid : string
   state_name : string
+}
+export type ProjectComputeValue = {
+  project_name: string;
+  total_projects : number;
+  employees: number;
+  epw: number;
+  reductions: number;
+  net_epw: number;
+  total_project_value_labor: number;
+}
+export type CalculateQreCostType = {
+  fte_qre_amount : number;
+  subcon_qre_amount : number;
+  nonlabor_qre_amount : number;
+}
+export type ProjectCalculatedDataCanada = {
+  project_code : string
+  project_name : string
+  total_effort_prj : number
+  total_cost_prj : number
+  total_cost_fte_prj : number
+  total_cost_subcon_prj : number
+  total_cost_nonlabor_prj : number
+  rd_percent_final : number
 }
