@@ -4,8 +4,6 @@ import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants"
 import { errorLog, generateSasUrl } from "../../utils/helpers";
 import SchemaService from "./schemaService";
 import { CaseSummary } from "../../models/caseSummaryModel";
-import { number } from "joi";
-import { initOrgSequelize } from "../../config/orgDataSource";
 import { IReportService } from "../interfaces/interface";
 
 
@@ -287,294 +285,118 @@ export class ReportService implements IReportService {
     async getMeetingList(userId: string, flag: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
-            const orgDb = await initOrgSequelize();
+
+            let accountIds: string[] = [];
 
             if (flag === "user") {
                 const childAccountIds = await this.getChildAccountIds(userId);
-
                 if (!childAccountIds) {
                     return {
                         statusCode: HttpStatus.SUCCESS,
                         message: "No accessible accounts found",
-                        data: { account: [], count: 0 },
+                        data: [],
                     };
                 }
-
-                const accounts = await this.schemaService.fetchAccountsByIds(childAccountIds);
-
-                const schemaNumberMap = new Map<string, string>();
-
-                await Promise.all(
-                    accounts.map(async (account) => {
-                        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
-                        const { rid, storage_type, r_number, parent_account_rid } = acc;
-
-                        if (storage_type === "store_in_parent") {
-                            const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
-                            schemaNumberMap.set(rid, parent);
-                        } else {
-                            schemaNumberMap.set(rid, r_number);
-                        }
-                    })
-                );
-
-                const activityStatuses: any[] = await sequelize.query(rawQueries.fetchActivityStatus(), { type: QueryTypes.SELECT });
-                const casePriorities: any[] = await sequelize.query(rawQueries.fetchCasePriority(), { type: QueryTypes.SELECT });
-
-                const statusMap = new Map(activityStatuses.map((s) => [s.rid, s.status_name]));
-                const priorityMap = new Map(casePriorities.map((p) => [p.rid, p.priority_name]));
-
-                const scheduledStatus = activityStatuses.find((s) => s.status_name === 'Scheduled');
-                const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
-
-                const userEmailQuery = rawQueries.fetchUserEmail(userId);
-                const userEmailResult: any[] = await sequelize.query(userEmailQuery.query, {
-                    replacements: userEmailQuery.replacements,
-                    type: QueryTypes.SELECT
-                });
-                const userEmail = userEmailResult[0]?.email || '';
-
-                const uniqueSchemaNames = new Set<string>();
-                for (const schemaNumber of schemaNumberMap.values()) {
-                    const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, "")}`;
-                    uniqueSchemaNames.add(schemaName);
-                }
-
-                const weeklyMeetingList: any[] = [];
-
-                await Promise.all(
-                    Array.from(uniqueSchemaNames).map(async (schemaName) => {
-                        try {
-                            const tableExists = await this.checkTableExistence(orgDb, schemaName, 'activities');
-                            if (!tableExists) {
-                                return;
-                            }
-                            // Get unique RIDs for this schema
-                            const weeklyMeetingListQuery = rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId, userEmail);
-                            const result: any[] = await orgDb.query(
-                                weeklyMeetingListQuery.query,
-                                {
-                                    replacements: weeklyMeetingListQuery.replacements,
-                                    type: QueryTypes.SELECT,
-                                }
-                            );
-                            weeklyMeetingList.push(...result);
-                        } catch (error) {
-                            console.error(`Error fetching resources for schema ${schemaName}:`, error);
-                        }
-                    })
-                );
-
-                const finalMeetingList = weeklyMeetingList.map((meeting) => ({
-                    ...meeting,
-                    status_name: statusMap.get(meeting.status_rid) || null,
-                    priority_name: priorityMap.get(meeting.priority_rid) || null,
-                }));
-
-                const allEmailSet = new Set<string>();
-                finalMeetingList.forEach((meeting) => {
-                    let participants: any[] = [];
-                    if (typeof meeting.meeting_participants === 'string') {
-                        const rawParticipants = meeting.meeting_participants.trim();
-                        if (rawParticipants) {
-                            try {
-                                const parsed = JSON.parse(rawParticipants);
-                                participants = Array.isArray(parsed) ? parsed : [];
-                            } catch (e) {
-                                participants = [];
-                            }
-                        }
-                    } else if (Array.isArray(meeting.meeting_participants)) {
-                        participants = meeting.meeting_participants;
-                    }
-
-                    const invitedBy = meeting.invited_by;
-                    if (invitedBy) allEmailSet.add(invitedBy);
-                    participants.forEach((p: string) => allEmailSet.add(p));
-                });
-
-                const emailNameMap = new Map<string, string>();
-                if (allEmailSet.size > 0) {
-                    try {
-                        const usersByEmailsQuery = rawQueries.fetchUsersByEmails(Array.from(allEmailSet));
-                        const users: any[] = await sequelize.query(
-                            usersByEmailsQuery.query,
-                            {
-                                replacements: usersByEmailsQuery.replacements,
-                                type: QueryTypes.SELECT
-                            }
-                        );
-                        users.forEach((u) => {
-                            emailNameMap.set(u.email, `${u.first_name || ''} ${u.last_name || ''}`.trim());
-                        });
-                    } catch (error) {
-                        console.error("Error fetching user details:", error);
-                    }
-                }
-
-                const finalMeetingListWithUsers = finalMeetingList.map((meeting) => {
-                    let participants: any[] = [];
-                    if (typeof meeting.meeting_participants === 'string') {
-                        const rawParticipants = meeting.meeting_participants.trim();
-                        if (rawParticipants) {
-                            try {
-                                const parsed = JSON.parse(rawParticipants);
-                                participants = Array.isArray(parsed) ? parsed : [];
-                            } catch (e) {
-                                participants = [];
-                            }
-                        }
-                    } else if (Array.isArray(meeting.meeting_participants)) {
-                        participants = meeting.meeting_participants;
-                    }
-                    const invitedBy = meeting.invited_by;
-
-                    return {
-                        ...meeting,
-                        meeting_participants: participants.map((email: string) => ({
-                            email,
-                            name: emailNameMap.get(email) || ''
-                        })),
-                        invited_by: {
-                            email: invitedBy,
-                            name: emailNameMap.get(invitedBy) || ''
-                        }
-                    };
-                });
-
-                return {
-                    statusCode: HttpStatus.SUCCESS,
-                    message: "Success",
-                    data: finalMeetingListWithUsers
-                };
-
+                accountIds = childAccountIds;
             } else {
+                const allAccountsQuery = `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid IS NOT NULL`;
+                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery, { type: QueryTypes.SELECT });
+                accountIds = allAccounts.map(a => a.rid);
+            }
 
-                const activityStatuses: any[] = await sequelize.query(rawQueries.fetchActivityStatus(), { type: QueryTypes.SELECT });
-                const casePriorities: any[] = await sequelize.query(rawQueries.fetchCasePriority(), { type: QueryTypes.SELECT });
-
-                const statusMap = new Map(activityStatuses.map((s) => [s.rid, s.status_name]));
-                const priorityMap = new Map(casePriorities.map((p) => [p.rid, p.priority_name]));
-
-                const scheduledStatus = activityStatuses.find((s) => s.status_name === 'Scheduled');
-                const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
-
-                const schemaList: any[] = await orgDb.query(
-                    rawQueries.fetchSchemas(),
-                    {
-                        type: QueryTypes.SELECT,
-                    }
-                );
-
-                const weeklyMeetingList: any[] = [];
-
-                await Promise.all(
-                    schemaList.map(async (schema) => {
-                        try {
-                            const schemaName = schema.schema_name;
-                            const tableExists = await this.checkTableExistence(orgDb, schemaName, 'activities');
-                            if (!tableExists) {
-                                return;
-                            }
-                            const weeklyMeetingListQuery = rawQueries.fetchWeeklyMeetingList(schemaName, scheduledStatusId);
-                            const result: any[] = await orgDb.query(
-                                weeklyMeetingListQuery.query,
-                                {
-                                    replacements: weeklyMeetingListQuery.replacements,
-                                    type: QueryTypes.SELECT,
-                                }
-                            );
-                            weeklyMeetingList.push(...result);
-                        } catch (error) {
-                            console.error(`Error fetching resources for schema ${schema.schema_name}:`, error);
-                        }
-                    })
-                );
-
-                const finalMeetingList = weeklyMeetingList.map((meeting) => ({
-                    ...meeting,
-                    status_name: statusMap.get(meeting.status_rid) || null,
-                    priority_name: priorityMap.get(meeting.priority_rid) || null,
-                }));
-
-                const allEmailSet = new Set<string>();
-                finalMeetingList.forEach((meeting) => {
-                    let participants: any[] = [];
-                    if (typeof meeting.meeting_participants === 'string') {
-                        const rawParticipants = meeting.meeting_participants.trim();
-                        if (rawParticipants) {
-                            try {
-                                const parsed = JSON.parse(rawParticipants);
-                                participants = Array.isArray(parsed) ? parsed : [];
-                            } catch (e) {
-                                participants = [];
-                            }
-                        }
-                    } else if (Array.isArray(meeting.meeting_participants)) {
-                        participants = meeting.meeting_participants;
-                    }
-
-                    const invitedBy = meeting.invited_by;
-                    if (invitedBy) allEmailSet.add(invitedBy);
-                    participants.forEach((p: string) => allEmailSet.add(p));
-                });
-
-                const emailNameMap = new Map<string, string>();
-                if (allEmailSet.size > 0) {
-                    try {
-                        const usersByEmailsQuery = rawQueries.fetchUsersByEmails(Array.from(allEmailSet));
-                        const users: any[] = await sequelize.query(
-                            usersByEmailsQuery.query,
-                            {
-                                replacements: usersByEmailsQuery.replacements,
-                                type: QueryTypes.SELECT
-                            }
-                        );
-                        users.forEach((u) => {
-                            emailNameMap.set(u.email, `${u.first_name || ''} ${u.last_name || ''}`.trim());
-                        });
-                    } catch (error) {
-                        console.error("Error fetching user details:", error);
-                    }
-                }
-
-                const finalMeetingListWithUsers = finalMeetingList.map((meeting) => {
-                    let participants: any[] = [];
-                    if (typeof meeting.meeting_participants === 'string') {
-                        const rawParticipants = meeting.meeting_participants.trim();
-                        if (rawParticipants) {
-                            try {
-                                const parsed = JSON.parse(rawParticipants);
-                                participants = Array.isArray(parsed) ? parsed : [];
-                            } catch (e) {
-                                participants = [];
-                            }
-                        }
-                    } else if (Array.isArray(meeting.meeting_participants)) {
-                        participants = meeting.meeting_participants;
-                    }
-                    const invitedBy = meeting.invited_by;
-
-                    return {
-                        ...meeting,
-                        meeting_participants: participants.map((email: string) => ({
-                            email,
-                            name: emailNameMap.get(email) || ''
-                        })),
-                        invited_by: {
-                            email: invitedBy,
-                            name: emailNameMap.get(invitedBy) || ''
-                        }
-                    };
-                });
-
+            if (accountIds.length === 0) {
                 return {
                     statusCode: HttpStatus.SUCCESS,
                     message: "Success",
-                    data: finalMeetingListWithUsers
+                    data: []
                 };
             }
 
+            const activityStatuses: any[] = await sequelize.query(rawQueries.fetchActivityStatus(), { type: QueryTypes.SELECT });
+
+            const statusMap = new Map(activityStatuses.map((s) => [s.rid, s.status_name]));
+
+            const scheduledStatus = activityStatuses.find((s) => s.status_name === 'Scheduled');
+            const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
+
+            // Fetch Meetings
+            const meetingListQuery = rawQueries.fetchMeetingSummaryList(accountIds, scheduledStatusId, flag === "user" ? userId : undefined);
+            const meetings: any[] = await sequelize.query(meetingListQuery.query, {
+                replacements: meetingListQuery.replacements,
+                type: QueryTypes.SELECT
+            });
+
+            const finalMeetingList = meetings.map((meeting) => ({
+                ...meeting,
+                status_name: statusMap.get(meeting.status_rid) || null,
+            }));
+
+            const allEmailSet = new Set<string>();
+            finalMeetingList.forEach((meeting) => {
+                let participants: any[] = [];
+                if (typeof meeting.meeting_participants === 'string') {
+                    const rawParticipants = meeting.meeting_participants.trim();
+                    if (rawParticipants) {
+                        try {
+                            const parsed = JSON.parse(rawParticipants);
+                            participants = Array.isArray(parsed) ? parsed : [];
+                        } catch (e) {
+                            participants = [];
+                        }
+                    }
+                } else if (Array.isArray(meeting.meeting_participants)) {
+                    participants = meeting.meeting_participants;
+                }
+
+                // Update meeting object with parsed participants for later use
+                meeting.meeting_participants = participants;
+
+                const invitedBy = meeting.invited_by;
+                if (invitedBy) allEmailSet.add(invitedBy);
+                participants.forEach((p: string) => allEmailSet.add(p));
+            });
+
+            const emailNameMap = new Map<string, string>();
+            if (allEmailSet.size > 0) {
+                try {
+                    const usersByEmailsQuery = rawQueries.fetchUsersByEmails(Array.from(allEmailSet));
+                    const users: any[] = await sequelize.query(
+                        usersByEmailsQuery.query,
+                        {
+                            replacements: usersByEmailsQuery.replacements,
+                            type: QueryTypes.SELECT
+                        }
+                    );
+                    users.forEach((u) => {
+                        emailNameMap.set(u.email, `${u.first_name || ''} ${u.last_name || ''}`.trim());
+                    });
+                } catch (error) {
+                    console.error("Error fetching user details:", error);
+                }
+            }
+
+            const finalMeetingListWithUsers = finalMeetingList.map((meeting) => {
+                const participants = meeting.meeting_participants; // Already parsed above
+                const invitedBy = meeting.invited_by;
+
+                return {
+                    ...meeting,
+                    meeting_participants: participants.map((email: string) => ({
+                        email,
+                        name: emailNameMap.get(email) || ''
+                    })),
+                    invited_by: {
+                        email: invitedBy,
+                        name: emailNameMap.get(invitedBy) || ''
+                    }
+                };
+            });
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Success",
+                data: finalMeetingListWithUsers
+            };
 
         } catch (error) {
             errorLog("getMeetingList", (error as Error).message);
@@ -586,27 +408,11 @@ export class ReportService implements IReportService {
         return this.schemaService.getAllowedExportFields(userId, permissionName);
     }
 
-    private async checkTableExistence(sequelize: Sequelize, schemaName: string, tableName: string): Promise<boolean> {
-        try {
-            const query = rawQueries.checkTableExistence();
-            const result: { exists: boolean }[] = await sequelize.query(query, {
-                replacements: { schemaName, tableName },
-                type: QueryTypes.SELECT
-            });
-            return result[0]?.exists || false;
-        } catch (error) {
-            errorLog(`Error checking table existence for ${schemaName}.${tableName}: ${error}`);
-            return false;
-        }
-    }
-
     async getWeeklyProductivityList(userId: string, flag: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
-            const orgDb = await initOrgSequelize();
 
             let accountIds: string[] = [];
-            let uniqueSchemaNames = new Set<string>();
 
             // 1. Resolve Accounts and Schemas based on flag
             if (flag === "user") {
@@ -625,28 +431,11 @@ export class ReportService implements IReportService {
                     };
                 }
                 accountIds = childAccountIds;
-
-                // Resolve Schemas for Meetings
-                const accounts = await this.schemaService.fetchAccountsByIds(accountIds);
-
-                await Promise.all(
-                    accounts.map(async (account) => {
-                        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
-                        const { rid, storage_type, r_number, parent_account_rid } = acc;
-
-                        if (storage_type === "store_in_parent") {
-                            const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
-                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${parent.replace(/\D/g, "")}`);
-                        } else {
-                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${r_number.replace(/\D/g, "")}`);
-                        }
-                    })
-                );
-
             } else {
-                // Admin/Else case: Use all schemas, empty accountIds means all accounts in fetch queries
-                const schemaList: any[] = await orgDb.query(rawQueries.fetchSchemas(), { type: QueryTypes.SELECT });
-                schemaList.forEach((s: any) => uniqueSchemaNames.add(s.schema_name));
+                // Admin/Else case: Use all accounts
+                const allAccountsQuery = `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid IS NOT NULL`;
+                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery, { type: QueryTypes.SELECT });
+                accountIds = allAccounts.map(a => a.rid);
             }
 
             // 2. Fetch Tasks Stats (Main DB)
@@ -683,7 +472,7 @@ export class ReportService implements IReportService {
             const overdueTasks = overdueTasksResult && overdueTasksResult[0] ? overdueTasksResult[0].count : 0;
             const blockedTasks = blockedTasksResult && blockedTasksResult[0] ? blockedTasksResult[0].count : 0;
 
-            // 3. Fetch Meeting Stats (Org DB)
+            // 3. Fetch Meeting Stats (Main DB - MeetingSummary)
             const activityStatuses: any[] = await sequelize.query(rawQueries.fetchActivityStatus(), { type: QueryTypes.SELECT });
 
             // Define statuses
@@ -696,55 +485,28 @@ export class ReportService implements IReportService {
             let totalMeetingsCount = 0;
             let attendedMeetingsCount = 0;
 
-            const userEmailQuery = rawQueries.fetchUserEmail(userId);
-            const userEmailResult: any[] = await sequelize.query(userEmailQuery.query, {
-                replacements: userEmailQuery.replacements,
-                type: QueryTypes.SELECT
-            });
-            const userEmail = userEmailResult[0]?.email || '';
+            const weeklyTotalMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, totalStatuses, flag === "user" ? userId : undefined);
+            const weeklyAttendedMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, attendedStatuses, flag === "user" ? userId : undefined);
 
-            const meetingCounts = await Promise.all(
-                Array.from(uniqueSchemaNames).map(async (schemaName) => {
-                    try {
-                        const tableExists = await this.checkTableExistence(orgDb, schemaName, 'activities');
-                        if (!tableExists) {
-                            return { total: 0, attended: 0 };
-                        }
-
-                        const weeklyTotalMeetingQuery = rawQueries.fetchWeeklyMeetingCount(schemaName, totalStatuses, flag === "user" ? userEmail : undefined);
-                        const weeklyAttendedMeetingQuery = rawQueries.fetchWeeklyMeetingCount(schemaName, attendedStatuses, flag === "user" ? userEmail : undefined);
-
-                        const [totalRes, attendedRes] = await Promise.all([
-                            orgDb.query<{ count: number }>(
-                                weeklyTotalMeetingQuery.query,
-                                {
-                                    replacements: weeklyTotalMeetingQuery.replacements,
-                                    type: QueryTypes.SELECT
-                                }
-                            ),
-                            orgDb.query<{ count: number }>(
-                                weeklyAttendedMeetingQuery.query,
-                                {
-                                    replacements: weeklyAttendedMeetingQuery.replacements,
-                                    type: QueryTypes.SELECT
-                                }
-                            )
-                        ]);
-
-                        return {
-                            total: Number(totalRes[0]?.count || 0),
-                            attended: Number(attendedRes[0]?.count || 0)
-                        };
-
-                    } catch (error) {
-                        errorLog(`Error fetching meetings for schema ${schemaName}: ${error}`);
-                        return { total: 0, attended: 0 };
+            const [totalRes, attendedRes] = await Promise.all([
+                sequelize.query<{ count: number }>(
+                    weeklyTotalMeetingQuery.query,
+                    {
+                        replacements: weeklyTotalMeetingQuery.replacements,
+                        type: QueryTypes.SELECT
                     }
-                })
-            );
+                ),
+                sequelize.query<{ count: number }>(
+                    weeklyAttendedMeetingQuery.query,
+                    {
+                        replacements: weeklyAttendedMeetingQuery.replacements,
+                        type: QueryTypes.SELECT
+                    }
+                )
+            ]);
 
-            totalMeetingsCount = meetingCounts.reduce((acc, curr) => acc + curr.total, 0);
-            attendedMeetingsCount = meetingCounts.reduce((acc, curr) => acc + curr.attended, 0);
+            totalMeetingsCount = Number(totalRes[0]?.count || 0);
+            attendedMeetingsCount = Number(attendedRes[0]?.count || 0);
 
             // 4. Construct Response
             const data = [
@@ -883,15 +645,14 @@ export class ReportService implements IReportService {
         return this.fetchTasksList(userId, flag, rawQueries.fetchOverdueApprovals);
     }
 
-    async getOverallProjectValue(userId: string, flag: string, fiscalYear?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+    async getOverallProjectValue(userId: string, flag: string, fiscalYear?: string, countryType?: string): Promise<{ statusCode: number; message: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
-            const orgDb = await initOrgSequelize();
+
 
             let accountIds: string[] = [];
-            let uniqueSchemaNames = new Set<string>();
 
-            // 1. Resolve Accounts and Schemas based on flag
+
             if (flag === "user") {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
@@ -903,31 +664,9 @@ export class ReportService implements IReportService {
                     };
                 }
                 accountIds = childAccountIds;
-
-                // Resolve Schemas for Meetings
-                const accounts = await this.schemaService.fetchAccountsByIds(accountIds);
-
-                await Promise.all(
-                    accounts.map(async (account) => {
-                        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
-                        const { rid, storage_type, r_number, parent_account_rid } = acc;
-
-                        if (storage_type === "store_in_parent") {
-                            const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
-                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${parent.replace(/\D/g, "")}`);
-                        } else {
-                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${r_number.replace(/\D/g, "")}`);
-                        }
-                    })
-                );
-
-            } else {
-                // Admin/Else case: Use all schemas, empty accountIds means all accounts in fetch queries
-                const schemaList: any[] = await orgDb.query(rawQueries.fetchSchemas(), { type: QueryTypes.SELECT });
-                schemaList.forEach((s: any) => uniqueSchemaNames.add(s.schema_name));
             }
 
-            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries();
+            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries(undefined, countryType);
             const activeCountriesRids: any[] = await sequelize.query(countryQuery, {
                 type: QueryTypes.SELECT
             });
@@ -935,54 +674,11 @@ export class ReportService implements IReportService {
             const activeCountriesRidsSet = new Set<string>();
             activeCountriesRids.forEach((c: any) => activeCountriesRidsSet.add(c.country_rid));
 
-            const countryWiseAmounts = new Map<string, { computed: number, submitted: number, approved: number }>();
 
-            await Promise.all(
-                Array.from(uniqueSchemaNames).map(async (schemaName) => {
-                    try {
-                        const countryTableExists = await this.checkTableExistence(orgDb, schemaName, 'rd_credit_country_calculations');
-                        const casesTableExists = await this.checkTableExistence(orgDb, schemaName, 'cases');
-                        if (!countryTableExists || !casesTableExists) {
-                            return;
-                        }
-
-                        const { query, replacements } = rawQueries.fetchCountryWiseRDAmounts(schemaName, flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
-                        const results: any[] = await orgDb.query(query, {
-                            replacements,
-                            type: QueryTypes.SELECT
-                        });
-
-                        for (const row of results) {
-                            const rid = row.country_rid;
-                            if (!countryWiseAmounts.has(rid)) {
-                                countryWiseAmounts.set(rid, { computed: 0, submitted: 0, approved: 0 });
-                            }
-                            const entry = countryWiseAmounts.get(rid)!;
-                            entry.computed += Number(row.final_credit_computed || 0);
-                            entry.submitted += Number(row.final_credit_submitted || 0);
-                            entry.approved += Number(row.final_credit_approved || 0);
-                        }
-
-                    } catch (error) {
-                        errorLog(`Error fetching country wise amounts for schema ${schemaName}: ${(error as Error).message}`);
-                    }
-                })
-            );
-
-            const { query, replacements } = rawQueries.fetchOverallProjectValue(flag === "user" ? accountIds : undefined, fiscalYear);
-            const projectValueResults: any[] = await sequelize.query(query, {
+            const { query, replacements } = rawQueries.fetchOverallProjectValue(flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
+            const finalResult: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
-            });
-
-            const finalResult = projectValueResults.map(row => {
-                const amounts = countryWiseAmounts.get(row.country_rid) || { computed: 0, submitted: 0, approved: 0 };
-                return {
-                    ...row,
-                    final_credit_computed: amounts.computed,
-                    final_credit_submitted: amounts.submitted,
-                    final_credit_approved: amounts.approved
-                };
             });
 
             return {
@@ -997,13 +693,13 @@ export class ReportService implements IReportService {
         }
     }
 
-    async getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+    async getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string, countryType?: string): Promise<{ statusCode: number; message: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
-            const orgDb = await initOrgSequelize();
+
 
             let accountIds: string[] = [];
-            let uniqueSchemaNames = new Set<string>();
+
 
             if (flag === "user") {
                 const childAccountIds = await this.getChildAccountIds(userId);
@@ -1016,31 +712,9 @@ export class ReportService implements IReportService {
                     };
                 }
                 accountIds = childAccountIds;
-
-                // Resolve Schemas for Meetings
-                const accounts = await this.schemaService.fetchAccountsByIds(accountIds);
-
-                await Promise.all(
-                    accounts.map(async (account) => {
-                        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
-                        const { rid, storage_type, r_number, parent_account_rid } = acc;
-
-                        if (storage_type === "store_in_parent") {
-                            const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
-                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${parent.replace(/\D/g, "")}`);
-                        } else {
-                            uniqueSchemaNames.add(`${MAIN_SCHEMA_NAME}_${r_number.replace(/\D/g, "")}`);
-                        }
-                    })
-                );
-
-            } else {
-                // Admin/Else case: Use all schemas, empty accountIds means all accounts in fetch queries
-                const schemaList: any[] = await orgDb.query(rawQueries.fetchSchemas(), { type: QueryTypes.SELECT });
-                schemaList.forEach((s: any) => uniqueSchemaNames.add(s.schema_name));
             }
 
-            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries(countryRid);
+            const { query: countryQuery, replacements: countryReplacements } = rawQueries.fetchActiveCountries(countryRid, countryType);
             const activeCountriesRids: any[] = await sequelize.query(countryQuery, {
                 replacements: countryReplacements,
                 type: QueryTypes.SELECT
@@ -1052,69 +726,29 @@ export class ReportService implements IReportService {
             const activeCountriesRidsSet = new Set<string>();
             activeCountriesRids.forEach((c: any) => activeCountriesRidsSet.add(c.country_rid));
 
-            const countryAccountWiseAmounts = new Map<string, { computed: number, submitted: number, approved: number }>();
             const countryWiseApprovedAmount = new Map<string, { country_rid: string, country_name: string, country_code: string, approved: number }>();
 
-            await Promise.all(
-                Array.from(uniqueSchemaNames).map(async (schemaName) => {
-                    try {
-                        const countryTableExists = await this.checkTableExistence(orgDb, schemaName, 'rd_credit_country_calculations');
-                        const casesTableExists = await this.checkTableExistence(orgDb, schemaName, 'cases');
-                        if (!countryTableExists || !casesTableExists) {
-                            return;
-                        }
-
-                        const { query, replacements } = rawQueries.fetchCountryAccountWiseRDAmounts(schemaName, flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
-                        const results: any[] = await orgDb.query(query, {
-                            replacements,
-                            type: QueryTypes.SELECT
-                        });
-
-                        for (const row of results) {
-                            const key = `${row.country_rid}-${row.account_rid}`;
-                            if (!countryAccountWiseAmounts.has(key)) {
-                                countryAccountWiseAmounts.set(key, { computed: 0, submitted: 0, approved: 0 });
-                            }
-                            const entry = countryAccountWiseAmounts.get(key)!;
-                            entry.computed += Number(row.final_credit_computed || 0);
-                            entry.submitted += Number(row.final_credit_submitted || 0);
-                            entry.approved += Number(row.final_credit_approved || 0);
-
-                            const countryKey = row.country_rid || '';
-                            if (!countryWiseApprovedAmount.has(countryKey)) {
-                                const countryDetails = activeCountriesMap.get(countryKey);
-                                countryWiseApprovedAmount.set(countryKey, {
-                                    country_rid: countryDetails?.country_rid || '',
-                                    country_name: countryDetails?.country_name || '',
-                                    country_code: countryDetails?.country_code || '',
-                                    approved: 0
-                                });
-                            }
-                            const countryEntry = countryWiseApprovedAmount.get(countryKey)!;
-                            countryEntry.approved += Number(row.final_credit_approved || 0);
-                        }
-
-                    } catch (error) {
-                        errorLog(`Error fetching country account wise amounts for schema ${schemaName}: ${(error as Error).message}`);
-                    }
-                })
-            );
-
             const { query, replacements } = rawQueries.fetchGlobalAccountClaimedAmounts(flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
-            const accountWiseConsolidationList: any[] = await sequelize.query(query, {
+            const AccountWiseConsolidationList: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
             });
 
-            const finalAccountWiseConsolidationList = accountWiseConsolidationList.map(row => {
-                const key = `${row.country_rid}-${row.account_rid}`;
-                const amounts = countryAccountWiseAmounts.get(key) || { computed: 0, submitted: 0, approved: 0 };
-                return {
-                    ...row,
-                    final_credit_computed: amounts.computed,
-                    final_credit_submitted: amounts.submitted,
-                    final_credit_approved: amounts.approved
-                };
+            const finalAccountWiseConsolidationList = AccountWiseConsolidationList.filter((row) => row.final_credit_submitted > 0);
+
+            AccountWiseConsolidationList.forEach((row) => {
+                const countryKey = row.country_rid || '';
+                if (!countryWiseApprovedAmount.has(countryKey)) {
+                    const countryDetails = activeCountriesMap.get(countryKey);
+                    countryWiseApprovedAmount.set(countryKey, {
+                        country_rid: countryDetails?.country_rid || '',
+                        country_name: countryDetails?.country_name || '',
+                        country_code: countryDetails?.country_code || '',
+                        approved: 0
+                    });
+                }
+                const countryEntry = countryWiseApprovedAmount.get(countryKey)!;
+                countryEntry.approved += Number(row.final_credit_approved || 0);
             });
 
             const countryWiseConsolidation = Array.from(countryWiseApprovedAmount.values());

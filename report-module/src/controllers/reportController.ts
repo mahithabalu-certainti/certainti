@@ -365,7 +365,8 @@ async function getOverallProjectValue(req: Request, res: Response): Promise<void
         const result = await reportService.getOverallProjectValue(
             userId,
             value.flag,
-            value.fiscalYear
+            value.fiscalYear,
+            value.countryType
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -399,7 +400,8 @@ async function getGlobalLevelChart(req: Request, res: Response): Promise<void> {
             userId,
             value.flag,
             value.fiscalYear,
-            value.countryRid
+            value.countryRid,
+            value.countryType
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {

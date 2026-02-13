@@ -11,11 +11,13 @@ const reportFlagSchema = Joi.object({
 
 const getOverallProjectValueSchema = Joi.object({
     flag: Joi.string().valid("all", "user").required(),
+    countryType: Joi.string().valid("all", "active").required(),
     fiscalYear: Joi.number().optional()
 });
 
 const globalLevelChartSchema = Joi.object({
     flag: Joi.string().valid("all", "user").required(),
+    countryType: Joi.string().valid("all", "active").required(),
     fiscalYear: Joi.number().optional(),
     countryRid: Joi.string().optional()
 });
