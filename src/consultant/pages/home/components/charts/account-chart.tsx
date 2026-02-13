@@ -8,6 +8,7 @@ import {
   getSelectStyles,
 } from '../../helpers';
 import { AccountYearData } from '../../../../types/dashboard';
+import { getFiscalYears } from '../../../../../common-utils';
 
 interface Props {
   title: string;
@@ -33,8 +34,10 @@ const AccountChart: React.FC<Props> = ({
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState('100%');
 
+  const minYear = 1950;
   const currentYear = new Date().getFullYear();
-  const allYears = Array.from({ length: 4 }, (_, i) => currentYear - i).sort();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
+  const yearValues = fiscalYears.slice(0, 4).map((fy) => Number(fy.value));
 
   // BUILD GOOGLE-CHART ROWS
   const chartRows = React.useMemo(() => {
@@ -88,11 +91,11 @@ const AccountChart: React.FC<Props> = ({
 
   return (
     <div
-      className={`bg-white rounded-lg border border-gray-200 overflow-hidden ${className}`}
+      className={`bg-white rounded-lg border border-[#CBD6E2] overflow-hidden ${className}`}
       ref={chartRef}
     >
       {/* Header */}
-      <div className='flex items-center justify-between px-4 py-3 border-b border-gray-200'>
+      <div className='flex items-center justify-between px-4 py-3 border-b border-[#CBD6E2]'>
         <div className='flex items-center justify-between gap-3'>
           <div className='flex-shrink-0'>{getDynamicSvgIcon(title, 26)}</div>
           <div>
@@ -122,18 +125,18 @@ const AccountChart: React.FC<Props> = ({
             Last 4 Years
           </MenuItem>
 
-          {allYears?.map((year, i) => (
+          {fiscalYears?.map((year, i) => (
             <MenuItem
-              key={`FY-${year}-${i}`}
-              value={year}
-              title={String(year)}
+              key={`${year.value}-${i}`}
+              value={year.value}
+              title={year.label}
               sx={{
                 color: '#425A76',
                 fontSize: '13px',
                 fontWeight: 500,
               }}
             >
-              FY-{year}
+              {year.label}
             </MenuItem>
           ))}
         </Select>
@@ -147,7 +150,7 @@ const AccountChart: React.FC<Props> = ({
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className='w-full border-t border-gray-100 relative'
+                  className='w-full border-t border-[#CBD6E2] relative'
                 >
                   <span className='absolute -left-6 -top-2 text-[10px] text-gray-300'>
                     {100 - i * 20}
@@ -242,7 +245,7 @@ const AccountChart: React.FC<Props> = ({
 
           {/* Custom Legend */}
           <div className='flex justify-center gap-4 flex-wrap p-3 mb-1'>
-            {(selectedYear === 'all' ? allYears : [Number(selectedYear)]).map(
+            {(selectedYear === 'all' ? yearValues : [Number(selectedYear)]).map(
               (year) => (
                 <div key={year} className='flex items-center gap-1 text-sm'>
                   <span

@@ -8,6 +8,7 @@ import {
   getDynamicSvgIcon,
   getSelectStyles,
 } from '../../helpers';
+import { getFiscalYears } from '../../../../../common-utils';
 
 export interface DonutMetricItem {
   country: string;
@@ -40,8 +41,9 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
   selectedYear,
   onYearChange,
 }) => {
+  const minYear = 1950;
   const currentYear = new Date().getFullYear();
-  const allYears = Array.from({ length: 4 }, (_, i) => currentYear - i).sort();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
   // Transform to DonutMetricItem format using data directly
   const transformedData = useMemo(() => {
@@ -77,9 +79,9 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
   };
 
   return (
-    <div className='bg-white rounded-lg border border-gray-200 overflow-hidden'>
+    <div className='bg-white rounded-lg border border-[#CBD6E2] overflow-hidden'>
       {/* Header with Year Selector */}
-      <div className='flex items-center justify-between px-4 py-3 border-b border-gray-200'>
+      <div className='flex items-center justify-between px-4 py-3 border-b border-[#CBD6E2]'>
         <div className='flex items-center gap-3'>
           <div className='flex-shrink-0'>{getDynamicSvgIcon(title, 26)}</div>
           <div>
@@ -106,17 +108,18 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
           >
             Last 4 Years
           </MenuItem>
-          {allYears.map((year) => (
+          {fiscalYears.map((year, i) => (
             <MenuItem
-              key={year}
-              value={year}
+              key={`${year.value}-${i}`}
+              value={year.value}
+              title={year.label}
               sx={{
                 color: '#425A76',
                 fontSize: '13px',
                 fontWeight: 500,
               }}
             >
-              FY-{year}
+              {year.label}
             </MenuItem>
           ))}
         </Select>
@@ -133,7 +136,19 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
                 key={i}
                 className='flex flex-col items-center justify-center text-center'
               >
-                <Skeleton variant='circular' width={160} height={160} />
+                {/* Donut Skeleton */}
+                <div className='relative flex items-center justify-center'>
+                  <Skeleton
+                    variant='circular'
+                    width={160}
+                    height={160}
+                    sx={{ position: 'relative' }}
+                  />
+                  <div
+                    className='absolute bg-white rounded-full'
+                    style={{ width: '88px', height: '88px' }}
+                  />
+                </div>
                 <Skeleton
                   variant='text'
                   width='60%'
@@ -150,8 +165,8 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
             ))}
           </div>
           {/* Legend Skeleton */}
-          <div className='flex justify-center gap-6 border-t border-gray-200 p-3'>
-            {[...Array(4)].map((_, i) => (
+          <div className='flex justify-center gap-6 border-t border-[#CBD6E2] p-3'>
+            {[...Array(6)].map((_, i) => (
               <div key={i} className='flex items-center gap-2'>
                 <Skeleton
                   variant='rectangular'
@@ -174,12 +189,24 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
                 style={{ minHeight }}
               >
                 {transformedData.map((country, idx) => {
+                  // Step 1: Calculate grand total for this country
+                  const grandTotal = metrics.reduce((sum, m) => {
+                    return (
+                      sum + (country[m.key as keyof DonutMetricItem] as number)
+                    );
+                  }, 0);
+
+                  // Step 2: Calculate percentages
                   const chartData = [
                     ['Metric', 'Value'],
-                    ...metrics.map((m) => [
-                      m.label,
-                      country[m.key as keyof DonutMetricItem] as number,
-                    ]),
+                    ...metrics.map((m) => {
+                      const value = country[
+                        m.key as keyof DonutMetricItem
+                      ] as number;
+                      const percentage =
+                        grandTotal > 0 ? (value / grandTotal) * 100 : 0;
+                      return [m.label, parseFloat(percentage.toFixed(2))];
+                    }),
                   ];
 
                   const colorList = metrics.map((m) =>
@@ -210,7 +237,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
               </div>
 
               {/* Shared Legend */}
-              <div className='px-4 pb-4 flex flex-wrap justify-center gap-4 border-t border-gray-200 pt-3'>
+              <div className='px-4 pb-4 flex flex-wrap justify-center gap-4 border-t border-[#CBD6E2] pt-3'>
                 {metrics.map((m) => (
                   <div key={m.key} className='flex items-center gap-2'>
                     <span

@@ -497,6 +497,16 @@ export const formatDate = (dateString: string): string => {
   });
 };
 
+export const formatTo12HourWithMinutes = (time24: string) => {
+  if (!time24) return '';
+  const [hours, minutes] = time24.split(':');
+  let hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12;
+  hour = hour === 0 ? 12 : hour;
+  return `${hour.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+};
+
 export const getPriorityColor = (priority?: string) => {
   const normalized = (priority || '').toLowerCase().trim();
   switch (normalized) {
@@ -598,7 +608,7 @@ export const COMMON_MENU_PROPS = {
   PaperProps: {
     sx: {
       maxWidth: 300,
-      maxHeight: 300,
+      maxHeight: 200,
       marginTop: '4px',
       boxShadow:
         'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',

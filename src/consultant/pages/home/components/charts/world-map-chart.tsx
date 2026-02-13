@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Chart, { ReactGoogleChartEvent } from 'react-google-charts';
 import StackedBarChart from './stacked-bar-chart';
 import {
@@ -13,6 +13,7 @@ import { MenuItem, Select } from '@mui/material';
 import { useGetGlobalLevelChart } from '../../../../services/dashboard/dashboard-service';
 import { AccountWiseConsolidation } from '../../../../types/dashboard';
 import { PROJECT_COLORS } from '../../../../../admin/pages/workflow-builder/form/helper';
+import { getFiscalYears } from '../../../../../common-utils';
 
 interface MapChartProps {
   title: string;
@@ -20,17 +21,32 @@ interface MapChartProps {
 }
 
 const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
-  const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [chartKey, setChartKey] = useState(0);
 
-  // Get available years (last 4 years)
-  const availableYears = useMemo(() => {
-    const years = Array.from({ length: 4 }, (_, i) => currentYear - i).sort(
-      (a, b) => b - a
-    );
-    return years;
-  }, [currentYear]);
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
+
+  // Handle window resize to adjust charts when sidebar opens/closes
+  useEffect(() => {
+    let resizeTimer: ReturnType<typeof setTimeout>;
+
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        setChartKey((prev) => prev + 1);
+      }, 150);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
+  }, []);
 
   // Fetch data from API
   const { data: apiData, isLoading } = useGetGlobalLevelChart(
@@ -163,7 +179,10 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
   ];
 
   return (
-    <div className='bg-white rounded-lg px-4 py-3 border border-gray-200 overflow-hidden'>
+    <div
+      key={`worldmap-bar-${chartKey}`}
+      className='bg-white rounded-lg px-4 py-3 border border-[#CBD6E2] overflow-hidden'
+    >
       <div className='mb-4 flex justify-between items-center'>
         {/* Header */}
         <div className='flex items-center gap-3'>
@@ -198,17 +217,18 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
             >
               Last 4 Years
             </MenuItem>
-            {availableYears.map((year) => (
+            {fiscalYears.map((year, i) => (
               <MenuItem
-                key={year}
-                value={year}
+                key={`${year.value}-${i}`}
+                value={year.value}
+                title={year.label}
                 sx={{
                   color: '#425A76',
                   fontSize: '13px',
                   fontWeight: 500,
                 }}
               >
-                FY-{year}
+                {year.label}
               </MenuItem>
             ))}
           </Select>
@@ -231,18 +251,18 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
       </div>
 
       {isLoading ? (
-        <div className='flex items-center justify-center h-96 text-gray-500 border border-gray-200 rounded-lg'>
+        <div className='flex items-center justify-center h-96 text-gray-500 border border-[#CBD6E2] rounded-lg'>
           <div className='text-center'>
             <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-2'></div>
             <p className='text-sm'>Loading chart data...</p>
           </div>
         </div>
       ) : !apiData || chartData.length === 0 ? (
-        <div className='flex justify-center items-center h-[200px] text-sm text-[#425A76] border border-gray-200 rounded-lg'>
+        <div className='flex justify-center items-center h-[200px] text-sm text-[#425A76] border border-[#CBD6E2] rounded-lg'>
           No data available
         </div>
       ) : (
-        <div className='flex flex-col lg:flex-row gap-6 lg:gap-0 border border-gray-200 rounded-lg overflow-hidden'>
+        <div className='flex flex-col lg:flex-row gap-6 lg:gap-0 border border-[#CBD6E2] rounded-lg overflow-hidden'>
           <div className='w-full lg:w-[40%] pt-6'>
             <StackedBarChart
               title={chartTitle}

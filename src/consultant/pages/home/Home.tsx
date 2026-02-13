@@ -44,6 +44,7 @@ import {
   getTrendIcon,
   getPriorityBadge,
   getStatusBadge,
+  formatTo12HourWithMinutes,
 } from './helpers';
 import { ExportDashboardReport } from '../../services/dashboard/dashboard-service';
 import { ClockIcon } from '@mui/x-date-pickers';
@@ -270,42 +271,44 @@ export const HomePage: React.FC = () => {
             const statusBadge = getStatusBadge(item.status_name);
 
             return (
-              <div className='flex items-start justify-between gap-3'>
-                <div className='flex-1'>
-                  <p className='text-sm font-semibold text-[#2A2A2A]'>
-                    {item.subject}
-                  </p>
-                  <div className='flex items-center gap-4 mt-1 text-[11px] text-[#425a76cf]'>
-                    <span>
-                      {formatDate(item.effective_start_datetime)} at{' '}
-                      {item.effective_start_time}
-                    </span>
-                    {item.priority_name && priorityBadge && (
-                      <span
-                        className='px-2 py-0.5 rounded text-[10px] font-medium capitalize'
-                        style={{
-                          backgroundColor: priorityBadge.bg,
-                          color: priorityBadge.text,
-                        }}
-                      >
-                        {item.priority_name}
+              <div>
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='flex-1'>
+                    <p className='text-sm font-semibold text-[#2A2A2A]'>
+                      {item.subject}
+                    </p>
+                    <div className='flex items-center gap-4 mt-1 text-[11px] text-[#425a76cf]'>
+                      <span>
+                        {formatDate(item.effective_start_datetime)} at{' '}
+                        {formatTo12HourWithMinutes(item.effective_start_time)}
                       </span>
-                    )}
+                      {item.priority_name && priorityBadge && (
+                        <span
+                          className='px-2 py-0.5 rounded text-[10px] font-medium capitalize'
+                          style={{
+                            backgroundColor: priorityBadge.bg,
+                            color: priorityBadge.text,
+                          }}
+                        >
+                          {item.priority_name}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className='text-[11px] text-[#425A76] font-medium mt-1'>
-                    <span className='text-[#2a2a2a]'>Attendees:</span>{' '}
-                    {item.meeting_participants?.map((p) => p.name).join(', ') ||
-                      'None'}
-                  </p>
+                  <div
+                    className='px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap capitalize'
+                    style={{
+                      backgroundColor: statusBadge.bg,
+                      color: statusBadge.text,
+                    }}
+                  >
+                    {item.status_name}
+                  </div>
                 </div>
-                <div
-                  className='px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap capitalize'
-                  style={{
-                    backgroundColor: statusBadge.bg,
-                    color: statusBadge.text,
-                  }}
-                >
-                  {item.status_name}
+                <div className='text-[11px] text-[#425A76] font-medium mt-1'>
+                  <span className='text-[#2a2a2a]'>Attendees:</span>{' '}
+                  {item.meeting_participants?.map((p) => p.name).join(', ') ||
+                    'None'}
                 </div>
               </div>
             );
@@ -430,7 +433,7 @@ export const HomePage: React.FC = () => {
                           <TickIcon className='w-[16px] h-[16px] [&_*]:!fill-[#00A63E]' />
                         </React.Suspense>
                       ) : (
-                        <div className='w-[15px] h-[15px] border border-gray-400 rounded-[2px] cursor-pointer'></div>
+                        <div className='w-[15px] h-[15px] border border-[#CBD6E2] rounded-[2px] cursor-pointer'></div>
                       )}
                     </button>
                   </Tooltip>

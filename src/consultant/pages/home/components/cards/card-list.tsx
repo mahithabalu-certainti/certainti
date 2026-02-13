@@ -34,10 +34,10 @@ const CardList = <T,>({
   if (isLoading) {
     return (
       <div
-        className={`bg-white rounded-lg border border-gray-200 overflow-hidden ${className}`}
+        className={`bg-white rounded-lg border border-[#CBD6E2] overflow-hidden ${className}`}
       >
         {/* Header Skeleton */}
-        <div className='flex items-center gap-3 px-4 py-3 border-b border-gray-200'>
+        <div className='flex items-center gap-3 px-4 py-3 border-b border-[#CBD6E2]'>
           <div className='flex-shrink-0'>
             <Skeleton variant='circular' width={26} height={26} />
           </div>
@@ -73,10 +73,10 @@ const CardList = <T,>({
 
   return (
     <div
-      className={`bg-white rounded-lg border border-gray-200 overflow-hidden ${className}`}
+      className={`bg-white rounded-lg border border-[#CBD6E2] overflow-hidden ${className}`}
     >
       {/* Header */}
-      <div className='flex items-center justify-between px-4 py-3 border-b border-gray-200'>
+      <div className='flex items-center justify-between px-4 py-3 border-b border-[#CBD6E2]'>
         <div className='flex items-center gap-3'>
           <div className='flex-shrink-0'>{getDynamicSvgIcon(title, 26)}</div>
           <div>

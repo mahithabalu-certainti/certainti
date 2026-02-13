@@ -165,11 +165,11 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-lg border border-gray-200 overflow-hidden ${className}`}
+      className={`bg-white rounded-lg border border-[#CBD6E2] overflow-hidden ${className}`}
     >
       {/* Header */}
       {!hideHeader && (
-        <div className='flex items-center gap-3 px-4 py-3 border-b border-gray-200'>
+        <div className='flex items-center gap-3 px-4 py-3 border-b border-[#CBD6E2]'>
           <div className='flex-shrink-0'>{getDynamicSvgIcon(title, 26)}</div>
           <div>
             <h3 className='text-xl font-semibold text-[#2A2A2A]'>{title}</h3>
@@ -181,7 +181,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
       )}
 
       {summary.length > 0 && (
-        <div className='flex items-center justify-evenly px-4 py-3 border-b border-slate-200'>
+        <div className='flex items-center justify-evenly px-4 py-3 border-b border-[#CBD6E2]'>
           {summary.map((item, idx) => (
             <div key={idx} className='flex items-center gap-2'>
               <span
