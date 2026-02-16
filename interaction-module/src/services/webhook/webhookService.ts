@@ -1235,7 +1235,7 @@ export class WebHookService {
       "Notes",
       "Question No",
     ];
-    const tableHeader = array[4] || [];
+    const tableHeader = array[5] || [];
 
     expectedHeaders.forEach((expected, index) => {
       if (tableHeader[index] !== expected) {
