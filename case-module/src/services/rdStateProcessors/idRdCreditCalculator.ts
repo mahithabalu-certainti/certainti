@@ -47,7 +47,13 @@ export class RdCreditCalculatorForID {
             inputFields,
             computedFields,
             finalCredit: this.round2(qreCalInfo.final_credit),
-            totalQRE: this.round2(qreCalInfo.total_current_year_qre)
+            totalQRE: this.round2(qreCalInfo.total_current_year_qre),
+            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+            avgAnnualGrossReceipts: this.round2(qreCalInfo.average_annual_gross_receipts),
+          
+            
         }
     }
 

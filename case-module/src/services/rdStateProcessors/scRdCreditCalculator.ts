@@ -71,7 +71,11 @@ export class RdCreditCalculatorForSC {
             inputFields,
             computedFields,
             finalCredit: this.round2(final_credit),
-            totalQRE: this.round2(total_current_year_qre)
+            totalQRE: this.round2(total_current_year_qre),
+            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+
         }
 
     }
