@@ -213,7 +213,7 @@ class InteractionSchemaService {
     interactionLevel: string
   ) {
     try {
-      const { Interaction, InteractionItem } = await this.interactionModelService.getModels(accountNumber);
+      const { Interaction, InteractionItem, InteractionSummary } = await this.interactionModelService.getModels(accountNumber);
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
@@ -260,6 +260,16 @@ class InteractionSchemaService {
           }))
         );
 
+      // Utility: Prepare bulk InteractionSummary data
+      const prepareInteractionSummary = (interactions: any[]) =>
+        interactions.map((interaction) => ({
+          interaction_rid: interaction.rid,
+          r_number: interaction.r_number || null,
+          ...interactionData,
+          created_datetime: new Date(),
+          created_by: userId,
+        }));
+
       // Utility: Prepare bulk SendEmailInfo data
       const prepareSendEmailInfoData = (interactions: any[], projects: IProject[]) =>
         interactions.map((interaction, idx) => ({
@@ -278,6 +288,10 @@ class InteractionSchemaService {
         // Bulk create Interactions
         const interactionRequests = prepareInteractionData(interactionData.projects);
         const createdInteractions = await batchInsert(Interaction, interactionRequests, { ignoreDuplicates: true });
+
+        // Bulk insert InteractionSummary
+        const interactionSummaryData = prepareInteractionSummary(createdInteractions);
+        await batchInsert(InteractionSummary, interactionSummaryData);
 
         // Bulk insert InteractionItem
         if (interactionData.questions && Array.isArray(interactionData.questions) && interactionData.questions.length > 0) {
