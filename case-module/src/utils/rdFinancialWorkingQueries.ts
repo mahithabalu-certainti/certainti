@@ -136,9 +136,9 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.project_name,
         COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
         COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        COALESCE(cp.total_cost_fte_prj, 0.00) AS total_cost_fte_prj,
-        COALESCE(cp.total_cost_subcon_prj, 0.00) AS total_cost_subcon_prj,
-        COALESCE(cp.total_cost_nonlabor_prj, 0.00) AS total_cost_nonlabor_prj,
+        CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
     FROM
         ${schemaName}.project_fiscal cp
@@ -154,7 +154,6 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         GROUP BY
         cp.rid
     `
-    console.log(query);
     return query;
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
