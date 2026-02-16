@@ -417,23 +417,21 @@ async function exportInteractionTemplate(req: Request, res: Response) {
       });
       // headerSheet.addRow(headers);
       if (allowedFieldSet.has("questions")) {
-        worksheet.addRow(["Question No", "Questions", "Notes", "Is Mandatory"]);
+        worksheet.addRow(["Question No", "Questions", "Notes"]);
         worksheet.getRow(8).eachCell((cell) => {
           cell.font = { bold: true };
         });
         worksheet.columns = [
           { key: "question no", width: 15 },
           { key: "question", width: 50 },
-          { key: "notes", width: 30 },
-          { key: "is_mandatory", width: 15 },
+          { key: "notes", width: 30 }
         ];
         response.questions.forEach((item: any) => {
           const plain = item.get ? item.get({ plain: true }) : item;
           const row = worksheet.addRow({
             "question no": plain.question_seq_num,
             question: plain.question,
-            notes: "",
-            is_mandatory: plain.is_mandatory ? "Yes" : "No",
+            notes: ""
           });
         });
       }

@@ -174,7 +174,7 @@ export class WebHookService {
             if (dataRow.length >= 2) {
               answers.push({
                 rid: "",
-                questionSeqId: dataRow[5]?.trim(),
+                questionSeqId: dataRow[4]?.trim(),
                 question: dataRow[1]?.trim() || "",
                 response: dataRow[2]?.trim() || "",
                 notes: dataRow[3]?.trim() || "",
@@ -1233,7 +1233,6 @@ export class WebHookService {
       "Questions",
       "Answers",
       "Notes",
-      "Is Mandatory",
       "Question No",
     ];
     const tableHeader = array[5] || [];
@@ -1253,7 +1252,6 @@ export class WebHookService {
     const totalRows = dataRows.length;
 
     let answeredRowsCount = 0;
-    let mandatoryQuestionsCount = 0;
     let answerValidation = false;
 
     for (let i = 0; i < totalRows; i++) {
@@ -1264,8 +1262,7 @@ export class WebHookService {
       const question = row[1];
       const answer = row[2]?.trim();
       const notes = row[3];
-      const isMandatory = row[4]?.trim().toLowerCase();
-      const questionId = row[5];
+      const questionId = row[4];
 
       const rowErrors: string[] = [];
 
@@ -1273,19 +1270,6 @@ export class WebHookService {
       const hasAnswer = !!answer;
       if (hasAnswer) answeredRowsCount++;
 
-      if (isMandatory === "yes") mandatoryQuestionsCount++;
-
-      // Special case: only one row
-      if (totalRows === 1 && isMandatory === "yes" && !hasAnswer) {
-        rowErrors.push(
-          "Answer is required because the question is mandatory"
-        );
-      }
-
-      if (isMandatory === "yes" && !answer?.trim()) {
-        answerValidation = true;
-        rowErrors.push("Answer is required because the question is mandatory");
-      }
 
       // Skip empty-answer rows (in multiple row case)
       // if (totalRows > 1 && !hasAnswer) continue;
@@ -1293,18 +1277,12 @@ export class WebHookService {
       // For answered rows, validate required fields
       if (!questionId) rowErrors.push("Question No");
       if (!question) rowErrors.push("Questions");
-      if (!isMandatory) rowErrors.push("Is Mandatory");
 
       if (rowErrors.length > 0) {
         errors.push(`Row ${i + 7} is missing: ${rowErrors.join(", ")}`);
       }
     }
 
-    if (answeredRowsCount === 0 && mandatoryQuestionsCount > 0) {
-      errors.push(
-        "No answers provided. At least one answered row is required."
-      );
-    }
 
     if (errors.length > 0) {
       return { valid: answerValidation ? true : false, errors, answerValidation };

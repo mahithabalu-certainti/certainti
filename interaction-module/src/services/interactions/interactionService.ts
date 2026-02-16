@@ -1593,7 +1593,7 @@ export class InteractionService {
         } 
         else {
           const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
-          if(fetchResNameEmail[0].length > 0) {
+          if(fetchResNameEmail[0].length > 0 || data.email !== "" && data.email !== null && data.email !== undefined) {
             if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
             email = data.email;
             name = data.name;
@@ -1698,7 +1698,6 @@ export class InteractionService {
       "Questions",
       "Answers",
       "Notes",
-      "Is Mandatory",
       "Question No",
     ]);
     worksheet.getRow(6).eachCell((cell) => {
@@ -1711,7 +1710,6 @@ export class InteractionService {
       { key: "question", width: 50 },
       { key: "answer", width: 50 },
       { key: "notes", width: 30 },
-      { key: "is_mandatory", width: 15 },
       { key: "question no", width: 15 },
     ];
 
@@ -1725,7 +1723,6 @@ export class InteractionService {
         question: plain.question,
         answer: "",
         notes: "",
-        is_mandatory: plain.is_mandatory ? "Yes" : "No",
         "question no": plain.question_seq_num
       });
 
@@ -1735,7 +1732,6 @@ export class InteractionService {
       row.getCell(3).protection = { locked: false };
       row.getCell(4).protection = { locked: true };
       row.getCell(5).protection = { locked: true };
-      row.getCell(6).protection = { locked: true };
     });
 
     // Now protect worksheet AFTER all protections are set
@@ -1782,9 +1778,9 @@ export class InteractionService {
        let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       if (is_interaction_followup) {
          if(interactionLevel.toLowerCase() === 'project') {
-        templateName = interactionTemplateName.interactionProjectRemainder
+        templateName = interactionTemplateName.interactionProjectReminder
        } else {
-        templateName = interactionTemplateName.interactionAccountRemainder
+        templateName = interactionTemplateName.interactionAccountReminder
        }
       emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       

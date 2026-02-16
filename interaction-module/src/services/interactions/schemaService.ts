@@ -2809,7 +2809,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
         order: [
           ["question_seq_num", "ASC"],
@@ -2895,7 +2895,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
        order: [
           ["question_seq_num", "ASC"],
@@ -2929,7 +2929,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
         order: [
           ["question_seq_num", "ASC"],
@@ -3445,9 +3445,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         where: { interaction_rid: interactionRid },
       });
     } catch (err) {
-      logMessage(`Error updating interaction remainder: ${err}`);
+      logMessage(`Error updating interaction reminder: ${err}`);
       throw new Error(
-        "Error updating interaction remainder: " + (err as Error).message
+        "Error updating interaction reminder: " + (err as Error).message
       );
     }
   }
