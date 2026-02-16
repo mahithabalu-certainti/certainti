@@ -476,8 +476,8 @@ class RDCreditSchemaService {
                 prev_year1_qre: result?.prev1yearQRE,
                 prev_year2_qre: result?.prev2yearQRE,
                 prev_year3_qre: result?.prev3yearQRE,
-                total_wages: result?.totalFTE,
-                total_supplies: result?.totalNonLabor,
+                total_wages: result?.totalWages,
+                total_supplies: result?.totalSupplies,
                 total_subcontract: result?.totalSubCon
             },
             {
