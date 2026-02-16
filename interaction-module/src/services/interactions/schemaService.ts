@@ -2807,7 +2807,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
         order: [
           ["question_seq_num", "ASC"],
@@ -2893,7 +2893,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
        order: [
           ["question_seq_num", "ASC"],
@@ -2927,7 +2927,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
         order: [
           ["question_seq_num", "ASC"],
