@@ -174,7 +174,7 @@ export class WebHookService {
             if (dataRow.length >= 2) {
               answers.push({
                 rid: "",
-                questionSeqId: dataRow[5]?.trim(),
+                questionSeqId: dataRow[4]?.trim(),
                 question: dataRow[1]?.trim() || "",
                 response: dataRow[2]?.trim() || "",
                 notes: dataRow[3]?.trim() || "",
@@ -1235,7 +1235,7 @@ export class WebHookService {
       "Notes",
       "Question No",
     ];
-    const tableHeader = array[5] || [];
+    const tableHeader = array[4] || [];
 
     expectedHeaders.forEach((expected, index) => {
       if (tableHeader[index] !== expected) {
