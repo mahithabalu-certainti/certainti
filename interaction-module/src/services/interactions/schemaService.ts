@@ -3443,9 +3443,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         where: { interaction_rid: interactionRid },
       });
     } catch (err) {
-      logMessage(`Error updating interaction remainder: ${err}`);
+      logMessage(`Error updating interaction reminder: ${err}`);
       throw new Error(
-        "Error updating interaction remainder: " + (err as Error).message
+        "Error updating interaction reminder: " + (err as Error).message
       );
     }
   }
