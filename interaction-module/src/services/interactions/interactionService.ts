@@ -1778,9 +1778,9 @@ export class InteractionService {
        let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       if (is_interaction_followup) {
          if(interactionLevel.toLowerCase() === 'project') {
-        templateName = interactionTemplateName.interactionProjectRemainder
+        templateName = interactionTemplateName.interactionProjectReminder
        } else {
-        templateName = interactionTemplateName.interactionAccountRemainder
+        templateName = interactionTemplateName.interactionAccountReminder
        }
       emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       
