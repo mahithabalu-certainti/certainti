@@ -48,7 +48,7 @@ import {
 } from "../../models/taskCollaboratorsModel";
 import CaseSchemaService from "../cases/schemaService";
 import { sendEmailWithAttachment } from "../emailService";
-import { scheduleTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
+import { scheduleTeamsMeetingUtil, updateTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
 import moment from "moment";
 import { ChecklistSchemaService } from "../cases/caseChecklist/checklistSchemaService";
 import { CaseTaskSchemaService } from "../cases/caseTask/caseTaskSchemaService";
@@ -2208,6 +2208,49 @@ class ActivitySchemaService {
     return response;
   }
 
+  async fetchSenderEmailInfo(
+    accountNumber: string,
+    parentAccountRid?: string
+  ) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchSenderEmail(
+          schemaName,
+          parentAccountRid || ""
+        ),
+        { type: "SELECT" }
+      );
+
+      if (senderEmailInfo) {
+        const clientSecret = senderEmailInfo.client_secret;
+        const decryptedSecret = await decryptClientSecret(clientSecret);
+
+        return {
+          email:
+            senderEmailInfo.support_email,
+          clientId:
+            senderEmailInfo.client_id,
+          clientSecret:
+            decryptedSecret,
+          tenantId:
+            senderEmailInfo.tenant_id,
+        };
+      }
+      return null;
+    } catch (error) {
+      errorLog(`Error fetching sender email info: ${error}`);
+      return null;
+    }
+  }
+
   async updateActivityMeeting(
     accountNumber: string,
     activityRequest: IActivityMeeting,
@@ -2260,6 +2303,41 @@ class ActivitySchemaService {
       where: { rid: activityRequest.activity_rid },
       raw: true
     });
+
+    try {
+      const [accountInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountInfo(activityRequest.account_rid!),
+        { type: "SELECT" }
+      );
+
+      let parentAccountNumber = accountNumber;
+      if (accountInfo.storage_type === 'separate_db') {
+        const [parentAccountInfo]: any[] =
+          await this.mainDbSequelize.query(
+            rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+            { type: "SELECT" }
+          );
+        parentAccountNumber = parentAccountInfo.r_number;
+      }
+
+      const senderEmailInfo = await this.fetchSenderEmailInfo(
+        parentAccountNumber,
+        accountInfo.parent_account_rid
+      );
+
+      if (senderEmailInfo && existingActivity && existingActivity.meeting_id) {
+        const scheduleResponse = await updateTeamsMeetingUtil(
+          existingActivity.meeting_id,
+          { ...activityData, meeting_participants: meetingParticipants },
+          senderEmailInfo
+        );
+        if (!scheduleResponse.success) {
+          logMessage(`Failed to update Teams meeting: ${scheduleResponse.error}`);
+        }
+      }
+    } catch (err) {
+      logMessage(`Error updating Teams meeting: ${err}`);
+    }
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },

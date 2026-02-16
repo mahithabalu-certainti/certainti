@@ -173,6 +173,8 @@ export const STATUS_MESSAGE = {
   failedToUpdate: "Failed to update",
   activityCreated: "Activity created successfully",
   activityCreationFailed: "Activity creation failed",
+  activityCancelled: "Activity cancelled successfully",
+  activityCancellationFailed: "Activity cancellation failed",
   activityUpdated: "Activity updated successfully",
   activityUpdateFailed: "Activity update failed",
   taskWeightageListSuccess: "Task Weightage fetched successfully",
@@ -203,26 +205,26 @@ export const STATUS_MESSAGE = {
   rdCreditPreview: "RD credit calculation results retrieved",
   rdCreditProcessInitiatedSuccess: "RD credit calculation initiated successfully",
   rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
-  noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
-  financialWorkingSignedOff : "Financial Working has been successfully approved",
-  financialWorkingSignedOffFailed : "Failed to signoff financial working",
-  rdFormSignedOff : "RD Form has been successfully approved",
-  rdFormSignOffFailed : "Failed to approve RD Form",
-  regionsFetchedSuccess : "Regions listed successfully",
-  userPreferenceUpdatedSuccess : "UserPreference updated successfully",
-  userPreferenceUpdationFailed : "UserPreference updation failed",
-  rdCreditFinancialSignOffPending:"Financial working sign-off is pending. Cannot initiate RD Form Filler process.",
-  rdFormProcessInitiatedSuccess : "RD form filler process initiated successfully",
-  rdFormPreview : "RD form retrieved successfully",
+  noProjectsAssignedToCase: "No Assigned Projects found. Kindly assign a project to case and try again",
+  financialWorkingSignedOff: "Financial Working has been successfully approved",
+  financialWorkingSignedOffFailed: "Failed to signoff financial working",
+  rdFormSignedOff: "RD Form has been successfully approved",
+  rdFormSignOffFailed: "Failed to approve RD Form",
+  regionsFetchedSuccess: "Regions listed successfully",
+  userPreferenceUpdatedSuccess: "UserPreference updated successfully",
+  userPreferenceUpdationFailed: "UserPreference updation failed",
+  rdCreditFinancialSignOffPending: "Financial working sign-off is pending. Cannot initiate RD Form Filler process.",
+  rdFormProcessInitiatedSuccess: "RD form filler process initiated successfully",
+  rdFormPreview: "RD form retrieved successfully",
   financialWorkingInitiated: "Financial workings are being computed. Refresh the page to check the status",
-  caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully",
-  dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully",
-  closureRemarksExportedSuccess : "Closing Remarks Exported Successfully",
-  dossierPackageFetchedSuccess : "Dossier Package fetched successfully"
+  caseClosureRemarksSuccess: "Case Closure Remarks Details fetched successfully",
+  dossierCreationInitiatedSuccess: "Dossier Creation Initaited Successfully",
+  closureRemarksExportedSuccess: "Closing Remarks Exported Successfully",
+  dossierPackageFetchedSuccess: "Dossier Package fetched successfully"
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
-   "Australia":  `R&D Tax Incentive Schedule`
+  "Australia": `R&D Tax Incentive Schedule`
 };
 
 export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
@@ -233,7 +235,7 @@ export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
 export const FORM_TYPE = {
   "Fillable": "fillable",
   "Non-Fillable": "non-fillable",
-};  
+};
 
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",
@@ -586,8 +588,8 @@ export const rawQueries = {
     totalprojects: any,
     totalCost: any,
     total_projects_qre_cost: any,
-    totalQualifiedProjects : any,
-    totalQualifiedProjectCost : any
+    totalQualifiedProjects: any,
+    totalQualifiedProjectCost: any
   ) {
     return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE rid = '${caseRid}'`;
   },
@@ -596,8 +598,8 @@ export const rawQueries = {
     totalprojects: any,
     totalCost: any,
     total_projects_qre_cost: any,
-    totalQualifiedProjects : any,
-    totalQualifiedProjectCost : any
+    totalQualifiedProjects: any,
+    totalQualifiedProjectCost: any
   ) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost}, case_total_qualified_projects = ${totalQualifiedProjects}, case_total_qualified_project_cost = ${totalQualifiedProjectCost} WHERE case_rid = '${caseRid}'`;
   },
@@ -1654,10 +1656,10 @@ export const rawQueries = {
   updateClaimQualifiedInProjectFiscalSummary(projectFiscalRids: string[], accountRid: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = true WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
-  getFinancialWorkingId () {
+  getFinancialWorkingId() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%Financial Computation%'`
   },
-  getRdFormSignOffId () {
+  getRdFormSignOffId() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%RD Forms%'`
   },
   updateClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
@@ -1737,7 +1739,7 @@ export const rawQueries = {
     return `SELECT fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
   },
   fetchProjectCountsAndQreByState(schemaName: string) {
-    return  `
+    return `
                 SELECT 
                     pfr.region_rid as state_rid,
                     COUNT(DISTINCT cp.project_fiscal_rid) as total_projects,
@@ -1754,17 +1756,17 @@ export const rawQueries = {
                 GROUP BY pfr.region_rid
             `
   },
-  fetchCanadaOntRegion () {
+  fetchCanadaOntRegion() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.state WHERE state_name ILIKE '%ontario%'`
   },
-  insertSignoffDetails (createdBy : string, signoffTypeRid : string, caseRid : string, accountRid : string, schemaName : string, comments : string) {
+  insertSignoffDetails(createdBy: string, signoffTypeRid: string, caseRid: string, accountRid: string, schemaName: string, comments: string) {
     const safeComments = (comments ?? "").toString().replace(/'/g, "");
     return `INSERT INTO ${schemaName}.signoff_details (created_by, created_datetime, signoff_type_rid, case_rid, account_rid, comments) VALUES('${createdBy}', NOW(), '${signoffTypeRid}', '${caseRid}', '${accountRid}', '${safeComments}')`
   },
-  findSignOffTypes (rids : string[]) {
-    return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d : any) => `'${d}'`).join(',')})`
+  findSignOffTypes(rids: string[]) {
+    return `SELECT rid, signoff_type_name FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE rid IN (${rids.map((d: any) => `'${d}'`).join(',')})`
   },
-  fetchFederalForms(countryRid: string, effectiveStart: string, effectiveEnd: string){
+  fetchFederalForms(countryRid: string, effectiveStart: string, effectiveEnd: string) {
     return `SELECT dmf.browse_file,dmf.rid,dmf.form_type
     FROM trd365.data_mapper_forms dmf
   WHERE dmf.country_rid = '${countryRid}'
@@ -1775,7 +1777,7 @@ export const rawQueries = {
        OR dmf.effective_to_date >= DATE '${effectiveStart}')
   AND is_active = true`
   },
-  fetchStateForms(countryRid: string,stateRid: string, effectiveStart: string, effectiveEnd: string){
+  fetchStateForms(countryRid: string, stateRid: string, effectiveStart: string, effectiveEnd: string) {
     return `SELECT dmf.browse_file,dmf.rid,dmf.form_type
 FROM trd365.data_mapper_forms dmf
 WHERE dmf.country_rid = '${countryRid}'
@@ -1794,7 +1796,7 @@ WHERE dmf.country_rid = '${countryRid}'
     ) AS financial_working_signoff
     `
   },
-  fetchRdFormMapperConfigurations(formId: string){
+  fetchRdFormMapperConfigurations(formId: string) {
     return `
      SELECT DISTINCT
        dmfm.field_label,
@@ -1809,45 +1811,41 @@ WHERE dmf.country_rid = '${countryRid}'
       WHERE dmfm.form_rid = :formId
       ORDER BY dmfm.extraction_order ASC`
   },
-  saveFederalFilledFormUrl(schemaName: string)
-  {
+  saveFederalFilledFormUrl(schemaName: string) {
     return `
           UPDATE ${schemaName}.rd_credit_country_calculations
           SET rd_form_url = :filledFormUrl
           WHERE case_rid = :caseRid
           and country_rid  =:countryRid`
   },
-  saveStateFilledFormUrl(schemaName: string)
-  {
+  saveStateFilledFormUrl(schemaName: string) {
     return `
            UPDATE ${schemaName}.rd_credit_state_calculations
       SET rd_form_url = :filledFormUrl
       WHERE case_rid = :caseRid
       and state_rid  =:stateRid`
   },
-  updateFederalFormError(schemaName: string)
-    {
-      return `UPDATE ${schemaName}.rd_credit_country_calculations
+  updateFederalFormError(schemaName: string) {
+    return `UPDATE ${schemaName}.rd_credit_country_calculations
       SET form_error_message = 'Federal form file not found'
       WHERE case_rid = :caseRid
       and country_rid  =:countryRid`
-    },
-  updateStateFormError(schemaName: string)
-    {
-      return `UPDATE ${schemaName}.rd_credit_state_calculations
+  },
+  updateStateFormError(schemaName: string) {
+    return `UPDATE ${schemaName}.rd_credit_state_calculations
             SET form_error_message = 'State form file not found'
             WHERE case_rid = :caseRid
             and country_rid  =:countryRid
             and state_rid = :stateRid`
-    },
-  fetchFederalFormUrl(schemaName: string){
+  },
+  fetchFederalFormUrl(schemaName: string) {
     return `
       SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_country_calculations
       WHERE case_rid = :caseRid
       and country_rid  =:countryRid
       LIMIT 1`
   },
-   fetchStateFormUrl(schemaName: string){
+  fetchStateFormUrl(schemaName: string) {
     return `
      SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_state_calculations
       WHERE case_rid = :caseRid
@@ -1882,8 +1880,7 @@ WHERE dmf.country_rid = '${countryRid}'
       WHERE dmo.rid = :rid
       LIMIT 1`
   },
-  fetchConfiguration(schemaName:string,caseRid:string)
-  {
+  fetchConfiguration(schemaName: string, caseRid: string) {
     return `
       SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
     `
@@ -1893,8 +1890,7 @@ WHERE dmf.country_rid = '${countryRid}'
     refTable: string,
     quotedJsonPath: string,
     stateRid?: string,
-  )
-  {
+  ) {
     return `
           SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
           FROM ${schemaName}.${refTable}
@@ -1933,16 +1929,16 @@ WHERE dmf.country_rid = '${countryRid}'
         WHERE ${whereColumn} = :case_rid
         LIMIT 1`;
   },
-   fetchAssignedProjectIds (caseRid : string, schemaName : string, type? : string){
-    if(type === DOSSIER_NAME) {
+  fetchAssignedProjectIds(caseRid: string, schemaName: string, type?: string) {
+    if (type === DOSSIER_NAME) {
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
        WHERE cp.case_rid = '${caseRid}'`
     } else {
-        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
+      return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
     }
-},
+  },
   fetchDocumentByIds() {
     return `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`;
   },
@@ -1952,20 +1948,20 @@ WHERE dmf.country_rid = '${countryRid}'
   fetchUserByIds() {
     return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`;
   },
-  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string, summaryType : string) {
-       if(summaryType === 'qualifiedprojects') {
+  getCaseProjectsIds(caseRid: string, accountRid: string, schemaName: string, summaryType: string) {
+    if (summaryType === 'qualifiedprojects') {
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
        WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true
        `
     } else {
-        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+      return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
     }
   },
   fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
     return `
-    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d: any) => `'${d}'`).join(',')})`;
   },
   getTableMappings() {
     return `
@@ -2432,13 +2428,13 @@ export const onlyFederals = {
   canada: "CAN"
 }
 export const DOSSIER_NAME = 'dossier_project_document'
-   export const techSummaryFieldMappings = [
-     
-    { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
-    { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
-    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
-    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
-    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
-   
-  ];
+export const techSummaryFieldMappings = [
+
+  { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+  { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
+  { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+  { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+  { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+  { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+
+];

@@ -422,6 +422,24 @@ export interface IActivityService {
     errorMessage?: string;
     data?: any;
   }>;
+  cancelActivityMeeting(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+  completeActivityMeeting(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
   createActivityCall(
     data: IActivityCall,
     userId: string,
@@ -516,30 +534,30 @@ export interface IChildCaseService extends ICaseService {
     errorMessage?: string;
     data?: { cases: any };
   }>;
-  getCaseClosureRemarks(data : any): Promise<{
+  getCaseClosureRemarks(data: any): Promise<{
     case_rid: string;
     case_name: any;
     closing_remarks: {
-        created_by: any;
-        created_by_name: any;
-        signoff_type_rid: any;
-        signoff_type_name: any;
-        signoff_at: any;
+      created_by: any;
+      created_by_name: any;
+      signoff_type_rid: any;
+      signoff_type_name: any;
+      signoff_at: any;
     }[];
-} | {
+  } | {
     case_rid: any;
     case_name: any;
     closing_remarks: never[];
-} | undefined>
-initiateCreateDossierForm(data : any) : Promise<string>
-exportCaseClosingRemarks(data : any): Promise<string | undefined>
-fetchDossierPackage(data : any) : Promise<{
+  } | undefined>
+  initiateCreateDossierForm(data: any): Promise<string>
+  exportCaseClosingRemarks(data: any): Promise<string | undefined>
+  fetchDossierPackage(data: any): Promise<{
     statusCode: number;
     data: DossierForm;
-} | {
+  } | {
     statusCode: number;
     data: null;
-}>
+  }>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;
