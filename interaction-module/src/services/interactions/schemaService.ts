@@ -270,6 +270,8 @@ class InteractionSchemaService {
           user_rid: userId,
           is_email_send: false,
           interaction_level: interactionLevel,
+          name: interactionData.email_info?.name || "",
+          email: interactionData.email_info?.email || "",
         }));
 
       if (Array.isArray(interactionData.projects) && interactionData.projects.length > 0) {
