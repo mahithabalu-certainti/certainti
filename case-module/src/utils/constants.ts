@@ -1594,7 +1594,7 @@ export const rawQueries = {
     return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = true WHERE project_fiscal_rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
   getFinancialWorkingId () {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%financial_working%'`
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%Financial Computation%'`
   },
   updateClaimQualifiedInCaseProjectFiscalRegion (ProjectRegionIds : any[], accountRid : string, schemaName : string) {
     let ids = ProjectRegionIds.filter((d : any) => d.region_rid !== null)
