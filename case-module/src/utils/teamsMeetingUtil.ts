@@ -82,7 +82,6 @@ export async function scheduleTeamsMeetingUtil(
 
   const tz = activityRequest.time_zone || "UTC";
   const startDateTime = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`, "YYYY-MM-DD HH:mm", tz);
-  const endDateTime = moment.tz(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
   const endDateTimepayload = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
   const payload: any = {
     subject: activityRequest.subject,
@@ -105,7 +104,7 @@ export async function scheduleTeamsMeetingUtil(
   };
 
   // Only add recurrence if recurrence_type is set and not 'none'
-  if (activityRequest.recurrence_type && activityRequest.recurrence_type !== 'none') {
+  if (recurrentpattern && Object.keys(recurrentpattern).length > 0) {
     payload.recurrence = {
       pattern: recurrentpattern,
       range: {
@@ -115,6 +114,10 @@ export async function scheduleTeamsMeetingUtil(
         recurrenceTimeZone: activityRequest.time_zone || "UTC",
       },
     };
+  } else if (activityRequest.recurrence_type && activityRequest.recurrence_type !== 'none') {
+    logMessage(
+      `scheduleTeamsMeetingUtil: Unsupported or invalid recurrence_type '${activityRequest.recurrence_type}', skipping recurrence configuration.`
+    );
   }
   try {
     const credential = new ClientSecretCredential(
@@ -290,8 +293,14 @@ export async function updateTeamsMeetingUtil(
       meetingParticipants = [];
     }
   }
-  // Remove duplicates and trim emails
-  meetingParticipants = Array.from(new Set(meetingParticipants.map(e => e.trim())));
+  // Remove duplicates, trim, and filter out empty strings
+  meetingParticipants = Array.from(
+    new Set(
+      meetingParticipants
+        .map((e) => e.trim().toLowerCase())
+        .filter((e) => e.length > 0)
+    )
+  );
 
   const attendees = meetingParticipants.map((email) => ({
     emailAddress: { address: email },
@@ -300,7 +309,6 @@ export async function updateTeamsMeetingUtil(
 
   const tz = activityRequest.time_zone || "UTC";
   const startDateTime = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`, "YYYY-MM-DD HH:mm", tz);
-  const endDateTime = moment.tz(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
   // Using endDateTimepayload logic from schedule function to maintain consistency
   const endDateTimepayload = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
 

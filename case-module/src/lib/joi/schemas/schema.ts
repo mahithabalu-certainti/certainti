@@ -1261,8 +1261,8 @@ const rdFormSignOffSchema = Joi.object({
 });
 
 const completeActivityMeetingSchema = Joi.object({
-  activity_rid: Joi.string().required(),
-  account_rid: Joi.string().required()
+  activity_rid: Joi.string().max(255).required(),
+  account_rid: Joi.string().max(255).required()
 });
 
 export {

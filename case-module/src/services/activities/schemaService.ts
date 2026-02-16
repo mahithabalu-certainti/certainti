@@ -2208,49 +2208,6 @@ class ActivitySchemaService {
     return response;
   }
 
-  async fetchSenderEmailInfo(
-    accountNumber: string,
-    parentAccountRid?: string
-  ) {
-    try {
-      if (!this.orgDbSequelize) {
-        this.orgDbSequelize = await this.caseModelService.getSequelize();
-      }
-      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-        /\D/g,
-        ""
-      )}`;
-
-      const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
-        rawQueries.fetchSenderEmail(
-          schemaName,
-          parentAccountRid || ""
-        ),
-        { type: "SELECT" }
-      );
-
-      if (senderEmailInfo) {
-        const clientSecret = senderEmailInfo.client_secret;
-        const decryptedSecret = await decryptClientSecret(clientSecret);
-
-        return {
-          email:
-            senderEmailInfo.support_email,
-          clientId:
-            senderEmailInfo.client_id,
-          clientSecret:
-            decryptedSecret,
-          tenantId:
-            senderEmailInfo.tenant_id,
-        };
-      }
-      return null;
-    } catch (error) {
-      errorLog(`Error fetching sender email info: ${error}`);
-      return null;
-    }
-  }
-
   async updateActivityMeeting(
     accountNumber: string,
     activityRequest: IActivityMeeting,
@@ -2320,9 +2277,9 @@ class ActivitySchemaService {
         parentAccountNumber = parentAccountInfo.r_number;
       }
 
-      const senderEmailInfo = await this.fetchSenderEmailInfo(
+      const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
         parentAccountNumber,
-        accountInfo.parent_account_rid
+        accountInfo.parent_account_rid || ""
       );
 
       if (senderEmailInfo && existingActivity && existingActivity.meeting_id) {

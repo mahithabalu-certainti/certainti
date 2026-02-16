@@ -21,6 +21,7 @@ import {
   IActivityCall,
   IActivityEmail,
   IActivityMeeting,
+  IActivityMeetingAction,
   IActivityTask,
   ICreateCases,
   ICreateCaseTeam,
@@ -714,7 +715,7 @@ export class ActivityService {
   }
 
   async cancelActivityMeeting(
-    data: any,
+    data: IActivityMeetingAction,
     userId: string
   ) {
     try {
@@ -754,7 +755,7 @@ export class ActivityService {
   }
 
   async completeActivityMeeting(
-    data: any,
+    data: IActivityMeetingAction,
     userId: string
   ) {
     try {
@@ -780,7 +781,7 @@ export class ActivityService {
 
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: "Meeting completed successfully",
+        message: STATUS_MESSAGE.activityCompleted,
         data: result,
       };
     } catch (err) {
@@ -788,7 +789,7 @@ export class ActivityService {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: "Meeting completion failed",
+        errorMessage: STATUS_MESSAGE.activityCompletionFailed,
       };
     }
   }

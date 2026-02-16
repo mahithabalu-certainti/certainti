@@ -13,6 +13,7 @@ import {
     rawQueries,
     activityTypes
 } from "../../utils/constants";
+import { IActivityMeetingAction } from "../../utils/types";
 import { cancelTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
 import ActivitySchemaService from "./schemaService";
 import { Sequelize } from "sequelize";
@@ -33,7 +34,7 @@ export class ChildSchemaService {
 
     async cancelActivityMeeting(
         accountNumber: string,
-        activityRequest: any,
+        activityRequest: IActivityMeetingAction,
         userId: string
     ) {
         try {
@@ -41,7 +42,10 @@ export class ChildSchemaService {
             this.mainDbSequelize = await this.caseModelService.getMainSequelize();
 
             const existingActivity = await Activities.findOne({
-                where: { rid: activityRequest.activity_rid },
+                where: {
+                    rid: activityRequest.activity_rid,
+                    account_rid: activityRequest.account_rid,
+                },
             });
 
             if (!existingActivity) {
@@ -74,16 +78,34 @@ export class ChildSchemaService {
             );
 
             if (senderEmailInfo && existingActivity.meeting_id) {
-                await cancelTeamsMeetingUtil(
+                const cancelResult = await cancelTeamsMeetingUtil(
                     existingActivity.meeting_id,
                     senderEmailInfo
                 );
+
+                if (!cancelResult.success) {
+                    return {
+                        success: false,
+                        message: "Failed to cancel Teams meeting",
+                        statusCode: HttpStatus.FAILED,
+                        errorMessage: cancelResult.error,
+                    };
+                }
             }
 
             const [meetingStatus]: any[] = await this.mainDbSequelize.query(
                 rawQueries.fetchActivityStatusByName("Cancelled", "Meeting"),
                 { type: "SELECT" }
             );
+
+            if (!meetingStatus || !meetingStatus.rid) {
+                logMessage("Activity status 'Cancelled' not found for Meeting");
+                return {
+                    statusCode: HttpStatus.NOT_FOUND,
+                    message: HttpStatus.NOT_FOUND_MESSAGE,
+                    errorMessage: "Activity status not found",
+                };
+            }
 
             await Activities.update(
                 {
@@ -141,7 +163,7 @@ export class ChildSchemaService {
 
     async completeActivityMeeting(
         accountNumber: string,
-        activityRequest: any,
+        activityRequest: IActivityMeetingAction,
         userId: string
     ) {
         try {
@@ -149,7 +171,10 @@ export class ChildSchemaService {
             this.mainDbSequelize = await this.caseModelService.getMainSequelize();
 
             const existingActivity = await Activities.findOne({
-                where: { rid: activityRequest.activity_rid },
+                where: {
+                    rid: activityRequest.activity_rid,
+                    account_rid: activityRequest.account_rid,
+                },
             });
 
             if (!existingActivity) {
@@ -242,6 +267,11 @@ export class ChildSchemaService {
             const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
                 rawQueries.fetchSenderEmail(schemaName, parentAccountId)
             );
+
+            if (!senderEmailInfo || senderEmailInfo.length === 0 || !senderEmailInfo[0]) {
+                return null;
+            }
+
             const clientSecret = senderEmailInfo[0]?.client_secret;
             const decryptedSecret = await decryptClientSecret(clientSecret);
 

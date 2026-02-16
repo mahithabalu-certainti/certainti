@@ -37,6 +37,7 @@ import {
   TaskCategoryType,
   CaseTaskDropdownType,
   CaseClosureRemarks,
+  IActivityMeetingAction,
 } from "../../utils/types";
 
 export interface ICaseService {
@@ -423,7 +424,7 @@ export interface IActivityService {
     data?: any;
   }>;
   cancelActivityMeeting(
-    data: any,
+    data: IActivityMeetingAction,
     userId: string
   ): Promise<{
     statusCode: number;
@@ -432,7 +433,7 @@ export interface IActivityService {
     data?: any;
   }>;
   completeActivityMeeting(
-    data: any,
+    data: IActivityMeetingAction,
     userId: string
   ): Promise<{
     statusCode: number;
