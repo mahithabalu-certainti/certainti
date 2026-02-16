@@ -381,43 +381,6 @@ export const rawQueries = {
       replacements: { rids }
     };
   },
-  fetchWeeklyMeetingList(schemaName: string, statusId: string, userId?: string) {
-    let query = `
-    SELECT 
-    *
-    FROM ${schemaName}.activities a
-    WHERE LOWER(a.activity_type) = :activityType
-      AND a.status_rid = :statusId`;
-
-    const replacements: any = {
-      activityType: ActivityType.MEETING.toLowerCase(),
-      statusId
-    };
-
-    if (userId) {
-      query += `
-        AND (
-            a.meeting_participants::jsonb @> :userIdJson
-            OR a.invited_by = :userId
-          )
-        `;
-      replacements.userIdJson = JSON.stringify([userId]);
-      replacements.userId = userId;
-    }
-    query += `
-      AND a.effective_start_time IS NOT NULL
-      AND a.effective_end_time IS NOT NULL
-      AND a.effective_start_datetime >= date_trunc('week', CURRENT_DATE)
-      AND a.effective_start_datetime < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'
-
-    ORDER BY 
-        a.effective_start_datetime DESC,
-        a.effective_start_time DESC,
-        a.effective_end_time DESC
-    LIMIT 5;
-    `;
-    return { query, replacements };
-  },
   fetchWeeklyTotalTaskCount(accountIds?: string[], userId?: string) {
     let query = `
     SELECT count('x')
@@ -444,41 +407,6 @@ export const rawQueries = {
 
     query += ` AND a.effective_end_datetime::date >= date_trunc('week', CURRENT_DATE)::date
       AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days';`;
-    return { query, replacements };
-  },
-  fetchWeeklyMeetingCount(schemaName: string, statusIds: string[], userId?: string) {
-    let query = `
-    SELECT 
-    count('x')
-    FROM ${schemaName}.activities a
-    WHERE LOWER(a.activity_type) = :activityType
-    `;
-
-    const replacements: any = {
-      activityType: ActivityType.MEETING.toLowerCase()
-    };
-
-    if (statusIds && statusIds.length > 0) {
-      query += ` AND a.status_rid IN (:statusIds)`;
-      replacements.statusIds = statusIds;
-    }
-
-    if (userId) {
-      query += `
-        AND (
-            a.meeting_participants::jsonb @> :userIdJson
-            OR a.invited_by = :userId
-          )
-        `;
-      replacements.userIdJson = JSON.stringify([userId]);
-      replacements.userId = userId;
-    }
-    query += `
-      AND a.effective_start_time IS NOT NULL
-      AND a.effective_end_time IS NOT NULL
-      AND a.effective_start_datetime >= date_trunc('week', CURRENT_DATE)
-      AND a.effective_start_datetime < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'
-    `;
     return { query, replacements };
   },
   getAccountsByRidsQuery(): string {
@@ -863,7 +791,7 @@ export const rawQueries = {
       ) as "exists";
     `;
   },
-  fetchActiveCountries(countryRid?: string) {
+  fetchCountries(countryRid?: string, countryType?: string) {
     const replacements: any = {};
     let query = `
       SELECT 
@@ -871,7 +799,7 @@ export const rawQueries = {
         c.country_name,
         c.country_code
       FROM ${MAIN_SCHEMA_NAME}.country c
-      WHERE c.status = 'active'
+      WHERE 1 = 1
     `;
 
     if (countryRid) {
@@ -879,144 +807,178 @@ export const rawQueries = {
       replacements.countryRid = countryRid;
     }
 
+    if (countryType === "active") {
+      query += ` AND c.status = 'active'`;
+    }
+
     return { query, replacements };
   },
-  fetchOverallProjectValue(accountIds?: string[], fiscalYear?: string) {
+  fetchOverallProjectValue(
+    accountIds?: string[],
+    fiscalYear?: string,
+    activeCountriesRidsSet?: Set<string>
+  ) {
+
+    const replacements: any = {};
+    let projectFilters = ` WHERE 1 = 1 `;
+    let rccFilters = ` WHERE 1 = 1 `;
+
+    if (accountIds && accountIds.length > 0) {
+      projectFilters += ` AND p.account_rid IN (:accountIds) `;
+      rccFilters += ` AND cs.account_rid IN (:accountIds) `;
+      replacements.accountIds = accountIds;
+    }
+
+    if (fiscalYear) {
+      projectFilters += ` AND p.fiscal_year = :fiscalYear `;
+      rccFilters += ` AND cs.fiscal_year = :fiscalYear `;
+      replacements.fiscalYear = fiscalYear;
+    }
+
     let query = `
+    SELECT 
+      c.rid AS country_rid,
+      c.country_name,
+      c.country_code,
+
+      COALESCE(p.total_project_cost, 0) AS total_project_cost,
+      COALESCE(p.qualified_project_cost, 0) AS qualified_project_cost,
+      COALESCE(p.qre_cost, 0) AS qre_cost,
+
+      COALESCE(rcc.final_credit_computed, 0) AS final_credit_computed,
+      COALESCE(rcc.final_credit_submitted, 0) AS final_credit_submitted,
+      COALESCE(rcc.final_credit_approved, 0) AS final_credit_approved
+
+    FROM ${MAIN_SCHEMA_NAME}.country c
+
+    LEFT JOIN (
       SELECT 
-        c.rid as country_rid,
-        c.country_name,
-	      c.country_code, 
-        COALESCE(SUM(p.total_cost_prj), 0) as total_project_cost,
-        COALESCE(SUM(case when p.is_qualified = true then p.total_cost_prj else 0 end), 0) as qualified_project_cost,
-        COALESCE(SUM(p.qre_final), 0) as qre_cost
+        p.country_rid,
+        SUM(p.total_cost_prj) AS total_project_cost,
+        SUM(CASE WHEN p.is_qualified = true THEN p.total_cost_prj ELSE 0 END) AS qualified_project_cost,
+        SUM(p.qre_final) AS qre_cost
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON p.country_rid = c.rid
-      WHERE c.status = 'active'
-    `;
+      ${projectFilters}
+      GROUP BY p.country_rid
+    ) p ON c.rid = p.country_rid
 
-    const replacements: any = {};
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND p.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
-
-    if (fiscalYear) {
-      query += ` AND p.fiscal_year = :fiscalYear`;
-      replacements.fiscalYear = fiscalYear;
-    }
-
-    query += ` GROUP BY c.rid, c.country_name, c.country_code;`;
-
-    return { query, replacements };
-  },
-  fetchCountryWiseRDAmounts(schemaName: string, accountIds?: string[], fiscalYear?: string, activeCountriesRidsSet?: Set<string>) {
-    let query = `
-      SELECT a.country_rid,
-       COALESCE(SUM(final_credit), 0) as final_credit_computed,
-       COALESCE(SUM(final_credit_submitted), 0) as final_credit_submitted,
-       COALESCE(SUM(final_credit_approved), 0) as final_credit_approved
-      FROM ${schemaName}.rd_credit_country_calculations a
-      join ${schemaName}.cases b
-      on a.case_rid = b.rid
-      join ${schemaName}.account_details c
-      on b.account_rid = c.account_rid
-      WHERE 1=1
-    `;
-
-    const replacements: any = {};
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND b.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
-
-    if (fiscalYear) {
-      query += ` AND b.fiscal_year = :fiscalYear`;
-      replacements.fiscalYear = fiscalYear;
-    }
-
-    if (activeCountriesRidsSet) {
-      query += ` AND a.country_rid in (:activeCountriesRids)`;
-      replacements.activeCountriesRids = Array.from(activeCountriesRidsSet);
-    }
-
-    query += ` GROUP BY a.country_rid;`;
-
-    return { query, replacements };
-  },
-  fetchCountryAccountWiseRDAmounts(schemaName: string, accountIds?: string[], fiscalYear?: string, activeCountriesRidsSet?: Set<string>) {
-    let query = `
-      SELECT a.country_rid,
-       b.account_rid,
-       COALESCE(SUM(final_credit), 0) as final_credit_computed,
-       COALESCE(SUM(final_credit_submitted), 0) as final_credit_submitted,
-       COALESCE(SUM(final_credit_approved), 0) as final_credit_approved
-      FROM ${schemaName}.rd_credit_country_calculations a
-      join ${schemaName}.cases b
-      on a.case_rid = b.rid
-      join ${schemaName}.account_details c
-      on b.account_rid = c.account_rid
-      WHERE 1=1
-    `;
-
-    const replacements: any = {};
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND b.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
-
-    if (fiscalYear) {
-      query += ` AND b.fiscal_year = :fiscalYear`;
-      replacements.fiscalYear = fiscalYear;
-    }
-
-    if (activeCountriesRidsSet) {
-      query += ` AND a.country_rid in (:activeCountriesRids)`;
-      replacements.activeCountriesRids = Array.from(activeCountriesRidsSet);
-    }
-
-    query += ` GROUP BY a.country_rid, b.account_rid`;
-
-    return { query, replacements };
-  },
-  fetchGlobalAccountClaimedAmounts(accountIds?: string[], fiscalYear?: string, activeCountriesRidsSet?: Set<string>) {
-    let query = `
+    LEFT JOIN (
       SELECT 
-        a.rid as account_rid,
-        a.account_name,
-        c.rid as country_rid,
-        c.country_name,
-	      c.country_code, 
-        COALESCE(SUM(p.total_cost_prj), 0) as total_project_cost,
-        COALESCE(SUM(case when p.is_qualified = true then p.total_cost_prj else 0 end), 0) as qualified_project_cost,
-        COALESCE(SUM(p.qre_final), 0) as qre_cost
-      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON p.country_rid = c.rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON p.account_rid = a.rid
-      WHERE 1=1
-    `;
+        rcc.country_rid,
+        SUM(CASE WHEN rcc.final_credit = 'NaN' THEN 0 ELSE rcc.final_credit END) AS final_credit_computed,
+        SUM(CASE WHEN rcc.final_credit_submitted = 'NaN' THEN 0 ELSE rcc.final_credit_submitted END) AS final_credit_submitted,
+        SUM(CASE WHEN rcc.final_credit_approved = 'NaN' THEN 0 ELSE rcc.final_credit_approved END) AS final_credit_approved
+      FROM ${MAIN_SCHEMA_NAME}.rd_credit_calculations_summary rcc
+      JOIN ${MAIN_SCHEMA_NAME}.case_summary cs 
+        ON rcc.case_rid = cs.case_rid
+      ${rccFilters}
+      GROUP BY rcc.country_rid
+    ) rcc ON c.rid = rcc.country_rid
+
+    WHERE 1 = 1
+  `;
+
+    if (activeCountriesRidsSet && activeCountriesRidsSet.size > 0) {
+      query += ` AND c.rid IN (:activeCountriesRids) `;
+      replacements.activeCountriesRids = Array.from(activeCountriesRidsSet);
+    }
+
+    query += `
+    ORDER BY c.country_name;
+  `;
+
+    return { query, replacements };
+  },
+  fetchGlobalAccountClaimedAmounts(
+    accountIds?: string[],
+    fiscalYear?: string,
+    activeCountriesRidsSet?: Set<string>
+  ) {
 
     const replacements: any = {};
+    let projectFilters = ` WHERE 1=1 `;
+    let rccFilters = ` WHERE 1=1 `;
 
     if (accountIds && accountIds.length > 0) {
-      query += ` AND p.account_rid in (:accountIds)`;
+      projectFilters += ` AND p.account_rid IN (:accountIds) `;
+      rccFilters += ` AND cs.account_rid IN (:accountIds) `;
       replacements.accountIds = accountIds;
     }
 
     if (fiscalYear) {
-      query += ` AND p.fiscal_year = :fiscalYear`;
+      projectFilters += ` AND p.fiscal_year = :fiscalYear `;
+      rccFilters += ` AND cs.fiscal_year = :fiscalYear `;
       replacements.fiscalYear = fiscalYear;
     }
 
-    if (activeCountriesRidsSet) {
-      query += ` AND p.country_rid in (:activeCountriesRids)`;
+    if (activeCountriesRidsSet && activeCountriesRidsSet.size > 0) {
+      projectFilters += ` AND p.country_rid IN (:activeCountriesRids) `;
+      rccFilters += ` AND rcc.country_rid IN (:activeCountriesRids) `;
       replacements.activeCountriesRids = Array.from(activeCountriesRidsSet);
     }
 
-    query += ` GROUP BY a.rid, a.account_name, c.rid, c.country_name, c.country_code;`;
+    const query = `
+    WITH project_agg AS (
+      SELECT 
+        p.country_rid,
+        p.account_rid,
+        SUM(p.total_cost_prj) AS total_project_cost,
+        SUM(CASE WHEN p.is_qualified THEN p.total_cost_prj ELSE 0 END) AS qualified_project_cost,
+        SUM(p.qre_final) AS qre_cost
+      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
+      ${projectFilters}
+      GROUP BY p.country_rid, p.account_rid
+    ),
+
+    rcc_agg AS (
+      SELECT 
+        rcc.country_rid,
+        cs.account_rid,
+        SUM(CASE WHEN rcc.final_credit = 'NaN' THEN 0 ELSE rcc.final_credit END) AS final_credit_computed,
+        SUM(CASE WHEN rcc.final_credit_submitted = 'NaN' THEN 0 ELSE rcc.final_credit_submitted END) AS final_credit_submitted,
+        SUM(CASE WHEN rcc.final_credit_approved = 'NaN' THEN 0 ELSE rcc.final_credit_approved END) AS final_credit_approved
+      FROM ${MAIN_SCHEMA_NAME}.rd_credit_calculations_summary rcc
+      JOIN ${MAIN_SCHEMA_NAME}.case_summary cs 
+        ON rcc.case_rid = cs.case_rid
+      ${rccFilters}
+      GROUP BY rcc.country_rid, cs.account_rid
+    ),
+
+    combined_keys AS (
+      SELECT country_rid, account_rid FROM project_agg
+      UNION
+      SELECT country_rid, account_rid FROM rcc_agg
+    )
+
+    SELECT 
+      a.rid AS account_rid,
+      a.account_name,
+      c.rid AS country_rid,
+      c.country_name,
+      c.country_code,
+
+      COALESCE(p.total_project_cost, 0) AS total_project_cost,
+      COALESCE(p.qualified_project_cost, 0) AS qualified_project_cost,
+      COALESCE(p.qre_cost, 0) AS qre_cost,
+
+      COALESCE(r.final_credit_computed, 0) AS final_credit_computed,
+      COALESCE(r.final_credit_submitted, 0) AS final_credit_submitted,
+      COALESCE(r.final_credit_approved, 0) AS final_credit_approved
+
+    FROM combined_keys k
+    LEFT JOIN project_agg p 
+      ON k.country_rid = p.country_rid 
+      AND k.account_rid = p.account_rid
+    LEFT JOIN rcc_agg r 
+      ON k.country_rid = r.country_rid 
+      AND k.account_rid = r.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c 
+      ON k.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.account a 
+      ON k.account_rid = a.rid
+
+    ORDER BY a.account_name, c.country_name;
+  `;
 
     return { query, replacements };
   },
@@ -1051,5 +1013,85 @@ export const rawQueries = {
     query += ` ORDER BY a.account_name, c.fiscal_year`;
 
     return { query, replacements };
-  }
+  },
+  fetchMeetingSummaryList(accountRids: string[], statusId?: string, userEmail?: string) {
+    let query = `
+    SELECT 
+      *
+    FROM ${MAIN_SCHEMA_NAME}.meeting_summary a
+    WHERE a.account_rid IN (:accountRids)
+    `;
+
+    const replacements: any = {
+      accountRids,
+    };
+
+    if (statusId) {
+      query += ` AND a.status_rid = :statusId`;
+      replacements.statusId = statusId;
+    }
+
+    if (userEmail) {
+      query += `
+        AND (
+            a.meeting_participants::jsonb @> :userEmailJson
+            OR a.invited_by = :userEmail
+          )
+        `;
+      replacements.userEmailJson = JSON.stringify([userEmail]);
+      replacements.userEmail = userEmail;
+    }
+
+    query += `
+      AND a.effective_start_time IS NOT NULL
+      AND a.effective_end_time IS NOT NULL
+      AND a.effective_start_datetime >= date_trunc('week', CURRENT_DATE)
+      AND a.effective_start_datetime < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'
+    
+    ORDER BY 
+        a.effective_start_datetime DESC,
+        a.effective_start_time DESC,
+        a.effective_end_time DESC
+    LIMIT 5;
+    `;
+    return { query, replacements };
+  },
+  fetchMeetingSummaryCount(accountRids: string[], statusIds?: string[], userEmail?: string) {
+    let query = `
+    SELECT 
+      count('x')
+    FROM ${MAIN_SCHEMA_NAME}.meeting_summary a
+    WHERE a.account_rid IN (:accountRids)
+    `;
+
+    const replacements: any = {
+      accountRids,
+    };
+
+    if (statusIds && statusIds.length > 0) {
+      query += ` AND a.status_rid IN (:statusIds)`;
+      replacements.statusIds = statusIds;
+    }
+
+    if (userEmail) {
+      query += `
+        AND (
+            a.meeting_participants::jsonb @> :userEmailJson
+            OR a.invited_by = :userEmail
+          )
+        `;
+      replacements.userEmailJson = JSON.stringify([userEmail]);
+      replacements.userEmail = userEmail;
+    }
+
+    query += `
+      AND a.effective_start_time IS NOT NULL
+      AND a.effective_end_time IS NOT NULL
+      AND a.effective_start_datetime >= date_trunc('week', CURRENT_DATE)
+      AND a.effective_start_datetime < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'
+    `;
+
+    return { query, replacements };
+  },
+
 };

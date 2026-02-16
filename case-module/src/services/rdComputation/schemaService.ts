@@ -58,7 +58,7 @@ class RDCreditSchemaService {
                 countryCode: data?.country_code || null,
                 countryName: data?.country_name || null,
                 regionName: data?.region_name || null,
-                accountName : data?.account_name || null
+                accountName: data?.account_name || null
             };
         } catch (err) {
             logMessage(`Error fetching account: ${err}`);
@@ -73,7 +73,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize, currentFiscalYear : any): Promise<QRE> {
+    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize, currentFiscalYear: any): Promise<QRE> {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -403,15 +403,15 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any,finalCredit : number,result: any,config : JSON) {
+    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any, finalCredit: number, result: any,config : JSON) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
-        return await RdCreditCountryCalculations.upsert(
+        const [calculationEntry] = await RdCreditCountryCalculations.upsert(
             {
                 case_rid,
                 country_rid,
                 input_params,
                 computed_fields,
-                final_credit : finalCredit,
+                final_credit: finalCredit,
                 total_qre: result.totalQRE,
                 average_annual_gross_receipts: result.averageAnnualGrossReceipts,
                 prev_year1_qre: result.prev1yearQRE,
@@ -425,6 +425,30 @@ class RDCreditSchemaService {
             {
                 returning: true
             });
+        const { RdCreditCalculationsSummary } = await this.caseModelService.getModels(accountNumber);
+
+        // Re-implementation with finding existing record
+        const existingSummary = await RdCreditCalculationsSummary.findOne({
+            where: {
+                credit_calculation_rid: calculationEntry.rid,
+            }
+        });
+
+        if (existingSummary) {
+            await existingSummary.update({
+                final_credit: finalCredit,
+                modified_datetime: new Date()
+            });
+        } else {
+            await RdCreditCalculationsSummary.create({
+                credit_calculation_rid: calculationEntry.rid,
+                case_rid,
+                country_rid,
+                state_rid: null,
+                final_credit: finalCredit
+            });
+        }
+        return calculationEntry;
     }
 
     /**
@@ -437,9 +461,9 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any,final_credit : number,total_qre: number, result?: any) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any, final_credit: number, total_qre: number, result?: any) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
-        return await RdCreditStateCalculations.upsert(
+        const [calculationEntry] = await RdCreditStateCalculations.upsert(
             {
                 case_rid,
                 country_rid,
@@ -459,6 +483,30 @@ class RDCreditSchemaService {
             {
                 returning: true
             });
+
+        const { RdCreditCalculationsSummary } = await this.caseModelService.getModels(accountNumber);
+
+        const existingSummary = await RdCreditCalculationsSummary.findOne({
+            where: {
+                credit_calculation_rid: calculationEntry.rid,
+            }
+        });
+
+        if (existingSummary) {
+            await existingSummary.update({
+                final_credit: final_credit,
+                modified_datetime: new Date()
+            });
+        } else {
+            await RdCreditCalculationsSummary.create({
+                credit_calculation_rid: calculationEntry.rid,
+                case_rid,
+                country_rid,
+                state_rid,
+                final_credit: final_credit
+            });
+        }
+        return calculationEntry;
     }
 
     /**
@@ -472,15 +520,15 @@ class RDCreditSchemaService {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditStateCalculations.findOne({
-            attributes : {
-                exclude : ["final_credit"]
+            attributes: {
+                exclude: ["final_credit"]
             },
             where: {
                 case_rid,
                 state_rid
             },
             order: [['created_datetime', 'DESC']],
-            raw : true
+            raw: true
 
         });
     }
@@ -526,12 +574,12 @@ class RDCreditSchemaService {
      * @param case_rid 
      * @returns 
      */
-    async markAsInitiated(accountNumber: string, case_rid: string,type:string): Promise<string> {
+    async markAsInitiated(accountNumber: string, case_rid: string, type: string): Promise<string> {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
         const createdRecord = await RdCreditProcess.create({
             case_rid,
             status: 'INITIATED',
-            request_type : type
+            request_type: type
         });
         return createdRecord.rid!;
     }
@@ -542,7 +590,7 @@ class RDCreditSchemaService {
      * @param rid 
      * @returns 
      */
-    async markAsInProgress(accountNumber: string, rid: string,type:string) {
+    async markAsInProgress(accountNumber: string, rid: string, type: string) {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
@@ -557,12 +605,12 @@ class RDCreditSchemaService {
      * @param rid 
      * @returns 
      */
-    async markAsCompleted(accountNumber: string, rid: string,type:string) {
+    async markAsCompleted(accountNumber: string, rid: string, type: string) {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
             { status: 'COMPLETED' },
-            { where: { rid,request_type : type } }
+            { where: { rid, request_type: type } }
         );
     }
 
@@ -576,9 +624,9 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         const result = await RdCreditProcess.findOne({
-            where: { 
-                case_rid, 
-                request_type : "dossier-form" 
+            where: {
+                case_rid,
+                request_type: "dossier-form"
             },
             order: [['created_datetime', 'DESC']],
             attributes: ['status'],
@@ -586,12 +634,12 @@ class RDCreditSchemaService {
         return result?.status || null;
     }
 
-    async getStateSummaryResults(accountNumber: string, case_rid: string,schemaName : string): Promise<{ [key: string]: any }> {
+    async getStateSummaryResults(accountNumber: string, case_rid: string, schemaName: string): Promise<{ [key: string]: any }> {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
-        
+
         // Get state calculations with state_rid and final_credit
         const stateCalculations = await RdCreditStateCalculations.findAll({
-            attributes: ['state_rid', 'final_credit','total_qre'],
+            attributes: ['state_rid', 'final_credit', 'total_qre'],
             where: {
                 case_rid
             },
@@ -609,7 +657,7 @@ class RDCreditSchemaService {
 
         // Get unique state_rids
         const stateRids = [...new Set(stateCalculations.map(calc => calc.state_rid))];
-        
+
         if (stateRids.length === 0) {
             return {};
         }
@@ -624,7 +672,7 @@ class RDCreditSchemaService {
         );
         // Get project counts, QRE totals, and resource counts by state
         const projectData: any[] = await this.orgDbSequelize.query(
-           rawQueries.fetchProjectCountsAndQreByState(schemaName),
+            rawQueries.fetchProjectCountsAndQreByState(schemaName),
             {
                 replacements: { case_rid, stateRids },
                 type: QueryTypes.SELECT,
@@ -649,7 +697,7 @@ class RDCreditSchemaService {
             });
         });
 
-        
+
         // Build result object: { state_name: { state_code, final_credit, total_projects, total_resources, total_qre } }
         const result: { [key: string]: any } = {};
         let totalCredit = 0;

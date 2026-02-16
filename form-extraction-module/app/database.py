@@ -163,8 +163,8 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                     else:
                         form_type = "non-fillable"
 
-                    form_type_query = f"UPDATE {schema}.data_mapper_forms SET form_type = %s WHERE rid = %s"
-                    form_type_params = [form_type, rid]
+                    form_type_query = f"UPDATE {schema}.data_mapper_forms SET form_type = %s,field_array = %s, extracted_data = %s WHERE rid = %s"
+                    form_type_params = [form_type, json.dumps(pdf_form_fields), json.dumps(extracted_data), rid]
 
                     cur.execute(form_type_query, tuple(form_type_params))
 
