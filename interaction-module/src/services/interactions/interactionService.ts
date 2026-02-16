@@ -1593,7 +1593,7 @@ export class InteractionService {
         } 
         else {
           const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
-          if(fetchResNameEmail[0].length > 0) {
+          if(fetchResNameEmail[0].length > 0 || data.email !== "" && data.email !== null && data.email !== undefined) {
             if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
             email = data.email;
             name = data.name;
