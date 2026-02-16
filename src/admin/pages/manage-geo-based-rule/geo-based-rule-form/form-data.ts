@@ -63,8 +63,8 @@ export const GeoBasedRuleFormFieldsData = (
             return createTextField(item.label, formattedLabel, {
               ...commonProps,
               placeholder: 'MM',
-              regex: REGEX_PATTERNS.ALLOW_ZERO_TO_99,
-              regexErrorMessage: 'Value must be between 0 and 99',
+              regex: REGEX_PATTERNS.ALLOW_01_TO_99,
+              regexErrorMessage: 'Value must be between 01 and 99',
               maxLength: 2,
             });
           }
