@@ -17,6 +17,7 @@ export interface RdCreditCountryCalcAttributes {
     total_wages?: number | null;
     total_supplies?: number | null;
     total_subcontract?: number | null;
+    config_json?:JSON
     final_credit?: number | null;
     created_datetime?: Date;
     modified_datetime?: Date;
@@ -46,6 +47,7 @@ export class RdCreditCountryCalculations
     public total_supplies?: number | null;
     public total_subcontract?: number | null;
     public final_credit?: number | null;
+    public config_json?: JSON;
     public created_datetime?: Date;
     public modified_datetime?: Date;
 
@@ -112,6 +114,10 @@ export class RdCreditCountryCalculations
                 total_subcontract: {
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
+                },
+                config_json: { 
+                    type: DataTypes.JSONB, 
+                    allowNull: false 
                 },
                 created_datetime: {
                     type: DataTypes.DATE,
