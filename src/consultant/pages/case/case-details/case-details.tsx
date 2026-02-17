@@ -833,6 +833,7 @@ export const CaseDetails = () => {
               isActionItemsExpanded={isActionItemsExpanded}
               setIsActionItemsExpanded={handleToggleActionItems}
               isCaseTeamCreated={isCaseTeamCreated}
+              refetchCaseDetails={refetchCaseDetails}
             />
           </div>
         );

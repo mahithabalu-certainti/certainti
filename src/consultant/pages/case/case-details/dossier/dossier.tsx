@@ -5,6 +5,7 @@ import {
 } from '../../../../../common-service';
 import {
   ActivityDropdownItem,
+  AuditTimelineListExportParams,
   CaseAssignedExportParams,
   CaseDetails,
   ColorCode,
@@ -89,8 +90,9 @@ interface DossierProps {
   setTechnicalSummaryParams?: (
     params: TechnicalSummaryExportListParams
   ) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setAuditTimelineParams?: React.Dispatch<React.SetStateAction<any>>;
+  setAuditTimelineParams?: React.Dispatch<
+    React.SetStateAction<AuditTimelineListExportParams>
+  >;
 }
 
 const Dossier: React.FC<DossierProps> = ({

@@ -61,6 +61,7 @@ interface WorkBreakDownProps {
   isActionItemsExpanded?: boolean;
   setIsActionItemsExpanded?: (expanded: boolean) => void;
   isCaseTeamCreated?: boolean;
+  refetchCaseDetails: () => void;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -72,6 +73,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   isActionItemsExpanded,
   setIsActionItemsExpanded,
   isCaseTeamCreated,
+  refetchCaseDetails,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -918,6 +920,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 caseStartDate={caseStartDate}
                 caseEndDate={caseEndDate}
                 isCaseTeamCreated={isCaseTeamCreated}
+                refetchCaseDetails={refetchCaseDetails}
               />
             )}
           </>
