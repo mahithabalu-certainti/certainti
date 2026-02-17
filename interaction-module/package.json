@@ -30,7 +30,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/otp-generator": "^4.0.2",
-    "axios": "^1.11.0",
+    "axios": "^1.13.5",
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
     "cross-fetch": "^4.1.0",

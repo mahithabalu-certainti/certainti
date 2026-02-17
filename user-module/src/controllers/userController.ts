@@ -344,10 +344,10 @@ async function listUsers(req: Request, res: Response): Promise<void> {
  *
  * @throws {Error} - Throws an error if the user search process fails at any step.
  */
-async function listUserById(req: Request, res: Response): Promise<void> {
+async function listUserById(req: Request<{id : string}>, res: Response): Promise<void> {
   const methodName = "List user by ID";
   try {
-    const { id: userId } = req.params;
+    const { id : userId } = req.params;
 
     const { error, value } = listUserByIdSchema.validate(req.query, {
       abortEarly: true,
