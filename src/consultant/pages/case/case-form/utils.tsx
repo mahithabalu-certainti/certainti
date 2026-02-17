@@ -17,6 +17,7 @@ export const transformCaseFormPayload = (
   const basePayload: CaseFormPayload = {
     account_rid: accountId || formData.account_rid || '',
     case_owner_rid: formData.case_owner || '',
+    parent_case_rid: formData.parent_case_rid || '',
     case_name: formData.case_name || '',
     description: formData.description || '',
     fiscal_year: formData.fiscal_year || 0,

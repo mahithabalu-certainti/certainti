@@ -85,6 +85,12 @@ export const getCaseListColumns = (
         permissionMap?.['case_name']?.edit &&
         permissionMap?.['case_name']?.read &&
         !accountInActive,
+      conditionallyEdit: [
+        {
+          key: 'status_name',
+          matchValue: ['Submitted', 'On Hold', 'In Progress', 'Audit Review'],
+        },
+      ],
       hide:
         !permissionMap?.['case_name']?.edit &&
         !permissionMap?.['case_name']?.read,
@@ -134,6 +140,12 @@ export const getCaseListColumns = (
         permissionMap?.['case_owner_rid']?.edit &&
         permissionMap?.['case_owner_rid']?.read &&
         !accountInActive,
+      conditionallyEdit: [
+        {
+          key: 'status_name',
+          matchValue: ['Submitted', 'On Hold', 'In Progress', 'Audit Review'],
+        },
+      ],
       hide:
         !permissionMap?.['case_owner_rid']?.edit &&
         !permissionMap?.['case_owner_rid']?.read,

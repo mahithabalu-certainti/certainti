@@ -1286,6 +1286,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   key={i}
                   value={option.value}
                   title={option.label}
+                  disabled={option?.disabled}
                 >
                   {option.label}
                 </MenuItem>

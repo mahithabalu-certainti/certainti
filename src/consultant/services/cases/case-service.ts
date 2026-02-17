@@ -17,6 +17,7 @@ import {
   CaseStatusResponse,
   CaseSubmissionDateResponse,
   CaseTaskExportParams,
+  ClosedCaseListResponse,
   ExportCaseListResponse,
 } from '../../types/cases';
 import { CommonApiResponse } from '../../../common-service';
@@ -471,5 +472,30 @@ export const useGetCaseSubmissionDate = (
     retry: 0,
     gcTime: 0,
     enabled: !!countryRid && !!fiscalYear && !!accountRid,
+  });
+};
+
+// Closed case list
+export const fetchClosedCaseList = async (
+  accountId: string
+): Promise<ClosedCaseListResponse> => {
+  try {
+    const { data } = await caseServiceApi.get<ClosedCaseListResponse>(
+      `/api/cases/closedCases/list?account_rid=${accountId}`
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching closed case list:', error);
+    throw error;
+  }
+};
+
+export const useClosedCaseList = (accountId: string) => {
+  return useQuery<ClosedCaseListResponse, Error>({
+    queryKey: ['closed-case-list', accountId],
+    queryFn: () => fetchClosedCaseList(accountId),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountId,
   });
 };

@@ -26,6 +26,7 @@ export const CaseFormData = (
   accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   filingTypeOptions?: SelectOption[],
   ownerOptions?: SelectOption[],
+  parentCaseOptions?: SelectOption[],
   countryOptions?: SelectOption[],
   accountList?: ParentChildSelectOption[],
   dateConstraints?: {
@@ -44,7 +45,10 @@ export const CaseFormData = (
   calculatedStatutoryDate?: string,
   statusOptions?: SelectOption[],
   isAustralianCountry?: boolean,
-  CountryName?: string
+  CountryName?: string,
+  isAmendmentType?: boolean,
+  isParentCaseLoading?: boolean,
+  isCaseClosed?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -59,7 +63,7 @@ export const CaseFormData = (
             onChange: true,
             hide: !globalType,
             expandedAll: true,
-            disabled: isEditView,
+            disabled: isEditView || isCaseClosed,
           }),
           createTextField('account_name', 'Account Name', {
             required: false,
@@ -83,11 +87,28 @@ export const CaseFormData = (
             options: filingTypeOptions || [],
             placeholder: 'Choose Filing Type',
             required: true,
-            disabled: isEditView,
+            onChange: true,
+            disabled: isEditView || isCaseClosed,
             hide:
               isEditView &&
               !permissionMap?.['filing_type_rid']?.edit &&
               !permissionMap?.['filing_type_rid']?.read,
+          }),
+          createSelectField('parent_case_rid', 'Parent Case', {
+            options: parentCaseOptions || [],
+            placeholder: 'Choose Parent Case',
+            required: true,
+            hide: !isAmendmentType,
+            disabled: isEditView || isCaseClosed,
+            isLoading: isParentCaseLoading,
+            // disabled:
+            //   isEditView &&
+            //   !permissionMap?.['parent_case_rid']?.edit &&
+            //   permissionMap?.['parent_case_rid']?.read,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['parent_case_rid']?.edit &&
+            //   !permissionMap?.['parent_case_rid']?.read,
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
@@ -95,7 +116,7 @@ export const CaseFormData = (
             required: true,
             onChange: true,
             isFiscalYear: true,
-            disabled: isEditView,
+            disabled: isEditView || isCaseClosed,
             hide:
               isEditView &&
               !permissionMap?.['fiscal_year']?.edit &&
@@ -116,9 +137,10 @@ export const CaseFormData = (
               },
             ],
             disabled:
-              isEditView &&
-              !permissionMap?.['case_name']?.edit &&
-              permissionMap?.['case_name']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['case_name']?.edit &&
+                permissionMap?.['case_name']?.read),
             hide:
               isEditView &&
               !permissionMap?.['case_name']?.edit &&
@@ -129,9 +151,10 @@ export const CaseFormData = (
             placeholder: 'Choose Case Owner',
             required: true,
             disabled:
-              isEditView &&
-              !permissionMap?.['case_owner_rid']?.edit &&
-              permissionMap?.['case_owner_rid']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['case_owner_rid']?.edit &&
+                permissionMap?.['case_owner_rid']?.read),
             hide:
               isEditView &&
               !permissionMap?.['case_owner_rid']?.edit &&
@@ -156,13 +179,14 @@ export const CaseFormData = (
             label: '',
             type: '',
             required: false,
-            hide: isEditView,
+            hide: isEditView || isAmendmentType,
           }),
           createSelectField('status_rid', 'Status', {
             options: statusOptions || [],
             placeholder: 'Choose Status',
             required: true,
             hide: !isEditView,
+            disabled: isCaseClosed,
             // disabled:
             //   isEditView &&
             //   !permissionMap?.['status_rid']?.edit &&
@@ -180,9 +204,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['heat_light_power']?.edit &&
-              permissionMap?.['heat_light_power']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['heat_light_power']?.edit &&
+                permissionMap?.['heat_light_power']?.read),
             hide:
               ![
                 FinancialWorkingCountries.Ireland,
@@ -204,9 +229,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['total_nonlabor_cost']?.edit &&
-              permissionMap?.['total_nonlabor_cost']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['total_nonlabor_cost']?.edit &&
+                permissionMap?.['total_nonlabor_cost']?.read),
             hide:
               isEditView &&
               !permissionMap?.['total_nonlabor_cost']?.edit &&
@@ -223,9 +249,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['tax_liability']?.edit &&
-              permissionMap?.['tax_liability']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                permissionMap?.['tax_liability']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.US ||
               (isEditView &&
@@ -247,9 +274,10 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['employers_pension_contribution']?.edit &&
-                permissionMap?.['employers_pension_contribution']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['employers_pension_contribution']?.edit &&
+                  permissionMap?.['employers_pension_contribution']?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.Australia ||
                 (isEditView &&
@@ -272,9 +300,10 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['material_software_cost']?.edit &&
-                permissionMap?.['material_software_cost']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['material_software_cost']?.edit &&
+                  permissionMap?.['material_software_cost']?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.UK ||
                 (isEditView &&
@@ -293,9 +322,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['sub_contracts']?.edit &&
-              permissionMap?.['sub_contracts']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['sub_contracts']?.edit &&
+                permissionMap?.['sub_contracts']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.UK ||
               (isEditView &&
@@ -314,9 +344,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['cloud_software']?.edit &&
-              permissionMap?.['cloud_software']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['cloud_software']?.edit &&
+                permissionMap?.['cloud_software']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.Ireland ||
               (isEditView &&
@@ -335,9 +366,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['unpaid_amounts_paid']?.edit &&
-              permissionMap?.['unpaid_amounts_paid']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts_paid']?.edit &&
+                permissionMap?.['unpaid_amounts_paid']?.read),
             hide:
               ![FinancialWorkingCountries.Ireland].includes(
                 CountryName as FinancialWorkingCountries
@@ -358,9 +390,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['unpaid_amounts']?.edit &&
-              permissionMap?.['unpaid_amounts']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts']?.edit &&
+                permissionMap?.['unpaid_amounts']?.read),
             hide:
               ![FinancialWorkingCountries.Ireland].includes(
                 CountryName as FinancialWorkingCountries
@@ -381,9 +414,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['aggregated_turnover']?.edit &&
-              permissionMap?.['aggregated_turnover']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['aggregated_turnover']?.edit &&
+                permissionMap?.['aggregated_turnover']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.Australia ||
               (isEditView &&
@@ -402,9 +436,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['total_expenses']?.edit &&
-              permissionMap?.['total_expenses']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['total_expenses']?.edit &&
+                permissionMap?.['total_expenses']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.Australia ||
               (isEditView &&
@@ -423,9 +458,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['taxable_income']?.edit &&
-              permissionMap?.['taxable_income']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['taxable_income']?.edit &&
+                permissionMap?.['taxable_income']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.Australia ||
               (isEditView &&
@@ -444,9 +480,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['export_sales_revenue']?.edit &&
-              permissionMap?.['export_sales_revenue']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.Australia ||
               (isEditView &&
@@ -468,9 +505,10 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['lease_costs_of_computers']?.edit &&
-                permissionMap?.['lease_costs_of_computers']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.US ||
                 (isEditView &&
@@ -493,9 +531,11 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['illinois_rd_credit_partnership_corp']?.edit &&
-                permissionMap?.['illinois_rd_credit_partnership_corp']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.edit &&
+                  permissionMap?.['illinois_rd_credit_partnership_corp']?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.US ||
                 (isEditView &&
@@ -520,10 +560,12 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['illinois_research_payments_corp_only']
-                  ?.edit &&
-                permissionMap?.['illinois_research_payments_corp_only']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.edit &&
+                  permissionMap?.['illinois_research_payments_corp_only']
+                    ?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.US ||
                 (isEditView &&
@@ -548,9 +590,10 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['basic_research_payments']?.edit &&
-                permissionMap?.['basic_research_payments']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  permissionMap?.['basic_research_payments']?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.US ||
                 (isEditView &&
@@ -573,11 +616,12 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['qualified_computer_rental_time_expenses']
-                  ?.edit &&
-                permissionMap?.['qualified_computer_rental_time_expenses']
-                  ?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.edit &&
+                  permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.US ||
                 (isEditView &&
@@ -598,9 +642,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['current_year_gross_receipts']?.edit &&
-              permissionMap?.['current_year_gross_receipts']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['current_year_gross_receipts']?.edit &&
+                permissionMap?.['current_year_gross_receipts']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.US ||
               (isEditView &&
@@ -622,9 +667,10 @@ export const CaseFormData = (
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
-                isEditView &&
-                !permissionMap?.['credit_carry_forward_py']?.edit &&
-                permissionMap?.['credit_carry_forward_py']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  permissionMap?.['credit_carry_forward_py']?.read),
               hide:
                 CountryName !== FinancialWorkingCountries.US ||
                 (isEditView &&
@@ -644,9 +690,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['other_credits_total']?.edit &&
-              permissionMap?.['other_credits_total']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['other_credits_total']?.edit &&
+                permissionMap?.['other_credits_total']?.read),
             hide:
               CountryName !== FinancialWorkingCountries.US ||
               (isEditView &&
@@ -664,9 +711,10 @@ export const CaseFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
-              isEditView &&
-              !permissionMap?.['other']?.edit &&
-              permissionMap?.['other']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
             hide:
               isEditView &&
               !permissionMap?.['other']?.edit &&
@@ -711,9 +759,10 @@ export const CaseFormData = (
               ? new Date(dateConstraints.start_date_min)
               : undefined,
             disabled:
-              isEditView &&
-              !permissionMap?.['start_date']?.edit &&
-              permissionMap?.['start_date']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['start_date']?.edit &&
+                permissionMap?.['start_date']?.read),
             hide:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -736,9 +785,10 @@ export const CaseFormData = (
                 ? new Date(dateConstraints.planned_max)
                 : undefined,
               disabled:
-                isEditView &&
-                !permissionMap?.['planned_submission_date']?.edit &&
-                permissionMap?.['planned_submission_date']?.read,
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['planned_submission_date']?.edit &&
+                  permissionMap?.['planned_submission_date']?.read),
               hide:
                 isEditView &&
                 !permissionMap?.['planned_submission_date']?.edit &&
@@ -789,9 +839,10 @@ export const CaseFormData = (
             regexErrorMessage: 'Description must be within 2000 characters',
             regex: REGEX_PATTERNS.DESCRIPTION,
             disabled:
-              isEditView &&
-              !permissionMap?.['case_description']?.edit &&
-              permissionMap?.['case_description']?.read,
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['case_description']?.edit &&
+                permissionMap?.['case_description']?.read),
             hide:
               isEditView &&
               !permissionMap?.['case_description']?.edit &&
@@ -861,6 +912,7 @@ export const CaseFormData = (
       permissionMap,
       accountPermissionMap,
       ownerOptions,
+      parentCaseOptions,
       countryOptions,
       accountList,
       dateConstraints,
@@ -873,6 +925,9 @@ export const CaseFormData = (
       isAustralianCountry,
       statusOptions,
       CountryName,
+      isAmendmentType,
+      isParentCaseLoading,
+      isCaseClosed,
     ]
   );
 };
