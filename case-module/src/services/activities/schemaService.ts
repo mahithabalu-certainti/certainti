@@ -2049,6 +2049,7 @@ class ActivitySchemaService {
         (activityRequest as any).meeting_id = activityData.meeting_id;
         (activityRequest as any).effective_start_datetime = activityData.effective_start_datetime;
         (activityRequest as any).effective_end_datetime = activityData.effective_end_datetime;
+        (activityRequest as any).meeting_status_rid = meetingStatus?.rid || null
 
         await this.addMeetingSummary(accountNumber, activityRequest, response.rid);
         await this.uploadActivityFiles(files, activityRequest, accountNumber);
