@@ -276,6 +276,7 @@ export class ProjectResourceService {
     sortBy: string,
     sortOrder: string,
     search: string,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -315,7 +316,8 @@ export class ProjectResourceService {
           limit,
           order,
           sortBy,
-          sortOrder
+          sortOrder,
+          type
         );
       projectResources = projectResources.slice(offset, page * limit);
 
@@ -384,7 +386,8 @@ export class ProjectResourceService {
     sortBy: string,
     sortOrder: string,
     userId: string,
-    search: string
+    search: string,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -420,7 +423,8 @@ export class ProjectResourceService {
           order,
           sortBy,
           sortOrder,
-          userId
+          userId,
+          type
         );
 
       return {

@@ -66,7 +66,7 @@ export class CaseService {
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
   protected caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService: CaseManagementSchemaService
-  private logger: Logger;
+  protected logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private helperMethod: HelperMethods

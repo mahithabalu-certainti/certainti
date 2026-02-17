@@ -47,6 +47,8 @@ import { KeyContact } from "../models/keyContactDetails";
 import { RdCreditCountryCalculations } from "../models/rdCreditCountryCalcModel";
 import { RdCreditStateCalculations } from "../models/rdCreditStateCalcModel";
 import { RdCreditProcess } from "../models/rdCreditProcessModel";
+import { RdCreditCalculationsSummary } from "../models/rdCreditCalculationsSummaryModel";
+import { MeetingSummary } from "../models/meetingSummaryModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -89,6 +91,8 @@ export class CaseModelService {
       Jurisdiction: ReturnType<typeof Jurisdiction.initialize>;
       CaseKeyContactDetails: ReturnType<typeof CaseKeyContactDetails.initialize>;
       KeyContact: ReturnType<typeof KeyContact.initialize>;
+      RdCreditCalculationsSummary: ReturnType<typeof RdCreditCalculationsSummary.initialize>;
+      MeetingSummary: ReturnType<typeof MeetingSummary.initialize>;
     }
   > = new Map();
 
@@ -161,6 +165,8 @@ export class CaseModelService {
     const RdCreditCountryCalculationsModel = RdCreditCountryCalculations.initialize(sequelize, schemaName);
     const RdCreditStateCalculationsModel = RdCreditStateCalculations.initialize(sequelize, schemaName);
     const RdCreditProcessModel = RdCreditProcess.initialize(sequelize, schemaName);
+    const RdCreditCalculationsSummaryModel = RdCreditCalculationsSummary.initialize(mainDbSequelize, "");
+    const MeetingSummaryModel = MeetingSummary.initialize(mainDbSequelize, "");
 
     CaseProjectModel.belongsTo(ProjectFiscalModel, {
       foreignKey: "project_fiscal_rid",
@@ -195,10 +201,10 @@ export class CaseModelService {
       CaseHistorySubmission: CaseHistorySubmissionModel,
       Activities: ActivitiesModel,
       TaskHistory: TaskHistoryModel,
-      RdCreditCountryCalculationsModel : RdCreditCountryCalculationsModel,
-      CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
-      WorkflowConnector : WorkflowConnectorModel,
-      WorkflowConnectorMapping : WorkflowConnectorMappingModel,
+      RdCreditCountryCalculationsModel: RdCreditCountryCalculationsModel,
+      CaseTaskWorkflowConnector: CaseTaskWorkflowConnectorModel,
+      WorkflowConnector: WorkflowConnectorModel,
+      WorkflowConnectorMapping: WorkflowConnectorMappingModel,
       ProjectResourceFiscal: ProjectResourceFiscalModel,
       ProjectTask: ProjectTaskModel,
       CaseProjectResourceFiscal: CaseProjectResourceFiscalModel,
@@ -212,9 +218,11 @@ export class CaseModelService {
       JurisdictionConfig: JurisdictionConfigModel,
       CaseKeyContactDetails: CaseKeyContactDetailsModel,
       KeyContact: KeyContactModel,
-       RdCreditCountryCalculations : RdCreditCountryCalculationsModel,
-      RdCreditStateCalculations : RdCreditStateCalculationsModel,
-      RdCreditProcess : RdCreditProcessModel
+      RdCreditCountryCalculations: RdCreditCountryCalculationsModel,
+      RdCreditStateCalculations: RdCreditStateCalculationsModel,
+      RdCreditProcess: RdCreditProcessModel,
+      RdCreditCalculationsSummary: RdCreditCalculationsSummaryModel,
+      MeetingSummary: MeetingSummaryModel
     };
 
     this.modelCache.set(schemaName, models);

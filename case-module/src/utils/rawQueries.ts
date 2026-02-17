@@ -30,7 +30,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
     c.employers_pension_contribution, c.other, c.material_software_cost, 
     c.sub_contracts, c.cloud_software,c.unpaid_amounts_paid, c.unpaid_amounts,
-    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,
+    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,rd_form_signoff,
     c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
     rcc.final_credit,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE

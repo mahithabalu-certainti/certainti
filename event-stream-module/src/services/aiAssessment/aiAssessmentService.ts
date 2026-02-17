@@ -7,14 +7,17 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Sequelize } from "sequelize";
 import { errorLog, logMessage } from "../../utils/helpers";
+import WebSocketManager from "../webSocketManager";
 export class AIAssessmentService {
   private logger: Logger;
   private producer!: Producer;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
+  private wsManager: WebSocketManager;
 
   constructor(logger: Logger) {
     this.logger = logger;
+    this.wsManager = WebSocketManager.getInstance();
   }
   private async getMainDb() {
     if (!this.mainDbSequelize)
@@ -70,6 +73,30 @@ export class AIAssessmentService {
       const message = {
         value: JSON.stringify(aiResponse),
       };
+
+       const { company_id, project_id, transaction_id } = aiResponse.data || aiResponse;
+       logMessage(`AI Response Type: ${aiResponse?.data?.type}`);
+    
+      // Check if message type is refine_summary and send via WebSocket
+      if (aiResponse?.data?.type === "refine_summary") {
+        logMessage(`Detected refine_summary message type, sending via WebSocket`);
+        if (company_id && project_id) {
+          // Send to specific assessment room
+          this.wsManager.sendRefinementPrompt(company_id, project_id, aiResponse);
+          logMessage(`AI response sent to WebSocket room: assessment_${company_id}_${project_id}`);
+        } else {
+          logMessage(`Missing company_id or project_id in refine_summary message: ${JSON.stringify(aiResponse)}`);
+        }
+        
+        // Still return success for refine_summary type
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "AI response sent via WebSocket",
+          data: "",
+        };
+      }
+      
+      // For all other message types, continue with normal Kafka flow
       if (!this.producer) {
         await this.initProducer();
       }
@@ -99,6 +126,7 @@ export class AIAssessmentService {
      logMessage("Kafka producer disconnected");
     }
   }
+
   async createAuditLogEntry(
     transaction_id: string,
     company_id: string,
