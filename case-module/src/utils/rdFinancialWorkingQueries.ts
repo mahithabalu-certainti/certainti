@@ -187,3 +187,54 @@ export const findTaskWeightageDetails = (weightageIds : string[]) => {
 export const getCompletedTaskStatusId = () => {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%Completed%'`
 }
+export const calculateCostForCaseSubmissionCurrentYear = (schemaName : string, caseRid : string, countryRid : string) => {
+    return `
+    SELECT 
+    SUM(COALESCE(pf.total_cost_fte_prj, 0.00)) AS total_fte_cost, 
+    SUM(COALESCE(pf.total_cost_subcon_prj, 0.00)) AS total_subcon_cost,
+    SUM(COALESCE(pf.total_cost_nonlabor_prj, 0.00)) AS total_nonlabor_cost,
+    SUM(COALESCE(pf.total_cost_prj, 0.00)) AS total_project_cost,
+    CASE WHEN rcc.case_rid = '${caseRid}' AND rcc.country_rid = '${countryRid}' THEN rcc.total_qre ELSE 0 END AS total_qre,
+    rcc.average_annual_gross_receipts
+    FROM
+    ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    LEFT JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
+    LEFT JOIN ${schemaName}.rd_credit_country_calculations rcc ON rcc.case_rid = cs.rid
+    WHERE
+    cs.rid = '${caseRid}'
+    GROUP BY
+    cs.case_total_qre_cost,
+	rcc.case_rid,
+	rcc.country_rid,
+	rcc.total_qre,
+    rcc.average_annual_gross_receipts
+    `
+}
+
+export const calculateStateCostForCaseSubmissionCurrentYear = (schemaName : string, caseRid : string, stateRids : any[]) => {
+    return `
+    SELECT
+    SUM(COALESCE(pfr.total_cost_fte_from_prj_res, 0.00)) AS total_fte_cost,
+    SUM(COALESCE(pfr.total_cost_subcon_from_prj_res, 0.00)) AS total_subcon_cost,
+    SUM(COALESCE(pfr.total_cost_nonlabor_from_prj_res, 0.00)) AS total_nonlabor_cost,
+    rsc.total_qre,
+    pfr.region_rid,
+    rsc.average_annual_gross_receipts
+    FROM
+    ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pfr.project_fiscal_rid
+    LEFT JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
+    LEFT JOIN ${schemaName}.rd_credit_state_calculations rsc ON rsc.case_rid = cs.rid AND rsc.state_rid = pfr.region_rid
+    WHERE
+    cs.rid = '${caseRid}'
+    AND
+    pfr.region_rid IN (${stateRids.map((d : any) => `'${d.state_rid}'`).join(",")})
+    GROUP BY
+    cs.case_total_qre_cost,
+    rsc.total_qre,
+    rsc.average_annual_gross_receipts,
+	pfr.region_rid
+    `
+}

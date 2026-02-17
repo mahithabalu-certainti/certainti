@@ -3,10 +3,10 @@ import { CaseService } from "./caseService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
-import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, DOSSIER_NAME, HttpStatus, rawQueries, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
-import { CaseClosureRemarks, CaseData, ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
+import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, ENV_PREFIX, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
+import { CaseCloseType, CaseClosureRemarks, CaseData, CaseSubmissionType, ParentAccountType, ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
-import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadToAzureBlob } from "../../utils/helpers";
+import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
@@ -14,10 +14,13 @@ import RDCreditSchemaService from "../rdComputation/schemaService";
 import { ProjectResourceService } from "../projectResource/projectResourceService";
 import moment from "moment";
 import {buildRawWhereClause, fetchProjectResourceById, getAttachmentDisplayNames, getProjectResourcesByProjectIds, getProjectsByAccountId, getProjectTasksByProjectIds, getResourceCostsByResourceIds, getResourcesByAccountId, getResourceSkillsByResourceIds, getSortParameters, mapAttachmentToCommonFormat, processDateFilter, processNumberFilter, processProjectCountFilter, processTextFilter} from '../../utils/attachmentsHelper'
-import { Attachment } from "../../models/attachments";
+import { Attachment, AttachmentCreationAttributes } from "../../models/attachments";
 import { createZipFile, uploadZipBufferToAzureBlob } from "../../utils/dossierPackage";
 import { DossierForm } from "../../models/dossierForm";
 import { AiTechnicalSummary } from "../../models/aiTechnicalSummary";
+import { calculateCostForCaseSubmissionCurrentYear, calculateStateCostForCaseSubmissionCurrentYear } from "../../utils/rdFinancialWorkingQueries";
+import { CaseHistorySubmissionCreationAttributes } from "../../models/caseHistorySubmissionModel";
+import Decimal from "decimal.js";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -75,7 +78,7 @@ export class ChildCaseService extends CaseService {
             }
             const caseResult : any = await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, data.sign_off));
             if(caseResult[1].rowCount) {
-                const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId());
+                const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.financialWorking));
                 await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findFinancialWorkingId[0][0].rid, data.case_rid, data.account_rid, schemaName, data.comments))
                 await orgDb.query(rawQueries.updateClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName));
                 await orgDb.query(rawQueries.updateClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName));
@@ -1412,6 +1415,125 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       });
     }
     return { whereClause };
+  }
+  async closeCase (data : CaseCloseType) {
+    const mainDb = await super.getMainDb();
+    const orgDb = await super.getOrgDb();
+
+    const [findParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(findParentAccount) {
+      const schemaName = rawQueries.fetchSchemaName(findParentAccount.r_number)
+      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment} = await this.caseModelService.getModels(findParentAccount.r_number);
+      const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.case));
+      await SignoffDetails.create({
+        account_rid : data.account_rid,
+        case_rid : data.case_rid,
+        signoff_type_rid : findFinancialWorkingId[0][0].rid,
+        created_by : data.user_rid,
+        created_datetime : new Date()
+      });
+      if(data.attachments.length > 0) {
+        const fileUploadedResult = await uploadMultipleFilesToAzureBlob(data.account_rid, findParentAccount.r_number, data.attachments);
+        if(fileUploadedResult.length > 0) {
+          let storeInArrayOfObjects : AttachmentCreationAttributes[] = [];
+          fileUploadedResult.forEach((d) => {
+            storeInArrayOfObjects.push({
+              created_by : data.user_rid,
+              attach_to : data.case_rid,
+              account_rid : data.account_rid,
+              browse_file : d.url,
+              size_in_mb : d.size,
+              attachment_level : "case",
+              fiscal_year : Number(data.fiscal_year),
+              document_category_rid : "",
+              document_type_rid : "",
+              document_category_others: "",
+              document_type_others : "",
+              comments : data.comments,
+              document_name : d.name,
+              format : d.extension,
+              created_datetime : new Date(),
+            });
+          });
+          await Attachment.bulkCreate(storeInArrayOfObjects)
+        }
+      }
+      if(Object.keys(data.country_credits).length > 0) {
+        const [affectedCount] = await RdCreditCalculationsSummary.update({
+          final_credit_approved : data.country_credits.rd_credits_approved,
+          final_credit_submitted : data.country_credits.rd_credits_submitted,
+          final_credit : data.country_credits.rd_credits_computed
+        }, {
+          where : {
+            case_rid : data.case_rid,
+            country_rid : data.country_credits.country_rid,
+            state_rid : {
+              [Op.eq] : null
+            }
+          }
+        });
+        if(affectedCount > 0) {
+          const [caseSubmittedCost] = await orgDb.query<CaseSubmissionType>(calculateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.country_credits.country_rid), {type : QueryTypes.SELECT});
+          await CaseHistorySubmission.create({
+            account_rid : data.account_rid,
+            country_rid : data.country_credits.country_rid,
+            created_by : data.user_rid,
+            fiscal_year : data.fiscal_year,
+            total_project_cost : caseSubmittedCost?.total_project_cost || 0.00,
+            total_fte_cost : caseSubmittedCost?.total_fte_cost || 0.00,
+            total_subcon_cost : caseSubmittedCost?.total_subcon_cost || 0.00,
+            total_nonlabor_cost : caseSubmittedCost?.total_nonlabor_cost || 0.00,
+            total_qre : caseSubmittedCost?.total_qre || 0.00,
+            total_rd_credits : data.country_credits.rd_credits_approved,
+            annual_gross_receipts : caseSubmittedCost?.average_annual_gross_receipts || 0.00
+          });
+        }
+      } 
+      if(data.state_credits.length > 0) {
+        for(let stateData of data.state_credits) {
+          await RdCreditCalculationsSummary.update({
+          final_credit_approved : stateData.rd_credits_approved,
+          final_credit_submitted : stateData.rd_credits_submitted,
+          final_credit : stateData.rd_credits_computed
+        }, {
+          where : {
+            case_rid : data.case_rid,
+            country_rid : stateData.country_rid,
+            state_rid : stateData.state_rid
+          }
+        });
+        }
+        const caseSubmittedCost = await orgDb.query<CaseSubmissionType>(calculateStateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.state_credits), {type : QueryTypes.SELECT});
+        if(caseSubmittedCost.length > 0) {
+          let storeArrayStateData : CaseHistorySubmissionCreationAttributes[] = [];
+          caseSubmittedCost.forEach((d : CaseSubmissionType) => {
+            storeArrayStateData.push({
+              account_rid : data.account_rid,
+              country_rid : data.country_credits.country_rid,
+              created_by : data.user_rid,
+              fiscal_year : data.fiscal_year,
+              total_project_cost : parseFloat(new Decimal(d.total_fte_cost).add(d.total_subcon_cost).add(d.total_nonlabor_cost).toFixed(2)) || 0.00,
+              total_fte_cost : d.total_fte_cost || 0.00,
+              total_subcon_cost : d.total_subcon_cost || 0.00,
+              total_nonlabor_cost : d.total_nonlabor_cost || 0.00,
+              total_qre : d.total_qre || 0.00,
+              total_rd_credits : data.country_credits.rd_credits_approved,
+              annual_gross_receipts : d.average_annual_gross_receipts || 0.00
+            });
+          });
+          await CaseHistorySubmission.bulkCreate(storeArrayStateData);
+        }
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.caseClosedSuccess
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNoFound,
+      }
+    }
   }
 }
 
