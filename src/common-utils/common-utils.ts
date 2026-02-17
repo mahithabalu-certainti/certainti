@@ -554,6 +554,7 @@ export const REGEX_PATTERNS = {
   NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
   ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
   ALLOW_ZERO_TO_99: /^[0-9]{1,2}$/,
+  ALLOW_01_TO_99: /^(?!0+$)[0-9]{1,2}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,

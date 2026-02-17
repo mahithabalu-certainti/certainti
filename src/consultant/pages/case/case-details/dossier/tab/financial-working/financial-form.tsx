@@ -381,6 +381,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     initiateProcess(payload, {
       onSuccess: () => {
         setDossierFinancialStatus(true);
+        handleViewFinancialHighlights();
       },
       onError: (error: any) => {
         errorToast(
