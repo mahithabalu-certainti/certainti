@@ -111,6 +111,7 @@ export interface CaseDetails {
   case_name: string;
   filing_type_rid: string;
   case_owner_rid: string;
+  parent_case_rid?: string;
   fiscal_year: number;
   status_rid: string;
   case_total_projects: string | number | null;
@@ -165,6 +166,7 @@ export interface CaseFormFields {
   account_rid?: string;
   account_name?: string;
   case_owner?: string;
+  parent_case_rid?: string;
   case_name?: string;
   description?: string;
   fiscal_year?: number;
@@ -202,6 +204,7 @@ export interface CaseFormPayload {
   case_rid?: string;
   account_rid: string;
   case_owner_rid: string;
+  parent_case_rid?: string;
   case_name: string;
   description: string;
   fiscal_year: number;
@@ -362,4 +365,19 @@ export interface CaseSubmissionDateResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: CaseSubmissionDate;
+}
+
+// Closed case list
+export interface ClosedCaseList {
+  rid: string;
+  case_name: string;
+}
+
+export interface ClosedCaseListResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    cases: ClosedCaseList[];
+  };
 }

@@ -117,6 +117,10 @@ export const getGlobalCaseListColumns = (
       },
       conditionallyEdit: [
         { key: 'account_status_name', matchValue: ['Active'] },
+        {
+          key: 'status_name',
+          matchValue: ['Submitted', 'On Hold', 'In Progress', 'Audit Review'],
+        },
       ],
     },
     {
@@ -164,6 +168,10 @@ export const getGlobalCaseListColumns = (
       },
       conditionallyEdit: [
         { key: 'account_status_name', matchValue: ['Active'] },
+        {
+          key: 'status_name',
+          matchValue: ['Submitted', 'On Hold', 'In Progress', 'Audit Review'],
+        },
       ],
     },
     {
