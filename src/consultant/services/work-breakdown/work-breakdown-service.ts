@@ -547,6 +547,10 @@ export const useGetTaskStatuses = (enabled: boolean = true) => {
     queryKey: ['taskStatuses'],
     queryFn: fetchTaskStatuses,
     enabled: enabled,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 

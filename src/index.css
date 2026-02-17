@@ -258,3 +258,8 @@
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 6px;
 }
+
+/* google chart tooltip */
+.google-visualization-tooltip {
+  pointer-events: none !important;
+}
