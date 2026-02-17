@@ -93,6 +93,7 @@ export const CaseFormData = (
               isEditView &&
               !permissionMap?.['filing_type_rid']?.edit &&
               !permissionMap?.['filing_type_rid']?.read,
+            resetDependsFields: ['parent_case_rid'],
           }),
           createSelectField('parent_case_rid', 'Parent Case', {
             options: parentCaseOptions || [],

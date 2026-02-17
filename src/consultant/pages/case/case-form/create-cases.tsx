@@ -464,7 +464,8 @@ export const CreateCases: React.FC = () => {
       accountId,
       formValues as CaseFormFields,
       isEditView,
-      caseData
+      caseData,
+      isAmendmentType
     );
     if (isEditView) {
       updateCase.mutate(payload);
