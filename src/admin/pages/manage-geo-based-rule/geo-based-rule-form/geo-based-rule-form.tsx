@@ -204,7 +204,12 @@ const GeoBasedRuleForm: React.FC = () => {
               'submission_date',
             ].includes(item.label);
 
-            if (isSubmissionDate && item.value && dayjs(item.value).isValid()) {
+            if (
+              isSubmissionDate &&
+              item.value &&
+              String(item.value).length > 2 &&
+              dayjs(item.value).isValid()
+            ) {
               dynamicValues[item.label] = dayjs(item.value).format('MM');
             } else {
               dynamicValues[item.label] = item.value;
