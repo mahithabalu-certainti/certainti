@@ -168,13 +168,17 @@ export class WebHookService {
           row[1]?.toLowerCase() === "questions" &&
           row[2]?.toLowerCase() === "answers"
         ) {
+          // Detect format: check if "Is Mandatory" column exists
+          const isOldFormat = row.length >= 6 && row[4]?.toLowerCase() === "is mandatory";
+          const questionNoIndex = isOldFormat ? 5 : 4;
+          
           // Start reading data from the next row
           for (let j = i + 1; j < parsedData.length; j++) {
             const dataRow = parsedData[j];
             if (dataRow.length >= 2) {
               answers.push({
                 rid: "",
-                questionSeqId: dataRow[4]?.trim(),
+                questionSeqId: dataRow[questionNoIndex]?.trim(),
                 question: dataRow[1]?.trim() || "",
                 response: dataRow[2]?.trim() || "",
                 notes: dataRow[3]?.trim() || "",
@@ -1228,14 +1232,34 @@ export class WebHookService {
     }
 
     // Column Headers at index 5
-    const expectedHeaders = [
-      "Record ID",
-      "Questions",
-      "Answers",
-      "Notes",
-      "Question No",
-    ];
     const tableHeader = array[5] || [];
+    
+    // Check for both new format (5 columns) and old format (6 columns with "Is Mandatory")
+    const isOldFormat = tableHeader.length >= 6 && tableHeader[4] === "Is Mandatory";
+    
+    let expectedHeaders: string[];
+    let questionNoIndex: number;
+    
+    if (isOldFormat) {
+      expectedHeaders = [
+        "Record ID",
+        "Questions",
+        "Answers",
+        "Notes",
+        "Is Mandatory",
+        "Question No",
+      ];
+      questionNoIndex = 5;
+    } else {
+      expectedHeaders = [
+        "Record ID",
+        "Questions",
+        "Answers",
+        "Notes",
+        "Question No",
+      ];
+      questionNoIndex = 4;
+    }
 
     expectedHeaders.forEach((expected, index) => {
       if (tableHeader[index] !== expected) {
@@ -1262,7 +1286,7 @@ export class WebHookService {
       const question = row[1];
       const answer = row[2]?.trim();
       const notes = row[3];
-      const questionId = row[4];
+      const questionId = row[questionNoIndex]; // Use dynamic index based on format
 
       const rowErrors: string[] = [];
 
