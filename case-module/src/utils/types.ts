@@ -1080,7 +1080,7 @@ export interface ParentAccountType {
   account_name : string
   r_number : string
   storage_type : string
-  is_parent : string
+  is_parent : boolean
   currency_rid : string
 }
 
