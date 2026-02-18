@@ -1,10 +1,10 @@
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries, USER_FLAG } from "../../utils/constants";
 import { errorLog, generateSasUrl } from "../../utils/helpers";
 import SchemaService from "./schemaService";
 import { CaseSummary } from "../../models/caseSummaryModel";
-import { IReportService } from "../interfaces/interface";
+import { IReportService, ICountDetails, IResponse, IMeeting, IWeeklyProductivity, ITask, IGlobalLevelChart } from "../interfaces/interface";
 
 
 export class ReportService implements IReportService {
@@ -32,20 +32,20 @@ export class ReportService implements IReportService {
             .map((acc) => acc.id);
     }
 
-    async getCountDetails(userId: string, flag: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
+    async getCountDetails(userId: string, flag: string): Promise<IResponse<ICountDetails[]>> {
         try {
             const sequelize = await this.getMainSequelize();
             const existingCaseSummaryModel = sequelize.models.CaseSummary as typeof CaseSummary | undefined;
             const CaseSummaryModel = existingCaseSummaryModel ?? CaseSummary.initialize(sequelize, MAIN_SCHEMA_NAME);
 
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
                 if (!childAccountIds) {
                     return {
                         statusCode: HttpStatus.SUCCESS,
                         message: "No accessible accounts found",
-                        data: { account: [], count: 0 },
+                        data: [],
                     };
                 }
 
@@ -111,7 +111,7 @@ export class ReportService implements IReportService {
                     }
                 );
 
-                const result: any = []
+                const result: ICountDetails[] = []
 
                 result.push({
                     "name": "Active Accounts",
@@ -224,11 +224,11 @@ export class ReportService implements IReportService {
                     { type: QueryTypes.SELECT }
                 );
 
-                const result: any = []
+                const result: ICountDetails[] = []
 
                 result.push({
                     "name": "Active Accounts",
-                    "count": activeAccountsCount[0]?.count || 0,
+                    "count": Number(activeAccountsCount[0]?.count || 0),
                     "order": 1
                 })
                 result.push({
@@ -282,13 +282,13 @@ export class ReportService implements IReportService {
         }
     }
 
-    async getMeetingList(userId: string, flag: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
+    async getMeetingList(userId: string, flag: string): Promise<IResponse<IMeeting[]>> {
         try {
             const sequelize = await this.getMainSequelize();
 
             let accountIds: string[] = [];
 
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const childAccountIds = await this.getChildAccountIds(userId);
                 if (!childAccountIds) {
                     return {
@@ -299,8 +299,8 @@ export class ReportService implements IReportService {
                 }
                 accountIds = childAccountIds;
             } else {
-                const allAccountsQuery = `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid IS NOT NULL`;
-                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery, { type: QueryTypes.SELECT });
+                const allAccountsQuery = rawQueries.fetchAllChildAccounts();
+                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery.query, { type: QueryTypes.SELECT });
                 accountIds = allAccounts.map(a => a.rid);
             }
 
@@ -320,7 +320,7 @@ export class ReportService implements IReportService {
             const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
 
             let userEmail: string | undefined;
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const userEmailQuery = rawQueries.fetchUserEmail(userId);
                 const userEmailResult: { email: string }[] = await sequelize.query(userEmailQuery.query, {
                     replacements: userEmailQuery.replacements,
@@ -418,14 +418,14 @@ export class ReportService implements IReportService {
         return this.schemaService.getAllowedExportFields(userId, permissionName);
     }
 
-    async getWeeklyProductivityList(userId: string, flag: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
+    async getWeeklyProductivityList(userId: string, flag: string): Promise<IResponse<IWeeklyProductivity[]>> {
         try {
             const sequelize = await this.getMainSequelize();
 
             let accountIds: string[] = [];
 
             // 1. Resolve Accounts and Schemas based on flag
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
                 if (!childAccountIds) {
@@ -443,17 +443,17 @@ export class ReportService implements IReportService {
                 accountIds = childAccountIds;
             } else {
                 // Admin/Else case: Use all accounts
-                const allAccountsQuery = `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid IS NOT NULL`;
-                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery, { type: QueryTypes.SELECT });
+                const allAccountsQuery = rawQueries.fetchAllChildAccounts();
+                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery.query, { type: QueryTypes.SELECT });
                 accountIds = allAccounts.map(a => a.rid);
             }
 
             // 2. Fetch Tasks Stats (Main DB)
-            const weeklyCompletedQuery = rawQueries.fetchWeeklyCompletedTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
-            const weeklyTotalQuery = rawQueries.fetchWeeklyTotalTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
-            const weeklyOpenQuery = rawQueries.fetchWeeklyOpenTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
-            const weeklyOverdueQuery = rawQueries.fetchWeeklyOverDueTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
-            const weeklyBlockedQuery = rawQueries.fetchWeeklyBlockedTaskCount(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+            const weeklyCompletedQuery = rawQueries.fetchWeeklyCompletedTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
+            const weeklyTotalQuery = rawQueries.fetchWeeklyTotalTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
+            const weeklyOpenQuery = rawQueries.fetchWeeklyOpenTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
+            const weeklyOverdueQuery = rawQueries.fetchWeeklyOverDueTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
+            const weeklyBlockedQuery = rawQueries.fetchWeeklyBlockedTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
 
             const tasksPromises = [
                 // Completed Tasks (Weekly)
@@ -496,7 +496,7 @@ export class ReportService implements IReportService {
             let attendedMeetingsCount = 0;
 
             let userEmail: string | undefined;
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const userEmailQuery = rawQueries.fetchUserEmail(userId);
                 const userEmailResult: { email: string }[] = await sequelize.query(userEmailQuery.query, {
                     replacements: userEmailQuery.replacements,
@@ -569,12 +569,12 @@ export class ReportService implements IReportService {
     }
 
 
-    private async fetchTasksList(userId: string, flag: string, queryGenerator: (accountIds?: string[], userId?: string) => { query: string, replacements: any }): Promise<{ statusCode: number; message: string; data?: any }> {
+    private async fetchTasksList(userId: string, flag: string, queryGenerator: (accountIds?: string[], userId?: string) => { query: string, replacements: any }): Promise<IResponse<ITask[]>> {
         try {
             const sequelize = await this.getMainSequelize();
             let accountIds: string[] = [];
 
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
                 if (!childAccountIds) {
@@ -587,7 +587,7 @@ export class ReportService implements IReportService {
                 accountIds = childAccountIds;
             }
 
-            const { query, replacements } = queryGenerator(flag === "user" ? accountIds : undefined, flag === "user" ? userId : undefined);
+            const { query, replacements } = queryGenerator(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
             const tasks: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
@@ -641,31 +641,31 @@ export class ReportService implements IReportService {
         }
     }
 
-    async getUpcomingTasksList(userId: string, flag: string) {
+    async getUpcomingTasksList(userId: string, flag: string): Promise<IResponse<ITask[]>> {
         return this.fetchTasksList(userId, flag, rawQueries.fetchUpcomingTasks);
     }
 
-    async getDueTodayOverdueTasksList(userId: string, flag: string) {
+    async getDueTodayOverdueTasksList(userId: string, flag: string): Promise<IResponse<ITask[]>> {
         return this.fetchTasksList(userId, flag, rawQueries.fetchOverDueTasks);
     }
 
-    async getOpenTasksList(userId: string, flag: string) {
+    async getOpenTasksList(userId: string, flag: string): Promise<IResponse<ITask[]>> {
         return this.fetchTasksList(userId, flag, rawQueries.fetchOpenTasks);
     }
 
-    async getCompletedTasksThisWeekList(userId: string, flag: string) {
+    async getCompletedTasksThisWeekList(userId: string, flag: string): Promise<IResponse<ITask[]>> {
         return this.fetchTasksList(userId, flag, rawQueries.fetchWeeklyCompletedTasks);
     }
 
-    async getPendingFollowUpsList(userId: string, flag: string) {
+    async getPendingFollowUpsList(userId: string, flag: string): Promise<IResponse<ITask[]>> {
         return this.fetchTasksList(userId, flag, rawQueries.fetchWeeklyPendingFollowUps);
     }
 
-    async getOverdueApprovalsList(userId: string, flag: string) {
+    async getOverdueApprovalsList(userId: string, flag: string): Promise<IResponse<ITask[]>> {
         return this.fetchTasksList(userId, flag, rawQueries.fetchOverdueApprovals);
     }
 
-    async getOverallProjectValue(userId: string, flag: string, fiscalYear?: string, countryType?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+    async getOverallProjectValue(userId: string, flag: string, fiscalYear?: string, countryType?: string): Promise<IResponse<any[]>> {
         try {
             const sequelize = await this.getMainSequelize();
 
@@ -673,7 +673,7 @@ export class ReportService implements IReportService {
             let accountIds: string[] = [];
 
 
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
                 if (!childAccountIds) {
@@ -696,10 +696,22 @@ export class ReportService implements IReportService {
             activeCountriesRids.forEach((c: any) => activeCountriesRidsSet.add(c.country_rid));
 
 
-            const { query, replacements } = rawQueries.fetchOverallProjectValue(flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
-            const finalResult: any[] = await sequelize.query(query, {
+            const { query, replacements } = rawQueries.fetchOverallProjectValue(flag === USER_FLAG ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
+            let finalResult: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
+            });
+
+            finalResult = finalResult.filter((row) => {
+                if (Number(row.total_project_cost) === 0 &&
+                    Number(row.qualified_project_cost) === 0 &&
+                    Number(row.qre_cost) === 0 &&
+                    Number(row.final_credit_computed) === 0 &&
+                    Number(row.final_credit_submitted) === 0 &&
+                    Number(row.final_credit_approved) === 0) {
+                    return false;
+                }
+                return true;
             });
 
             return {
@@ -714,7 +726,7 @@ export class ReportService implements IReportService {
         }
     }
 
-    async getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string, countryType?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+    async getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string, countryType?: string): Promise<IResponse<IGlobalLevelChart>> {
         try {
             const sequelize = await this.getMainSequelize();
 
@@ -722,14 +734,17 @@ export class ReportService implements IReportService {
             let accountIds: string[] = [];
 
 
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
                 if (!childAccountIds) {
                     return {
                         statusCode: HttpStatus.SUCCESS,
                         message: "No accessible accounts found",
-                        data: []
+                        data: {
+                            accountWiseConsolidationList: [],
+                            countryWiseConsolidation: []
+                        }
                     };
                 }
                 accountIds = childAccountIds;
@@ -749,7 +764,7 @@ export class ReportService implements IReportService {
 
             const countryWiseApprovedAmount = new Map<string, { country_rid: string, country_name: string, country_code: string, approved: number }>();
 
-            const { query, replacements } = rawQueries.fetchGlobalAccountClaimedAmounts(flag === "user" ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
+            const { query, replacements } = rawQueries.fetchGlobalAccountClaimedAmounts(flag === USER_FLAG ? accountIds : undefined, fiscalYear, activeCountriesRidsSet);
             const accountWiseConsolidationList: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT
@@ -785,12 +800,12 @@ export class ReportService implements IReportService {
             throw error;
         }
     }
-    async getCasesByHealthStatus(userId: string, flag: string, fiscalYear?: string): Promise<{ statusCode: number; message: string; data?: any }> {
+    async getCasesByHealthStatus(userId: string, flag: string, fiscalYear?: string): Promise<IResponse<any[]>> {
         try {
             const sequelize = await this.getMainSequelize();
             let accountIds: string[] = [];
 
-            if (flag === "user") {
+            if (flag === USER_FLAG) {
                 const childAccountIds = await this.getChildAccountIds(userId);
 
                 if (!childAccountIds) {
@@ -803,7 +818,7 @@ export class ReportService implements IReportService {
                 accountIds = childAccountIds;
             }
 
-            const { query, replacements } = rawQueries.fetchCasesByHealthStatus(flag === "user" ? accountIds : undefined, fiscalYear);
+            const { query, replacements } = rawQueries.fetchCasesByHealthStatus(flag === USER_FLAG ? accountIds : undefined, fiscalYear);
             const result: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT

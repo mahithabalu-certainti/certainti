@@ -27,6 +27,8 @@ export const NODE_ENV = {
   PROD: "PRODUCTION",
 };
 
+export const USER_FLAG = "user";
+
 export const ALPHANUMERIC_CONDITIONS = {
   equals: "equals",
   notEquals: "not_equals",
@@ -118,6 +120,11 @@ export const rawQueries = {
       LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
       WHERE gea.entity_type = 'ACCOUNT'
         AND gea.access_type = 'INCLUDE'`,
+  fetchAllChildAccounts() {
+    return {
+      query: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid IS NOT NULL`
+    }
+  },
   fetchCaseCountWithStatus(status: string, accountIds?: string[]) {
     let query = `SELECT count('x') FROM ${MAIN_SCHEMA_NAME}.case_summary a
     join ${MAIN_SCHEMA_NAME}.case_status b
@@ -1054,6 +1061,37 @@ export const rawQueries = {
         a.effective_end_time DESC
     LIMIT 5;
     `;
+    return { query, replacements };
+  },
+  fetchMeetingSummaryListForAdmin(accountRids: string[], statusId?: string) {
+    let query = `
+      SELECT 
+        *
+      FROM ${MAIN_SCHEMA_NAME}.meeting_summary a
+      WHERE a.account_rid IN (:accountRids)
+      `;
+
+    const replacements: any = {
+      accountRids,
+    };
+
+    if (statusId) {
+      query += ` AND a.status_rid = :statusId`;
+      replacements.statusId = statusId;
+    }
+
+    query += `
+        AND a.effective_start_time IS NOT NULL
+        AND a.effective_end_time IS NOT NULL
+        AND a.effective_start_datetime >= date_trunc('week', CURRENT_DATE)
+        AND a.effective_start_datetime < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'
+      
+      ORDER BY 
+          a.effective_start_datetime DESC,
+          a.effective_start_time DESC,
+          a.effective_end_time DESC
+      LIMIT 5;
+      `;
     return { query, replacements };
   },
   fetchMeetingSummaryCount(accountRids: string[], statusIds?: string[], userEmail?: string) {
