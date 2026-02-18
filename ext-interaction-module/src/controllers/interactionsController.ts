@@ -109,7 +109,7 @@ async function updateInteractionResponse(
  * @throws {Error} - Throws an error if required parameters or headers are missing, validation fails, or the service call encounters an issue.
  */
 async function getInteractionDetailsById(
-  req: Request,
+  req: Request<{interactionRid : string, accountId : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "Get interaction details";

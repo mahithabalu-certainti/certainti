@@ -1213,9 +1213,9 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
 
    export const interactionTemplateName = {
     interactionProject : "interaction project",
-    interactionProjectRemainder : "interaction project remainder",
+    interactionProjectReminder : "interaction project reminder",
     interactionAccount : "interaction account",
-    interactionAccountRemainder : "interaction account remainder",
+    interactionAccountReminder : "interaction account reminder",
     interactionProjectUpdate : "interaction project update",
     interactionAccountUpdate : "interaction account update"
   }

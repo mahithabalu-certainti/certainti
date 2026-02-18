@@ -505,7 +505,7 @@ async function updateInteractionResponse(
  * @throws {Error} - Handles and logs any unexpected errors and responds with a 400 status code.
  */
 async function getInteractionDetailsById(
-  req: Request,
+  req: Request<{interactionRid : string, accountId : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "Get interaction details";
@@ -865,7 +865,7 @@ async function updateTechSummaryContext(
  * @returns {Promise<void>} - A Promise that resolves once the response is sent.
  */
 async function getInteractionQuestionsById(
-  req: Request,
+  req: Request<{interactionRid : string, accountId : string}>,
   res: Response
 ): Promise<void> {
   const methodName = "Get interaction questions";
