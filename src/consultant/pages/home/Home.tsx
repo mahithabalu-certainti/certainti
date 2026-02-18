@@ -230,14 +230,7 @@ export const HomePage: React.FC = () => {
       const seventhDayDate = dayjs().add(7, 'day').format('YYYY-MM-DD');
 
       if (cardKey === 'active_accounts') {
-        navigateWithFilters(navigate, ACCOUNT, [
-          {
-            filterKey: 'status_rid',
-            type: 'enum',
-            operator: 'equals',
-            value: 'Active',
-          },
-        ]);
+        navigateWithFilters(navigate, ACCOUNT, []);
       } else if (cardKey === 'active_cases') {
         navigateWithFilters(navigate, CASE, []);
       } else if (cardKey === 'total_completed_cases') {
