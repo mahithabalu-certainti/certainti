@@ -22,7 +22,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     rid = f.project_fiscal_rid
     )
 
-    SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
+    SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,c.parent_case_rid,
     c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,f.case_total_qualified_projects,
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,

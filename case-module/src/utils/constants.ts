@@ -1896,8 +1896,13 @@ WHERE dmf.country_rid = '${countryRid}'
     stateRid?: string,
   )
   {
+    const usesConfigJson = quotedJsonPath.startsWith("$.config_json");
+    const jsonPath = usesConfigJson
+      ? `$.${quotedJsonPath.replace(/^\$\.config_json\.?/, "")}`
+      : quotedJsonPath;
+    const jsonColumn = usesConfigJson ? "config_json" : "computed_fields";
     return `
-          SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
+          SELECT jsonb_path_query_first(${jsonColumn}, '${jsonPath}')::text AS field_value
           FROM ${schemaName}.${refTable}
           WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
@@ -1908,8 +1913,13 @@ WHERE dmf.country_rid = '${countryRid}'
     quotedJsonPath: string,
     includeStateRid: boolean,
   ) {
+    const usesConfigJson = quotedJsonPath.startsWith("$.config_json");
+    const jsonPath = usesConfigJson
+      ? `$.${quotedJsonPath.replace(/^\$\.config_json\.?/, "")}`
+      : quotedJsonPath;
+    const jsonColumn = usesConfigJson ? "config_json" : "computed_fields";
     return `
-          SELECT jsonb_path_query_first(computed_fields, '${quotedJsonPath}')::text AS field_value
+          SELECT jsonb_path_query_first(${jsonColumn}, '${jsonPath}')::text AS field_value
           FROM ${schemaName}.${refTable}
           WHERE case_rid = :case_rid${includeStateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`;

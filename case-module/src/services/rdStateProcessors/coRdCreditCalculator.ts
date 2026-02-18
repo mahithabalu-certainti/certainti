@@ -64,7 +64,10 @@ export class RdCreditCalculatorForCO {
             inputFields,
             computedFields,
             finalCredit: allowableCredit.toNumber(),
-            totalQRE: totalQREs.toNumber()
+            totalQRE: totalQREs.toNumber(),
+            totalWages: wages,
+            totalSupplies: supplies,
+            totalContract: contract
         }
     }
 
