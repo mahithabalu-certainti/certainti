@@ -509,12 +509,12 @@ const CallForm: React.FC<CallFormProps> = ({
           e.preventDefault();
           if (
             participantsSuggestions.suggestions[
-              participantsSuggestions.highlightedIndex
+            participantsSuggestions.highlightedIndex
             ]
           ) {
             const selectedSuggestion =
               participantsSuggestions.suggestions[
-                participantsSuggestions.highlightedIndex
+              participantsSuggestions.highlightedIndex
               ];
             addParticipant('call_participants', selectedSuggestion.email);
           }
@@ -664,11 +664,6 @@ const CallForm: React.FC<CallFormProps> = ({
 
     if (!formData.minutes_of_meeting.trim()) {
       newErrors.minutes_of_meeting = 'Field is required';
-    }
-
-    if (!REGEX_PATTERNS.MAX_2000.test(formData.minutes_of_meeting)) {
-      newErrors.minutes_of_meeting =
-        'Minutes of Meeting must be within 2000 characters';
     }
 
     if (!formData.subject.trim()) {
@@ -1142,11 +1137,10 @@ const CallForm: React.FC<CallFormProps> = ({
                   isEditView,
                   permissionMap
                 )}
-                className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
-                  errors?.minutes_of_meeting
-                    ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
-                    : ''
-                }`}
+                className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${errors?.minutes_of_meeting
+                  ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
+                  : ''
+                  }`}
               />
               {errors?.minutes_of_meeting && (
                 <span className='text-[12px] text-red-400'>
@@ -1211,11 +1205,10 @@ const CallForm: React.FC<CallFormProps> = ({
                   <div className='w-[502px] max-w-[502px] mt-2'>
                     {message && (
                       <div
-                        className={`text-sm ${
-                          message.type === 'error'
-                            ? 'text-red-600'
-                            : 'text-green-600'
-                        }`}
+                        className={`text-sm ${message.type === 'error'
+                          ? 'text-red-600'
+                          : 'text-green-600'
+                          }`}
                       >
                         {message.text}
                       </div>

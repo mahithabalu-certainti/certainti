@@ -129,7 +129,7 @@ export const AccountForm: React.FC = () => {
   const isCaseExists = account?.accountDetails?.is_case_exists;
   const logoUrl = account?.accountById?.logo_url;
   const logoName = logoUrl
-    ? decodeURIComponent(logoUrl.substring(logoUrl.lastIndexOf('/') + 1))
+    ? decodeURIComponent(logoUrl.substring(logoUrl.lastIndexOf('/') + 1).split('?')[0])
     : '';
   const getMimeTypeFromExtension = (fileName: string): string => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -192,30 +192,30 @@ export const AccountForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-          ...transformKeyContactsFromAPI(
-            account?.accountDetails?.keyContacts || [],
-            memoizedStatus
-          ),
-          status: account?.accountById?.status_rid,
-          record_id: account?.accountDetails?.rid,
-          account_id: account?.accountById?.r_number,
-          created_on: formatDateToYYYYMMDDWithTime(
-            account?.accountById?.created_datetime
-          ),
-          updated_on: account?.accountById?.modified_datetime
-            ? formatDateToYYYYMMDDWithTime(
-                account?.accountById?.modified_datetime || '-'
-              )
-            : '-',
-          created_by: account?.accountDetails?.created_by,
-          updated_by: account?.accountDetails?.modified_by || '-',
-          website: account?.accountDetails?.website || '',
-        }),
+        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+        autosend_interaction: account?.accountDetails.autosend_interaction
+          ? 'yes'
+          : 'no',
+        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+        ...transformKeyContactsFromAPI(
+          account?.accountDetails?.keyContacts || [],
+          memoizedStatus
+        ),
+        status: account?.accountById?.status_rid,
+        record_id: account?.accountDetails?.rid,
+        account_id: account?.accountById?.r_number,
+        created_on: formatDateToYYYYMMDDWithTime(
+          account?.accountById?.created_datetime
+        ),
+        updated_on: account?.accountById?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(
+            account?.accountById?.modified_datetime || '-'
+          )
+          : '-',
+        created_by: account?.accountDetails?.created_by,
+        updated_by: account?.accountDetails?.modified_by || '-',
+        website: account?.accountDetails?.website || '',
+      }),
     }),
     [account, memoizedStatus]
   );
@@ -330,8 +330,8 @@ export const AccountForm: React.FC = () => {
     setKeyContacts(fields);
     setIsKeyContactsReady(
       !getAccount.isPending &&
-        !keyContactRoles.isPending &&
-        !statusOptions.isPending
+      !keyContactRoles.isPending &&
+      !statusOptions.isPending
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -529,11 +529,11 @@ export const AccountForm: React.FC = () => {
                 ? { ...accountData }
                 : !isEditView
                   ? {
-                      // Set default values in Create Account
-                      status: defaultActiveValue,
-                      autosend_interaction: YesNo.No,
-                      auto_access_rd: YesNo.Yes,
-                    }
+                    // Set default values in Create Account
+                    status: defaultActiveValue,
+                    autosend_interaction: YesNo.No,
+                    auto_access_rd: YesNo.Yes,
+                  }
                   : {}
             }
             outData={submitData}
