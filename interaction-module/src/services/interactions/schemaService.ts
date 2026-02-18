@@ -4730,8 +4730,8 @@ const existingTemplate = await InteractionTemplate.findOne({
       );
   
   
-      return templateDetails;  
-  }
+      return templateDetails;
+    }
 
   /**
    * Bulk fetch projects that do NOT have key contacts
