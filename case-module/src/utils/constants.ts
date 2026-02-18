@@ -404,7 +404,7 @@ export const rawQueries = {
   },
   getCaseStatus() {
     return `
-      SELECT rid, status_name 
+      SELECT rid, status_name, status_type
       FROM ${MAIN_SCHEMA_NAME}.case_status
       WHERE status = 'active'
       ORDER BY status_name ASC

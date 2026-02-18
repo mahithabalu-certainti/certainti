@@ -813,33 +813,26 @@ export class ProjectService {
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 
-        projectData = await this.projectIngestion.enrichKeyContactsByProjectId(
-          projectData,
-          accountRNumber
-        );
+        // Run independent enrichment operations in parallel for better performance
+        const [enrichedKeyContacts, geoData, industryData, typeAndStatus, keyContactData, classificationData, userDetails] = 
+          await Promise.all([
+            this.projectIngestion.enrichKeyContactsByProjectId(projectData, accountRNumber),
+            this.schemaService.insertProjectGeoData(projectData, mainDbInit),
+            this.schemaService.insertIndustyName(projectData, mainDbInit),
+            this.schemaService.insertProjectTypeAndStatus(projectData, mainDbInit, projectType),
+            this.schemaService.projectKeyContactData(projectData, mainDbInit),
+            this.schemaService.projectClassificationData(projectData, mainDbInit),
+            this.schemaService.insertUserDetails(projectData)
+          ]);
 
-        projectData = await this.schemaService.insertProjectGeoData(
-          projectData,
-          mainDbInit
-        );
-        projectData = await this.schemaService.insertIndustyName(
-          projectData,
-          mainDbInit
-        );
-        projectData = await this.schemaService.insertProjectTypeAndStatus(
-          projectData,
-          mainDbInit,
-          projectType
-        );
-        projectData = await this.schemaService.projectKeyContactData(
-          projectData,
-          mainDbInit
-        );
-
-        projectData = await this.schemaService.projectClassificationData(
-          projectData,
-          mainDbInit
-        );
+        // Merge all enriched data into projectData
+        projectData = enrichedKeyContacts;
+        projectData.dataValues = { ...projectData.dataValues, ...geoData };
+        projectData.dataValues = { ...projectData.dataValues, ...industryData };
+        projectData.dataValues = { ...projectData.dataValues, ...typeAndStatus };
+        projectData.dataValues = { ...projectData.dataValues, ...keyContactData };
+        projectData.dataValues = { ...projectData.dataValues, ...classificationData };
+        projectData.dataValues = { ...projectData.dataValues, ...userDetails };
 
         projectData = this.insertAccount(
           projectData,
@@ -847,8 +840,6 @@ export class ProjectService {
           accountDetails,
           isSubscriptionCreated
         );
-
-        projectData = await this.schemaService.insertUserDetails(projectData);
       }
 
       // Fetch attachments for the project
@@ -1461,17 +1452,20 @@ export class ProjectService {
   }> {
     try {
       const offset = (page - 1) * limit;
-      const userGroupType = await this.schemaService.getUserGroupType(userId);
-      const userProfileType = await this.schemaService.getUserProfileType(
-        userId
-      );
+      // Parallelize user lookups
+      const [userGroupType, userProfileType] = await Promise.all([
+        this.schemaService.getUserGroupType(userId),
+        this.schemaService.getUserProfileType(userId)
+      ]);
       const isCustomGlobal = userGroupType === "DEFAULT";
       const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
-      const isPOCProfile =
-        userProfileType?.profileName === "Project Point of Contact";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
       logMessage(`allProjectList  - isFromUserGroup: ${isFromUserGroup}, accountRid: ${accountRid}, userGroupType: ${userGroupType}, userProfileType: ${userProfileType?.profileName}`);
-      if (!isCustomGlobal) {
+
+      // Consolidate access control logic
+      const needsAccessCheck = !isCustomGlobal || (isCustomGlobal && isPOCProfile);
+      if (needsAccessCheck) {
         accessibleIds = await this.getAccessibleProjectIds(
           userId,
           isDefaultParent,
@@ -1491,59 +1485,31 @@ export class ProjectService {
         }
       }
 
-      if (isCustomGlobal && isPOCProfile) {
-        accessibleIds = await this.getAccessibleProjectIds(
-          userId,
-          isDefaultParent,
-          isPOCProfile,
-          userProfileType?.email,
-          isCustomGlobal
-        );
-        if (accessibleIds.length === 0) {
-          return {
-            statusCode: HttpStatus.SUCCESS,
-            message: HttpStatus.SUCCESS_MESSAGE,
-            data: {
-              projects: [],
-              count: 0,
-            },
-          };
-        }
-      }
-
-      const [finalSortBy, finalSortOrder] =
-        this.getSortParametersForAllProjects(sortBy, sortOrder);
-
-      const { accountDataSort } = this.processAccountDataSort(
-        sortBy,
-        sortOrder
-      );
-
+      const [finalSortBy, finalSortOrder] = this.getSortParametersForAllProjects(sortBy, sortOrder);
+      const { accountDataSort } = this.processAccountDataSort(sortBy, sortOrder);
       const sort = {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
       };
 
-      const appliedAccountNumber =
-        await this.schemaService.computeGlobalAccountFilter(globalFilters);
+      const appliedAccountNumber = await this.schemaService.computeGlobalAccountFilter(globalFilters);
       if (isFromUserGroup && accountRid.length > 0) {
         appliedAccountNumber.push(...accountRid);
       }
 
-      let { finalResult: allProjectList, totalCount } =
-        await this.schemaService.fetchAllProjects(
-          offset,
-          limit,
-          sort,
-          filters,
-          fiscalYear,
-          appliedAccountNumber,
-          userId,
-          search,
-          accountDataSort,
-          bothParentAndChild,
-          accessibleIds
-        );
+      let { finalResult: allProjectList, totalCount } = await this.schemaService.fetchAllProjects(
+        offset,
+        limit,
+        sort,
+        filters,
+        fiscalYear,
+        appliedAccountNumber,
+        userId,
+        search,
+        accountDataSort,
+        bothParentAndChild,
+        accessibleIds
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
