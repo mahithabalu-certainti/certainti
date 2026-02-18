@@ -410,6 +410,14 @@ export const rawQueries = {
       ORDER BY status_name ASC
     `;
   },
+  getCaseCloseStatus() {
+    return `
+      SELECT rid, status_name, status_type
+      FROM ${MAIN_SCHEMA_NAME}.case_status
+      WHERE status = 'active' AND status_name ILIKE '%Closed%'
+      ORDER BY status_name ASC
+    `;
+  },
   getChecklistStatus() {
     return `
       SELECT rid, status_name 

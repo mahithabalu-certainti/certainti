@@ -1423,7 +1423,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
     const findParentAccount = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT, plain : true});
     if(findParentAccount) {
       const schemaName = rawQueries.fetchSchemaName(findParentAccount.r_number)
-      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations} = await this.caseModelService.getModels(findParentAccount.r_number);
+      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations, Case} = await this.caseModelService.getModels(findParentAccount.r_number);
       const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.case));
       await SignoffDetails.create({
         account_rid : data.account_rid,
@@ -1490,26 +1490,35 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         if(affectedCount > 0) {
           const [caseSubmittedCost] = await orgDb.query<CaseSubmissionType>(calculateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.country_credits.country_rid, "update"), {type : QueryTypes.SELECT});
           this.logger.info("caseSubmittedCost Data Retrived successfully")
-          await CaseHistorySubmission.create({
-            account_rid : data.account_rid,
-            country_rid : data.country_credits.country_rid,
-            created_by : data.user_rid,
-            fiscal_year : data.fiscal_year,
-            total_project_cost : parseFloat(new Decimal(caseSubmittedCost?.total_fte_cost ?? 0).add(caseSubmittedCost?.total_subcon_cost ?? 0).add(caseSubmittedCost?.total_nonlabor_cost ?? 0).toFixed(2)) || 0.00,
-            total_fte_cost : caseSubmittedCost?.total_fte_cost || 0.00,
-            total_subcon_cost : caseSubmittedCost?.total_subcon_cost || 0.00,
-            total_nonlabor_cost : caseSubmittedCost?.total_nonlabor_cost || 0.00,
-            total_qre : caseSubmittedCost?.total_qre || 0.00,
-            total_rd_credits : data.country_credits.rd_credits_approved,
-            annual_gross_receipts : caseSubmittedCost?.average_annual_gross_receipts || 0.00,
-            total_project : 0,
-            total_qualified_project : 0,
-            total_qualified_project_cost : 0
-          });
-          this.logger.info("CaseHistorySubmission For Country Created successfully")
+          const checkIsAlreadyHistoryCreated = await CaseHistorySubmission.findOne({
+            where : {
+              account_rid : data.account_rid,
+              fiscal_year : data.fiscal_year,
+              country_rid : data.country_credits.country_rid
+            }, raw : true
+          })
+          if(!checkIsAlreadyHistoryCreated) {
+            await CaseHistorySubmission.create({
+              account_rid : data.account_rid,
+              country_rid : data.country_credits.country_rid,
+              created_by : data.user_rid,
+              fiscal_year : data.fiscal_year,
+              total_project_cost : parseFloat(new Decimal(caseSubmittedCost?.total_fte_cost ?? 0).add(caseSubmittedCost?.total_subcon_cost ?? 0).add(caseSubmittedCost?.total_nonlabor_cost ?? 0).toFixed(2)) || 0.00,
+              total_fte_cost : caseSubmittedCost?.total_fte_cost || 0.00,
+              total_subcon_cost : caseSubmittedCost?.total_subcon_cost || 0.00,
+              total_nonlabor_cost : caseSubmittedCost?.total_nonlabor_cost || 0.00,
+              total_qre : caseSubmittedCost?.total_qre || 0.00,
+              total_rd_credits : data.country_credits.rd_credits_approved,
+              annual_gross_receipts : caseSubmittedCost?.average_annual_gross_receipts || 0.00,
+              total_project : 0,
+              total_qualified_project : 0,
+              total_qualified_project_cost : 0
+            });
+            this.logger.info("CaseHistorySubmission For Country Created successfully")
+          }
         }
       } 
-      if(data.state_credits.length > 0) {
+      if(data.state_credits.length > 0 && data.country_rid) {
         for(let stateData of data.state_credits) {
           await RdCreditCalculationsSummary.update({
           final_credit_approved : stateData.rd_credits_approved,
@@ -1540,28 +1549,56 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         this.logger.info("caseSubmittedCost For Statewise Retrieved successfully")
         if(caseSubmittedCost.length > 0) {
           let storeArrayStateData : CaseHistorySubmissionCreationAttributes[] = [];
-          caseSubmittedCost.forEach((d : CaseSubmissionType) => {
-            storeArrayStateData.push({
+          const findIsStateAlreadyCreated = await CaseHistorySubmission.findAll({
+            where : {
               account_rid : data.account_rid,
-              country_rid : data.country_credits.country_rid,
-              state_rid : d.state_rid,
-              created_by : data.user_rid,
               fiscal_year : data.fiscal_year,
-              total_project_cost : parseFloat(new Decimal(d.total_fte_cost).add(d.total_subcon_cost).add(d.total_nonlabor_cost).toFixed(2)) || 0.00,
-              total_fte_cost : d.total_fte_cost || 0.00,
-              total_subcon_cost : d.total_subcon_cost || 0.00,
-              total_nonlabor_cost : d.total_nonlabor_cost || 0.00,
-              total_qre : d.total_qre || 0.00,
-              total_rd_credits : data.state_credits.map((dd : RdCreditsState) => dd.state_rid === d.state_rid ? dd.rd_credits_approved : 0)[0] ?? 0,
-              annual_gross_receipts : d.average_annual_gross_receipts || 0.00,
-              total_project : 0,
-              total_qualified_project : 0,
-              total_qualified_project_cost : 0
-            });
+              state_rid : {
+                [Op.in] : data.state_credits.map((d) => d.state_rid)
+              }
+            },
+            attributes : ['state_rid'],
+            raw : true
+          });
+          let finalizedData : any[]
+          if(findIsStateAlreadyCreated.length > 0) {
+            finalizedData = findIsStateAlreadyCreated.map((d) => d.state_rid) || []
+          } else finalizedData = []
+          
+          caseSubmittedCost.forEach((d : CaseSubmissionType) => {
+            if(!finalizedData.includes(d.state_rid)) {
+              storeArrayStateData.push({
+                account_rid : data.account_rid,
+                country_rid : data.country_rid,
+                state_rid : d.state_rid,
+                created_by : data.user_rid,
+                fiscal_year : data.fiscal_year,
+                total_project_cost : parseFloat(new Decimal(d.total_fte_cost).add(d.total_subcon_cost).add(d.total_nonlabor_cost).toFixed(2)) || 0.00,
+                total_fte_cost : d.total_fte_cost || 0.00,
+                total_subcon_cost : d.total_subcon_cost || 0.00,
+                total_nonlabor_cost : d.total_nonlabor_cost || 0.00,
+                total_qre : d.total_qre || 0.00,
+                total_rd_credits : data.state_credits.map((dd : RdCreditsState) => dd.state_rid === d.state_rid ? dd.rd_credits_approved : 0)[0] ?? 0,
+                annual_gross_receipts : d.average_annual_gross_receipts || 0.00,
+                total_project : 0,
+                total_qualified_project : 0,
+                total_qualified_project_cost : 0
+              }); 
+            }
           });
           await CaseHistorySubmission.bulkCreate(storeArrayStateData);
           this.logger.info("CaseHistorySubmission For State Inserted successfully")
         }
+      }
+      if(data.user_preference !== '') {
+        const getCaseCloseStatus = await mainDb.query<{rid : string, status_name : string, status_type : string}>(rawQueries.getCaseCloseStatus(), {type : QueryTypes.SELECT, plain : true})
+        await Case.update({
+          status_rid : getCaseCloseStatus?.rid
+        }, {
+          where : {
+            rid : data.case_rid
+          }
+        })
       }
       return {
         statusCode : HttpStatus.SUCCESS,

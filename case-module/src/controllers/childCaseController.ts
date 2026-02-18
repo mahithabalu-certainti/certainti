@@ -335,7 +335,6 @@ async function closeCase(req : Request, res : Response) {
     validData.user_rid = userId
     const result = await childCaseService.closeCase(validData, req.files as Express.Multer.File[]);
     if(result.statusCode === HttpStatus.SUCCESS) {
-      addLog(methodName, new Date().toISOString(), result.statusMessage);
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
