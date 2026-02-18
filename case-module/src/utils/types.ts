@@ -1099,7 +1099,6 @@ export interface ComputedValueRequest {
   account_rid : string
   country_rid : string
   state_rid : string[],
-  country_code : string
 }
 
 export interface CaseStateComputedType {

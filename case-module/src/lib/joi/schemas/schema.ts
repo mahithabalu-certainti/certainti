@@ -1271,7 +1271,7 @@ const caseCloseSchema = Joi.object({
     rd_credits_computed : Joi.string().required(),
     rd_credits_approved : Joi.string().required(),
     rd_credits_submitted : Joi.string().required()
-  }),
+  }).allow({}),
   comments : Joi.string().optional().allow(""),
   state_credits : Joi.array().items(stateCreditSchema),
   fiscal_year : Joi.string().required()

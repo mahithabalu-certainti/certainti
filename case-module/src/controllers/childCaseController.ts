@@ -320,10 +320,18 @@ async function closeCase(req : Request, res : Response) {
     if(!userId) {
       addLog(methodName, new Date().toISOString(), STATUS_MESSAGE.userIdMissingInHeader)
     }
-    req.body.country_credits = JSON.parse(req.body.country_credits);
-    req.body.state_credits = JSON.parse(req.body.state_credits)
+    if(req.body.country_credits && typeof req.body.country_credits === 'string') {
+      req.body.country_credits = JSON.parse(req.body.country_credits);
+    }
+    if(req.body.state_credits && typeof req.body.state_credits === 'string') {
+      req.body.state_credits = JSON.parse(req.body.state_credits)
+    }
 
     const validData = await validateRequest(req, caseCloseSchema, res);
+    if (!validData) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
     validData.user_rid = userId
     const result = await childCaseService.closeCase(validData, req.files as Express.Multer.File[]);
     if(result.statusCode === HttpStatus.SUCCESS) {
