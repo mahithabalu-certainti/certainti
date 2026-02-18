@@ -204,6 +204,19 @@ class InteractionSchemaService {
     }
   }
 
+  async fetchEmailSubjectPrefix() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
+    }
+    const [emailPrefix]:any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionEmailSubject(),
+      {
+        type: "SELECT",
+      }
+    );
+
+    return emailPrefix;
+  }
 
   async createBulkInteractions(
     accountNumber: string,
