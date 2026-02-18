@@ -4746,23 +4746,36 @@ const existingTemplate = await InteractionTemplate.findOne({
     schemaName: string
   ): Promise<Set<string>> {
     try {
+      // Short-circuit if there are no projects to check
+      if (!projectFiscalRids || projectFiscalRids.length === 0) {
+        return new Set<string>();
+      }
+
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
 
-      // Fetch all key contacts for all projects in a single query
-      const allKeyContacts: any[] = await this.orgDbSequelize.query(
-        rawQueries.fetchProjectsWithoutKeyContacts(schemaName, projectFiscalRids),
-        {
-          type: "SELECT",
+      // Limit the number of project RIDs per query to avoid very large IN clauses
+      const BATCH_SIZE = 1000;
+      const projectsWithKeyContacts = new Set<string>();
+
+      // Fetch key contacts for projects in batches
+      for (let i = 0; i < projectFiscalRids.length; i += BATCH_SIZE) {
+        const batch = projectFiscalRids.slice(i, i + BATCH_SIZE);
+
+        const batchKeyContacts: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectsWithoutKeyContacts(schemaName, batch),
+          {
+            type: "SELECT",
+          }
+        );
+
+        for (const row of batchKeyContacts) {
+          if (row && row.entity_rid) {
+            projectsWithKeyContacts.add(row.entity_rid);
+          }
         }
-      );
-
-      // Create a set of project RIDs that HAVE key contacts
-      const projectsWithKeyContacts = new Set(
-        allKeyContacts.map((row: any) => row.entity_rid)
-      );
-
+      }
       // Return projects that DON'T have key contacts
       const projectsWithoutKeyContacts = new Set(
         projectFiscalRids.filter(rid => !projectsWithKeyContacts.has(rid))
