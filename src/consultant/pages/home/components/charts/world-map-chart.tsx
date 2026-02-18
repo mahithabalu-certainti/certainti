@@ -59,17 +59,20 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
   // Prepare map data for Google Charts
   const mapData = useMemo(() => {
     if (!apiData?.countryWiseConsolidation) {
-      return [['Country', 'R&D Cost Approved (Millions)']];
+      return [['Country', 'Total RD Credits Approved']];
     }
 
-    const data: any[] = [['Country', 'R&D Cost Approved (Millions)']];
+    const data: any[] = [['Country', 'Total RD Credits Approved']];
 
     apiData.countryWiseConsolidation.forEach((country, index) => {
       if (selectedCountry) {
         // Highlight only selected country, gray others
+        const isSelected = country.country_rid === selectedCountry;
         data.push([
           country.country_name,
-          country.country_rid === selectedCountry ? country.approved : 0,
+          isSelected
+            ? { v: country.approved, f: formatAmount(country.approved) }
+            : 0,
         ]);
       } else {
         // Global view normal values
@@ -117,12 +120,12 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
 
   const chartTitle = useMemo(() => {
     if (!selectedCountry || !apiData?.countryWiseConsolidation) {
-      return `Global Account Claimed Amounts (FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear})`;
+      return `Global Account RD Credits Submitted (FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear})`;
     }
     const country = apiData.countryWiseConsolidation.find(
       (c) => c.country_rid === selectedCountry
     );
-    return `${country?.country_name} - Account Claimed Amounts (FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear})`;
+    return `${country?.country_name} - Account RD Credits Submitted (FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear})`;
   }, [selectedCountry, apiData, selectedYear]);
 
   const chartSubtitle = useMemo(() => {
@@ -245,7 +248,7 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
               }}
               className='h-[27px] px-2.5 border border-[#CBD6E2] text-[#425A76] rounded-[2px] text-sm font-medium cursor-pointer'
             >
-              Reset to Global View
+              Back to Global View
             </button>
           )}
         </div>
@@ -258,57 +261,63 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
             <p className='text-sm'>Loading chart data...</p>
           </div>
         </div>
-      ) : !apiData || chartData.length === 0 ? (
+      ) : !apiData || (!selectedCountry && chartData.length === 0) ? (
         <div className='flex justify-center items-center h-[200px] text-sm text-[#425A76] border border-[#CBD6E2] rounded-lg'>
           No data available
         </div>
       ) : (
         <div className='flex flex-col lg:flex-row gap-6 lg:gap-0 border border-[#CBD6E2] rounded-lg overflow-hidden'>
           <div className='w-full lg:w-[40%] pt-6'>
-            <StackedBarChart
-              title={chartTitle}
-              subtitle={chartSubtitle}
-              className='border-0 rounded-none bg-transparent'
-              data={chartData}
-              getLabel={(d: AccountWiseConsolidation) => d.account_name}
-              hideHeader={true}
-              minHeight={520}
-              customTooltip={true}
-              itemsPerPage={10}
-              series={[
-                {
-                  key: 'final_credit_submitted',
-                  name: 'Claimed Submitted',
-                  color: '#4A90E2',
-                },
-              ]}
-              getTooltipData={(d: AccountWiseConsolidation) => [
-                {
-                  label: 'Total Project Cost',
-                  value: formatAmount(Number(d.total_project_cost)),
-                },
-                {
-                  label: 'Total Qualified Cost',
-                  value: formatAmount(Number(d.qualified_project_cost)),
-                },
-                {
-                  label: 'Total QRE Cost',
-                  value: formatAmount(Number(d.qre_cost)),
-                },
-                {
-                  label: 'RD Credits Computed',
-                  value: formatAmount(d.final_credit_computed),
-                },
-                {
-                  label: 'Claimed Submitted',
-                  value: formatAmount(d.final_credit_submitted),
-                },
-                {
-                  label: 'Claimed Approved',
-                  value: formatAmount(d.final_credit_approved),
-                },
-              ]}
-            />
+            {chartData.length === 0 ? (
+              <div className='flex justify-center items-center h-[520px] text-sm text-[#425A76]'>
+                No data available
+              </div>
+            ) : (
+              <StackedBarChart
+                title={chartTitle}
+                subtitle={chartSubtitle}
+                className='border-0 rounded-none bg-transparent'
+                data={chartData}
+                getLabel={(d: AccountWiseConsolidation) => d.account_name}
+                hideHeader={true}
+                minHeight={520}
+                customTooltip={true}
+                itemsPerPage={10}
+                series={[
+                  {
+                    key: 'final_credit_submitted',
+                    name: 'RD Credits Submitted',
+                    color: '#4A90E2',
+                  },
+                ]}
+                getTooltipData={(d: AccountWiseConsolidation) => [
+                  {
+                    label: 'Total Project Cost',
+                    value: formatAmount(Number(d.total_project_cost)),
+                  },
+                  {
+                    label: 'Qualified Project Cost',
+                    value: formatAmount(Number(d.qualified_project_cost)),
+                  },
+                  {
+                    label: 'QRE Cost',
+                    value: formatAmount(Number(d.qre_cost)),
+                  },
+                  {
+                    label: 'RD Credits Computed',
+                    value: formatAmount(d.final_credit_computed),
+                  },
+                  {
+                    label: 'RD Credits Submitted',
+                    value: formatAmount(d.final_credit_submitted),
+                  },
+                  {
+                    label: 'RD Credits Approved',
+                    value: formatAmount(d.final_credit_approved),
+                  },
+                ]}
+              />
+            )}
           </div>
 
           <div

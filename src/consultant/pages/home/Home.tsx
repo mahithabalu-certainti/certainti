@@ -318,7 +318,7 @@ export const HomePage: React.FC = () => {
 
         <CardList
           title='Weekly Productivity'
-          subtitle={`${weeklyProductivity?.length || 0} Productivity items tracked this week`}
+          subtitle={`Productivity items tracked this week`}
           items={weeklyProductivity || []}
           isLoading={isWeeklyProductivityLoading}
           exportEnable={true}

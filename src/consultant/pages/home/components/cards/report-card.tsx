@@ -7,6 +7,7 @@ interface ReportCardProps {
   value?: string | number;
   color?: string;
   isLoading?: boolean;
+  onClick?: () => void;
 }
 
 const ReportCard: React.FC<ReportCardProps> = ({
@@ -14,6 +15,7 @@ const ReportCard: React.FC<ReportCardProps> = ({
   value,
   color = '#425A76',
   isLoading = false,
+  onClick,
 }) => {
   const bgColor = blendWithWhite(color, 0.9);
 
@@ -30,7 +32,14 @@ const ReportCard: React.FC<ReportCardProps> = ({
   }
 
   return (
-    <div className='flex flex-col justify-between bg-white rounded-lg border border-[#CBD6E2] overflow-hidden p-4 h-full'>
+    <div
+      className={`flex flex-col justify-between bg-white rounded-lg border border-[#CBD6E2] overflow-hidden p-4 h-full ${
+        onClick
+          ? 'cursor-pointer hover:shadow-md transition-shadow duration-200'
+          : ''
+      }`}
+      onClick={onClick}
+    >
       <div
         className='text-[#425A76] text-sm font-medium truncate'
         title={title}
