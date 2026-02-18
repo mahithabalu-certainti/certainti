@@ -68,8 +68,15 @@ export const TaskCategory = {
   APPROVALS_SIGN_OFFS: 'Approvals & Sign-offs',
 };
 
+
 export const ActivityType = {
   MEETING: 'Meeting',
+};
+
+export const ATTACHMENT_LEVEL = {
+  ACCOUNT: 'account',
+  PROJECT: 'project',
+  CASE: 'case',
 };
 
 export const constants = {
@@ -1063,37 +1070,6 @@ export const rawQueries = {
     `;
     return { query, replacements };
   },
-  fetchMeetingSummaryListForAdmin(accountRids: string[], statusId?: string) {
-    let query = `
-      SELECT 
-        *
-      FROM ${MAIN_SCHEMA_NAME}.meeting_summary a
-      WHERE a.account_rid IN (:accountRids)
-      `;
-
-    const replacements: any = {
-      accountRids,
-    };
-
-    if (statusId) {
-      query += ` AND a.status_rid = :statusId`;
-      replacements.statusId = statusId;
-    }
-
-    query += `
-        AND a.effective_start_time IS NOT NULL
-        AND a.effective_end_time IS NOT NULL
-        AND a.effective_start_datetime >= date_trunc('week', CURRENT_DATE)
-        AND a.effective_start_datetime < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'
-      
-      ORDER BY 
-          a.effective_start_datetime DESC,
-          a.effective_start_time DESC,
-          a.effective_end_time DESC
-      LIMIT 5;
-      `;
-    return { query, replacements };
-  },
   fetchMeetingSummaryCount(accountRids: string[], statusIds?: string[], userEmail?: string) {
     let query = `
     SELECT 
@@ -1130,6 +1106,43 @@ export const rawQueries = {
     `;
 
     return { query, replacements };
+  },
+  getAccountWithStatusByRidQuery(): string {
+    return `
+      SELECT 
+        ${MAIN_SCHEMA_NAME}.account.*, 
+        ${MAIN_SCHEMA_NAME}.status.status_description AS status  
+      FROM ${MAIN_SCHEMA_NAME}.account
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.status 
+        ON ${MAIN_SCHEMA_NAME}.account.status_rid = ${MAIN_SCHEMA_NAME}.status.rid
+      WHERE ${MAIN_SCHEMA_NAME}.account.rid = :rid
+    `;
+  },
+  getProjectWithStatusByRidQuery(): string {
+    return `
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary
+      WHERE ${MAIN_SCHEMA_NAME}.project_fiscal_summary.project_fiscal_rid = :projectFiscalRid
+    `;
+  },
+  getProjectsByRidsQuery(): string {
+    return `
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary
+      WHERE ${MAIN_SCHEMA_NAME}.project_fiscal_summary.project_fiscal_rid IN (:projectRids)
+    `;
+  },
+  fetchCaseById() {
+    return `
+    SELECT case_name
+    FROM "${MAIN_SCHEMA_NAME}".case_summary
+    WHERE case_rid = :caseId
+    `;
+  },
+  fetchCasesByRids() {
+    return `
+    SELECT case_rid, case_name
+    FROM "${MAIN_SCHEMA_NAME}".case_summary
+    WHERE case_rid IN (:caseRids)
+    `;
   },
 
 };

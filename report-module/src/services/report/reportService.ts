@@ -32,7 +32,7 @@ export class ReportService implements IReportService {
             .map((acc) => acc.id);
     }
 
-    async getCountDetails(userId: string, flag: string): Promise<IResponse<ICountDetails[]>> {
+    async getCountDetails(userId: string, flag: string): Promise<IResponse<ICountDetails[] | { account: any[], count: number }>> {
         try {
             const sequelize = await this.getMainSequelize();
             const existingCaseSummaryModel = sequelize.models.CaseSummary as typeof CaseSummary | undefined;
@@ -45,7 +45,10 @@ export class ReportService implements IReportService {
                     return {
                         statusCode: HttpStatus.SUCCESS,
                         message: "No accessible accounts found",
-                        data: [],
+                        data: {
+                            account: [],
+                            count: 0,
+                        },
                     };
                 }
 
@@ -115,41 +118,49 @@ export class ReportService implements IReportService {
 
                 result.push({
                     "name": "Active Accounts",
+                    "key": "active_accounts",
                     "count": childAccountIds.length,
                     "order": 1
                 })
                 result.push({
                     "name": "Active Cases",
+                    "key": "active_cases",
                     "count": totalCases,
                     "order": 2
                 })
                 result.push({
                     "name": "Total Completed Cases",
+                    "key": "total_completed_cases",
                     "count": completedCasesCount[0]?.count || 0,
                     "order": 3
                 })
                 result.push({
                     "name": "Stalled Cases",
+                    "key": "stalled_cases",
                     "count": onHoldCasesCount[0]?.count || 0,
                     "order": 4
                 })
                 result.push({
                     "name": "Open Tasks",
+                    "key": "open_tasks",
                     "count": openTasksCount[0]?.count || 0,
                     "order": 5
                 })
                 result.push({
                     "name": "Due Today / Over Due Tasks",
+                    "key": "due_today_overdue_tasks",
                     "count": overDueTasksCount[0]?.count || 0,
                     "order": 6
                 })
                 result.push({
                     "name": "Upcoming Tasks (7 Days)",
+                    "key": "upcoming_tasks_7_days",
                     "count": upcomingTasksCount[0]?.count || 0,
                     "order": 7
                 })
                 result.push({
                     "name": "Tasks Completed This Week",
+                    "key": "tasks_completed_this_week",
                     "count": weeklyCompletedTasksCount[0]?.count || 0,
                     "order": 8
                 })
@@ -228,41 +239,49 @@ export class ReportService implements IReportService {
 
                 result.push({
                     "name": "Active Accounts",
+                    "key": "active_accounts",
                     "count": Number(activeAccountsCount[0]?.count || 0),
                     "order": 1
                 })
                 result.push({
                     "name": "Active Cases",
+                    "key": "active_cases",
                     "count": totalCases,
                     "order": 2
                 })
                 result.push({
                     "name": "Total Completed Cases",
+                    "key": "total_completed_cases",
                     "count": completedCasesCount[0]?.count || 0,
                     "order": 3
                 })
                 result.push({
                     "name": "Stalled Cases",
+                    "key": "stalled_cases",
                     "count": onHoldCasesCount[0]?.count || 0,
                     "order": 4
                 })
                 result.push({
                     "name": "Open Tasks",
+                    "key": "open_tasks",
                     "count": openTasksCount[0]?.count || 0,
                     "order": 5
                 })
                 result.push({
                     "name": "Due Today / Over Due Tasks",
+                    "key": "due_today_overdue_tasks",
                     "count": overDueTasksCount[0]?.count || 0,
                     "order": 6
                 })
                 result.push({
                     "name": "Upcoming Tasks (7 Days)",
+                    "key": "upcoming_tasks_7_days",
                     "count": upcomingTasksCount[0]?.count || 0,
                     "order": 7
                 })
                 result.push({
                     "name": "Tasks Completed This Week",
+                    "key": "tasks_completed_this_week",
                     "count": weeklyCompletedTasksCount[0]?.count || 0,
                     "order": 8
                 })
@@ -385,6 +404,11 @@ export class ReportService implements IReportService {
                 }
             }
 
+            // Build attachment display names for each schemaNumber group
+            const attachmentDisplayNames: Record<string, string> = await this.schemaService.getAttachmentDisplayNames(
+                finalMeetingList
+            );
+
             const finalMeetingListWithUsers = finalMeetingList.map((meeting) => {
                 const participants = meeting.meeting_participants; // Already parsed above
                 const invitedBy = meeting.invited_by;
@@ -398,7 +422,8 @@ export class ReportService implements IReportService {
                     invited_by: {
                         email: invitedBy,
                         name: emailNameMap.get(invitedBy) || ''
-                    }
+                    },
+                    attached_to: attachmentDisplayNames[meeting.rid] || ''
                 };
             });
 

@@ -1,5 +1,6 @@
 export interface ICountDetails {
     name: string;
+    key: string;
     count: number;
     order: number;
 }
@@ -14,6 +15,13 @@ export interface IMeeting {
     meeting_participants: IMeetingParticipant[];
     invited_by: IMeetingParticipant;
     [key: string]: any; // Allow other properties for now
+}
+
+export interface IAttachment {
+    rid: string;
+    attach_to: string;
+    attachment_level: string;
+    [key: string]: any;
 }
 
 export interface IWeeklyProductivity {
@@ -48,7 +56,7 @@ export interface IResponse<T> {
 }
 
 export interface IReportService {
-    getCountDetails(userId: string, flag: string): Promise<IResponse<ICountDetails[]>>;
+    getCountDetails(userId: string, flag: string): Promise<IResponse<ICountDetails[] | { account: any[], count: number }>>;
 
     getMeetingList(userId: string, flag: string): Promise<IResponse<IMeeting[]>>;
 
