@@ -147,6 +147,25 @@ export class ChildCaseService extends CaseService {
         const orgDb = await this.getOrgDb();
         const mainDb = await this.getMainDb();
         try {
+         const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+        if (!accountNumber) {
+                throw new Error("Invalid account ID");
+            }
+        const schemaName = rawQueries.fetchSchemaName(accountNumber);
+        const checkTableQuery = rawQueries.checkCaseTableExists(schemaName);
+        const [tableExists] = await orgDb.query(checkTableQuery, {
+                 type: "SELECT",
+               });
+        if ((tableExists as any).exists === false) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+              message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
+              data: { cases: [] }
+          };
+        }
           const [caseStatus]: any = await mainDb.query(rawQueries.fetchCaseStatusByType(caseStatuses.CLOSED));
           if (caseStatus.length === 0) {
             return {
@@ -163,14 +182,7 @@ export class ChildCaseService extends CaseService {
                 errorMessage: "Regular filing type not found",
             };
           } 
-        const { accountNumber, parentAccountId } =
-        await this.caseSchemaService.fetchValidAccountNumberById(
-          data.account_rid
-        );
-
-            if (!accountNumber) {
-                throw new Error("Invalid account ID");
-            }
+        
           const { Case } = await this.caseModelService.getModels(accountNumber);
             const closedCases = await Case.findAll({
                 attributes: ['rid', 'case_name'],
