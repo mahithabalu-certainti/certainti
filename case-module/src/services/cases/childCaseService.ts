@@ -4,7 +4,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, ENV_PREFIX, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
-import { CaseCloseType, CaseClosureRemarks, CaseData, CaseSubmissionType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds } from "../../utils/types";
+import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, StateType } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
@@ -1420,7 +1420,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
     const mainDb = await super.getMainDb();
     const orgDb = await super.getOrgDb();
 
-    const [findParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    const findParentAccount = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT, plain : true});
     if(findParentAccount) {
       const schemaName = rawQueries.fetchSchemaName(findParentAccount.r_number)
       const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations} = await this.caseModelService.getModels(findParentAccount.r_number);
@@ -1488,7 +1488,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         })
         this.logger.info("Country Credits updated successfully")
         if(affectedCount > 0) {
-          const [caseSubmittedCost] = await orgDb.query<CaseSubmissionType>(calculateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.country_credits.country_rid), {type : QueryTypes.SELECT});
+          const [caseSubmittedCost] = await orgDb.query<CaseSubmissionType>(calculateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.country_credits.country_rid, "update"), {type : QueryTypes.SELECT});
           this.logger.info("caseSubmittedCost Data Retrived successfully")
           await CaseHistorySubmission.create({
             account_rid : data.account_rid,
@@ -1536,7 +1536,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         })
         }
         this.logger.info("RdCreditCalculationsSummary For Statewise Updated successfully")
-        const caseSubmittedCost = await orgDb.query<CaseSubmissionType>(calculateStateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.state_credits), {type : QueryTypes.SELECT});
+        const caseSubmittedCost = await orgDb.query<CaseSubmissionType>(calculateStateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.state_credits, "update"), {type : QueryTypes.SELECT});
         this.logger.info("caseSubmittedCost For Statewise Retrieved successfully")
         if(caseSubmittedCost.length > 0) {
           let storeArrayStateData : CaseHistorySubmissionCreationAttributes[] = [];
@@ -1571,6 +1571,65 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       return {
         statusCode : HttpStatus.NOT_FOUND,
         statusMessage : STATUS_MESSAGE.accountNoFound,
+      }
+    }
+  }
+  async getComputedValue (data : ComputedValueRequest) {
+    const mainDb = await super.getMainDb();
+    const orgDb = await super.getOrgDb();
+    const fetchParentAccount = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT, plain : true});
+    if(fetchParentAccount) {
+      let schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+      let stateData : CaseStateComputedType[] = []
+      if(data.country_code === countryCodes.USA || data.country_code === countryCodes.CAN) {
+        const fetchStateComputedData = await orgDb.query<CaseStateComputedType>(calculateStateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.state_rid, "list"), {type : QueryTypes.SELECT});
+        this.logger.info(`State Computed Data retrived successfully`)
+        const safetyCheckForId = [...new Set(fetchStateComputedData.map((d : CaseStateComputedType) => d.state_rid))];
+        const findAllState = await mainDb.query<StateType>(rawQueries.fetchStatesByIds(), {
+          type : QueryTypes.SELECT,
+          replacements : {
+            ids : safetyCheckForId
+          }
+        })
+        const mapStateName = new Map(findAllState.map((d) => [d.rid, d.state_name]));
+        stateData = fetchStateComputedData.map((d) => {
+          return {
+            ...d,
+            state_name : mapStateName.get(d.state_rid) || ''
+          }
+        });
+      } else {
+        stateData = []
+      }
+      let fetchCountryComputedData = await orgDb.query<CaseCountryComputedType>(calculateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.country_rid, "list"), {type : QueryTypes.SELECT, plain : true});
+      this.logger.info(`Country Computed Data retrived successfully`)
+      if(fetchCountryComputedData) {
+        const findCountryData = await mainDb.query<CountryType>(rawQueries.getCountryDetails(fetchCountryComputedData.country_rid), {type : QueryTypes.SELECT, plain : true});
+        if(findCountryData) {
+          fetchCountryComputedData.country_name = findCountryData.country_name
+        }
+      } else {
+        fetchCountryComputedData = null
+      }
+      let finalData = {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.computedDataFetchedSuccess,
+        data : {
+          countryComputedData : fetchCountryComputedData,
+          stateComputedData : stateData
+        }
+      }
+      this.logger.info(`FinalData computed successfully`)
+      return finalData;
+    } 
+    else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNoFound,
+        data : {
+          countryComputedData : null,
+          stateComputedData : []
+        }
       }
     }
   }

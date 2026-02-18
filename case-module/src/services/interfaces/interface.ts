@@ -38,6 +38,9 @@ import {
   CaseTaskDropdownType,
   CaseClosureRemarks,
   CaseCloseType,
+  ComputedValueRequest,
+  CaseStateComputedType,
+  CaseCountryComputedType,
 } from "../../utils/types";
 
 export interface ICaseService {
@@ -544,6 +547,14 @@ fetchDossierPackage(data : any) : Promise<{
 closeCase(data : CaseCloseType, files : Express.Multer.File[]): Promise<{
     statusCode: number;
     statusMessage: string;
+}>
+getComputedValue(data : ComputedValueRequest): Promise<{
+    statusCode: number;
+    statusMessage: string;
+    data: {
+        countryComputedData: CaseCountryComputedType | null;
+        stateComputedData: CaseStateComputedType[];
+    };
 }>
 }
 export interface ICaseTaskService {

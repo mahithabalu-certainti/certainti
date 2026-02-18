@@ -219,7 +219,8 @@ export const STATUS_MESSAGE = {
   dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully",
   closureRemarksExportedSuccess : "Closing Remarks Exported Successfully",
   dossierPackageFetchedSuccess : "Dossier Package fetched successfully",
-  caseClosedSuccess : "Case Closed Successfully"
+  caseClosedSuccess : "Case Closed Successfully",
+  computedDataFetchedSuccess : "Computed data fetched successfully"
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {

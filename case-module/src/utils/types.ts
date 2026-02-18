@@ -1093,3 +1093,22 @@ export interface CaseSubmissionType {
   average_annual_gross_receipts : number
   state_rid : string
 }
+
+export interface ComputedValueRequest {
+  case_rid : string
+  account_rid : string
+  country_rid : string
+  state_rid : string[],
+  country_code : string
+}
+
+export interface CaseStateComputedType {
+  state_rid : string
+  final_credit : string
+  state_name : string
+}
+export interface CaseCountryComputedType {
+  country_rid : string
+  final_credit : string
+  country_name : string
+}
