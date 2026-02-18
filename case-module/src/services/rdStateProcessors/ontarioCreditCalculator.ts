@@ -5,6 +5,7 @@ import { ProjectCalculatedDataCanada, ProjectComputeValue, ProjectFiscalIds } fr
 import { Case } from "../../models/caseModel";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { rawQueries } from "../../utils/constants";
+import Decimal from "decimal.js";
 
 type extractConfig = {
     fte_proxy : number,
@@ -54,11 +55,11 @@ export class RdCreditCalculatorForON {
                 "Project Code":projectData.project_code,
                 "Project Name" : projectData.project_name,
                 "Total Hours" : parseFloat(Number(projectData.total_effort_prj).toFixed(1)) || 0.00,
-                "Project Total Cost": parseFloat(Number(projectData.total_cost_prj).toFixed(1)) || 0.00,
+                "Project Total Cost": parseFloat(Number(new Decimal(projectData.total_cost_fte_prj || 0).add(projectData.total_cost_subcon_prj || 0).add(projectData.total_cost_nonlabor_prj || 0)).toFixed(1)) || 0.00,
                 "FTE Cost": parseFloat(Number(projectData.total_cost_fte_prj).toFixed(1)) || 0.00,
                 "SubCon Cost": parseFloat(Number(projectData.total_cost_subcon_prj).toFixed(1)) || 0.00,
-                "Other Cost": parseFloat(Number(projectData.total_cost_nonlabor_prj).toFixed(1)) || 0.00,
-                "Total Cost": parseFloat(Number(projectData.total_cost_prj).toFixed(1)) || 0.00,
+                "Other Cost": parseFloat(Number(caseDetails.other).toFixed(1)) || 0.00,
+                "Total Cost": parseFloat(Number(new Decimal(projectData.total_cost_fte_prj || 0).add(projectData.total_cost_subcon_prj || 0).add(caseDetails.other || 0)).toFixed(1)) || 0.00,
                 "Net QRE %": `${projectData.rd_percent_final}%`,
                 "FTE QRE Adjustment": `${fteQreAdjustment}%`,
                 "Subcon QRE Adjustment": `${subconQreAdjustment}%`,
