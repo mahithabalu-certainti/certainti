@@ -272,18 +272,24 @@ class InteractionSchemaService {
         }));
 
       // Utility: Prepare bulk SendEmailInfo data
-      const prepareSendEmailInfoData = (interactions: any[], projects: IProject[]) =>
-        interactions.map((interaction, idx) => ({
-          interaction_rid: interaction.rid,
-          account_rid: interactionData.account_rid,
-          account_rnumber: accountNumber,
-          project_fiscal_rid: projects[idx]?.project_fiscal_rid ?? "",
-          user_rid: userId,
-          is_email_send: false,
-          interaction_level: interactionLevel,
-          name: interactionData.email_info?.name || "",
-          email: interactionData.email_info?.email || "",
-        }));
+      // Maps interactions to projects by project_fiscal_rid instead of array index to handle skipped interactions from ignoreDuplicates
+      const prepareSendEmailInfoData = (interactions: any[], projects: IProject[]) => {
+        const projectMap = new Map(projects.map(p => [p.project_fiscal_rid, p]));
+        return interactions.map((interaction) => {
+          const project = projectMap.get(interaction.project_fiscal_rid);
+          return {
+            interaction_rid: interaction.rid,
+            account_rid: interactionData.account_rid,
+            account_rnumber: accountNumber,
+            project_fiscal_rid: interaction.project_fiscal_rid,
+            user_rid: userId,
+            is_email_send: false,
+            interaction_level: interactionLevel,
+            name: interactionData.email_info?.name || "",
+            email: interactionData.email_info?.email || "",
+          };
+        });
+      };
 
       // For Project level interactions, bulk check if key contact details exist when name and email are empty
       let projectsWithoutKeyContacts: Set<string> = new Set();
@@ -358,8 +364,12 @@ class InteractionSchemaService {
           const enabledProjects: IProject[] = [];
           const enabledInteractions: any[] = [];
           
-          for (let i = 0; i < interactionData.projects.length; i++) {
-            const project = interactionData.projects[i];
+          // Create a map of interactions by project_fiscal_rid for accurate matching
+          const interactionMap = new Map(
+            createdInteractions.map((interaction: any) => [interaction.project_fiscal_rid, interaction])
+          );
+          
+          for (const project of interactionData.projects) {
             if (!project) continue; // Skip if project is undefined
             
             // Skip projects that have no key contacts and no email_info
@@ -371,8 +381,8 @@ class InteractionSchemaService {
             
             if (isEnabled) {
               enabledProjects.push(project);
-              // Find corresponding interaction for this project
-              const correspondingInteraction = createdInteractions[i];
+              // Find corresponding interaction for this project by project_fiscal_rid instead of array index
+              const correspondingInteraction = interactionMap.get(project.project_fiscal_rid);
               if (correspondingInteraction) {
                 enabledInteractions.push(correspondingInteraction);
               }
