@@ -175,11 +175,12 @@ const Dossier: React.FC<DossierProps> = ({
     return map;
   }, [projectListViewEditFields]);
 
-  const initialTab = useMemo(() => {
-    if (isFinancialView) return 'financial_workings';
-    return 'summary';
-  }, [isFinancialView]);
+  // const initialTab = useMemo(() => {
+  //   if (isFinancialView) return 'financial_workings';
+  //   return 'summary';
+  // }, [isFinancialView]);
 
+  const initialTab = 'summary';
   useEffect(() => {
     if (searchParams.get('list') === 'dossier' && !searchParams.get('tab')) {
       searchParams.set('tab', initialTab);
@@ -353,11 +354,6 @@ const Dossier: React.FC<DossierProps> = ({
 
   const tabs = [
     {
-      label: 'Financial Workings',
-      value: 'financial_workings',
-      hide: !isFinancialView,
-    },
-    {
       label: 'Summary',
       value: 'summary',
       hide: false,
@@ -368,8 +364,13 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'RD Form',
-      value: 'rd_form',
+      label: 'Technical Summary',
+      value: 'technical_summary',
+      hide: false,
+    },
+    {
+      label: 'Resource Summary',
+      value: 'resource_summary',
       hide: false,
     },
     {
@@ -378,13 +379,13 @@ const Dossier: React.FC<DossierProps> = ({
       hide: false,
     },
     {
-      label: 'Technical Summary',
-      value: 'technical_summary',
-      hide: false,
+      label: 'Financial Workings',
+      value: 'financial_workings',
+      hide: !isFinancialView,
     },
     {
-      label: 'Resource Summary',
-      value: 'resource_summary',
+      label: 'RD Form',
+      value: 'rd_form',
       hide: false,
     },
     {
@@ -408,14 +409,14 @@ const Dossier: React.FC<DossierProps> = ({
       hide: !showTableControls,
     },
     {
-      label:
-        dossierCreditStatus === 'COMPLETED'
-          ? 'Download Dossier'
-          : 'Initiate Dossier',
+      label: 'Dossier Package',
+      // dossierCreditStatus === 'COMPLETED'
+      //   ? 'Download Dossier'
+      //   : 'Initiate Dossier',
       variant: 'outlined' as const,
       disabled:
-        !caseDetails?.rd_form_signoff ||
-        (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),
+        !caseDetails?.financial_working_signoff ||
+        (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),  // need to change rd form sign after rd form complete 
       onClick: handleGenerateDossierSheet,
       sx: { width: '125px', minWidth: '125px' },
       // hide: !showTableControls,
@@ -437,7 +438,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
           (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
@@ -477,7 +478,7 @@ const Dossier: React.FC<DossierProps> = ({
         defaultValue={tabParam}
       />
       {caseDetails?.case_total_qualified_projects === 0 ||
-      caseDetails?.case_total_qualified_projects === '0' ? (
+        caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>
