@@ -331,8 +331,9 @@ class InteractionSchemaService {
           const filteredProjects = interactionData.projects.filter(proj => 
             !projectsWithoutKeyContacts.has(proj.project_fiscal_rid)
           );
-          const filteredInteractions = createdInteractions.filter((_, idx) => {
-            const projectRid = interactionData.projects?.[idx]?.project_fiscal_rid;
+          // Filter interactions based on their own project_fiscal_rid to avoid index misalignment
+          const filteredInteractions = createdInteractions.filter((interaction: any) => {
+            const projectRid = (interaction as any).project_fiscal_rid;
             return projectRid ? !projectsWithoutKeyContacts.has(projectRid) : true;
           });
           
