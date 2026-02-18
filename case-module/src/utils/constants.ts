@@ -1510,6 +1510,7 @@ export const rawQueries = {
     WHERE g.credit_program_name = 'Platform Configuration'
     AND g.is_federal = true
     AND g.country_rid = '${countryRid}'
+    order by k.credit_parameter_display_name asc
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
