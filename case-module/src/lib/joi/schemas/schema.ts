@@ -70,6 +70,7 @@ const createCaseSchema = Joi.object({
 
 const updateCaseSchema = Joi.object({
   case_rid: Joi.string().required(),
+  parent_case_rid: Joi.string().optional().allow("", null),
   account_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().optional().allow(""),
