@@ -61,33 +61,33 @@ export enum QuestionUpdate {
 export const getQuestionTableColumns = (
   isEditView: boolean
 ): TemplateFormTableColumn[] => [
-    {
-      name: 'questionNo',
-      label: 'Question No.',
-      width: '10%',
-      hide: !isEditView,
-    },
-    {
-      name: 'question',
-      label: 'Interaction Questions',
-      width: '57%',
-      required: true,
-    },
-    // { name: 'mandatory', label: 'Mandatory', width: '5%' },
-    {
-      name: 'notes',
-      label: 'Notes',
-      width: '23%',
-      hide: false,
-    },
-    {
-      name: 'action',
-      label: 'Action',
-      width: '5%',
-      align: 'center',
-      hide: false,
-    },
-  ];
+  {
+    name: 'questionNo',
+    label: 'Question No.',
+    width: '10%',
+    hide: !isEditView,
+  },
+  {
+    name: 'question',
+    label: 'Interaction Questions',
+    width: '57%',
+    required: true,
+  },
+  // { name: 'mandatory', label: 'Mandatory', width: '5%' },
+  {
+    name: 'notes',
+    label: 'Notes',
+    width: '23%',
+    hide: false,
+  },
+  {
+    name: 'action',
+    label: 'Action',
+    width: '5%',
+    align: 'center',
+    hide: false,
+  },
+];
 
 export const shouldHideField = (
   fieldName: string,

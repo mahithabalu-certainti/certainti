@@ -131,43 +131,43 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
 
   const headerButtons = isEditing
     ? [
-      {
-        label: 'Save',
-        variant: 'contained' as const,
-        disabled: updateTechSummaryText.isPending,
-        loading: updateTechSummaryText.isPending,
-        sx: { width: '50px', minWidth: '50px' },
-        onClick: handleSave,
-      },
-      {
-        label: 'Cancel',
-        variant: 'outlined' as const,
-        onClick: handleCancel,
-        sx: { width: '60px', minWidth: '60px' },
-        disabled: updateTechSummaryText.isPending,
-      },
-    ]
-    : [
-      {
-        label: 'Edit',
-        variant: 'outlined' as const,
-        disabled: accountInActive || disabledAdditionalSummaryText,
-        onClick: () => setIsEditing(true),
-        sx: { width: '48px', minWidth: '48px' },
-        hide: hideAdditionalSummaryText,
-      },
-      {
-        label: 'Back To Technical Summary',
-        variant: 'outlined' as const,
-        disabled: false,
-        onClick: () => {
-          if (setIsActionItemsExpanded) setIsActionItemsExpanded(false);
-          handleBackClick();
+        {
+          label: 'Save',
+          variant: 'contained' as const,
+          disabled: updateTechSummaryText.isPending,
+          loading: updateTechSummaryText.isPending,
+          sx: { width: '50px', minWidth: '50px' },
+          onClick: handleSave,
         },
-        sx: { width: '178px', minWidth: '178px' },
-        hide: hideAdditionalSummaryText,
-      },
-    ];
+        {
+          label: 'Cancel',
+          variant: 'outlined' as const,
+          onClick: handleCancel,
+          sx: { width: '60px', minWidth: '60px' },
+          disabled: updateTechSummaryText.isPending,
+        },
+      ]
+    : [
+        {
+          label: 'Edit',
+          variant: 'outlined' as const,
+          disabled: accountInActive || disabledAdditionalSummaryText,
+          onClick: () => setIsEditing(true),
+          sx: { width: '48px', minWidth: '48px' },
+          hide: hideAdditionalSummaryText,
+        },
+        {
+          label: 'Back To Technical Summary',
+          variant: 'outlined' as const,
+          disabled: false,
+          onClick: () => {
+            if (setIsActionItemsExpanded) setIsActionItemsExpanded(false);
+            handleBackClick();
+          },
+          sx: { width: '178px', minWidth: '178px' },
+          hide: hideAdditionalSummaryText,
+        },
+      ];
 
   const auditInfo: DetailItem[] = [
     {

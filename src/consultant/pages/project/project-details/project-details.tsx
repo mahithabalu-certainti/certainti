@@ -1046,10 +1046,10 @@ export const ProjectDetails = () => {
           primaryButton={
             isProjectFieldsEditable && !detailPageView
               ? {
-                label: 'Edit',
-                onClick: handleEditAccount,
-                disabled: accountInActive,
-              }
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                  disabled: accountInActive,
+                }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -1062,12 +1062,13 @@ export const ProjectDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
-          ? 'max-h-0 opacity-0'
-          : isError
-            ? 'max-h-[60px] opacity-100'
-            : 'max-h-[140px] opacity-100'
-          }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
       >
         <ProjectInfoSection
           columns={projectDetails}
@@ -1077,10 +1078,11 @@ export const ProjectDetails = () => {
       </div>
       <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px]'
-            : 'w-[220px] min-w-[220px] max-w-[220px]'
-            }`}
+          className={`flex transition-all duration-300 ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px]'
+              : 'w-[220px] min-w-[220px] max-w-[220px]'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -1100,7 +1102,7 @@ export const ProjectDetails = () => {
             maxHeight: isActionItemsExpanded
               ? 'calc(100vh - 140px)'
               : 'calc(100vh - 283px)',
-            overflow: 'auto'
+            overflow: 'auto',
           }}
         >
           {isProjectSignedOff && !isLoading && (
