@@ -285,7 +285,17 @@ class InteractionSchemaService {
           email: interactionData.email_info?.email || "",
         }));
 
+      // For Project level interactions, bulk check if key contact details exist when name and email are empty
+      let projectsWithoutKeyContacts: Set<string> = new Set();
       if (Array.isArray(interactionData.projects) && interactionData.projects.length > 0) {
+        if (interactionLevel === 'Project' && (!interactionData.email_info?.name || !interactionData.email_info?.email)) {
+          const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+          projectsWithoutKeyContacts = await this.getProjectsWithoutKeyContacts(
+            interactionData.projects.map(p => p.project_fiscal_rid),
+            schemaName
+          );
+        }
+
         // Bulk create Interactions
         const interactionRequests = prepareInteractionData(interactionData.projects);
         const createdInteractions = await batchInsert(Interaction, interactionRequests, { ignoreDuplicates: true });
@@ -317,16 +327,29 @@ class InteractionSchemaService {
        
         const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId,interactionData.account_rid);
         if (isParensettingsConfigured && (interactionData.trigger_send || autoSendAccess)) {
-          // Bulk insert SendEmailInfo
-          const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
-          await batchInsert(SendEmailInfo, sendEmailInfoData);
-
-          // Bulk update Interaction status to INQUEUE
-          const inqueueStatusRid = await this.getInteractionStatusByType(statusAction.INQUEUE);
-          await Interaction.update(
-            { status_rid: inqueueStatusRid! },
-            { where: { rid: createdInteractions.map(i => i.rid) } }
+          // Filter projects: exclude those with no key contacts and no email_info
+          const filteredProjects = interactionData.projects.filter(proj => 
+            !projectsWithoutKeyContacts.has(proj.project_fiscal_rid)
           );
+          const filteredInteractions = createdInteractions.filter((_, idx) => {
+            const projectRid = interactionData.projects?.[idx]?.project_fiscal_rid;
+            return projectRid ? !projectsWithoutKeyContacts.has(projectRid) : true;
+          });
+          
+          // Bulk insert SendEmailInfo only for projects with key contacts or email_info
+          if (filteredProjects.length > 0 && filteredInteractions.length > 0) {
+            const sendEmailInfoData = prepareSendEmailInfoData(filteredInteractions, filteredProjects);
+            await batchInsert(SendEmailInfo, sendEmailInfoData);
+          }
+
+          // Bulk update Interaction status to INQUEUE for projects with email info
+          const inqueueStatusRid = await this.getInteractionStatusByType(statusAction.INQUEUE);
+          if (filteredInteractions.length > 0) {
+            await Interaction.update(
+              { status_rid: inqueueStatusRid! },
+              { where: { rid: filteredInteractions.map(i => i.rid) } }
+            );
+          }
         }
         else
         {
@@ -337,6 +360,11 @@ class InteractionSchemaService {
           for (let i = 0; i < interactionData.projects.length; i++) {
             const project = interactionData.projects[i];
             if (!project) continue; // Skip if project is undefined
+            
+            // Skip projects that have no key contacts and no email_info
+            if (projectsWithoutKeyContacts.has(project.project_fiscal_rid)) {
+              continue;
+            }
             
             const isEnabled = await this.checkProjectAutoSendAccess(accountNumber, project.project_fiscal_rid);
             
@@ -4702,7 +4730,93 @@ const existingTemplate = await InteractionTemplate.findOne({
       );
   
   
-      return templateDetails;  }
+      return templateDetails;  
+  }
+
+  /**
+   * Bulk fetch projects that do NOT have key contacts
+   * Returns a Set of project fiscal RIDs that have no key contacts
+   * 
+   * @param {string[]} projectFiscalRids - Array of project fiscal RIDs to check
+   * @param {string} schemaName - Schema name
+   * @returns {Promise<Set<string>>} Set of project fiscal RIDs without key contacts
+   */
+  private async getProjectsWithoutKeyContacts(
+    projectFiscalRids: string[],
+    schemaName: string
+  ): Promise<Set<string>> {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+
+      // Fetch all key contacts for all projects in a single query
+      const allKeyContacts: any[] = await this.orgDbSequelize.query(
+        `SELECT DISTINCT entity_rid FROM ${schemaName}.key_contact_details 
+         WHERE entity_rid IN (${projectFiscalRids.map(rid => `'${rid}'`).join(',')}) 
+         AND include_in_communication = TRUE`,
+        {
+          type: "SELECT",
+        }
+      );
+
+      // Create a set of project RIDs that HAVE key contacts
+      const projectsWithKeyContacts = new Set(
+        allKeyContacts.map((row: any) => row.entity_rid)
+      );
+
+      // Return projects that DON'T have key contacts
+      const projectsWithoutKeyContacts = new Set(
+        projectFiscalRids.filter(rid => !projectsWithKeyContacts.has(rid))
+      );
+
+      if (projectsWithoutKeyContacts.size > 0) {
+        logMessage(
+          `[getProjectsWithoutKeyContacts] ${projectsWithoutKeyContacts.size} projects have no key contacts`
+        );
+      }
+
+      return projectsWithoutKeyContacts;
+    } catch (error) {
+      logMessage(
+        `Error fetching projects without key contacts: ${error}`
+      );
+      // Return empty set on error to avoid filtering out projects
+      return new Set();
+    }
+  }
+
+  /**
+   * Check if key contact details exist for a project
+   * 
+   * @param {string} projectFiscalRid - Project fiscal RID
+   * @param {string} schemaName - Schema name
+   * @returns {Promise<boolean>} True if key contact details exist, false otherwise
+   */
+  private async checkProjectKeyContactExists(
+    projectFiscalRid: string,
+    schemaName: string
+  ): Promise<boolean> {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+
+      const keyContactDetails: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchKeyContactForInteraction(schemaName, projectFiscalRid),
+        {
+          type: "SELECT",
+        }
+      );
+
+      return keyContactDetails && keyContactDetails.length > 0;
+    } catch (error) {
+      logMessage(
+        `Error checking key contact details for project ${projectFiscalRid}: ${error}`
+      );
+      return false;
+    }
+  }
 
 }
 
