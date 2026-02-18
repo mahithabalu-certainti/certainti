@@ -1255,6 +1255,34 @@ const rdFormSignOffSchema = Joi.object({
   sign_off: Joi.boolean().required()
 });
 
+const stateCreditSchema = Joi.object({
+  state_rid : Joi.string().required().max(50),
+  rd_credits_computed : Joi.string().required(),
+  rd_credits_approved : Joi.string().required(),
+  rd_credits_submitted : Joi.string().required()
+})
+
+const caseCloseSchema = Joi.object({
+  account_rid : Joi.string().required().max(50),
+  case_rid : Joi.string().required().max(50),
+  country_credits : Joi.object({
+    country_rid : Joi.string().required().max(50),
+    rd_credits_computed : Joi.string().required(),
+    rd_credits_approved : Joi.string().required(),
+    rd_credits_submitted : Joi.string().required()
+  }),
+  comments : Joi.string().optional().allow(""),
+  state_credits : Joi.array().items(stateCreditSchema),
+  fiscal_year : Joi.string().required()
+})
+const singleFileSchema = Joi.object({
+  mimetype : Joi.string().required(),
+  size : Joi.number().required(),
+  originalname : Joi.string().required()
+})
+const validateFile = Joi.array().items(singleFileSchema).optional()
+
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -1323,5 +1351,7 @@ export {
   caseClosedListSchema,
   rdFormGenerationSchema,
   rdFormPreviewSchema,
-  rdFormSignOffSchema
+  rdFormSignOffSchema,
+  caseCloseSchema,
+  validateFile
 };

@@ -1058,8 +1058,7 @@ interface RdCreditsCountry {
   rd_credits_submitted : number
 }
 
-interface RdCreditsState {
-  country_rid : string
+export interface RdCreditsState {
   state_rid : string
   rd_credits_computed : number
   rd_credits_approved : number
@@ -1072,8 +1071,6 @@ export interface CaseCloseType {
   country_credits : RdCreditsCountry,
   state_credits : RdCreditsState[]
   comments : string
-  attachments : Express.Multer.File[]
-  country_code : string
   user_rid : string,
   fiscal_year : string
 }
@@ -1094,4 +1091,5 @@ export interface CaseSubmissionType {
   total_project_cost : number
   total_qre : number,
   average_annual_gross_receipts : number
+  state_rid : string
 }

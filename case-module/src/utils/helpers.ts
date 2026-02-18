@@ -921,7 +921,7 @@ export const uploadMultipleFilesToAzureBlob = async (accountRid : string, accoun
       const extension = file.originalname.includes(".") ? file.originalname.substring(file.originalname.lastIndexOf(".")) : "";
       const baseName = file.originalname.replace(/\.[^/.]+$/, "");
       const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, "");
-      const timestamp = new Date();
+      const timestamp = Date.now()
       const blobName = `${accountRid}/cases/dossier/${timestamp}-${sanitizedBaseName}${extension}`
       const blockBlobClient = container.getBlockBlobClient(blobName);
       const uploadOptions = {
@@ -940,4 +940,9 @@ export const uploadMultipleFilesToAzureBlob = async (accountRid : string, accoun
     })
   )
   return uploadedResult;
+}
+
+export const addLog = (methodName : string, timestamp : string, message : string) => {
+  const logger = getLogger();
+  return logger.info(`MethodName : ${methodName}, Timestamp : ${timestamp}, Error : ${message}`)
 }
