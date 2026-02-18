@@ -1581,7 +1581,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
     if(fetchParentAccount) {
       let schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
       let stateData : CaseStateComputedType[] = []
-      if(data.country_code === countryCodes.USA || data.country_code === countryCodes.CAN) {
+      if(data.state_rid.length > 0) {
         const fetchStateComputedData = await orgDb.query<CaseStateComputedType>(calculateStateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.state_rid, "list"), {type : QueryTypes.SELECT});
         this.logger.info(`State Computed Data retrived successfully`)
         const safetyCheckForId = [...new Set(fetchStateComputedData.map((d : CaseStateComputedType) => d.state_rid))];
@@ -1601,15 +1601,18 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       } else {
         stateData = []
       }
-      let fetchCountryComputedData = await orgDb.query<CaseCountryComputedType>(calculateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.country_rid, "list"), {type : QueryTypes.SELECT, plain : true});
-      this.logger.info(`Country Computed Data retrived successfully`)
-      if(fetchCountryComputedData) {
-        const findCountryData = await mainDb.query<CountryType>(rawQueries.getCountryDetails(fetchCountryComputedData.country_rid), {type : QueryTypes.SELECT, plain : true});
-        if(findCountryData) {
-          fetchCountryComputedData.country_name = findCountryData.country_name
+      let fetchCountryComputedData = null
+      if(data.country_rid) {
+        fetchCountryComputedData = await orgDb.query<CaseCountryComputedType>(calculateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.country_rid, "list"), {type : QueryTypes.SELECT, plain : true});
+        this.logger.info(`Country Computed Data retrived successfully`)
+        if(fetchCountryComputedData) {
+          const findCountryData = await mainDb.query<CountryType>(rawQueries.getCountryDetails(fetchCountryComputedData.country_rid), {type : QueryTypes.SELECT, plain : true});
+          if(findCountryData) {
+            fetchCountryComputedData.country_name = findCountryData.country_name
+          }
+        } else {
+          fetchCountryComputedData = null
         }
-      } else {
-        fetchCountryComputedData = null
       }
       let finalData = {
         statusCode : HttpStatus.SUCCESS,
