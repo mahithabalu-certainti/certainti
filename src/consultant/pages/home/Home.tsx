@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../../store/store';
-import { checkPermission } from '../../../common-utils';
+import { checkPermission, navigateWithFilters } from '../../../common-utils';
 import { MenuOption } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
+import { ACCOUNT, CASE, TASKS } from '../../../routes';
 import {
   useGetDashboardCountDetails,
   useGetCasesByHealthStatus,
@@ -51,8 +53,10 @@ import { ClockIcon } from '@mui/x-date-pickers';
 import { Tooltip } from '@mui/material';
 import { TickIcon } from '../../../assets';
 import { useToast } from '../../../hooks';
+import dayjs from 'dayjs';
 
 export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const { errorToast } = useToast();
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [donutFiscalYear, setDonutFiscalYear] = useState<string>('all');
@@ -85,21 +89,21 @@ export const HomePage: React.FC = () => {
       donutFiscalYear === 'all' ? undefined : Number(donutFiscalYear)
     );
   const { data: weeklyProductivity, isLoading: isWeeklyProductivityLoading } =
-    useGetWeeklyProductivity('all');
+    useGetWeeklyProductivity('user');
   const { data: overdueApprovals, isLoading: isOverdueLoading } =
-    useGetOverdueApprovals('all');
+    useGetOverdueApprovals('user');
   const { data: upcomingTasks, isLoading: isUpcomingLoading } =
-    useGetUpcomingTasks('all');
+    useGetUpcomingTasks('user');
   const { data: dueTodayOverdueTasks, isLoading: isDueTodayLoading } =
-    useGetDueTodayOverdueTasks('all');
+    useGetDueTodayOverdueTasks('user');
   const { data: openTasks, isLoading: isOpenTasksLoading } =
-    useGetOpenTasks('all');
+    useGetOpenTasks('user');
   const { data: completedTasks, isLoading: isCompletedLoading } =
-    useGetCompletedTasksThisWeek('all');
+    useGetCompletedTasksThisWeek('user');
   const { data: meetingList, isLoading: isMeetingsLoading } =
-    useGetMeetingList('all');
+    useGetMeetingList('user');
   const { data: pendingFollowUps, isLoading: isPendingFollowUpsLoading } =
-    useGetPendingFollowUps('all');
+    useGetPendingFollowUps('user');
 
   const { data: taskStatuses } = useGetTaskStatuses();
 
@@ -216,8 +220,105 @@ export const HomePage: React.FC = () => {
   }, [healthStatusData]);
 
   const handleExport = async (key: ExportReportType) => {
-    await ExportDashboardReport(key);
+    await ExportDashboardReport(key, 'user');
   };
+
+  // Handler to navigate to cases page with pre-applied filters
+  const handleCardClick = useCallback(
+    (cardKey: string) => {
+      const tomorrowDate = dayjs().add(1, 'day').format('YYYY-MM-DD');
+      const seventhDayDate = dayjs().add(7, 'day').format('YYYY-MM-DD');
+
+      if (cardKey === 'active_accounts') {
+        navigateWithFilters(navigate, ACCOUNT, [
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'equals',
+            value: 'Active',
+          },
+        ]);
+      } else if (cardKey === 'active_cases') {
+        navigateWithFilters(navigate, CASE, []);
+      } else if (cardKey === 'total_completed_cases') {
+        navigateWithFilters(navigate, CASE, [
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'equals',
+            value: 'Closed',
+          },
+        ]);
+      } else if (cardKey === 'stalled_cases') {
+        navigateWithFilters(navigate, CASE, [
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'equals',
+            value: 'On Hold',
+          },
+        ]);
+      } else if (cardKey === 'open_tasks') {
+        navigateWithFilters(navigate, TASKS, [
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'in',
+            value: ['To Do', 'In Progress'],
+          },
+        ]);
+      } else if (cardKey === 'due_today_overdue_tasks') {
+        navigateWithFilters(navigate, TASKS, [
+          {
+            filterKey: 'effective_end_datetime',
+            type: 'date',
+            operator: 'before',
+            value: tomorrowDate,
+          },
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'in',
+            value: ['To Do', 'In Progress'],
+          },
+        ]);
+      } else if (cardKey === 'upcoming_tasks_7_days') {
+        navigateWithFilters(navigate, TASKS, [
+          {
+            filterKey: 'effective_start_datetime',
+            type: 'date',
+            operator: 'between',
+            value: [tomorrowDate, seventhDayDate],
+          },
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'in',
+            value: ['To Do', 'In Progress'],
+          },
+        ]);
+      } else if (cardKey === 'tasks_completed_this_week') {
+        const startDate = dayjs().startOf('week').format('YYYY-MM-DD');
+        const endDate = dayjs().endOf('week').format('YYYY-MM-DD');
+
+        navigateWithFilters(navigate, TASKS, [
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'equals',
+            value: 'Completed',
+          },
+          {
+            filterKey: 'effective_end_datetime',
+            type: 'date',
+            operator: 'between',
+            value: [startDate, endDate],
+          },
+        ]);
+      }
+    },
+    [navigate]
+  );
 
   if (!isDashboardEnable) return <AccessRestricted />;
 
@@ -238,10 +339,11 @@ export const HomePage: React.FC = () => {
             ))
           : countDetails?.map((card, index) => (
               <ReportCard
-                key={index}
+                key={card.key ?? index}
                 title={card.name}
                 value={card.count}
                 color={PROJECT_COLORS[index % PROJECT_COLORS.length]}
+                onClick={() => handleCardClick(card.key)}
               />
             ))}
       </div>

@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState, useEffect } from 'react';
 import {
   AllModules,
   AllPermissions,
@@ -14,7 +14,14 @@ import {
   useGetCaseOwners,
   useGetCaseStatuses,
 } from '../../../services/cases/case-service';
-import { checkPermission, reshapeGlobalFilter } from '../../../../common-utils';
+import {
+  buildApiFilters,
+  buildFilterStates,
+  checkPermission,
+  NavFilter,
+  NavFilterState,
+  reshapeGlobalFilter,
+} from '../../../../common-utils';
 import { getGlobalCasesFilterFields } from '../helper';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import {
@@ -27,13 +34,15 @@ import {
 import { ActionsDropdown } from '../../../../components';
 import SearchBar from '../../../../components/search/search-bar';
 import Filter from '../../account-details-sidebar/components/filter/filter';
+import { storeFilters } from '../../account-details-sidebar/components/filter/utils';
 import { CaseListTable } from './table/case-table';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { CASE_CREATE } from '../../../../routes';
 import TextButton from '../../../../components/button/text-button';
 
 const Cases: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -50,6 +59,7 @@ const Cases: React.FC = () => {
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [urlFilterApplied, setUrlFilterApplied] = useState<boolean>(false);
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -102,6 +112,62 @@ const Cases: React.FC = () => {
       })) || [],
     [allCountries.data?.data.country]
   );
+
+  // Handle navigation state-based filtering (from dashboard / other pages)
+  useEffect(() => {
+    const navState = location.state as NavFilterState | null;
+    const incomingFilters: NavFilter[] = navState?.filters ?? [];
+
+    if (incomingFilters.length === 0 || urlFilterApplied) return;
+
+    if (caseStatusOptions.length === 0) return;
+
+    const resolvedFilters: NavFilter[] = incomingFilters.map((f) => {
+      if (f.type !== 'enum') return f;
+
+      const resolveValue = (val: string): string => {
+        // Check caseStatusOptions
+        const statusMatch = caseStatusOptions.find(
+          (opt) => opt.label.toLowerCase() === val.toLowerCase()
+        );
+        if (statusMatch) return statusMatch.value;
+        // Value is already a RID or unknown — pass through
+        return val;
+      };
+
+      const rawValue = f.value;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let resolvedValue: any = rawValue;
+
+      if (typeof rawValue === 'string') {
+        resolvedValue = resolveValue(rawValue);
+      } else if (Array.isArray(rawValue)) {
+        resolvedValue = rawValue.map((v) =>
+          typeof v === 'string' ? resolveValue(v) : v
+        );
+      }
+
+      return { ...f, value: resolvedValue };
+    });
+
+    // Build the internal FilterState format and store in localStorage
+    const filterStates = buildFilterStates(resolvedFilters);
+    storeFilters(filterStates, 'global-cases');
+
+    // Build and apply the API filter format
+    const apiFilters = buildApiFilters(resolvedFilters);
+    setAppliedFilters(apiFilters as FilterTypes);
+    setUrlFilterApplied(true);
+
+    // Clear navigation state so refreshing doesn't re-apply
+    navigate(location.pathname, { replace: true });
+  }, [
+    location.state,
+    caseStatusOptions,
+    urlFilterApplied,
+    navigate,
+    location.pathname,
+  ]);
 
   // Permissions
   const casesEnable = checkPermission(modules, AllModules.CASES);
