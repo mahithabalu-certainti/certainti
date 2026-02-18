@@ -4752,9 +4752,7 @@ const existingTemplate = await InteractionTemplate.findOne({
 
       // Fetch all key contacts for all projects in a single query
       const allKeyContacts: any[] = await this.orgDbSequelize.query(
-        `SELECT DISTINCT entity_rid FROM ${schemaName}.key_contact_details 
-         WHERE entity_rid IN (${projectFiscalRids.map(rid => `'${rid}'`).join(',')}) 
-         AND include_in_communication = TRUE`,
+        rawQueries.fetchProjectsWithoutKeyContacts(schemaName, projectFiscalRids),
         {
           type: "SELECT",
         }
@@ -4786,37 +4784,6 @@ const existingTemplate = await InteractionTemplate.findOne({
     }
   }
 
-  /**
-   * Check if key contact details exist for a project
-   * 
-   * @param {string} projectFiscalRid - Project fiscal RID
-   * @param {string} schemaName - Schema name
-   * @returns {Promise<boolean>} True if key contact details exist, false otherwise
-   */
-  private async checkProjectKeyContactExists(
-    projectFiscalRid: string,
-    schemaName: string
-  ): Promise<boolean> {
-    try {
-      if (!this.orgDbSequelize) {
-        this.orgDbSequelize = await this.interactionModelService.getSequelize();
-      }
-
-      const keyContactDetails: any[] = await this.orgDbSequelize.query(
-        rawQueries.fetchKeyContactForInteraction(schemaName, projectFiscalRid),
-        {
-          type: "SELECT",
-        }
-      );
-
-      return keyContactDetails && keyContactDetails.length > 0;
-    } catch (error) {
-      logMessage(
-        `Error checking key contact details for project ${projectFiscalRid}: ${error}`
-      );
-      return false;
-    }
-  }
 
 }
 
