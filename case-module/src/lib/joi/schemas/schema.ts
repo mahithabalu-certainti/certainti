@@ -1274,7 +1274,9 @@ const caseCloseSchema = Joi.object({
   }).allow({}),
   comments : Joi.string().optional().allow(""),
   state_credits : Joi.array().items(stateCreditSchema),
-  fiscal_year : Joi.string().required()
+  fiscal_year : Joi.string().required(),
+  user_preference : Joi.string().allow(""),
+  country_rid : Joi.string().optional().allow("")
 })
 const singleFileSchema = Joi.object({
   mimetype : Joi.string().required(),

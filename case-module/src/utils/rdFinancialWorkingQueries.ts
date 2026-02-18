@@ -226,7 +226,7 @@ export const calculateStateCostForCaseSubmissionCurrentYear = (schemaName : stri
         COALESCE(rsc.total_qre, 0.00) AS total_qre,
         COALESCE(rsc.average_annual_gross_receipts, 0.00) AS average_annual_gross_receipts,
         rsc.state_rid`
-        condition = `rsc.state_rid IN (${stateRids.map((d : any) => `'${d}'`).join(",")})`
+        condition = `rsc.state_rid IN (${stateRids.map((d : any) => `'${d.state_rid}'`).join(",")})`
 
     }
     return `

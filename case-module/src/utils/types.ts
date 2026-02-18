@@ -1071,8 +1071,10 @@ export interface CaseCloseType {
   country_credits : RdCreditsCountry,
   state_credits : RdCreditsState[]
   comments : string
-  user_rid : string,
+  user_rid : string
   fiscal_year : string
+  user_preference : string
+  country_rid : string
 }
 
 export interface ParentAccountType {
