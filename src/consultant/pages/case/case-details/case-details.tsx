@@ -1297,7 +1297,7 @@ export const CaseDetails = () => {
                 </div>
                 <div>
                   <span className='font-bold mr-1 capitalize'>
-                    Initiate Dossier Status
+                    Dossier Package Status
                   </span>
                   -
                   <span className='ml-1 font-medium'>

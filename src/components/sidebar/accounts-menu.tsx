@@ -31,7 +31,6 @@ export const accountNavItems: INavItem[] = [
     link: MAIN_ROUTE,
     type: 'link',
     matchLink: MAIN_ROUTE,
-    noRedirect: true,
     activePath: 'dashboard',
   },
   {
