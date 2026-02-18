@@ -218,7 +218,9 @@ export const STATUS_MESSAGE = {
   caseClosureRemarksSuccess : "Case Closure Remarks Details fetched successfully",
   dossierCreationInitiatedSuccess : "Dossier Creation Initaited Successfully",
   closureRemarksExportedSuccess : "Closing Remarks Exported Successfully",
-  dossierPackageFetchedSuccess : "Dossier Package fetched successfully"
+  dossierPackageFetchedSuccess : "Dossier Package fetched successfully",
+  caseClosedSuccess : "Case Closed Successfully",
+  computedDataFetchedSuccess : "Computed data fetched successfully"
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
@@ -309,13 +311,13 @@ export const rawQueries = {
       `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type, currency_rid, is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
       SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent, a.currency_rid, a.storage_type
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -1654,8 +1656,9 @@ export const rawQueries = {
   updateClaimQualifiedInProjectFiscalSummary(projectFiscalRids: string[], accountRid: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = true WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
-  getFinancialWorkingId () {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%Financial Computation%'`
+  getFinancialWorkingId (typeName : string) {
+    const safeTypeName = typeName.replace(/'/g, "''");
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%${safeTypeName}%'`
   },
   getRdFormSignOffId () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.signoff_type WHERE signoff_type_name ILIKE '%RD Forms%'`
@@ -2452,3 +2455,16 @@ export const DOSSIER_NAME = 'dossier_project_document'
     { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
    
   ];
+
+  export const countryCodes = {
+    USA : "USA",
+    AUS : "AUS",
+    CAN : "CAN",
+    IRL : "IRL",
+    GBR : "GBR"
+  }
+  export const SignOffTypes = {
+    financialWorking : "Financial Computation",
+    case : "Case",
+    rdForms : "RD Forms"
+  }

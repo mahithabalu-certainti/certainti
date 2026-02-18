@@ -1,11 +1,12 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Configurations from "../config/config";
-import { errorLog, handleErrorResponse, handleSuccessResponse, successLog, validateRequest } from "../utils/helpers";
+import { addLog, errorLog, handleErrorResponse, handleSuccessResponse, successLog, validateRequest } from "../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
-import { caseClosedListSchema } from "../lib/joi/schemas/schema";
+import { caseClosedListSchema, caseCloseSchema, validateFile } from "../lib/joi/schemas/schema";
 
 const services = Configurations.getInstance().getServices();
 const childCaseService = services.caseService;
+const logger = Configurations.getInstance().getLogger();
 
 async function signOffFinancialWorking (req : Request, res : Response) {
     const methodName = "signOffFinancialWorking";
@@ -290,6 +291,132 @@ async function getDossierPackage (req : Request, res : Response) {
     return;
   }
 }
+/**
+ * Controller function to close a specific case.
+ *
+ * This async function handles HTTP requests to close a case by:
+ * - Validating the presence of a user ID in the request headers
+ * - Parsing and normalizing `country_credits` and `state_credits` from the request body
+ * - Validating the request payload against the `caseCloseSchema`
+ * - Attaching the user identifier to the validated data
+ * - Delegating the case closure operation to the `childCaseService.closeCase` method
+ * - Returning appropriate HTTP responses based on the operation result (success or not found)
+ *
+ * Error handling:
+ * - Logs a message if the required user ID header is missing
+ * - Logs and returns a `BAD_REQUEST` response if validation fails or any runtime error occurs
+ *
+ * @param {Request} req - Express request object containing headers, body, and uploaded files
+ * @param {Response} res - Express response object used to send the API response
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and handles any validation, service, or runtime errors
+ */
+
+async function closeCase(req : Request, res : Response) {
+  const methodName = "Close Case";
+  try {
+    const userId = req.headers['x-user-id'];
+    if(!userId) {
+      addLog(methodName, new Date().toISOString(), STATUS_MESSAGE.userIdMissingInHeader)
+    }
+    req.body.country_credits = JSON.parse(req.body.country_credits);
+    req.body.state_credits = JSON.parse(req.body.state_credits)
+
+    const validData = await validateRequest(req, caseCloseSchema, res);
+    validData.user_rid = userId
+    const result = await childCaseService.closeCase(validData, req.files as Express.Multer.File[]);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      addLog(methodName, new Date().toISOString(), result.statusMessage);
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    } else {
+      addLog(methodName, new Date().toISOString(), result.statusMessage);
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : result.statusMessage
+      }) 
+    }
+  } 
+  catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * Controller function to retrieve computed values for a specific request.
+ *
+ * This async function handles HTTP requests to fetch computed data by:
+ * - Validating the presence of a user ID in the request headers
+ * - Extracting input data from the request body
+ * - Delegating the computation logic to the `childCaseService.getComputedValue` method
+ * - Returning appropriate HTTP responses based on the service result (success or not found)
+ *
+ * Response handling:
+ * - Returns `SUCCESS` status along with computed data when the operation is successful
+ * - Returns `NOT_FOUND` status along with relevant data/message when no matching result is found
+ *
+ * Error handling:
+ * - Logs a message if the required user ID header is missing
+ * - Logs and returns a `BAD_REQUEST` response if any runtime or service error occurs
+ *
+ * @param {Request} req - Express request object containing headers and request body
+ * @param {Response} res - Express response object used to send the API response
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and handles any service or runtime errors
+ */
+
+async function getComputedValue(req : Request, res : Response) {
+  const methodName = "Get Computed Value"
+  try {
+    const userId = req.headers['x-user-id'];
+    if(!userId) {
+      addLog(methodName, new Date().toISOString(), STATUS_MESSAGE.userIdMissingInHeader)
+    }
+    const data = req.body;
+    const result = await childCaseService.getComputedValue(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      addLog(methodName, new Date().toISOString(), result.statusMessage);
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage,
+        data : result.data
+      })
+    } else {
+      addLog(methodName, new Date().toISOString(), result.statusMessage);
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : result.statusMessage,
+        data : result.data
+      }) 
+    }
+  }
+  catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
     signOffFinancialWorking,
     regionListForFinancialHighlights,
@@ -297,5 +424,7 @@ export default {
     fetchCaseClosingRemarks,
     initiateCreateDossierForm,
     exportSignOffDetails,
-    getDossierPackage
+    getDossierPackage,
+    closeCase,
+    getComputedValue
 }

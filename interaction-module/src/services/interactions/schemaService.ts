@@ -1426,13 +1426,13 @@ class InteractionSchemaService {
         finalData = applyFilters(finalData, projectCodeConditions, projectCodeFilter, "project_code")
       if(projectNameConditions != null && projectNameConditions != undefined)
         finalData = applyFilters(finalData, projectNameConditions, projectNameFilter, "project_name")
-      if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+      if (mainTableFilters[sortBy] != undefined && sortOrder.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;
           if (!b?.[sortBy]) return -1;
           return a[sortBy].localeCompare(b[sortBy]);
         });
-      } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+      } else if (mainTableFilters[sortBy] != undefined && sortOrder.toLowerCase() == 'desc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!b?.[sortBy]) return 1;
           if (!a?.[sortBy]) return -1;

@@ -21,6 +21,8 @@ export interface RdCreditStateCalcAttributes {
     total_subcontract?: number | null;
     created_datetime?: Date;
     modified_datetime?: Date;
+    final_credit_submitted?: number | null;
+    final_credit_approved?: number | null;
 }
 
 export interface RdCreditStateCalcCreationAttributes
@@ -50,6 +52,8 @@ export class RdCreditStateCalculations
     public total_subcontract?: number | null;
     public created_datetime?: Date;
     public modified_datetime?: Date;
+    public final_credit_submitted?: number | null;
+    public final_credit_approved?: number | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditStateCalculations.init(
@@ -119,6 +123,14 @@ export class RdCreditStateCalculations
                     type: DataTypes.DATE,
                     allowNull: true,
                     defaultValue: DataTypes.NOW,
+                },
+                final_credit_submitted: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                final_credit_approved: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
                 },
             },
             {
