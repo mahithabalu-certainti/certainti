@@ -23,8 +23,8 @@ export class CaseTaskSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
-  private caseSchemaService : CaseSchemaService
-  private helperMethod : HelperMethods
+  private caseSchemaService: CaseSchemaService
+  private helperMethod: HelperMethods
 
   constructor() {
     this.caseModelService = new CaseModelService();
@@ -103,6 +103,7 @@ export class CaseTaskSchemaService {
         created_by: data.created_by || "",
         created_datetime: new Date(),
         task_type_rid: data.task_type_rid || "",
+        task_category_rid: data.task_category_rid || "",
       });
       if (data?.checklist_template_rid) {
         const response = await this.helperMethod.fetchChecklistTemplateDetailsById(
@@ -235,9 +236,8 @@ export class CaseTaskSchemaService {
                 }
               }
             }
-            const [currentStatus]:any[] = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(isTaskExists.task_status_rid,data.task_status_rid), { type: QueryTypes.SELECT });
-            if(currentStatus === 'Closed')
-            {
+            const [currentStatus]: any[] = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(isTaskExists.task_status_rid, data.task_status_rid), { type: QueryTypes.SELECT });
+            if (currentStatus === 'Closed') {
               data.is_flagged = false;
             }
           }
@@ -255,11 +255,11 @@ export class CaseTaskSchemaService {
             }, transaction
           });
           const [caseInfo]: any[] = await this.mainDbSequelize.query(
-                  rawQueries.fetchCasesInfo(data.case_rid),
-                  {
-                    replacements: { case_rid: data.case_rid },
-                    type: "SELECT"
-                  });
+            rawQueries.fetchCasesInfo(data.case_rid),
+            {
+              replacements: { case_rid: data.case_rid },
+              type: "SELECT"
+            });
           let baseRuleEnginePayload: any = {
             userId: data.modified_by,
             accountRid: data.account_rid,
@@ -269,7 +269,7 @@ export class CaseTaskSchemaService {
             entity: entityNames.task,
             caseName: caseInfo ? caseInfo.case_name : ""
           };
-      
+
           if (data?.checklist_template_rid) {
             if (data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
               if (isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
@@ -328,6 +328,7 @@ export class CaseTaskSchemaService {
               effective_end_datetime: data.effective_end_datetime,
               modified_by: data.modified_by || "",
               modified_datetime: new Date(),
+              task_category_rid: data.task_category_rid || ""
             },
             {
               where: {
@@ -409,7 +410,7 @@ export class CaseTaskSchemaService {
                 oldValue = (isTaskExists as any)[c]
                 newValue = (data as any)[c]
                 columnName = c
-  
+
                 if (columnName == "assigned_to") {
                   labelName = "Assigned To"
                   const result: any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
@@ -423,9 +424,9 @@ export class CaseTaskSchemaService {
                   baseRuleEnginePayload.targetUserID = newValue;
                   baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
                   baseRuleEnginePayload.task = "Assigned";
-                 
+
                   logMessage(`Triggering rule engine for assignee change with payload ${JSON.stringify(baseRuleEnginePayload)}`)
-                   
+
                 }
                 else if (columnName === "checklist_template_rid") {
                   labelName = "Checklist"
@@ -446,25 +447,24 @@ export class CaseTaskSchemaService {
                   newValueString = columnMapping.get(newValue);
                 }
                 else if (columnName === "task_status_rid") {
-                  
+
                   labelName = "Status"
                   const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(oldValue, newValue));
-                 
+
                   for (let r of result[0]) {
                     columnMapping.set(r.rid, r.task_status_name)
                   }
-                  if(data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined)
-            {
-                  const [userInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserDetails(data.assigned_to), { type: QueryTypes.SELECT });
-                  baseRuleEnginePayload.targetEmail = userInfo?.email || '';
+                  if (data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
+                    const [userInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserDetails(data.assigned_to), { type: QueryTypes.SELECT });
+                    baseRuleEnginePayload.targetEmail = userInfo?.email || '';
                   }
-                 
+
                   oldValueString = columnMapping.get(oldValue)
                   newValueString = columnMapping.get(newValue);
-                  baseRuleEnginePayload.status  = newValueString;
+                  baseRuleEnginePayload.status = newValueString;
                   baseRuleEnginePayload.targetUserID = data.assigned_to;
-                  
-                   
+
+
                   // await this.helperMethod.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
                   //   newValue: newValueString,
                   //   oldValue: oldValueString
@@ -507,7 +507,7 @@ export class CaseTaskSchemaService {
                 })
                 updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
               }
-            
+
               if (updatedColumnsStorage.length > 0) {
                 combinedColumns = updatedColumnsStorage.join(', ')
               }
@@ -522,52 +522,52 @@ export class CaseTaskSchemaService {
                 event_datetime: new Date(),
                 description: `Task Updated : ${combinedColumns}`
               })
-            }    
+            }
             await transaction.commit();
             const findAllTaskByCaseIds = await CaseTask.findAll({
-            attributes : ['weightage_rid', 'task_status_rid'],
-            where : {
-              case_rid : data.case_rid
-            }, 
-            raw : true
-          });
-          if(findAllTaskByCaseIds.length > 0) {
-            const allTasksWeightageIds = [...new Set(findAllTaskByCaseIds.map((d : CaseTask) => d.weightage_rid!))];
-            const findCompletedTaskStatus : any = await this.mainDbSequelize.query(getCompletedTaskStatusId());
-            const completedTaskStatusId = findCompletedTaskStatus[0][0].rid
-            const allCompletedTaskWeightageIds = findAllTaskByCaseIds.filter((d : CaseTask) => d.task_status_rid === completedTaskStatusId).map((f : CaseTask) => f.weightage_rid!)
-            const findWeightageValues = await this.mainDbSequelize.query<WeightageType>(findTaskWeightageDetails(allTasksWeightageIds), {type : QueryTypes.SELECT});
-            if(findWeightageValues.length > 0) {
-              const mapAllWeightageWithValue = new Map(findWeightageValues.map((d : WeightageType) => [d.rid, d.weightage_value]));
-              let totalAllWeightageValues : Decimal = new Decimal(0)
-              let completedWeightValues : Decimal = new Decimal(0)
-              findAllTaskByCaseIds.forEach((data : CaseTask) => {
-                if(mapAllWeightageWithValue.get(data.weightage_rid!) !== undefined) {
-                  totalAllWeightageValues = totalAllWeightageValues.add(mapAllWeightageWithValue.get(data.weightage_rid!)!)
-                }
-              });
-              allCompletedTaskWeightageIds.forEach((data : any) => {
-                 if(mapAllWeightageWithValue.get(data!) !== undefined) {
-                  completedWeightValues = completedWeightValues.add(mapAllWeightageWithValue.get(data!)!)
-                }
-              })
-              console.log("completedWeightValues ===> ", completedWeightValues)
-              console.log("totalAllWeightageValues ===> ", totalAllWeightageValues)
-              const caseCompletionPercentage = (completedWeightValues.div(totalAllWeightageValues)).mul(100) || new Decimal(0)
-              await Case.update({
-                case_completion_percentage : parseFloat(caseCompletionPercentage.toFixed(2))
-              }, {
-                where : {
-                  rid : data.case_rid
-                }
-              })
+              attributes: ['weightage_rid', 'task_status_rid'],
+              where: {
+                case_rid: data.case_rid
+              },
+              raw: true
+            });
+            if (findAllTaskByCaseIds.length > 0) {
+              const allTasksWeightageIds = [...new Set(findAllTaskByCaseIds.map((d: CaseTask) => d.weightage_rid!))];
+              const findCompletedTaskStatus: any = await this.mainDbSequelize.query(getCompletedTaskStatusId());
+              const completedTaskStatusId = findCompletedTaskStatus[0][0].rid
+              const allCompletedTaskWeightageIds = findAllTaskByCaseIds.filter((d: CaseTask) => d.task_status_rid === completedTaskStatusId).map((f: CaseTask) => f.weightage_rid!)
+              const findWeightageValues = await this.mainDbSequelize.query<WeightageType>(findTaskWeightageDetails(allTasksWeightageIds), { type: QueryTypes.SELECT });
+              if (findWeightageValues.length > 0) {
+                const mapAllWeightageWithValue = new Map(findWeightageValues.map((d: WeightageType) => [d.rid, d.weightage_value]));
+                let totalAllWeightageValues: Decimal = new Decimal(0)
+                let completedWeightValues: Decimal = new Decimal(0)
+                findAllTaskByCaseIds.forEach((data: CaseTask) => {
+                  if (mapAllWeightageWithValue.get(data.weightage_rid!) !== undefined) {
+                    totalAllWeightageValues = totalAllWeightageValues.add(mapAllWeightageWithValue.get(data.weightage_rid!)!)
+                  }
+                });
+                allCompletedTaskWeightageIds.forEach((data: any) => {
+                  if (mapAllWeightageWithValue.get(data!) !== undefined) {
+                    completedWeightValues = completedWeightValues.add(mapAllWeightageWithValue.get(data!)!)
+                  }
+                })
+                console.log("completedWeightValues ===> ", completedWeightValues)
+                console.log("totalAllWeightageValues ===> ", totalAllWeightageValues)
+                const caseCompletionPercentage = (completedWeightValues.div(totalAllWeightageValues)).mul(100) || new Decimal(0)
+                await Case.update({
+                  case_completion_percentage: parseFloat(caseCompletionPercentage.toFixed(2))
+                }, {
+                  where: {
+                    rid: data.case_rid
+                  }
+                })
+              }
             }
-          }
-           await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
-                    newValue: "newValueString",
-                    oldValue: "oldValueString"
-                  }, accessToken);
-           return {
+            await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
+              newValue: "newValueString",
+              oldValue: "oldValueString"
+            }, accessToken);
+            return {
               statusCode: HttpStatus.SUCCESS,
               statusMessage: STATUS_MESSAGE.taskUpdatedSuccess
             }
@@ -584,7 +584,7 @@ export class CaseTaskSchemaService {
       logMessage(`Error in updateUserLevelTask: ${error}`);
       return {
         statusCode: HttpStatus.FAILED,
-        statusMessage:  'Task update failed due to an unexpected error.'
+        statusMessage: 'Task update failed due to an unexpected error.'
       }
     }
   }
@@ -1851,7 +1851,7 @@ export class CaseTaskSchemaService {
   }
 
   async deleteAttachment(accountNumber: string, data: any, userId: string) {
-    const { TaskAttachments,ActivityHistory } = await this.caseModelService.getModels(
+    const { TaskAttachments, ActivityHistory } = await this.caseModelService.getModels(
       accountNumber
     );
     const findTaskDetails = await this.findTaskById(
@@ -2665,9 +2665,8 @@ export class CaseTaskSchemaService {
                   return {
                     success: true,
                     statusCode: HttpStatus.BAD_REQUEST,
-                    statusMessage: `This task cannot be completed because it is enabled by ${
-                      mapTargetTasks.get(f.target_rid)?.task_name
-                    }`,
+                    statusMessage: `This task cannot be completed because it is enabled by ${mapTargetTasks.get(f.target_rid)?.task_name
+                      }`,
                   };
                 }
               }
@@ -2683,9 +2682,8 @@ export class CaseTaskSchemaService {
                 return {
                   success: true,
                   statusCode: HttpStatus.BAD_REQUEST,
-                  statusMessage: `This task is blocked by ${
-                    mapTargetTasks.get(f.target_rid)?.task_name
-                  }. Please complete that task before proceeding.`,
+                  statusMessage: `This task is blocked by ${mapTargetTasks.get(f.target_rid)?.task_name
+                    }. Please complete that task before proceeding.`,
                 };
               }
             } else {
@@ -2700,6 +2698,6 @@ export class CaseTaskSchemaService {
       }
     }
   }
-  
- 
+
+
 }

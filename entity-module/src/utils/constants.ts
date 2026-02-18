@@ -21,6 +21,7 @@ export const HttpStatus = {
 };
 
 export const MAIN_SCHEMA_NAME = "trd365";
+export const DOSSIER_NAME = 'dossier_project_document'
 
 export const NODE_ENV = {
   DEV: "DEV",
@@ -2373,6 +2374,17 @@ export const rawQueries = {
     AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
   ORDER BY rv.effective_start_date DESC`;
   },
+  fetchAssignedProjectIds (caseRid : string, schemaName : string){
+    return `
+    SELECT pf.rid AS project_fiscal_rid 
+    FROM ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE 
+    cp.case_rid = '${caseRid}'
+    AND
+    pf.is_qualified = true
+    `
+}
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

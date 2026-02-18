@@ -990,3 +990,63 @@ export type ProjectCalculatedDataCanada = {
   total_cost_nonlabor_prj : number
   rd_percent_final : number
 }
+
+export type SignOffDetailsResponse = {
+  signoff_type_rid : string
+  created_by : string
+  created_datetime : string
+}
+
+export type CaseClosureRemarks = {
+  case_rid : string
+  signoff_details : SignOffDetailsResponse[]
+}
+
+// Flat array structure interface
+export interface FieldData {
+    label: string;
+    field_type: string;
+    value: string | number;
+    value_field_id: string;
+    section_id?: string;
+    id?: string;
+}
+
+export interface CaseData {
+  rid: string;
+  r_number: string;
+  case_name: string;
+  account_rid: string;
+
+  fiscal_year: number;
+
+  material_software_cost: number | null;
+  heat_light_power: number | null;
+  total_nonlabor_cost: number | null;
+
+  employers_pension_contribution: number | null;
+  other: number | null;
+
+  total_expenses: number | null;
+  sub_contracts: number | null;
+  cloud_software: number | null;
+
+  unpaid_amounts_paid: number | null;
+  unpaid_amounts: number | null;
+
+  aggregated_turnover: number | null;
+  taxable_income: number | null;
+  export_sales_revenue: number | null;
+
+  lease_costs_of_computers: number | null;
+
+  illinois_rd_credit_partnership_corp: number | null;
+  illinois_research_payments_corp_only: number | null;
+  basic_research_payments: number | null;
+
+  qualified_computer_rental_time_expenses: number | null;
+
+  credit_carry_forward_py: number | null;
+  current_year_gross_receipts: number | null;
+  other_credits_total: number | null;
+}

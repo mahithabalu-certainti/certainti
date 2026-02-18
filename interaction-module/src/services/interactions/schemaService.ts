@@ -18,6 +18,7 @@ import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
+import axios from "axios";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1219,7 +1220,8 @@ class InteractionSchemaService {
     sortOrder: string = "ASC",
     type: string = "list",
     caseRid? : string,
-    accountRid? : string
+    accountRid? : string,
+    summaryType? : string 
   ) {
     try {
       if(!this.orgDbSequelize) {
@@ -1288,7 +1290,7 @@ class InteractionSchemaService {
       // Fetch technical summaries and count
       let whereCondition;
       if(caseRid !== undefined && caseRid !== '') {
-        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
         whereCondition = {
           account_rid : accountRid,
           project_fiscal_rid: {
@@ -1906,6 +1908,24 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       techSummary.technical_summary_refinement_prompt = summaryContext;
       techSummary.modified_by = userId;
       techSummary.modified_datetime = new Date();
+      
+      const payload = {
+            company_id:techSummary.account_rid,
+            project_id: techSummary.project_fiscal_rid,
+            refinment_prompt: summaryContext,
+            existing_summary: techSummary.technical_summary,
+            request_id: techSummaryId,
+          };
+      let headers = {
+                  contentType: "application/json",
+                };
+      await axios.post(
+            process.env.TRIGGER_AI_REFINE_SUMMARY!,
+            payload,
+            {
+              headers: headers,
+            }
+          );
       await AiTechnicalSummary.update(
         {
           technical_summary_refinement_prompt: summaryContext,  

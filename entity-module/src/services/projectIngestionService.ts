@@ -3197,7 +3197,7 @@ class ProjectIngestionService {
       where: {
         rid: projectId,
       },
-      attributes: ["rid", "project_code", "currency_rid"],
+      attributes: ["rid", "project_code", "currency_rid", "project_name"],
     });
 
     return projectData;
