@@ -36,6 +36,7 @@ interface TaskCardProps<T> {
   exportEnable?: boolean;
   exportKey?: ExportReportType;
   handleExport?: (key: ExportReportType) => void;
+  onItemClick?: (item: T) => void;
 }
 
 const TaskCard = <T,>({
@@ -50,6 +51,7 @@ const TaskCard = <T,>({
   exportEnable = false,
   exportKey,
   handleExport,
+  onItemClick,
 }: TaskCardProps<T>) => {
   const itemRenderer = (item: T) => {
     if (renderItem) return renderItem(item);
@@ -184,6 +186,7 @@ const TaskCard = <T,>({
       exportEnable={exportEnable}
       exportKey={exportKey}
       handleExport={handleExport}
+      onItemClick={onItemClick ? (item) => onItemClick(item) : undefined}
     />
   );
 };

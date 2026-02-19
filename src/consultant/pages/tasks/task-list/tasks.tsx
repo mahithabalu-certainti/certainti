@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   AccountSettingsIcon,
@@ -74,6 +74,10 @@ export const Tasks: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') || 'milestone';
+
+  const openTaskIdRef = useRef(
+    (location.state as { openTaskId?: string } | null)?.openTaskId
+  );
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -544,6 +548,7 @@ export const Tasks: React.FC = () => {
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             taskType='milestone'
+            openTaskId={openTaskIdRef.current}
           />
         )}
         {tabParam === 'activity' && isActivityTaskEnable && (
@@ -559,6 +564,7 @@ export const Tasks: React.FC = () => {
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             taskType='activity'
+            openTaskId={openTaskIdRef.current}
           />
         )}
       </div>
