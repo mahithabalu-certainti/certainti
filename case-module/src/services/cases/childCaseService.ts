@@ -268,16 +268,17 @@ async initiateCreateDossierForm (data : any) {
     const caseRid = data.case_rid;
     const userId = data.userId;
     const accountNumber = fetchParentNumber[0][0].r_number;
+    const timezones = data.timezone;
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId})}]
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones})}]
     })
     console.log(`Message : ${JSON.stringify(result)}`)
     console.log(`Message published to ID : ${processingRid}`);
     return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
 }
-async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string) {
+async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string, timez : string) {
     const orgDb = await this.getOrgDb()
     let schemaName = rawQueries.fetchSchemaName(accountNumber)
     const {DossierFormModel} = await this.getModels(schemaName)
@@ -292,6 +293,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseProjectsPayload.fiscal_year = caseDetails!.fiscal_year;
     caseProjectsPayload.userId = userId,
     caseProjectsPayload.type = "qualifiedProjects"
+    caseProjectsPayload.timezone = timez
     const getProjectQualifiedData = await this.exportAssignedProjects(caseProjectsPayload);
     const generateQualifiedProjectsCSV = await generateExcelBase64(
           getProjectQualifiedData.data,
@@ -307,7 +309,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseClosingPayload.account_rid = accountRid;
     caseClosingPayload.sort = 'signoff_at';
     caseClosingPayload.sort_by = 'ASC';
-    caseClosingPayload.timezone = ''
+    caseClosingPayload.timezone = timez
     const closingRemarksData = await this.exportCaseClosingRemarks(caseClosingPayload);
 
     const fetchCountryUrl : any = await orgDb.query(fetchRdFormUrlForCountry(schemaName, caseRid));
@@ -360,7 +362,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
         allowedFieldSet.add(field.field_name);
       }
     }
-    const timezone = ''
+    const timezone = timez
      const isValidTZ = timezone && isValidTimezone(timezone);
     const formatDate = (date?: Date) => {
       const offsetMs = (5 * 60 + 30) * 60 * 1000;

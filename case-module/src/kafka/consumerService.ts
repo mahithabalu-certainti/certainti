@@ -119,7 +119,7 @@ export class KafkaConsumerService {
                 try {
 
                     const markInProgress = await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, key, 'dossier-form');
-                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key);
+                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key, payload.timezone);
                     await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, key,'dossier-form');
                     console.log(`Dossier processing complete for ID: ${key}`);
                 } catch (error) {
