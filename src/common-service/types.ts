@@ -390,7 +390,7 @@ export enum AllPermissions {
   DOSSIER_RD_FORMS_VIEW = 'dossier_rd_forms_view',
   DOSSIER_AUDIT_TIMELINE_VIEW = 'dossier_audit_timeline_view',
   DOSSIER_CLOSE_CASE = 'close_case',
-  DOSSIER_PACKAGES = 'dossier_packages',
+  DOSSIER_PACKAGES = 'dossier_package',
   DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
   DOSSIER_RD_FORMS_SIGNOFF = 'rd_forms_sign_off',
   DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',

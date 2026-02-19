@@ -179,6 +179,7 @@ const Dossier: React.FC<DossierProps> = ({
     AllPermissions.DOSSIER_PACKAGES
   );
 
+
   // Permission Management
   const projectViewEditFields = useMemo(
     () =>
@@ -324,6 +325,7 @@ const Dossier: React.FC<DossierProps> = ({
       const payload = {
         account_rid: accountid,
         case_rid: caseId ?? '',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
       refetchDossierInitiate(payload, {
         onSuccess: () => {
@@ -446,9 +448,6 @@ const Dossier: React.FC<DossierProps> = ({
     },
     {
       label: 'Dossier Package',
-      // dossierCreditStatus === 'COMPLETED'
-      //   ? 'Download Dossier'
-      //   : 'Initiate Dossier',
       variant: 'outlined' as const,
       disabled:
         !caseDetails?.financial_working_signoff ||
@@ -459,7 +458,6 @@ const Dossier: React.FC<DossierProps> = ({
     },
   ];
 
-  // if (!isFinancialView) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>

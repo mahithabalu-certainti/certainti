@@ -178,12 +178,14 @@ export const useUserPreference = () => {
 
 export const fetchDossierInitiate = async (
   accountRid: string,
-  caseRid: string
+  caseRid: string,
+  timezone: string
 ): Promise<RDCreditStatusResponse> => {
   const url = getDossierInitiateURL();
   const response = await caseServiceApi.post(url, {
     account_rid: accountRid,
     case_rid: caseRid,
+    timezone: timezone,
   });
   return response.data;
 };
@@ -192,10 +194,10 @@ export const useDossierInitiate = () => {
   return useMutation<
     RDCreditStatusResponse,
     Error,
-    { account_rid: string; case_rid: string }
+    { account_rid: string; case_rid: string, timezone: string }
   >({
-    mutationFn: ({ account_rid, case_rid }) =>
-      fetchDossierInitiate(account_rid, case_rid),
+    mutationFn: ({ account_rid, case_rid, timezone }) =>
+      fetchDossierInitiate(account_rid, case_rid, timezone),
   });
 };
 export const ExportDossierPackage = async (
