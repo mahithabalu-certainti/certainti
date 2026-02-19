@@ -1266,26 +1266,27 @@ const completeActivityMeetingSchema = Joi.object({
   account_rid: Joi.string().max(255).required()
 });
 const stateCreditSchema = Joi.object({
-  state_rid: Joi.string().required().max(50),
-  rd_credits_computed: Joi.string().required(),
-  rd_credits_approved: Joi.string().required(),
-  rd_credits_submitted: Joi.string().required()
+  state_rid : Joi.string().required().max(50),
+  rd_credits_computed : Joi.string().required(),
+  rd_credits_approved : Joi.string().required(),
+  rd_credits_submitted : Joi.string().required(),
+  comments : Joi.string().optional().allow(""),
 })
 
 const caseCloseSchema = Joi.object({
-  account_rid: Joi.string().required().max(50),
-  case_rid: Joi.string().required().max(50),
-  country_credits: Joi.object({
-    country_rid: Joi.string().required().max(50),
-    rd_credits_computed: Joi.string().required(),
-    rd_credits_approved: Joi.string().required(),
-    rd_credits_submitted: Joi.string().required()
+  account_rid : Joi.string().required().max(50),
+  case_rid : Joi.string().required().max(50),
+  country_credits : Joi.object({
+    country_rid : Joi.string().required().max(50),
+    rd_credits_computed : Joi.string().required(),
+    rd_credits_approved : Joi.string().required(),
+    rd_credits_submitted : Joi.string().required(),
+    comments : Joi.string().optional().allow(""),
   }).allow({}),
-  comments: Joi.string().optional().allow(""),
-  state_credits: Joi.array().items(stateCreditSchema),
-  fiscal_year: Joi.string().required(),
-  user_preference: Joi.string().allow(""),
-  country_rid: Joi.string().optional().allow("")
+  state_credits : Joi.array().items(stateCreditSchema),
+  fiscal_year : Joi.string().required(),
+  user_preference : Joi.string().allow(""),
+  country_rid : Joi.string().optional().allow(""),
 })
 const singleFileSchema = Joi.object({
   mimetype: Joi.string().required(),

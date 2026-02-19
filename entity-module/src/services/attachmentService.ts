@@ -367,9 +367,18 @@ export class AttachmentService {
         arrayData.push(await model.findOne({ where }))
         return arrayData
       } else {
+        let attachmentLevel;
+
+        if(level === "case") {
+          attachmentLevel = ["case", "close case"]
+        } else {
+          attachmentLevel = [level]
+        }
         where = {
           [Op.and]: [
-            { attachment_level: level },
+            { attachment_level: {
+              [Op.in] : attachmentLevel
+            } },
             { attach_to: { [Op.in]: attachToIds } },
             ...(whereClause[Op.and] || [])
           ]
