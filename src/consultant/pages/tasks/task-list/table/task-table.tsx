@@ -72,6 +72,7 @@ interface ITaskTableProps {
   searchValue?: string;
   fixedFilters?: Record<string, any>;
   taskType: 'milestone' | 'activity';
+  openTaskId?: string;
 }
 
 export const TaskTable: React.FC<ITaskTableProps> = ({
@@ -85,6 +86,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   searchValue,
   fixedFilters,
   taskType,
+  openTaskId,
 }) => {
   const { errorToast, successToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -730,6 +732,15 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       setTaskList(data.data.tasks || []);
     }
   }, [data]);
+
+  // Auto-open the task detail modal when navigated from the dashboard
+  useEffect(() => {
+    if (!openTaskId || taskList.length === 0) return;
+    const match = taskList.find((task) => task.rid === openTaskId);
+    if (match) {
+      setSelectedTask(match);
+    }
+  }, [openTaskId, taskList]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';

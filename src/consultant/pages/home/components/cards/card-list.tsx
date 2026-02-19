@@ -16,6 +16,7 @@ interface CardListProps<T> {
   exportEnable?: boolean;
   exportKey?: ExportReportType;
   handleExport?: (key: ExportReportType) => void;
+  onItemClick?: (item: T, index: number) => void;
 }
 
 const CardList = <T,>({
@@ -30,6 +31,7 @@ const CardList = <T,>({
   exportEnable = false,
   exportKey,
   handleExport,
+  onItemClick,
 }: CardListProps<T>) => {
   if (isLoading) {
     return (
@@ -121,7 +123,9 @@ const CardList = <T,>({
                 boxShadow:
                   'rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px',
                 ...getItemStyle?.(item),
+                cursor: onItemClick ? 'pointer' : undefined,
               }}
+              onClick={() => onItemClick?.(item, index)}
             >
               {itemRenderer(item, index)}
             </div>

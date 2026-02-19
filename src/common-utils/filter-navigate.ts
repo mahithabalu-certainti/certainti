@@ -43,6 +43,7 @@ export interface NavFilter {
 
 export interface NavFilterState {
   filters: NavFilter[];
+  [key: string]: unknown;
 }
 
 // ─── Main utility ─────────────────────────────────────────────────────────────
@@ -50,9 +51,10 @@ export interface NavFilterState {
 export function navigateWithFilters(
   navigate: NavigateFunction,
   route: string,
-  filters: NavFilter[]
+  filters: NavFilter[],
+  extraState?: Record<string, unknown>
 ): void {
-  const state: NavFilterState = { filters };
+  const state: NavFilterState = { filters, ...extraState };
   navigate(route, { state });
 }
 
