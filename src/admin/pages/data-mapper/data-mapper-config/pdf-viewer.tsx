@@ -135,17 +135,32 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const handleFieldClick = (field: PDFField) => {
     if (field.id) {
-      navigator.clipboard.writeText(field.id).catch(() => {
-        // Fallback for older browsers
+      const fallbackCopy = (text: string) => {
         const ta = document.createElement('textarea');
-        ta.value = field.id;
+        ta.value = text;
         ta.style.position = 'fixed';
         ta.style.opacity = '0';
         document.body.appendChild(ta);
         ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-      });
+        try {
+          document.execCommand('copy');
+        } finally {
+          document.body.removeChild(ta);
+        }
+      };
+
+      try {
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard
+            .writeText(field.id)
+            .catch(() => fallbackCopy(field.id));
+        } else {
+          fallbackCopy(field.id);
+        }
+      } catch {
+        fallbackCopy(field.id);
+      }
+
       setCopiedFieldId(field.id);
       setTimeout(() => setCopiedFieldId(null), 1500);
     }
