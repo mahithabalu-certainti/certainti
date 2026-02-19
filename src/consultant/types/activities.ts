@@ -53,7 +53,7 @@ export type ActivityList = {
   assigned_to?: string | null;
   task_name?: string | null;
   task_template_rid?: string | null;
-  remainder_interval?: number | null;
+  reminder_interval?: number | null;
   task_repeat_frequency?: string | null;
   event_url?: string | null;
   event_code?: string | null;

@@ -206,7 +206,7 @@ const Projects: React.FC<ProjectsProps> = ({
     isTriggerQualifiedDisabled?: boolean
   ): string => {
     if (isRdClaimQualified) {
-      return 'Project is signed off';
+      return 'Project is approved';
     }
     if (isTriggerQualifiedDisabled) {
       return 'Project type not allowed due to Configuration setting';

@@ -257,7 +257,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionTypes = useGetInteractionTypes();
   const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
+  const interactionStatusReminder = useGetInteractionStatusByReminder(true);
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -308,11 +308,11 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const memoizedInteractionStatusReminder = useMemo(
     () =>
-      interactionStatusRemainder.data?.data.interactionStatus.map((status) => ({
+      interactionStatusReminder.data?.data.interactionStatus.map((status) => ({
         option: status.status_name,
         value: status.rid,
       })) || [],
-    [interactionStatusRemainder.data?.data.interactionStatus]
+    [interactionStatusReminder.data?.data.interactionStatus]
   );
 
   const memoizedInteractionTypes = useMemo(

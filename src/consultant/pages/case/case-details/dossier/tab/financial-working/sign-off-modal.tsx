@@ -186,7 +186,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
         },
         {
           onSuccess: (response: { statusMessage?: string }) => {
-            successToast(response?.statusMessage || 'Signed off successfully');
+            successToast(response?.statusMessage || 'Approved successfully');
             setSignOffFile(null);
             setSignOffComments('');
             setMessage(null);

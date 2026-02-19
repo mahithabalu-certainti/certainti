@@ -145,6 +145,42 @@ const Dossier: React.FC<DossierProps> = ({
     permission,
     AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
   );
+  const isQualifiedProjectsView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_QUALIFIED_PROJECTS_VIEW
+  );
+  const isTechnicalSummaryView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_TECHNICAL_SUMMARY_VIEW
+  );
+  const isProjectDocumentsView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_PROJECT_DOCUMENTS_VIEW
+  );
+  const isResourceSummaryView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_RESOURCE_SUMMARY_VIEW
+  );
+  const isRdFormsView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_RD_FORMS_VIEW
+  );
+  const isAuditTimelineView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_AUDIT_TIMELINE_VIEW
+  );
+  const isSummaryView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_SUMMARY_VIEW
+  );
+  // const iscaseClose = checkPermission(
+  //   permission,
+  //   AllPermissions.DOSSIER_CLOSE_CASE
+  // );  // need to add close case btn
+  const isPackagesDownload = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_PACKAGES
+  );
 
   // Permission Management
   const projectViewEditFields = useMemo(
@@ -291,6 +327,7 @@ const Dossier: React.FC<DossierProps> = ({
       const payload = {
         account_rid: accountid,
         case_rid: caseId ?? '',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
       refetchDossierInitiate(payload, {
         onSuccess: () => {
@@ -359,27 +396,27 @@ const Dossier: React.FC<DossierProps> = ({
     {
       label: 'Summary',
       value: 'summary',
-      hide: false,
+      hide: !isSummaryView,
     },
     {
       label: 'Qualified Projects',
       value: 'qualified_projects',
-      hide: false,
+      hide: !isQualifiedProjectsView,
     },
     {
       label: 'Technical Summary',
       value: 'technical_summary',
-      hide: false,
+      hide: !isTechnicalSummaryView,
     },
     {
       label: 'Resource Summary',
       value: 'resource_summary',
-      hide: false,
+      hide: !isResourceSummaryView,
     },
     {
       label: 'Project Documents',
       value: 'project_documents',
-      hide: false,
+      hide: !isProjectDocumentsView,
     },
     {
       label: 'Financial Workings',
@@ -389,12 +426,12 @@ const Dossier: React.FC<DossierProps> = ({
     {
       label: 'RD Form',
       value: 'rd_form',
-      hide: false,
+      hide: !isRdFormsView,
     },
     {
       label: 'Audit Timeline',
       value: 'audit_timeline',
-      hide: false,
+      hide: !isAuditTimelineView,
     },
   ];
 
@@ -419,7 +456,7 @@ const Dossier: React.FC<DossierProps> = ({
         (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''), // need to change rd form sign after rd form complete
       onClick: handleGenerateDossierSheet,
       sx: { width: '125px', minWidth: '125px' },
-      // hide: !showTableControls,
+      hide: !isPackagesDownload,
     },
     {
       label: 'Close Case',
@@ -438,8 +475,6 @@ const Dossier: React.FC<DossierProps> = ({
     setIsModalOpen(false);
   };
 
-  // if (!isFinancialView) return <AccessRestricted />;
-
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
       <SectionTabPanel
@@ -453,7 +488,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
           (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
@@ -493,7 +528,7 @@ const Dossier: React.FC<DossierProps> = ({
         defaultValue={tabParam}
       />
       {caseDetails?.case_total_qualified_projects === 0 ||
-      caseDetails?.case_total_qualified_projects === '0' ? (
+        caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>

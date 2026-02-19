@@ -195,7 +195,7 @@ const RDForm: React.FC<RDFormProps> = ({
   );
   const isSignoffVisible = checkPermission(
     permission,
-    AllPermissions.DOSSIER_FINANCIAL_SIGNOFF
+    AllPermissions.DOSSIER_RD_FORMS_SIGNOFF
   );
 
   const accountPermissionMap = useMemo(() => {
