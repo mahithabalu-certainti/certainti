@@ -1457,11 +1457,11 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           let fetchStateIdFromName : string;
           let fetchCountryIdFromName : string;
           fileUploadedResult.forEach((d) => {
-            if(d.fieldName.startsWith("file_state_")) {
-              fetchStateIdFromName = d.fieldName.replace("file_state_", "");
+            if(d.name.startsWith("file_state_")) {
+              fetchStateIdFromName = d.name.replace("file_state_", "");
             }
-            else if(d.fieldName.startsWith("file_country_")) {
-              fetchCountryIdFromName = d.fieldName.replace("file_country_", "");
+            else if(d.name.startsWith("file_country_")) {
+              fetchCountryIdFromName = d.name.replace("file_country_", "");
             }
             storeInArrayOfObjects.push({
               created_by : data.user_rid,
