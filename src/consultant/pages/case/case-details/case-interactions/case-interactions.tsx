@@ -719,11 +719,11 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
 
   const filterFields = !viewInteractionHistory
     ? getCaseInteractionFilterFields(
-      memoizedInteractionTypes,
-      memoizedInteractionResSources,
-      memoizedInteractionStatus,
-      permissionMap
-    )
+        memoizedInteractionTypes,
+        memoizedInteractionResSources,
+        memoizedInteractionStatus,
+        permissionMap
+      )
     : getCaseInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getProjectCaseInteractionFilterFields(
     memoizedInteractionStatusReminder,

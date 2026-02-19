@@ -194,7 +194,7 @@ export const useDossierInitiate = () => {
   return useMutation<
     RDCreditStatusResponse,
     Error,
-    { account_rid: string; case_rid: string, timezone: string }
+    { account_rid: string; case_rid: string; timezone: string }
   >({
     mutationFn: ({ account_rid, case_rid, timezone }) =>
       fetchDossierInitiate(account_rid, case_rid, timezone),

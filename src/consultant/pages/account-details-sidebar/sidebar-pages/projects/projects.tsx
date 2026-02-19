@@ -323,11 +323,11 @@ const Projects: React.FC<ProjectsProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-          state: {
-            field: fieldValue || '',
-            section: fieldValue ? '' : section,
-          },
-        }
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
         : undefined
     );
   };

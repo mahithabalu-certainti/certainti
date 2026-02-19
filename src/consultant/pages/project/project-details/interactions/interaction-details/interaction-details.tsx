@@ -404,15 +404,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         selectedRows={
           data
             ? [
-              {
-                rid: data.interaction_rid || interactionId || '',
-                interaction_level_name: data.interaction_level_name || '',
-                project_fiscal_rid: data.project_fiscal_rid || '',
-                recipient_name: data.recipient_name || '',
-                recipient_email: data.recipient_email || '',
-                status_name: data.status_name || '',
-              } as InteractionList,
-            ]
+                {
+                  rid: data.interaction_rid || interactionId || '',
+                  interaction_level_name: data.interaction_level_name || '',
+                  project_fiscal_rid: data.project_fiscal_rid || '',
+                  recipient_name: data.recipient_name || '',
+                  recipient_email: data.recipient_email || '',
+                  status_name: data.status_name || '',
+                } as InteractionList,
+              ]
             : []
         }
         onSuccessRefetch={refetch}

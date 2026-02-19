@@ -192,9 +192,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       flag: 'account',
     },
     !viewDetails &&
-    !viewInteractionHistory &&
-    !viewInteractionAttachment &&
-    !viewResponseHistory,
+      !viewInteractionHistory &&
+      !viewInteractionAttachment &&
+      !viewResponseHistory,
     refreshInteractions
   );
   const {
@@ -627,12 +627,12 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
-      memoizedInteractionTypes,
-      memoizedInteractionResSources,
-      memoizedInteractionStatus,
-      memoizedInteractionLevel,
-      permissionMap
-    )
+        memoizedInteractionTypes,
+        memoizedInteractionResSources,
+        memoizedInteractionStatus,
+        memoizedInteractionLevel,
+        permissionMap
+      )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getInteractionModelFilterFields(
     memoizedInteractionStatusReminder,
