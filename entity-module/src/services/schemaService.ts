@@ -664,6 +664,25 @@ class SchemaService {
     });
     return result;
   }
+    /**
+   * Returns timeline entity types for a given attachment_level.
+   * Used for timeline entry creation in NotesService and elsewhere.
+   */
+  getTimelineTypesForAttachmentLevel(attachmentLevel: string): string[] {
+    const accountLevels = ["account", "resource", "resource_cost", "resource_skill"];
+    const projectLevels = ["project_task", "project_resource"];
+    const caseLevels = ["case"];
+    if (attachmentLevel === "project") {
+      return ["account", "project"];
+    } else if (accountLevels.includes(attachmentLevel)) {
+      return ["account"];
+    } else if (projectLevels.includes(attachmentLevel)) {
+      return ["project"];
+    } else if (caseLevels.includes(attachmentLevel)) {
+      return ["case"];
+    }
+    return [];
+  }
   /**
    * Create an entry in the account_timeline table for the given schema.
    * @param sequelize Sequelize instance connected to the main DB
@@ -696,6 +715,13 @@ class SchemaService {
         else if(entityType === "project")
         {
             const [result] = await sequelize.query(rawQueries.insertTimeLine(schemaName,"project_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+        else if(entityType === "case")
+        {
+            const [result] = await sequelize.query(rawQueries.insertCaseTimeLine(schemaName,"case_timeline"), {
             replacements: entryData,
             type: QueryTypes.INSERT,
         });

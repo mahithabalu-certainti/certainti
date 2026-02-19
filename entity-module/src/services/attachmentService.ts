@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import "moment-timezone";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Attachment, setupAttachmentSeq } from "../models/attachments";
-import { DOSSIER_NAME, HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { DOSSIER_NAME, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import { ICreateAttachment } from "../utils/types";
 import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
@@ -141,6 +141,24 @@ export class AttachmentService {
         comments: attachmentData.comments || null,
         created_by: userId,
       });
+
+      const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                                      userId: userId!,
+                                                      eventType: eventTypes.UI_HANDLER
+                                                    });
+              // Use SchemaService to determine timeline entity type(s)
+      const timelineTypes = this.schemaService.getTimelineTypesForAttachmentLevel(attachmentData.attachment_level);
+      
+      await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+                created_by: userId!,
+                account_rid: account_rid,
+                entity_rid: attachmentModel.rid,
+                entity_name: entityTypes.ATTACHMENT,
+                created_by_name: userEventInfo.full_name,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.CREATE,
+                descriptions: name
+              }, timelineTypes);
 
       await AttachmentTimeline.create({
         document_rid: attachmentModel.rid,
