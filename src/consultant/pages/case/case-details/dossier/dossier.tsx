@@ -35,7 +35,7 @@ import {
   getQualifiedProjectsFilterFields,
 } from './helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { checkPermission, getFiscalYears } from '../../../../../common-utils';
+import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import {
@@ -59,8 +59,6 @@ import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
 import CloseCaseModal from './close-case-modal';
 import { useGetProjectType } from '../../../../services/project';
-import { FieldChangeEvent } from '../../../../../components/table/types';
-import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
 
 const DossierTabs = [
   {
@@ -562,7 +560,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
           (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
@@ -602,7 +600,7 @@ const Dossier: React.FC<DossierProps> = ({
         defaultValue={tabParam}
       />
       {caseDetails?.case_total_qualified_projects === 0 ||
-      caseDetails?.case_total_qualified_projects === '0' ? (
+        caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>
