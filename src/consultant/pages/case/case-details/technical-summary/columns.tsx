@@ -38,7 +38,7 @@ export const getTechnicalSummaryListColumns = (
   {
     id: 'project_code',
     sortId: 'project_code',
-    label: 'Project code',
+    label: 'Project Code',
     width: 160,
     sortable: true,
     sx: { textAlign: 'right' },
