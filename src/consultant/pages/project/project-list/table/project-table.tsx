@@ -152,7 +152,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
                     account_status_name: project.account_status_name,
                     disableCheckBox: !!fiscal.is_rd_claim_qualified,
                     checkBoxMessage: fiscal.is_rd_claim_qualified
-                      ? 'Project is signed off'
+                      ? 'Project is approved'
                       : '',
                   })) || [],
               }))
@@ -190,11 +190,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-            state: {
-              field: fieldValue || '',
-              section: fieldValue ? '' : section,
-            },
-          }
+          state: {
+            field: fieldValue || '',
+            section: fieldValue ? '' : section,
+          },
+        }
         : undefined
     );
   };

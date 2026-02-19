@@ -206,7 +206,7 @@ const Projects: React.FC<ProjectsProps> = ({
     isTriggerQualifiedDisabled?: boolean
   ): string => {
     if (isRdClaimQualified) {
-      return 'Project is signed off';
+      return 'Project is approved';
     }
     if (isTriggerQualifiedDisabled) {
       return 'Project type not allowed due to Configuration setting';
@@ -323,11 +323,11 @@ const Projects: React.FC<ProjectsProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-            state: {
-              field: fieldValue || '',
-              section: fieldValue ? '' : section,
-            },
-          }
+          state: {
+            field: fieldValue || '',
+            section: fieldValue ? '' : section,
+          },
+        }
         : undefined
     );
   };

@@ -186,7 +186,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
         },
         {
           onSuccess: (response: { statusMessage?: string }) => {
-            successToast(response?.statusMessage || 'Signed off successfully');
+            successToast(response?.statusMessage || 'Approved successfully');
             setSignOffFile(null);
             setSignOffComments('');
             setMessage(null);
@@ -241,11 +241,10 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
             </label>
             <textarea
               rows={6}
-              className={`w-full min-h-[120px] max-h-[120px] overflow-auto p-2 text-[13px] resize-none border rounded-md focus:outline-none focus:ring-1 transition-all ${
-                commentError
-                  ? 'border-red-500 focus:ring-red-500 bg-[#FEF2F2]'
-                  : 'border-[#CBD6E2] focus:ring-[#0176D3]'
-              }`}
+              className={`w-full min-h-[120px] max-h-[120px] overflow-auto p-2 text-[13px] resize-none border rounded-md focus:outline-none focus:ring-1 transition-all ${commentError
+                ? 'border-red-500 focus:ring-red-500 bg-[#FEF2F2]'
+                : 'border-[#CBD6E2] focus:ring-[#0176D3]'
+                }`}
               placeholder='Enter your comments here...'
               value={signOffComments}
               onChange={(e) => {
@@ -271,13 +270,12 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
                 onDragOver={handleDragOver}
                 onClick={openFileDialog}
                 className={`h-[116px] w-full border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 transition-all
-                    ${
-                      isFileUploaded
-                        ? 'cursor-default opacity-80 bg-[#F4F6F9] border-[#0176D3]'
-                        : message?.type === 'error'
-                          ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
-                          : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer hover:bg-[#E8F0FE]'
-                    }
+                    ${isFileUploaded
+                    ? 'cursor-default opacity-80 bg-[#F4F6F9] border-[#0176D3]'
+                    : message?.type === 'error'
+                      ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
+                      : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer hover:bg-[#E8F0FE]'
+                  }
                   `}
                 style={{
                   pointerEvents: isFileUploaded ? 'none' : 'auto',
@@ -319,11 +317,10 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
               <div className='w-full mt-1'>
                 {message && (
                   <div
-                    className={`text-sm break-words max-h-[60px] overflow-y-auto ${
-                      message.type === 'error'
-                        ? 'text-red-600'
-                        : 'text-green-600'
-                    }`}
+                    className={`text-sm break-words max-h-[60px] overflow-y-auto ${message.type === 'error'
+                      ? 'text-red-600'
+                      : 'text-green-600'
+                      }`}
                   >
                     {message.text}
                   </div>
@@ -340,7 +337,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
                     }
                   }}
                   existingFiles={[]}
-                  onRemoveExistingFile={() => {}}
+                  onRemoveExistingFile={() => { }}
                   disabled={false}
                 />
               </div>
