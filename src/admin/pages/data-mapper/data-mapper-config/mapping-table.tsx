@@ -2211,7 +2211,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
       sx={{
         boxShadow: 'none',
         overflow: 'auto',
-        maxHeight: 'calc(100vh - 290px)',
+        maxHeight: 'calc(100vh - 245px)',
         minHeight: 'auto',
         height: 'fit-content',
         border: '1px solid #CBD6E2',

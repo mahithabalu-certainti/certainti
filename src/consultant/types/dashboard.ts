@@ -188,6 +188,7 @@ export interface DashboardMeetingDetail {
   recurrence_monthly_index: number | null;
   status_name: string;
   priority_name?: string | null;
+  attached_to: string;
 }
 
 export interface DashboardMeetingListResponse {

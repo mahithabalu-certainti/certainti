@@ -223,6 +223,25 @@ export const HomePage: React.FC = () => {
     await ExportDashboardReport(key, 'user');
   };
 
+  const handleTaskItemClick = useCallback(
+    (t: DashboardTaskDetail | PendingFollowUpDetail) => {
+      navigateWithFilters(
+        navigate,
+        TASKS,
+        [
+          {
+            filterKey: 'r_number',
+            type: 'text',
+            operator: 'equals',
+            value: t.r_number,
+          },
+        ],
+        { openTaskId: t.rid }
+      );
+    },
+    [navigate]
+  );
+
   // Handler to navigate to cases page with pre-applied filters
   const handleCardClick = useCallback(
     (cardKey: string) => {
@@ -361,38 +380,22 @@ export const HomePage: React.FC = () => {
           exportKey='meetingList'
           handleExport={handleExport}
           itemRenderer={(item: DashboardMeetingDetail) => {
-            const priorityBadge = item.priority_name
-              ? getPriorityBadge(item.priority_name)
-              : null;
             const statusBadge = getStatusBadge(item.status_name);
+            const levelColor =
+              item.attachment_level?.toLowerCase() === 'account'
+                ? { bg: '#EFF6FF', text: '#1D4ED8' }
+                : item.attachment_level?.toLowerCase() === 'case'
+                  ? { bg: '#F0FDF4', text: '#15803D' }
+                  : { bg: '#FFF7ED', text: '#C2410C' };
 
             return (
               <div>
                 <div className='flex items-start justify-between gap-3'>
-                  <div className='flex-1'>
-                    <p className='text-sm font-semibold text-[#2A2A2A]'>
-                      {item.subject}
-                    </p>
-                    <div className='flex items-center gap-4 mt-1 text-[11px] text-[#425a76cf]'>
-                      <span>
-                        {formatDate(item.effective_start_datetime)} at{' '}
-                        {formatTo12HourWithMinutes(item.effective_start_time)}
-                      </span>
-                      {item.priority_name && priorityBadge && (
-                        <span
-                          className='px-2 py-0.5 rounded text-[10px] font-medium capitalize'
-                          style={{
-                            backgroundColor: priorityBadge.bg,
-                            color: priorityBadge.text,
-                          }}
-                        >
-                          {item.priority_name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <p className='text-sm font-semibold text-[#2A2A2A] flex-1'>
+                    {item.subject}
+                  </p>
                   <div
-                    className='px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap capitalize'
+                    className='px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap capitalize flex-shrink-0'
                     style={{
                       backgroundColor: statusBadge.bg,
                       color: statusBadge.text,
@@ -401,6 +404,29 @@ export const HomePage: React.FC = () => {
                     {item.status_name}
                   </div>
                 </div>
+                <div className='flex items-center gap-2 mt-1 text-[11px] text-[#425a76cf]'>
+                  <span>
+                    {formatDate(item.effective_start_datetime)} at{' '}
+                    {formatTo12HourWithMinutes(item.effective_start_time)}
+                  </span>
+                  {item.attachment_level && (
+                    <span
+                      className='px-2 py-0.5 rounded text-[10px] font-semibold capitalize'
+                      style={{
+                        backgroundColor: levelColor.bg,
+                        color: levelColor.text,
+                      }}
+                    >
+                      {item.attachment_level}
+                    </span>
+                  )}
+                </div>
+                {item.attached_to && (
+                  <div className='text-[11px] text-[#425A76] font-medium mt-1'>
+                    <span className='text-[#2a2a2a]'>Related To:</span>{' '}
+                    {item.attached_to}
+                  </div>
+                )}
                 <div className='text-[11px] text-[#425A76] font-medium mt-1'>
                   <span className='text-[#2a2a2a]'>Attendees:</span>{' '}
                   {item.meeting_participants?.map((p) => p.name).join(', ') ||
@@ -466,6 +492,7 @@ export const HomePage: React.FC = () => {
           exportEnable={true}
           exportKey='pendingFollowUps'
           handleExport={handleExport}
+          onItemClick={handleTaskItemClick}
           itemRenderer={(item) => {
             const priorityBadge = item.priority_name
               ? getPriorityBadge(item.priority_name)
@@ -564,6 +591,7 @@ export const HomePage: React.FC = () => {
           exportEnable={true}
           exportKey='overdueApprovals'
           handleExport={handleExport}
+          onItemClick={handleTaskItemClick}
           itemRenderer={(item: OverdueApprovalsDetail) => {
             const daysOverdue = Math.max(
               0,
@@ -613,6 +641,7 @@ export const HomePage: React.FC = () => {
           exportEnable={true}
           exportKey='upcomingTasks'
           handleExport={handleExport}
+          onItemClick={handleTaskItemClick}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -635,6 +664,7 @@ export const HomePage: React.FC = () => {
           exportEnable={true}
           exportKey='dueTodayOverdueTasks'
           handleExport={handleExport}
+          onItemClick={handleTaskItemClick}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -663,6 +693,7 @@ export const HomePage: React.FC = () => {
           exportEnable={true}
           exportKey='openTasks'
           handleExport={handleExport}
+          onItemClick={handleTaskItemClick}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -685,6 +716,7 @@ export const HomePage: React.FC = () => {
           exportEnable={true}
           exportKey='completedTasksThisWeek'
           handleExport={handleExport}
+          onItemClick={handleTaskItemClick}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
