@@ -800,6 +800,11 @@ const createActivityEmailSchema = Joi.object({
   email_status: Joi.string().required(),
 });
 
+const cancelActivityMeetingSchema = Joi.object({
+  activity_rid: Joi.string().max(255).required(),
+  account_rid: Joi.string().max(255).required()
+});
+
 const createActivityMeetingSchema = Joi.object({
   account_rid: Joi.string().max(255).required(),
   attach_to: Joi.string().required(),
@@ -961,7 +966,7 @@ const exportListProjectResourceSchema = Joi.object({
     .optional()
     .allow(""),
   timezone: Joi.string().optional(),
-  type : Joi.string().optional().allow(null),
+  type: Joi.string().optional().allow(null),
   search: Joi.string()
     .max(255)
     .allow('')
@@ -1003,7 +1008,7 @@ const listResourceSchema = Joi.object({
   ).optional(),
   apiSource: Joi.string().optional().default("Project"),
   accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
-  type : Joi.string().optional().allow("")
+  type: Joi.string().optional().allow("")
 });
 
 const exportListProjectTasksSchema = Joi.object({
@@ -1236,26 +1241,30 @@ const updateDataMapperSchema = Joi.object({
 
 
 const rdFormGenerationSchema = Joi.object({
-  account_rid : Joi.string().max(255).required(),
-  case_rid : Joi.string().max(255).required(),
-  fiscal_year : Joi.number().required()
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
+  fiscal_year: Joi.number().required()
 });
 
 const rdFormPreviewSchema = Joi.object({
-  account_rid : Joi.string().max(255).required(),
-  case_rid : Joi.string().max(255).required(),
-  is_federal : Joi.boolean().required(),
-  country_rid : Joi.string().max(255).required(),
-  state_rid : Joi.string().max(255).optional().allow("", null)
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
+  is_federal: Joi.boolean().required(),
+  country_rid: Joi.string().max(255).required(),
+  state_rid: Joi.string().max(255).optional().allow("", null)
 });
 
 const rdFormSignOffSchema = Joi.object({
-  account_rid : Joi.string().max(255).required(),
-  case_rid : Joi.string().max(255).required(),
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
   comments: Joi.string().max(2000).optional().allow("", null),
   sign_off: Joi.boolean().required()
 });
 
+const completeActivityMeetingSchema = Joi.object({
+  activity_rid: Joi.string().max(255).required(),
+  account_rid: Joi.string().max(255).required()
+});
 const stateCreditSchema = Joi.object({
   state_rid : Joi.string().required().max(50),
   rd_credits_computed : Joi.string().required(),
@@ -1280,9 +1289,9 @@ const caseCloseSchema = Joi.object({
   country_rid : Joi.string().optional().allow(""),
 })
 const singleFileSchema = Joi.object({
-  mimetype : Joi.string().required(),
-  size : Joi.number().required(),
-  originalname : Joi.string().required()
+  mimetype: Joi.string().required(),
+  size: Joi.number().required(),
+  originalname: Joi.string().required()
 })
 const validateFile = Joi.array().items(singleFileSchema).optional()
 
@@ -1356,6 +1365,8 @@ export {
   rdFormGenerationSchema,
   rdFormPreviewSchema,
   rdFormSignOffSchema,
+  cancelActivityMeetingSchema,
+  completeActivityMeetingSchema,
   caseCloseSchema,
   validateFile
 };

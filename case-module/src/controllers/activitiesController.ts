@@ -10,7 +10,7 @@ import {
   isValidTimezone,
   logMessage,
 } from "../utils/helpers";
-import { HttpStatus} from "../utils/constants";
+import { HttpStatus } from "../utils/constants";
 import {
   listActivityTaskSchema,
   exportActivitySchema,
@@ -22,6 +22,8 @@ import {
   createActivityCallSchema,
   updateActivityTaskSchema,
   createActivityTaskSchema,
+  cancelActivityMeetingSchema,
+  completeActivityMeetingSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
@@ -230,7 +232,7 @@ async function updateActivityEmail(req: Request, res: Response) {
       fileArray = [];
     }
     data.created_by = userId;
-    if(data.deleted_file_ids !== undefined) {
+    if (data.deleted_file_ids !== undefined) {
       data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
     }
     const result = await activityService.updateActivityEmail(
@@ -358,7 +360,7 @@ async function updateActivityMeeting(req: Request, res: Response) {
       fileArray = [];
     }
     data.created_by = userId;
-    if(data.deleted_file_ids !== undefined) {
+    if (data.deleted_file_ids !== undefined) {
       data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
     }
     const result = await activityService.updateActivityMeeting(
@@ -393,6 +395,113 @@ async function updateActivityMeeting(req: Request, res: Response) {
   }
 }
 
+async function cancelActivityMeeting(req: Request, res: Response) {
+  const methodName = "Cancel Meeting";
+  try {
+    const value = await validateRequest(
+      req,
+      cancelActivityMeetingSchema,
+      res,
+      "POST"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const result = await activityService.cancelActivityMeeting(
+      value,
+      userId
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function completeActivityMeeting(req: Request, res: Response) {
+  const methodName = "Complete Meeting";
+  try {
+    const value = await validateRequest(
+      req,
+      completeActivityMeetingSchema,
+      res,
+      "POST"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const result = await activityService.completeActivityMeeting(
+      value,
+      userId
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function createActivityCall(req: Request, res: Response) {
   const methodName = "Create Call";
   try {
@@ -486,7 +595,7 @@ async function updateActivityCall(req: Request, res: Response) {
       fileArray = [];
     }
     data.created_by = userId;
-    if(data.deleted_file_ids !== undefined) {
+    if (data.deleted_file_ids !== undefined) {
       data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
     }
     const result = await activityService.updateActivityCall(
@@ -583,7 +692,7 @@ async function getAllActivityTask(req: Request, res: Response) {
       return;
     }
     const userId = req.headers["x-user-id"] as string;
-     if (typeof value.filters === 'string') {
+    if (typeof value.filters === 'string') {
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
@@ -734,83 +843,83 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
         !checklists?.data?.activities || checklists.data.activities.length < 1
           ? []
           : checklists.data.activities.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                fiscal_year: `FY-${d.fiscal_year}`,
-                checklist_name: d.checklist_name,
-                attachment_level: d.attachment_level,
-                attach_to: d.attach_to,
-                attached_to: d.attached_to,
-                status_name: d.status_name,
-                created_by: d.created_by_name,
-                description: d.description,
-                created_datetime: formatDate(d.created_datetime),
-                effective_start_datetime:
-                  value.activityType && value.activityType.toLowerCase() === "task"
-                    ? formatDateOnly(d.effective_start_datetime)
-                    : formatDate(d.effective_start_datetime),
-                effective_end_datetime:
-                  value.activityType && value.activityType.toLowerCase() === "task"
-                    ? formatDateOnly(d.effective_end_datetime)
-                    : formatDate(d.effective_end_datetime),
-                activity_type: d.activity_type,
-                created_by_name: d.created_by_name,
-                call_platform: d.call_platform,
-                to_email: Array.isArray(d.to_email) ? d.to_email.join(",") : d.to_email,
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              fiscal_year: `FY-${d.fiscal_year}`,
+              checklist_name: d.checklist_name,
+              attachment_level: d.attachment_level,
+              attach_to: d.attach_to,
+              attached_to: d.attached_to,
+              status_name: d.status_name,
+              created_by: d.created_by_name,
+              description: d.description,
+              created_datetime: formatDate(d.created_datetime),
+              effective_start_datetime:
+                value.activityType && value.activityType.toLowerCase() === "task"
+                  ? formatDateOnly(d.effective_start_datetime)
+                  : formatDate(d.effective_start_datetime),
+              effective_end_datetime:
+                value.activityType && value.activityType.toLowerCase() === "task"
+                  ? formatDateOnly(d.effective_end_datetime)
+                  : formatDate(d.effective_end_datetime),
+              activity_type: d.activity_type,
+              created_by_name: d.created_by_name,
+              call_platform: d.call_platform,
+              to_email: Array.isArray(d.to_email) ? d.to_email.join(",") : d.to_email,
 
-                effective_start_time: d.effective_start_time ? moment(d.effective_start_time, 'HH:mm').format('h:mm A') : '',
-                effective_end_time: d.effective_end_time ? moment(d.effective_end_time, 'HH:mm').format('h:mm A') : '',
-                subject: d.subject,
-                modified_by: d.modified_by_name,
-                modified_datetime:
-                  d.modified_datetime == null
-                    ? ""
-                    : formatDate(d.modified_datetime),
-                assigned_to_name: d.assigned_to_name,
-                invited_by: d.invited_by,
-                task_name: d.task_name,
-              };
+              effective_start_time: d.effective_start_time ? moment(d.effective_start_time, 'HH:mm').format('h:mm A') : '',
+              effective_end_time: d.effective_end_time ? moment(d.effective_end_time, 'HH:mm').format('h:mm A') : '',
+              subject: d.subject,
+              modified_by: d.modified_by_name,
+              modified_datetime:
+                d.modified_datetime == null
+                  ? ""
+                  : formatDate(d.modified_datetime),
+              assigned_to_name: d.assigned_to_name,
+              invited_by: d.invited_by,
+              task_name: d.task_name,
+            };
 
-              // Build exportRecord using allowed fields and resultMap
-              const exportRecord: Record<string, any> = {};
-              if(value.activityType && value.activityType.toLowerCase() === "email") {
-                emailactivityFieldMappings.forEach((mapping) => {
+            // Build exportRecord using allowed fields and resultMap
+            const exportRecord: Record<string, any> = {};
+            if (value.activityType && value.activityType.toLowerCase() === "email") {
+              emailactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
               });
-              } else if(value.activityType && value.activityType.toLowerCase() === "meeting") {
-                meetingactivityFieldMappings.forEach((mapping) => {
+            } else if (value.activityType && value.activityType.toLowerCase() === "meeting") {
+              meetingactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
               });
-              } else if(value.activityType && value.activityType.toLowerCase() === "call") {
-                 callactivityFieldMappings.forEach((mapping) => {
+            } else if (value.activityType && value.activityType.toLowerCase() === "call") {
+              callactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
               });
-              } else if(value.activityType && value.activityType.toLowerCase() === "task") {
-                 taskactivityFieldMappings.forEach((mapping) => {
+            } else if (value.activityType && value.activityType.toLowerCase() === "task") {
+              taskactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
               });
-              } else {
-                 activityFieldMappings.forEach((mapping) => {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
+            } else {
+              activityFieldMappings.forEach((mapping) => {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
               });
-              }
-             
+            }
 
-              return exportRecord;
-            });
+
+            return exportRecord;
+          });
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
@@ -1114,6 +1223,7 @@ export default {
   createActivityCall,
   updateActivityCall,
   fetchMeetingActivityById,
-  fetchCallActivityById
-
+  fetchCallActivityById,
+  cancelActivityMeeting,
+  completeActivityMeeting
 };
