@@ -81,7 +81,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
-  const disableRemainderBtn = [
+  const disableReminderBtn = [
     StatusTypeEnum.sent,
     StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
@@ -179,7 +179,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       variant: 'outlined' as const,
       disabled:
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
@@ -189,7 +189,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       variant: 'outlined' as const,
       disabled:
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
@@ -333,12 +333,12 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           <>
             {data?.interaction_level_name?.toLocaleLowerCase() ===
               'project' && (
-              <DetailsSection
-                title='Basic Information'
-                data={basicDetails}
-                customStyle='pt-0 mt-0'
-              />
-            )}
+                <DetailsSection
+                  title='Basic Information'
+                  data={basicDetails}
+                  customStyle='pt-0 mt-0'
+                />
+              )}
             <DetailsSection
               title='Interaction Information'
               data={interactionDetails}
@@ -380,15 +380,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         selectedRows={
           data
             ? [
-                {
-                  rid: data.interaction_rid || interactionId || '',
-                  interaction_level_name: data.interaction_level_name || '',
-                  project_fiscal_rid: data.project_fiscal_rid || '',
-                  recipient_name: data.recipient_name || '',
-                  recipient_email: data.recipient_email || '',
-                  status_name: data.status_name || '',
-                } as InteractionList,
-              ]
+              {
+                rid: data.interaction_rid || interactionId || '',
+                interaction_level_name: data.interaction_level_name || '',
+                project_fiscal_rid: data.project_fiscal_rid || '',
+                recipient_name: data.recipient_name || '',
+                recipient_email: data.recipient_email || '',
+                status_name: data.status_name || '',
+              } as InteractionList,
+            ]
             : []
         }
         onSuccessRefetch={refetch}

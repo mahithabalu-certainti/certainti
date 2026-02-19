@@ -192,9 +192,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       flag: 'account',
     },
     !viewDetails &&
-      !viewInteractionHistory &&
-      !viewInteractionAttachment &&
-      !viewResponseHistory,
+    !viewInteractionHistory &&
+    !viewInteractionAttachment &&
+    !viewResponseHistory,
     refreshInteractions
   );
   const {
@@ -233,7 +233,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
+  const interactionStatusReminder = useGetInteractionStatusByReminder(true);
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
 
@@ -282,11 +282,11 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const memoizedInteractionStatusReminder = useMemo(
     () =>
-      interactionStatusRemainder.data?.data.interactionStatus.map((status) => ({
+      interactionStatusReminder.data?.data.interactionStatus.map((status) => ({
         option: status.status_name,
         value: status.rid,
       })) || [],
-    [interactionStatusRemainder.data?.data.interactionStatus]
+    [interactionStatusReminder.data?.data.interactionStatus]
   );
   const memoizedInteractionLevel = useMemo(
     () =>
@@ -627,12 +627,12 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
-        memoizedInteractionTypes,
-        memoizedInteractionResSources,
-        memoizedInteractionStatus,
-        memoizedInteractionLevel,
-        permissionMap
-      )
+      memoizedInteractionTypes,
+      memoizedInteractionResSources,
+      memoizedInteractionStatus,
+      memoizedInteractionLevel,
+      permissionMap
+    )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getInteractionModelFilterFields(
     memoizedInteractionStatusReminder,

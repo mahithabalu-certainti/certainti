@@ -81,7 +81,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
-  const disableRemainderBtn = [
+  const disableReminderBtn = [
     StatusTypeEnum.sent,
     StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
@@ -152,7 +152,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
-  const handleRemainder = () => {
+  const handleReminder = () => {
     const interactions = [
       {
         interaction_rid: data?.interaction_rid || interactionId || '',
@@ -199,7 +199,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled:
         isProjectSignedOff ||
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !isSendInteraction,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
@@ -210,9 +210,9 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled:
         isProjectSignedOff ||
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !isSendInteraction,
-      onClick: () => handleRemainder(),
+      onClick: () => handleReminder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
       isLoading: sendInteraction.isPending,
@@ -404,15 +404,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         selectedRows={
           data
             ? [
-                {
-                  rid: data.interaction_rid || interactionId || '',
-                  interaction_level_name: data.interaction_level_name || '',
-                  project_fiscal_rid: data.project_fiscal_rid || '',
-                  recipient_name: data.recipient_name || '',
-                  recipient_email: data.recipient_email || '',
-                  status_name: data.status_name || '',
-                } as InteractionList,
-              ]
+              {
+                rid: data.interaction_rid || interactionId || '',
+                interaction_level_name: data.interaction_level_name || '',
+                project_fiscal_rid: data.project_fiscal_rid || '',
+                recipient_name: data.recipient_name || '',
+                recipient_email: data.recipient_email || '',
+                status_name: data.status_name || '',
+              } as InteractionList,
+            ]
             : []
         }
         onSuccessRefetch={refetch}
