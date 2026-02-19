@@ -551,8 +551,6 @@ export class CaseTaskSchemaService {
                     completedWeightValues = completedWeightValues.add(mapAllWeightageWithValue.get(data!)!)
                   }
                 })
-                console.log("completedWeightValues ===> ", completedWeightValues)
-                console.log("totalAllWeightageValues ===> ", totalAllWeightageValues)
                 const caseCompletionPercentage = (completedWeightValues.div(totalAllWeightageValues)).mul(100) || new Decimal(0)
                 await Case.update({
                   case_completion_percentage: parseFloat(caseCompletionPercentage.toFixed(2))

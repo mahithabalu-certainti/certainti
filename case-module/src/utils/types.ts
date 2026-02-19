@@ -1056,6 +1056,7 @@ interface RdCreditsCountry {
   rd_credits_computed : number
   rd_credits_approved : number
   rd_credits_submitted : number
+  comments : string
 }
 
 export interface RdCreditsState {
@@ -1063,6 +1064,7 @@ export interface RdCreditsState {
   rd_credits_computed : number
   rd_credits_approved : number
   rd_credits_submitted : number
+  comments : string
 }
 
 export interface CaseCloseType {
@@ -1070,7 +1072,6 @@ export interface CaseCloseType {
   case_rid : string
   country_credits : RdCreditsCountry,
   state_credits : RdCreditsState[]
-  comments : string
   user_rid : string
   fiscal_year : string
   user_preference : string

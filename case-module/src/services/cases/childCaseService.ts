@@ -1436,8 +1436,19 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         const fileUploadedResult = await uploadMultipleFilesToAzureBlob(data.account_rid, findParentAccount.r_number, files);
         this.logger.info("fileUploadedResult Completed and Retrieved");
         if(fileUploadedResult.length > 0) {
+          const setComments = new Map(data.state_credits.map((d) => [d.state_rid, d.comments]));
+          const setCountryComments = new Map();
+          setCountryComments.set(data.country_credits.country_rid, data.country_credits.comments);
           let storeInArrayOfObjects : AttachmentCreationAttributes[] = [];
+          let fetchStateIdFromName : string;
+          let fetchCountryIdFromName : string;
           fileUploadedResult.forEach((d) => {
+            if(d.fieldName.startsWith("file_state_")) {
+              fetchStateIdFromName = d.fieldName.replace("file_state_", "");
+            }
+            else if(d.fieldName.startsWith("file_country_")) {
+              fetchCountryIdFromName = d.fieldName.replace("file_country_", "");
+            }
             storeInArrayOfObjects.push({
               created_by : data.user_rid,
               attach_to : data.case_rid,
@@ -1450,7 +1461,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
               document_type_rid : "",
               document_category_others: "",
               document_type_others : "",
-              comments : data.comments,
+              comments : setComments.get(fetchStateIdFromName) ?? setCountryComments.get(fetchCountryIdFromName),
               document_name : d.name,
               format : d.extension,
               created_datetime : new Date(),

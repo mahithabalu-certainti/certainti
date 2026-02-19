@@ -1260,7 +1260,8 @@ const stateCreditSchema = Joi.object({
   state_rid : Joi.string().required().max(50),
   rd_credits_computed : Joi.string().required(),
   rd_credits_approved : Joi.string().required(),
-  rd_credits_submitted : Joi.string().required()
+  rd_credits_submitted : Joi.string().required(),
+  comments : Joi.string().optional().allow(""),
 })
 
 const caseCloseSchema = Joi.object({
@@ -1270,13 +1271,13 @@ const caseCloseSchema = Joi.object({
     country_rid : Joi.string().required().max(50),
     rd_credits_computed : Joi.string().required(),
     rd_credits_approved : Joi.string().required(),
-    rd_credits_submitted : Joi.string().required()
+    rd_credits_submitted : Joi.string().required(),
+    comments : Joi.string().optional().allow(""),
   }).allow({}),
-  comments : Joi.string().optional().allow(""),
   state_credits : Joi.array().items(stateCreditSchema),
   fiscal_year : Joi.string().required(),
   user_preference : Joi.string().allow(""),
-  country_rid : Joi.string().optional().allow("")
+  country_rid : Joi.string().optional().allow(""),
 })
 const singleFileSchema = Joi.object({
   mimetype : Joi.string().required(),
