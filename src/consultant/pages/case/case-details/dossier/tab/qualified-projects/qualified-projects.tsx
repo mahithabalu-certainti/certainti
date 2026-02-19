@@ -206,7 +206,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: 'calc(100vh - 450px)',
           overflow: 'auto',
         }}
         stickyHeader={true}
@@ -215,7 +215,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={[]}
-        loading={isLoading}
+        loading={!isLoading}
         error={isError ? 'Failed to load qualified projects data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}

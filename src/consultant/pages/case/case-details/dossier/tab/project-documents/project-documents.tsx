@@ -53,7 +53,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     {
       page: currentPage + 1,
       limit: 100,
-      sortBy: 'r_number',
+      sortBy: 'project_code',
       sortOrder: 'ASC',
     }
   );

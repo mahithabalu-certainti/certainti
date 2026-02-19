@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   AllPermissions,
   useGetAllCountries,
+  useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
+  useGetStatus,
 } from '../../../../../common-service';
 import {
   ActivityDropdownItem,
@@ -11,6 +14,7 @@ import {
   ColorCode,
   ExportType,
   FinancialHighlightsResponse,
+  SelectOption,
   TechnicalSummaryExportListParams,
 } from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -31,7 +35,7 @@ import {
   getQualifiedProjectsFilterFields,
 } from './helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { checkPermission } from '../../../../../common-utils';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import {
@@ -40,7 +44,10 @@ import {
   useRDCreditStatus,
 } from '../../../../services/case-dossier/cases-financial-services';
 import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
-import { useFetchState } from '../../../../services/account';
+import {
+  useFetchClassification,
+  useFetchState,
+} from '../../../../services/account';
 import {
   useGetResourceStatus,
   useGetResourceType,
@@ -51,6 +58,9 @@ import { AttachmentsListExportParams } from '../../../../types/attachment';
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
 import CloseCaseModal from './close-case-modal';
+import { useGetProjectType } from '../../../../services/project';
+import { FieldChangeEvent } from '../../../../../components/table/types';
+import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
 
 const DossierTabs = [
   {
@@ -132,6 +142,7 @@ const Dossier: React.FC<DossierProps> = ({
   const [resetSearch, setResetSearch] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [currentCategory, setCurrentCategory] = useState<string>('');
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -274,12 +285,20 @@ const Dossier: React.FC<DossierProps> = ({
     if (fieldName === 'country_rid' && value) {
       setCurrentCountry(String(value));
     }
+    if (fieldName === 'document_category_rid' && value) {
+      setCurrentCategory(String(value));
+    }
   };
 
   const allCountries = useGetAllCountries();
   const regions = useFetchState(currentCountry?.toString() || '');
   const resourceTypeOptions = useGetResourceType();
   const resourceStatusOptions = useGetResourceStatus();
+  const Classification = useFetchClassification();
+  const statusOptions = useGetStatus();
+  const projectTypeOptions = useGetProjectType();
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
   const countryOptions = useMemo(
     () =>
@@ -361,12 +380,66 @@ const Dossier: React.FC<DossierProps> = ({
     return map;
   }, [technicalSummaryViewEditFields]);
 
+  const memoizedClassification = useMemo(
+    () =>
+      Classification.data?.data.projectClassifications.map((data) => ({
+        option: data.classification_name,
+        value: data.classification_name,
+      })) || [],
+    [Classification.data?.data.projectClassifications]
+  );
+  const memoizedProjectTypes = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        option: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
+  );
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      categoryTypes.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [categoryTypes.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
+  const fieldOptions = {
+    fiscalYears: [],
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'qualified_projects':
-        return getQualifiedProjectsFilterFields();
+        return getQualifiedProjectsFilterFields(
+          memoizedClassification,
+          memoizedProjectTypes,
+          memoizedStatus,
+          projectPermissionMap
+        );
       case 'project_documents':
-        return getProjectDocumentsFilterFields();
+        return getProjectDocumentsFilterFields(fieldOptions, permissionMap);
       case 'technical_summary':
         return getTechnicalSummaryFilterFields(technicalSummarypermissionMap);
       case 'resource_summary':
@@ -390,6 +463,7 @@ const Dossier: React.FC<DossierProps> = ({
     regionOptions,
     tabParam,
     technicalSummarypermissionMap,
+    fieldOptions,
   ]);
 
   const tabs = [
@@ -488,7 +562,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={
           (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
@@ -528,7 +602,7 @@ const Dossier: React.FC<DossierProps> = ({
         defaultValue={tabParam}
       />
       {caseDetails?.case_total_qualified_projects === 0 ||
-        caseDetails?.case_total_qualified_projects === '0' ? (
+      caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>
