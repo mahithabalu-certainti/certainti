@@ -4,6 +4,9 @@ import {
   HttpStatus,
   MAIN_SCHEMA_NAME,
   SCHEMANAME_PREFIX,
+  entityTypes,
+  eventNames,
+  eventTypes,
   rawQueries,
 } from "../utils/constants";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
@@ -242,6 +245,20 @@ class ResourceSkillService {
         // Update the resource_fiscal table
         if (resource_rid) {
           try {
+            const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                    userId: userId!,
+                    eventType: eventTypes.UI_HANDLER
+                  });
+            await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+              created_by: userId!,
+              account_rid: account_rid,
+              entity_rid: createdResourceSkill?.rid!,
+              entity_name: entityTypes.RESOURCE,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.CREATE,
+              descriptions:skill_description
+            },["account"]);
             ResourceFiscal.initialize(sequelizeInstance, schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
@@ -483,12 +500,26 @@ class ResourceSkillService {
         );
         // Create history records for the changes
         if (affectedCounts > 0) {
-          await this.createResourceSkillHistory(
-            originalResourceSkill.toJSON(),
-            affectedRows[0],
-            userId,
-            accountNumberFetched
-          );
+          const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                    userId: userId!,
+                    eventType: eventTypes.UI_HANDLER
+                  });
+            await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+              created_by: userId!,
+              account_rid: originalResourceSkill.account_rid,
+              entity_rid: originalResourceSkill?.rid!,
+              entity_name: entityTypes.RESOURCE,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.CREATE,
+              descriptions:skill_description
+            },["account"]);
+            await this.createResourceSkillHistory(
+              originalResourceSkill.toJSON(),
+              affectedRows[0],
+              userId,
+              accountNumberFetched
+            );
 
           // Also log to timeline
           await this.createResourceSkillTimeline(

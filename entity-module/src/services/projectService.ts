@@ -8,6 +8,9 @@ import {
   primaryKeyContacts,
   rawQueries,
   STATUS_MESSAGE,
+  eventTypes,
+  entityTypes,
+  eventNames,
 } from "../utils/constants";
 import {
   ICreateProject,
@@ -411,14 +414,21 @@ export class ProjectService {
               accountNumber
             );
           }
-
-          await this.projectIngestion.addProjectTimeline(
-            accountNumber,
-            projectData.account_id,
-            "create",
-            createdProjectFiscal.rid,
-            projectData
-          );
+        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                              userId: userId!,
+                                              eventType: eventTypes.UI_HANDLER
+                                            });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: projectData.account_id,
+          entity_rid: createdProjectFiscal?.rid!,
+          entity_name: entityTypes.PROJECT,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.CREATE,
+          descriptions:projectData.project_code
+        },["account","project"]);
+    
         }
       }
 
@@ -513,6 +523,20 @@ export class ProjectService {
         accountData,
         userId
       );
+       const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                              userId: userId!,
+                                              eventType: eventTypes.UI_HANDLER
+                                            });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: projectData.account_id,
+          entity_rid: projectData?.project_fiscal_id!,
+          entity_name: entityTypes.PROJECT,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.UPDATE,
+          descriptions:projectData.project_code
+        },["account","project"]);
 
       return {
         statusCode: HttpStatus.SUCCESS,

@@ -77,6 +77,23 @@ export const R_NUMBER_PREFIX = {
   NOTES_SUMMARY: "NOTS",
 };
 
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+}
+
+export const eventTypes = {
+   UI_HANDLER: "ui handler",
+}
+
 export const STATUS_MESSAGE = {
   accountInactive: "Inactive Account",
   accountNoFound: "Account not found",
@@ -1475,6 +1492,24 @@ export const rawQueries = {
       SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountId}'
     `;
   },
+  insertTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, title, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by, :title,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
+    `;
+  },
   fetchAttachmentSummaryByTask() {
     return `
       SELECT 
@@ -2270,6 +2305,13 @@ export const rawQueries = {
     if (newRid === null) newRid = ''
     return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
+  getEventTypeQuery() {
+    return `SELECT rid, event_type_name FROM ${MAIN_SCHEMA_NAME}.event_type where event_type_name = :eventType`
+  },
+  getEventNameQuery() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.event_type where event_name = :eventName`
+  },
+
   fetchCheckLists(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''

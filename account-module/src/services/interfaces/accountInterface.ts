@@ -94,6 +94,15 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { keyContactRoles: any };
   }>;
+  listTimeLineEntries(
+   value: { nextOffset: string; limit: string; entityType: string, accountId: string }
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { timeLineEntries: any; count: number };
+  }>;
+  
   // provisionMonitoredAccount(
   //   account_name: string
   // ): void;
