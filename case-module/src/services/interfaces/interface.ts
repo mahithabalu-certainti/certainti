@@ -37,6 +37,7 @@ import {
   TaskCategoryType,
   CaseTaskDropdownType,
   CaseClosureRemarks,
+  IActivityMeetingAction,
   CaseCloseType,
   ComputedValueRequest,
   CaseStateComputedType,
@@ -426,6 +427,24 @@ export interface IActivityService {
     errorMessage?: string;
     data?: any;
   }>;
+  cancelActivityMeeting(
+    data: IActivityMeetingAction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+  completeActivityMeeting(
+    data: IActivityMeetingAction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
   createActivityCall(
     data: IActivityCall,
     userId: string,
@@ -520,42 +539,42 @@ export interface IChildCaseService extends ICaseService {
     errorMessage?: string;
     data?: { cases: any };
   }>;
-  getCaseClosureRemarks(data : any): Promise<{
+  getCaseClosureRemarks(data: any): Promise<{
     case_rid: string;
     case_name: any;
     closing_remarks: {
-        created_by: any;
-        created_by_name: any;
-        signoff_type_rid: any;
-        signoff_type_name: any;
-        signoff_at: any;
+      created_by: any;
+      created_by_name: any;
+      signoff_type_rid: any;
+      signoff_type_name: any;
+      signoff_at: any;
     }[];
-} | {
+  } | {
     case_rid: any;
     case_name: any;
     closing_remarks: never[];
-} | undefined>
-initiateCreateDossierForm(data : any) : Promise<string>
-exportCaseClosingRemarks(data : any): Promise<string | undefined>
-fetchDossierPackage(data : any) : Promise<{
+  } | undefined>
+  initiateCreateDossierForm(data: any): Promise<string>
+  exportCaseClosingRemarks(data: any): Promise<string | undefined>
+  fetchDossierPackage(data: any): Promise<{
     statusCode: number;
     data: DossierForm;
-} | {
+  } | {
     statusCode: number;
     data: null;
-}>
-closeCase(data : CaseCloseType, files : Express.Multer.File[]): Promise<{
+  }>
+  closeCase(data: CaseCloseType, files: Express.Multer.File[]): Promise<{
     statusCode: number;
     statusMessage: string;
-}>
-getComputedValue(data : ComputedValueRequest): Promise<{
+  }>
+  getComputedValue(data: ComputedValueRequest): Promise<{
     statusCode: number;
     statusMessage: string;
     data: {
-        countryComputedData: CaseCountryComputedType | null;
-        stateComputedData: CaseStateComputedType[];
+      countryComputedData: CaseCountryComputedType | null;
+      stateComputedData: CaseStateComputedType[];
     };
-}>
+  }>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;
