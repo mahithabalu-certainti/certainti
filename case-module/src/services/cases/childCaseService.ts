@@ -1457,7 +1457,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
               account_rid : data.account_rid,
               browse_file : d.url,
               size_in_mb : d.size,
-              attachment_level : "case",
+              attachment_level : "close case",
               fiscal_year : Number(data.fiscal_year),
               document_category_rid : "",
               document_type_rid : "",
