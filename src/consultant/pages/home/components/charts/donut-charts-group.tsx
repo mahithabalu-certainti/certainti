@@ -103,6 +103,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
           className='custom-select-no-arrow w-[150px] max-w-[150px] sm:text-sm'
           MenuProps={COMMON_MENU_PROPS}
           sx={getSelectStyles(false, false)}
+          disabled={isLoading}
         >
           <MenuItem
             value='all'

@@ -605,3 +605,61 @@ export interface DossierPackageResponse {
     extension: string;
   };
 }
+
+// ComputedData
+
+export interface ComputedDataPayload {
+  case_rid: string;
+  account_rid: string;
+  country_rid: string;
+  state_rid?: string[];
+  country_code: string;
+}
+
+export interface CountryComputedData {
+  final_credit: string;
+  country_rid: string;
+  country_name: string;
+}
+
+export interface StateComputedData {
+  final_credit: string;
+  state_rid: string;
+  state_name: string;
+}
+
+export interface ComputedDataResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    countryComputedData: CountryComputedData;
+    stateComputedData: StateComputedData[];
+  };
+}
+
+export interface CaseCloseCountryCredits {
+  country_rid: string;
+  rd_credits_computed: string;
+  rd_credits_submitted: string;
+  rd_credits_approved: string;
+  comments: string;
+}
+
+export interface CaseCloseStateCredit {
+  state_rid: string;
+  rd_credits_computed: string;
+  rd_credits_submitted: string;
+  rd_credits_approved: string;
+  comments: string;
+}
+
+export interface CaseClosePayload {
+  case_rid: string;
+  account_rid: string;
+  country_credits: Partial<CaseCloseCountryCredits>;
+  state_credits: CaseCloseStateCredit[];
+  files?: Record<string, File>; // key: file_country_{rid} or file_state_{rid}
+  fiscal_year?: string | number;
+  user_preference?: string; // 'true' or ''
+}

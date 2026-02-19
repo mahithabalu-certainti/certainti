@@ -12,7 +12,11 @@ import {
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
-import { ArrowBackIcon } from '../../../../../../../assets';
+import {
+  ArrowBackIcon,
+  ZoomInIcon,
+  ZoomOutIcon,
+} from '../../../../../../../assets';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -188,6 +192,19 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             >
               Zoom:
             </Typography>
+            <IconButton
+              size='small'
+              onClick={handleZoomOut}
+              disabled={scale <= 0.5}
+              disableRipple
+              sx={{
+                '&.Mui-disabled': { color: '#CBD6E2' },
+              }}
+            >
+              <ZoomOutIcon
+                className={`w-4.5 h-4.5 ${scale <= 0.5 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
+              />
+            </IconButton>
             <FormControl size='small'>
               <Select
                 value={Math.round(scale * 100)}
@@ -204,19 +221,16 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             </FormControl>
             <IconButton
               size='small'
-              onClick={handleZoomOut}
-              disabled={scale <= 0.5}
-              disableRipple
-            >
-              <span className='text-xl font-bold'>-</span>
-            </IconButton>
-            <IconButton
-              size='small'
               onClick={handleZoomIn}
               disabled={scale >= 3}
               disableRipple
+              sx={{
+                '&.Mui-disabled': { color: '#CBD6E2' },
+              }}
             >
-              <span className='text-xl font-bold'>+</span>
+              <ZoomInIcon
+                className={`w-4.5 h-4.5 ${scale >= 3 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
+              />
             </IconButton>
           </Box>
 
@@ -240,15 +254,15 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                 className={`w-3 h-3 ${currentPage === 1 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
               />
             </IconButton>
-            <FormControl size='small'>
-              <Select
-                value={currentPage}
-                onChange={handlePageChange}
-                MenuProps={COMMON_MENU_PROPS}
-                sx={getSelectStyles(false, false)}
-              >
-                {pdfDoc &&
-                  Array.from({ length: pdfDoc.numPages }, (_, i) => (
+            {pdfDoc && (
+              <FormControl size='small'>
+                <Select
+                  value={currentPage}
+                  onChange={handlePageChange}
+                  MenuProps={COMMON_MENU_PROPS}
+                  sx={getSelectStyles(false, false)}
+                >
+                  {Array.from({ length: pdfDoc.numPages }, (_, i) => (
                     <MenuItem
                       key={i + 1}
                       value={i + 1}
@@ -257,8 +271,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                       Page {i + 1}
                     </MenuItem>
                   ))}
-              </Select>
-            </FormControl>
+                </Select>
+              </FormControl>
+            )}
             <IconButton
               onClick={handleNextPage}
               size='small'
@@ -268,7 +283,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               }}
             >
               <ArrowBackIcon
-                className={`w-3 h-3 ${currentPage === 1 ? '[&>path]:stroke-[#CBD6E2]' : ''} rotate-180`}
+                className={`w-3 h-3 ${currentPage === pdfDoc?.numPages ? '[&>path]:stroke-[#CBD6E2]' : ''} rotate-180`}
               />
             </IconButton>
           </Box>

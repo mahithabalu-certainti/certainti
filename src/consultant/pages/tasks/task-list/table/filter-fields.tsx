@@ -18,6 +18,14 @@ const nonReqTextfieldOptions: { option: string; value: string }[] = [
   { option: 'Contains', value: 'contains' },
   { option: 'Is Empty', value: 'is_empty' },
 ];
+
+const dateOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Before', value: 'before' },
+  { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+];
+
 const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -97,6 +105,26 @@ export const getTaskFilterFields = (
     type: 'text',
     operatorOption: nonReqTextfieldOptions,
     hide: permissionMap ? !permissionMap['assigned_to']?.read : false,
+  },
+  {
+    name: 'Start Date',
+    value: 'effective_start_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+    isFutureDateEnabled: true,
+    hide: permissionMap
+      ? !permissionMap['effective_start_datetime']?.read
+      : false,
+  },
+  {
+    name: 'Due Date',
+    value: 'effective_end_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+    isFutureDateEnabled: true,
+    hide: permissionMap
+      ? !permissionMap['effective_end_datetime']?.read
+      : false,
   },
   {
     name: 'Priority',

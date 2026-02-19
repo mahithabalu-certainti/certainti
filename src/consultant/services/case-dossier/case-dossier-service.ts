@@ -7,6 +7,9 @@ import {
   ClosingRemarksResponse,
   RDFormResponse,
   ClosingRemarksParams,
+  ComputedDataResponse,
+  ComputedDataPayload,
+  CaseClosePayload,
 } from '../../types';
 import {
   ResourceSummaryMockData,
@@ -271,5 +274,76 @@ export const useRDFormMapperPreviewMutation = () => {
         isFederal,
         stateRid
       ),
+  });
+};
+
+// ComputedData
+
+export const fetchComputedData = async (
+  payload: ComputedDataPayload
+): Promise<ComputedDataResponse> => {
+  const response = await caseServiceApi.post<ComputedDataResponse>(
+    '/api/cases/computedValues',
+    payload
+  );
+
+  return response.data;
+};
+
+export const useComputedData = (
+  payload: ComputedDataPayload,
+  enabled: boolean
+): UseQueryResult<ComputedDataResponse, Error> => {
+  return useQuery<ComputedDataResponse, Error>({
+    queryKey: ['computed-data', payload],
+    queryFn: () => fetchComputedData(payload),
+    retry: 0,
+    gcTime: 0,
+    enabled:
+      enabled &&
+      !!payload.account_rid &&
+      !!payload.case_rid &&
+      !!payload.country_rid &&
+      !!payload.country_code,
+  });
+};
+
+// ─── Case Close ───────────────────────────────────────────────────────────────
+
+export const fetchCaseClose = async (
+  payload: CaseClosePayload
+): Promise<{ data: unknown }> => {
+  const formData = new FormData();
+
+  formData.append('case_rid', payload.case_rid);
+  formData.append('account_rid', payload.account_rid);
+  formData.append('country_credits', JSON.stringify(payload.country_credits));
+  formData.append('state_credits', JSON.stringify(payload.state_credits));
+
+  if (payload.fiscal_year !== undefined) {
+    formData.append('fiscal_year', String(payload.fiscal_year));
+  }
+
+  if (payload.user_preference !== undefined) {
+    formData.append('user_preference', payload.user_preference);
+  }
+
+  // Append per-row files with their named keys (file_country_{rid} / file_state_{rid})
+  if (payload.files) {
+    Object.entries(payload.files).forEach(([key, file]) => {
+      formData.append(key, file);
+    });
+  }
+
+  const response = await caseServiceApi.post('/api/cases/close', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
+
+export const useCaseCloseMutation = () => {
+  return useMutation<{ data: unknown }, Error, CaseClosePayload>({
+    mutationFn: (payload) => fetchCaseClose(payload),
   });
 };

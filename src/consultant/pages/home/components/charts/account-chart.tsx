@@ -117,6 +117,7 @@ const AccountChart: React.FC<Props> = ({
           }`}
           MenuProps={COMMON_MENU_PROPS}
           sx={getSelectStyles(false, false)}
+          disabled={isLoading}
         >
           <MenuItem
             value='all'
