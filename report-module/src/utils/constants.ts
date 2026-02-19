@@ -149,11 +149,11 @@ export const rawQueries = {
   fetchOpenTaskCount(accountIds?: string[], userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     WHERE b.task_type_name = :taskType
       AND d.task_status_name IN (:taskStatus)`;
@@ -178,11 +178,11 @@ export const rawQueries = {
   fetchWeeklyOpenTaskCount(accountIds?: string[], userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     WHERE b.task_type_name = :taskType
       AND d.task_status_name IN (:taskStatus)`;
@@ -209,11 +209,11 @@ export const rawQueries = {
   fetchWeeklyBlockedTaskCount(accountIds?: string[], userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     WHERE b.task_type_name = :taskType
       AND d.task_status_name = :taskStatus`;
@@ -241,11 +241,11 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     WHERE b.task_type_name = :taskType
       AND d.task_status_name IN (:taskStatus)`;
@@ -272,11 +272,11 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     WHERE b.task_type_name = :taskType
       AND d.task_status_name IN (:taskStatus)`;
@@ -307,11 +307,11 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     WHERE b.task_type_name = :taskType
       AND d.task_status_name IN (:taskStatus)`;
@@ -339,11 +339,11 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     WHERE b.task_type_name = :taskType
       AND d.task_status_name = :taskStatus`;
@@ -399,9 +399,9 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     WHERE b.task_type_name = :taskType`;
 
@@ -487,11 +487,11 @@ export const rawQueries = {
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
     g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
 	left join ${MAIN_SCHEMA_NAME}.case_priority e
 	 on a.priority_rid = e.rid
@@ -518,7 +518,8 @@ export const rawQueries = {
     }
 
     query += ` AND a.effective_start_datetime::date > CURRENT_DATE
-      AND a.effective_start_datetime::date <= CURRENT_DATE + INTERVAL '7 days';`;
+      AND a.effective_start_datetime::date <= CURRENT_DATE + INTERVAL '7 days'
+      ORDER BY a.effective_start_datetime::date ASC;`;
     return { query, replacements };
   },
   fetchOverDueTasks(accountIds?: string[], userId?: string) {
@@ -539,11 +540,11 @@ export const rawQueries = {
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
     g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
 	left join ${MAIN_SCHEMA_NAME}.case_priority e
 	 on a.priority_rid = e.rid
@@ -569,7 +570,8 @@ export const rawQueries = {
       replacements.userId = userId;
     }
 
-    query += ` AND a.effective_end_datetime::date <= CURRENT_DATE;`;
+    query += ` AND a.effective_end_datetime::date <= CURRENT_DATE
+    ORDER BY a.effective_end_datetime::date ASC;`;
     return { query, replacements };
   },
   fetchOpenTasks(accountIds?: string[], userId?: string) {
@@ -590,11 +592,11 @@ export const rawQueries = {
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
     g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
 	left join ${MAIN_SCHEMA_NAME}.case_priority e
 	 on a.priority_rid = e.rid
@@ -621,7 +623,8 @@ export const rawQueries = {
     }
 
     query += ` AND a.effective_end_datetime::date >= date_trunc('week', CURRENT_DATE)::date
-      AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days';`;
+      AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days'
+      ORDER BY a.effective_end_datetime::date ASC;`;
 
     return { query, replacements };
   },
@@ -643,11 +646,11 @@ export const rawQueries = {
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
     g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
 	left join ${MAIN_SCHEMA_NAME}.case_priority e
 	 on a.priority_rid = e.rid
@@ -674,7 +677,8 @@ export const rawQueries = {
     }
 
     query += ` AND a.effective_end_datetime::date >= date_trunc('week', CURRENT_DATE)::date
-      AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days';`;
+      AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days'
+      ORDER BY a.effective_end_datetime::date ASC;`;
     return { query, replacements };
   },
   fetchWeeklyPendingFollowUps(accountIds?: string[], userId?: string) {
@@ -702,11 +706,11 @@ export const rawQueries = {
       h.category_name,
       g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     left join ${MAIN_SCHEMA_NAME}.case_priority e
     on a.priority_rid = e.rid
@@ -737,7 +741,8 @@ export const rawQueries = {
     }
 
     query += ` AND a.effective_end_datetime::date >= date_trunc('week', CURRENT_DATE)::date
-      AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days';`;
+      AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days'
+      ORDER BY a.effective_end_datetime::date ASC;`;
     return { query, replacements };
   },
   fetchOverdueApprovals(accountIds?: string[], userId?: string) {
@@ -759,11 +764,11 @@ export const rawQueries = {
 	h.category_name,
     g.profile_url
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    JOIN ${MAIN_SCHEMA_NAME}.task_type b
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_summary c
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
     left join ${MAIN_SCHEMA_NAME}.case_priority e
     on a.priority_rid = e.rid
@@ -793,7 +798,8 @@ export const rawQueries = {
       replacements.userId = userId;
     }
 
-    query += ` AND a.effective_end_datetime::date <= CURRENT_DATE;`;
+    query += ` AND a.effective_end_datetime::date <= CURRENT_DATE
+    ORDER BY a.effective_end_datetime::date ASC;`;
     return { query, replacements };
   },
   checkTableExistence() {
