@@ -48,7 +48,7 @@ import {
 } from "../../models/taskCollaboratorsModel";
 import CaseSchemaService from "../cases/schemaService";
 import { sendEmailWithAttachment } from "../emailService";
-import { scheduleTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
+import { scheduleTeamsMeetingUtil, updateTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
 import moment from "moment";
 import { ChecklistSchemaService } from "../cases/caseChecklist/checklistSchemaService";
 import { CaseTaskSchemaService } from "../cases/caseTask/caseTaskSchemaService";
@@ -2264,6 +2264,41 @@ class ActivitySchemaService {
       where: { rid: activityRequest.activity_rid },
       raw: true
     });
+
+    try {
+      const [accountInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountInfo(activityRequest.account_rid!),
+        { type: "SELECT" }
+      );
+
+      let parentAccountNumber = accountNumber;
+      if (accountInfo.storage_type === 'separate_db') {
+        const [parentAccountInfo]: any[] =
+          await this.mainDbSequelize.query(
+            rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+            { type: "SELECT" }
+          );
+        parentAccountNumber = parentAccountInfo.r_number;
+      }
+
+      const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+        parentAccountNumber,
+        accountInfo.parent_account_rid || ""
+      );
+
+      if (senderEmailInfo && existingActivity && existingActivity.meeting_id) {
+        const scheduleResponse = await updateTeamsMeetingUtil(
+          existingActivity.meeting_id,
+          { ...activityData, meeting_participants: meetingParticipants },
+          senderEmailInfo
+        );
+        if (!scheduleResponse.success) {
+          logMessage(`Failed to update Teams meeting: ${scheduleResponse.error}`);
+        }
+      }
+    } catch (err) {
+      logMessage(`Error updating Teams meeting: ${err}`);
+    }
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },

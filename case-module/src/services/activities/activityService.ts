@@ -21,6 +21,7 @@ import {
   IActivityCall,
   IActivityEmail,
   IActivityMeeting,
+  IActivityMeetingAction,
   IActivityTask,
   ICreateCases,
   ICreateCaseTeam,
@@ -50,6 +51,7 @@ import {
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
 
 import ActivitySchemaService from "./schemaService";
+import { ChildSchemaService } from "./childSchemaService";
 import CaseSchemaService from "../cases/schemaService";
 import { CaseTaskSchemaService } from "../cases/caseTask/caseTaskSchemaService";
 import { ChecklistSchemaService } from "../cases/caseChecklist/checklistSchemaService";
@@ -58,19 +60,21 @@ export class ActivityService {
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService: CaseManagementSchemaService;
   private activitySchemaService: ActivitySchemaService;
+  private childSchemaService: ChildSchemaService;
   private caseSchemaService: CaseSchemaService;
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
-  private caseTaskSchemaService : CaseTaskSchemaService
-  private checklistSchemaService : ChecklistSchemaService
-  private helperMethod : HelperMethods
+  private caseTaskSchemaService: CaseTaskSchemaService
+  private checklistSchemaService: ChecklistSchemaService
+  private helperMethod: HelperMethods
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.caseModelService = new CaseModelService(); // Initialize your model service here
     this.caseManagementService = new CaseManagementSchemaService();
     this.activitySchemaService = new ActivitySchemaService();
+    this.childSchemaService = new ChildSchemaService();
     this.caseSchemaService = new CaseSchemaService();
     this.caseTaskSchemaService = new CaseTaskSchemaService()
     this.checklistSchemaService = new ChecklistSchemaService()
@@ -136,15 +140,13 @@ export class ActivityService {
         transaction
       );
 
-      if(taskResponse)
-      {
-        if(!this.mainDbSequelize)
-        {
+      if (taskResponse) {
+        if (!this.mainDbSequelize) {
           this.mainDbSequelize = await this.getMainDb();
         }
         const [taskTypeResponse]: any[] = await this.mainDbSequelize.query(
           rawQueries.getActivityTaskType(),
-          {type: QueryTypes.SELECT}
+          { type: QueryTypes.SELECT }
         );
         taskRequest.task_type_rid = taskTypeResponse.rid;
         await this.activitySchemaService.addTaskSummary(
@@ -154,7 +156,7 @@ export class ActivityService {
           taskResponse.get("r_number") || ""
         )
       }
-        
+
       if (taskRequest?.checklist_rid) {
         const response =
           await this.caseManagementService.fetchChecklistTemplateDetailsById(
@@ -194,7 +196,7 @@ export class ActivityService {
           rawQueries.getActiveStatusId()
         );
         for (let d of taskRequest.tags) {
-          await this.caseTaskSchemaService .createOrUpdateTags(
+          await this.caseTaskSchemaService.createOrUpdateTags(
             taskResponse.rid,
             taskRequest.account_rid!,
             "",
@@ -217,7 +219,7 @@ export class ActivityService {
           );
         } */
 
-      
+
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -341,57 +343,57 @@ export class ActivityService {
           errorMessage: "Invalid account ID",
         };
       }
-        const userGroupType = await this.caseSchemaService.getUserGroupType(
-              userId
-            );
-            const userProfileType = await this.caseSchemaService.getUserProfileType(
-              userId
-            );
-            const isCustomGlobal = userGroupType === "DEFAULT";
-            const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
-            const isPOCProfile =
-              userProfileType?.profileName === "Project Point of Contact";
-            let accessibleIds: string[] = [];
-            if (!isCustomGlobal) {
-              accessibleIds = await this.getAccessibleProjectIds(
-                userId,
-                isDefaultParent,
-                isPOCProfile,
-                userProfileType?.email,
-                isCustomGlobal
-              );
-              if (accessibleIds.length === 0) {
-                return {
-                  message: 'No accessible checklist found for the user.',
-                  statusCode: HttpStatus.NOT_FOUND,
-                  data: {
-                      totalCount: 0,
-                    activities: [],
-                  },
-                };
-              }
-            }
-      
-            if (isCustomGlobal && isPOCProfile) {
-              accessibleIds = await this.getAccessibleProjectIds(
-                userId,
-                isDefaultParent,
-                isPOCProfile,
-                userProfileType?.email,
-                isCustomGlobal
-              );
-              if (accessibleIds.length === 0) {
-                return {
-                  message: 'No accessible checklist found for the user.',
-                  statusCode: HttpStatus.NOT_FOUND,
-                  data: {
-                  
-                    totalCount: 0,
-                    activities: [],
-                  },
-                };
-              }
-            }
+      const userGroupType = await this.caseSchemaService.getUserGroupType(
+        userId
+      );
+      const userProfileType = await this.caseSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            message: 'No accessible checklist found for the user.',
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+              totalCount: 0,
+              activities: [],
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            message: 'No accessible checklist found for the user.',
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+
+              totalCount: 0,
+              activities: [],
+            },
+          };
+        }
+      }
       const checklistResponse: any =
         await this.activitySchemaService.fetchActivities(
           accountNumber,
@@ -540,17 +542,17 @@ export class ActivityService {
         };
       }
       let isSubscriptionCreated = false;
-        const accountData = await this.helperMethod.fetchAccountById(accountRid);
-        let accountRNumber = accountData.r_number;
+      const accountData = await this.helperMethod.fetchAccountById(accountRid);
+      let accountRNumber = accountData.r_number;
 
       let childRNumber = await this.caseSchemaService.fetchParentAccount(
-          accountData.parent_account_rid
-        );
-        if (accountData.storage_type === "store_in_parent") {
-          accountRNumber = childRNumber;
-        }
-        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
-        emailActivityDetails.is_email_configured = isSubscriptionCreated
+        accountData.parent_account_rid
+      );
+      if (accountData.storage_type === "store_in_parent") {
+        accountRNumber = childRNumber;
+      }
+      isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber, accountRid)) ?? false;
+      emailActivityDetails.is_email_configured = isSubscriptionCreated
 
 
       return {
@@ -597,17 +599,17 @@ export class ActivityService {
         };
       }
       let isSubscriptionCreated = false;
-        const accountData = await this.helperMethod.fetchAccountById(accountRid);
-        let accountRNumber = accountData.r_number;
+      const accountData = await this.helperMethod.fetchAccountById(accountRid);
+      let accountRNumber = accountData.r_number;
 
       let childRNumber = await this.caseSchemaService.fetchParentAccount(
-          accountData.parent_account_rid
-        );
-        if (accountData.storage_type === "store_in_parent") {
-          accountRNumber = childRNumber;
-        }
-        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
-        activityDetails.is_email_configured = isSubscriptionCreated
+        accountData.parent_account_rid
+      );
+      if (accountData.storage_type === "store_in_parent") {
+        accountRNumber = childRNumber;
+      }
+      isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber, accountRid)) ?? false;
+      activityDetails.is_email_configured = isSubscriptionCreated
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -689,15 +691,14 @@ export class ActivityService {
         userId,
         files
       );
-      if (result.success === false) 
-        {
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: result.error,
+      if (result.success === false) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: result.error,
         }
       }
-    
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.activityCreated,
@@ -713,7 +714,87 @@ export class ActivityService {
     }
   }
 
-   async createActivityCall(
+  async cancelActivityMeeting(
+    data: IActivityMeetingAction,
+    userId: string
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.childSchemaService.cancelActivityMeeting(
+        accountNumber,
+        data,
+        userId
+      );
+      if (result.success === false) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: result.message,
+        }
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityCancelled,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error cancelling activity meeting, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityCancellationFailed,
+      };
+    }
+  }
+
+  async completeActivityMeeting(
+    data: IActivityMeetingAction,
+    userId: string
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.childSchemaService.completeActivityMeeting(
+        accountNumber,
+        data,
+        userId
+      );
+      if (result.success === false) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: result.message,
+        }
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityCompleted,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error completing activity meeting, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityCompletionFailed,
+      };
+    }
+  }
+
+  async createActivityCall(
     data: IActivityCall,
     userId: string,
     files?: Express.Multer.File[]
@@ -815,106 +896,106 @@ export class ActivityService {
     }
   }
   async getActivityStatus(activityType: string): Promise<{
-      statusCode: number;
-      message: string;
-      errorMessage?: string;
-      data?: { activityStatus: any };
-    }> {
-      try {
-        const activityStatus = await this.activitySchemaService.getActivityStatus(activityType);
-  
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: {
-            activityStatus,
-          },
-        };
-      } catch (err) {
-        logMessage(`Error fetching activity status, ${err}`);
-        throw this.throwServiceError(err as Error);
-      }
-    }
-  
-   async getAccessibleProjectIds(
-      userId: string,
-      isdefaultparent: boolean,
-      isPOC: boolean = false,
-      userEmail?: string,
-      isCustomGlobal: boolean = false
-    ): Promise<string[]> {
-      const mainDbSequelize = await initMainDbSequelize();
-      const MAIN_SCHEMA_NAME = "trd365";
-  
-      const replacements: any[] = [];
-  
-      let accessControlWhere = "WHERE 1=1";
-      logMessage(
-        `isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`
-      );
-  
-      if (isCustomGlobal) {
-        // If isPOC is also true, restrict to POC email
-        if (isPOC && userEmail) {
-          accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
-          replacements.push(userEmail, userEmail);
-        }
-        // Else allow all projects (no extra access checks)
-      } else {
-        // Non-global user – apply account/project access checks
-        const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
-        replacements.push(userId, userId, userId, userId);
-        accessControlWhere += ` AND ${accountAccessSubquery}`;
-  
-        if (!isdefaultparent) {
-          // Add project-level access checks if not a parent group
-          accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
-          replacements.push(userId, userId, userId, userId);
-        }
-  
-        // Only non-global users can be further filtered by POC
-        if (isPOC && userEmail) {
-          accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
-          replacements.push(userEmail, userEmail);
-        }
-      }
-  
-      const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
-  
-      const results = await mainDbSequelize.query(query, {
-        replacements,
-        type: "SELECT",
-      });
-  
-      return results.map((row: any) => row.project_fiscal_rid);
-    }
-    /**
-     * Formats an error response to be returned from service methods.
-     *
-     * @param {Error} err - The caught error object containing error details.
-     *
-     * @returns {{
-     *   statusCode: number;
-     *   message: string;
-     *   errorMessage: string;
-     * }} - Standardized error response object with consistent structure.
-     *
-     * @description
-     * - Converts any caught error into a standardized service error format.
-     * - Sets status code to FAILED (500) for consistent error handling.
-     * - Preserves the original error message for debugging purposes.
-     * - Used across all service methods to maintain consistent error response structure.
-     * - Ensures all service errors follow the same format for frontend consumption.
-     */
-    throwServiceError(err: Error): {
-      statusCode: number;
-      message: string;
-      errorMessage: string;
-    } {
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityStatus: any };
+  }> {
+    try {
+      const activityStatus = await this.activitySchemaService.getActivityStatus(activityType);
+
       return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: err.message,
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          activityStatus,
+        },
       };
+    } catch (err) {
+      logMessage(`Error fetching activity status, ${err}`);
+      throw this.throwServiceError(err as Error);
     }
+  }
+
+  async getAccessibleProjectIds(
+    userId: string,
+    isdefaultparent: boolean,
+    isPOC: boolean = false,
+    userEmail?: string,
+    isCustomGlobal: boolean = false
+  ): Promise<string[]> {
+    const mainDbSequelize = await initMainDbSequelize();
+    const MAIN_SCHEMA_NAME = "trd365";
+
+    const replacements: any[] = [];
+
+    let accessControlWhere = "WHERE 1=1";
+    logMessage(
+      `isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`
+    );
+
+    if (isCustomGlobal) {
+      // If isPOC is also true, restrict to POC email
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+      // Else allow all projects (no extra access checks)
+    } else {
+      // Non-global user – apply account/project access checks
+      const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+      replacements.push(userId, userId, userId, userId);
+      accessControlWhere += ` AND ${accountAccessSubquery}`;
+
+      if (!isdefaultparent) {
+        // Add project-level access checks if not a parent group
+        accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+        replacements.push(userId, userId, userId, userId);
+      }
+
+      // Only non-global users can be further filtered by POC
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+    }
+
+    const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
+
+    const results = await mainDbSequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    return results.map((row: any) => row.project_fiscal_rid);
+  }
+  /**
+   * Formats an error response to be returned from service methods.
+   *
+   * @param {Error} err - The caught error object containing error details.
+   *
+   * @returns {{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage: string;
+   * }} - Standardized error response object with consistent structure.
+   *
+   * @description
+   * - Converts any caught error into a standardized service error format.
+   * - Sets status code to FAILED (500) for consistent error handling.
+   * - Preserves the original error message for debugging purposes.
+   * - Used across all service methods to maintain consistent error response structure.
+   * - Ensures all service errors follow the same format for frontend consumption.
+   */
+  throwServiceError(err: Error): {
+    statusCode: number;
+    message: string;
+    errorMessage: string;
+  } {
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: err.message,
+    };
+  }
 }

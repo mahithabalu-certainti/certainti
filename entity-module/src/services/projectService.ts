@@ -707,7 +707,7 @@ export class ProjectService {
     }
   }
 
-  /**
+/**
  * Retrieves detailed information about a project and its attachments by account and project IDs.
  *
  * @async
@@ -837,26 +837,33 @@ export class ProjectService {
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 
-        // Run independent enrichment operations in parallel for better performance
-        const [enrichedKeyContacts, geoData, industryData, typeAndStatus, keyContactData, classificationData, userDetails] = 
-          await Promise.all([
-            this.projectIngestion.enrichKeyContactsByProjectId(projectData, accountRNumber),
-            this.schemaService.insertProjectGeoData(projectData, mainDbInit),
-            this.schemaService.insertIndustyName(projectData, mainDbInit),
-            this.schemaService.insertProjectTypeAndStatus(projectData, mainDbInit, projectType),
-            this.schemaService.projectKeyContactData(projectData, mainDbInit),
-            this.schemaService.projectClassificationData(projectData, mainDbInit),
-            this.schemaService.insertUserDetails(projectData)
-          ]);
+        projectData = await this.projectIngestion.enrichKeyContactsByProjectId(
+          projectData,
+          accountRNumber
+        );
 
-        // Merge all enriched data into projectData
-        projectData = enrichedKeyContacts;
-        projectData.dataValues = { ...projectData.dataValues, ...geoData };
-        projectData.dataValues = { ...projectData.dataValues, ...industryData };
-        projectData.dataValues = { ...projectData.dataValues, ...typeAndStatus };
-        projectData.dataValues = { ...projectData.dataValues, ...keyContactData };
-        projectData.dataValues = { ...projectData.dataValues, ...classificationData };
-        projectData.dataValues = { ...projectData.dataValues, ...userDetails };
+        projectData = await this.schemaService.insertProjectGeoData(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertIndustyName(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertProjectTypeAndStatus(
+          projectData,
+          mainDbInit,
+          projectType
+        );
+        projectData = await this.schemaService.projectKeyContactData(
+          projectData,
+          mainDbInit
+        );
+
+        projectData = await this.schemaService.projectClassificationData(
+          projectData,
+          mainDbInit
+        );
 
         projectData = this.insertAccount(
           projectData,
@@ -864,6 +871,8 @@ export class ProjectService {
           accountDetails,
           isSubscriptionCreated
         );
+
+        projectData = await this.schemaService.insertUserDetails(projectData);
       }
 
       // Fetch attachments for the project
