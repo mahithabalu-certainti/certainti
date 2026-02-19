@@ -1055,3 +1055,66 @@ export interface CaseData {
   current_year_gross_receipts: number | null;
   other_credits_total: number | null;
 }
+
+interface RdCreditsCountry {
+  country_rid : string
+  rd_credits_computed : number
+  rd_credits_approved : number
+  rd_credits_submitted : number
+}
+
+export interface RdCreditsState {
+  state_rid : string
+  rd_credits_computed : number
+  rd_credits_approved : number
+  rd_credits_submitted : number
+}
+
+export interface CaseCloseType {
+  account_rid : string
+  case_rid : string
+  country_credits : RdCreditsCountry,
+  state_credits : RdCreditsState[]
+  comments : string
+  user_rid : string
+  fiscal_year : string
+  user_preference : string
+  country_rid : string
+}
+
+export interface ParentAccountType {
+  rid : string
+  account_name : string
+  r_number : string
+  storage_type : string
+  is_parent : boolean
+  currency_rid : string
+}
+
+export interface CaseSubmissionType {
+  total_fte_cost : number
+  total_subcon_cost : number
+  total_nonlabor_cost : number
+  total_project_cost : number
+  total_qre : number,
+  average_annual_gross_receipts : number
+  state_rid : string
+}
+
+export interface ComputedValueRequest {
+  case_rid : string
+  account_rid : string
+  country_rid : string
+  state_rid : string[],
+}
+
+export interface CaseStateComputedType {
+  state_rid : string
+  final_credit : string
+  state_name : string
+}
+export interface CaseCountryComputedType {
+  country_rid : string
+  final_credit : string
+  country_name : string
+}

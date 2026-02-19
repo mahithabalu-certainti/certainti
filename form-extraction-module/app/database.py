@@ -144,8 +144,8 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                 
                 field_insert_sql = f"""
                                 INSERT INTO {schema}.data_mapper_form_mappings 
-                            (form_rid, field_label, created_by, field_type, column_id, extraction_order, field_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            (form_rid, field_label, created_by, field_type, column_id, extraction_order, field_id, status)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                             """
                 
                 # insert labels
@@ -168,25 +168,26 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
                     cur.execute(form_type_query, tuple(form_type_params))
 
-                    def insert_safe_label(label, f_type):
+                    def insert_safe_label(label, f_type, field_id=None):
                         nonlocal extraction_order
                         if label and label not in processed_labels:
                             extraction_order += 1
-                            field_id = None
-                            if form_type == "non-fillable" and country_code:
-                                if state_code:
-                                    field_id = f"{country_code}-{state_code}-F{extraction_order:04d}"
-                                else:
-                                    field_id = f"{country_code}-F{extraction_order:04d}"
+                            if not field_id:
+                                if form_type == "non-fillable" and country_code:
+                                    if state_code:
+                                        field_id = f"{country_code}-{state_code}-F{extraction_order:04d}"
+                                    else:
+                                        field_id = f"{country_code}-F{extraction_order:04d}"
 
-                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order, field_id))
+                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order, field_id, 'anomaly'))
                             processed_labels.add(label)
 
                     header_fields = data_obj.get("header_fields", [])
                     if header_fields and isinstance(header_fields, list):
                         for header_field in header_fields:
                             f_label = header_field.get("label", "")
-                            insert_safe_label(f_label, "line-item")
+                            field_id = header_field.get("value_field_id", "")
+                            insert_safe_label(f_label, "line-item", field_id)
 
                     sections = data_obj.get("sections", [])
                     if sections and isinstance(sections, list):
@@ -197,7 +198,8 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                                 for line_item in line_items:
                                     line_item_id = line_item.get("id", "")
                                     f_label = f"{line_item_id} - {line_item.get('label', '')}" if line_item_id else line_item.get('label', '')
-                                    insert_safe_label(f_label, "line-item")
+                                    field_id = line_item.get("value_field_id", "")
+                                    insert_safe_label(f_label, "line-item", field_id)
                             
                             #insert tables
                             tables = section.get("tables", [])
@@ -211,10 +213,25 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
                                     # if not mislabeled, insert as table
                                     if not is_mislabeled:
+
                                         column_headers = table.get("column_headers")
                                         if column_headers and isinstance(column_headers, list):
+                                            first_row_field_id_map = {}
+                                            rows = table.get("rows")    
+                                            if rows and isinstance(rows, list):
+                                                first_row = rows[0]
+                                                if first_row and isinstance(first_row, dict):
+                                                    cells = first_row.get("cells")
+                                                    if cells and isinstance(cells, list):
+                                                        for idx, cell in enumerate(cells):
+                                                            value_field_id = cell.get("value_field_id", "")
+                                                            header = cell.get("header", "").replace(" ", "").lower()
+                                                            if header:
+                                                                first_row_field_id_map[header] = value_field_id
                                             for idx, header in enumerate(column_headers):
-                                                insert_safe_label(header, "table")
+                                                header_key = header.replace(" ", "").lower()
+                                                field_id = first_row_field_id_map.get(header_key, "")
+                                                insert_safe_label(header, "table", field_id)
 
                                         rows = table.get("rows")    
                                         if rows and isinstance(rows, list):
@@ -226,8 +243,9 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                                                         if cells and isinstance(cells, list):
                                                             for cell in cells:
                                                                 header = cell.get("header")
+                                                                field_id = cell.get("value_field_id", "")
                                                                 f_label = row_id + " -> " + header
-                                                                insert_safe_label(f_label, "line-item")
+                                                                insert_safe_label(f_label, "line-item", field_id)
 
                                     # if mislabeled, insert second cell as line-item for each row
                                     else:
@@ -240,14 +258,15 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                                                         if isinstance(cell, dict):
 
                                                             f_label = cell.get("value") or cell.get("header")
+                                                            field_id = cell.get("value_field_id", "")
 
                                                             is_split, f_label = split_by_keywords(f_label)
 
                                                             if is_split:
                                                                 for label in f_label:
-                                                                    insert_safe_label(label, "line-item")
+                                                                    insert_safe_label(label, "line-item", field_id)
                                                             else:
-                                                                insert_safe_label(f_label, "line-item")
+                                                                insert_safe_label(f_label, "line-item", field_id)
 
 
                         

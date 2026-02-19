@@ -131,7 +131,7 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
                     .format("YYYY-MMM-DD, hh:mm:ss A");
             };
 
-            const finalStructuredData = result.data.map((d: any) => {
+            const finalStructuredData = result?.data?.map((d: any) => {
                 let resultMap: { [key: string]: any } = {
                     ...d,
                     invited_by: d.invited_by?.email ? `${d.invited_by.name} (${d.invited_by.email})` : "",

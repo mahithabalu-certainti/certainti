@@ -683,7 +683,7 @@ export class ProjectService {
     }
   }
 
-  /**
+/**
  * Retrieves detailed information about a project and its attachments by account and project IDs.
  *
  * @async
@@ -1461,17 +1461,20 @@ export class ProjectService {
   }> {
     try {
       const offset = (page - 1) * limit;
-      const userGroupType = await this.schemaService.getUserGroupType(userId);
-      const userProfileType = await this.schemaService.getUserProfileType(
-        userId
-      );
+      // Parallelize user lookups
+      const [userGroupType, userProfileType] = await Promise.all([
+        this.schemaService.getUserGroupType(userId),
+        this.schemaService.getUserProfileType(userId)
+      ]);
       const isCustomGlobal = userGroupType === "DEFAULT";
       const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
-      const isPOCProfile =
-        userProfileType?.profileName === "Project Point of Contact";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
       logMessage(`allProjectList  - isFromUserGroup: ${isFromUserGroup}, accountRid: ${accountRid}, userGroupType: ${userGroupType}, userProfileType: ${userProfileType?.profileName}`);
-      if (!isCustomGlobal) {
+
+      // Consolidate access control logic
+      const needsAccessCheck = !isCustomGlobal || (isCustomGlobal && isPOCProfile);
+      if (needsAccessCheck) {
         accessibleIds = await this.getAccessibleProjectIds(
           userId,
           isDefaultParent,
@@ -1491,59 +1494,31 @@ export class ProjectService {
         }
       }
 
-      if (isCustomGlobal && isPOCProfile) {
-        accessibleIds = await this.getAccessibleProjectIds(
-          userId,
-          isDefaultParent,
-          isPOCProfile,
-          userProfileType?.email,
-          isCustomGlobal
-        );
-        if (accessibleIds.length === 0) {
-          return {
-            statusCode: HttpStatus.SUCCESS,
-            message: HttpStatus.SUCCESS_MESSAGE,
-            data: {
-              projects: [],
-              count: 0,
-            },
-          };
-        }
-      }
-
-      const [finalSortBy, finalSortOrder] =
-        this.getSortParametersForAllProjects(sortBy, sortOrder);
-
-      const { accountDataSort } = this.processAccountDataSort(
-        sortBy,
-        sortOrder
-      );
-
+      const [finalSortBy, finalSortOrder] = this.getSortParametersForAllProjects(sortBy, sortOrder);
+      const { accountDataSort } = this.processAccountDataSort(sortBy, sortOrder);
       const sort = {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
       };
 
-      const appliedAccountNumber =
-        await this.schemaService.computeGlobalAccountFilter(globalFilters);
+      const appliedAccountNumber = await this.schemaService.computeGlobalAccountFilter(globalFilters);
       if (isFromUserGroup && accountRid.length > 0) {
         appliedAccountNumber.push(...accountRid);
       }
 
-      let { finalResult: allProjectList, totalCount } =
-        await this.schemaService.fetchAllProjects(
-          offset,
-          limit,
-          sort,
-          filters,
-          fiscalYear,
-          appliedAccountNumber,
-          userId,
-          search,
-          accountDataSort,
-          bothParentAndChild,
-          accessibleIds
-        );
+      let { finalResult: allProjectList, totalCount } = await this.schemaService.fetchAllProjects(
+        offset,
+        limit,
+        sort,
+        filters,
+        fiscalYear,
+        appliedAccountNumber,
+        userId,
+        search,
+        accountDataSort,
+        bothParentAndChild,
+        accessibleIds
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,

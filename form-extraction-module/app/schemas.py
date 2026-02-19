@@ -46,6 +46,12 @@ class FormHeaderField(BaseModel):
             "control appears."
         ),
     )
+    position: Optional[List[float]] = Field(
+        default=None,
+        description=(
+            "Bounding box [x0, y0, x1, y1] in PDF user units."
+        ),
+    )
 
 
 # ---------- Line items (1–xx etc.) ----------
@@ -87,6 +93,12 @@ class LineItem(BaseModel):
             "1-based page number in the source PDF where this line's input box appears."
         ),
     )
+    position: Optional[List[float]] = Field(
+        default=None,
+        description=(
+            "Bounding box [x0, y0, x1, y1] in PDF user units."
+        ),
+    )
 
 
 # ---------- Generic table structures (Section G / Part 8 / etc.) ----------
@@ -120,6 +132,12 @@ class TableCell(BaseModel):
         description=(
             "1-based page number in the source PDF where this table cell's "
             "input control appears."
+        ),
+    )
+    position: Optional[List[float]] = Field(
+        default=None,
+        description=(
+            "Bounding box [x0, y0, x1, y1] in PDF user units."
         ),
     )
 

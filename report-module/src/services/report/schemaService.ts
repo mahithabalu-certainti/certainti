@@ -2,10 +2,12 @@ import { QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import {
     rawQueries,
+    ATTACHMENT_LEVEL,
 } from "../../utils/constants";
 import {
     errorLog,
 } from "../../utils/helpers";
+import { IAttachment } from "../../services/interfaces/interface";
 class SchemaService {
 
 
@@ -223,6 +225,154 @@ class SchemaService {
 
         const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
         return exportableFields;
+    }
+    async getAttachmentDisplayNames(attachments: IAttachment[]): Promise<Record<string, string>> {
+        const displayNames: Record<string, string> = {};
+        const accountRids: string[] = [];
+        const projectRids: string[] = [];
+        const caseRids: string[] = [];
+
+        // 1. Group IDs by type
+        for (const attachment of attachments) {
+            if (!attachment.attach_to) {
+                displayNames[attachment.rid] = '';
+                continue;
+            }
+
+            switch (attachment.attachment_level) {
+                case ATTACHMENT_LEVEL.ACCOUNT:
+                    accountRids.push(attachment.attach_to);
+                    break;
+                case ATTACHMENT_LEVEL.PROJECT:
+                    projectRids.push(attachment.attach_to);
+                    break;
+                case ATTACHMENT_LEVEL.CASE:
+                    caseRids.push(attachment.attach_to);
+                    break;
+                default:
+                    displayNames[attachment.rid] = attachment.attach_to;
+            }
+        }
+
+        const mainDbSequelize = await initMainDbSequelize();
+        const promises = [];
+
+        // 2. Bulk Fetch
+        if (accountRids.length > 0) {
+            promises.push(
+                this.fetchAccountsByIds(accountRids).then(accounts => ({ type: ATTACHMENT_LEVEL.ACCOUNT, data: accounts }))
+            );
+        }
+
+        if (projectRids.length > 0) {
+            const query = rawQueries.getProjectsByRidsQuery();
+            promises.push(
+                mainDbSequelize.query(query, {
+                    replacements: { projectRids },
+                    type: QueryTypes.SELECT
+                }).then(projects => ({ type: ATTACHMENT_LEVEL.PROJECT, data: projects }))
+            );
+        }
+
+        if (caseRids.length > 0) {
+            const query = rawQueries.fetchCasesByRids();
+            promises.push(
+                mainDbSequelize.query(query, {
+                    replacements: { caseRids },
+                    type: QueryTypes.SELECT
+                }).then(cases => ({ type: ATTACHMENT_LEVEL.CASE, data: cases }))
+            );
+        }
+
+        try {
+            const results = await Promise.all(promises);
+
+            // 3. Map Results
+            const accountMap = new Map<string, string>();
+            const projectMap = new Map<string, string>();
+            const caseMap = new Map<string, string>();
+
+            results.forEach(result => {
+                if (result.type === ATTACHMENT_LEVEL.ACCOUNT) {
+                    (result.data as any[]).forEach(a => accountMap.set(a.rid, a.account_name));
+                } else if (result.type === ATTACHMENT_LEVEL.PROJECT) {
+                    (result.data as any[]).forEach(p => projectMap.set(p.project_fiscal_rid, p.project_code));
+                } else if (result.type === ATTACHMENT_LEVEL.CASE) {
+                    (result.data as any[]).forEach(c => caseMap.set(c.case_rid, c.case_name));
+                }
+            });
+
+            // 4. Populate displayNames
+            for (const attachment of attachments) {
+                // initialization handled in step 1 for default/empty
+                if (displayNames[attachment.rid] !== undefined) continue;
+
+                let name = attachment.attach_to;
+                switch (attachment.attachment_level) {
+                    case ATTACHMENT_LEVEL.ACCOUNT:
+                        name = accountMap.get(attachment.attach_to) || attachment.attach_to;
+                        break;
+                    case ATTACHMENT_LEVEL.PROJECT:
+                        name = projectMap.get(attachment.attach_to) || attachment.attach_to;
+                        break;
+                    case ATTACHMENT_LEVEL.CASE:
+                        name = caseMap.get(attachment.attach_to) || attachment.attach_to;
+                        break;
+                }
+                displayNames[attachment.rid] = name;
+            }
+        } catch (err) {
+            errorLog("Error in getAttachmentDisplayNames bulk fetch:", (err as Error).message);
+            // Fallback to original ID if bulk fetch fails
+            for (const attachment of attachments) {
+                if (displayNames[attachment.rid] === undefined) {
+                    displayNames[attachment.rid] = attachment.attach_to;
+                }
+            }
+        }
+
+        return displayNames;
+    }
+    async fetchAccountById(accountId: string) {
+        try {
+            const mainDbSequelize = await initMainDbSequelize();
+            const [accountData]: any[] = await mainDbSequelize.query(
+                rawQueries.getAccountWithStatusByRidQuery(),
+                {
+                    replacements: { rid: accountId },
+                    type: "SELECT",
+                }
+            );
+
+            return accountData;
+        } catch (err) {
+            errorLog("Error fetching Accounts: " + (err as Error).message);
+            throw new Error("Error fetching Accounts: " + (err as Error).message);
+        }
+    }
+    async fetchProjectInfoById(projectFiscalRid: string) {
+        const mainDbSequelize = await initMainDbSequelize();
+        const [projectData]: any[] = await mainDbSequelize.query(
+            rawQueries.getProjectWithStatusByRidQuery(),
+            {
+                replacements: { projectFiscalRid },
+                type: "SELECT",
+            }
+        );
+
+        return projectData;
+    }
+    async fetchCaseById(caseId: string) {
+
+        const query = rawQueries.fetchCaseById();
+
+        const mainDbSequelize = await initMainDbSequelize();
+        const [result]: any[] = await mainDbSequelize.query(query, {
+            replacements: { caseId },
+            type: "SELECT",
+        });
+
+        return result;
     }
 }
 export default SchemaService;

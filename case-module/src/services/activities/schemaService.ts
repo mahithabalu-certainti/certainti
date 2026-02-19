@@ -1845,7 +1845,8 @@ class ActivitySchemaService {
   async addMeetingSummary(
     accountNumber: string,
     activityRequest: IActivityMeeting,
-    activityRid: string
+    activityRid: string,
+    rNumber: string
   ) {
     const { MeetingSummary } = await this.caseModelService.getModels("");
 
@@ -1871,6 +1872,7 @@ class ActivitySchemaService {
     }
 
     await MeetingSummary.create({
+      r_number: rNumber,
       activity_rid: activityRid,
       account_rid: activityRequest.account_rid || "",
       attach_to: activityRequest.attach_to,
@@ -1899,7 +1901,8 @@ class ActivitySchemaService {
 
   async updateMeetingSummary(
     accountNumber: string,
-    activityRequest: IActivityMeeting
+    activityRequest: IActivityMeeting,
+    existingActivity: any
   ) {
     const { MeetingSummary } = await this.caseModelService.getModels("");
 
@@ -1955,7 +1958,7 @@ class ActivitySchemaService {
     );
 
     if (affectedCount === 0) {
-      await this.addMeetingSummary(accountNumber, activityRequest, activityRequest.activity_rid as string);
+      await this.addMeetingSummary(accountNumber, activityRequest, activityRequest.activity_rid as string, existingActivity.r_number as string);
     }
   }
 
@@ -2049,8 +2052,9 @@ class ActivitySchemaService {
         (activityRequest as any).meeting_id = activityData.meeting_id;
         (activityRequest as any).effective_start_datetime = activityData.effective_start_datetime;
         (activityRequest as any).effective_end_datetime = activityData.effective_end_datetime;
+        (activityRequest as any).meeting_status_rid = meetingStatus?.rid || null
 
-        await this.addMeetingSummary(accountNumber, activityRequest, response.rid);
+        await this.addMeetingSummary(accountNumber, activityRequest, response.rid, response.r_number as string);
         await this.uploadActivityFiles(files, activityRequest, accountNumber);
         await this.addTaskTimeline(
           accountNumber,
@@ -2299,7 +2303,7 @@ class ActivitySchemaService {
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
     });
-    await this.updateMeetingSummary(accountNumber, activityRequest);
+    await this.updateMeetingSummary(accountNumber, activityRequest, existingActivity);
     if (activityData.deleted_file_ids !== undefined) {
       if (activityData.deleted_file_ids.length > 0) {
         const getAllDeletedFileIds = [...new Set(activityData.deleted_file_ids.map((d: any) => d))];

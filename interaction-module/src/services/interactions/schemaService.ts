@@ -214,7 +214,7 @@ class InteractionSchemaService {
     interactionLevel: string
   ) {
     try {
-      const { Interaction, InteractionItem } = await this.interactionModelService.getModels(accountNumber);
+      const { Interaction, InteractionItem, InteractionSummary } = await this.interactionModelService.getModels(accountNumber);
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
@@ -261,22 +261,54 @@ class InteractionSchemaService {
           }))
         );
 
-      // Utility: Prepare bulk SendEmailInfo data
-      const prepareSendEmailInfoData = (interactions: any[], projects: IProject[]) =>
-        interactions.map((interaction, idx) => ({
+      // Utility: Prepare bulk InteractionSummary data
+      const prepareInteractionSummary = (interactions: any[]) =>
+        interactions.map((interaction) => ({
           interaction_rid: interaction.rid,
-          account_rid: interactionData.account_rid,
-          account_rnumber: accountNumber,
-          project_fiscal_rid: projects[idx]?.project_fiscal_rid ?? "",
-          user_rid: userId,
-          is_email_send: false,
-          interaction_level: interactionLevel,
+          r_number: interaction.r_number || null,
+          ...interactionData,
+          created_datetime: new Date(),
+          created_by: userId,
         }));
 
+      // Utility: Prepare bulk SendEmailInfo data
+      // Maps interactions to projects by project_fiscal_rid instead of array index to handle skipped interactions from ignoreDuplicates
+      const prepareSendEmailInfoData = (interactions: any[], projects: IProject[]) => {
+        const projectMap = new Map(projects.map(p => [p.project_fiscal_rid, p]));
+        return interactions.map((interaction) => {
+          const project = projectMap.get(interaction.project_fiscal_rid);
+          return {
+            interaction_rid: interaction.rid,
+            account_rid: interactionData.account_rid,
+            account_rnumber: accountNumber,
+            project_fiscal_rid: interaction.project_fiscal_rid,
+            user_rid: userId,
+            is_email_send: false,
+            interaction_level: interactionLevel,
+            name: interactionData.email_info?.name || "",
+            email: interactionData.email_info?.email || "",
+          };
+        });
+      };
+
+      // For Project level interactions, bulk check if key contact details exist when name and email are empty
+      let projectsWithoutKeyContacts: Set<string> = new Set();
       if (Array.isArray(interactionData.projects) && interactionData.projects.length > 0) {
+        if (interactionLevel === 'Project' && (!interactionData.email_info?.name || !interactionData.email_info?.email)) {
+          const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+          projectsWithoutKeyContacts = await this.getProjectsWithoutKeyContacts(
+            interactionData.projects.map(p => p.project_fiscal_rid),
+            schemaName
+          );
+        }
+
         // Bulk create Interactions
         const interactionRequests = prepareInteractionData(interactionData.projects);
         const createdInteractions = await batchInsert(Interaction, interactionRequests, { ignoreDuplicates: true });
+
+        // Bulk insert InteractionSummary
+        const interactionSummaryData = prepareInteractionSummary(createdInteractions);
+        await batchInsert(InteractionSummary, interactionSummaryData);
 
         // Bulk insert InteractionItem
         if (interactionData.questions && Array.isArray(interactionData.questions) && interactionData.questions.length > 0) {
@@ -301,16 +333,30 @@ class InteractionSchemaService {
        
         const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId,interactionData.account_rid);
         if (isParensettingsConfigured && (interactionData.trigger_send || autoSendAccess)) {
-          // Bulk insert SendEmailInfo
-          const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
-          await batchInsert(SendEmailInfo, sendEmailInfoData);
-
-          // Bulk update Interaction status to INQUEUE
-          const inqueueStatusRid = await this.getInteractionStatusByType(statusAction.INQUEUE);
-          await Interaction.update(
-            { status_rid: inqueueStatusRid! },
-            { where: { rid: createdInteractions.map(i => i.rid) } }
+          // Filter projects: exclude those with no key contacts and no email_info
+          const filteredProjects = interactionData.projects.filter(proj => 
+            !projectsWithoutKeyContacts.has(proj.project_fiscal_rid)
           );
+          // Filter interactions based on their own project_fiscal_rid to avoid index misalignment
+          const filteredInteractions = createdInteractions.filter((interaction: any) => {
+            const projectRid = (interaction as any).project_fiscal_rid;
+            return projectRid ? !projectsWithoutKeyContacts.has(projectRid) : true;
+          });
+          
+          // Bulk insert SendEmailInfo only for projects with key contacts or email_info
+          if (filteredProjects.length > 0 && filteredInteractions.length > 0) {
+            const sendEmailInfoData = prepareSendEmailInfoData(filteredInteractions, filteredProjects);
+            await batchInsert(SendEmailInfo, sendEmailInfoData);
+          }
+
+          // Bulk update Interaction status to INQUEUE for projects with email info
+          const inqueueStatusRid = await this.getInteractionStatusByType(statusAction.INQUEUE);
+          if (filteredInteractions.length > 0) {
+            await Interaction.update(
+              { status_rid: inqueueStatusRid! },
+              { where: { rid: filteredInteractions.map(i => i.rid) } }
+            );
+          }
         }
         else
         {
@@ -318,16 +364,25 @@ class InteractionSchemaService {
           const enabledProjects: IProject[] = [];
           const enabledInteractions: any[] = [];
           
-          for (let i = 0; i < interactionData.projects.length; i++) {
-            const project = interactionData.projects[i];
+          // Create a map of interactions by project_fiscal_rid for accurate matching
+          const interactionMap = new Map(
+            createdInteractions.map((interaction: any) => [interaction.project_fiscal_rid, interaction])
+          );
+          
+          for (const project of interactionData.projects) {
             if (!project) continue; // Skip if project is undefined
+            
+            // Skip projects that have no key contacts and no email_info
+            if (projectsWithoutKeyContacts.has(project.project_fiscal_rid)) {
+              continue;
+            }
             
             const isEnabled = await this.checkProjectAutoSendAccess(accountNumber, project.project_fiscal_rid);
             
             if (isEnabled) {
               enabledProjects.push(project);
-              // Find corresponding interaction for this project
-              const correspondingInteraction = createdInteractions[i];
+              // Find corresponding interaction for this project by project_fiscal_rid instead of array index
+              const correspondingInteraction = interactionMap.get(project.project_fiscal_rid);
               if (correspondingInteraction) {
                 enabledInteractions.push(correspondingInteraction);
               }
@@ -1371,13 +1426,13 @@ class InteractionSchemaService {
         finalData = applyFilters(finalData, projectCodeConditions, projectCodeFilter, "project_code")
       if(projectNameConditions != null && projectNameConditions != undefined)
         finalData = applyFilters(finalData, projectNameConditions, projectNameFilter, "project_name")
-      if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+      if (mainTableFilters[sortBy] != undefined && sortOrder.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;
           if (!b?.[sortBy]) return -1;
           return a[sortBy].localeCompare(b[sortBy]);
         });
-      } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+      } else if (mainTableFilters[sortBy] != undefined && sortOrder.toLowerCase() == 'desc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!b?.[sortBy]) return 1;
           if (!a?.[sortBy]) return -1;
@@ -2827,7 +2882,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
         order: [
           ["question_seq_num", "ASC"],
@@ -2913,7 +2968,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
        order: [
           ["question_seq_num", "ASC"],
@@ -2947,7 +3002,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
+          [Sequelize.literal("false"), "is_mandatory"],
         ],
         order: [
           ["question_seq_num", "ASC"],
@@ -3463,9 +3518,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         where: { interaction_rid: interactionRid },
       });
     } catch (err) {
-      logMessage(`Error updating interaction remainder: ${err}`);
+      logMessage(`Error updating interaction reminder: ${err}`);
       throw new Error(
-        "Error updating interaction remainder: " + (err as Error).message
+        "Error updating interaction reminder: " + (err as Error).message
       );
     }
   }
@@ -4686,7 +4741,73 @@ const existingTemplate = await InteractionTemplate.findOne({
       );
   
   
-      return templateDetails;  }
+      return templateDetails;
+    }
+
+  /**
+   * Bulk fetch projects that do NOT have key contacts
+   * Returns a Set of project fiscal RIDs that have no key contacts
+   * 
+   * @param {string[]} projectFiscalRids - Array of project fiscal RIDs to check
+   * @param {string} schemaName - Schema name
+   * @returns {Promise<Set<string>>} Set of project fiscal RIDs without key contacts
+   */
+  private async getProjectsWithoutKeyContacts(
+    projectFiscalRids: string[],
+    schemaName: string
+  ): Promise<Set<string>> {
+    try {
+      // Short-circuit if there are no projects to check
+      if (!projectFiscalRids || projectFiscalRids.length === 0) {
+        return new Set<string>();
+      }
+
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+
+      // Limit the number of project RIDs per query to avoid very large IN clauses
+      const BATCH_SIZE = 1000;
+      const projectsWithKeyContacts = new Set<string>();
+
+      // Fetch key contacts for projects in batches
+      for (let i = 0; i < projectFiscalRids.length; i += BATCH_SIZE) {
+        const batch = projectFiscalRids.slice(i, i + BATCH_SIZE);
+
+        const batchKeyContacts: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectsWithoutKeyContacts(schemaName, batch),
+          {
+            type: "SELECT",
+          }
+        );
+
+        for (const row of batchKeyContacts) {
+          if (row && row.entity_rid) {
+            projectsWithKeyContacts.add(row.entity_rid);
+          }
+        }
+      }
+      // Return projects that DON'T have key contacts
+      const projectsWithoutKeyContacts = new Set(
+        projectFiscalRids.filter(rid => !projectsWithKeyContacts.has(rid))
+      );
+
+      if (projectsWithoutKeyContacts.size > 0) {
+        logMessage(
+          `[getProjectsWithoutKeyContacts] ${projectsWithoutKeyContacts.size} projects have no key contacts`
+        );
+      }
+
+      return projectsWithoutKeyContacts;
+    } catch (error) {
+      logMessage(
+        `Error fetching projects without key contacts: ${error}`
+      );
+      // Return empty set on error to avoid filtering out projects
+      return new Set();
+    }
+  }
+
 
 }
 

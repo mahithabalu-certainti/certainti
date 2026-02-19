@@ -50,8 +50,8 @@ export class RdCreditCalculatorForMA {
             computedFields,
             finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit),
             totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre),
-            totalSubCon: this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
-            totalFTE: this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
+            totalContract: this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
+            totalWages: this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
             prev1yearQRE: this.round2(stateRdData.prior3YearsQREs[0]?.qre || 0),
             prev2yearQRE: this.round2(stateRdData.prior3YearsQREs[1]?.qre || 0),
             prev3yearQRE: this.round2(stateRdData.prior3YearsQREs[2]?.qre || 0), averageAnnualGrossReceipts: this.round2(part3CreditCalInfo.avg_total_previous_receipts)
@@ -116,7 +116,8 @@ export class RdCreditCalculatorForMA {
             applicable_credit_rate,
             total_credit_group: this.round2(total_credit_group),
             aggregate_group_credit_percent,
-            amount_group_credit: this.round2(amount_group_credit)
+            amount_group_credit: this.round2(amount_group_credit),
+            
         }
 
     }

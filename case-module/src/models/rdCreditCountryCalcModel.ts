@@ -17,9 +17,12 @@ export interface RdCreditCountryCalcAttributes {
     total_wages?: number | null;
     total_supplies?: number | null;
     total_subcontract?: number | null;
+    config_json?:JSON
     final_credit?: number | null;
     created_datetime?: Date;
     modified_datetime?: Date;
+    final_credit_submitted?: number | null;
+    final_credit_approved?: number | null;
 }
 
 export interface RdCreditCountryCalcCreationAttributes
@@ -46,8 +49,11 @@ export class RdCreditCountryCalculations
     public total_supplies?: number | null;
     public total_subcontract?: number | null;
     public final_credit?: number | null;
+    public config_json?: JSON;
     public created_datetime?: Date;
     public modified_datetime?: Date;
+    public final_credit_submitted?: number | null;
+    public final_credit_approved?: number | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditCountryCalculations.init(
@@ -113,6 +119,10 @@ export class RdCreditCountryCalculations
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },
+                config_json: { 
+                    type: DataTypes.JSONB, 
+                    allowNull: false 
+                },
                 created_datetime: {
                     type: DataTypes.DATE,
                     allowNull: true,
@@ -122,6 +132,14 @@ export class RdCreditCountryCalculations
                     type: DataTypes.DATE,
                     allowNull: true,
                     defaultValue: DataTypes.NOW,
+                },
+                final_credit_submitted: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                final_credit_approved: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
                 },
             },
             {

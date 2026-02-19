@@ -136,9 +136,9 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.project_name,
         COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
         COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        COALESCE(cp.total_cost_fte_prj, 0.00) AS total_cost_fte_prj,
-        COALESCE(cp.total_cost_subcon_prj, 0.00) AS total_cost_subcon_prj,
-        COALESCE(cp.total_cost_nonlabor_prj, 0.00) AS total_cost_nonlabor_prj,
+        CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
     FROM
         ${schemaName}.project_fiscal cp
@@ -154,7 +154,6 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         GROUP BY
         cp.rid
     `
-    console.log(query);
     return query;
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
@@ -186,4 +185,58 @@ export const findTaskWeightageDetails = (weightageIds : string[]) => {
 
 export const getCompletedTaskStatusId = () => {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%Completed%'`
+}
+export const calculateCostForCaseSubmissionCurrentYear = (schemaName : string, caseRid : string, countryRid : string, type : string) => {
+    let selectColumns : string = ``
+    if(type === 'list') {
+        selectColumns = 
+        `COALESCE(rcc.final_credit, 0.00) AS final_credit, rcc.country_rid`
+    } else {
+        selectColumns = 
+        `COALESCE(rcc.total_wages, 0.00) AS total_fte_cost, 
+        COALESCE(rcc.total_subcontract, 0.00) AS total_subcon_cost,
+        COALESCE(rcc.total_supplies, 0.00) AS total_nonlabor_cost,
+        COALESCE(rcc.total_qre, 0.00) AS total_qre,
+        COALESCE(rcc.average_annual_gross_receipts, 0.00) AS average_annual_gross_receipts`
+    }
+    return `
+    SELECT 
+    ${selectColumns}
+    FROM
+    ${schemaName}.rd_credit_country_calculations rcc
+    WHERE
+    rcc.case_rid = '${caseRid}'
+    AND
+    rcc.country_rid = '${countryRid}'
+    `
+}
+
+export const calculateStateCostForCaseSubmissionCurrentYear = (schemaName : string, caseRid : string, stateRids : any[], type : string) => {
+    let selectColumns : string = ``
+    let condition : string = ``
+    if(type === 'list') {
+        selectColumns = 
+        `COALESCE(rsc.final_credit, 0.00) AS final_credit, rsc.state_rid`
+        condition = `rsc.state_rid IN (${stateRids.map((d : any) => `'${d}'`).join(",")})`
+    } else {
+        selectColumns = 
+        `COALESCE(rsc.total_wages, 0.00) AS total_fte_cost, 
+        COALESCE(rsc.total_subcontract, 0.00) AS total_subcon_cost,
+        COALESCE(rsc.total_supplies, 0.00) AS total_nonlabor_cost,
+        COALESCE(rsc.total_qre, 0.00) AS total_qre,
+        COALESCE(rsc.average_annual_gross_receipts, 0.00) AS average_annual_gross_receipts,
+        rsc.state_rid`
+        condition = `rsc.state_rid IN (${stateRids.map((d : any) => `'${d.state_rid}'`).join(",")})`
+
+    }
+    return `
+    SELECT
+    ${selectColumns}
+    FROM
+    ${schemaName}.rd_credit_state_calculations rsc
+    WHERE
+    rsc.case_rid = '${caseRid}'
+    AND
+    ${condition}
+    `
 }

@@ -22,6 +22,7 @@ import { DataMapperObjects } from "./dataMapperObjects";
 import { DataMapperUploadStatus } from "./dataMapperUploadStatus";
 import { SignoffDetails } from "./signoffDetails";
 import { MeetingSummary } from "./meetingSummaryModel";
+import { Attachment } from "./attachments";
 
 export const models = {
   Case,
@@ -45,7 +46,8 @@ export const models = {
   DataMapperObjects,
   DataMapperUploadStatus,
   SignoffDetails,
-  MeetingSummary
+  MeetingSummary,
+  Attachment
 };
 
 export async function initModels() {

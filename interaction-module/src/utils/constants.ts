@@ -899,6 +899,11 @@ export const rawQueries = {
   fetchKeyContactForInteraction(schemaName : string, id : string) {
     return `SELECT key_contact_name, key_contact_email FROM ${schemaName}.key_contact_details where entity_rid = '${id}' AND include_in_communication = TRUE`
   },
+  fetchProjectsWithoutKeyContacts(schemaName: string, projectFiscalRids: string[]) {
+    return `SELECT DISTINCT entity_rid FROM ${schemaName}.key_contact_details 
+           WHERE entity_rid IN (${projectFiscalRids.map(rid => `'${rid}'`).join(',')}) 
+           AND include_in_communication = TRUE`;
+  },
   fetchProfServConsultantDetails (schemaName : string, accountRid : string, keyContactRoleId : string) {
     return `SELECT * FROM ${schemaName}.key_contact_details WHERE entity_rid = '${accountRid}' AND key_contact_role = '${keyContactRoleId}'`
   },
@@ -1213,9 +1218,9 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
 
    export const interactionTemplateName = {
     interactionProject : "interaction project",
-    interactionProjectRemainder : "interaction project remainder",
+    interactionProjectReminder : "interaction project reminder",
     interactionAccount : "interaction account",
-    interactionAccountRemainder : "interaction account remainder",
+    interactionAccountReminder : "interaction account reminder",
     interactionProjectUpdate : "interaction project update",
     interactionAccountUpdate : "interaction account update"
   }
