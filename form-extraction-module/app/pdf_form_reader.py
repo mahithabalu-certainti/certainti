@@ -482,3 +482,29 @@ def split_by_keywords(input_string: str) -> Tuple[bool, Any]:
     result = [part.strip() for part in parts if part.strip()]
     
     return True, result
+
+
+def get_page_dimensions(pdf_path: Path) -> List[Tuple[float, float]]:
+    """
+    Return a list of (width, height) for each page in the PDF (0-based index).
+    Result is in PDF user units.
+    """
+    reader = PdfReader(str(pdf_path))
+    dims = []
+    for page in reader.pages:
+        # Attempt to get MediaBox. pypdf / PyPDF2 usually expose it as a property or item.
+        # It behaves like a list: [left, bottom, right, top]
+        mbox = page.mediabox
+
+        # Calculate width/height safely
+        try:
+            # pypdf RectangleObject
+            width = float(mbox.width)
+            height = float(mbox.height)
+        except AttributeError:
+            # Fallback for list-like or older objects
+            width = float(mbox[2]) - float(mbox[0])
+            height = float(mbox[3]) - float(mbox[1])
+
+        dims.append((width, height))
+    return dims
