@@ -16,7 +16,7 @@ export const COMMON_MENU_PROPS = {
 };
 
 export const getSelectStyles = (hasError: boolean, isEmpty: boolean) => ({
-  height: '32px',
+  height: '28px',
   fontSize: '13px',
   fontWeight: 500,
   color: isEmpty ? '#7D98B6' : '#425A76',

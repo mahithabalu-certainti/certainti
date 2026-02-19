@@ -1,5 +1,6 @@
 export interface DashboardCountDetail {
   name: string;
+  key: string;
   count: string;
   order: number;
 }

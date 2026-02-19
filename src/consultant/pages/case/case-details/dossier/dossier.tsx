@@ -50,6 +50,7 @@ import ClosingRemarks from './tab/close-remarks/closing-remarks';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
+import CloseCaseModal from './close-case-modal';
 
 const DossierTabs = [
   {
@@ -130,6 +131,8 @@ const Dossier: React.FC<DossierProps> = ({
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -455,7 +458,22 @@ const Dossier: React.FC<DossierProps> = ({
       sx: { width: '125px', minWidth: '125px' },
       hide: !isPackagesDownload,
     },
+    {
+      label: 'Close Case',
+      variant: 'outlined' as const,
+      disabled:
+        !caseDetails?.financial_working_signoff ||
+        caseDetails?.status_name?.toLowerCase() === 'closed' ||
+        (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),
+      onClick: () => setIsModalOpen(true),
+      sx: { width: '90px', minWidth: '90px' },
+      hide: false,
+    },
   ];
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
@@ -470,7 +488,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
           (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
@@ -510,7 +528,7 @@ const Dossier: React.FC<DossierProps> = ({
         defaultValue={tabParam}
       />
       {caseDetails?.case_total_qualified_projects === 0 ||
-      caseDetails?.case_total_qualified_projects === '0' ? (
+        caseDetails?.case_total_qualified_projects === '0' ? (
         <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <div>
             <React.Suspense fallback={null}>
@@ -626,6 +644,18 @@ const Dossier: React.FC<DossierProps> = ({
           )}
         </div>
       )}
+
+      <CloseCaseModal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        caseDetails={{
+          country_name: caseDetails?.country_name,
+          country_rid: caseDetails?.country_rid,
+          country_code: caseDetails?.country_code,
+          fiscal_year: caseDetails?.fiscal_year,
+        }}
+        refetchCaseDetails={refetchCaseDetails}
+      />
     </div>
   );
 };
