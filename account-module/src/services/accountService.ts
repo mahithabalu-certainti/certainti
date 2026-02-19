@@ -7,7 +7,7 @@ import {
   col,
   QueryTypes,
 } from "sequelize";
-import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
+import { entityTypes, eventNames, eventTypes, HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount, AccountAttributes, CaseExistsType } from "../utils/types";
 import { errorLog, generateSasUrl, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
@@ -1233,7 +1233,9 @@ async accountList(
         account.rid,
         account?.parent_account_rid
       );
+      let accountNumber = account.r_number;
       if (parent_account && data_storage === "store_in_parent") {
+        accountNumber = parent_account?.r_number || "";
         await this.schemaService.insertAccountDetails(
           parent_account?.r_number || "",
           accountData,
@@ -1271,6 +1273,21 @@ async accountList(
           account.r_number || ""
         );
       }
+
+       const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                    userId: userId!,
+                    eventType: eventTypes.UI_HANDLER
+                  });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+              created_by: userId!,
+              account_rid: account.rid,
+              entity_rid: account.rid,
+              entity_name: entityTypes.ACCOUNT,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.CREATE,
+              descriptions:account_name
+            },["account"]);
 
       // await this.provisionMonitoredAccount(account_name);
 
@@ -1498,6 +1515,7 @@ async accountList(
 
       const default_parent_id = affectedRows[0].parent_account_rid;
       const default_r_number = affectedRows[0].r_number;
+      let accountNumber = default_r_number;
 
       if (default_parent_id && data_storage === "separate_db") {
         await this.schemaService.updateAccountDetails(
@@ -1515,6 +1533,7 @@ async accountList(
       }
 
       if (default_parent_id && data_storage === "store_in_parent") {
+        accountNumber = parent_account?.r_number;
         await this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
@@ -1528,6 +1547,21 @@ async accountList(
           parent_account?.r_number
         );
       }
+      
+       const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                    userId: userId!,
+                    eventType: eventTypes.UI_HANDLER
+                  });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+              created_by: userId!,
+              account_rid:account_rid,
+              entity_rid: account_rid,
+              entity_name: entityTypes.ACCOUNT,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.UPDATE,
+              descriptions:account_name
+            },["account"]);
 
       if (default_parent_id === null) {
         this.schemaService.updateAccountDetails(
@@ -2219,6 +2253,77 @@ async accountList(
       return this.throwServiceError(err as Error);
     }
   }
+
+  listTimeLineEntries = async (value: { nextOffset: string; limit: string; entityType: string; accountId: string }): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { timeLineEntries: any; count: number; nextOffset: number | null };
+  }> => {
+    const mainDb = await initSequelize(); 
+    try {
+      const fetchParentAccountRnumber: any = await mainDb.query(
+        await rawQueries.fetchParentAccount(value.accountId, mainDb)
+      );
+      if (fetchParentAccountRnumber[0].length > 0) {
+        let schemaName = rawQueries.fetchSchemaName(
+          fetchParentAccountRnumber[0][0].r_number
+        );
+        const sequelize = await initOrgSequelize();
+        const offsetNum = Number(value.nextOffset) || 0;
+        const limitNum = Number(value.limit) || 10;
+        const query = rawQueries.fetchAccountTimelineEntries(schemaName);
+        const timeLineEntries = await sequelize.query(query, {
+          replacements: {
+            entityType: value.entityType,
+            accountId: value.accountId,
+            offset: offsetNum,
+            limit: limitNum,
+          },
+          type: QueryTypes.SELECT,
+        });
+
+        // Get total count (without limit/offset) for pagination
+        const countQuery:any = await sequelize.query(rawQueries.fetchAccountTimelineEntriesCount(schemaName), {
+          replacements: {
+            entityType: value.entityType,
+            accountId: value.accountId,
+          },
+          type: QueryTypes.SELECT,
+        });
+
+        const totalCount = countQuery[0]?.count ? Number(countQuery[0].count) : 0;
+
+        let nextOffsetResult: number | null = null;
+        if (timeLineEntries.length === limitNum && offsetNum + limitNum < totalCount) {
+          nextOffsetResult = offsetNum + limitNum;
+        }
+
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            timeLineEntries,
+            count: totalCount,
+            nextOffset: nextOffsetResult,
+          },
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "No parent account found for the given account ID",
+          data: {
+            timeLineEntries: [],
+            count: 0,
+            nextOffset: null,
+          },
+        };
+      }
+    } catch (err) {
+      errorLog("listTimeLineEntries", err instanceof Error ? err.message : String(err));
+      return this.throwServiceError(err as Error);
+    }
+  };
 
   buildWhereClause(
     filters: Record<string, any>,

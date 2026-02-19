@@ -1,3 +1,5 @@
+import { Sequelize } from "sequelize/types/sequelize";
+
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -60,7 +62,25 @@ export const STATUS_MESSAGE = {
   invalidStatus: "Invalid Status. Status should either Active/In-Active.",
   noDataToUpdate: "Data is requried to update",
   storeInParent: "store_in_parent",
+  separateDb: "separate_db",
 };
+
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+}
+
+export const eventTypes = {
+   UI_HANDLER: "ui handler",
+}
 
 export const rawQueries = {
   fetchAccountDetails(schemaName: string, accountRid: string) {
@@ -372,6 +392,61 @@ export const rawQueries = {
       FROM "${cleanedSchema}".key_contact_details 
       WHERE entity_rid IN (:accountRids) 
         AND entity_type = 'Account'
+    `;
+  },
+   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  async fetchParentAccount(
+    accountRid: any,
+    mainSequelize: Sequelize
+  ): Promise<any> {
+    let checkIsSeparateDb: any = await mainSequelize.query(
+      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    );
+    if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
+      return `SELECT rid, r_number, account_name, storage_type, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+    } else {
+      return `
+      with fetch_account_details AS (
+      SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      )
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
+      WHERE a.rid = ad.parent_account_rid`;
+    }
+  },
+  fetchAccountTimelineEntries(schemaName: string) {
+    return `
+      SELECT event_name, descriptions, created_datetime,created_by_name, entity_name
+      FROM "${schemaName}".account_timeline
+      WHERE account_rid = :accountId
+      ORDER BY created_datetime DESC
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchAccountTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".account_timeline
+      WHERE account_rid = :accountId
+    `;
+  },
+  insertTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, title, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by, :title,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
     `;
   },
   getAccountFiscalSummaryByAccountRidsQuery(schemaName: string) {

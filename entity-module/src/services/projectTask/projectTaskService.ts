@@ -1,5 +1,8 @@
 import Decimal from "decimal.js";
 import {
+  entityTypes,
+  eventNames,
+  eventTypes,
   HttpStatus,
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -30,6 +33,7 @@ import { errorLog, logMessage } from "../../utils/helpers";
 import ProjectIngestionService from "../projectIngestionService";
 import { Case } from "../../models/caseModel";
 import { Logger } from "winston";
+import SchemaService from "../schemaService";
 
 
 
@@ -40,12 +44,14 @@ export class ProjectInjestionTaskService {
   private orgDbSequelize: Sequelize | null = null;
   private projectIngestion: ProjectIngestionService;
   private logger: Logger;
+  private schemaService: SchemaService;
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.projectTaskSchema = new ProjectTaskSchemaService();
     this.projectResourceSchema = new ProjectResourceSchemaService();
     this.projectIngestion = new ProjectIngestionService(this.logger);
+    this.schemaService = new SchemaService();
   }
 
   private formatDateForDb(dateString?: string): Date | null {
@@ -305,6 +311,21 @@ export class ProjectInjestionTaskService {
         transaction
       );
       if (newTask) {
+        
+        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                        userId: userId!,
+                                        eventType: eventTypes.UI_HANDLER
+                                      });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: projectTaskData.account_rid,
+          entity_rid: newTask?.rid!,
+          entity_name: entityTypes.PROJECT_TASK,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.CREATE,
+          descriptions:projectTaskData.resource_code
+        },["project"]);
         await this.projectTaskSchema.addProjectTaskTimeline(
           accountNumber,
           "create",
@@ -641,6 +662,20 @@ export class ProjectInjestionTaskService {
         transaction
       );
       if (updatedTask) {
+         const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                        userId: userId!,
+                                        eventType: eventTypes.UI_HANDLER
+                                      });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: projectTaskData.account_rid,
+          entity_rid: projectTaskData.project_task_rid!,
+          entity_name: entityTypes.PROJECT_TASK,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.CREATE,
+          descriptions:projectTaskData.resource_code
+        },["project"]);
         await this.projectTaskSchema.addProjectTaskTimeline(
           accountNumber,
           "update",

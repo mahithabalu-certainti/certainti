@@ -312,6 +312,12 @@ const colorCodesSchema = Joi.object({
   status: Joi.string().valid("Active", "Inactive", "All").default("All"),
 })
 
+const listTimeLineEntriesSchema = Joi.object({
+  nextOffset: Joi.string().optional().allow('', null),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+  entityType: Joi.string().required(),
+  accountId: Joi.string().required()
+});
 export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema, colorCodesSchema ,
-  listOrgAccountSchema
+  listOrgAccountSchema,listTimeLineEntriesSchema
 };
