@@ -83,6 +83,8 @@ export const entityTypes = {
   RESOURCE: "Resource",
   PROJECT_TASK: "Project Task",
   NOTES: "Notes",
+  ATTACHMENT: "Attachment",
+  PROJECT_RESOURCE: "Project Resource",
 };
 
 export const eventNames = {
@@ -1499,6 +1501,17 @@ export const rawQueries = {
             created_by, title, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
             :created_by, :title,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+  insertCaseTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, title, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by, :title,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
         ` 
