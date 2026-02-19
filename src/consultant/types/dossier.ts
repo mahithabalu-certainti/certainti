@@ -643,6 +643,7 @@ export interface CaseCloseCountryCredits {
   rd_credits_computed: string;
   rd_credits_submitted: string;
   rd_credits_approved: string;
+  comments: string;
 }
 
 export interface CaseCloseStateCredit {
@@ -650,6 +651,7 @@ export interface CaseCloseStateCredit {
   rd_credits_computed: string;
   rd_credits_submitted: string;
   rd_credits_approved: string;
+  comments: string;
 }
 
 export interface CaseClosePayload {
@@ -657,7 +659,7 @@ export interface CaseClosePayload {
   account_rid: string;
   country_credits: Partial<CaseCloseCountryCredits>;
   state_credits: CaseCloseStateCredit[];
-  files?: File[];
-  comments?: string;
+  files?: Record<string, File>; // key: file_country_{rid} or file_state_{rid}
   fiscal_year?: string | number;
+  user_preference?: string; // 'true' or ''
 }

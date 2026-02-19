@@ -320,17 +320,18 @@ export const fetchCaseClose = async (
   formData.append('country_credits', JSON.stringify(payload.country_credits));
   formData.append('state_credits', JSON.stringify(payload.state_credits));
 
-  if (payload.comments !== undefined) {
-    formData.append('comments', payload.comments);
-  }
-
   if (payload.fiscal_year !== undefined) {
     formData.append('fiscal_year', String(payload.fiscal_year));
   }
 
-  if (payload.files && payload.files.length > 0) {
-    payload.files.forEach((file) => {
-      formData.append('files', file);
+  if (payload.user_preference !== undefined) {
+    formData.append('user_preference', payload.user_preference);
+  }
+
+  // Append per-row files with their named keys (file_country_{rid} / file_state_{rid})
+  if (payload.files) {
+    Object.entries(payload.files).forEach(([key, file]) => {
+      formData.append(key, file);
     });
   }
 

@@ -1,14 +1,28 @@
-import { Box, Modal, Select, MenuItem } from '@mui/material';
+import {
+  Box,
+  Modal,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
+} from '@mui/material';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { CloseIcon, UploadIcon } from '../../../../../assets';
+import {
+  CloseIcon,
+  UploadIcon,
+  AttachmentsSideIcon,
+  CloseCircleIcon,
+  ErrorInfoIcon,
+} from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
-import { SectionHeaderTab } from '../../../../../components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useFetchState } from '../../../../services/account';
-import { FileList } from '../../../../../components/file-list';
 import { useToast } from '../../../../../hooks';
 import { REGEX_PATTERNS } from '../../../../../common-utils';
-import { COMMON_MENU_PROPS, getSelectStyles } from './tab/rd-form/helper';
+import ConfirmationPopup from '../../../../../common-utils/confirmation-popup';
 import {
   useComputedData,
   useCaseCloseMutation,
@@ -26,25 +40,46 @@ interface CloseCaseModalProps {
   refetchCaseDetails?: () => void;
 }
 
-interface TabFormData {
+interface RowFormData {
   rd_credits_computed: string;
   rd_credits_submitted: string;
   rd_credits_approved: string;
+  comments: string;
 }
 
-interface FormErrors {
-  country?: string;
-  region?: string;
+interface RowErrors {
   rd_credits_submitted?: string;
   rd_credits_approved?: string;
   comments?: string;
-  attachments?: string;
 }
 
-const MAX_FILE_SIZE_MB = 100;
-const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
+const EMPTY_ROW: RowFormData = {
+  rd_credits_computed: '',
+  rd_credits_submitted: '',
+  rd_credits_approved: '',
+  comments: '',
+};
 
-const ACCEPTED_FILE_TYPES = [
+const MAX_FILE_SIZE_MB = 100;
+const ACCEPTED_EXTENSIONS = [
+  'eml',
+  'msg',
+  'pdf',
+  'txt',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'bmp',
+  'svg',
+  'webp',
+];
+const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
+const ACCEPTED_MIME_TYPES = [
   'image/*',
   'message/rfc822',
   'application/vnd.ms-outlook',
@@ -56,10 +91,248 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];
 
-const EMPTY_FORM: TabFormData = {
-  rd_credits_computed: '',
-  rd_credits_submitted: '',
-  rd_credits_approved: '',
+const TABLE_HEAD_SX = {
+  '& .MuiTableCell-root': {
+    fontWeight: 700,
+    fontSize: '12px',
+    color: '#2A2A2A',
+    padding: '0px 8px',
+    height: '32px',
+    boxSizing: 'border-box',
+    backgroundColor: '#FCFCFC',
+    borderBottom: '1px solid #CBD6E2',
+    borderRight: '1px solid #CBD6E2',
+    '&:last-child': { borderRight: 'none' },
+  },
+};
+
+const TABLE_BODY_SX = {
+  '& .MuiTableCell-root': {
+    padding: '0px',
+    borderRight: '1px solid #CBD6E2',
+    borderBottom: '1px solid #CBD6E2',
+    '&:last-child': { borderRight: 'none' },
+    '& input, & textarea': {
+      border: 'none',
+      outline: 'none',
+      boxShadow: 'none',
+      background: 'transparent',
+      width: '100%',
+      fontSize: '12px',
+      padding: '2px 8px',
+      fontFamily: 'inherit',
+      resize: 'none',
+      '&:disabled': { backgroundColor: '#f3f4f6', color: '#6b7280' },
+      '&:focus': { border: '1px solid #60a5fa', backgroundColor: 'white' },
+    },
+  },
+};
+
+const CellInput: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  hasError?: boolean;
+  errorMsg?: string;
+}> = ({ value, onChange, placeholder, disabled, hasError, errorMsg }) => (
+  <div className={`relative flex h-full ${hasError ? 'bg-[#FEF2F2]' : ''}`}>
+    <input
+      type='text'
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      disabled={disabled}
+      autoComplete='off'
+      className={`outline-none w-full h-[36px] sm:text-[12px] px-2 placeholder:text-[12px] placeholder:text-[#7d98b6] ${disabled ? 'bg-gray-100 text-gray-500' : ''} ${hasError ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+      style={{ fontFamily: 'inherit' }}
+    />
+    {hasError && errorMsg && (
+      <Tooltip
+        title={errorMsg}
+        arrow
+        placement='top'
+        slotProps={{
+          tooltip: {
+            sx: {
+              backgroundColor: '#FEF2F2',
+              mr: 1,
+            },
+          },
+        }}
+      >
+        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+          <React.Suspense fallback={null}>
+            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+          </React.Suspense>
+        </span>
+      </Tooltip>
+    )}
+  </div>
+);
+
+const CellTextarea: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  hasError?: boolean;
+  errorMsg?: string;
+}> = ({ value, onChange, placeholder, hasError, errorMsg }) => (
+  <div className={`relative flex h-full ${hasError ? 'bg-[#FEF2F2]' : ''}`}>
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={2}
+      className={`outline-none w-full sm:text-[12px] px-2 py-1 resize-none placeholder:text-[12px] placeholder:text-[#7d98b6] ${hasError ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+      style={{
+        fontFamily: 'inherit',
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#9ca3af transparent',
+      }}
+    />
+    {hasError && errorMsg && (
+      <Tooltip
+        title={errorMsg}
+        arrow
+        placement='top'
+        slotProps={{
+          tooltip: {
+            sx: {
+              backgroundColor: '#FEF2F2',
+              mr: 1,
+            },
+          },
+        }}
+      >
+        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+          <React.Suspense fallback={null}>
+            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+          </React.Suspense>
+        </span>
+      </Tooltip>
+    )}
+  </div>
+);
+
+const FileUploadCell: React.FC<{
+  file: File | null;
+  onFileSet: (f: File | null) => void;
+  onError: (msg: string) => void;
+  error?: string;
+}> = ({ file, onFileSet, onError, error }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const validateAndSet = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const f = files[0]; // only first file
+    if (/\s/.test(f.name)) {
+      onError(`"${f.name}" must not contain spaces.`);
+      return;
+    }
+    if (RESTRICTED_EXTENSIONS.test(f.name)) {
+      onError(`"${f.name}" type is not allowed.`);
+      return;
+    }
+    const ext = f.name.split('.').pop()?.toLowerCase();
+    const isImage = f.type.startsWith('image/');
+    const mimeOk = ACCEPTED_MIME_TYPES.some((t) =>
+      t === 'image/*' ? isImage : f.type === t
+    );
+    const extOk = ext && ACCEPTED_EXTENSIONS.includes(ext);
+    if (!mimeOk && !extOk) {
+      onError(`"${f.name}" is not an accepted file type.`);
+      return;
+    }
+    if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      onError(`"${f.name}" exceeds ${MAX_FILE_SIZE_MB}MB.`);
+      return;
+    }
+    onFileSet(f);
+  };
+
+  return (
+    <div className='relative flex flex-col gap-1 min-h-[36px] justify-center'>
+      <input
+        type='file'
+        ref={inputRef}
+        className='hidden'
+        accept='image/*,.eml,.msg,.pdf,.txt,.doc,.docx,.xls,.xlsx'
+        onChange={(e) => {
+          validateAndSet(e.target.files);
+          if (inputRef.current) inputRef.current.value = '';
+        }}
+      />
+      {file ? (
+        <div className='flex items-center justify-between mx-1.5 bg-white border border-[#CBD6E2] rounded p-1.5 shadow-sm gap-1'>
+          <div className='flex items-center gap-1 flex-1 min-w-0'>
+            <React.Suspense fallback={null}>
+              <AttachmentsSideIcon className='w-2.5 h-2.5 flex-shrink-0 [&>path]:stroke-[#2D3E4F]' />
+            </React.Suspense>
+            <span
+              className='text-[10px] text-[#2D3E4F] truncate leading-tight'
+              title={file.name}
+            >
+              {file.name}
+            </span>
+          </div>
+          <button
+            type='button'
+            className='p-0 cursor-pointer flex-shrink-0 leading-none'
+            onClick={(e) => {
+              e.stopPropagation();
+              onFileSet(null);
+              onError(''); // clear any stale validation error
+            }}
+            title='Remove file'
+          >
+            <React.Suspense fallback={null}>
+              <CloseCircleIcon
+                alt='close-icon'
+                className='w-4 h-4 hover:[&>path]:stroke-[#e34616] hover:[&>rect]:fill-[#ffede7]'
+              />
+            </React.Suspense>
+          </button>
+        </div>
+      ) : (
+        <div
+          className={`relative flex items-center h-11 justify-center ${error ? 'bg-[#FEF2F2]' : ''}`}
+        >
+          <button
+            type='button'
+            className='flex items-center gap-1 text-[11px] text-[#0176D3] hover:underline cursor-pointer self-center py-1'
+            onClick={() => inputRef.current?.click()}
+          >
+            <React.Suspense fallback={null}>
+              <UploadIcon className='w-3 h-3' />
+            </React.Suspense>
+            Upload
+          </button>
+          {error && (
+            <Tooltip
+              title={error}
+              arrow
+              placement='top'
+              slotProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: '#FEF2F2',
+                    mr: 1,
+                  },
+                },
+              }}
+            >
+              <span className='h-[28px] w-5 flex items-center justify-center absolute top-[50%] -translate-y-1/2 bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                <React.Suspense fallback={null}>
+                  <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+                </React.Suspense>
+              </span>
+            </Tooltip>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
@@ -68,24 +341,23 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
   caseDetails,
   refetchCaseDetails,
 }) => {
-  const [activeTab, setActiveTab] = useState<string>('federal');
-  const [selectedRegion, setSelectedRegion] = useState<string>('');
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [comments, setComments] = useState<string>('');
-  const [message, setMessage] = useState<{
-    type: 'error' | 'success';
-    text: string;
-  } | null>(null);
+  const [countryForm, setCountryForm] = useState<RowFormData>(EMPTY_ROW);
+  const [countryErrors, setCountryErrors] = useState<RowErrors>({});
+  const [countryFile, setCountryFile] = useState<File | null>(null);
+  const [countryFileError, setCountryFileError] = useState('');
 
-  // Per-tab form data keyed by 'federal' or state_rid
-  const [tabFormData, setTabFormData] = useState<Record<string, TabFormData>>(
-    {}
-  );
+  const [stateFormData, setStateFormData] = useState<
+    Record<string, RowFormData>
+  >({});
+  const [stateErrors, setStateErrors] = useState<Record<string, RowErrors>>({});
+  const [stateFiles, setStateFiles] = useState<Record<string, File | null>>({});
+  const [stateFileErrors, setStateFileErrors] = useState<
+    Record<string, string>
+  >({});
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
   const { successToast } = useToast();
-
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
@@ -98,269 +370,209 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
 
   const region = useFetchState(caseDetails?.country_rid || '', 'active');
   const { mutate: closeCase, isPending: isClosing } = useCaseCloseMutation();
+
+  const stateList = useMemo(() => {
+    return (region.data?.data.states || []).map((s) => ({
+      state_rid: s.rid,
+      state_name: s.state_name,
+    }));
+  }, [region.data?.data.states]);
+
   const computedDataQuery = useComputedData(
     {
       case_rid: caseId ?? '',
       account_rid: accountid,
       country_rid: caseCountryDetails.country_rid,
       country_code: caseCountryDetails.country_code,
-      state_rid:
-        activeTab === 'state_wise' && selectedRegion ? [selectedRegion] : [],
+      state_rid: stateList.map((s) => s.state_rid),
     },
     open
   );
   const computedData = computedDataQuery.data?.data;
 
-  const regionListOptions = useMemo(() => {
-    const states = region.data?.data.states || [];
-    return states.map((state) => ({
-      label: state.state_name,
-      value: state.rid,
-    }));
-  }, [region.data?.data.states]);
-
   useEffect(() => {
     if (!computedData || !open) return;
 
-    if (activeTab === 'federal') {
-      const finalCredit = computedData.countryComputedData?.final_credit ?? '';
-      setTabFormData((prev) => ({
-        ...prev,
-        federal: {
-          ...(prev['federal'] ?? EMPTY_FORM),
-          rd_credits_computed: finalCredit,
-        },
-      }));
-    } else if (activeTab === 'state_wise' && selectedRegion) {
-      const stateData = computedData.stateComputedData?.find(
-        (s) => s.state_rid === selectedRegion
-      );
-      const finalCredit = stateData?.final_credit ?? '';
-      setTabFormData((prev) => ({
-        ...prev,
-        [selectedRegion]: {
-          ...(prev[selectedRegion] ?? EMPTY_FORM),
-          rd_credits_computed: finalCredit,
-        },
-      }));
-    }
-  }, [computedData, activeTab, selectedRegion, open]);
+    // Country computed
+    const countryFinalCredit =
+      computedData.countryComputedData?.final_credit ?? '';
+    setCountryForm((prev) => ({
+      ...prev,
+      rd_credits_computed: countryFinalCredit,
+    }));
 
-  // Auto-select first region when switching to state-wise tab
-  useEffect(() => {
-    if (
-      activeTab === 'state_wise' &&
-      regionListOptions.length > 0 &&
-      !selectedRegion
-    ) {
-      setSelectedRegion(regionListOptions[0].value);
-    }
-  }, [activeTab, regionListOptions, selectedRegion]);
-
-  const tabs = [
-    { label: 'Federal', value: 'federal', hide: false },
-    { label: 'State-wise', value: 'state_wise', hide: false },
-  ];
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    setTabFormData({});
-    setComments('');
-    setSelectedFiles([]);
-    setErrors({});
-    setMessage(null);
-    if (value === 'federal') {
-      setSelectedRegion('');
-    }
-  };
-
-  const handleRegionChange = (value: string) => {
-    setSelectedRegion(value);
-    setTabFormData({});
-    setComments('');
-    setSelectedFiles([]);
-    setErrors({});
-    setMessage(null);
-  };
-
-  // Current form key: 'federal' or the selected state_rid
-  const currentKey = activeTab === 'federal' ? 'federal' : selectedRegion || '';
-
-  const currentFormData: TabFormData = tabFormData[currentKey] ?? EMPTY_FORM;
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    if (name === 'comments') {
-      setComments(value);
-      setErrors((prev) => ({ ...prev, comments: '' }));
-    } else {
-      setTabFormData((prev) => ({
-        ...prev,
-        [currentKey]: {
-          ...(prev[currentKey] ?? EMPTY_FORM),
-          [name]: value,
-        },
-      }));
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const showError = (text: string) => {
-    setMessage({ type: 'error', text });
-  };
-
-  const validateFiles = (files: FileList | null): File[] => {
-    if (!files) return [];
-    const validFiles: File[] = [];
-    const allowedExtensions = [
-      'eml',
-      'msg',
-      'pdf',
-      'txt',
-      'doc',
-      'docx',
-      'xls',
-      'xlsx',
-      'jpg',
-      'jpeg',
-      'png',
-      'gif',
-      'bmp',
-      'svg',
-      'webp',
-    ];
-
-    for (const file of Array.from(files)) {
-      if (/\s/.test(file.name)) {
-        showError(
-          `"${file.name}" is invalid. File name must not contain spaces.`
-        );
-        continue;
-      }
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      const isImage = file.type.startsWith('image/');
-      const isMimeTypeAccepted = ACCEPTED_FILE_TYPES.some((acceptedType) => {
-        if (acceptedType === 'image/*') return isImage;
-        return file.type === acceptedType;
+    // State computed — match by state_rid
+    if (computedData.stateComputedData?.length) {
+      setStateFormData((prev) => {
+        const updated = { ...prev };
+        computedData.stateComputedData.forEach((sd) => {
+          updated[sd.state_rid] = {
+            ...(updated[sd.state_rid] ?? EMPTY_ROW),
+            rd_credits_computed: sd.final_credit ?? '',
+          };
+        });
+        return updated;
       });
-      const isExtensionAccepted =
-        fileExtension && allowedExtensions.includes(fileExtension);
-      if (!isMimeTypeAccepted && !isExtensionAccepted) {
-        showError(
-          `"${file.name}" is not a valid file. Only images, .eml, .msg, .pdf, .txt, .doc, .docx, .xls, or .xlsx files are allowed.`
-        );
-        continue;
-      }
-      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        showError(`"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB limit.`);
-        continue;
-      }
-      if (RESTRICTED_EXTENSIONS.test(file.name)) {
-        showError(
-          `"${file.name}" type is not allowed (.exe, .bat, .cmd, .sh, .bash).`
-        );
-        continue;
-      }
-      validFiles.push(file);
     }
-    return validFiles;
+  }, [computedData, open]);
+
+  const handleClose = () => {
+    setCountryForm(EMPTY_ROW);
+    setCountryErrors({});
+    setCountryFile(null);
+    setCountryFileError('');
+    setStateFormData({});
+    setStateErrors({});
+    setStateFiles({});
+    setStateFileErrors({});
+    setShowConfirmation(false);
+    onClose();
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessage(null);
-    const validFiles = validateFiles(e.target.files);
-    if (validFiles.length > 0) {
-      setSelectedFiles((prev) => [...prev, ...validFiles]);
-      setErrors((prev) => ({ ...prev, attachments: '' }));
-    }
+  const updateCountryField = (field: keyof RowFormData, value: string) => {
+    setCountryForm((prev) => ({ ...prev, [field]: value }));
+    setCountryErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setMessage(null);
-    const validFiles = validateFiles(e.dataTransfer.files);
-    if (validFiles.length > 0) {
-      setSelectedFiles((prev) => [...prev, ...validFiles]);
-      setErrors((prev) => ({ ...prev, attachments: '' }));
-    }
+  const updateStateField = (
+    stateRid: string,
+    field: keyof RowFormData,
+    value: string
+  ) => {
+    setStateFormData((prev) => ({
+      ...prev,
+      [stateRid]: {
+        ...(prev[stateRid] ?? EMPTY_ROW),
+        [field]: value,
+      },
+    }));
+    setStateErrors((prev) => ({
+      ...prev,
+      [stateRid]: {
+        ...(prev[stateRid] ?? {}),
+        [field]: '',
+      },
+    }));
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  // ── Check if a state row has ANY data filled ──
+  const stateHasAnyData = (stateRid: string): boolean => {
+    const d = stateFormData[stateRid];
+    if (!d) return !!stateFiles[stateRid];
+    return (
+      !!d.rd_credits_submitted.trim() ||
+      !!d.rd_credits_approved.trim() ||
+      !!d.comments.trim() ||
+      !!stateFiles[stateRid]
+    );
   };
 
-  const openFileDialog = () => {
-    fileInputRef.current?.click();
-  };
+  // ── Check if ALL states have data ──
+  const allStatesHaveData = () =>
+    stateList.length > 0 &&
+    stateList.every((s) => stateHasAnyData(s.state_rid));
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (activeTab === 'state_wise' && !selectedRegion) {
-      newErrors.region = 'Field is required';
-    }
-
-    if (!currentFormData.rd_credits_submitted.trim()) {
-      newErrors.rd_credits_submitted = 'Field is required';
+  // ── Validate country row (mandatory) ──
+  const validateCountry = (): boolean => {
+    const errs: RowErrors = {};
+    if (!countryForm.rd_credits_submitted.trim()) {
+      errs.rd_credits_submitted = 'Field is required';
     } else if (
-      !REGEX_PATTERNS.EFFORTS_NUMBER.test(currentFormData.rd_credits_submitted)
+      !REGEX_PATTERNS.EFFORTS_NUMBER.test(countryForm.rd_credits_submitted)
     ) {
-      newErrors.rd_credits_submitted =
-        'Only positive numbers allowed, up to 16 digits and 2 decimal places';
+      errs.rd_credits_submitted =
+        'Only positive numbers, up to 16 digits and 2 decimal places';
     }
-
-    if (!currentFormData.rd_credits_approved.trim()) {
-      newErrors.rd_credits_approved = 'Field is required';
+    if (!countryForm.rd_credits_approved.trim()) {
+      errs.rd_credits_approved = 'Field is required';
     } else if (
-      !REGEX_PATTERNS.EFFORTS_NUMBER.test(currentFormData.rd_credits_approved)
+      !REGEX_PATTERNS.EFFORTS_NUMBER.test(countryForm.rd_credits_approved)
     ) {
-      newErrors.rd_credits_approved =
-        'Only positive numbers allowed, up to 16 digits and 2 decimal places';
+      errs.rd_credits_approved =
+        'Only positive numbers, up to 16 digits and 2 decimal places';
     }
-
-    if (!REGEX_PATTERNS.MAX_2000.test(comments)) {
-      newErrors.comments = 'Comments must be within 2000 characters';
+    if (
+      countryForm.comments &&
+      !REGEX_PATTERNS.MAX_2000.test(countryForm.comments)
+    ) {
+      errs.comments = 'Comments must be within 2000 characters';
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setCountryErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validateForm()) return;
+  // ── Validate state rows
+  const validateStates = (): boolean => {
+    let valid = true;
+    const newStateErrors: Record<string, RowErrors> = {};
 
-    // Federal tab → full country_credits; State-wise tab → empty object
-    const federalData = tabFormData['federal'] ?? EMPTY_FORM;
-    const country_credits =
-      activeTab === 'federal'
-        ? {
-            country_rid: caseCountryDetails.country_rid,
-            rd_credits_computed: federalData.rd_credits_computed,
-            rd_credits_submitted: federalData.rd_credits_submitted,
-            rd_credits_approved: federalData.rd_credits_approved,
-          }
-        : {};
+    stateList.forEach((s) => {
+      if (!stateHasAnyData(s.state_rid)) return; // skip empty rows
 
-    // Build state_credits from all state tab data
-    const state_credits = regionListOptions
-      .map((opt) => {
-        const stateData = tabFormData[opt.value];
-        if (!stateData) return null;
+      const d = stateFormData[s.state_rid] ?? EMPTY_ROW;
+      const errs: RowErrors = {};
+      if (!d.rd_credits_submitted.trim()) {
+        errs.rd_credits_submitted = 'Field is required';
+        valid = false;
+      } else if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(d.rd_credits_submitted)) {
+        errs.rd_credits_submitted =
+          'Only positive numbers, up to 16 digits and 2 decimal places';
+        valid = false;
+      }
+      if (!d.rd_credits_approved.trim()) {
+        errs.rd_credits_approved = 'Field is required';
+        valid = false;
+      } else if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(d.rd_credits_approved)) {
+        errs.rd_credits_approved =
+          'Only positive numbers, up to 16 digits and 2 decimal places';
+        valid = false;
+      }
+      if (d.comments && !REGEX_PATTERNS.MAX_2000.test(d.comments)) {
+        errs.comments = 'Comments must be within 2000 characters';
+        valid = false;
+      }
+      if (Object.keys(errs).length > 0) {
+        newStateErrors[s.state_rid] = errs;
+      }
+    });
+
+    setStateErrors(newStateErrors);
+    return valid;
+  };
+
+  // ── Build & send payload ──
+  const buildAndSubmit = (userPreference: string) => {
+    const country_credits = {
+      country_rid: caseCountryDetails.country_rid,
+      rd_credits_computed: countryForm.rd_credits_computed,
+      rd_credits_submitted: countryForm.rd_credits_submitted,
+      rd_credits_approved: countryForm.rd_credits_approved,
+      comments: countryForm.comments,
+    };
+
+    const state_credits = stateList
+      .filter((s) => stateHasAnyData(s.state_rid))
+      .map((s) => {
+        const d = stateFormData[s.state_rid] ?? EMPTY_ROW;
         return {
-          state_rid: opt.value,
-          rd_credits_computed: stateData.rd_credits_computed,
-          rd_credits_submitted: stateData.rd_credits_submitted,
-          rd_credits_approved: stateData.rd_credits_approved,
+          state_rid: s.state_rid,
+          rd_credits_computed: d.rd_credits_computed,
+          rd_credits_submitted: d.rd_credits_submitted,
+          rd_credits_approved: d.rd_credits_approved,
+          comments: d.comments,
         };
-      })
-      .filter(Boolean) as {
-      state_rid: string;
-      rd_credits_computed: string;
-      rd_credits_submitted: string;
-      rd_credits_approved: string;
-    }[];
+      });
+
+    // Build named files dict
+    const files: Record<string, File> = {};
+    if (countryFile) {
+      files[`file_country_${caseCountryDetails.country_rid}`] = countryFile;
+    }
+    stateList.forEach((s) => {
+      if (stateFiles[s.state_rid]) {
+        files[`file_state_${s.state_rid}`] = stateFiles[s.state_rid]!;
+      }
+    });
 
     closeCase(
       {
@@ -368,9 +580,9 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
         account_rid: accountid,
         country_credits,
         state_credits,
-        files: selectedFiles.length > 0 ? selectedFiles : undefined,
-        comments: comments || undefined,
+        files: Object.keys(files).length > 0 ? files : undefined,
         fiscal_year: caseDetails?.fiscal_year,
+        user_preference: userPreference,
       },
       {
         onSuccess: () => {
@@ -382,24 +594,40 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
     );
   };
 
-  const handleClose = () => {
-    setActiveTab('federal');
-    setSelectedRegion('');
-    setTabFormData({});
-    setComments('');
-    setSelectedFiles([]);
-    setErrors({});
-    setMessage(null);
-    onClose();
+  // ── Main submit handler ──
+  const handleSubmit = () => {
+    const countryValid = validateCountry();
+    const statesValid = validateStates();
+    if (!countryValid || !statesValid) return;
+
+    // Show confirmation popup if there are states and not ALL of them are filled
+    if (stateList.length > 0 && !allStatesHaveData()) {
+      setShowConfirmation(true);
+      return;
+    }
+
+    buildAndSubmit('');
+  };
+
+  const handleConfirmYes = () => {
+    setShowConfirmation(false);
+    buildAndSubmit('true');
+  };
+
+  const handleConfirmNo = () => {
+    setShowConfirmation(false);
   };
 
   return (
     <React.Suspense fallback={null}>
       <Modal open={open}>
-        <Box className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-[40%] max-w-[40%] bg-white rounded-md shadow-lg outline-none'>
+        <Box
+          className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-md shadow-lg outline-none'
+          sx={{ width: '80vw' }}
+        >
           {/* Header */}
-          <div className='flex items-center justify-between gap-2 p-4 border-b border-[#CBD6E2] shrink-0'>
-            <div className='text-[16px] font-bold text-[#2D3E4F]'>
+          <div className='flex items-center justify-between gap-2 px-5 py-3 border-b border-[#CBD6E2]'>
+            <div className='text-[15px] font-bold text-[#2D3E4F]'>
               Close Case
             </div>
             <button
@@ -415,290 +643,278 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
 
           {/* Body */}
           <div
-            className='min-h-[500px] max-h-[70vh] overflow-y-auto'
+            className='overflow-y-auto px-5 py-4 flex flex-col gap-5'
             style={{
+              maxHeight: '70vh',
               pointerEvents: isClosing ? 'none' : 'all',
             }}
           >
-            <SectionHeaderTab
-              tabs={tabs}
-              onTabChange={handleTabChange}
-              defaultValue={activeTab}
-              className='flex flex-col gap-0 border-b border-[#CBD6E2] pl-3'
-            />
-            <div className='pb-2'>
-              {/* Country and Region Fields */}
-              <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-6 py-3'>
-                <div>
-                  <label
-                    className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1'
-                    htmlFor='country_name'
-                  >
-                    Country <span className='text-red-500'>*</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='country_name'
-                    placeholder='-'
-                    autoComplete='off'
-                    className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
-                      errors?.country &&
-                      'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'
-                    }`}
-                    disabled={true}
-                    value={caseCountryDetails.country_name}
-                  />
-                  {errors?.country && (
-                    <span className='text-[12px] text-red-400 col-span-full'>
-                      {errors.country}
-                    </span>
-                  )}
-                </div>
-
-                {activeTab === 'state_wise' && (
-                  <div>
-                    <label
-                      className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1'
-                      htmlFor='region'
-                    >
-                      Region <span className='text-red-500'>*</span>
-                    </label>
-
-                    <Select
-                      name='region'
-                      value={selectedRegion}
-                      onChange={(e) => handleRegionChange(e.target.value)}
-                      displayEmpty
-                      fullWidth
-                      size='small'
-                      className={`custom-select-no-arrow sm:text-sm ${
-                        selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                      } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
-                      MenuProps={COMMON_MENU_PROPS}
-                      sx={getSelectStyles(
-                        !!errors?.region,
-                        selectedRegion === ''
-                      )}
-                    >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          color: '#7D98B6',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                        }}
-                      >
-                        Choose Region
-                      </MenuItem>
-                      {regionListOptions?.map((option, i) => (
-                        <MenuItem
-                          key={`${option.value}-${i}`}
-                          value={option.value}
-                          title={option.label}
-                          sx={{
-                            color: '#425A76',
-                            fontSize: '13px',
-                            fontWeight: 500,
-                          }}
-                        >
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-
-                    {errors?.region && (
-                      <span className='text-[12px] text-red-400 col-span-full'>
-                        {errors.region}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* RD Credits Computed */}
-                <div>
-                  <label
-                    htmlFor='rd_credits_computed'
-                    className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
-                  >
-                    RD Credits Computed
-                  </label>
-                  <input
-                    type='text'
-                    name='rd_credits_computed'
-                    placeholder={
-                      computedDataQuery.isLoading
-                        ? 'Loading...'
-                        : 'Enter RD Credits Computed'
-                    }
-                    value={currentFormData.rd_credits_computed}
-                    onChange={handleInputChange}
-                    autoComplete='off'
-                    disabled={true}
-                    className='outline-none placeholder-custom-color disabled:bg-gray-100 h-[32px] w-full sm:text-sm py-2 px-3 border border-[#CBD6E2] rounded-xs'
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor='rd_credits_submitted'
-                    className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
-                  >
-                    RD Credits Submitted <span className='text-red-500'>*</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='rd_credits_submitted'
-                    placeholder='Enter RD Credits Submitted'
-                    value={currentFormData.rd_credits_submitted}
-                    onChange={handleInputChange}
-                    autoComplete='off'
-                    className={`outline-none placeholder-custom-color h-[32px] w-full sm:text-sm py-2 px-3 focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
-                      errors?.rd_credits_submitted
-                        ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
-                        : ''
-                    }`}
-                  />
-                  {errors?.rd_credits_submitted && (
-                    <span className='text-[12px] text-red-400'>
-                      {errors.rd_credits_submitted}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    htmlFor='rd_credits_approved'
-                    className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
-                  >
-                    RD Credits Approved <span className='text-red-500'>*</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='rd_credits_approved'
-                    placeholder='Enter RD Credits Approved'
-                    value={currentFormData.rd_credits_approved}
-                    onChange={handleInputChange}
-                    autoComplete='off'
-                    className={`outline-none placeholder-custom-color h-[32px] w-full sm:text-sm py-2 px-3 focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
-                      errors?.rd_credits_approved
-                        ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
-                        : ''
-                    }`}
-                  />
-                  {errors?.rd_credits_approved && (
-                    <span className='text-[12px] text-red-400'>
-                      {errors.rd_credits_approved}
-                    </span>
-                  )}
-                </div>
+            <div>
+              <div className='font-bold text-[13px] text-[#2D3E4F] mb-2'>
+                Federal
               </div>
-
-              {/* Comments Field */}
-              <div className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-6 pt-3'>
-                <label
-                  htmlFor='comments'
-                  className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
+              <TableContainer
+                sx={{ border: '1px solid #CBD6E2', borderRadius: '2px' }}
+              >
+                <Table
+                  size='small'
+                  sx={{ tableLayout: 'fixed', width: '100%' }}
                 >
-                  Comments
-                </label>
-                <textarea
-                  name='comments'
-                  placeholder='Enter Comments'
-                  value={comments}
-                  onChange={handleInputChange}
-                  autoComplete='off'
-                  className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
-                    errors?.comments
-                      ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
-                      : ''
-                  }`}
-                />
-                {errors?.comments && (
-                  <span className='text-[12px] text-red-400'>
-                    {errors.comments}
-                  </span>
-                )}
-              </div>
+                  <TableHead sx={TABLE_HEAD_SX}>
+                    <TableRow>
+                      <TableCell style={{ width: '12%' }}>
+                        Country Name
+                      </TableCell>
+                      <TableCell style={{ width: '16%' }}>
+                        RD Credits Computed
+                      </TableCell>
+                      <TableCell style={{ width: '16%' }}>
+                        RD Credits Submitted{' '}
+                        <span className='text-red-500'>*</span>
+                      </TableCell>
+                      <TableCell style={{ width: '16%' }}>
+                        RD Credits Approved{' '}
+                        <span className='text-red-500'>*</span>
+                      </TableCell>
+                      <TableCell style={{ width: 'auto' }}>Comments</TableCell>
+                      <TableCell style={{ width: '10%', textAlign: 'center' }}>
+                        Attachment
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody sx={TABLE_BODY_SX}>
+                    <TableRow>
+                      <TableCell>
+                        <div className='px-2 py-2 text-[12px] text-[#2D3E4F] font-medium h-full min-h-[36px] flex items-center'>
+                          {computedDataQuery.isLoading ? (
+                            <span className='text-[#9DB0C6]'>Loading…</span>
+                          ) : (
+                            caseCountryDetails.country_name || '-'
+                          )}
+                        </div>
+                      </TableCell>
 
-              {/* Attachments Section */}
-              <div className='mt-4 px-6'>
-                <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-2 block'>
-                  Attachments
-                </label>
-
-                <div className='flex flex-col items-center justify-center gap-4'>
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onClick={openFileDialog}
-                    className={`h-[116px] w-full border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 cursor-pointer
-                      ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}
-                    `}
-                  >
-                    <React.Suspense fallback={null}>
-                      <UploadIcon
-                        alt='Upload Icon'
-                        className='w-[36px] h-[24px]'
-                      />
-                    </React.Suspense>
-                    <div
-                      className='text-[14px] text-[#0B0B0B]'
-                      style={{ whiteSpace: 'nowrap' }}
-                    >
-                      Drag your file or{' '}
-                      <span
-                        className='text-[#0176D3] underline'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openFileDialog();
+                      <TableCell>
+                        <CellInput
+                          value={countryForm.rd_credits_computed}
+                          onChange={() => undefined}
+                          placeholder={
+                            computedDataQuery.isLoading ? 'Loading...' : '-'
+                          }
+                          disabled
+                        />
+                      </TableCell>
+                      <TableCell
+                        style={{
+                          backgroundColor: countryErrors.rd_credits_submitted
+                            ? '#FEF2F2'
+                            : undefined,
                         }}
                       >
-                        browse
-                      </span>
-                    </div>
-                    <input
-                      type='file'
-                      accept='image/*,.eml,.msg,.pdf,.txt,.doc,.docx,.xls,.xlsx'
-                      className='hidden'
-                      ref={fileInputRef}
-                      onChange={handleFileSelect}
-                      multiple
-                    />
-                  </div>
-
-                  {/* Error messages */}
-                  <div className='w-full'>
-                    {message && (
-                      <div
-                        className={`text-sm ${
-                          message.type === 'error'
-                            ? 'text-red-600'
-                            : 'text-green-600'
-                        }`}
+                        <CellInput
+                          value={countryForm.rd_credits_submitted}
+                          onChange={(v) =>
+                            updateCountryField('rd_credits_submitted', v)
+                          }
+                          placeholder='Enter RD Credits Submitted'
+                          hasError={!!countryErrors.rd_credits_submitted}
+                          errorMsg={countryErrors.rd_credits_submitted}
+                        />
+                      </TableCell>
+                      <TableCell
+                        style={{
+                          backgroundColor: countryErrors.rd_credits_approved
+                            ? '#FEF2F2'
+                            : undefined,
+                        }}
                       >
-                        {message.text}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='w-full'>
-                    <FileList
-                      fileInputRef={fileInputRef}
-                      selectedFiles={selectedFiles}
-                      setSelectedFiles={setSelectedFiles}
-                      existingFiles={[]}
-                      onRemoveExistingFile={() => {}}
-                      disabled={false}
-                      className='w-full'
-                    />
-                  </div>
-                </div>
-              </div>
+                        <CellInput
+                          value={countryForm.rd_credits_approved}
+                          onChange={(v) =>
+                            updateCountryField('rd_credits_approved', v)
+                          }
+                          placeholder='Enter RD Credits Approved'
+                          hasError={!!countryErrors.rd_credits_approved}
+                          errorMsg={countryErrors.rd_credits_approved}
+                        />
+                      </TableCell>
+                      <TableCell
+                        style={{
+                          backgroundColor: countryErrors.comments
+                            ? '#FEF2F2'
+                            : undefined,
+                        }}
+                      >
+                        <CellTextarea
+                          value={countryForm.comments}
+                          onChange={(v) => updateCountryField('comments', v)}
+                          placeholder='Enter Comments'
+                          hasError={!!countryErrors.comments}
+                          errorMsg={countryErrors.comments}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FileUploadCell
+                          file={countryFile}
+                          onFileSet={setCountryFile}
+                          onError={setCountryFileError}
+                          error={countryFileError || undefined}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </div>
+            {stateList.length > 0 && (
+              <div>
+                <div className='font-bold text-[13px] text-[#2D3E4F] mb-2'>
+                  State-wise
+                </div>
+                <TableContainer
+                  sx={{ border: '1px solid #CBD6E2', borderRadius: '2px' }}
+                >
+                  <Table
+                    size='small'
+                    sx={{ tableLayout: 'fixed', width: '100%' }}
+                  >
+                    <TableHead sx={TABLE_HEAD_SX}>
+                      <TableRow>
+                        <TableCell style={{ width: '12%' }}>
+                          State Name
+                        </TableCell>
+                        <TableCell style={{ width: '16%' }}>
+                          RD Credits Computed
+                        </TableCell>
+                        <TableCell style={{ width: '16%' }}>
+                          RD Credits Submitted
+                        </TableCell>
+                        <TableCell style={{ width: '16%' }}>
+                          RD Credits Approved
+                        </TableCell>
+                        <TableCell style={{ width: 'auto' }}>
+                          Comments
+                        </TableCell>
+                        <TableCell
+                          style={{ width: '10%', textAlign: 'center' }}
+                        >
+                          Attachment
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody sx={TABLE_BODY_SX}>
+                      {stateList.map((s) => {
+                        const d = stateFormData[s.state_rid] ?? EMPTY_ROW;
+                        const errs = stateErrors[s.state_rid] ?? {};
+                        const fileErr = stateFileErrors[s.state_rid] ?? '';
+
+                        return (
+                          <TableRow key={s.state_rid}>
+                            <TableCell>
+                              <div className='px-2 py-2 text-[12px] text-[#2D3E4F] font-medium h-full min-h-[36px] flex items-center'>
+                                {s.state_name}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <CellInput
+                                value={d.rd_credits_computed}
+                                onChange={() => undefined}
+                                placeholder={
+                                  computedDataQuery.isLoading
+                                    ? 'Loading...'
+                                    : '-'
+                                }
+                                disabled
+                              />
+                            </TableCell>
+                            <TableCell
+                              style={{
+                                backgroundColor: errs.rd_credits_submitted
+                                  ? '#FEF2F2'
+                                  : undefined,
+                              }}
+                            >
+                              <CellInput
+                                value={d.rd_credits_submitted}
+                                onChange={(v) =>
+                                  updateStateField(
+                                    s.state_rid,
+                                    'rd_credits_submitted',
+                                    v
+                                  )
+                                }
+                                placeholder='Enter RD Credits Submitted'
+                                hasError={!!errs.rd_credits_submitted}
+                                errorMsg={errs.rd_credits_submitted}
+                              />
+                            </TableCell>
+                            <TableCell
+                              style={{
+                                backgroundColor: errs.rd_credits_approved
+                                  ? '#FEF2F2'
+                                  : undefined,
+                              }}
+                            >
+                              <CellInput
+                                value={d.rd_credits_approved}
+                                onChange={(v) =>
+                                  updateStateField(
+                                    s.state_rid,
+                                    'rd_credits_approved',
+                                    v
+                                  )
+                                }
+                                placeholder='Enter RD Credits Approved'
+                                hasError={!!errs.rd_credits_approved}
+                                errorMsg={errs.rd_credits_approved}
+                              />
+                            </TableCell>
+                            <TableCell
+                              style={{
+                                backgroundColor: errs.comments
+                                  ? '#FEF2F2'
+                                  : undefined,
+                              }}
+                            >
+                              <CellTextarea
+                                value={d.comments}
+                                onChange={(v) =>
+                                  updateStateField(s.state_rid, 'comments', v)
+                                }
+                                placeholder='Enter Comments'
+                                hasError={!!errs.comments}
+                                errorMsg={errs.comments}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <FileUploadCell
+                                file={stateFiles[s.state_rid] ?? null}
+                                onFileSet={(f) =>
+                                  setStateFiles((prev) => ({
+                                    ...prev,
+                                    [s.state_rid]: f,
+                                  }))
+                                }
+                                onError={(msg) =>
+                                  setStateFileErrors((prev) => ({
+                                    ...prev,
+                                    [s.state_rid]: msg,
+                                  }))
+                                }
+                                error={fileErr || undefined}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </div>
+            )}
           </div>
 
-          {/* Footer */}
-          <div className='border-t border-[#CBD6E2] px-6 py-4 flex gap-3 justify-end'>
+          <div className='border-t border-[#CBD6E2] px-6 py-3 flex gap-3 justify-end'>
             <TextButton
               label='Cancel'
               onClick={handleClose}
@@ -724,6 +940,13 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
           </div>
         </Box>
       </Modal>
+
+      <ConfirmationPopup
+        isOpen={showConfirmation}
+        message='One or more state entries are incomplete. Do you want to close this case without completing all state details?'
+        onConfirm={handleConfirmYes}
+        onCancel={handleConfirmNo}
+      />
     </React.Suspense>
   );
 };
