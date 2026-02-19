@@ -199,6 +199,20 @@ const Dossier: React.FC<DossierProps> = ({
       )?.fields ?? [],
     [permission]
   );
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMapAttachment = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -437,7 +451,7 @@ const Dossier: React.FC<DossierProps> = ({
           projectPermissionMap
         );
       case 'project_documents':
-        return getProjectDocumentsFilterFields(fieldOptions, permissionMap);
+        return getProjectDocumentsFilterFields(fieldOptions, permissionMapAttachment);
       case 'technical_summary':
         return getTechnicalSummaryFilterFields(technicalSummarypermissionMap);
       case 'resource_summary':
@@ -447,7 +461,7 @@ const Dossier: React.FC<DossierProps> = ({
           countryOptions,
           regionOptions,
           memoizedResourceType,
-          memoizedResourceStatus
+          memoizedResourceStatus,
         );
       default:
         return [];
@@ -462,6 +476,11 @@ const Dossier: React.FC<DossierProps> = ({
     tabParam,
     technicalSummarypermissionMap,
     fieldOptions,
+    memoizedClassification,
+    memoizedProjectTypes,
+    memoizedStatus,
+    projectPermissionMap,
+    permissionMapAttachment
   ]);
 
   const tabs = [
