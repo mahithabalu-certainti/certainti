@@ -704,7 +704,8 @@ export class DataMapperService implements IDataMapperService {
                         modified_datetime: new Date(),
                         field_id: mapping.field_id,
                         calculation_config: mapping.calculation_config,
-                        column_id: columnRid
+                        column_id: columnRid,
+                        status: mapping.status
                     }, {
                         where: {
                             rid: mapping.rid
