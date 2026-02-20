@@ -1503,6 +1503,16 @@ export const rawQueries = {
   insertTimeLine(schemaName: string, tableName: string) {
     return `
       INSERT INTO "${schemaName}".${tableName} (
+        created_by, event_type_rid, event_name, descriptions, account_rid, entity_name, entity_rid, created_by_name
+      ) VALUES (
+        :created_by, :event_type_rid, :event_name, :descriptions, :account_rid, :entity_name, :entity_rid, :created_by_name
+      )
+      RETURNING *;
+    `;
+  },
+  insertProjectTimeLine(schemaName: string, tableName: string) {
+    return `
+      INSERT INTO "${schemaName}".${tableName} (
         created_by, event_type_rid, event_name, descriptions, account_rid, entity_name, entity_rid, created_by_name, project_rid
       ) VALUES (
         :created_by, :event_type_rid, :event_name, :descriptions, :account_rid, :entity_name, :entity_rid, :created_by_name, COALESCE(:project_rid, NULL)
