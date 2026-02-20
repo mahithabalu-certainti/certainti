@@ -3326,16 +3326,21 @@ class CaseSchemaService {
       const { CaseTimeline } = await this.caseModelService.getModels(
         accountNumber
       );
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: userId,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
 
       await CaseTimeline.create({
         account_rid: accountRid,
         event_name: eventName,
         event_status: eventStatus,
         event_type: eventType,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
         entity_rid: caseRid,
         description: description,
         created_by: userId,
-        event_datetime: new Date(),
         created_datetime: new Date(),
       });
     } catch (err) {

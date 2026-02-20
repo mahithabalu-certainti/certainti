@@ -20,6 +20,7 @@ export interface CaseTimelineAttributes {
   event_datetime?: Date;
   description?: string;
   entity_name?: string;
+  created_by_name?: string;
 }
 
 export interface CaseTimelineCreationAttributes
@@ -48,6 +49,7 @@ export class CaseTimeline
   public event_datetime?: Date;
   public description?: string;
   public entity_name?: string;
+  public created_by_name?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return CaseTimeline.init(
@@ -106,6 +108,10 @@ export class CaseTimeline
         },
         event_type_rid: {
           type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        created_by_name: {
+          type: DataTypes.STRING(100),
           allowNull: false,
         },
         case_rid: {
