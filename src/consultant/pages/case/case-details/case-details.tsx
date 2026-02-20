@@ -524,6 +524,10 @@ export const CaseDetails = () => {
         {
           ...attachmentParams,
           ...attachmentPayload,
+          ...{
+            attachmentLevel:
+              exportType === 'dossier-project-documents' ? 'project' : 'case',
+          },
         },
         exportType === 'dossier-project-documents' ? 'project-documents' : ''
       );
