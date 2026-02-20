@@ -689,7 +689,7 @@ class CaseSchemaService {
                                     entity_name: entityTypes.CASE,
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
-                                    event_name: eventNames.CREATE,
+                                    event_name: eventNames.UPDATE,
                                     descriptions:caseRequest.case_name,
                                     case_rid: caseRequest.case_rid,
                                   },["account","case"]);
