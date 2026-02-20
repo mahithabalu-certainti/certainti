@@ -11,7 +11,12 @@ import {
   Popover,
   IconButton,
 } from '@mui/material';
-import { CloseIcon, ErrorInfoIcon } from '../../../../assets';
+import {
+  AcceptIcon,
+  CloseIcon,
+  ErrorInfoIcon,
+  RejectIcon,
+} from '../../../../assets';
 import TruncateWithTooltip from '../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 import TextButton from '../../../../components/button/text-button';
 
@@ -67,6 +72,7 @@ interface MappingItem {
   inputValue?: string;
   fieldIdError?: string;
   targetError?: string;
+  status?: string;
 }
 
 interface MappingTableProps {
@@ -554,7 +560,41 @@ const MappingTable: React.FC<MappingTableProps> = ({
     const updatedMappings = localMappings.map((mapping) => {
       if (mapping.rid === rid) {
         // Only clear fieldIdError if it exists, don't validate
-        return { ...mapping, field_id: value, fieldIdError: undefined };
+        // If field_id is cleared, set status to 'inactive'
+        const newStatus =
+          !value || value.trim() === '' ? 'inactive' : mapping.status;
+        return {
+          ...mapping,
+          field_id: value,
+          fieldIdError: undefined,
+          status: newStatus,
+        };
+      }
+      return mapping;
+    });
+    setLocalMappings(updatedMappings);
+    onMappingsChange(updatedMappings);
+  };
+
+  const handleAcceptAnomaly = (rid: string): void => {
+    const updatedMappings = localMappings.map((mapping) => {
+      if (mapping.rid === rid) {
+        return {
+          ...mapping,
+          status: 'active',
+          fieldIdError: undefined,
+        };
+      }
+      return mapping;
+    });
+    setLocalMappings(updatedMappings);
+    onMappingsChange(updatedMappings);
+  };
+
+  const handleRejectAnomaly = (rid: string): void => {
+    const updatedMappings = localMappings.map((mapping) => {
+      if (mapping.rid === rid) {
+        return { ...mapping, status: 'inactive', fieldIdError: undefined };
       }
       return mapping;
     });
@@ -2320,7 +2360,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                     'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for manual text entry, then press Enter (e.g., #Custom Value)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
                   }
                   arrow
-                  placement='top'
+                  placement='left'
                   slotProps={{
                     tooltip: {
                       sx: {
@@ -2384,46 +2424,84 @@ const MappingTable: React.FC<MappingTableProps> = ({
                   />
                 </TableCell>
                 <TableCell sx={{ p: '8px' }}>
-                  <div
-                    className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
-                  >
-                    <textarea
-                      value={mapping.field_id || ''}
-                      onChange={(e) => {
-                        handleFieldIdChange(mapping.rid, e.target.value);
-                        // auto-grow height
-                        e.target.style.height = 'auto';
-                        e.target.style.height = `${e.target.scrollHeight}px`;
-                      }}
-                      disabled={formType === 'non-fillable'}
-                      placeholder='Enter Field ID'
-                      className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] disabled:bg-gray-100 text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
-                        mapping.fieldIdError
-                          ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
-                          : 'border-gray-300 focus:border-blue-400'
-                      }`}
-                    />
-                    {mapping.fieldIdError && (
-                      <Tooltip
-                        title={mapping.fieldIdError}
-                        arrow
-                        placement='top'
-                        slotProps={{
-                          tooltip: {
-                            sx: {
-                              backgroundColor: '#FEF2F2',
-                              mr: 1,
-                            },
-                          },
+                  <div className='flex gap-1 h-full'>
+                    <div
+                      className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                    >
+                      <textarea
+                        value={mapping.field_id || ''}
+                        onChange={(e) => {
+                          handleFieldIdChange(mapping.rid, e.target.value);
+                          // auto-grow height
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
-                      >
-                        <span className='h-[26px] w-5 flex items-center justify-center absolute top-[1px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
-                          <React.Suspense fallback={null}>
-                            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
-                          </React.Suspense>
-                        </span>
-                      </Tooltip>
-                    )}
+                        disabled={formType === 'non-fillable'}
+                        placeholder='Enter Field ID'
+                        className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] disabled:bg-gray-100 text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
+                          mapping.fieldIdError
+                            ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
+                            : 'border-gray-300 focus:border-blue-400'
+                        }`}
+                      />
+                      {mapping.fieldIdError && (
+                        <Tooltip
+                          title={mapping.fieldIdError}
+                          arrow
+                          placement='top'
+                          slotProps={{
+                            tooltip: {
+                              sx: {
+                                backgroundColor: '#FEF2F2',
+                                mr: 1,
+                              },
+                            },
+                          }}
+                        >
+                          <span className='h-[26px] w-5 flex items-center justify-center absolute top-[1px] bg-[#FEF2F2] right-[4px] cursor-pointer'>
+                            <React.Suspense fallback={null}>
+                              <ErrorInfoIcon
+                                alt='error'
+                                className='w-5 h-3.5'
+                              />
+                            </React.Suspense>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </div>
+                    {mapping.status === 'anomaly' &&
+                      formType !== 'non-fillable' && (
+                        <div className='w-6 h-full flex flex-col justify-start items-center gap-2.5'>
+                          <Tooltip
+                            title={'Accept Anomaly'}
+                            arrow
+                            placement='right'
+                          >
+                            <button
+                              className='flex items-center justify-center cursor-pointer'
+                              onClick={() => handleAcceptAnomaly(mapping.rid)}
+                            >
+                              <React.Suspense fallback={null}>
+                                <AcceptIcon alt='accept' className='w-5 h-5' />
+                              </React.Suspense>
+                            </button>
+                          </Tooltip>
+                          <Tooltip
+                            title={'Reject Anomaly'}
+                            arrow
+                            placement='right'
+                          >
+                            <button
+                              className='flex items-center justify-center cursor-pointer'
+                              onClick={() => handleRejectAnomaly(mapping.rid)}
+                            >
+                              <React.Suspense fallback={null}>
+                                <RejectIcon alt='reject' className='w-5 h-5' />
+                              </React.Suspense>
+                            </button>
+                          </Tooltip>
+                        </div>
+                      )}
                   </div>
                 </TableCell>
                 <TableCell sx={{ p: '8px' }}>
@@ -2791,11 +2869,19 @@ const MappingTable: React.FC<MappingTableProps> = ({
           horizontal: 'left',
         }}
         TransitionProps={{
-          timeout: 0, // Remove animation for instant appearance
+          timeout: 0,
         }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {
+              pointerEvents: 'auto',
+              zIndex: 1100,
               width: functionPopover?.anchorEl
                 ? functionPopover.anchorEl.clientWidth + 5
                 : '450px',
@@ -2960,9 +3046,17 @@ const MappingTable: React.FC<MappingTableProps> = ({
         TransitionProps={{
           timeout: 0,
         }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {
+              pointerEvents: 'auto',
+              zIndex: 1100,
               width: conditionalPopover?.anchorEl
                 ? conditionalPopover.anchorEl.clientWidth + 5
                 : '500px',
