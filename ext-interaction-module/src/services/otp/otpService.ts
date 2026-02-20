@@ -530,7 +530,7 @@ export class OtpService {
     interactionId: string
   ): Promise<boolean> {
     try {
-      await sendEmail(mailContent);
+      await sendEmail(mailContent, account_rid);
       this.logger.info(`[OTP] OTP email sent successfully to ${email}`);
       return true;
     } catch (err) {

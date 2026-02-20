@@ -4,6 +4,7 @@ import { IEmailMessage } from "../utils/types";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import { decryptClientSecret } from "../utils/helpers";
+import { initOrgSequelize } from "../config/orgDataSource";
 
 /**
  * Sends an email message using the Microsoft Graph API.
@@ -22,14 +23,22 @@ import { decryptClientSecret } from "../utils/helpers";
  */
 export async function sendEmail(emailMessage: {
   message: IEmailMessage;
-}): Promise<any> {
-  const { email, tenant_id, client_id, client_secret } =
-    await fetchPlatFormCredentials();
+}, account_rid : string): Promise<any> {
+  const mainDb = await initMainDbSequelize();
+  const orgDb = await initOrgSequelize();
+  let parentRid;
+  let fetchParent: any = await mainDb.query(await rawQueries.fetchParentAccount(account_rid, mainDb));
+  if(fetchParent[0][0].is_parent === true) parentRid = fetchParent[0][0].rid
+  else parentRid = fetchParent[0][0].parent_account_rid
+  const parentAccountForSettings : any = await mainDb.query(rawQueries.getAccountDetails(parentRid));
+  let schemaForSetting = rawQueries.fetchSchemaName(parentAccountForSettings[0][0].r_number);
+  const fetchExistingSettings: any = await rawQueries.fetchSettings(schemaForSetting,orgDb,parentRid);
+  const existingSettings = fetchExistingSettings[0];
 
   const credential = new ClientSecretCredential(
-    tenant_id,
-    client_id,
-    client_secret
+    existingSettings.tenant_id,
+    existingSettings.client_id,
+    existingSettings.client_secret
   );
 
   const graphClient = Client.initWithMiddleware({
@@ -45,7 +54,7 @@ export async function sendEmail(emailMessage: {
 
   try {
     const response = await graphClient
-      .api(`/users/${email}/sendMail`)
+      .api(`/users/${existingSettings.email}/sendMail`)
       .post(emailMessage);
 
     return response;
