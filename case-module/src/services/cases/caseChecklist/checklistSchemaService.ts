@@ -1034,7 +1034,7 @@ export class ChecklistSchemaService {
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                             created_by: caseRequest.modified_by!,
                             account_rid: caseRequest.account_rid,
-                            entity_rid: caseRequest.checklist_rid!,
+                            entity_rid: createdChecklist.rid!,
                             entity_name: entityTypes.CHECKLIST,
                             created_by_name: userEventInfo.full_name,
                             event_type_rid: userEventInfo.event_type_rid,

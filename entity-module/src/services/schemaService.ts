@@ -699,6 +699,7 @@ class SchemaService {
       event_type_rid: string;
       event_name?: string;
       descriptions?: string;
+      project_rid?: string;
     },
     entityTypes: string[]
   ) {
