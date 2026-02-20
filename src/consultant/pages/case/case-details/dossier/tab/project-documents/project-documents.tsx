@@ -74,7 +74,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       entityId: caseId || '',
       search: searchValue,
       fiscalYear: 0,
-      type: 'qualifiedProjects',
+      type: 'dossier_project_document',
     },
     refreshTrigger
   );
@@ -95,7 +95,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       page: currentPage + 1,
       filters: appliedFilters,
       search: searchValue,
-      type: 'qualifiedProjects',
+      type: 'dossier_project_document',
     }));
   }, [currentPage, appliedFilters, searchValue]);
 
@@ -109,7 +109,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       filters: appliedFilters,
       search: searchValue,
       fiscalYear: 0,
-      type: 'qualifiedProjects',
+      type: 'dossier_project_document',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
