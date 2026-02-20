@@ -799,6 +799,16 @@ export interface IDataMapperService {
     data?: any;
   }>;
 
+  recomputeMapping(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
   getDataMapperFormsMappingDetail(userId: string, rid: string): Promise<{
     statusCode: number;
     message: string;
