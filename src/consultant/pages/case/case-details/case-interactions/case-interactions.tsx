@@ -285,6 +285,20 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     });
     return map;
   }, [interactionsViewEditFields]);
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
 
   const memoizedInteractionStatus = useMemo(
     () =>
@@ -714,7 +728,8 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
-    permissionMap
+    permissionMap,
+    projectPermissionMap
   );
 
   const filterFields = !viewInteractionHistory
@@ -722,7 +737,8 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
         memoizedInteractionTypes,
         memoizedInteractionResSources,
         memoizedInteractionStatus,
-        permissionMap
+        permissionMap,
+        projectPermissionMap
       )
     : getCaseInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getProjectCaseInteractionFilterFields(

@@ -14,7 +14,8 @@ export const getInteractionListColumns = (
     rid: string,
     rNumber: string
   ) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
@@ -51,8 +52,8 @@ export const getInteractionListColumns = (
     width: 120,
     sortable: true,
     hide:
-      !permissionMap?.['project_code']?.edit &&
-      !permissionMap?.['project_code']?.read,
+      !projectPermissionMap?.['project_code']?.edit &&
+      !projectPermissionMap?.['project_code']?.read,
   },
   {
     id: 'interaction_level_name',

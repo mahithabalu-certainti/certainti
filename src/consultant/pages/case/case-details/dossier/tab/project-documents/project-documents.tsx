@@ -156,11 +156,26 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     });
     return map;
   }, [attachmentViewEditFields]);
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
   const isAttachmentExportEnable = checkPermission(
     permission,
     AllPermissions.ATTACHMENT_EXPORT
   );
   const projectDocumentsColumns = getProjectDocumentsColumns(
+    projectPermissionMap,
     permissionMap,
     isAttachmentExportEnable
   );

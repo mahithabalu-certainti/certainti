@@ -15,6 +15,7 @@ const handleDownload = (documentUrl: string, documentName: string) => {
 };
 
 export const getProjectDocumentsColumns = (
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   isAttachmentExportEnable?: boolean
 ): ListTableColumn<AttachmentList>[] => [
@@ -33,6 +34,9 @@ export const getProjectDocumentsColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+    hide:
+      !projectPermissionMap?.['project_code']?.edit &&
+      !projectPermissionMap?.['project_code']?.read,
   },
   {
     id: 'project_name',
@@ -40,6 +44,9 @@ export const getProjectDocumentsColumns = (
     sortable: true,
     sortId: 'project_name',
     width: 200,
+    hide:
+      !projectPermissionMap?.['project_name']?.edit &&
+      !projectPermissionMap?.['project_name']?.read,
   },
   {
     id: 'document_name',
