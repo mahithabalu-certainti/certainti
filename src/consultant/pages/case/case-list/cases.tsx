@@ -394,6 +394,7 @@ const Cases: React.FC = () => {
           </button>
           <Suspense fallback={null}>
             <Filter
+              key={String(urlFilterApplied)}
               value='global-cases'
               isOpen={isFilterOpen}
               filterAnchorEl={anchorEl}

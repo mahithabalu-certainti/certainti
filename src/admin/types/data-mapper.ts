@@ -164,6 +164,8 @@ export interface FieldMapping {
   calculation_config: ObjectRidMap | null;
   field_type: 'line-item' | 'table';
   column_id: string | null;
+  extraction_order: number;
+  status: 'active' | 'inactive' | 'anomaly';
 }
 
 export interface MappingDetailsData {

@@ -23,7 +23,8 @@ export const getCaseInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
   interactionResponseSources: { option: string; value: string }[],
   interactionStatus: { option: string; value: string }[],
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -47,17 +48,17 @@ export const getCaseInteractionFilterFields = (
       name: 'Project Code',
       value: 'project_code',
       type: 'text',
-      // hide:
-      //   !permissionMap?.['project_code']?.edit &&
-      //   !permissionMap?.['project_code']?.read,
+      hide:
+        !projectPermissionMap?.['project_code']?.edit &&
+        !projectPermissionMap?.['project_code']?.read,
     },
     {
       name: 'Project Name',
       value: 'project_name',
       type: 'text',
-      // hide:
-      //   !permissionMap?.['project_name']?.edit &&
-      //   !permissionMap?.['project_name']?.read,
+      hide:
+        !projectPermissionMap?.['project_name']?.edit &&
+        !projectPermissionMap?.['project_name']?.read,
     },
     {
       name: 'Age (Days)',

@@ -14,7 +14,8 @@ export const getCaseInteractionListColumns = (
     rid: string,
     rNumber: string
   ) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
@@ -61,7 +62,9 @@ export const getCaseInteractionListColumns = (
     label: 'Project Code',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['project_code']?.edit && !permissionMap?.['project_code']?.read,
+    hide:
+      !projectPermissionMap?.['project_code']?.edit &&
+      !projectPermissionMap?.['project_code']?.read,
     render: (row: InteractionList) => row.project_code || '-',
   },
   {
@@ -70,8 +73,10 @@ export const getCaseInteractionListColumns = (
     label: 'Project Name',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['project_code']?.edit && !permissionMap?.['project_code']?.read,
     render: (row: InteractionList) => row.project_name || '-',
+    hide:
+      !projectPermissionMap?.['project_name']?.edit &&
+      !projectPermissionMap?.['project_name']?.read,
   },
   {
     id: 'interaction_age',
