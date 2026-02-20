@@ -366,7 +366,11 @@ class ProjectIngestionService {
       ...baseData,
       default_metric_type: "project",
     });
-    if (accountSettings[0]?.auto_access_rd === true) {
+    const isTriggerEnabled = await this.isAutoTriggerRDAssessment(accountNumber, {
+      account_rid: projectData.account_id,
+      project_fiscal_rid: [response.rid],
+    });
+    if (isTriggerEnabled) {
       const req = {
         data: [
           {
@@ -382,6 +386,103 @@ class ProjectIngestionService {
 
     return response;
   }
+
+  async isAutoTriggerRDAssessment(
+      accountNumber: string,
+      interactionDetails: any
+    ) {
+      try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.getMainSequelize();
+        }
+        if(!this.orgDbSequelize){
+          this.orgDbSequelize = await this.getSequelize();
+        }
+        const globalInteractionAccess = await this.checkGlobalAutoTriggerAccess(this.mainDbSequelize);
+        if (globalInteractionAccess) {
+          return true;
+        } else {
+
+          const accountInteraction = await this.checkAccountAutoTriggerAccess(accountNumber, interactionDetails.account_rid,this.orgDbSequelize);
+          if(accountInteraction){
+            return true;
+          }
+          
+          const projectInteraction = await this.checkProjectAutoTriggerAccess(accountNumber, interactionDetails.project_fiscal_rid,this.orgDbSequelize);
+          if(projectInteraction){
+            return true;
+          }
+         
+          return false;
+        }
+      } catch (err) {
+        logMessage(`Error checking auto-send interaction status: ${err}`);
+        throw new Error(
+          "Error checking auto-send interaction status: " + (err as Error).message
+        );
+      }
+    }
+    async checkGlobalAutoTriggerAccess(mainDbSequelize: Sequelize) {
+      try {
+        const [globalAccess]: any[] = await mainDbSequelize.query(
+          rawQueries.fetchGlobalAutoTriggerAccess(),
+          { type: "SELECT" }
+        );
+        return globalAccess?.auto_access_rd ?? false;
+      } catch (err) {
+        logMessage(`Error checking global auto-trigger interaction access: ${err}`);
+        throw new Error(
+          "Error checking global auto-trigger interaction access: " +
+            (err as Error).message
+        );
+      } 
+    }
+  
+    async checkAccountAutoTriggerAccess( accountNumber: string,
+      accountRid: string,orgDbSequelize: Sequelize) {
+      try {
+       
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+            /\D/g,
+            ""
+          )}`;
+         const [accountInfo]: any[] = await orgDbSequelize.query(
+            rawQueries.fetchAccountLevelInfoForTriggerAI(accountRid, schemaName),  
+            { type: "SELECT" }
+          );
+        return accountInfo?.autosend_interaction ?? false;
+      } catch (err) {
+        logMessage(`Error checking account auto-trigger interaction access: ${err}`);
+        throw new Error(
+          "Error checking account auto-trigger interaction access: " +
+            (err as Error).message
+        );
+      } 
+    }
+  
+    async checkProjectAutoTriggerAccess( accountNumber: string,
+      project_fiscal_rid: string,orgDbSequelize: Sequelize) {
+      try {
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+            /\D/g,
+            ""
+          )}`;
+         const [projectInfo]: any[] = await orgDbSequelize.query(
+            rawQueries.fetchisAutoTriggerEnabled(
+              project_fiscal_rid,
+              schemaName
+            ),
+            { type: "SELECT" }
+          );
+        return projectInfo?.auto_send_ai_interaction ?? false;
+      } catch (err) {
+        logMessage(`Error checking project auto-trigger interaction access: ${err}`);
+        throw new Error(
+          "Error checking project auto-trigger interaction access: " +
+            (err as Error).message
+        );
+      } 
+    }
   private async getProducer(): Promise<Producer> {
     if (!this.producer) {
       const kafka = new Kafka({

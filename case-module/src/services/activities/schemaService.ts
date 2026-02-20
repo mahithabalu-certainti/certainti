@@ -19,7 +19,10 @@ import {
   activityStatus,
   constants,
   callFields,
-  activityTypes
+  activityTypes,
+  eventTypes,
+  entityTypes,
+  eventNames
 } from "../../utils/constants";
 import {
   decryptClientSecret,
@@ -1713,16 +1716,32 @@ class ActivitySchemaService {
         files
       );
     }
-    this.addTaskTimeline(
-      accountNumber,
-      activityData.activity_rid,
-      activityData.account_rid,
-      `Email Activity Created with subject: ${activityRequest.subject}`,
-      userId,
-      `Email Activity Created: ${activityRequest.subject}`,
-      "success",
-      activityData.activity_rid
-    );
+    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: userId!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+    const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
+      
+    await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: userId!,
+                      account_rid: activityData.account_rid,
+                      entity_rid: activityData.activity_rid!,
+                      entity_name: entityTypes.ACTIVITY_EMAIL,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.CREATE,
+                      descriptions:activityRequest.subject
+                    },timelineTypes);
+    // this.addTaskTimeline(
+    //   accountNumber,
+    //   activityData.activity_rid,
+    //   activityData.account_rid,
+    //   `Email Activity Created with subject: ${activityRequest.subject}`,
+    //   userId,
+    //   `Email Activity Created: ${activityRequest.subject}`,
+    //   "success",
+    //   activityData.activity_rid
+    // );
     return response;
   }
 
@@ -1829,16 +1848,32 @@ class ActivitySchemaService {
       existingActivity,
       activityTypes.email
     );
-    await this.addTaskTimeline(
-      accountNumber,
-      activityRequest.activity_rid,
-      activityRequest.account_rid,
-      `Email Activity updated with subject: ${activityRequest.subject}`,
-      userId,
-      `Email Activity updated: ${activityRequest.subject}`,
-      "success",
-      activityRequest.activity_rid
-    );
+    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: userId!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+    const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
+      
+    await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: userId!,
+                      account_rid: activityData.account_rid,
+                      entity_rid: activityData.activity_rid!,
+                      entity_name: entityTypes.ACTIVITY_EMAIL,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.UPDATE,
+                      descriptions:activityRequest.subject
+                    },timelineTypes);
+    // await this.addTaskTimeline(
+    //   accountNumber,
+    //   activityRequest.activity_rid,
+    //   activityRequest.account_rid,
+    //   `Email Activity updated with subject: ${activityRequest.subject}`,
+    //   userId,
+    //   `Email Activity updated: ${activityRequest.subject}`,
+    //   "success",
+    //   activityRequest.activity_rid
+    // );
     return response;
   }
 
@@ -2066,6 +2101,22 @@ class ActivitySchemaService {
           "success",
           activityData.activity_rid
         );
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: userId!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+        const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
+      
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: userId!,
+                      account_rid: activityData.account_rid,
+                      entity_rid: activityData.activity_rid!,
+                      entity_name: entityTypes.ACTIVITY_MEETING,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.CREATE,
+                      descriptions:activityRequest.subject
+                    },timelineTypes);
         return response;
       }
       else {
@@ -2112,16 +2163,32 @@ class ActivitySchemaService {
     const response = await Activities.create(activityData);
     activityRequest.activity_rid = response.rid;
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
-    this.addTaskTimeline(
-      accountNumber,
-      activityData.activity_rid,
-      activityData.account_rid,
-      `Call Activity Created with subject: ${activityRequest.subject}`,
-      userId,
-      `Call Activity Created: ${activityRequest.subject}`,
-      "success",
-      activityData.activity_rid
-    );
+    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: userId!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+    const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
+      
+    await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: userId!,
+                      account_rid: activityData.account_rid,
+                      entity_rid: activityData.activity_rid!,
+                      entity_name: entityTypes.ACTIVITY_CALL,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.CREATE,
+                      descriptions:activityRequest.subject
+                    },timelineTypes);
+    // this.addTaskTimeline(
+    //   accountNumber,
+    //   activityData.activity_rid,
+    //   activityData.account_rid,
+    //   `Call Activity Created with subject: ${activityRequest.subject}`,
+    //   userId,
+    //   `Call Activity Created: ${activityRequest.subject}`,
+    //   "success",
+    //   activityData.activity_rid
+    // );
     return response;
   }
 
@@ -2199,16 +2266,32 @@ class ActivitySchemaService {
       existingActivity,
       activityTypes.call
     );
-    await this.addTaskTimeline(
-      accountNumber,
-      activityRequest.activity_rid,
-      activityRequest.account_rid!,
-      `Call Activity updated with subject: ${activityRequest.subject}`,
-      userId,
-      `Call Activity updated: ${activityRequest.subject}`,
-      "success",
-      activityRequest.activity_rid
-    );
+    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: userId!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+    const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
+      
+    await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: userId!,
+                      account_rid: activityData.account_rid,
+                      entity_rid: activityData.activity_rid!,
+                      entity_name: entityTypes.ACTIVITY_CALL,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.UPDATE,
+                      descriptions:activityRequest.subject
+                    },timelineTypes);
+    // await this.addTaskTimeline(
+    //   accountNumber,
+    //   activityRequest.activity_rid,
+    //   activityRequest.account_rid!,
+    //   `Call Activity updated with subject: ${activityRequest.subject}`,
+    //   userId,
+    //   `Call Activity updated: ${activityRequest.subject}`,
+    //   "success",
+    //   activityRequest.activity_rid
+    // );
     return response;
   }
 
@@ -2358,6 +2441,22 @@ class ActivitySchemaService {
         activityTypes.meeting
       );
     }
+    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: userId!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+    const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
+      
+    await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: userId!,
+                      account_rid: activityData.account_rid,
+                      entity_rid: activityData.activity_rid!,
+                      entity_name: entityTypes.ACTIVITY_MEETING,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.UPDATE,
+                      descriptions:activityRequest.subject
+                    },timelineTypes);
     await this.addTaskTimeline(
       accountNumber,
       activityRequest.activity_rid,

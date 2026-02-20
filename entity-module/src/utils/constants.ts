@@ -388,6 +388,10 @@ export const rawQueries = {
   checkRegionExists(data: any) {
     return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = '${data.region_rid}'`;
   },
+  fetchGlobalAutoTriggerAccess() {
+    return `
+    SELECT auto_access_rd FROM ${MAIN_SCHEMA_NAME}.organization_licenses limit 1`;
+  },
   isResourceCodeDuplicate(schemaName: string, data: any) {
     return `
             SELECT resource_code FROM ${schemaName}.resources
@@ -1498,9 +1502,9 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, title, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
-            :created_by, :title,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
         ` 
@@ -1509,9 +1513,9 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, title, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
-            :created_by, :title,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
         ` 
@@ -2418,6 +2422,14 @@ export const rawQueries = {
   fetchAccountDetailsInfo(rid: string) {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+   fetchAccountLevelInfoForTriggerAI(rid: string,schemaName: string) {
+    return `
+    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,auto_access_rd FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+  },
+  fetchisAutoTriggerEnabled(projectFiscalRid: string, schemaName: string) {
+    return `
+    SELECT auto_access_rd FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`;
   },
   fetchAllPlatformConfig(rid: string) {
     return `

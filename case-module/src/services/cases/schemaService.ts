@@ -17,7 +17,10 @@ import {
   ALPHANUMERIC_CONDITIONS,
   caseFilingTypes,
   entityNames,
+  entityTypes,
   ENV_PREFIX,
+  eventNames,
+  eventTypes,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -386,6 +389,23 @@ class CaseSchemaService {
             casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
             fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
         }
+       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: caseRequest.modified_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+                
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: caseRequest.modified_by!,
+                                    account_rid: caseRequest.account_rid,
+                                    entity_rid: casecreationResponse.rid!,
+                                    entity_name: entityTypes.CASE,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.CREATE,
+                                    descriptions:caseRequest.case_name,
+                                    case_rid: caseRequest.case_rid,
+                                  },["account","case"]);
+
         await this.addCaseManagementTimeline(
           accountNumber,
           casecreationResponse.rid,
@@ -657,16 +677,32 @@ class CaseSchemaService {
 
       // Add timeline entry for case update
       if (caseRequest.case_rid) {
-        await this.addCaseManagementTimeline(
-          accountNumber,
-          caseRequest.case_rid,
-          caseRequest.account_rid,
-          caseRequest,
-          userId,
-          "updated",
-          "success",
-          existingCase
-        );
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: caseRequest.modified_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+                
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: caseRequest.modified_by!,
+                                    account_rid: caseRequest.account_rid,
+                                    entity_rid: caseRequest.case_rid!,
+                                    entity_name: entityTypes.CASE,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.CREATE,
+                                    descriptions:caseRequest.case_name,
+                                    case_rid: caseRequest.case_rid,
+                                  },["account","case"]);
+        // await this.addCaseManagementTimeline(
+        //   accountNumber,
+        //   caseRequest.case_rid,
+        //   caseRequest.account_rid,
+        //   caseRequest,
+        //   userId,
+        //   "updated",
+        //   "success",
+        //   existingCase
+        // );
       }
 
       return {
