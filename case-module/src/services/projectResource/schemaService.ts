@@ -921,6 +921,9 @@ export class ProjectResourceSchemaService {
       order: dbOrder,
       where: {
         ...whereFilters,
+        ...(type === 'qualifiedProjects' && {
+          '$project_resource_fiscal_project_fiscal.is_qualified' : true
+        })
       },
       attributes: {
         include: [
@@ -933,12 +936,7 @@ export class ProjectResourceSchemaService {
           model: ProjectFiscal,
           attributes: [],
           required: false,
-          as: "project_resource_fiscal_project_fiscal",
-          ...(type === 'qualifiedProjects' && {
-            where : {
-              is_qualified : true
-            }
-          })
+          as: "project_resource_fiscal_project_fiscal"
         },]
     });
 
