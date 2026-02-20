@@ -368,7 +368,7 @@ class ProjectIngestionService {
     });
     const isTriggerEnabled = await this.isAutoTriggerRDAssessment(accountNumber, {
       account_rid: projectData.account_id,
-      project_fiscal_rid: [response.rid],
+      project_fiscal_rid: response.rid,
     });
     if (isTriggerEnabled) {
       const req = {
