@@ -67,7 +67,7 @@ export async function sendEmail(emailMessage: {
 
   try {
     const response = await graphClient
-      .api(`/users/${existingSettings.email}/sendMail`)
+      .api(`/users/${existingSettings.support_email}/sendMail`)
       .post(emailMessage);
 
     return {
