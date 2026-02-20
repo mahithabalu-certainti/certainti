@@ -2024,7 +2024,7 @@ WHERE dmf.country_rid = '${countryRid}'
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
-       WHERE cp.case_rid = '${caseRid}'`
+       WHERE cp.case_rid = '${caseRid}' AND pf.is_qualified = true`
     } else {
       return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
     }

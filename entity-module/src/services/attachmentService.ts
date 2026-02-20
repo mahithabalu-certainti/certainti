@@ -1649,8 +1649,8 @@ export class AttachmentService {
         }
       }
       const labelMap: Record<string, string> = {
-        "Project ID": "Project ID",
-        "Name": "Name",
+        "Project Code": "Project Code",
+        "Project Name": "Name",
         "Document Name": "Document Name",
         Format: "Format",
         Size: "Size",
@@ -1675,13 +1675,16 @@ export class AttachmentService {
       attachments = attachments.map((at) => {
         const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
+        let dynamicLabel : string;
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey]; // field_desc
           if (allowedFieldSet.has(label)) {
             filtered[label] = value; // export with label name
           }
           if (allowedFieldSetForProjects.has(label!)) {
-            filtered[label!] = value; // export with label name
+            if(label === 'Name') dynamicLabel = "Project Name"
+            else dynamicLabel = label!
+            filtered[dynamicLabel] = value
           }
         }
         return filtered;
@@ -1707,7 +1710,7 @@ export class AttachmentService {
   // Helper function to map attachment data to common format
   private mapAttachmentToCommonFormat(at: any, timezone : string) {
     return {
-      "Project ID": at.project_code || "-",
+      "Project Code": at.project_code || "-",
       "Project Name": at.project_name || "-",
       "Document Name": at.document_name || "-",
       Format: at.format || "-",

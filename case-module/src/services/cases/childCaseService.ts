@@ -1126,7 +1126,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       }
       const labelMap: Record<string, string> = {
         "Project Code": "Project Code",
-        "Name": "Name",
+        "Project Name": "Name",
         "Document Name": "Document Name",
         Format: "Format",
         Size: "Size",
@@ -1149,15 +1149,18 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       }));
 
       attachments = attachments.map((at) => {
-        const rawMapped = mapAttachmentToCommonFormat(at, timezone); // with internal keys
+        const rawMapped = mapAttachmentToCommonFormat(at, timezone);
         const filtered: Record<string, any> = {};
+        let dynamicLabel : string;
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
-          const label = labelMap[fieldKey]; // field_desc
+          const label = labelMap[fieldKey];
           if (allowedFieldSet.has(label!)) {
-            filtered[label!] = value; // export with label name
+            filtered[label!] = value;
           }
           if (allowedFieldSetForProjects.has(label!)) {
-            filtered[label!] = value; // export with label name
+            if(label === 'Name') dynamicLabel = "Project Name"
+            else dynamicLabel = label!
+            filtered[dynamicLabel] = value
           }
         }
         return filtered;
