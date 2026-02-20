@@ -254,7 +254,8 @@ export class ProjectResourceService {
                           created_by_name: userEventInfo.full_name,
                           event_type_rid: userEventInfo.event_type_rid,
                           event_name: eventNames.CREATE,
-                          descriptions: projectResourceData.project_code
+                          descriptions: projectResourceData.resource_code || '',
+                          project_rid: projectResourceData.project_fiscal_rid,
                         }, ["project"]);
           await this.projectResourceSchema.addProjectResourceTimeline(
             accountNumber,
@@ -1052,7 +1053,8 @@ export class ProjectResourceService {
                           created_by_name: userEventInfo.full_name,
                           event_type_rid: userEventInfo.event_type_rid,
                           event_name: eventNames.UPDATE,
-                          descriptions: (existingProjectResource as any).project_code || ''
+                          descriptions: (existingProjectResource as any).resource_code || '',
+                          project_rid: projectData.project_rid,
                         }, ["project"]);
 
       await this.recordTimelineAndHistory(

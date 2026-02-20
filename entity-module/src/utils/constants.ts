@@ -81,6 +81,8 @@ export const entityTypes = {
   ACCOUNT: "Account",
   PROJECT: "Project",
   RESOURCE: "Resource",
+  RESOURCE_COST: "Resource Cost",
+  RESOURCE_SKILL: "Resource Skill",
   PROJECT_TASK: "Project Task",
   NOTES: "Notes",
   ATTACHMENT: "Attachment",
@@ -1502,9 +1504,9 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
           )
           RETURNING *;
         ` 
