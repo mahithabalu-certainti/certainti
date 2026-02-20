@@ -105,7 +105,7 @@ export class ReportService implements IReportService {
                     }
                 );
 
-                const weeklyCompletedTasksQuery = rawQueries.fetchWeeklyCompletedTaskCount(childAccountIds, userId);
+                const weeklyCompletedTasksQuery = rawQueries.fetchWeeklyCompletedTaskCount(userId);
                 const weeklyCompletedTasksCount: { count: number }[] = await sequelize.query(
                     weeklyCompletedTasksQuery.query,
                     {
@@ -305,32 +305,6 @@ export class ReportService implements IReportService {
         try {
             const sequelize = await this.getMainSequelize();
 
-            let accountIds: string[] = [];
-
-            if (flag === USER_FLAG) {
-                const childAccountIds = await this.getChildAccountIds(userId);
-                if (!childAccountIds) {
-                    return {
-                        statusCode: HttpStatus.SUCCESS,
-                        message: "No accessible accounts found",
-                        data: [],
-                    };
-                }
-                accountIds = childAccountIds;
-            } else {
-                const allAccountsQuery = rawQueries.fetchAllChildAccounts();
-                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery.query, { type: QueryTypes.SELECT });
-                accountIds = allAccounts.map(a => a.rid);
-            }
-
-            if (accountIds.length === 0) {
-                return {
-                    statusCode: HttpStatus.SUCCESS,
-                    message: "Success",
-                    data: []
-                };
-            }
-
             const activityStatuses: any[] = await sequelize.query(rawQueries.fetchActivityStatus(), { type: QueryTypes.SELECT });
 
             const statusMap = new Map(activityStatuses.map((s) => [s.rid, s.status_name]));
@@ -349,7 +323,7 @@ export class ReportService implements IReportService {
             }
 
             // Fetch Meetings
-            const meetingListQuery = rawQueries.fetchMeetingSummaryList(accountIds, scheduledStatusId, userEmail);
+            const meetingListQuery = rawQueries.fetchMeetingSummaryList(scheduledStatusId, userEmail);
             const meetings: any[] = await sequelize.query(meetingListQuery.query, {
                 replacements: meetingListQuery.replacements,
                 type: QueryTypes.SELECT
@@ -447,38 +421,12 @@ export class ReportService implements IReportService {
         try {
             const sequelize = await this.getMainSequelize();
 
-            let accountIds: string[] = [];
-
-            // 1. Resolve Accounts and Schemas based on flag
-            if (flag === USER_FLAG) {
-                const childAccountIds = await this.getChildAccountIds(userId);
-
-                if (!childAccountIds) {
-                    return {
-                        statusCode: HttpStatus.SUCCESS,
-                        message: "No accessible accounts found",
-                        data: [
-                            { category: "Tasks Completed", count: 0, total: 0, unit: "tasks" },
-                            { category: "Meetings / Sessions Attended", count: 0, total: 0, unit: "meetings" },
-                            { category: "Pending Tasks", count: 0, total: 0, unit: "tasks" },
-                            { category: "Blocked / Bottlenecks", count: 0, total: 0, unit: "issues" }
-                        ],
-                    };
-                }
-                accountIds = childAccountIds;
-            } else {
-                // Admin/Else case: Use all accounts
-                const allAccountsQuery = rawQueries.fetchAllChildAccounts();
-                const allAccounts: { rid: string }[] = await sequelize.query(allAccountsQuery.query, { type: QueryTypes.SELECT });
-                accountIds = allAccounts.map(a => a.rid);
-            }
-
             // 2. Fetch Tasks Stats (Main DB)
-            const weeklyCompletedQuery = rawQueries.fetchWeeklyCompletedTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
-            const weeklyTotalQuery = rawQueries.fetchWeeklyTotalTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
-            const weeklyOpenQuery = rawQueries.fetchWeeklyOpenTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
-            const weeklyOverdueQuery = rawQueries.fetchWeeklyOverDueTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
-            const weeklyBlockedQuery = rawQueries.fetchWeeklyBlockedTaskCount(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
+            const weeklyCompletedQuery = rawQueries.fetchWeeklyCompletedTaskCount(flag === USER_FLAG ? userId : undefined);
+            const weeklyTotalQuery = rawQueries.fetchWeeklyTotalTaskCount(flag === USER_FLAG ? userId : undefined);
+            const weeklyOpenQuery = rawQueries.fetchWeeklyOpenTaskCount(flag === USER_FLAG ? userId : undefined);
+            const weeklyOverdueQuery = rawQueries.fetchWeeklyOverDueTaskCount(flag === USER_FLAG ? userId : undefined);
+            const weeklyBlockedQuery = rawQueries.fetchWeeklyBlockedTaskCount(flag === USER_FLAG ? userId : undefined);
 
             const tasksPromises = [
                 // Completed Tasks (Weekly)
@@ -530,8 +478,8 @@ export class ReportService implements IReportService {
                 userEmail = userEmailResult[0]?.email;
             }
 
-            const weeklyTotalMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, totalStatuses, userEmail);
-            const weeklyAttendedMeetingQuery = rawQueries.fetchMeetingSummaryCount(accountIds, attendedStatuses, userEmail);
+            const weeklyTotalMeetingQuery = rawQueries.fetchMeetingSummaryCount(totalStatuses, userEmail);
+            const weeklyAttendedMeetingQuery = rawQueries.fetchMeetingSummaryCount(attendedStatuses, userEmail);
 
             const [totalRes, attendedRes] = await Promise.all([
                 sequelize.query<{ count: number }>(
@@ -594,25 +542,11 @@ export class ReportService implements IReportService {
     }
 
 
-    private async fetchTasksList(userId: string, flag: string, queryGenerator: (accountIds?: string[], userId?: string) => { query: string, replacements: any }): Promise<IResponse<ITask[]>> {
+    private async fetchTasksList(userId: string, flag: string, queryGenerator: (userId?: string) => { query: string, replacements: any }): Promise<IResponse<ITask[]>> {
         try {
             const sequelize = await this.getMainSequelize();
-            let accountIds: string[] = [];
 
-            if (flag === USER_FLAG) {
-                const childAccountIds = await this.getChildAccountIds(userId);
-
-                if (!childAccountIds) {
-                    return {
-                        statusCode: HttpStatus.SUCCESS,
-                        message: "No accessible accounts found",
-                        data: []
-                    };
-                }
-                accountIds = childAccountIds;
-            }
-
-            const { query, replacements } = queryGenerator(flag === USER_FLAG ? accountIds : undefined, flag === USER_FLAG ? userId : undefined);
+            const { query, replacements } = queryGenerator(flag === USER_FLAG ? userId : undefined);
             const tasks: any[] = await sequelize.query(query, {
                 replacements,
                 type: QueryTypes.SELECT

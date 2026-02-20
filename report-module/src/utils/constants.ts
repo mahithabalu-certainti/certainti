@@ -175,7 +175,7 @@ export const rawQueries = {
 
     return { query, replacements };
   },
-  fetchWeeklyOpenTaskCount(accountIds?: string[], userId?: string) {
+  fetchWeeklyOpenTaskCount(userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
@@ -192,11 +192,6 @@ export const rawQueries = {
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
-
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
       replacements.userId = userId;
@@ -206,7 +201,7 @@ export const rawQueries = {
       AND a.effective_end_datetime::date < date_trunc('week', CURRENT_DATE)::date + INTERVAL '7 days'`;
     return { query, replacements };
   },
-  fetchWeeklyBlockedTaskCount(accountIds?: string[], userId?: string) {
+  fetchWeeklyBlockedTaskCount(userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
@@ -222,11 +217,6 @@ export const rawQueries = {
       taskType: TaskType.MILESTONE,
       taskStatus: TaskStatus.BLOCKED
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -268,7 +258,7 @@ export const rawQueries = {
     query += ` AND a.effective_end_datetime::date <= CURRENT_DATE;`;
     return { query, replacements };
   },
-  fetchWeeklyOverDueTaskCount(accountIds?: string[], userId?: string) {
+  fetchWeeklyOverDueTaskCount(userId?: string) {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
@@ -285,11 +275,6 @@ export const rawQueries = {
       taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -335,7 +320,7 @@ export const rawQueries = {
       AND a.effective_start_datetime::date <= CURRENT_DATE + INTERVAL '7 days';`;
     return { query, replacements };
   },
-  fetchWeeklyCompletedTaskCount(accountIds?: string[], userId?: string) {
+  fetchWeeklyCompletedTaskCount(userId?: string) {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
@@ -352,11 +337,6 @@ export const rawQueries = {
       taskType: TaskType.MILESTONE,
       taskStatus: TaskStatus.COMPLETED
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -395,7 +375,7 @@ export const rawQueries = {
       replacements: { rids }
     };
   },
-  fetchWeeklyTotalTaskCount(accountIds?: string[], userId?: string) {
+  fetchWeeklyTotalTaskCount(userId?: string) {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
@@ -408,11 +388,6 @@ export const rawQueries = {
     const replacements: any = {
       taskType: TaskType.MILESTONE
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -469,7 +444,7 @@ export const rawQueries = {
         AND ufa.user_id = :userId
     `;
   },
-  fetchUpcomingTasks(accountIds?: string[], userId?: string) {
+  fetchUpcomingTasks(userId?: string) {
     let query = `
     SELECT 
       a.rid,
@@ -506,11 +481,6 @@ export const rawQueries = {
       taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -522,7 +492,7 @@ export const rawQueries = {
       ORDER BY a.effective_start_datetime::date ASC;`;
     return { query, replacements };
   },
-  fetchOverDueTasks(accountIds?: string[], userId?: string) {
+  fetchOverDueTasks(userId?: string) {
     let query = `
     SELECT 
       a.rid,
@@ -559,11 +529,6 @@ export const rawQueries = {
       taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -574,7 +539,7 @@ export const rawQueries = {
     ORDER BY a.effective_end_datetime::date ASC;`;
     return { query, replacements };
   },
-  fetchOpenTasks(accountIds?: string[], userId?: string) {
+  fetchOpenTasks(userId?: string) {
     let query = `
     SELECT 
       a.rid,
@@ -611,11 +576,6 @@ export const rawQueries = {
       taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -628,7 +588,7 @@ export const rawQueries = {
 
     return { query, replacements };
   },
-  fetchWeeklyCompletedTasks(accountIds?: string[], userId?: string) {
+  fetchWeeklyCompletedTasks(userId?: string) {
     let query = `
     SELECT 
       a.rid,
@@ -666,11 +626,6 @@ export const rawQueries = {
       taskStatus: TaskStatus.COMPLETED
     };
 
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
-
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
       replacements.userId = userId;
@@ -681,7 +636,7 @@ export const rawQueries = {
       ORDER BY a.effective_end_datetime::date ASC;`;
     return { query, replacements };
   },
-  fetchWeeklyPendingFollowUps(accountIds?: string[], userId?: string) {
+  fetchWeeklyPendingFollowUps(userId?: string) {
     let query = `
     SELECT 
       a.rid,
@@ -730,11 +685,6 @@ export const rawQueries = {
       taskCategory: TaskCategory.REVIEWS
     };
 
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
-
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
       replacements.userId = userId;
@@ -745,7 +695,7 @@ export const rawQueries = {
       ORDER BY a.effective_end_datetime::date ASC;`;
     return { query, replacements };
   },
-  fetchOverdueApprovals(accountIds?: string[], userId?: string) {
+  fetchOverdueApprovals(userId?: string) {
     let query = `
     SELECT 
       a.rid,
@@ -787,11 +737,6 @@ export const rawQueries = {
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO],
       taskCategory: TaskCategory.APPROVALS_SIGN_OFFS
     };
-
-    if (accountIds && accountIds.length > 0) {
-      query += ` AND c.account_rid in (:accountIds)`;
-      replacements.accountIds = accountIds;
-    }
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -1034,17 +979,15 @@ export const rawQueries = {
 
     return { query, replacements };
   },
-  fetchMeetingSummaryList(accountRids: string[], statusId?: string, userEmail?: string) {
+  fetchMeetingSummaryList(statusId?: string, userEmail?: string) {
     let query = `
     SELECT 
       *
     FROM ${MAIN_SCHEMA_NAME}.meeting_summary a
-    WHERE a.account_rid IN (:accountRids)
+    WHERE 1=1
     `;
 
-    const replacements: any = {
-      accountRids,
-    };
+    const replacements: any = {};
 
     if (statusId) {
       query += ` AND a.status_rid = :statusId`;
@@ -1076,17 +1019,15 @@ export const rawQueries = {
     `;
     return { query, replacements };
   },
-  fetchMeetingSummaryCount(accountRids: string[], statusIds?: string[], userEmail?: string) {
+  fetchMeetingSummaryCount(statusIds?: string[], userEmail?: string) {
     let query = `
     SELECT 
       count('x')
     FROM ${MAIN_SCHEMA_NAME}.meeting_summary a
-    WHERE a.account_rid IN (:accountRids)
+    WHERE 1=1
     `;
 
-    const replacements: any = {
-      accountRids,
-    };
+    const replacements: any = {};
 
     if (statusIds && statusIds.length > 0) {
       query += ` AND a.status_rid IN (:statusIds)`;

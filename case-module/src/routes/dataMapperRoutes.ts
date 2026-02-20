@@ -57,6 +57,12 @@ routes.get(
   controller.dataMapperController.getObjectsList
 );
 
+routes.post(
+  "/recompute",
+  checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),
+  controller.dataMapperController.recomputeMapping
+);
+
 routes.get(
   "/uploadStatus/list",
   checkUserStatusMiddleware("rd_form_data_mapper_view_edit"),

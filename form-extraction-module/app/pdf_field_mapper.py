@@ -27,6 +27,38 @@ class NormField:
     bbox: Optional[List[float]] = None
 
 
+def _distance_sq(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+    return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+
+def _find_nearest_field(
+    target_center: Tuple[float, float],
+    target_page: int,
+    candidate_fields: List[NormField],
+    used_ids: set[str],
+    max_distance: float = float('inf')
+) -> Optional[NormField]:
+    """
+    Find the nearest unused field on the same page.
+    """
+    best_field = None
+    best_dist = float('inf')
+
+    for f in candidate_fields:
+        if f.page != target_page:
+            continue
+        if f.field_id in used_ids:
+            continue
+        
+        # Calculate distance center-to-center
+        dist = _distance_sq(target_center, (f.x, f.y))
+        
+        if dist < best_dist and dist <= max_distance**2:
+            best_dist = dist
+            best_field = f
+
+    return best_field
+
+
 def _load_norm_fields(pdf_path: Path) -> List[NormField]:
     """
     Load all fields from the PDF and convert to a simplified representation that
@@ -303,13 +335,36 @@ def _assign_header_field_ids(
     used_ids: set[str],
 ) -> None:
     """
-    For header_fields[i] without a value_field_id, assign from text_fields in
-    visual order and also attach the PDF page number.
+    For header_fields[i] without a value_field_id:
+      1. Try to find nearest text field if position is available.
+      2. Fallback to reading order assignment for remaining fields.
     """
     header_fields = extraction.get("header_fields")
     if not isinstance(header_fields, list):
         return
 
+    # Pass 1: Position-based mapping
+    for hf in header_fields:
+        if not isinstance(hf, MutableMapping):
+            continue
+        if hf.get("value_field_id"):
+            continue
+            
+        pos = hf.get("position")
+        page = hf.get("page")
+        
+        if pos and page and len(pos) == 4:
+            # calculate center
+            cx = (pos[0] + pos[2]) / 2
+            cy = (pos[1] + pos[3]) / 2
+            
+            chosen = _find_nearest_field((cx, cy), page, text_fields, used_ids)
+            if chosen:
+                hf["value_field_id"] = chosen.field_id
+                # If page was set from extraction, it matches. 
+                used_ids.add(chosen.field_id)
+
+    # Pass 2: Fallback to sequential reading order
     cursor = 0
     n = len(text_fields)
 
@@ -318,7 +373,7 @@ def _assign_header_field_ids(
             continue
 
         if hf.get("value_field_id"):
-            # Already set by ADE – respect it.
+            # Already set
             continue
 
         # Skip over text fields we've already used.
@@ -345,9 +400,9 @@ def _assign_line_item_ids(
 ) -> None:
     """
     For each section.line_items[*], assign value_field_id using:
-      1) Suffix match on the line 'id'
-      2) Fallback to remaining text fields in reading order
-    Also attaches the PDF page number when a match is found.
+      1) Position-based mapping if available.
+      2) Suffix match on the line 'id'.
+      3) Fallback to remaining text fields in reading order.
     """
     suffix_lookup = _build_suffix_lookup(fields)
     text_fields = _sorted_text_fields(fields)
@@ -373,17 +428,30 @@ def _assign_line_item_ids(
                 continue
 
             chosen: Optional[NormField] = None
+            
+            # 1) Try position-based mapping
+            pos = li.get("position")
+            page = li.get("page")
+            if pos and page and len(pos) == 4:
+                cx = (pos[0] + pos[2]) / 2
+                cy = (pos[1] + pos[3]) / 2
+                chosen = _find_nearest_field((cx, cy), page, fields, used_ids)
+            
+            if chosen:
+                 # Found by position
+                 pass
 
-            # 1) Try suffix match with the line ID.
-            line_id = li.get("id")
-            if line_id is not None:
-                candidates = suffix_lookup.get(str(line_id), [])
-                for c in candidates:
-                    if c.field_id not in used_ids:
-                        chosen = c
-                        break
+            # 2) Try suffix match with the line ID.
+            if chosen is None:
+                line_id = li.get("id")
+                if line_id is not None:
+                    candidates = suffix_lookup.get(str(line_id), [])
+                    for c in candidates:
+                        if c.field_id not in used_ids:
+                            chosen = c
+                            break
 
-            # 2) Fallback: next unused text field in reading order.
+            # 3) Fallback: next unused text field in reading order.
             if chosen is None:
                 while cursor < n and text_fields[cursor].field_id in used_ids:
                     cursor += 1
@@ -400,14 +468,16 @@ def _assign_line_item_ids(
                 used_ids.add(chosen.field_id)
 
 
+
 def _assign_table_ids(
     extraction: Dict[str, Any],
     fields: List[NormField],
     used_ids: set[str],
 ) -> None:
     """
-    Assign IDs to table cells by consuming remaining text fields in reading order.
-    Also attaches the PDF page number for each mapped cell.
+    Assign IDs to table cells:
+      1) Position-based mapping if available.
+      2) Consume remaining text fields in reading order.
     """
     text_fields = _sorted_text_fields(fields)
     cursor = 0
@@ -440,8 +510,27 @@ def _assign_table_ids(
                         continue
                     if cell.get("value_field_id"):
                         continue
+                        
+                    chosen: Optional[NormField] = None
+                    
+                    # 1) Try position mapping
+                    pos = cell.get("position")
+                    page = cell.get("page")
+                    if pos and page and len(pos) == 4:
+                        cx = (pos[0] + pos[2]) / 2
+                        cy = (pos[1] + pos[3]) / 2
+                        chosen = _find_nearest_field((cx, cy), page, text_fields, used_ids)
+                        
+                    if chosen:
+                        cell["value_field_id"] = chosen.field_id
+                        if not cell.get("page"):
+                            cell["page"] = chosen.page
+                        if not cell.get("position"):
+                            cell["position"] = chosen.bbox
+                        used_ids.add(chosen.field_id)
+                        continue
 
-                    # Find next unused text field.
+                    # 2) Find next unused text field.
                     while cursor < n and text_fields[cursor].field_id in used_ids:
                         cursor += 1
                     if cursor >= n:
@@ -456,6 +545,7 @@ def _assign_table_ids(
                     if not cell.get("position"):
                         cell["position"] = chosen.bbox
                     used_ids.add(chosen.field_id)
+
 
 
 # ---------------------------------------------------------------------------
