@@ -678,12 +678,12 @@ class CaseSchemaService {
       // Add timeline entry for case update
       if (caseRequest.case_rid) {
         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                          userId: caseRequest.modified_by!,
+                                          userId: userId,
                                           eventType: eventTypes.UI_HANDLER
                                         });
                 
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                    created_by: caseRequest.modified_by!,
+                                    created_by: userId,
                                     account_rid: caseRequest.account_rid,
                                     entity_rid: caseRequest.case_rid!,
                                     entity_name: entityTypes.CASE,
@@ -711,6 +711,7 @@ class CaseSchemaService {
         data: caseUpdateResponse
       };
     } catch (error) {
+      console.log(error);
       logMessage(`Error updating cases: ${error}`);
       throw new Error("Error updating cases: " + error);
     }

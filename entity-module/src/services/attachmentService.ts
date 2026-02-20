@@ -157,7 +157,8 @@ export class AttachmentService {
                 created_by_name: userEventInfo.full_name,
                 event_type_rid: userEventInfo.event_type_rid,
                 event_name: eventNames.CREATE,
-                descriptions: name
+                descriptions: name,
+                project_rid: attachmentData.attachment_level === "project" ? attachmentData.attach_to : ''
               }, timelineTypes);
 
       await AttachmentTimeline.create({
