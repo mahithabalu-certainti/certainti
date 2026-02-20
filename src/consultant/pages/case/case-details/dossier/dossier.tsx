@@ -435,6 +435,7 @@ const Dossier: React.FC<DossierProps> = ({
     [allDocumentInfo.data?.data.documentCategories]
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fieldOptions = {
     fiscalYears: [],
     docCategories: memoizedDocumentCategories,
@@ -483,7 +484,6 @@ const Dossier: React.FC<DossierProps> = ({
     memoizedClassification,
     memoizedProjectTypes,
     memoizedStatus,
-    projectPermissionMap,
     permissionMapAttachment,
   ]);
 

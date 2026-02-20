@@ -507,6 +507,7 @@ export const Tasks: React.FC = () => {
           </button>
           <Suspense fallback={null}>
             <Filter
+              key={String(urlFilterApplied)}
               value='global-tasks'
               isOpen={isFilterOpen}
               filterAnchorEl={anchorEl}
