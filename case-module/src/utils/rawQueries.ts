@@ -262,7 +262,7 @@ export const fetchProjectsForCases = (
     filterQueryConditions = [];
   }
   if (filterQueryConditions.length > 0) {
-    combinedFilterQuery = filterQueryConditions.join("AND");
+    combinedFilterQuery = filterQueryConditions.join(" AND ");
   } else {
     combinedFilterQuery = ` `;
   }
