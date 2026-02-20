@@ -325,8 +325,8 @@ export const getQualifiedProjectsFilterFields = (
     options: classificationOption,
     operatorOption: enumOptions,
     hide:
-      !projectPermissionMap?.['classification_name']?.read &&
-      !projectPermissionMap?.['classification_name']?.edit,
+      !projectPermissionMap?.['project_classification_rid']?.read &&
+      !projectPermissionMap?.['project_classification_rid']?.edit,
   },
   {
     name: 'Customer Group',
@@ -425,17 +425,17 @@ export const getQualifiedProjectsFilterFields = (
     type: 'text',
     operatorOption: nonReqTextfieldOptions,
     hide:
-      !projectPermissionMap?.['project_point_of_contact']?.read &&
-      !projectPermissionMap?.['project_point_of_contact']?.edit,
+      !projectPermissionMap?.['key_contacts']?.read &&
+      !projectPermissionMap?.['key_contacts']?.edit,
   },
   {
     name: 'Technical Point of Contact',
-    value: 'technical_point_of_contact',
+    value: 'project_technical_point_of_contact',
     type: 'text',
     operatorOption: nonReqTextfieldOptions,
     hide:
-      !projectPermissionMap?.['technical_point_of_contact']?.read &&
-      !projectPermissionMap?.['technical_point_of_contact']?.edit,
+      !projectPermissionMap?.['key_contacts']?.read &&
+      !projectPermissionMap?.['key_contacts']?.edit,
   },
   {
     name: 'Comments',

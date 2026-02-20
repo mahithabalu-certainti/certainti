@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExportType,
   ProjectDocumentsListURLParams,
@@ -15,6 +15,10 @@ import {
   AttachmentList,
   AttachmentsListExportParams,
 } from '../../../../../../types/attachment';
+import { checkPermission } from '../../../../../../../common-utils';
+import { AllPermissions } from '../../../../../../../common-service';
+import { RootState } from '../../../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 interface ProjectDocumentsProps {
   refreshTrigger: number;
@@ -136,8 +140,30 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const RestrictedColumns = [
     { id: 'r_number', canHide: false, canDrag: false },
   ];
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  const projectDocumentsColumns = getProjectDocumentsColumns();
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+  const projectDocumentsColumns = getProjectDocumentsColumns(
+    permissionMap,
+    isAttachmentExportEnable
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
