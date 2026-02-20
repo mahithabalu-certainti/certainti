@@ -430,9 +430,9 @@ class ProjectIngestionService {
         );
         return globalAccess?.auto_access_rd ?? false;
       } catch (err) {
-        logMessage(`Error checking global auto-trigger interaction access: ${err}`);
+        logMessage(`Error checking global auto-access RD interaction access: ${err}`);
         throw new Error(
-          "Error checking global auto-trigger interaction access: " +
+          "Error checking global auto-access RD interaction access: " +
             (err as Error).message
         );
       } 
@@ -450,7 +450,7 @@ class ProjectIngestionService {
             rawQueries.fetchAccountLevelInfoForTriggerAI(accountRid, schemaName),  
             { type: "SELECT" }
           );
-        return accountInfo?.autosend_interaction ?? false;
+        return accountInfo?.auto_access_rd ?? false;
       } catch (err) {
         logMessage(`Error checking account auto-trigger interaction access: ${err}`);
         throw new Error(
@@ -474,7 +474,7 @@ class ProjectIngestionService {
             ),
             { type: "SELECT" }
           );
-        return projectInfo?.auto_send_ai_interaction ?? false;
+        return projectInfo?.auto_access_rd ?? false;
       } catch (err) {
         logMessage(`Error checking project auto-trigger interaction access: ${err}`);
         throw new Error(
