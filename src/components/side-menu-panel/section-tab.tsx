@@ -1,5 +1,5 @@
-import React, { Suspense, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { Box, Switch, Tab, Tabs } from '@mui/material';
 import { RefreshIcon, ResourceFilterIcon } from '../../assets';
 import Filter from '../../consultant/pages/account-details-sidebar/components/filter/filter';
@@ -99,6 +99,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   activityMenuItems = [],
 }) => {
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tabValue, setTabValue] = useState('');
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -107,15 +108,24 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   const isFilterOpen = Boolean(filterAnchorEl);
   const filterId = isFilterOpen ? `${contextKey}-filter-popover` : undefined;
 
+  // Keep a stable ref to the latest onTabChange so the initialization effect
+  // only re-runs when `tabs` changes, not every time the parent re-renders
+  // with a new inline function reference (which would reset the active tab).
+  const onTabChangeRef = useRef(onTabChange);
+  useEffect(() => {
+    onTabChangeRef.current = onTabChange;
+  });
+
   useEffect(() => {
     const activeTab = tabs?.find((tab) => !tab.hide)?.id || '';
     setTabValue(activeTab);
 
     // inform parent about initial tab
-    if (activeTab && onTabChange) {
-      onTabChange(activeTab);
+    if (activeTab && onTabChangeRef.current) {
+      onTabChangeRef.current(activeTab);
     }
-  }, [tabs, onTabChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs]);
 
   useEffect(() => {
     setAppliedFilters({});
@@ -130,6 +140,15 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     setAppliedFilters({});
     clearFilters(contextKey || 'resource');
     setSortFilterCount(0);
+
+    const selectedTab = tabs?.find((tab) => tab.id === newValue);
+    if (selectedTab?.key === 'timeline') {
+      searchParams.set('timelineview', 'true');
+    } else if (selectedTab?.key === 'overview') {
+      searchParams.delete('timelineview');
+    }
+    setSearchParams(searchParams);
+
     onTabChange?.(newValue);
   };
 
@@ -246,13 +265,13 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                   <ResourceFilterIcon />
                   {(Object.keys(appliedFilters).length > 0 ||
                     sortFilterCount > 0) && (
-                    <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
-                      <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                      <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                        {Object.keys(appliedFilters).length + sortFilterCount}
-                      </span>
-                    </div>
-                  )}
+                      <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
+                        <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                        <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                          {Object.keys(appliedFilters).length + sortFilterCount}
+                        </span>
+                      </div>
+                    )}
                 </Box>
 
                 <Suspense fallback={null}>
@@ -285,7 +304,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
             <GlobalFiscalYearDropdown
               fiscalYear={String(fiscalYearValue)}
               fiscalYearsOptions={allYears || []}
-              onChange={updatedYear || (() => {})}
+              onChange={updatedYear || (() => { })}
               className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
             />
           )}

@@ -8,11 +8,12 @@ import TextButton from '../../../../../components/button/text-button';
 import DetailsInfo from './details-info';
 import { accountDetailsProps } from '../../../account-details/utils';
 import { ACCOUNT } from '../../../../../routes';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AllPermissions, OverviewTabs } from '../../../../../common-service';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { SectionTabPanel } from '../../../../../components';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -25,20 +26,21 @@ const detailsTabs: OverviewTabs[] = [
     id: AllPermissions.ACCOUNTS_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview'
   },
-  // {
-  //   id: AllMenus.ACCOUNTS_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNTS_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline'
+  },
 ];
 
 interface DetailsProps {
   activityMenuItems: ActivityDropdownItem[];
   accountDetails?: accountDetailsProps;
   isLoading?: boolean;
-  isError?: boolean; // ErrorProps | null | undefined;
+  isError?: boolean;
   isAccountEditEnable?: boolean;
   isAccountDetailsDownloadEnable?: boolean;
 }
@@ -51,6 +53,8 @@ const Details: React.FC<DetailsProps> = ({
   activityMenuItems,
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isTimeLineView = searchParams.get('timelineview') === 'true'
 
   const isKeyContactAvailable =
     accountDetails?.accountDetails?.keyContacts &&
@@ -71,6 +75,7 @@ const Details: React.FC<DetailsProps> = ({
       hide: !isAccountEditEnable,
     },
   ];
+
 
   return (
     <div
@@ -97,61 +102,68 @@ const Details: React.FC<DetailsProps> = ({
           filterVisibility={false}
           showFilter={false}
           contextKey='account-details'
-          setCurrentPage={() => {}}
+          setCurrentPage={() => { }}
           appliedFilters={{}}
-          setAppliedFilters={() => {}}
-          handleFilter={() => {}}
+          setAppliedFilters={() => { }}
+          handleFilter={() => { }}
           sortFilterCount={0}
-          setSortFilterCount={() => {}}
+          setSortFilterCount={() => { }}
           showAddActivity={true}
           activityMenuItems={activityMenuItems}
         />
-        <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
-          <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
-            <Box className='flex items-center gap-2'>
-              <div
-                className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${ColorCode.accountBgColor}]`}
-              >
-                <AccountsIcon
-                  alt='details'
-                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-                />
-              </div>
-              <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
-                Details
+
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline
+              entitytype="account"
+            />
+          </div>
+        ) : (
+          <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
+            <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
+              <Box className='flex items-center gap-2'>
+                <div
+                  className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${ColorCode.accountBgColor}]`}
+                >
+                  <AccountsIcon
+                    alt='details'
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  />
+                </div>
+                <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
+                  Details
+                </Box>
+              </Box>
+              <Box className='flex items-center gap-2'>
+                {headerButtons?.map((button, index) => {
+                  if (button.hide) return null;
+                  return (
+                    <TextButton
+                      key={`header-button-${index}`}
+                      label={button.label}
+                      onClick={button.onClick}
+                      aria-label={button.label}
+                      sx={button.sx}
+                      disabled={button.disabled}
+                    />
+                  );
+                })}
               </Box>
             </Box>
-            <Box className='flex items-center gap-2'>
-              {headerButtons?.map((button, index) => {
-                if (button.hide) return null;
-                return (
-                  <TextButton
-                    key={`header-button-${index}`}
-                    label={button.label}
-                    // variant={button.variant}
-                    onClick={button.onClick}
-                    // loading={button.loading}
-                    aria-label={button.label}
-                    sx={button.sx}
-                    disabled={button.disabled}
-                  />
-                );
-              })}
+            <Box>
+              {isLoading ? (
+                <DetailsSectionSkeleton />
+              ) : (
+                <DetailsInfo
+                  detailsInfo={accountDetails}
+                  isDetailsLoading={isLoading}
+                  detailsError={isError}
+                  isKeyContactAvailable={isKeyContactAvailable}
+                />
+              )}
             </Box>
-          </Box>
-          <Box>
-            {isLoading ? (
-              <DetailsSectionSkeleton />
-            ) : (
-              <DetailsInfo
-                detailsInfo={accountDetails}
-                isDetailsLoading={isLoading}
-                detailsError={isError}
-                isKeyContactAvailable={isKeyContactAvailable}
-              />
-            )}
-          </Box>
-        </div>
+          </div>
+        )}
       </Box>
     </div>
   );

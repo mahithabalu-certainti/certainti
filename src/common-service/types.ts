@@ -458,6 +458,7 @@ export interface OverviewTabs {
   name: string;
   hide: boolean;
   disable?: boolean;
+  key: "overview" | "timeline"
 }
 
 export type FailedQueueItem = {
