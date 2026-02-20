@@ -187,6 +187,9 @@ export const STATUS_MESSAGE = {
   interactionFetchedSuccess: "Interactions fetched successfully",
   dataNotFound: "Data not found",
   historyResponseFetched: "Interaction Response history fetched successfully",
+  otpSentSuccessfully : "OTP email sent successfully",
+  otpFailedToSend : "Failed to send OTP. Please try again.",
+  noConfigurationFound : "Configuration not found. Kindly contact Admin."
 };
 
 export const rawQueries = {

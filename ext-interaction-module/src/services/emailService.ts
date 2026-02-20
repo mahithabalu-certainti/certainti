@@ -2,7 +2,7 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import { IEmailMessage } from "../utils/types";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { decryptClientSecret } from "../utils/helpers";
 import { initOrgSequelize } from "../config/orgDataSource";
 
@@ -35,6 +35,13 @@ export async function sendEmail(emailMessage: {
   const fetchExistingSettings: any = await rawQueries.fetchSettings(schemaForSetting,orgDb,parentRid);
   const existingSettings = fetchExistingSettings[0];
 
+  if(existingSettings.email === null) {
+    return {
+      status : HttpStatus.NOT_FOUND_MESSAGE,
+      data : null
+    }
+  }
+
   const credential = new ClientSecretCredential(
     existingSettings.tenant_id,
     existingSettings.client_id,
@@ -57,7 +64,10 @@ export async function sendEmail(emailMessage: {
       .api(`/users/${existingSettings.email}/sendMail`)
       .post(emailMessage);
 
-    return response;
+    return {
+      status : HttpStatus.SUCCESS,
+      data : response
+    };
   } catch (error: any) {
     throw new Error(error.message);
   }

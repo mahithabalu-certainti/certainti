@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import moment from "moment-timezone";
-import { HttpStatus, MAX_RESEND_ATTEMPTS } from "../../utils/constants";
+import { HttpStatus, MAX_RESEND_ATTEMPTS, STATUS_MESSAGE } from "../../utils/constants";
 import { IEmailMessage, IGenerateOtp, IVerifyOtp } from "../../utils/types";
 import { OtpSchemaService } from "./schemeService";
 import {
@@ -131,7 +131,7 @@ export class OtpService {
       );
 
       // 6. Update attempt history
-      if (!sent) {
+      if (!sent.success) {
         const attempt_number = (otpMeta?.otp_attempt_count || 0) + 1;
 
         await this.otpSchema.storeOtpHistory({
@@ -147,7 +147,7 @@ export class OtpService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           statusMessage: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: "Failed to send OTP. Please try again.",
+          errorMessage: STATUS_MESSAGE.otpFailedToSend,
         };
       }
 
@@ -476,11 +476,11 @@ export class OtpService {
         interaction_rid
       );
 
-      if (!sent) {
+      if (!sent.success) {
         return {
           statusCode: HttpStatus.FAILED,
           statusMessage: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Failed to resend OTP. Please try again later.",
+          errorMessage: sent.message,
         };
       }
 
@@ -528,11 +528,20 @@ export class OtpService {
       otp_block_until?: Date | null;
     },
     interactionId: string
-  ): Promise<boolean> {
+  ) {
     try {
-      await sendEmail(mailContent, account_rid);
+      const emailResult = await sendEmail(mailContent, account_rid);
+      if(emailResult.status === HttpStatus.NOT_FOUND_MESSAGE) {
+        return {
+          success : false,
+          message : STATUS_MESSAGE.noConfigurationFound
+        }
+      }
       this.logger.info(`[OTP] OTP email sent successfully to ${email}`);
-      return true;
+      return {
+        success : true,
+        message : STATUS_MESSAGE.otpSentSuccessfully
+      };
     } catch (err) {
       this.logger.error(
         `[OTP] Failed to send OTP to ${email}: ${(err as Error).message}`
@@ -560,7 +569,10 @@ export class OtpService {
         updatePayload
       );
 
-      return false;
+      return {
+        success : false,
+        message : STATUS_MESSAGE.otpFailedToSend
+      };
     }
   }
 
