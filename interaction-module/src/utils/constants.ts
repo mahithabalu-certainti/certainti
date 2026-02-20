@@ -1049,7 +1049,7 @@ export const rawQueries = {
     `;
   },
   getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string, summaryType? : string) {
-    if(summaryType === 'qualifiedprojects') {
+    if(summaryType === 'qualifiedProjects') {
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
