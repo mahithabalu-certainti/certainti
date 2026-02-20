@@ -2110,7 +2110,7 @@ class ActivitySchemaService {
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                       created_by: userId!,
                       account_rid: activityData.account_rid,
-                      entity_rid: activityData.activity_rid!,
+                      entity_rid: activityRequest.activity_rid!,
                       entity_name: entityTypes.ACTIVITY_MEETING,
                       created_by_name: userEventInfo.full_name,
                       event_type_rid: userEventInfo.event_type_rid,
@@ -2172,7 +2172,7 @@ class ActivitySchemaService {
     await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                       created_by: userId!,
                       account_rid: activityData.account_rid,
-                      entity_rid: activityData.activity_rid!,
+                      entity_rid: activityRequest.activity_rid!,
                       entity_name: entityTypes.ACTIVITY_CALL,
                       created_by_name: userEventInfo.full_name,
                       event_type_rid: userEventInfo.event_type_rid,

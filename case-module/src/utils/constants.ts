@@ -313,7 +313,7 @@ export const entityTypes = {
   NOTES: "Notes",
   ATTACHMENT: "Attachment",
   PROJECT_RESOURCE: "Project Resource",
-  ACTIVITY_CALL:"Call",
+  ACTIVITY_CALL:"Call log",
   ACTIVITY_MEETING:"Meeting",
   ACTIVITY_EMAIL:"Email",
   ACTIVITY_TASK:"Task",
