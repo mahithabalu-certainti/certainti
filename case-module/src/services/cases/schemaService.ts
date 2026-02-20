@@ -87,6 +87,7 @@ import { RdCreditProcess, setupRdCreditProcessSequence } from "../../models/rdCr
 import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { setupSignoffDetailsSequence, SignoffDetails } from "../../models/signoffDetails";
+import { DossierForm, setupDossierFormSequence } from "../../models/dossierForm";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -958,6 +959,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const dossierFormModel = DossierForm.initialise(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -994,6 +999,8 @@ class CaseSchemaService {
       await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName);
       await SignoffDetailsModel.sync({force : false});
       await setupSignoffDetailsSequence(orgDbSequlize, schemaName)
+      await dossierFormModel.sync({force : false});
+      await setupDossierFormSequence(orgDbSequlize, schemaName);
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);

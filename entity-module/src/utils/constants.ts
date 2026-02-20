@@ -236,6 +236,10 @@ export const rawQueries = {
       WHERE a.rid = ad.parent_account_rid`;
     }
   },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d: any) => `'${d}'`).join(',')})`;
+  },
   fetchAccountDetailsByRid(accountRid: string) {
     return `
             SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;

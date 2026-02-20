@@ -170,8 +170,8 @@ export const filtersColumns : Record<string, string> =
   equals: "equals",
   notEquals: "not_equals",
   contains: "contains",
-  isEmpty: "is_empty",
-  IN: "in",
+  is_empty: "is_empty",
+  in: "in",
   less_than: "less_than",
   greater_than: "greater_than",
   between: "between",
@@ -1103,7 +1103,7 @@ export const rawQueries = {
     `;
   },
   getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string, summaryType? : string) {
-    if(summaryType === 'qualifiedprojects') {
+    if(summaryType === 'qualifiedProjects') {
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid

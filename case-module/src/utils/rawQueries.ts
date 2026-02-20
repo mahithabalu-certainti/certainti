@@ -127,17 +127,17 @@ export const fetchProjectsForCases = (
       validColumnsForSorting[sort] === "project_point_of_contact"
     ) {
       dynamicAlias = `poc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (
       sort.includes(validColumnsForSorting[sort]) &&
-      validColumnsForSorting[sort] === "project_point_of_contact"
+      validColumnsForSorting[sort] === "project_technical_point_of_contact"
     ) {
       dynamicAlias = `tpoc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (sort.includes(validColumnsForSorting[sort])) {
       dynamicAlias = `pf`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
-    } else sortValue = `ORDER BY pf.project_code ASC`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
+    } else sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
   } else {
     sortValue = ``;
   }
@@ -226,22 +226,22 @@ export const fetchProjectsForCases = (
             case "date": {
               if (cond === "equals") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} = '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) = '${value}'`
                 );
               }
               if (cond === "after") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} > '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) > '${value}'`
                 );
               }
               if (cond === "before") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} < '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) < '${value}'`
                 );
               }
               if (cond === "is_empty") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} IS NULL`
+                  `DATE(${dynamicAlias}.${validKey}) IS NULL`
                 );
               }
               if (cond === "between") {
@@ -262,7 +262,7 @@ export const fetchProjectsForCases = (
     filterQueryConditions = [];
   }
   if (filterQueryConditions.length > 0) {
-    combinedFilterQuery = filterQueryConditions.join("AND");
+    combinedFilterQuery = filterQueryConditions.join(" AND ");
   } else {
     combinedFilterQuery = ` `;
   }

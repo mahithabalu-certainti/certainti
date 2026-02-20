@@ -2024,7 +2024,7 @@ WHERE dmf.country_rid = '${countryRid}'
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
-       WHERE cp.case_rid = '${caseRid}'`
+       WHERE cp.case_rid = '${caseRid}' AND pf.is_qualified = true`
     } else {
       return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
     }
@@ -2521,6 +2521,8 @@ export const DOSSIER_NAME = 'dossier_project_document'
 export const techSummaryFieldMappings = [
 
   { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+  { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+  { permissionField: 'project_name', exportField: 'Project Name', dataField: 'project_name' },
   { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
   { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
   { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
