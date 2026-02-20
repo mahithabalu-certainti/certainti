@@ -738,13 +738,15 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
           "project",
           entityIds
         );
-        let fetchProjectDetails : any[] = [...new Set(projectAttachments.map((project : any) => project.dataValues.attach_to))];
-        let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
-        let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
-        projectAttachments.forEach((d: any) => {
-          d.dataValues.project_code = projectDetailsMap.get(d.dataValues.attach_to)?.project_code || null;
-          d.dataValues.project_name = projectDetailsMap.get(d.dataValues.attach_to)?.project_name || null;
-        });
+        if(type === DOSSIER_NAME) {
+          let fetchProjectDetails : any[] = [...new Set(projectAttachments.map((project : any) => project.dataValues.attach_to))];
+          let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+          let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+          projectAttachments.forEach((d: any) => {
+            d.dataValues.project_code = projectDetailsMap.get(d.dataValues.attach_to)?.project_code || null;
+            d.dataValues.project_name = projectDetailsMap.get(d.dataValues.attach_to)?.project_name || null;
+          });
+        }
         allAttachments.push(...projectAttachments);
         if(type !== DOSSIER_NAME) {
            const projectChildAttachments =
