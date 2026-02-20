@@ -466,7 +466,23 @@ export class OtpService {
       const safeOtpMeta = otpMeta ?? { otp_attempt_count: newAttemptCount };
 
       // 7. Send OTP email
-      const mailContent = otpMailTemplate(newOtp, email);
+      let emailContents = await this.otpSchema.getTemplateDetailsByCategory("interaction otp");
+      let  mailContent = {
+          message: {
+          subject :  emailContents.subject,
+          body: {
+              contentType: "HTML",
+              content:this.replacePlaceholders(emailContents.body_html,newOtp,process.env.SUPPORT_EMAIL!
+              ),
+            },
+        toRecipients: [
+              {
+                emailAddress: {address: email,},
+              },
+            ],
+         
+        },
+        }
       const sent = await this.sendOtpOnceAndTrackFailure(
         accountNumber,
         email,

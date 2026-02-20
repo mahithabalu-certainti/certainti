@@ -417,7 +417,7 @@ export const rawQueries = {
   },
   fetchAccountTimelineEntries(schemaName: string) {
     return `
-      SELECT event_name, descriptions, created_datetime,created_by_name, entity_name
+      SELECT rid,r_number,event_name, descriptions, created_datetime,created_by_name, entity_name
       FROM "${schemaName}".account_timeline
       WHERE account_rid = :accountId
       ORDER BY created_datetime DESC
