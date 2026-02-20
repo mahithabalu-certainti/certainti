@@ -226,22 +226,22 @@ export const fetchProjectsForCases = (
             case "date": {
               if (cond === "equals") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} = '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) = '${value}'`
                 );
               }
               if (cond === "after") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} > '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) > '${value}'`
                 );
               }
               if (cond === "before") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} < '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) < '${value}'`
                 );
               }
               if (cond === "is_empty") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} IS NULL`
+                  `DATE(${dynamicAlias}.${validKey}) IS NULL`
                 );
               }
               if (cond === "between") {
