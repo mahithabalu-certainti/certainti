@@ -127,17 +127,17 @@ export const fetchProjectsForCases = (
       validColumnsForSorting[sort] === "project_point_of_contact"
     ) {
       dynamicAlias = `poc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (
       sort.includes(validColumnsForSorting[sort]) &&
       validColumnsForSorting[sort] === "project_point_of_contact"
     ) {
       dynamicAlias = `tpoc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (sort.includes(validColumnsForSorting[sort])) {
       dynamicAlias = `pf`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
-    } else sortValue = `ORDER BY pf.project_code ASC`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
+    } else sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
   } else {
     sortValue = ``;
   }
