@@ -368,7 +368,17 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       userId,
       "projects_tech_summary_view_edit"
     );
-     const allowedFieldSet = new Set<string>();
+    const projectFields = await this.getAllowedExportFields(
+      userId,
+      "projects_view_edit"
+    )
+    const allowedFieldSet = new Set<string>();
+    const allowedProjectFieldSet = new Set<string>();
+    for(let p of projectFields) {
+      if(p.read) {
+        allowedProjectFieldSet.add(p.field_name)
+      }
+    }
     for (const field of fields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
@@ -382,6 +392,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
                 project_code: d.project_code,
+                project_name : d.project_name, 
                 fiscal_year: d.fiscal_year,
                 status_name: d.status_name,
                 version: d.version,
@@ -395,6 +406,10 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
               const exportRecord: Record<string, any> = {};
               techSummaryFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+                if(allowedProjectFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
@@ -723,6 +738,13 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
           "project",
           entityIds
         );
+        let fetchProjectDetails : any[] = [...new Set(projectAttachments.map((project : any) => project.dataValues.attach_to))];
+        let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+        let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+        projectAttachments.forEach((d: any) => {
+          d.dataValues.project_code = projectDetailsMap.get(d.dataValues.attach_to)?.project_code || null;
+          d.dataValues.project_name = projectDetailsMap.get(d.dataValues.attach_to)?.project_name || null;
+        });
         allAttachments.push(...projectAttachments);
         if(type !== DOSSIER_NAME) {
            const projectChildAttachments =
@@ -1085,15 +1107,26 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
           userId,
           "attachments_view_edit"
         );
+      const allowedProjectFieldsForExport =
+        await this.getAllowedExportFields(
+          userId,
+          "projects_view_edit"
+        );
       const allowedFieldSet = new Set<string>();
+      const allowedFieldSetForProjects = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
           allowedFieldSet.add(field.field_desc);
         }
       }
+      for (const field of allowedProjectFieldsForExport) {
+        if (field.read) {
+          allowedFieldSetForProjects.add(field.field_desc);
+        }
+      }
       const labelMap: Record<string, string> = {
-        "Project ID": "Project ID",
-        "Project Name": "Project Name",
+        "Project Code": "Project Code",
+        "Name": "Name",
         "Document Name": "Document Name",
         Format: "Format",
         Size: "Size",
@@ -1121,6 +1154,9 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey]; // field_desc
           if (allowedFieldSet.has(label!)) {
+            filtered[label!] = value; // export with label name
+          }
+          if (allowedFieldSetForProjects.has(label!)) {
             filtered[label!] = value; // export with label name
           }
         }

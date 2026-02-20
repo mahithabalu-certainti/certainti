@@ -2083,10 +2083,20 @@ async function exportTechnicalSummary(req: Request, res: Response) {
       userId,
       "projects_tech_summary_view_edit"
     );
+    const projectFields = await interactionService.getAllowedExportFields(
+      userId,
+      "projects_view_edit"
+    )
     const allowedFieldSet = new Set<string>();
+     const allowedProjectFieldSet = new Set<string>();
     for (const field of fields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
+      }
+    }
+    for(let p of projectFields) {
+      if(p.read) {
+        allowedProjectFieldSet.add(p.field_name)
       }
     }
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
@@ -2127,6 +2137,10 @@ async function exportTechnicalSummary(req: Request, res: Response) {
               const exportRecord: Record<string, any> = {};
               techSummaryFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+                if(allowedProjectFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }

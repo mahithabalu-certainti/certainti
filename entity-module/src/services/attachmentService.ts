@@ -1262,6 +1262,13 @@ export class AttachmentService {
           "project",
           entityIds
         );
+        let fetchProjectDetails : any[] = [...new Set(projectAttachments.map((project : any) => project.dataValues.attach_to))];
+        let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+        let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+        projectAttachments.forEach((d: any) => {
+          d.dataValues.project_code = projectDetailsMap.get(d.dataValues.attach_to)?.project_code || null;
+          d.dataValues.project_name = projectDetailsMap.get(d.dataValues.attach_to)?.project_name || null;
+        });
         allAttachments.push(...projectAttachments);
         if(type !== DOSSIER_NAME) {
            const projectChildAttachments =
@@ -1624,15 +1631,26 @@ export class AttachmentService {
           userId,
           "attachments_view_edit"
         );
+      const allowedProjectFieldsForExport =
+        await this.schemaService.getAllowedExportFields(
+          userId,
+          "projects_view_edit"
+        );
       const allowedFieldSet = new Set<string>();
+      const allowedFieldSetForProjects = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
           allowedFieldSet.add(field.field_desc);
         }
       }
+       for (const field of allowedProjectFieldsForExport) {
+        if (field.read) {
+          allowedFieldSetForProjects.add(field.field_desc);
+        }
+      }
       const labelMap: Record<string, string> = {
         "Project ID": "Project ID",
-        "Project Name": "Project Name",
+        "Name": "Name",
         "Document Name": "Document Name",
         Format: "Format",
         Size: "Size",
@@ -1661,6 +1679,9 @@ export class AttachmentService {
           const label = labelMap[fieldKey]; // field_desc
           if (allowedFieldSet.has(label)) {
             filtered[label] = value; // export with label name
+          }
+          if (allowedFieldSetForProjects.has(label!)) {
+            filtered[label!] = value; // export with label name
           }
         }
         return filtered;

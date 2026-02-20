@@ -130,7 +130,7 @@ export const fetchProjectsForCases = (
       sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (
       sort.includes(validColumnsForSorting[sort]) &&
-      validColumnsForSorting[sort] === "project_point_of_contact"
+      validColumnsForSorting[sort] === "project_technical_point_of_contact"
     ) {
       dynamicAlias = `tpoc`;
       sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;

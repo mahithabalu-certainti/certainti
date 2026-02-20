@@ -608,8 +608,8 @@ export async function getAttachmentDisplayNames(attachments: any[], schemaNumber
 
   export function mapAttachmentToCommonFormat(at: any, timezone : string) {
     return {
-      "Project ID": at.project_code || "-",
-      "Project Name": at.project_name || "-",
+      "Project Code": at.project_code || "-",
+      "Name": at.project_name || "-",
       "Document Name": at.document_name || "-",
       Format: at.format || "-",
       Size: at.size_in_mb || "-",
