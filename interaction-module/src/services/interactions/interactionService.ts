@@ -25,6 +25,9 @@ import {
   interactionTaskName,
   interactionSource,
   interactionTemplateName,
+  entityTypes,
+  eventNames,
+  eventTypes,
 } from "../../utils/constants";
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -208,6 +211,27 @@ export class InteractionService {
           interaction.get("interaction_iteration") || 0,
           interaction.get("parent_interaction_rid") || null
         );
+        const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
+                                                  userId: userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        let timelineTypes = ["account"];
+        if(intLevel.toLowerCase() === 'project')
+        {
+          timelineTypes = ["project"]
+        }
+                        
+        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: userId!,
+                                            account_rid: interactionData.account_rid,
+                                            entity_rid: interaction.rid!,
+                                            entity_name: entityTypes.INTERACTION,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.CREATE,
+                                            descriptions:'',
+                                            project_rid: intLevel === 'Project' ? interactionData.project_fiscal_rid : '',
+                                          }, timelineTypes);
         await this.interactionSchemaService.addInteractionTimeline(
           accountNumber,
           "create",
@@ -529,6 +553,27 @@ export class InteractionService {
           transaction,
           userId
         );
+        const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
+                                                  userId: userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        let timelineTypes = ["account"];
+        if(interactionData?.interaction_level?.toLowerCase() === 'project')
+        {
+          timelineTypes = ["project"]
+        }
+                        
+        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: userId!,
+                                            account_rid: interactionData.account_rid,
+                                            entity_rid: interactionData.interaction_rid!,
+                                            entity_name: entityTypes.INTERACTION,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.UPDATE,
+                                            descriptions:'',
+                                            project_rid: interactionData?.interaction_level?.toLowerCase() === 'project' ? interactionData.project_fiscal_rid : '',
+                                          }, timelineTypes);
         await this.interactionSchemaService.addInteractionTimeline(
           accountNumber,
           "update",

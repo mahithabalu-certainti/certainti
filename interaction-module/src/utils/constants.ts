@@ -62,6 +62,32 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+  ATTACHMENT: "Attachment",
+  PROJECT_RESOURCE: "Project Resource",
+  ACTIVITY_CALL:"Call",
+  ACTIVITY_MEETING:"Meeting",
+  ACTIVITY_EMAIL:"Email",
+  ACTIVITY_TASK:"Task",
+  CHECKLIST:"Checklist",
+  CASE:"Case",
+  INTERACTION:"Interaction"
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+  CANCEL: "cancelled",
+}
+
+export const eventTypes = {
+   UI_HANDLER: "ui handler",
+}
 export const sendEmailCount = 25
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
@@ -524,7 +550,35 @@ export const rawQueries = {
     return `
     SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,max_ai_interactions FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
   },
-  
+   fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
+    `;
+  },
+  insertTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+   insertProjectTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name,project_rid
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
+          )
+          RETURNING *;
+        ` 
+  },
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
     return `
     SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`;
