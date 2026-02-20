@@ -1725,7 +1725,7 @@ class ActivitySchemaService {
     await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                       created_by: userId!,
                       account_rid: activityData.account_rid,
-                      entity_rid: activityData.activity_rid!,
+                      entity_rid: response.rid!,
                       entity_name: entityTypes.ACTIVITY_EMAIL,
                       created_by_name: userEventInfo.full_name,
                       event_type_rid: userEventInfo.event_type_rid,
