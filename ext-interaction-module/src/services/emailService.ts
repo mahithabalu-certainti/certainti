@@ -41,11 +41,17 @@ export async function sendEmail(emailMessage: {
       data : null
     }
   }
+  let decryptedSecret = "";
+  if (existingSettings && existingSettings.client_secret) {
+    decryptedSecret = await decryptClientSecret(
+      existingSettings.client_secret
+    );
+  }
 
   const credential = new ClientSecretCredential(
     existingSettings.tenant_id,
     existingSettings.client_id,
-    existingSettings.client_secret
+    decryptedSecret
   );
 
   const graphClient = Client.initWithMiddleware({
