@@ -23,6 +23,8 @@ export interface RdCreditCountryCalcAttributes {
     modified_datetime?: Date;
     final_credit_submitted?: number | null;
     final_credit_approved?: number | null;
+    rd_form_url ? : string | null
+    form_error_message? : string | null
 }
 
 export interface RdCreditCountryCalcCreationAttributes
@@ -54,6 +56,8 @@ export class RdCreditCountryCalculations
     public modified_datetime?: Date;
     public final_credit_submitted?: number | null;
     public final_credit_approved?: number | null;
+    public rd_form_url? : string | null
+    public form_error_message? : string | null
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditCountryCalculations.init(
@@ -141,6 +145,14 @@ export class RdCreditCountryCalculations
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },
+                rd_form_url : {
+                    type : DataTypes.STRING(500),
+                    allowNull : true
+                },
+                form_error_message : {
+                    type : DataTypes.STRING(500),
+                    allowNull : true
+                }
             },
             {
                 sequelize,

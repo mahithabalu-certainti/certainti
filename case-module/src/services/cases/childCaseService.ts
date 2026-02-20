@@ -375,18 +375,6 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       }
     }
     const timezone = timez
-     const isValidTZ = timezone && isValidTimezone(timezone);
-    const formatDate = (date?: Date) => {
-      const offsetMs = (5 * 60 + 30) * 60 * 1000;
-      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
-      return date
-        ? moment
-            .utc(convertedDate)
-            .tz(isValidTZ ? timezone : "UTC")
-            .utcOffset('-012:30')
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-        : null;
-    }
     const finalStructuredData =
         techSummary.technicalSummary.length < 1
           ? []
@@ -400,12 +388,9 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
                 summary_context: d.summary_context,
                 technical_summary: d.technical_summary,
                 created_by: d.created_user_name,
-                created_datetime: formatDate(d.created_datetime),
+                created_datetime: d.created_datetime ? timezone && isValidTimezone(timezone) ? moment.tz(d.created_datetime.toISOString(), timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.created_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
                 modified_by: d.modified_user_name,
-                modified_datetime:
-                  d.modified_datetime == null
-                    ? ""
-                    : formatDate(d.modified_datetime),
+                modified_datetime: d.modified_datetime ? timezone && isValidTimezone(timezone) ? moment.tz(d.modified_datetime.toISOString(), timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.modified_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
               };
               const exportRecord: Record<string, any> = {};
               techSummaryFieldMappings.forEach((mapping) => {

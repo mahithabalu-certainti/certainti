@@ -922,7 +922,7 @@ export class ProjectResourceSchemaService {
       where: {
         ...whereFilters,
         ...(type === 'qualifiedProjects' && {
-          '$project_resource_fiscal_project_fiscal.is_qualified' : true
+          '$project_resource_fiscal_project_fiscal.is_qualified$' : true
         })
       },
       attributes: {
