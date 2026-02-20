@@ -161,7 +161,7 @@ export const validColumns: any = {
   project_classification_other: "project_classification_other",
   project_client_group: "project_client_group",
   project_group: "project_group",
-  total_effort_prj: "total_effort_prj",
+  total_effort: "total_effort_prj",
   total_cost_prj: "total_cost_prj",
   total_cost_fte: "total_cost_fte_prj",
   total_cost_subcon: "total_cost_subcon_prj",
