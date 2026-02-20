@@ -53,6 +53,7 @@ interface MappingItem {
   fieldIdError?: string;
   targetError?: string;
   column_id?: string | null;
+  status?: string;
 }
 
 const SIDEBAR_WIDTH = '38.1vw';
@@ -169,6 +170,7 @@ const DataMapperConfig: React.FC = () => {
         calculation_config: mapping.calculation_config,
         field_type: mapping.field_type,
         column_id: mapping.column_id || null,
+        status: mapping.status,
       })),
     };
 
