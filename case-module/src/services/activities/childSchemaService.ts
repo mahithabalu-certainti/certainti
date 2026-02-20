@@ -11,13 +11,17 @@ import {
     STATUS_MESSAGE,
     activityStatus,
     rawQueries,
-    activityTypes
+    activityTypes,
+    eventTypes,
+    eventNames,
+    entityTypes
 } from "../../utils/constants";
 import { IActivityMeetingAction } from "../../utils/types";
 import { cancelTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
 import ActivitySchemaService from "./schemaService";
 import { Sequelize } from "sequelize";
 import moment from "moment";
+import { HelperMethods } from "../cases/helperMethods";
 
 
 export class ChildSchemaService {
@@ -25,10 +29,12 @@ export class ChildSchemaService {
     private activitySchemaService: ActivitySchemaService;
     private orgDbSequelize: Sequelize | null = null;
     private mainDbSequelize: Sequelize | null = null;
+    private helperMethod: HelperMethods
 
     constructor() {
         this.caseModelService = new CaseModelService();
         this.activitySchemaService = new ActivitySchemaService();
+        this.helperMethod = new HelperMethods(this.caseModelService);
     }
 
 
@@ -138,16 +144,22 @@ export class ChildSchemaService {
                     activityTypes.meeting
                 );
             }
-            await this.activitySchemaService.addTaskTimeline(
-                accountNumber,
-                activityRequest.activity_rid,
-                activityRequest.account_rid!,
-                `Meeting Activity Cancelled`,
-                userId,
-                `Meeting Activity Cancelled`,
-                "success",
-                activityRequest.activity_rid
-            );
+            const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                        userId: userId!,
+                                        eventType: eventTypes.UI_HANDLER
+                                      });
+            const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(existingActivity.attachment_level!);
+                  
+            await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                  created_by: userId!,
+                                  account_rid: activityRequest.account_rid,
+                                  entity_rid: activityRequest.activity_rid!,
+                                  entity_name: entityTypes.ACTIVITY_MEETING,
+                                  created_by_name: userEventInfo.full_name,
+                                  event_type_rid: userEventInfo.event_type_rid,
+                                  event_name: eventNames.CANCEL,
+                                  descriptions:existingActivity.subject
+                                },timelineTypes);
 
             return {
                 success: true,

@@ -435,9 +435,9 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, title, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
-            :created_by, :title,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
         ` 
@@ -1132,9 +1132,13 @@ export const rawQueries = {
         document_rid VARCHAR(50),
         entity_rid VARCHAR(50) NOT NULL,
         event_name VARCHAR(100) NOT NULL,
-        event_type VARCHAR(100) NOT NULL,
-        event_status VARCHAR(100) NOT NULL,
-        event_datetime TIMESTAMPTZ NOT NULL,
+        event_type VARCHAR(100) NULL,
+        event_type_rid VARCHAR(50) NULL,
+        event_status VARCHAR(100) NULL,
+        event_datetime TIMESTAMPTZ  NULL,
+        project_rid VARCHAR(50) NULL,
+        entity_name VARCHAR(255) NULL,
+        created_by_name VARCHAR(255) NULL,
         CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
       );
     `;
@@ -1145,11 +1149,7 @@ export const rawQueries = {
       ADD CONSTRAINT project_timeline_account_rid_fkey
         FOREIGN KEY (account_rid)
         REFERENCES "${schemaName}".account_details(account_rid)
-        ON UPDATE CASCADE,
-      ADD CONSTRAINT project_timeline_entity_rid_fkey
-        FOREIGN KEY (entity_rid)
-        REFERENCES "${schemaName}".project_fiscal(rid)
-        ON UPDATE CASCADE;
+        ON UPDATE CASCADE
     `;
   },
   getCreateDocumentSequenceQuery(schemaName: string): string {
@@ -3390,15 +3390,14 @@ export const rawQueries = {
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) UNIQUE DEFAULT ('ACT-' || LPAD(nextval('"${schemaName}".account_timeline_seq')::TEXT, 10, '0')),
         created_by VARCHAR(50) NOT NULL,
-        modified_by VARCHAR(50),
-        document_name VARCHAR(255) NULL,
-        title VARCHAR(64) NOT NULL,
-        attach_to VARCHAR(50) NOT NULL,
-        attachment_level VARCHAR(50) NOT NULL,
-        event_type VARCHAR(50) NOT NULL,
-        event_status VARCHAR(50) NOT NULL,
+        created_datetime TIMESTAMPTZ NOT NULL,
+        title VARCHAR(64) NULL,
+        event_type_rid VARCHAR(50)  NULL,
         event_name VARCHAR(255),
-        event_datetime TIMESTAMPTZ NOT NULL,
+        entity_rid VARCHAR(50) NOT NULL,  
+        entity_name VARCHAR(255) NOT NULL,
+        created_by_name VARCHAR(255) NULL,
+        account_rid VARCHAR(50) NOT NULL,
         descriptions VARCHAR(2000)
       );
     `;

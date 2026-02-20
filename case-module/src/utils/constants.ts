@@ -305,6 +305,32 @@ export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
   summary: "summary",
 };
 
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+  ATTACHMENT: "Attachment",
+  PROJECT_RESOURCE: "Project Resource",
+  ACTIVITY_CALL:"Call log",
+  ACTIVITY_MEETING:"Meeting",
+  ACTIVITY_EMAIL:"Email",
+  ACTIVITY_TASK:"Task",
+  CHECKLIST:"Checklist",
+  CASE:"Case",
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+  CANCEL: "cancelled",
+}
+
+export const eventTypes = {
+   UI_HANDLER: "ui handler",
+}
+
 export const rawQueries = {
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
@@ -808,6 +834,46 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}."user" 
       WHERE rid = :userId
     `;
+  },
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
+    `;
+  },
+  insertTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+   insertProjectTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name,project_rid
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
+          )
+          RETURNING *;
+        ` 
+  },
+  insertCaseTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name,case_rid
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
+          )
+          RETURNING *;
+        ` 
   },
   fetchChecklistTemplates: `
     SELECT 

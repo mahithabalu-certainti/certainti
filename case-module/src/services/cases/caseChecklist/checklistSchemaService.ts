@@ -8,7 +8,10 @@ import {
 import { CaseModelService } from "../../../services/caseModelsService";
 import { v4 as uuidv4 } from "uuid";
 import {
+  entityTypes,
   ENV_PREFIX,
+  eventNames,
+  eventTypes,
   HttpStatus,
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -1022,6 +1025,24 @@ export class ChecklistSchemaService {
         },
         { transaction }
       );
+       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                  userId: caseRequest.modified_by!,
+                                  eventType: eventTypes.UI_HANDLER
+                                });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(caseRequest.attachment_level);
+            
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                            created_by: caseRequest.modified_by!,
+                            account_rid: caseRequest.account_rid,
+                            entity_rid: createdChecklist.rid!,
+                            entity_name: entityTypes.CHECKLIST,
+                            created_by_name: userEventInfo.full_name,
+                            event_type_rid: userEventInfo.event_type_rid,
+                            event_name: eventNames.CREATE,
+                            descriptions:caseRequest.checklist_name,
+                            project_rid: caseRequest.attachment_level === 'project' ? caseRequest.attach_to : undefined,
+                            case_rid: caseRequest.attachment_level === 'case' ? caseRequest.attach_to : undefined,
+                          },timelineTypes);
       return createdChecklist;
     } catch (error) {
        console.log(error)
@@ -1113,6 +1134,25 @@ export class ChecklistSchemaService {
         },
         { where: { rid: caseRequest.checklist_rid }, transaction }
       );
+
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                  userId: caseRequest.modified_by!,
+                                  eventType: eventTypes.UI_HANDLER
+                                });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(caseRequest.attachment_level);
+            
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                            created_by: caseRequest.modified_by!,
+                            account_rid: caseRequest.account_rid,
+                            entity_rid: caseRequest.checklist_rid!,
+                            entity_name: entityTypes.CHECKLIST,
+                            created_by_name: userEventInfo.full_name,
+                            event_type_rid: userEventInfo.event_type_rid,
+                            event_name: eventNames.UPDATE,
+                            descriptions:caseRequest.checklist_name,
+                            project_rid: caseRequest.attachment_level === 'project' ? caseRequest.attach_to : undefined,
+                            case_rid: caseRequest.attachment_level === 'case' ? caseRequest.attach_to : undefined,
+                          },timelineTypes);
 
       return createdChecklist;
     } catch (error) {

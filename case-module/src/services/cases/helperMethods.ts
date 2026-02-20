@@ -1,4 +1,4 @@
-import { Op, Sequelize, Transaction } from "sequelize";
+import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
 import {
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -1025,4 +1025,94 @@ export class HelperMethods {
         logMessage(`Error triggering rule engine: ${err}`);
       }
     }
+
+  /**
+     * Fetches user full name, event type, and event name in a single query.
+     * @param params Object with userId, eventType, eventName
+     * @returns Object with fullName, eventType, eventName
+     */
+  async fetchUserAndEventInfo(params: { userId: string; eventType: string;}) {
+    const sequelize = await initMainDbSequelize();
+    // Assumes the rawQueries have the correct SQL for each subquery
+    // This query returns a single row with all three values
+    const query = rawQueries.fetchUserAndEventInfo();
+    const [result] = await sequelize.query(query, {
+      replacements: {
+        userId: params.userId,
+        eventType: params.eventType
+      },
+      type: "SELECT",
+    });
+    return result;
+  }
+
+  /**
+ * Returns timeline entity types for a given attachment_level.
+ * Used for timeline entry creation in NotesService and elsewhere.
+ */
+  getTimelineTypesForAttachmentLevel(attachmentLevel: string): string[] {
+    const accountLevels = ["account", "resource", "resource_cost", "resource_skill"];
+    const projectLevels = ["project_task", "project_resource"];
+    const caseLevels = ["case","checklist","activity"];
+    if (attachmentLevel === "project") {
+      return ["account", "project"];
+    } else if (accountLevels.includes(attachmentLevel)) {
+      return ["account"];
+    } else if (projectLevels.includes(attachmentLevel)) {
+      return ["project"];
+    } else if (caseLevels.includes(attachmentLevel)) {
+      return ["case"];
+    }
+    return [];
+  }
+  /**
+   * Create an entry in the account_timeline table for the given schema.
+   * @param sequelize Sequelize instance connected to the main DB
+   * @param schemaName The schema name where the account_timeline table exists
+   * @param entryData Object containing the timeline entry fields
+   */
+  async createAccountTimelineEntry(accountNumber: string,
+    entryData: {
+      created_by: string;
+      account_rid: string;
+      entity_rid: string;
+      entity_name: string;
+      created_by_name: string;
+      event_type_rid: string;
+      event_name?: string;
+      descriptions?: string;
+      project_rid?: string;
+      case_rid?: string;
+    },
+    entityTypes: string[]
+  ) {
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+      if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    for (const entityType of entityTypes) {
+      if(entityType === "account")
+        {
+            const [result] = await this.orgDbSequelize.query(rawQueries.insertTimeLine(schemaName,"account_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+        else if(entityType === "project")
+        {
+            const [result] = await this.orgDbSequelize.query(rawQueries.insertProjectTimeLine(schemaName,"project_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+        else if(entityType === "case")
+        {
+            const [result] = await this.orgDbSequelize.query(rawQueries.insertCaseTimeLine(schemaName,"case_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+
+    }
+  }
 }

@@ -12,11 +12,15 @@ export interface CaseTimelineAttributes {
   modified_datetime?: Date;
   account_rid: string;
   entity_rid: string;
+  event_type_rid: string;
+  case_rid?: string;
   event_name?: string;
   event_type?: string;
   event_status?: string;
   event_datetime?: Date;
   description?: string;
+  entity_name?: string;
+  created_by_name?: string;
 }
 
 export interface CaseTimelineCreationAttributes
@@ -37,11 +41,15 @@ export class CaseTimeline
   public modified_datetime?: Date;
   public account_rid!: string;
   public entity_rid!: string;
+  public event_type_rid!: string;
+  public case_rid?: string;
   public event_name?: string;
   public event_type?: string;
   public event_status?: string;
   public event_datetime?: Date;
   public description?: string;
+  public entity_name?: string;
+  public created_by_name?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return CaseTimeline.init(
@@ -89,17 +97,28 @@ export class CaseTimeline
         entity_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
-          references: {
-            model: 'cases',
-            key: 'rid'
-          },
-          onUpdate: 'CASCADE'
         },
         event_name: {
           type: DataTypes.STRING(100),
           allowNull: true,
         },
         event_type: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        event_type_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        created_by_name: {
+          type: DataTypes.STRING(100),
+          allowNull: false,
+        },
+        case_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        entity_name: {
           type: DataTypes.STRING(100),
           allowNull: true,
         },

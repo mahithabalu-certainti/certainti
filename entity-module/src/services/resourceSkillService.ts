@@ -241,11 +241,7 @@ class ResourceSkillService {
           skill_details: skill_details || undefined,
           created_by: userId,
         });
-
-        // Update the resource_fiscal table
-        if (resource_rid) {
-          try {
-            const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+         const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
                     userId: userId!,
                     eventType: eventTypes.UI_HANDLER
                   });
@@ -253,12 +249,17 @@ class ResourceSkillService {
               created_by: userId!,
               account_rid: account_rid,
               entity_rid: createdResourceSkill?.rid!,
-              entity_name: entityTypes.RESOURCE,
+              entity_name: entityTypes.RESOURCE_SKILL,
               created_by_name: userEventInfo.full_name,
               event_type_rid: userEventInfo.event_type_rid,
               event_name: eventNames.CREATE,
-              descriptions:skill_description
+              descriptions:skill_details || ''
             },["account"]);
+
+        // Update the resource_fiscal table
+        if (resource_rid) {
+          try {
+           
             ResourceFiscal.initialize(sequelizeInstance, schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
@@ -508,11 +509,11 @@ class ResourceSkillService {
               created_by: userId!,
               account_rid: originalResourceSkill.account_rid,
               entity_rid: originalResourceSkill?.rid!,
-              entity_name: entityTypes.RESOURCE,
+              entity_name: entityTypes.RESOURCE_SKILL,
               created_by_name: userEventInfo.full_name,
               event_type_rid: userEventInfo.event_type_rid,
-              event_name: eventNames.CREATE,
-              descriptions:skill_description
+              event_name: eventNames.UPDATE,
+              descriptions:skill_details || ''
             },["account"]);
             await this.createResourceSkillHistory(
               originalResourceSkill.toJSON(),

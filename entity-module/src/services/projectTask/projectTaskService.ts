@@ -673,7 +673,7 @@ export class ProjectInjestionTaskService {
           entity_name: entityTypes.PROJECT_TASK,
           created_by_name: userEventInfo.full_name,
           event_type_rid: userEventInfo.event_type_rid,
-          event_name: eventNames.CREATE,
+          event_name: eventNames.UPDATE,
           descriptions:projectTaskData.resource_code
         },["project"]);
         await this.projectTaskSchema.addProjectTaskTimeline(

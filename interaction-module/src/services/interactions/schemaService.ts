@@ -746,6 +746,71 @@ class InteractionSchemaService {
     ]);
   }
 
+  
+    /**
+       * Fetches user full name, event type, and event name in a single query.
+       * @param params Object with userId, eventType, eventName
+       * @returns Object with fullName, eventType, eventName
+       */
+    async fetchUserAndEventInfo(params: { userId: string; eventType: string;}) {
+      const sequelize = await initMainDbSequelize();
+      // Assumes the rawQueries have the correct SQL for each subquery
+      // This query returns a single row with all three values
+      const query = rawQueries.fetchUserAndEventInfo();
+      const [result] = await sequelize.query(query, {
+        replacements: {
+          userId: params.userId,
+          eventType: params.eventType
+        },
+        type: "SELECT",
+      });
+      return result;
+    }
+  
+    /**
+     * Create an entry in the account_timeline table for the given schema.
+     * @param sequelize Sequelize instance connected to the main DB
+     * @param schemaName The schema name where the account_timeline table exists
+     * @param entryData Object containing the timeline entry fields
+     */
+    async createAccountTimelineEntry(accountNumber: string,
+      entryData: {
+        created_by: string;
+        account_rid: string;
+        entity_rid: string;
+        entity_name: string;
+        created_by_name: string;
+        event_type_rid: string;
+        event_name?: string;
+        descriptions?: string;
+        project_rid?: string;
+        case_rid?: string;
+      },
+      entityTypes: string[]
+    ) {
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+        if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      for (const entityType of entityTypes) {
+        if(entityType === "account")
+          {
+              const [result] = await this.orgDbSequelize.query(rawQueries.insertTimeLine(schemaName,"account_timeline"), {
+              replacements: entryData,
+              type: QueryTypes.INSERT,
+          });
+          }
+          else if(entityType === "project")
+          {
+              const [result] = await this.orgDbSequelize.query(rawQueries.insertProjectTimeLine(schemaName,"project_timeline"), {
+              replacements: entryData,
+              type: QueryTypes.INSERT,
+          });
+          }
+  
+      }
+    }
+
   async addInteractionHistory(
     accountNumber: string,
     newProjectTaskData: any,
@@ -2696,7 +2761,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           isAutoTriggerEnabled = await this.isAutoTriggerEnabled(
             accountNumber,
             responseData.project_fiscal_rid,
-            AiAssessmentEventTracker
+            AiAssessmentEventTracker,
+            responseData.account_rid,
           );
             
             logMessage(`account_rid: ${responseData.account_rid}, project_fiscal_account_id: ${responseData.project_fiscal_rid} isAutoTriggerEnabled: ${isAutoTriggerEnabled}`);
@@ -3715,7 +3781,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async isAutoTriggerEnabled(
     accountNumber: string,
     project_fiscal_rid: string,
-    AiAssessmentEventTracker: any
+    AiAssessmentEventTracker: any,
+    accountRid: string
   ) {
     try {
       if (!this.mainDbSequelize) {
@@ -3723,7 +3790,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           await this.interactionModelService.getMainSequelize();
       }
       const [globalAccess]: any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchGlobalAutoSendAccess(),
+        rawQueries.fetchGlobalAutoTriggerAccess(),
         { type: "SELECT" }
       );
       const responseReceivedEvent = await AiAssessmentEventTracker.findOne({
@@ -3747,7 +3814,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           /\D/g,
           ""
         )}`;
-
+        const [accountInfo]: any[] = await this.orgDbSequelize.query(
+                    rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
+                    { type: "SELECT" }
+                  );
+        if(accountInfo?.auto_access_rd && (responseReceivedEvent && responseReceivedEvent?.event_name))
+        {
+            return true;
+        }
         // Fetch project info
         const [projectInfo]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchisAutoTriggerEnabled(project_fiscal_rid, schemaName),
