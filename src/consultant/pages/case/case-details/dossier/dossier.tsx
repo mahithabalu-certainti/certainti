@@ -454,7 +454,8 @@ const Dossier: React.FC<DossierProps> = ({
       case 'project_documents':
         return getProjectDocumentsFilterFields(
           fieldOptions,
-          permissionMapAttachment
+          permissionMapAttachment,
+          projectPermissionMap
         );
       case 'technical_summary':
         return getTechnicalSummaryFilterFields(technicalSummarypermissionMap);

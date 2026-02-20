@@ -37,7 +37,8 @@ const numberOptions: { option: string; value: string }[] = [
 
 export const getProjectDocumentsFilterFields = (
   fieldOptions?: FieldOptionType,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   const { docCategories = [], docTypes = [] } = fieldOptions || {};
   return [
@@ -47,8 +48,8 @@ export const getProjectDocumentsFilterFields = (
       type: 'text',
       operatorOption: textOptions,
       hide:
-        !permissionMap?.['project_code']?.read &&
-        !permissionMap?.['project_code']?.edit,
+        !projectPermissionMap?.['project_code']?.read &&
+        !projectPermissionMap?.['project_code']?.edit,
     },
     {
       name: 'Project Name',
@@ -56,8 +57,8 @@ export const getProjectDocumentsFilterFields = (
       type: 'text',
       operatorOption: textOptions,
       hide:
-        !permissionMap?.['project_name']?.read &&
-        !permissionMap?.['project_name']?.edit,
+        !projectPermissionMap?.['project_name']?.read &&
+        !projectPermissionMap?.['project_name']?.edit,
     },
     {
       name: 'Document Name',
@@ -325,8 +326,8 @@ export const getQualifiedProjectsFilterFields = (
     options: classificationOption,
     operatorOption: enumOptions,
     hide:
-      !projectPermissionMap?.['classification_name']?.read &&
-      !projectPermissionMap?.['classification_name']?.edit,
+      !projectPermissionMap?.['project_classification_rid']?.read &&
+      !projectPermissionMap?.['project_classification_rid']?.edit,
   },
   {
     name: 'Customer Group',
@@ -425,17 +426,17 @@ export const getQualifiedProjectsFilterFields = (
     type: 'text',
     operatorOption: nonReqTextfieldOptions,
     hide:
-      !projectPermissionMap?.['project_point_of_contact']?.read &&
-      !projectPermissionMap?.['project_point_of_contact']?.edit,
+      !projectPermissionMap?.['key_contacts']?.read &&
+      !projectPermissionMap?.['key_contacts']?.edit,
   },
   {
     name: 'Technical Point of Contact',
-    value: 'technical_point_of_contact',
+    value: 'project_technical_point_of_contact',
     type: 'text',
     operatorOption: nonReqTextfieldOptions,
     hide:
-      !projectPermissionMap?.['technical_point_of_contact']?.read &&
-      !projectPermissionMap?.['technical_point_of_contact']?.edit,
+      !projectPermissionMap?.['key_contacts']?.read &&
+      !projectPermissionMap?.['key_contacts']?.edit,
   },
   {
     name: 'Comments',
