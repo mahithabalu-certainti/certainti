@@ -1500,16 +1500,15 @@ export const rawQueries = {
       SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountId}'
     `;
   },
-  insertTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
-          INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
-          ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
-          )
-          RETURNING *;
-        ` 
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
+      INSERT INTO "${schemaName}".${tableName} (
+        created_by, event_type_rid, event_name, descriptions, account_rid, entity_name, entity_rid, created_by_name, project_rid
+      ) VALUES (
+        :created_by, :event_type_rid, :event_name, :descriptions, :account_rid, :entity_name, :entity_rid, :created_by_name, COALESCE(:project_rid, NULL)
+      )
+      RETURNING *;
+    `;
   },
   insertCaseTimeLine(schemaName: string,tableName: string)
   {
