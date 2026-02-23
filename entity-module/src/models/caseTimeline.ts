@@ -18,7 +18,7 @@ export interface CaseTimelineAttributes {
   event_type?: string;
   event_status?: string;
   event_datetime?: Date;
-  description?: string;
+  descriptions?: string;
   entity_name?: string;
   created_by_name?: string;
 }
@@ -47,7 +47,7 @@ export class CaseTimeline
   public event_type?: string;
   public event_status?: string;
   public event_datetime?: Date;
-  public description?: string;
+  public descriptions?: string;
   public entity_name?: string;
   public created_by_name?: string;
 
@@ -130,7 +130,7 @@ export class CaseTimeline
           type: DataTypes.DATE,
           allowNull: true,
         },
-        description: {
+        descriptions: {
           type: DataTypes.TEXT,
           allowNull: true,
         },

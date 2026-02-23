@@ -873,7 +873,7 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name,case_rid
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
           )

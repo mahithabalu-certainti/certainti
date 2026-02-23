@@ -186,7 +186,7 @@ export class CaseTaskSchemaService {
           case_rid:data.case_rid,
           event_name: eventNames.CREATE,
           entity_name: entityTypes.TASK,
-          description: `${createdTaskResult.task_name}`,
+          descriptions: `${createdTaskResult.task_name}`,
         },
         { transaction }
       );
@@ -537,7 +537,7 @@ export class CaseTaskSchemaService {
                 case_rid:data.case_rid,
                 event_name: eventNames.UPDATE,
                 entity_name: entityTypes.TASK,
-                description: `${data.task_name}`
+                descriptions: `${data.task_name}`
               })
             }
             await transaction.commit();
@@ -860,7 +860,7 @@ export class CaseTaskSchemaService {
                 event_name: eventNames.ADDED,
                 entity_name:entityTypes.TAG,
                 event_type_rid: userEventInfo.event_type_rid,
-                description: `Task ${result.tag_name}`,
+                descriptions: `Task ${result.tag_name}`,
                 created_by_name: userEventInfo.full_name
               });
               await CaseHistory.create({
@@ -959,7 +959,7 @@ export class CaseTaskSchemaService {
             entity_name:entityTypes.TAG,
             event_name: eventNames.UPDATE,
            // description: `Tag added for task : ${tagDetails!.tag_name}`,
-            description:`Task ${existingTaskInfo!.task_name}`,
+            descriptions:`Task ${existingTaskInfo!.task_name}`,
             created_by_name: userEventInfo.full_name,
             event_type_rid: userEventInfo.event_type_rid,
           });
@@ -1203,7 +1203,7 @@ export class CaseTaskSchemaService {
           case_rid:data.task_rid,
           event_name: eventNames.UPDATE,
           entity_name:entityTypes.COMMENTS,
-          description: `Task ${existingTaskInfo.task_name}`,
+          descriptions: `Task ${existingTaskInfo.task_name}`,
         });
         await CaseHistory.create({
           created_by: data.created_by,
@@ -1438,7 +1438,7 @@ export class CaseTaskSchemaService {
                       case_rid:data.case_rid,
                       event_name: eventNames.DELETE,
                       entity_name:entityTypes.ATTACHMENT,
-                      description: `${fetchCommentsAttachmentDetails.document_name} in comments for task ${existingTaskInfo.task_name}`,
+                      descriptions: `${fetchCommentsAttachmentDetails.document_name} in comments for task ${existingTaskInfo.task_name}`,
                     });
                   }
                 }
@@ -1505,7 +1505,7 @@ export class CaseTaskSchemaService {
               entity_rid: data.case_rid,
               entity_name:entityTypes.COMMENTS,
               event_name: eventNames.UPDATE,
-              description: `Task ${existingTaskInfo.task_name}`,
+              descriptions: `Task ${existingTaskInfo.task_name}`,
             });
           } else {
             await this.addTaskTimeline(
@@ -1702,7 +1702,7 @@ export class CaseTaskSchemaService {
                   entity_rid: data.case_rid,
                   event_name: eventNames.DELETE,
                   entity_name:entityTypes.COMMENTS,
-                  description: `Task ${existingTaskInfo.task_name}`,
+                  descriptions: `Task ${existingTaskInfo.task_name}`,
                 });
               } else {
                 await this.addTaskTimeline(
@@ -1932,7 +1932,7 @@ export class CaseTaskSchemaService {
                 entity_rid: data.case_rid,
                 event_name: eventNames.ADDED,
                 entity_name:entityTypes.ATTACHMENT,
-                description: `Task ${existingTaskInfo.task_name}`,
+                descriptions: `Task ${existingTaskInfo.task_name}`,
               });
               await CaseHistory.create({
                 created_by: userId,
@@ -2020,7 +2020,7 @@ export class CaseTaskSchemaService {
             entity_rid: data.case_rid,
             event_name: eventNames.DELETE,
             entity_name:entityTypes.ATTACHMENT,
-            description: `Task ${findTaskDetails?.task_name}`,
+            descriptions: `Task ${findTaskDetails?.task_name}`,
           });
           await CaseHistory.create({
             created_by: userId,
