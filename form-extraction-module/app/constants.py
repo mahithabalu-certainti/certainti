@@ -1,2 +1,8 @@
 LINE_ITEM = "Line-Item"
-TABLE = "Table-Item"
+TABLE_ITEM = "Table-Item"
+
+MAPPING_STATUS = {
+    ACCEPTED: "accepted",
+    REJECTED: "rejected",
+    ANOMALY: "anomaly"
+}

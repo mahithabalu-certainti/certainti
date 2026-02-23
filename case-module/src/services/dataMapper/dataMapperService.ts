@@ -4,7 +4,7 @@ import { DataMapperForms, setupDataMapperFormsSequence } from "../../models/data
 import { uploadToAzureBlob, logMessage, errorLog, generateSasUrl, deleteFromAzureBlob } from "../../utils/helpers";
 import { Kafka, Producer } from "kafkajs";
 import { ENV } from "../../config/kafka";
-import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries, mappingStatus } from "../../utils/constants";
 import moment from "moment";
 import { DataMapperFormMappings } from "../../models/dataMapperFormMappings";
 import { DataMapperObjects } from "../../models/dataMapperObjects";
@@ -884,7 +884,7 @@ export class DataMapperService implements IDataMapperService {
             let updatedMappings = [...data.mappings];
             updatedMappings.sort((a, b) => (a.extraction_order || 0) - (b.extraction_order || 0));
 
-            const lastActiveMapping = [...updatedMappings].reverse().find((m: any) => m.status === "active");
+            const lastActiveMapping = [...updatedMappings].reverse().find((m: any) => m.status === mappingStatus.accepted);
 
             let cursor = 0;
             if (lastActiveMapping && lastActiveMapping.field_id) {
@@ -897,14 +897,14 @@ export class DataMapperService implements IDataMapperService {
             let reachedAnomaly = false;
 
             for (let i = 0; i < updatedMappings.length; i++) {
-                if (updatedMappings[i].status === "anomaly") {
+                if (updatedMappings[i].status === mappingStatus.anomaly) {
                     reachedAnomaly = true;
                 }
 
                 if (reachedAnomaly && cursor < textFields.length) {
                     if (updatedMappings[i].field_type !== "table") {
                         updatedMappings[i].field_id = textFields[cursor].field_id;
-                        updatedMappings[i].status = "anomaly";
+                        updatedMappings[i].status = mappingStatus.accepted;
                         cursor++;
                     }
                 }
