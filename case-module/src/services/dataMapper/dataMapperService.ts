@@ -904,7 +904,7 @@ export class DataMapperService implements IDataMapperService {
                 if (reachedAnomaly && cursor < textFields.length) {
                     if (updatedMappings[i].field_type !== "table") {
                         updatedMappings[i].field_id = textFields[cursor].field_id;
-                        updatedMappings[i].status = mappingStatus.accepted;
+                        updatedMappings[i].status = mappingStatus.anomaly;
                         cursor++;
                     }
                 }
