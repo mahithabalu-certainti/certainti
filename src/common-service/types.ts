@@ -223,6 +223,7 @@ export enum AllModules {
   ACTIVITIES_CALL = 'activity_call',
   WORKFLOW_BUILDER = 'workflow_builder',
   MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule',
+  FOUR_PART_ASSESSMENT = 'four_part_assessment',
 }
 
 export enum AllPermissions {
@@ -394,6 +395,10 @@ export enum AllPermissions {
   DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
   DOSSIER_RD_FORMS_SIGNOFF = 'rd_forms_sign_off',
   DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',
+  FOUR_PART_ASSESSMENT_OVERVIEW = 'four_part_assessment_overview',
+  FOUR_PART_ASSESSMENT_TIMELINE = 'four_part_assessment_timeline',
+  FOUR_PART_ASSESSMENT_VIEW_EDIT = 'four_part_assessment_view_edit',
+  FOUR_PART_ASSESSMENT_EXPORT = 'four_part_assessment_export',
 }
 
 export interface Country {

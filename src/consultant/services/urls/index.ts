@@ -10,3 +10,4 @@ export * from './cases-url';
 export * from './checklist-url';
 export * from './work-breakdown-url';
 export * from './dashboard-url';
+export * from './four-part-assessment-url';

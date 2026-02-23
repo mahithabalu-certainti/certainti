@@ -80,11 +80,8 @@ export type ManageUserDetailApiResponse = {
 export type ManageSetting = {
   rid: string;
   auto_send_interaction: boolean;
-  auto_access_rd: false;
-  email: string;
-  tenant_id: string;
-  client_id: string;
-  client_secret: string;
+  auto_access_rd: boolean;
+  four_part_assessment: boolean;
 };
 export type ConfigureManageSettingApiResponse = {
   statusCode: number;

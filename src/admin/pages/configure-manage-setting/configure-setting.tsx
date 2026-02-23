@@ -1,11 +1,10 @@
-import { Box } from '@mui/material';
 import { ManageSettingsIcon } from '../../../assets';
 import { FormBuilder } from '../../../components';
 import { ConfigureSettingsFormFields } from './helper';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { AllPermissions, OnChange } from '../../../common-service';
+import { AllPermissions } from '../../../common-service';
 import {
   useManageSettingDetails,
   useUpdateManageSettings,
@@ -28,8 +27,6 @@ interface FormValues extends Record<string, FormValueType> {
 }
 const ConfigureSetting = () => {
   const formRef = useRef<HTMLFormElement>(null);
-  const [emailRequried, setEmailRequried] = useState<boolean>(false);
-  const [idRequried, setIdRequried] = useState<boolean>(false);
   const updateManageSettings = useUpdateManageSettings();
   const { successToast } = useToast();
   const { data, isLoading, refetch } = useManageSettingDetails();
@@ -53,6 +50,7 @@ const ConfigureSetting = () => {
     email: '',
     auto_assessment: 'No',
     auto_send_ai_interaction: 'No',
+    four_part_assessment: 'Yes',
     rid: '',
   };
   const formValues = useMemo<FormValues>(() => {
@@ -64,35 +62,21 @@ const ConfigureSetting = () => {
       auto_send_ai_interaction: data?.data.settings?.auto_send_interaction
         ? 'Yes'
         : 'No',
-      email: data?.data.settings?.email ?? '',
-      tenant_id: data?.data.settings.tenant_id,
-      client_id: data?.data.settings.client_id,
-      client_secret: data?.data.settings.client_secret,
+      four_part_assessment: data?.data.settings?.four_part_assessment
+        ? 'Yes'
+        : 'No',
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  useEffect(() => {
-    if (!formValues) return;
-    setEmailRequried(!!data?.data.settings?.email);
-    const hasAnyIdValue =
-      !!data?.data.settings.client_secret ||
-      !!data?.data.settings.tenant_id ||
-      !!data?.data.settings.client_id;
-
-    setIdRequried(hasAnyIdValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formValues]);
-
   const handleFormSubmit = (values: object) => {
     const formData = values as FormValues;
-    console.log('formData', formData);
 
     const payload = {
       rid: data?.data.settings.rid ?? '',
       auto_send_interaction: formData.auto_send_ai_interaction === 'Yes',
       auto_access_rd: formData.auto_assessment === 'Yes',
-      email: formData.email,
+      four_part_assessment: formData.four_part_assessment === 'Yes',
     };
     updateManageSettings.mutate(payload, {
       onSuccess: (res: UpdateSettingsSuccess) => {
@@ -100,20 +84,6 @@ const ConfigureSetting = () => {
         refetch();
       },
     });
-  };
-  const onChangeField = (data: OnChange) => {
-    if (data.fieldName === 'support_email') {
-      const hasValue = !!data.fieldValue;
-      setEmailRequried(hasValue);
-    }
-    if (['client_secret', 'tenant_id', 'client_id'].includes(data.fieldName)) {
-      const hasAnyValue =
-        !!(data.fieldName === 'client_secret' && data.fieldValue) ||
-        !!(data.fieldName === 'tenant_id' && data.fieldValue) ||
-        !!(data.fieldName === 'client_id' && data.fieldValue);
-
-      setIdRequried(hasAnyValue);
-    }
   };
 
   return (
@@ -160,36 +130,14 @@ const ConfigureSetting = () => {
       {isLoading ? (
         <SkeletonForm />
       ) : (
-        <div className='flex flex-col gap-0 border-b border-[#CBD6E2] rounded-[2px] py-5'>
-          <Box
-            className='bg-white'
-            sx={{
-              // minHeight: '560px',
-              // maxHeight: '560px',
-              overflowY: 'auto',
-              '& .grid': {
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr) !important',
-                gap: '1rem',
-              },
-              '& .grid > div': {
-                gridColumn: 'span 1 !important',
-              },
-            }}
-          >
-            <FormBuilder
-              key={JSON.stringify(data?.data.settings)}
-              data={ConfigureSettingsFormFields(
-                permissionMap,
-                emailRequried,
-                idRequried
-              )}
-              formRef={formRef}
-              outData={handleFormSubmit}
-              values={formValues}
-              onChange={onChangeField}
-            />
-          </Box>
+        <div className='flex flex-col gap-0 border-b border-[#CBD6E2] rounded-[2px]'>
+          <FormBuilder
+            key={JSON.stringify(data?.data.settings)}
+            data={ConfigureSettingsFormFields(permissionMap)}
+            formRef={formRef}
+            outData={handleFormSubmit}
+            values={formValues}
+          />
         </div>
       )}
     </>

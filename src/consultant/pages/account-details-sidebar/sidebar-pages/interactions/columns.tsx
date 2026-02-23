@@ -46,6 +46,26 @@ export const getInteractionListColumns = (
     ),
   },
   {
+    id: 'assessment_type',
+    sortId: 'assessment_type',
+    label: 'Assessment Type',
+    width: 150,
+    sortable: true,
+    // hide:
+    //   !projectPermissionMap?.['assessment_type']?.edit &&
+    //   !projectPermissionMap?.['assessment_type']?.read,
+  },
+  {
+    id: 'four_part_assessment_id',
+    sortId: 'four_part_assessment_id',
+    label: 'Four Part Assessment ID',
+    width: 200,
+    sortable: true,
+    // hide:
+    //   !projectPermissionMap?.['four_part_assessment_id']?.edit &&
+    //   !projectPermissionMap?.['four_part_assessment_id']?.read,
+  },
+  {
     id: 'project_code',
     sortId: 'project_code',
     label: 'Project Code',
