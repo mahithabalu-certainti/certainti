@@ -7,7 +7,6 @@ import {
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import React, { useRef, useState } from 'react';
-import { ResourceTabs } from '../resources/resources';
 import {
   AllModules,
   AllPermissions,

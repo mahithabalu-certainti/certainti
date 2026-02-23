@@ -12,7 +12,6 @@ import {
   AllPermissions,
   OverviewTabs,
 } from '../../../../../common-service';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { Users } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import {

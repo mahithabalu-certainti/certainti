@@ -14,7 +14,6 @@ import {
   TimeSheetList,
   TimeSheetListURLParams,
 } from '../../../../types';
-import { ResourceTabs } from '../resources/resources';
 import { getTimesheetFilterFields } from './helpers';
 import { getTimesheetProjectTabFilterFields } from './timesheet-details-tab/project-tab/project-tab-filters';
 import { useSelector } from 'react-redux';

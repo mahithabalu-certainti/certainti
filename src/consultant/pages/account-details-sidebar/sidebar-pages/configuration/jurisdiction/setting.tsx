@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 
 import JurisdictionConfig from './Jurisdiction-Config/Jurisdiction-Config';
-import { ResourceTabs } from '../../resources/resources';
 import { AllPermissions, OverviewTabs } from '../../../../../../common-service';
 import { SectionTabPanel } from '../../../../../../components';
 import SectionHeader from '../../../../../../components/details-section/section-header';

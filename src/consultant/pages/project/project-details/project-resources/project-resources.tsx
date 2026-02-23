@@ -20,7 +20,6 @@ import { ProjectResourcesListType } from '../../../../types/project-resources';
 import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllMenus,
   AllModules,

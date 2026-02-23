@@ -4,7 +4,6 @@ import {
   AllPermissions,
   OverviewTabs,
 } from '../../../../../common-service';
-import { ResourceTabs } from '../resources/resources';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ImportsList, ImportsListURLParams } from '../../../../types/imports';
 import { getImportsListColumns } from './columns';

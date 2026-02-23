@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions, OverviewTabs } from '../../../../../common-service';
 import {
   ActivityDropdownItem,

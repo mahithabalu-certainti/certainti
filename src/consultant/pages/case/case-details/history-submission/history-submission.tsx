@@ -26,7 +26,6 @@ import {
 } from '../../../../../assets';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllModules,
   AllPermissions,

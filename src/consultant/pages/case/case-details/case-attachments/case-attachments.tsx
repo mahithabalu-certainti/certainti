@@ -6,7 +6,6 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllModules,
   AllPermissions,

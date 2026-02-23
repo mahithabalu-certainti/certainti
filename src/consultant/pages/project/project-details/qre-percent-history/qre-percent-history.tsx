@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions, OverviewTabs } from '../../../../../common-service';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { useGetQrePercentHistory } from '../../../../services/qre-percent-history/qre-percent-history';
