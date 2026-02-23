@@ -61,7 +61,7 @@ const AttachmentTabs: OverviewTabs[] = [
     id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
     name: 'Timeline',
     hide: false,
-    disable: true,
+    disable: false,
     key: "timeline"
   },
 ];
