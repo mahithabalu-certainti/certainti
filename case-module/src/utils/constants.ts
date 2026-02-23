@@ -319,12 +319,17 @@ export const entityTypes = {
   ACTIVITY_TASK:"Task",
   CHECKLIST:"Checklist",
   CASE:"Case",
+  TASK:"Task",
+  TAG:"Tag",
+  COMMENTS:"COMMENTS"
 };
 
 export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
   CANCEL: "cancelled",
+  ADDED:  "added",
+  DELETE: "deleted"
 }
 
 export const eventTypes = {

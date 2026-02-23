@@ -87,6 +87,8 @@ export const entityTypes = {
   NOTES: "Notes",
   ATTACHMENT: "Attachment",
   PROJECT_RESOURCE: "Project Resource",
+  TASK: "Task",
+  TAG:"Tag"
 };
 
 export const eventNames = {

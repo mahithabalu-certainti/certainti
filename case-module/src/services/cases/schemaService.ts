@@ -407,14 +407,14 @@ class CaseSchemaService {
                                     case_rid: caseRequest.case_rid,
                                   },["account","case"]);
 
-        await this.addCaseManagementTimeline(
-          accountNumber,
-          casecreationResponse.rid,
-          caseRequest.account_rid,
-          caseRequest,
-          caseRequest.created_by || "",
-          "created"
-        );
+        // await this.addCaseManagementTimeline(
+        //   accountNumber,
+        //   casecreationResponse.rid,
+        //   caseRequest.account_rid,
+        //   caseRequest,
+        //   caseRequest.created_by || "",
+        //   "created"
+        // );
         await this.addJurisdiction(
           casecreationResponse.account_rid,
           casecreationResponse.rid,
@@ -3341,7 +3341,6 @@ class CaseSchemaService {
 
       await CaseTimeline.create({
         account_rid: accountRid,
-        event_name: eventName,
         event_status: eventStatus,
         event_type: eventType,
         created_by_name: userEventInfo.full_name,
@@ -3350,7 +3349,9 @@ class CaseSchemaService {
         description: description,
         created_by: userId,
         created_datetime: new Date(),
+        event_name: eventNames.CREATE,
       });
+      
     } catch (err) {
       logMessage(`Error creating case team timeline: ${err}`);
       // Don't throw error for timeline issues to avoid breaking main functionality
