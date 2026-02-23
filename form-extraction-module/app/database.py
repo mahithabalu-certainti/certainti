@@ -6,6 +6,7 @@ from psycopg2 import pool
 from contextlib import contextmanager
 from .config import get_settings
 from .pdf_form_reader import detect_mislabeled_table, split_by_keywords
+from .constants import LINE_ITEM, TABLE
 
 settings = get_settings()
 
@@ -179,7 +180,7 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                                     else:
                                         field_id = f"{country_code}-F{extraction_order:04d}"
 
-                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order, field_id, 'anomaly'))
+                            cur.execute(field_insert_sql, (rid, label, user_id, f_type, None, extraction_order, field_id, 'anomaly' if field_id else 'inactive'))
                             processed_labels.add(label)
 
                     header_fields = data_obj.get("header_fields", [])
@@ -187,7 +188,7 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                         for header_field in header_fields:
                             f_label = header_field.get("label", "")
                             field_id = header_field.get("value_field_id", "")
-                            insert_safe_label(f_label, "line-item", field_id)
+                            insert_safe_label(f_label, LINE_ITEM, field_id)
 
                     sections = data_obj.get("sections", [])
                     if sections and isinstance(sections, list):
@@ -199,7 +200,7 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                                     line_item_id = line_item.get("id", "")
                                     f_label = f"{line_item_id} - {line_item.get('label', '')}" if line_item_id else line_item.get('label', '')
                                     field_id = line_item.get("value_field_id", "")
-                                    insert_safe_label(f_label, "line-item", field_id)
+                                    insert_safe_label(f_label, LINE_ITEM, field_id)
                             
                             #insert tables
                             tables = section.get("tables", [])
@@ -231,7 +232,7 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                                             for idx, header in enumerate(column_headers):
                                                 header_key = header.replace(" ", "").lower()
                                                 field_id = first_row_field_id_map.get(header_key, "")
-                                                insert_safe_label(header, "table", field_id)
+                                                insert_safe_label(header, TABLE, field_id)
 
                                         rows = table.get("rows")    
                                         if rows and isinstance(rows, list):
@@ -245,7 +246,7 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
                                                                 header = cell.get("header")
                                                                 field_id = cell.get("value_field_id", "")
                                                                 f_label = row_id + " -> " + header
-                                                                insert_safe_label(f_label, "line-item", field_id)
+                                                                insert_safe_label(f_label, LINE_ITEM, field_id)
 
                                     # if mislabeled, insert second cell as line-item for each row
                                     else:
@@ -264,9 +265,9 @@ def update_extraction_status(conn, rid, status, error_message=None, extracted_da
 
                                                             if is_split:
                                                                 for label in f_label:
-                                                                    insert_safe_label(label, "line-item", field_id)
+                                                                    insert_safe_label(label, LINE_ITEM, field_id)
                                                             else:
-                                                                insert_safe_label(f_label, "line-item", field_id)
+                                                                insert_safe_label(f_label, LINE_ITEM, field_id)
 
 
                         
