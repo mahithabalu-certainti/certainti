@@ -22,6 +22,8 @@ import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
+import { useSearchParams } from 'react-router';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const AttachmentTabs: OverviewTabs[] = [
   {
@@ -196,7 +198,8 @@ const QrePercentHistory = ({
     const updatedColumns = qrePercentHistoryColumns.filter((col) => !col.hide);
     setVisibleColumns(updatedColumns);
   }, [qrePercentHistoryColumns]);
-
+  const [searchParams] = useSearchParams();
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const getRowId = (row: QrePercentHistoryItem) => row.rid;
 
   const RestrictedColumns = [
@@ -244,58 +247,65 @@ const QrePercentHistory = ({
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <ResourceTableHeader
-        value={'qre-percent-history'}
-        title='RD Assessment History'
-        count={totalItems}
-        titleIcon={
-          <HistorySubmissionIcon
-            alt='financial-header-icon'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='project' />
+        </div>
+      ) : (
+        <>
+          <ResourceTableHeader
+            value={'qre-percent-history'}
+            title='RD Assessment History'
+            count={totalItems}
+            titleIcon={
+              <HistorySubmissionIcon
+                alt='financial-header-icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
+            }
+            headerButtons={headerButtons}
+            iconBg={ColorCode.projectBgColor}
+            bgType='circle'
           />
-        }
-        headerButtons={headerButtons}
-        iconBg={ColorCode.projectBgColor}
-        bgType='circle'
-      />
-      <div className='border border-[#CBD6E2]'>
-        <ManageColumnsPopover
-          anchorEl={columnAnchorEl}
-          open={isModalOpen}
-          popoverId={modalId}
-          onClose={handlePopoverClose}
-          columns={qrePercentHistoryColumns}
-          onColumnsChange={handleColumnsChange}
-          columnRestrictions={RestrictedColumns}
-        />
-        <ListTable<QrePercentHistoryItem>
-          data={qrePercentHistoryList}
-          columns={visibleColumns}
-          getRowId={getRowId}
-          hoverHighlight={false}
-          tableStyle={{
-            height: '100%',
-            maxHeight: 'calc(100vh - 380px)',
-            overflow: 'auto',
-          }}
-          stickyHeader={true}
-          stickyColumnsCount={1}
-          selectable={false}
-          actionWidth={80}
-          actionMenuItems={[]}
-          loading={isLoading}
-          error={isError ? 'Failed to load Attachment data' : undefined}
-          rowsPerPageOptions={[25, 50, 100]}
-          rowsPerPage={rowsPerPage}
-          currentPage={currentPage}
-          totalItems={totalItems}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortBy={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSortRequest}
-        />
-      </div>
+          <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={qrePercentHistoryColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
+            <ListTable<QrePercentHistoryItem>
+              data={qrePercentHistoryList}
+              columns={visibleColumns}
+              getRowId={getRowId}
+              hoverHighlight={false}
+              tableStyle={{
+                height: '100%',
+                maxHeight: 'calc(100vh - 380px)',
+                overflow: 'auto',
+              }}
+              stickyHeader={true}
+              stickyColumnsCount={1}
+              selectable={false}
+              actionWidth={80}
+              actionMenuItems={[]}
+              loading={isLoading}
+              error={isError ? 'Failed to load Attachment data' : undefined}
+              rowsPerPageOptions={[25, 50, 100]}
+              rowsPerPage={rowsPerPage}
+              currentPage={currentPage}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              sortBy={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSortRequest}
+            />
+          </div>
+        </>)}
     </div>
   );
 };
