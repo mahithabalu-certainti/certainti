@@ -53,14 +53,14 @@ const NotesTabs: OverviewTabs[] = [
     id: AllPermissions.NOTES_OVERVIEW,
     name: 'Overview',
     hide: false,
-    key: "overview"
+    key: 'overview',
   },
   {
     id: AllPermissions.NOTES_TIMELINE,
     name: 'Timeline',
     hide: false,
     // disable: true,
-    key: "timeline"
+    key: 'timeline',
   },
 ];
 
@@ -538,7 +538,8 @@ const Notes: React.FC<NotesProps> = ({
               </div>
             </>
           )}
-        </>)}
+        </>
+      )}
     </div>
   );
 };

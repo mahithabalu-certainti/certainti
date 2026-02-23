@@ -732,11 +732,11 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
-      memoizedInteractionTypes,
-      memoizedInteractionResSources,
-      memoizedInteractionStatus,
-      permissionMap
-    )
+        memoizedInteractionTypes,
+        memoizedInteractionResSources,
+        memoizedInteractionStatus,
+        permissionMap
+      )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getProjectInteractionFilterFields(
     memoizedInteractionStatusReminder,

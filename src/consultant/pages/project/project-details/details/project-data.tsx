@@ -48,14 +48,14 @@ const detailsTabs: OverviewTabs[] = [
     id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Overview',
     hide: false,
-    key: "overview"
+    key: 'overview',
   },
   {
     id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Timeline',
     hide: false,
     // disable: true,
-    key: "timeline"
+    key: 'timeline',
   },
 ];
 
@@ -160,13 +160,13 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           filterVisibility={false}
           showFilter={false}
           contextKey='project-details'
-          setCurrentPage={() => { }}
+          setCurrentPage={() => {}}
           appliedFilters={{}}
-          setAppliedFilters={() => { }}
-          handleFilter={() => { }}
-          handleSorting={() => { }}
+          setAppliedFilters={() => {}}
+          handleFilter={() => {}}
+          handleSorting={() => {}}
           sortFilterCount={0}
-          setSortFilterCount={() => { }}
+          setSortFilterCount={() => {}}
         />
         {isTimeLineView ? (
           <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
@@ -191,7 +191,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
               iconBg={ColorCode.projectBgColor}
               bgType='circle'
             />
-          </div>)}
+          </div>
+        )}
       </Box>
     </div>
   );

@@ -305,7 +305,8 @@ const QrePercentHistory = ({
               onSort={handleSortRequest}
             />
           </div>
-        </>)}
+        </>
+      )}
     </div>
   );
 };

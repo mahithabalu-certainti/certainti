@@ -52,13 +52,13 @@ const ChecklistTabs: OverviewTabs[] = [
     id: AllPermissions.CHECKLIST_OVERVIEW,
     name: 'Overview',
     hide: false,
-    key: 'overview'
+    key: 'overview',
   },
   {
     id: AllPermissions.CHECKLIST_TIMELINE,
     name: 'Timeline',
     hide: false,
-    key: 'timeline'
+    key: 'timeline',
   },
   // Future tabs like timeline can be added here
 ];
@@ -415,7 +415,6 @@ const Checklist: React.FC<ChecklistProps> = ({
         </div>
       ) : (
         <>
-
           {viewDetails ? (
             <ChecklistDetails
               accountOrProjectInActive={accountOrProjectInActive}
@@ -468,7 +467,9 @@ const Checklist: React.FC<ChecklistProps> = ({
                   actionDisplayMode='dropdown'
                   actionMenuItems={actionMenuItems}
                   loading={isLoading}
-                  error={isError ? 'Failed to load checklist records' : undefined}
+                  error={
+                    isError ? 'Failed to load checklist records' : undefined
+                  }
                   rowsPerPageOptions={[25, 50, 100]}
                   rowsPerPage={rowsPerPage}
                   currentPage={currentPage}
@@ -483,7 +484,8 @@ const Checklist: React.FC<ChecklistProps> = ({
               </div>
             </>
           )}
-        </>)}
+        </>
+      )}
     </div>
   );
 };

@@ -849,7 +849,9 @@ export const ProjectResources = ({
             <>
               <ProjectResourceTableHeader
                 value={
-                  viewDetails ? 'project-resource-details' : 'projects-resources'
+                  viewDetails
+                    ? 'project-resource-details'
+                    : 'projects-resources'
                 }
                 title={viewDetails ? 'Project Resource' : 'Project Resources'}
                 titleIcon={
@@ -908,7 +910,7 @@ export const ProjectResources = ({
                       conditionMenuItems={
                         !hideStatusAction
                           ? (row: ProjectResourcesListType) =>
-                            getConditionMenuItems(row)
+                              getConditionMenuItems(row)
                           : undefined
                       }
                       loading={isLoading}

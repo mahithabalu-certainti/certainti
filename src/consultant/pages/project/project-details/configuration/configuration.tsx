@@ -7,7 +7,11 @@ import {
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
-import { AllModules, AllPermissions, OverviewTabs } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { Users } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -27,14 +31,14 @@ const ConfigTabs: OverviewTabs[] = [
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
-    key: "overview"
+    key: 'overview',
   },
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
     name: 'Timeline',
     hide: false,
     // disable: true,
-    key: "timeline"
+    key: 'timeline',
   },
 ];
 
@@ -203,9 +207,9 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => { }}
+        handleSorting={() => {}}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={list !== 'settings'}
         onRefreshClick={onRefreshClick}
         hideTabPanel={hideSection}

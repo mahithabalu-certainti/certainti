@@ -788,7 +788,6 @@ export const ProjectTask = ({
           <Timeline entitytype='project' />
         </div>
       ) : (
-
         <>
           {showUploads ? (
             <Uploads
@@ -853,7 +852,7 @@ export const ProjectTask = ({
                       conditionMenuItems={
                         !hideStatusAction
                           ? (row: ProjectResourcesListType) =>
-                            getConditionMenuItems(row)
+                              getConditionMenuItems(row)
                           : undefined
                       }
                       loading={isLoading}
@@ -879,7 +878,8 @@ export const ProjectTask = ({
               </div>
             </>
           )}
-        </>)}
+        </>
+      )}
     </div>
   );
 };

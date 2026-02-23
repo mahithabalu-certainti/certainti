@@ -5,7 +5,11 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { AllModules, AllPermissions, OverviewTabs } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import {
   getAllActivityFilterFields,
   getCallFilterFields,
@@ -53,14 +57,14 @@ const ActivityTabs: OverviewTabs[] = [
     id: AllPermissions.ACTIVITIES_OVERVIEW,
     name: 'Overview',
     hide: false,
-    key: "overview"
+    key: 'overview',
   },
   {
     id: AllPermissions.ACTIVITIES_TIMELINE,
     name: 'Timeline',
     hide: true,
     // disable: true,
-    key: "timeline"
+    key: 'timeline',
   },
 ];
 
@@ -499,7 +503,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
           setCurrentPage={setCurrentPage}
           handleFilter={handleFilter}
           sortFilterCount={0}
-          setSortFilterCount={() => { }}
+          setSortFilterCount={() => {}}
           showRefresh={!viewDetails}
           onRefreshClick={handleRefresh}
           showSearch={!viewDetails}
@@ -655,7 +659,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
                 )}
               </div>
             )}
-          </>)}
+          </>
+        )}
       </div>
     </div>
   );

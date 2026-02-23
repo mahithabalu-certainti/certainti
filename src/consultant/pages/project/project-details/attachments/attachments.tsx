@@ -55,14 +55,14 @@ const AttachmentTabs: OverviewTabs[] = [
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
-    key: "overview"
+    key: 'overview',
   },
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
     name: 'Timeline',
     hide: false,
     disable: false,
-    key: "timeline"
+    key: 'timeline',
   },
 ];
 interface AttachmentsProps {
@@ -550,7 +550,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
               </div>
             </>
           )}
-        </>)}
+        </>
+      )}
     </div>
   );
 };
