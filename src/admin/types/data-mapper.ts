@@ -252,3 +252,16 @@ export interface DataMapperStatusApiResponse {
   statusMessage: string;
   data: DataMapperStatus[];
 }
+
+// Re-compute
+export interface RecomputeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: FieldMapping[];
+}
+
+export interface RecomputeRequest {
+  rid: string;
+  mappings: DataMapperFieldMapping[];
+}
