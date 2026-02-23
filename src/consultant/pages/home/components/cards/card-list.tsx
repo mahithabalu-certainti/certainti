@@ -19,6 +19,8 @@ interface CardListProps<T> {
   onItemClick?: (item: T, index: number) => void;
   disabled?: boolean;
   tooltipMessage?: string;
+  isItemDisabled?: (item: T) => boolean;
+  getItemTooltipMessage?: (item: T) => string;
 }
 
 const CardList = <T,>({
@@ -36,6 +38,8 @@ const CardList = <T,>({
   onItemClick,
   disabled = false,
   tooltipMessage = '',
+  isItemDisabled,
+  getItemTooltipMessage,
 }: CardListProps<T>) => {
   if (isLoading) {
     return (
@@ -119,6 +123,14 @@ const CardList = <T,>({
           style={{ maxHeight: `${maxHeight}px`, minHeight: `${maxHeight}px` }}
         >
           {items.map((item, index) => {
+            // Determine if this specific item is disabled
+            const itemDisabled = isItemDisabled
+              ? isItemDisabled(item)
+              : disabled;
+            const itemTooltip = getItemTooltipMessage
+              ? getItemTooltipMessage(item)
+              : tooltipMessage;
+
             const itemContent = (
               <div
                 key={index}
@@ -129,14 +141,14 @@ const CardList = <T,>({
                     'rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px',
                   ...getItemStyle?.(item),
                   cursor:
-                    onItemClick && !disabled
+                    onItemClick && !itemDisabled
                       ? 'pointer'
-                      : onItemClick && disabled
+                      : onItemClick && itemDisabled
                         ? 'not-allowed'
                         : undefined,
                 }}
                 onClick={
-                  disabled ? undefined : () => onItemClick?.(item, index)
+                  itemDisabled ? undefined : () => onItemClick?.(item, index)
                 }
               >
                 {itemRenderer(item, index)}
@@ -146,7 +158,7 @@ const CardList = <T,>({
             return (
               <Tooltip
                 key={index}
-                disableHoverListener={!disabled}
+                disableHoverListener={!itemDisabled}
                 title={
                   <div>
                     <Alert
@@ -166,7 +178,7 @@ const CardList = <T,>({
                         },
                       }}
                     >
-                      {tooltipMessage}
+                      {itemTooltip}
                     </Alert>
                   </div>
                 }

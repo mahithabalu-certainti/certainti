@@ -78,10 +78,10 @@ export const HomePage: React.FC = () => {
   const isCasesEnable = checkPermission(modules, AllModules.CASES);
   const isAccountEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const isCaseTaskEnable = checkPermission(modules, AllModules.WORKBREAKDOWN);
-  // const isActivityTaskEnable = checkPermission(
-  //   modules,
-  //   AllModules.ACTIVITIES_TASK
-  // );
+  const isActivityTaskEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_TASK
+  );
 
   // Helper function to check if a card is accessible based on permissions
   const isCardAccessible = useCallback(
@@ -128,6 +128,31 @@ export const HomePage: React.FC = () => {
     }
     return `Access Restricted: You do not have permission to access the ${pageName} page.\nPlease contact administrator to gain access.`;
   }, []);
+
+  // Helper function to check if a task item is accessible based on its type
+  const isTaskItemAccessible = useCallback(
+    (task: DashboardTaskDetail | PendingFollowUpDetail): boolean => {
+      const taskType = task.task_type_name?.toLowerCase();
+      if (taskType === 'activity') {
+        return isActivityTaskEnable || false;
+      } else if (taskType === 'milestone') {
+        return isCaseTaskEnable || false;
+      }
+      // If type is unknown, allow access if user has any task permission
+      return isCaseTaskEnable || isActivityTaskEnable || false;
+    },
+    [isCaseTaskEnable, isActivityTaskEnable]
+  );
+
+  // Helper function to get tooltip message for restricted task items
+  const getTaskItemTooltipMessage = useCallback(
+    (task: DashboardTaskDetail | PendingFollowUpDetail): string => {
+      const taskType = task.task_type_name?.toLowerCase();
+      const typeName = taskType === 'activity' ? 'Activity' : 'Case';
+      return `Access Restricted: You do not have permission to access ${typeName} tasks.\nPlease contact administrator to gain access.`;
+    },
+    []
+  );
 
   const { data: countDetails, isLoading: isCountsLoading } =
     useGetDashboardCountDetails('all');
@@ -589,12 +614,8 @@ export const HomePage: React.FC = () => {
           exportKey='pendingFollowUps'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
-          disabled={!isCaseTaskEnable}
-          tooltipMessage={
-            !isCaseTaskEnable
-              ? 'Access Restricted: You do not have permission to access the Task page.\nPlease contact administrator to gain access.'
-              : ''
-          }
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           itemRenderer={(item) => {
             const priorityBadge = item.priority_name
               ? getPriorityBadge(item.priority_name)
@@ -694,12 +715,8 @@ export const HomePage: React.FC = () => {
           exportKey='overdueApprovals'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
-          disabled={!isCaseTaskEnable}
-          tooltipMessage={
-            !isCaseTaskEnable
-              ? 'Access Restricted: You do not have permission to access the Task page.\nPlease contact administrator to gain access.'
-              : ''
-          }
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           itemRenderer={(item: OverdueApprovalsDetail) => {
             const daysOverdue = Math.max(
               0,
@@ -750,12 +767,8 @@ export const HomePage: React.FC = () => {
           exportKey='upcomingTasks'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
-          disabled={!isCaseTaskEnable}
-          tooltipMessage={
-            !isCaseTaskEnable
-              ? 'Access Restricted: You do not have permission to access the Task page.\nPlease contact administrator to gain access.'
-              : ''
-          }
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -779,12 +792,8 @@ export const HomePage: React.FC = () => {
           exportKey='dueTodayOverdueTasks'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
-          disabled={!isCaseTaskEnable}
-          tooltipMessage={
-            !isCaseTaskEnable
-              ? 'Access Restricted: You do not have permission to access the Task page.\nPlease contact administrator to gain access.'
-              : ''
-          }
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -814,12 +823,8 @@ export const HomePage: React.FC = () => {
           exportKey='openTasks'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
-          disabled={!isCaseTaskEnable}
-          tooltipMessage={
-            !isCaseTaskEnable
-              ? 'Access Restricted: You do not have permission to access the Task page.\nPlease contact administrator to gain access.'
-              : ''
-          }
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -843,12 +848,8 @@ export const HomePage: React.FC = () => {
           exportKey='completedTasksThisWeek'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
-          disabled={!isCaseTaskEnable}
-          tooltipMessage={
-            !isCaseTaskEnable
-              ? 'Access Restricted: You do not have permission to access the Task page.\nPlease contact administrator to gain access.'
-              : ''
-          }
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,

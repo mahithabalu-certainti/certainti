@@ -39,6 +39,8 @@ interface TaskCardProps<T> {
   onItemClick?: (item: T) => void;
   disabled?: boolean;
   tooltipMessage?: string;
+  isItemDisabled?: (item: T) => boolean;
+  getItemTooltipMessage?: (item: T) => string;
 }
 
 const TaskCard = <T,>({
@@ -56,6 +58,8 @@ const TaskCard = <T,>({
   onItemClick,
   disabled = false,
   tooltipMessage = '',
+  isItemDisabled,
+  getItemTooltipMessage,
 }: TaskCardProps<T>) => {
   const itemRenderer = (item: T) => {
     if (renderItem) return renderItem(item);
@@ -193,6 +197,8 @@ const TaskCard = <T,>({
       onItemClick={onItemClick ? (item) => onItemClick(item) : undefined}
       disabled={disabled}
       tooltipMessage={tooltipMessage}
+      isItemDisabled={isItemDisabled}
+      getItemTooltipMessage={getItemTooltipMessage}
     />
   );
 };
