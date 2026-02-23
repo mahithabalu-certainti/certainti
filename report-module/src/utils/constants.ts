@@ -149,17 +149,13 @@ export const rawQueries = {
   fetchOpenTaskCount(accountIds?: string[], userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -178,17 +174,13 @@ export const rawQueries = {
   fetchWeeklyOpenTaskCount(userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -204,17 +196,13 @@ export const rawQueries = {
   fetchWeeklyBlockedTaskCount(userId?: string) {
     let query = `SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name = :taskStatus`;
+    WHERE d.task_status_name = :taskStatus`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: TaskStatus.BLOCKED
     };
 
@@ -231,17 +219,13 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -262,17 +246,13 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -292,17 +272,13 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -324,17 +300,13 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status d
       ON a.status_rid = d.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name = :taskStatus`;
+    WHERE d.task_status_name = :taskStatus`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: TaskStatus.COMPLETED
     };
 
@@ -379,15 +351,11 @@ export const rawQueries = {
     let query = `
     SELECT count('x')
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
-      ON a.task_type_rid = b.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary c
       ON a.attach_to = c.case_rid
-    WHERE b.task_type_name = :taskType`;
+    WHERE 1=1`;
 
-    const replacements: any = {
-      taskType: TaskType.MILESTONE
-    };
+    const replacements: any = {};
 
     if (userId) {
       query += ` AND a.assigned_to = :userId`;
@@ -460,7 +428,8 @@ export const rawQueries = {
 	  a.fiscal_year,
 	  f.account_name,
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
-    g.profile_url
+    g.profile_url,
+    b.task_type_name
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -474,11 +443,9 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -508,7 +475,8 @@ export const rawQueries = {
 	  a.fiscal_year,
 	  f.account_name,
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
-    g.profile_url
+    g.profile_url,
+    b.task_type_name
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -522,11 +490,9 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -555,7 +521,8 @@ export const rawQueries = {
 	  a.fiscal_year,
 	  f.account_name,
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
-    g.profile_url
+    g.profile_url,
+    b.task_type_name
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -569,11 +536,9 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)`;
+    WHERE d.task_status_name IN (:taskStatus)`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO]
     };
 
@@ -604,7 +569,8 @@ export const rawQueries = {
 	  a.fiscal_year,
 	  f.account_name,
 	  concat(g.first_name, ' ', g.last_name) as assigned_to_name,
-    g.profile_url
+    g.profile_url,
+    b.task_type_name
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -618,11 +584,9 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name = :taskStatus`;
+    WHERE d.task_status_name = :taskStatus`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: TaskStatus.COMPLETED
     };
 
@@ -675,12 +639,10 @@ export const rawQueries = {
     on a.assigned_to = g.rid
     left join ${MAIN_SCHEMA_NAME}.task_category h
     on a.task_category_rid = h.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)
+    WHERE d.task_status_name IN (:taskStatus)
 	  AND h.category_name = :taskCategory`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO],
       taskCategory: TaskCategory.REVIEWS
     };
@@ -712,7 +674,8 @@ export const rawQueries = {
 	f.account_name,
 	concat(g.first_name, ' ', g.last_name) as assigned_to_name,
 	h.category_name,
-    g.profile_url
+    g.profile_url,
+    b.task_type_name
     FROM ${MAIN_SCHEMA_NAME}.task_summary a
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type b
       ON a.task_type_rid = b.rid
@@ -728,12 +691,10 @@ export const rawQueries = {
     on a.assigned_to = g.rid
     left join ${MAIN_SCHEMA_NAME}.task_category h
     on a.task_category_rid = h.rid
-    WHERE b.task_type_name = :taskType
-      AND d.task_status_name IN (:taskStatus)
+    WHERE d.task_status_name IN (:taskStatus)
 	  AND h.category_name = :taskCategory`;
 
     const replacements: any = {
-      taskType: TaskType.MILESTONE,
       taskStatus: [TaskStatus.IN_PROGRESS, TaskStatus.TO_DO],
       taskCategory: TaskCategory.APPROVALS_SIGN_OFFS
     };
