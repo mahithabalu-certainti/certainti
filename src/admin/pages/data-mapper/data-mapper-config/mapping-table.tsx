@@ -26,7 +26,7 @@ interface ObjectItem {
   object_name: string;
   ref_table: string;
   field_name: string | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
 }
 
 interface ConditionalClause {
@@ -67,7 +67,7 @@ interface MappingItem {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
@@ -561,11 +561,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
       if (mapping.rid === rid) {
         let newStatus = mapping.status;
         if (!value || value.trim() === '') {
-          // If field_id is empty, always set status to 'inactive'
-          newStatus = 'inactive';
+          // If field_id is empty, always set status to 'rejected'
+          newStatus = 'rejected';
         } else if (mapping.status !== 'anomaly') {
-          // If field_id has value and not in anomaly state, set to 'active'
-          newStatus = 'active';
+          // If field_id has value and not in anomaly state, set to 'accepted'
+          newStatus = 'accepted';
         }
         // If status is 'anomaly', it stays as 'anomaly' until accepted/rejected
 
@@ -587,7 +587,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
       if (mapping.rid === rid) {
         return {
           ...mapping,
-          status: 'active',
+          status: 'accepted',
           fieldIdError: undefined,
         };
       }
@@ -603,7 +603,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
         return {
           ...mapping,
           field_id: '', // Clear field ID on reject
-          status: 'inactive',
+          status: 'rejected',
           fieldIdError: undefined,
         };
       }
@@ -2328,7 +2328,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               <span>
                 <Tooltip
                   title={
-                    'Go to "Original Form" tab, select a field to copy its Field ID, then paste it here to map the field.'
+                    'Click the arrow icon on the right side to open "Original Form", select a field to copy its Field ID, then paste it here to map the field.'
                   }
                   arrow
                   placement='top'
@@ -2368,7 +2368,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               <span>
                 <Tooltip
                   title={
-                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for manual text entry, then press Enter (e.g., #Custom Value)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
+                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
                   }
                   arrow
                   placement='left'
@@ -2482,42 +2482,30 @@ const MappingTable: React.FC<MappingTableProps> = ({
                       {mapping.status === 'anomaly' &&
                         formType !== 'non-fillable' && (
                           <div className='absolute bottom-1 right-1 flex justify-end items-center gap-2 bg-white/95 p-1 rounded'>
-                            <Tooltip
-                              title={'Accept Anomaly'}
-                              arrow
-                              placement='top'
+                            <button
+                              onClick={() => handleAcceptAnomaly(mapping.rid)}
+                              className='inline-flex items-center gap-1 p-1.5 rounded text-[11px] w-auto cursor-pointer h-[20px] bg-[#3EA72F1A] hover:bg-[#3da72ff4] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
                             >
-                              <button
-                                onClick={() => handleAcceptAnomaly(mapping.rid)}
-                                className='inline-flex items-center gap-1 p-1.5 rounded text-[11px] w-auto cursor-pointer h-[20px] bg-[#3EA72F1A] hover:bg-[#3da72ff4] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
-                              >
-                                <React.Suspense fallback={null}>
-                                  <AcceptIcon
-                                    alt='accept'
-                                    className='w-3.5 h-3.5'
-                                  />
-                                </React.Suspense>
-                                Accept
-                              </button>
-                            </Tooltip>
-                            <Tooltip
-                              title={'Reject Anomaly'}
-                              arrow
-                              placement='top'
+                              <React.Suspense fallback={null}>
+                                <AcceptIcon
+                                  alt='accept'
+                                  className='w-3.5 h-3.5'
+                                />
+                              </React.Suspense>
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => handleRejectAnomaly(mapping.rid)}
+                              className='inline-flex items-center gap-1 p-1.5 rounded text-[12px] cursor-pointer w-auto h-[20px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
                             >
-                              <button
-                                onClick={() => handleRejectAnomaly(mapping.rid)}
-                                className='inline-flex items-center gap-1 p-1.5 rounded text-[12px] cursor-pointer w-auto h-[20px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
-                              >
-                                <React.Suspense fallback={null}>
-                                  <RejectIcon
-                                    alt='reject'
-                                    className='w-3.5 h-3.5'
-                                  />
-                                </React.Suspense>
-                                Reject
-                              </button>
-                            </Tooltip>
+                              <React.Suspense fallback={null}>
+                                <RejectIcon
+                                  alt='reject'
+                                  className='w-3.5 h-3.5'
+                                />
+                              </React.Suspense>
+                              Reject
+                            </button>
                           </div>
                         )}
                     </div>
@@ -2791,7 +2779,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onBlur={() => handleInputBlur(mapping.rid)}
                           placeholder={
                             (mapping.fieldExpressions || []).length === 0
-                              ? 'Type @ fields, # manual, numbers, MIN/MAX, if/else/else if or +, -, *, / for operators'
+                              ? 'Type @ fields, # for IDs, numbers, MIN/MAX, if/else/else if or +, -, *, / for operators'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -2980,7 +2968,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                   onKeyDown={handleFunctionPopoverKeyDown}
                   placeholder={
                     functionPopover.args.length === 0
-                      ? 'Type @ to add fields or # for manual entry'
+                      ? 'Type @ to add fields or # for IDs'
                       : 'Add more...'
                   }
                   className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -3298,7 +3286,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                             onKeyDown={(e) => handleClauseKeyDown(index, e)}
                             placeholder={
                               (clause.expressions || []).length === 0
-                                ? 'Type @ fields, # manual, &&, ||, operators...'
+                                ? 'Type @ fields, # for IDs, &&, ||, operators...'
                                 : 'Add more...'
                             }
                             className='flex-1 min-w-[120px] rounded-[2px] border-none outline-none bg-transparent text-sm placeholder-gray-400'
@@ -3551,7 +3539,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onKeyDown={(e) => handleReturnKeyDown(index, e)}
                           placeholder={
                             (clause.returnExpressions || []).length === 0
-                              ? 'Type @ fields, # manual, numbers...'
+                              ? 'Type @ fields, # for IDs, numbers...'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-[120px] border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'

@@ -37,6 +37,8 @@ interface TaskCardProps<T> {
   exportKey?: ExportReportType;
   handleExport?: (key: ExportReportType) => void;
   onItemClick?: (item: T) => void;
+  disabled?: boolean;
+  tooltipMessage?: string;
 }
 
 const TaskCard = <T,>({
@@ -52,6 +54,8 @@ const TaskCard = <T,>({
   exportKey,
   handleExport,
   onItemClick,
+  disabled = false,
+  tooltipMessage = '',
 }: TaskCardProps<T>) => {
   const itemRenderer = (item: T) => {
     if (renderItem) return renderItem(item);
@@ -134,7 +138,7 @@ const TaskCard = <T,>({
               </p>
             )}
           </div>
-          <div className='text-[11px] whitespace-nowrap flex-shrink-0'>
+          <div className='text-[11px] whitespace-nowrap flex-shrink-0 flex flex-col items-end'>
             <span
               style={{
                 color:
@@ -155,10 +159,10 @@ const TaskCard = <T,>({
                   ? `Due Today: (${data.date})`
                   : data.date}
             </span>
+            <div className='text-[11px] font-semibold text-[#425a76cf]'>
+              {data.account} / FY-{`${data.fiscalYear}`}
+            </div>
           </div>
-        </div>
-        <div className='text-[11px] font-semibold text-[#425a76cf]'>
-          {data.account} / FY-{`${data.fiscalYear}`}
         </div>
       </div>
     );
@@ -187,6 +191,8 @@ const TaskCard = <T,>({
       exportKey={exportKey}
       handleExport={handleExport}
       onItemClick={onItemClick ? (item) => onItemClick(item) : undefined}
+      disabled={disabled}
+      tooltipMessage={tooltipMessage}
     />
   );
 };

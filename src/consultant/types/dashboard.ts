@@ -114,6 +114,8 @@ export interface OverdueApprovalsDetail {
   assigned_to_name: string;
   category_name: string;
   profile_url: string | null;
+  task_type_name: string;
+  attach_to_name: string;
 }
 
 export interface OverdueApprovalsResponse {
@@ -138,6 +140,8 @@ export interface DashboardTaskDetail {
   account_name: string;
   assigned_to_name: string;
   profile_url: string | null;
+  task_type_name: string;
+  attach_to_name: string;
 }
 
 export interface DashboardTaskResponse {
@@ -220,6 +224,7 @@ export interface PendingFollowUpDetail {
   assigned_to_name: string;
   category_name: string;
   profile_url: string | null;
+  attach_to_name: string;
 }
 
 export interface PendingFollowUpListResponse {

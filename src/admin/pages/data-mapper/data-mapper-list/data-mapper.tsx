@@ -161,7 +161,7 @@ const DataMapper: React.FC = () => {
                 Configure Settings
               </div>
               <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
-                RD Form Configurations
+                RD Forms
               </div>
             </div>
           </div>
@@ -175,12 +175,12 @@ const DataMapper: React.FC = () => {
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
           <TextButton
-            label='Create Configuration'
+            label='Create RD Form'
             onClick={() => navigate(DATA_MAPPER_CREATE)}
             sx={{
-              width: '150px',
-              minWidth: '150px',
-              maxWidth: '150px',
+              width: '120px',
+              minWidth: '120px',
+              maxWidth: '120px',
             }}
           />
         </div>
@@ -188,7 +188,7 @@ const DataMapper: React.FC = () => {
 
       <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
         <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
-          All RD Form Configurations
+          All RD Forms
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>

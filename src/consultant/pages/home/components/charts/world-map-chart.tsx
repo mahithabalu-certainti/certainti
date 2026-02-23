@@ -236,21 +236,6 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
               </MenuItem>
             ))}
           </Select>
-
-          {selectedCountry && (
-            <button
-              onClick={() => {
-                setSelectedCountry(null);
-              }}
-              style={{
-                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              className='h-[27px] px-2.5 border border-[#CBD6E2] text-[#425A76] rounded-[2px] text-sm font-medium cursor-pointer'
-            >
-              Back to Global View
-            </button>
-          )}
         </div>
       </div>
 
@@ -324,6 +309,46 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
             className='w-full lg:w-[60%] pt-6'
             style={{ height: '500px', position: 'relative' }}
           >
+            {selectedCountry && (
+              <div className='absolute top-2 left-2 right-2 sm:left-6 sm:right-6 z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white/95 backdrop-blur-sm border border-[#CBD6E2] rounded-md px-3 py-2 sm:px-4 sm:py-2.5 shadow-md ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-300'>
+                <div className='flex items-center gap-2 text-[11px] sm:text-[12px] text-[#425A76]'>
+                  <div className='flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 animate-pulse'></div>
+                  <span className='leading-tight'>
+                    Viewing{' '}
+                    <b>
+                      {
+                        apiData?.countryWiseConsolidation?.find(
+                          (c) => c.country_rid === selectedCountry
+                        )?.country_name
+                      }
+                    </b>
+                    <span className='hidden md:inline'>
+                      . Click <b>"Back to Global View"</b> to see other
+                      countries.
+                    </span>
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedCountry(null)}
+                  className='group flex items-center gap-1.5 cursor-pointer text-[11px] sm:text-[12px] font-bold text-[#4A90E2] hover:text-[#357ABD] transition-all whitespace-nowrap'
+                >
+                  <svg
+                    width='14'
+                    height='14'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2.5'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    className='group-hover:-translate-x-0.5 transition-transform'
+                  >
+                    <path d='M19 12H5M12 19l-7-7 7-7' />
+                  </svg>
+                  Back to Global View
+                </button>
+              </div>
+            )}
             <Chart
               chartType='GeoChart'
               width='100%'
