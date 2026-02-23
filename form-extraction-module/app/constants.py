@@ -1,2 +1,2 @@
-LINE_ITEM = "Line-item"
-TABLE = "Table-item"
+LINE_ITEM = "Line-Item"
+TABLE = "Table-Item"
