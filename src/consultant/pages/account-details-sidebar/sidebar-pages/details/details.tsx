@@ -26,13 +26,13 @@ const detailsTabs: OverviewTabs[] = [
     id: AllPermissions.ACCOUNTS_OVERVIEW,
     name: 'Overview',
     hide: false,
-    key: 'overview'
+    key: 'overview',
   },
   {
     id: AllPermissions.ACCOUNTS_TIMELINE,
     name: 'Timeline',
     hide: false,
-    key: 'timeline'
+    key: 'timeline',
   },
 ];
 
@@ -54,7 +54,7 @@ const Details: React.FC<DetailsProps> = ({
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isTimeLineView = searchParams.get('timelineview') === 'true'
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
 
   const isKeyContactAvailable =
     accountDetails?.accountDetails?.keyContacts &&
@@ -75,7 +75,6 @@ const Details: React.FC<DetailsProps> = ({
       hide: !isAccountEditEnable,
     },
   ];
-
 
   return (
     <div
@@ -102,21 +101,19 @@ const Details: React.FC<DetailsProps> = ({
           filterVisibility={false}
           showFilter={false}
           contextKey='account-details'
-          setCurrentPage={() => { }}
+          setCurrentPage={() => {}}
           appliedFilters={{}}
-          setAppliedFilters={() => { }}
-          handleFilter={() => { }}
+          setAppliedFilters={() => {}}
+          handleFilter={() => {}}
           sortFilterCount={0}
-          setSortFilterCount={() => { }}
+          setSortFilterCount={() => {}}
           showAddActivity={true}
           activityMenuItems={activityMenuItems}
         />
 
         {isTimeLineView ? (
           <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
-            <Timeline
-              entitytype="account"
-            />
+            <Timeline entitytype='account' />
           </div>
         ) : (
           <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
