@@ -474,7 +474,7 @@ export function validateMappingItem(
   // Check for pending input value (unconverted text)
   if (hasInputValue) {
     errors.targetError =
-      'Invalid input in the Target field. Select an option from the dropdown, or use # for manual entry / enter a number (press Enter to add), or apply a supported operator.';
+      'Invalid input in the Target field. Select an option from the dropdown, or use # for IDs / enter a number (press Enter to add), or apply a supported operator.';
     return errors;
   }
 

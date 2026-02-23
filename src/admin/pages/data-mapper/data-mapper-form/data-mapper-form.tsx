@@ -160,8 +160,8 @@ const DataMapperForm: React.FC = () => {
     if (commonSuccess) {
       successToast(
         isEditView
-          ? 'RD Form Configuration updated successfully'
-          : 'RD Form Configuration created successfully'
+          ? 'RD Form updated successfully'
+          : 'RD Form created successfully'
       );
       goBack();
     }
@@ -323,13 +323,11 @@ const DataMapperForm: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {isEditView
-                  ? `RD Form Configuration > ${mapperData?.r_number}`
-                  : 'RD Form Configuration'}
+                {isEditView ? `RD Forms > ${mapperData?.r_number}` : 'RD Forms'}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Configuration' : 'Create Configuration'}
+              {isEditView ? 'Edit RD Form' : 'Create RD Form'}
             </h5>
           </div>
         </div>

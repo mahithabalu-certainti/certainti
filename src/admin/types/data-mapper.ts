@@ -162,10 +162,10 @@ export interface FieldMapping {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   column_id: string | null;
   extraction_order: number;
-  status: 'active' | 'inactive' | 'anomaly';
+  status: 'accepted' | 'rejected' | 'anomaly';
 }
 
 export interface MappingDetailsData {
@@ -195,7 +195,7 @@ export interface ObjectItem {
   parent_object: string;
   object_name: string;
   is_json: boolean;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
 }
 
 export interface ObjectsListResponse {
@@ -216,7 +216,7 @@ export interface DataMapperFieldMapping {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   column_id: string | null;
 }
 

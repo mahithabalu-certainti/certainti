@@ -1,4 +1,4 @@
-import { Skeleton, Tooltip } from '@mui/material';
+import { Skeleton, Tooltip, Alert } from '@mui/material';
 import { getDynamicSvgIcon } from '../../helpers';
 import React from 'react';
 import { ExportIcon } from '../../../../../assets';
@@ -17,6 +17,10 @@ interface CardListProps<T> {
   exportKey?: ExportReportType;
   handleExport?: (key: ExportReportType) => void;
   onItemClick?: (item: T, index: number) => void;
+  disabled?: boolean;
+  tooltipMessage?: string;
+  isItemDisabled?: (item: T) => boolean;
+  getItemTooltipMessage?: (item: T) => string;
 }
 
 const CardList = <T,>({
@@ -32,6 +36,10 @@ const CardList = <T,>({
   exportKey,
   handleExport,
   onItemClick,
+  disabled = false,
+  tooltipMessage = '',
+  isItemDisabled,
+  getItemTooltipMessage,
 }: CardListProps<T>) => {
   if (isLoading) {
     return (
@@ -73,7 +81,7 @@ const CardList = <T,>({
     );
   }
 
-  return (
+  const cardContent = (
     <div
       className={`bg-white rounded-lg border border-[#CBD6E2] overflow-hidden ${className}`}
     >
@@ -114,26 +122,88 @@ const CardList = <T,>({
           className={`px-4 py-3 overflow-y-auto space-y-3`}
           style={{ maxHeight: `${maxHeight}px`, minHeight: `${maxHeight}px` }}
         >
-          {items.map((item, index) => (
-            <div
-              key={index}
-              className='border-l-4 rounded p-3 bg-white hover:bg-gray-100 space-y-1 overflow-x-hidden'
-              style={{
-                borderLeftColor: '#CBD6E2',
-                boxShadow:
-                  'rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px',
-                ...getItemStyle?.(item),
-                cursor: onItemClick ? 'pointer' : undefined,
-              }}
-              onClick={() => onItemClick?.(item, index)}
-            >
-              {itemRenderer(item, index)}
-            </div>
-          ))}
+          {items.map((item, index) => {
+            // Determine if this specific item is disabled
+            const itemDisabled = isItemDisabled
+              ? isItemDisabled(item)
+              : disabled;
+            const itemTooltip = getItemTooltipMessage
+              ? getItemTooltipMessage(item)
+              : tooltipMessage;
+
+            const itemContent = (
+              <div
+                key={index}
+                className='border-l-4 rounded p-3 bg-white hover:bg-gray-100 space-y-1 overflow-x-hidden'
+                style={{
+                  borderLeftColor: '#CBD6E2',
+                  boxShadow:
+                    'rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px',
+                  ...getItemStyle?.(item),
+                  cursor:
+                    onItemClick && !itemDisabled
+                      ? 'pointer'
+                      : onItemClick && itemDisabled
+                        ? 'not-allowed'
+                        : undefined,
+                }}
+                onClick={
+                  itemDisabled ? undefined : () => onItemClick?.(item, index)
+                }
+              >
+                {itemRenderer(item, index)}
+              </div>
+            );
+
+            return (
+              <Tooltip
+                key={index}
+                disableHoverListener={!itemDisabled}
+                title={
+                  <div>
+                    <Alert
+                      severity='warning'
+                      sx={{
+                        padding: '4px 8px',
+                        fontSize: '12px',
+                        alignItems: 'center',
+                        '& .MuiAlert-icon': {
+                          fontSize: '16px',
+                          padding: 0,
+                          marginRight: '8px',
+                        },
+                        '& .MuiAlert-message': {
+                          padding: 0,
+                          whiteSpace: 'pre-line',
+                        },
+                      }}
+                    >
+                      {itemTooltip}
+                    </Alert>
+                  </div>
+                }
+                arrow
+                placement='top'
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      bgcolor: 'transparent',
+                      padding: 0,
+                      maxWidth: 'none',
+                    },
+                  },
+                }}
+              >
+                {itemContent}
+              </Tooltip>
+            );
+          })}
         </div>
       )}
     </div>
   );
+
+  return cardContent;
 };
 
 export default CardList;
