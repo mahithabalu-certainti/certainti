@@ -117,15 +117,24 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   });
 
   useEffect(() => {
-    const activeTab = tabs?.find((tab) => !tab.hide)?.id || '';
-    setTabValue(activeTab);
+    // prioritize timeline view from URL
+    const isTimeline = searchParams.get('timelineview') === 'true';
+    const activeTab =
+      tabs?.find(
+        (tab) =>
+          !tab.hide &&
+          (isTimeline ? tab.key === 'timeline' : tab.key === 'overview')
+      ) || tabs?.find((tab) => !tab.hide);
 
-    // inform parent about initial tab
-    if (activeTab && onTabChangeRef.current) {
-      onTabChangeRef.current(activeTab);
+    if (activeTab) {
+      setTabValue(activeTab.key);
+      // inform parent about initial tab
+      if (onTabChangeRef.current) {
+        onTabChangeRef.current(activeTab.id);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabs]);
+  }, [tabs, searchParams]);
 
   useEffect(() => {
     setAppliedFilters({});
@@ -141,15 +150,17 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     clearFilters(contextKey || 'resource');
     setSortFilterCount(0);
 
-    const selectedTab = tabs?.find((tab) => tab.id === newValue);
+    const selectedTab = tabs?.find((tab) => tab.key === newValue);
     if (selectedTab?.key === 'timeline') {
       searchParams.set('timelineview', 'true');
-    } else if (selectedTab?.key === 'overview') {
+    } else {
       searchParams.delete('timelineview');
     }
     setSearchParams(searchParams);
 
-    onTabChange?.(newValue);
+    if (selectedTab) {
+      onTabChange?.(selectedTab.id);
+    }
   };
 
   const handleToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -192,17 +203,17 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               tab.hide ? null : (
                 <Tab
                   key={i}
-                  value={tab.id}
+                  value={tab.key}
                   label={tab.name}
                   disabled={tab.disable}
                   sx={{
                     textTransform: 'none',
                     fontSize: '14px',
-                    fontWeight: tabValue === tab.id ? '500' : '400',
+                    fontWeight: tabValue === tab.key ? '500' : '400',
                     color: '#2D3E4F',
-                    backgroundColor: tabValue === tab.id ? '#0BBFB70D' : '',
+                    backgroundColor: tabValue === tab.key ? '#0BBFB70D' : '',
                     border:
-                      tabValue === tab.id
+                      tabValue === tab.key
                         ? '1px solid #0BBFB7'
                         : '1px solid transparent',
                     width: '120px',
@@ -211,7 +222,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                     minHeight: '24px',
                     padding: '8px 16px',
                     '&:hover': {
-                      color: tabValue === tab.id ? '#0BBFB7' : undefined,
+                      color: tabValue === tab.key ? '#0BBFB7' : undefined,
                     },
                   }}
                 />
@@ -265,13 +276,13 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                   <ResourceFilterIcon />
                   {(Object.keys(appliedFilters).length > 0 ||
                     sortFilterCount > 0) && (
-                      <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
-                        <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                        <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                          {Object.keys(appliedFilters).length + sortFilterCount}
-                        </span>
-                      </div>
-                    )}
+                    <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
+                      <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                      <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                        {Object.keys(appliedFilters).length + sortFilterCount}
+                      </span>
+                    </div>
+                  )}
                 </Box>
 
                 <Suspense fallback={null}>
@@ -304,7 +315,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
             <GlobalFiscalYearDropdown
               fiscalYear={String(fiscalYearValue)}
               fiscalYearsOptions={allYears || []}
-              onChange={updatedYear || (() => { })}
+              onChange={updatedYear || (() => {})}
               className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
             />
           )}

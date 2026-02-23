@@ -135,7 +135,7 @@ const TabPanel: React.FC<TabProps> = ({
   activityMenuItems = [],
 }) => {
   const { accountid } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -150,7 +150,6 @@ const TabPanel: React.FC<TabProps> = ({
       setTabValue(tab);
     }
   }, [location.pathname]);
-  const [searchtab, setSearchtab] = useSearchParams();
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]
@@ -162,14 +161,23 @@ const TabPanel: React.FC<TabProps> = ({
   const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
-    // assign default tab value
-    const activeTab = resourceTab?.find((tab) => !tab.hide)?.id;
-    setTabValue(activeTab as string);
-    // inform parent about initial tab
-    if (activeTab && onTabChange) {
-      onTabChange(activeTab);
+    // prioritize timeline view from URL
+    const isTimeline = searchParams.get('timelineview') === 'true';
+    const activeTab =
+      resourceTab?.find(
+        (tab) =>
+          !tab.hide &&
+          (isTimeline ? tab.key === 'timeline' : tab.key === 'overview')
+      ) || resourceTab?.find((tab) => !tab.hide);
+
+    if (activeTab) {
+      setTabValue(activeTab.key);
+      // inform parent about initial tab
+      if (onTabChange) {
+        onTabChange(activeTab.id);
+      }
     }
-  }, [resourceTab, onTabChange]);
+  }, [resourceTab, onTabChange, searchParams]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue);
@@ -177,15 +185,18 @@ const TabPanel: React.FC<TabProps> = ({
     setAppliedFilters({});
     clearFilters(value || 'resource');
     setSortFilterCount(0);
-    onTabChange?.(newValue);
 
-    const selectedTab = resourceTab?.find((tab) => tab.id === newValue);
+    const selectedTab = resourceTab?.find((tab) => tab.key === newValue);
     if (selectedTab?.key === 'timeline') {
-      searchtab.set('timelineview', 'true');
-    } else if (selectedTab?.key === 'overview') {
-      searchtab.delete('timelineview');
+      searchParams.set('timelineview', 'true');
+    } else {
+      searchParams.delete('timelineview');
     }
-    setSearchtab(searchtab);
+    setSearchParams(searchParams);
+
+    if (selectedTab) {
+      onTabChange?.(selectedTab.id);
+    }
   };
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
@@ -655,12 +666,12 @@ const TabPanel: React.FC<TabProps> = ({
           >
             {resourceTab?.map((it, i) => {
               if (it.hide) return null;
-              const isActive = tabValue === it.id;
+              const isActive = tabValue === it.key;
               return (
                 <Tab
                   key={i}
                   label={it.name}
-                  value={it.id}
+                  value={it.key}
                   disabled={it.disable}
                   sx={{
                     textTransform: 'none',
