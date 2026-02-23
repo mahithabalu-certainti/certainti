@@ -2543,3 +2543,9 @@ export const SignOffTypes = {
   case: "Case",
   rdForms: "RD Forms"
 }
+
+export const mappingStatus = {
+  accepted: "accepted",
+  rejected: "rejected",
+  anomaly: "anomaly"
+}

@@ -128,7 +128,7 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
                 if (isNaN(dateObj.getTime())) return "";
                 return moment(dateObj)
                     .tz(isValidTZ ? timezone : "UTC")
-                    .format("YYYY-MMM-DD, hh:mm:ss A");
+                    .format("YYYY-MMM-DD");
             };
 
             const finalStructuredData = result?.data?.map((d: any) => {
