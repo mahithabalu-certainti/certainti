@@ -5,6 +5,7 @@ import MappingTable from './mapping-table';
 import {
   useMappingDetails,
   useObjectsList,
+  useRecomputeDataMapper,
   useUpdateDataMapperConfig,
 } from '../../../service/data-mapper/data-mapper-service';
 import { PDFField } from '../../../types';
@@ -70,6 +71,8 @@ const DataMapperConfig: React.FC = () => {
   const [isPdfSidebarOpen, setIsPdfSidebarOpen] = useState(true);
 
   const updateDataMapperConfig = useUpdateDataMapperConfig();
+  const { mutate: recompute, isPending: isRecomputing } =
+    useRecomputeDataMapper();
   const { data: mappingData, isLoading } = useMappingDetails(mapperId, true);
   const { data: objectsList, isLoading: isLoadingObjects } = useObjectsList(
     mappingData?.formDetail?.country_rid || '',
@@ -78,7 +81,19 @@ const DataMapperConfig: React.FC = () => {
 
   useEffect(() => {
     if (mappingData?.mappings) {
-      setMappings(mappingData.mappings as MappingItem[]);
+      const sanitizedMappings = (mappingData.mappings as MappingItem[]).map(
+        (mapping) => {
+          // If field_id is empty, force status to 'inactive'
+          if (!mapping.field_id || mapping.field_id.trim() === '') {
+            return {
+              ...mapping,
+              status: 'inactive',
+            };
+          }
+          return mapping;
+        }
+      );
+      setMappings(sanitizedMappings);
     }
   }, [mappingData?.mappings]);
 
@@ -182,6 +197,46 @@ const DataMapperConfig: React.FC = () => {
     });
   };
 
+  const handleRecompute = () => {
+    const payload = {
+      rid: mapperId || '',
+      mappings: mappings.map((mapping) => ({
+        rid: mapping.rid,
+        created_datetime: mapping.created_datetime || '',
+        created_by: mapping.created_by || '',
+        modified_datetime: mapping.modified_datetime || null,
+        modified_by: mapping.modified_by || null,
+        form_rid: mapperId || '',
+        field_label: mapping.field_label,
+        field_id: mapping.field_id,
+        calculation_config: mapping.calculation_config,
+        field_type: mapping.field_type,
+        column_id: mapping.column_id || null,
+        status: mapping.status,
+      })),
+    };
+    recompute(payload, {
+      onSuccess: (data) => {
+        if (data?.data) {
+          const sanitizedMappings = (data.data as MappingItem[]).map(
+            (mapping) => {
+              // If field_id is empty, force status to 'inactive'
+              if (!mapping.field_id || mapping.field_id.trim() === '') {
+                return {
+                  ...mapping,
+                  status: 'inactive',
+                };
+              }
+              return mapping;
+            }
+          );
+          setMappings(sanitizedMappings);
+          successToast('Mappings recomputed successfully');
+        }
+      },
+    });
+  };
+
   const formLoading = isLoading || isLoadingObjects || isLoadingPdf;
 
   return (
@@ -239,7 +294,7 @@ const DataMapperConfig: React.FC = () => {
         {formLoading ? (
           <SkeletonForm />
         ) : (
-          <div>
+          <div style={{ pointerEvents: isRecomputing ? 'none' : 'all' }}>
             {/* Section 1 */}
             <div className='flex items-center align-middle px-10 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
               Basic Information
@@ -283,8 +338,19 @@ const DataMapperConfig: React.FC = () => {
               ))}
             </div>
             {/* Section 2 */}
-            <div className='flex items-center align-middle px-10 h-[30px] border border-b-0 border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Data Mapping
+            <div className='flex items-center justify-between align-middle px-10 h-[30px] border border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+              <span>Data Mapping</span>
+              <TextButton
+                label='Re-Compute'
+                loading={isRecomputing}
+                onClick={handleRecompute}
+                sx={{
+                  width: '95px',
+                  minWidth: '95px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
+              />
             </div>
             <div className='mt-4 px-10'>
               <MappingTable

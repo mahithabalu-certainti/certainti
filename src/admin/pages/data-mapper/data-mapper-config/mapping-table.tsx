@@ -559,10 +559,16 @@ const MappingTable: React.FC<MappingTableProps> = ({
   const handleFieldIdChange = (rid: string, value: string): void => {
     const updatedMappings = localMappings.map((mapping) => {
       if (mapping.rid === rid) {
-        // Only clear fieldIdError if it exists, don't validate
-        // If field_id is cleared, set status to 'inactive'
-        const newStatus =
-          !value || value.trim() === '' ? 'inactive' : mapping.status;
+        let newStatus = mapping.status;
+        if (!value || value.trim() === '') {
+          // If field_id is empty, always set status to 'inactive'
+          newStatus = 'inactive';
+        } else if (mapping.status !== 'anomaly') {
+          // If field_id has value and not in anomaly state, set to 'active'
+          newStatus = 'active';
+        }
+        // If status is 'anomaly', it stays as 'anomaly' until accepted/rejected
+
         return {
           ...mapping,
           field_id: value,
@@ -594,7 +600,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
   const handleRejectAnomaly = (rid: string): void => {
     const updatedMappings = localMappings.map((mapping) => {
       if (mapping.rid === rid) {
-        return { ...mapping, status: 'inactive', fieldIdError: undefined };
+        return {
+          ...mapping,
+          field_id: '', // Clear field ID on reject
+          status: 'inactive',
+          fieldIdError: undefined,
+        };
       }
       return mapping;
     });
@@ -2251,7 +2262,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
       sx={{
         boxShadow: 'none',
         overflow: 'auto',
-        maxHeight: 'calc(100vh - 245px)',
+        maxHeight: 'calc(100vh - 250px)',
         minHeight: 'auto',
         height: 'fit-content',
         border: '1px solid #CBD6E2',
@@ -2424,9 +2435,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
                   />
                 </TableCell>
                 <TableCell sx={{ p: '8px' }}>
-                  <div className='flex gap-1 h-full'>
+                  <div className='flex flex-col gap-1 h-full'>
                     <div
-                      className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                      className={`flex flex-col relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
                     >
                       <textarea
                         value={mapping.field_id || ''}
@@ -2438,7 +2449,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         }}
                         disabled={formType === 'non-fillable'}
                         placeholder='Enter Field ID'
-                        className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] disabled:bg-gray-100 text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
+                        className={`w-full flex-1 min-h-[32px] max-h-[90px] px-2 py-1 ${mapping.status === 'anomaly' && formType !== 'non-fillable' ? 'pb-9' : ''} border rounded-[2px] disabled:bg-gray-100 text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
                           mapping.fieldIdError
                             ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
                             : 'border-gray-300 focus:border-blue-400'
@@ -2468,40 +2479,48 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           </span>
                         </Tooltip>
                       )}
+                      {mapping.status === 'anomaly' &&
+                        formType !== 'non-fillable' && (
+                          <div className='absolute bottom-1 right-1 flex justify-end items-center gap-2 bg-white/95 p-1 rounded'>
+                            <Tooltip
+                              title={'Accept Anomaly'}
+                              arrow
+                              placement='top'
+                            >
+                              <button
+                                onClick={() => handleAcceptAnomaly(mapping.rid)}
+                                className='inline-flex items-center gap-1 p-1.5 rounded text-[11px] w-auto cursor-pointer h-[20px] bg-[#3EA72F1A] hover:bg-[#3da72ff4] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
+                              >
+                                <React.Suspense fallback={null}>
+                                  <AcceptIcon
+                                    alt='accept'
+                                    className='w-3.5 h-3.5'
+                                  />
+                                </React.Suspense>
+                                Accept
+                              </button>
+                            </Tooltip>
+                            <Tooltip
+                              title={'Reject Anomaly'}
+                              arrow
+                              placement='top'
+                            >
+                              <button
+                                onClick={() => handleRejectAnomaly(mapping.rid)}
+                                className='inline-flex items-center gap-1 p-1.5 rounded text-[12px] cursor-pointer w-auto h-[20px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
+                              >
+                                <React.Suspense fallback={null}>
+                                  <RejectIcon
+                                    alt='reject'
+                                    className='w-3.5 h-3.5'
+                                  />
+                                </React.Suspense>
+                                Reject
+                              </button>
+                            </Tooltip>
+                          </div>
+                        )}
                     </div>
-                    {mapping.status === 'anomaly' &&
-                      formType !== 'non-fillable' && (
-                        <div className='w-6 h-full flex flex-col justify-start items-center gap-2.5'>
-                          <Tooltip
-                            title={'Accept Anomaly'}
-                            arrow
-                            placement='right'
-                          >
-                            <button
-                              className='flex items-center justify-center cursor-pointer'
-                              onClick={() => handleAcceptAnomaly(mapping.rid)}
-                            >
-                              <React.Suspense fallback={null}>
-                                <AcceptIcon alt='accept' className='w-5 h-5' />
-                              </React.Suspense>
-                            </button>
-                          </Tooltip>
-                          <Tooltip
-                            title={'Reject Anomaly'}
-                            arrow
-                            placement='right'
-                          >
-                            <button
-                              className='flex items-center justify-center cursor-pointer'
-                              onClick={() => handleRejectAnomaly(mapping.rid)}
-                            >
-                              <React.Suspense fallback={null}>
-                                <RejectIcon alt='reject' className='w-5 h-5' />
-                              </React.Suspense>
-                            </button>
-                          </Tooltip>
-                        </div>
-                      )}
                   </div>
                 </TableCell>
                 <TableCell sx={{ p: '8px' }}>
