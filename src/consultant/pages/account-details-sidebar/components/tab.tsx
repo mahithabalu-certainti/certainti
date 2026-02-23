@@ -150,7 +150,7 @@ const TabPanel: React.FC<TabProps> = ({
       setTabValue(tab);
     }
   }, [location.pathname]);
-
+  const [searchtab, setSearchtab] = useSearchParams();
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]
@@ -178,6 +178,14 @@ const TabPanel: React.FC<TabProps> = ({
     clearFilters(value || 'resource');
     setSortFilterCount(0);
     onTabChange?.(newValue);
+
+    const selectedTab = resourceTab?.find((tab) => tab.id === newValue);
+    if (selectedTab?.key === 'timeline') {
+      searchtab.set('timelineview', 'true');
+    } else if (selectedTab?.key === 'overview') {
+      searchtab.delete('timelineview');
+    }
+    setSearchtab(searchtab);
   };
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
@@ -669,6 +677,7 @@ const TabPanel: React.FC<TabProps> = ({
                     borderRadius: '4px',
                     minHeight: '24px',
                     padding: '8px 16px',
+                    marginRight: '4px',
                     '&:hover': {
                       color: isActive ? '#0BBFB7' : undefined,
                     },

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, OverviewTabs } from '../../../../../common-service';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { useGetQrePercentHistory } from '../../../../services/qre-percent-history/qre-percent-history';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
@@ -23,11 +23,18 @@ import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
 
-const AttachmentTabs: ResourceTabs[] = [
+const AttachmentTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
 ];
 

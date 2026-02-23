@@ -34,13 +34,15 @@ const TechnicalSummaryTabs: OverviewTabs[] = [
     id: AllPermissions.PROJECT_TECHNICAL_SUMMARY_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.PROJECT_TECHNICAL_SUMMARY_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.PROJECT_TECHNICAL_SUMMARY_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 interface TechnicalSummaryProps {
@@ -263,7 +265,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
         showRefresh={!viewTechSummaryDetails}
         onRefreshClick={onRefreshClick}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showAddActivity={!viewTechSummaryDetails}
         activityMenuItems={activityMenuItems}
       />

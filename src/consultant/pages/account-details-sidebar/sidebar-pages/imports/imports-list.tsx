@@ -1,5 +1,9 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ImportsList, ImportsListURLParams } from '../../../../types/imports';
@@ -33,19 +37,21 @@ import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { ImportsIcon } from '../../../../../assets';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const ImportsTabs: ResourceTabs[] = [
+const ImportsTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_IMPORTS_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.ACCOUNT_IMPORTS_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNT_IMPORTS_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 interface AccountDetailsProps extends AccountDetailsResponse {
   activeKey: string;
@@ -287,7 +293,7 @@ const Imports: React.FC<ImportsProps> = ({
     permissionMap,
     isImportExportEnable
   );
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const importsFilterFields = getImportsFilterFields(
     fiscalYears,
     permissionMap
@@ -357,75 +363,83 @@ const Imports: React.FC<ImportsProps> = ({
         showAddActivity={showUploads || viewDetails ? false : true}
         activityMenuItems={activityMenuItems}
       />
-      {showUploads ? (
-        <ImportFile
-          accountNo={accountDetails?.accountById?.r_number}
-          accountId={accountid}
-          accountInActive={accountInActive}
-          onUploadSuccess={onRefreshClick}
-          handleShowUpload={() => handleImport(false)}
-        />
-      ) : viewDetails ? (
-        <ImportDetails handleBackClick={handleBackClick} />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='account' />
+        </div>
       ) : (
-        <>
-          <SectionHeader
-            title='Imports'
-            count={totalItems}
-            showItemCount={true}
-            titleIcon={
-              <ImportsIcon
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-                alt='Imports-header-icon'
+        <div>
+          {showUploads ? (
+            <ImportFile
+              accountNo={accountDetails?.accountById?.r_number}
+              accountId={accountid}
+              accountInActive={accountInActive}
+              onUploadSuccess={onRefreshClick}
+              handleShowUpload={() => handleImport(false)}
+            />
+          ) : viewDetails ? (
+            <ImportDetails handleBackClick={handleBackClick} />
+          ) : (
+            <>
+              <SectionHeader
+                title='Imports'
+                count={totalItems}
+                showItemCount={true}
+                titleIcon={
+                  <ImportsIcon
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                    alt='Imports-header-icon'
+                  />
+                }
+                ActionName='Download Templete'
+                actionItems={menuItems}
+                buttons={headerButtons}
+                iconBg={ColorCode.accountBgColor}
+                bgType='circle'
               />
-            }
-            ActionName='Download Templete'
-            actionItems={menuItems}
-            buttons={headerButtons}
-            iconBg={ColorCode.accountBgColor}
-            bgType='circle'
-          />
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={importsColumns}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
-            />
-            <ListTable
-              data={importsList}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={false}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={[]}
-              loading={isLoading}
-              error={isError ? 'Failed to load imports records' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
-              onSort={handleSortRequest}
-            />
-          </div>
-        </>
+              <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={importsColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={importsList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 320px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={[]}
+                  loading={isLoading}
+                  error={isError ? 'Failed to load imports records' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
+                  onSort={handleSortRequest}
+                />
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

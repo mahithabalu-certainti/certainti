@@ -68,6 +68,7 @@ import {
 } from '../../../../types';
 import { FilterValue } from '../../components/filter/filterType';
 import { ResourcesIcon } from '../../../../../assets';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -89,6 +90,7 @@ export interface ResourceTabs {
   name: string;
   hide: boolean;
   disable?: boolean;
+  key: string;
 }
 
 export interface TabMenus {
@@ -99,13 +101,18 @@ export interface TabMenus {
 }
 
 const resourceTabs: ResourceTabs[] = [
-  { id: AllPermissions.ACCOUNTS_VIEW_EDIT, name: 'Overview', hide: false },
-  // {
-  //   id: AllMenus.TIMESHEETS,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNTS_VIEW_EDIT,
+    name: 'Overview',
+    hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNTS_VIEW_EDIT,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 
 const tabs: TabMenus[] = [
@@ -228,14 +235,14 @@ const Resource: React.FC<ResourceProps> = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-
+  const [searchParams] = useSearchParams();
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const [updateResource] = useMutation(UPDATE_RESOURCE, {
     client: resourceClient,
   });
   const navigate = useNavigate();
   const { errorToast } = useToast();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const resId = searchParams.get('res_id');
   const source = searchParams.get('source');
@@ -1105,116 +1112,124 @@ const Resource: React.FC<ResourceProps> = ({
         !isResoureceOverviewHide &&
         isResourceViewAllEnable && (
           <>
-            <ResourceTableHeader
-              value={value}
-              title='Resources'
-              count={count}
-              resourceNumber={resourceData?.r_number ?? resourceNumber}
-              titleIcon={
-                <ResourcesIcon
-                  alt='resource header icon'
-                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+            {isTimeLineView ? (
+              <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+                <Timeline entitytype='account' />
+              </div>
+            ) : (
+              <div>
+                <ResourceTableHeader
+                  value={value}
+                  title='Resources'
+                  count={count}
+                  resourceNumber={resourceData?.r_number ?? resourceNumber}
+                  titleIcon={
+                    <ResourcesIcon
+                      alt='resource header icon'
+                      className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                    />
+                  }
+                  headerButtons={headerButtons}
+                  showBackArrow={showBackArrow}
+                  onBackClick={handleBackClick}
+                  iconBg={ColorCode.accountBgColor}
+                  bgType='circle'
+                  showCount={noteViewDetails || checklistDetails ? false : true}
                 />
-              }
-              headerButtons={headerButtons}
-              showBackArrow={showBackArrow}
-              onBackClick={handleBackClick}
-              iconBg={ColorCode.accountBgColor}
-              bgType='circle'
-              showCount={noteViewDetails || checklistDetails ? false : true}
-            />
 
-            {!viewResourceList && value && (
-              <ResourceSubComponents
-                permission={permission}
-                tabMenus={tabMenus}
-                setFilterVisibility={setFilterVisibility}
-                handleTabChange={handleTabChange}
-                value={value}
-                resourceId={searchParams.get('res_id') as string}
-                accountId={accountDetails?.data?.accountById?.r_number}
-                appliedFilters={appliedFilters || {}}
-                fiscalYearValue={convertedFiscalYear}
-                accountDetails={accountDetails as AccountData}
-                setShowFilter={setShowFilter}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                costOrder={costOrder}
-                setCostOrder={setCostOrder}
-                costorderBy={costorderBy}
-                setCostorderBy={setCostOrderBy}
-                skillOrder={skillOrder}
-                setSkillOrder={setSkillOrder}
-                skillOrderBy={skillOrderBy}
-                setSkillOrderBy={setSkillOrderBy}
-                refreshCostTrigger={refreshCostTrigger}
-                refreshSkillTrigger={refreshSkillTrigger}
-                attachmentsOrder={attachmentsOrder}
-                setAttachmentsOrder={setAttachmentsOrder}
-                attachmentsOrderBy={attachmentsOrderBy}
-                setAttachmentsOrderBy={setAttachmentsOrderBy}
-                notesOrder={notesOrder}
-                setNotesOrder={setNotesOrder}
-                notesOrderBy={notesOrderBy}
-                setNotesOrderBy={setNotesOrderBy}
-                refreshAttachments={refreshAttachments}
-                refreshNotes={refreshNotes}
-                checklistsOrder={checklistsOrder}
-                setChecklistsOrder={setChecklistsOrder}
-                checklistsOrderBy={checklistsOrderBy}
-                setChecklistsOrderBy={setChecklistsOrderBy}
-                refreshChecklists={refreshChecklists}
-                setCount={setCount}
-                resourceInActive={resourceInActive}
-                setResourceInActive={setResourceInActive}
-                setColumnAnchorEl={setColumnAnchorEl}
-                columnAnchorEl={columnAnchorEl}
-                searchValue={searchText}
-                setResourceNumber={setResourceNumber}
-              />
-            )}
-            {viewResourceList && !value && (
-              <div className='border border-[#CBD6E2]'>
-                <ManageColumnsPopover
-                  anchorEl={columnAnchorEl}
-                  open={isModalOpen}
-                  popoverId={modalId}
-                  onClose={handlePopoverClose}
-                  columns={resourceColumns}
-                  onColumnsChange={handleColumnsChange}
-                  columnRestrictions={RestrictedColumns}
-                />
-                <ListTable
-                  data={resourcesList}
-                  columns={visibleColumns}
-                  getRowId={getRowId}
-                  hoverHighlight={false}
-                  tableStyle={{
-                    borderBottom: '1px solid #CBD6E2',
-                    height: '100%',
-                    maxHeight: 'calc(100vh - 330px)',
-                    overflow: 'auto',
-                  }}
-                  stickyHeader={true}
-                  stickyColumnsCount={1}
-                  selectable={false}
-                  actionWidth={80}
-                  actionDisplayMode='dropdown'
-                  actionMenuItems={actionMenuItems}
-                  loading={isLoading}
-                  error={error ? 'Failed to load resource data' : undefined}
-                  rowsPerPageOptions={[25, 50, 100]}
-                  rowsPerPage={rowsPerPage}
-                  currentPage={currentPage}
-                  totalItems={ResourceList?.count || 0}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
-                  sortBy={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSortRequest}
-                  onCellEdit={handleCellEdit}
-                  onFieldChange={handleFieldChange}
-                />
+                {!viewResourceList && value && (
+                  <ResourceSubComponents
+                    permission={permission}
+                    tabMenus={tabMenus}
+                    setFilterVisibility={setFilterVisibility}
+                    handleTabChange={handleTabChange}
+                    value={value}
+                    resourceId={searchParams.get('res_id') as string}
+                    accountId={accountDetails?.data?.accountById?.r_number}
+                    appliedFilters={appliedFilters || {}}
+                    fiscalYearValue={convertedFiscalYear}
+                    accountDetails={accountDetails as AccountData}
+                    setShowFilter={setShowFilter}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    costOrder={costOrder}
+                    setCostOrder={setCostOrder}
+                    costorderBy={costorderBy}
+                    setCostorderBy={setCostOrderBy}
+                    skillOrder={skillOrder}
+                    setSkillOrder={setSkillOrder}
+                    skillOrderBy={skillOrderBy}
+                    setSkillOrderBy={setSkillOrderBy}
+                    refreshCostTrigger={refreshCostTrigger}
+                    refreshSkillTrigger={refreshSkillTrigger}
+                    attachmentsOrder={attachmentsOrder}
+                    setAttachmentsOrder={setAttachmentsOrder}
+                    attachmentsOrderBy={attachmentsOrderBy}
+                    setAttachmentsOrderBy={setAttachmentsOrderBy}
+                    notesOrder={notesOrder}
+                    setNotesOrder={setNotesOrder}
+                    notesOrderBy={notesOrderBy}
+                    setNotesOrderBy={setNotesOrderBy}
+                    refreshAttachments={refreshAttachments}
+                    refreshNotes={refreshNotes}
+                    checklistsOrder={checklistsOrder}
+                    setChecklistsOrder={setChecklistsOrder}
+                    checklistsOrderBy={checklistsOrderBy}
+                    setChecklistsOrderBy={setChecklistsOrderBy}
+                    refreshChecklists={refreshChecklists}
+                    setCount={setCount}
+                    resourceInActive={resourceInActive}
+                    setResourceInActive={setResourceInActive}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    columnAnchorEl={columnAnchorEl}
+                    searchValue={searchText}
+                    setResourceNumber={setResourceNumber}
+                  />
+                )}
+                {viewResourceList && !value && (
+                  <div className='border border-[#CBD6E2]'>
+                    <ManageColumnsPopover
+                      anchorEl={columnAnchorEl}
+                      open={isModalOpen}
+                      popoverId={modalId}
+                      onClose={handlePopoverClose}
+                      columns={resourceColumns}
+                      onColumnsChange={handleColumnsChange}
+                      columnRestrictions={RestrictedColumns}
+                    />
+                    <ListTable
+                      data={resourcesList}
+                      columns={visibleColumns}
+                      getRowId={getRowId}
+                      hoverHighlight={false}
+                      tableStyle={{
+                        borderBottom: '1px solid #CBD6E2',
+                        height: '100%',
+                        maxHeight: 'calc(100vh - 330px)',
+                        overflow: 'auto',
+                      }}
+                      stickyHeader={true}
+                      stickyColumnsCount={1}
+                      selectable={false}
+                      actionWidth={80}
+                      actionDisplayMode='dropdown'
+                      actionMenuItems={actionMenuItems}
+                      loading={isLoading}
+                      error={error ? 'Failed to load resource data' : undefined}
+                      rowsPerPageOptions={[25, 50, 100]}
+                      rowsPerPage={rowsPerPage}
+                      currentPage={currentPage}
+                      totalItems={ResourceList?.count || 0}
+                      onPageChange={handlePageChange}
+                      onRowsPerPageChange={handleRowsPerPageChange}
+                      sortBy={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSortRequest}
+                      onCellEdit={handleCellEdit}
+                      onFieldChange={handleFieldChange}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </>
