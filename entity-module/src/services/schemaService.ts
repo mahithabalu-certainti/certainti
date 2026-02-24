@@ -673,7 +673,7 @@ class SchemaService {
     const projectLevels = ["project_task", "project_resource"];
     const caseLevels = ["case"];
     if (attachmentLevel === "project") {
-      return ["account", "project"];
+      return ["project"];
     } else if (accountLevels.includes(attachmentLevel)) {
       return ["account"];
     } else if (projectLevels.includes(attachmentLevel)) {

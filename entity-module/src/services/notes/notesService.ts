@@ -132,7 +132,8 @@ export class NotesService {
           created_by_name: userEventInfo.full_name,
           event_type_rid: userEventInfo.event_type_rid,
           event_name: eventNames.CREATE,
-          descriptions: notesData.title
+          descriptions: notesData.title,
+          project_rid: notesData.attachment_level === 'project' ? notesData.attach_to : '',
         }, timelineTypes);
 
 
@@ -2185,7 +2186,7 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
           entity_name: entityTypes.NOTES,
           created_by_name: userEventInfo.full_name,
           event_type_rid: userEventInfo.event_type_rid,
-          event_name: eventNames.CREATE,
+          event_name: eventNames.UPDATE,
           descriptions: notesData.title
         }, timelineTypes);
 
