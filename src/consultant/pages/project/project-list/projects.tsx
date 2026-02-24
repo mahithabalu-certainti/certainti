@@ -205,6 +205,11 @@ export const Projects: React.FC = () => {
     return map;
   }, [accountViewEditFields]);
 
+  const projectCreateIsEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_CREATE
+  );
+
   const projectFilterFields = getAllProjectFilterFields(
     memoizedClassification.map((item) => ({
       label: item.option,
@@ -261,6 +266,7 @@ export const Projects: React.FC = () => {
           <div>
             <TextButton
               label='New'
+              disabled={!projectCreateIsEnable}
               onClick={() => handleNewProjectCLick()}
               // sx={ ...BUTTON_STYLES, width: '48px', minWidth: '48px' }
             />

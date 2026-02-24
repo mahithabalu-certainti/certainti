@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../../store/store';
 import { checkPermission, navigateWithFilters } from '../../../common-utils';
-import { MenuOption } from '../../../common-service';
+import { AllModules, MenuOption } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { ACCOUNT, CASE, TASKS } from '../../../routes';
 import {
@@ -70,8 +70,89 @@ export const HomePage: React.FC = () => {
   });
 
   // Permission Mangement
-  const { menus } = useSelector((state: RootState) => state.permission);
+  const { menus, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
   const isDashboardEnable = checkPermission(menus, MenuOption.DASHBOARD);
+
+  const isCasesEnable = checkPermission(modules, AllModules.CASES);
+  const isAccountEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isCaseTaskEnable = checkPermission(modules, AllModules.WORKBREAKDOWN);
+  const isActivityTaskEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_TASK
+  );
+
+  // Helper function to check if a card is accessible based on permissions
+  const isCardAccessible = useCallback(
+    (cardKey: string): boolean => {
+      if (cardKey === 'active_accounts') {
+        return isAccountEnable || false;
+      } else if (
+        cardKey === 'active_cases' ||
+        cardKey === 'total_completed_cases' ||
+        cardKey === 'stalled_cases'
+      ) {
+        return isCasesEnable || false;
+      } else if (
+        cardKey === 'open_tasks' ||
+        cardKey === 'due_today_overdue_tasks' ||
+        cardKey === 'upcoming_tasks_7_days' ||
+        cardKey === 'tasks_completed_this_week'
+      ) {
+        return isCaseTaskEnable || false;
+      }
+      return true;
+    },
+    [isAccountEnable, isCasesEnable, isCaseTaskEnable]
+  );
+
+  // Helper function to get access restricted message
+  const getAccessRestrictedMessage = useCallback((cardKey: string): string => {
+    let pageName = '';
+    if (cardKey === 'active_accounts') {
+      pageName = 'Account';
+    } else if (
+      cardKey === 'active_cases' ||
+      cardKey === 'total_completed_cases' ||
+      cardKey === 'stalled_cases'
+    ) {
+      pageName = 'Case';
+    } else if (
+      cardKey === 'open_tasks' ||
+      cardKey === 'due_today_overdue_tasks' ||
+      cardKey === 'upcoming_tasks_7_days' ||
+      cardKey === 'tasks_completed_this_week'
+    ) {
+      pageName = 'Task';
+    }
+    return `Access Restricted: You do not have permission to access the ${pageName} page.\nPlease contact administrator to gain access.`;
+  }, []);
+
+  // Helper function to check if a task item is accessible based on its type
+  const isTaskItemAccessible = useCallback(
+    (task: DashboardTaskDetail | PendingFollowUpDetail): boolean => {
+      const taskType = task.task_type_name?.toLowerCase();
+      if (taskType === 'activity') {
+        return isActivityTaskEnable || false;
+      } else if (taskType === 'milestone') {
+        return isCaseTaskEnable || false;
+      }
+      // If type is unknown, allow access if user has any task permission
+      return isCaseTaskEnable || isActivityTaskEnable || false;
+    },
+    [isCaseTaskEnable, isActivityTaskEnable]
+  );
+
+  // Helper function to get tooltip message for restricted task items
+  const getTaskItemTooltipMessage = useCallback(
+    (task: DashboardTaskDetail | PendingFollowUpDetail): string => {
+      const taskType = task.task_type_name?.toLowerCase();
+      const typeName = taskType === 'activity' ? 'Activity' : 'Case';
+      return `Access Restricted: You do not have permission to access ${typeName} tasks.\nPlease contact administrator to gain access.`;
+    },
+    []
+  );
 
   const { data: countDetails, isLoading: isCountsLoading } =
     useGetDashboardCountDetails('all');
@@ -235,8 +316,14 @@ export const HomePage: React.FC = () => {
             operator: 'equals',
             value: t.r_number,
           },
+          {
+            filterKey: 'attach_to_name',
+            type: 'text',
+            operator: 'equals',
+            value: t.attach_to_name,
+          },
         ],
-        { openTaskId: t.rid }
+        { openTaskId: t.rid, taskType: t.task_type_name?.toLowerCase() }
       );
     },
     [navigate]
@@ -251,7 +338,14 @@ export const HomePage: React.FC = () => {
       if (cardKey === 'active_accounts') {
         navigateWithFilters(navigate, ACCOUNT, []);
       } else if (cardKey === 'active_cases') {
-        navigateWithFilters(navigate, CASE, []);
+        navigateWithFilters(navigate, CASE, [
+          {
+            filterKey: 'status_rid',
+            type: 'enum',
+            operator: 'in',
+            value: ['Audit Review', 'In Progress', 'Submitted'],
+          },
+        ]);
       } else if (cardKey === 'total_completed_cases') {
         navigateWithFilters(navigate, CASE, [
           {
@@ -271,62 +365,82 @@ export const HomePage: React.FC = () => {
           },
         ]);
       } else if (cardKey === 'open_tasks') {
-        navigateWithFilters(navigate, TASKS, [
-          {
-            filterKey: 'status_rid',
-            type: 'enum',
-            operator: 'in',
-            value: ['To Do', 'In Progress'],
-          },
-        ]);
+        navigateWithFilters(
+          navigate,
+          TASKS,
+          [
+            {
+              filterKey: 'status_rid',
+              type: 'enum',
+              operator: 'in',
+              value: ['To Do', 'In Progress'],
+            },
+          ],
+          { taskType: 'milestone' }
+        );
       } else if (cardKey === 'due_today_overdue_tasks') {
-        navigateWithFilters(navigate, TASKS, [
-          {
-            filterKey: 'effective_end_datetime',
-            type: 'date',
-            operator: 'before',
-            value: tomorrowDate,
-          },
-          {
-            filterKey: 'status_rid',
-            type: 'enum',
-            operator: 'in',
-            value: ['To Do', 'In Progress'],
-          },
-        ]);
+        navigateWithFilters(
+          navigate,
+          TASKS,
+          [
+            {
+              filterKey: 'effective_end_datetime',
+              type: 'date',
+              operator: 'before',
+              value: tomorrowDate,
+            },
+            {
+              filterKey: 'status_rid',
+              type: 'enum',
+              operator: 'in',
+              value: ['To Do', 'In Progress'],
+            },
+          ],
+          { taskType: 'milestone' }
+        );
       } else if (cardKey === 'upcoming_tasks_7_days') {
-        navigateWithFilters(navigate, TASKS, [
-          {
-            filterKey: 'effective_start_datetime',
-            type: 'date',
-            operator: 'between',
-            value: [tomorrowDate, seventhDayDate],
-          },
-          {
-            filterKey: 'status_rid',
-            type: 'enum',
-            operator: 'in',
-            value: ['To Do', 'In Progress'],
-          },
-        ]);
+        navigateWithFilters(
+          navigate,
+          TASKS,
+          [
+            {
+              filterKey: 'effective_start_datetime',
+              type: 'date',
+              operator: 'between',
+              value: [tomorrowDate, seventhDayDate],
+            },
+            {
+              filterKey: 'status_rid',
+              type: 'enum',
+              operator: 'in',
+              value: ['To Do', 'In Progress'],
+            },
+          ],
+          { taskType: 'milestone' }
+        );
       } else if (cardKey === 'tasks_completed_this_week') {
         const startDate = dayjs().startOf('week').format('YYYY-MM-DD');
         const endDate = dayjs().endOf('week').format('YYYY-MM-DD');
 
-        navigateWithFilters(navigate, TASKS, [
-          {
-            filterKey: 'status_rid',
-            type: 'enum',
-            operator: 'equals',
-            value: 'Completed',
-          },
-          {
-            filterKey: 'effective_end_datetime',
-            type: 'date',
-            operator: 'between',
-            value: [startDate, endDate],
-          },
-        ]);
+        navigateWithFilters(
+          navigate,
+          TASKS,
+          [
+            {
+              filterKey: 'status_rid',
+              type: 'enum',
+              operator: 'equals',
+              value: 'Completed',
+            },
+            {
+              filterKey: 'effective_end_datetime',
+              type: 'date',
+              operator: 'between',
+              value: [startDate, endDate],
+            },
+          ],
+          { taskType: 'milestone' }
+        );
       }
     },
     [navigate]
@@ -349,15 +463,22 @@ export const HomePage: React.FC = () => {
           ? Array.from({ length: 8 }).map((_, index) => (
               <ReportCard key={index} isLoading={true} />
             ))
-          : countDetails?.map((card, index) => (
-              <ReportCard
-                key={card.key ?? index}
-                title={card.name}
-                value={card.count}
-                color={PROJECT_COLORS[index % PROJECT_COLORS.length]}
-                onClick={() => handleCardClick(card.key)}
-              />
-            ))}
+          : countDetails?.map((card, index) => {
+              const isAccessible = isCardAccessible(card.key);
+              return (
+                <ReportCard
+                  key={card.key ?? index}
+                  title={card.name}
+                  value={card.count}
+                  color={PROJECT_COLORS[index % PROJECT_COLORS.length]}
+                  onClick={() => handleCardClick(card.key)}
+                  disabled={!isAccessible}
+                  tooltipMessage={
+                    !isAccessible ? getAccessRestrictedMessage(card.key) : ''
+                  }
+                />
+              );
+            })}
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
@@ -493,6 +614,8 @@ export const HomePage: React.FC = () => {
           exportKey='pendingFollowUps'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           itemRenderer={(item) => {
             const priorityBadge = item.priority_name
               ? getPriorityBadge(item.priority_name)
@@ -592,6 +715,8 @@ export const HomePage: React.FC = () => {
           exportKey='overdueApprovals'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           itemRenderer={(item: OverdueApprovalsDetail) => {
             const daysOverdue = Math.max(
               0,
@@ -642,6 +767,8 @@ export const HomePage: React.FC = () => {
           exportKey='upcomingTasks'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -665,6 +792,8 @@ export const HomePage: React.FC = () => {
           exportKey='dueTodayOverdueTasks'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -694,6 +823,8 @@ export const HomePage: React.FC = () => {
           exportKey='openTasks'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,
@@ -717,6 +848,8 @@ export const HomePage: React.FC = () => {
           exportKey='completedTasksThisWeek'
           handleExport={handleExport}
           onItemClick={handleTaskItemClick}
+          isItemDisabled={(item) => !isTaskItemAccessible(item)}
+          getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
             description: t.case_name,

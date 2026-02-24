@@ -98,7 +98,7 @@ export const sideNavAdminItems: AdminNavItem[] = [
       },
       {
         id: MenuOption.DATA_MAPPER,
-        name: 'RD Form Configurations',
+        name: 'RD Forms',
         icon: DataMapperIcon,
         link: DATA_MAPPER,
         matchLink: DATA_MAPPER,
