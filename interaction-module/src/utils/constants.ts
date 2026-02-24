@@ -43,6 +43,11 @@ export const interactionType = {
   RD: "RD",
   GREENENERGY: "Green Energy",
 };
+export const interactionAssessmentSourceType = {
+  RD: "RD Assessment",
+  FPA: "Four Part Assessment",
+};
+
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
 export const SCHEMANAME_PREFIX = "trd365_";
@@ -118,7 +123,10 @@ export const filtersColumns : Record<string, string> =
     interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
     createdAt : "createdAt",
-    template_name : "template_name"
+    template_name : "template_name",
+    interaction_assessment_source_rid : "interaction_assessment_source_rid",
+    interaction_batch_id : "interaction_batch_id",
+    four_part_r_number : "four_part_r_number"
   }
 
   export const templatefiltersColumns : Record<string, string> =
@@ -163,7 +171,10 @@ export const filtersColumns : Record<string, string> =
     createdAt:"datetime",
     template_name : "string",
     created_user_name : "string",
-    modified_user_name : "string"
+    modified_user_name : "string",
+    interaction_assessment_source_rid : "string",
+    interaction_batch_id : "string",
+    four_part_r_number : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -196,7 +207,8 @@ export const mainTableFilters : Record<any, any> = {
   modified_by: "modified_by",
   modified_user_name:"modified_user_name",
   project_name : "project_name",
-  project_code : "project_code"
+  project_code : "project_code",
+  interaction_assessment_source_name : "interaction_assessment_source_name"
 }
 
 export const STATUS_MESSAGE = {
@@ -353,6 +365,19 @@ export const rawQueries = {
     }
     return `
     SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
+  },
+
+  fetchInteractionAssessmentSource(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
+    return `
+    SELECT rid, interaction_assessment_source_name  FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source WHERE rid IN (${ids})`;
   },
 
   fetchActiveStatus() {
@@ -1021,6 +1046,14 @@ export const rawQueries = {
       LIMIT 1
     `;
   },
+  getInteractionAssessmentSourceByNameQuery() {
+    return `
+      SELECT rid, interaction_assessment_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source 
+      WHERE interaction_assessment_source_name = :type 
+      LIMIT 1
+    `;
+  },
   getInteractionLevelNameByIdQuery() {
     return `
       SELECT interaction_level_name 
@@ -1115,6 +1148,32 @@ export const rawQueries = {
   fetchEmailTemplateByCategory (categoryName : string) {
     return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
   },
+  fetchFpaRid (schemaName : string, transactionId : string) {
+    return `SELECT rid FROM ${schemaName}.four_part_assessment WHERE transaction_id = '${transactionId}'`
+  },
+  fetchBatchInInteraction(schemaName : string) {
+    return `
+    SELECT interaction_batch_id 
+    FROM 
+    (
+    SELECT interaction_batch_id, 
+    RANK() OVER(PARTITION BY interaction_batch_id ORDER BY created_datetime DESC) AS rank
+    FROM
+    ${schemaName}.interactions
+    )
+    WHERE
+    rank = 1
+    `
+  },
+  fetchBatchInInteractionByTransId(schemaName : string, transactionId : string) {
+    return `
+    SELECT interaction_batch_id 
+    FROM
+    ${schemaName}.interactions
+    WHERE
+    transaction_id = '${transactionId}'
+    `
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

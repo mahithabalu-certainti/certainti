@@ -144,6 +144,10 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY p.r_number ${sortBy}`;
   else if (sort === filtersColumns.createdAt)
     sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else if (sort === filtersColumns.four_part_r_number)
+    sortValue = `ORDER BY fpr.r_number ${sortBy}`
+  else if (sort === filtersColumns.interaction_batch_id)
+    sortValue = `ORDER BY i.interaction_batch_id ${sortBy}`
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -175,7 +179,8 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,pf.project_name,
+            pf.project_code,pf.project_name, fpr.r_number AS four_part_r_number, i.interaction_batch_id,
+            i.interaction_assessment_source_rid,
             CASE 
                 WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
                 ELSE pf.fiscal_year
@@ -202,6 +207,7 @@ export const fetchInteractionForProjectLevelQuery = (
             END AS has_account_recipient
             FROM
             ${schemaName}.interactions i
+            LEFT JOIN ${schemaName}.four_part_assessment fpr ON fpr.rid = i.four_part_assessment_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
             LEFT JOIN LATERAL (
     SELECT kcd.key_contact_name, kcd.key_contact_email
@@ -266,7 +272,10 @@ export const fetchInteractionForProjectLevelQuery = (
         'project_code', i.project_code,
         'project_name', i.project_name, 
         'has_email_recipient', i.has_email_recipient,
-        'has_account_recipient', i.has_account_recipient
+        'has_account_recipient', i.has_account_recipient,
+        'interaction_batch_id', i.interaction_batch_id,
+        'four_part_r_number', i.four_part_r_number,
+        'interaction_assessment_source_rid', i.interaction_assessment_source_rid
         ${aggregatedQuery}
         ) ) AS interactions
 
@@ -650,6 +659,10 @@ const filterForInteractions = (
             else if (filteredColumns == "project_name") dynamicReference = `pf`;
             else if (filteredColumns == "account_name") dynamicReference = `a`;
             else if (filteredColumns == "fiscal_year") dynamicReference = `pf`;
+            else if (filteredColumns == 'four_part_r_number') {
+              dynamicReference = `fpr`
+              filteredColumns = "r_number"
+            }
             else if (filteredColumns == "parent_interaction_rid") {
               dynamicReference = `p`;
               filteredColumns = "r_number";

@@ -32,6 +32,7 @@ export interface ICreateInteraction {
   }
   recipient_name? : any,
   recipient_email? : any
+  interaction_assessment_source_rid? : string
 }
 
 export interface IProject {
@@ -176,4 +177,33 @@ export interface ICreateTemplateInteraction {
     question_seq_num?: string;
   }[];
 
+}
+export interface ProjectMetadata {
+  projectId : string
+  companyId : string
+  jurisdiction : string
+}
+
+export interface FourPartAssessment {
+  permitted_purpose: string
+  technological_uncertainty: string
+  process_of_experimentation: string
+  technological_in_nature: string
+  status: string
+  rationale: string
+  summary_judgment: string
+  rd_potential_category: string
+}
+
+export interface Assessment {
+  tracker_one_liner : string
+  project_metadata : ProjectMetadata
+}
+
+export interface FourPartAssessmentResponse {
+  assessment : Assessment
+  four_part_assessment : FourPartAssessment
+  summary_judgment : string
+  rd_potential_category : string
+  follow_up_questions : string[]
 }
