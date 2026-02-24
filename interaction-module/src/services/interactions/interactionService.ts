@@ -3474,7 +3474,7 @@ export class InteractionService {
     }
   }
 
-  async sendEmailInBatch() {
+   async sendEmailInBatch() {
     const mainDb = await this.getMainDb();
     let fetchEmailInfo : any = await mainDb.query(rawQueries.fetchEmailInfo);
     logMessage(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
