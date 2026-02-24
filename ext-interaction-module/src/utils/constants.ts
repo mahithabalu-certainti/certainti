@@ -187,6 +187,9 @@ export const STATUS_MESSAGE = {
   interactionFetchedSuccess: "Interactions fetched successfully",
   dataNotFound: "Data not found",
   historyResponseFetched: "Interaction Response history fetched successfully",
+  otpSentSuccessfully : "OTP email sent successfully",
+  otpFailedToSend : "Failed to send OTP. Please try again.",
+  noConfigurationFound : "Configuration not found. Kindly contact Admin."
 };
 
 export const rawQueries = {
@@ -195,20 +198,34 @@ export const rawQueries = {
     mainSequelize: Sequelize
   ): Promise<any> {
     let checkIsSeparateDb: any = await mainSequelize.query(
-      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+      `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
-      SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      SELECT rid, r_number, parent_account_rid,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent , a.subscription_id, a.parent_account_rid
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
     }
+  },
+  getAccountDetails(accountRid: string) {
+    return `SELECT rid, r_number, subscription_id, is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+  },
+  async fetchSettings(
+    schemaName: string,
+    orgDb: Sequelize,
+    parentAccountID: string
+  ) {
+    const query = `SELECT rid, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details WHERE account_rid = '${parentAccountID}'`;
+    const accountSettigs = await orgDb.query(query, {
+      type: "SELECT",
+    });
+    return accountSettigs;
   },
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
