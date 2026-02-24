@@ -48,7 +48,7 @@ interface MappingItem {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
@@ -83,11 +83,11 @@ const DataMapperConfig: React.FC = () => {
     if (mappingData?.mappings) {
       const sanitizedMappings = (mappingData.mappings as MappingItem[]).map(
         (mapping) => {
-          // If field_id is empty, force status to 'inactive'
+          // If field_id is empty, force status to 'rejected'
           if (!mapping.field_id || mapping.field_id.trim() === '') {
             return {
               ...mapping,
-              status: 'inactive',
+              status: 'rejected',
             };
           }
           return mapping;
@@ -220,11 +220,11 @@ const DataMapperConfig: React.FC = () => {
         if (data?.data) {
           const sanitizedMappings = (data.data as MappingItem[]).map(
             (mapping) => {
-              // If field_id is empty, force status to 'inactive'
+              // If field_id is empty, force status to 'rejected'
               if (!mapping.field_id || mapping.field_id.trim() === '') {
                 return {
                   ...mapping,
-                  status: 'inactive',
+                  status: 'rejected',
                 };
               }
               return mapping;
@@ -256,7 +256,7 @@ const DataMapperConfig: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {`RD Form Configuration ${mappingData?.formDetail?.r_number ? `> ${mappingData?.formDetail?.r_number || ''}` : ''}`}
+                {`RD Forms ${mappingData?.formDetail?.r_number ? `> ${mappingData?.formDetail?.r_number || ''}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
@@ -341,12 +341,14 @@ const DataMapperConfig: React.FC = () => {
             <div className='flex items-center justify-between align-middle px-10 h-[30px] border border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
               <span>Data Mapping</span>
               <TextButton
-                label='Re-Compute'
+                label='Re-Map Fields'
                 loading={isRecomputing}
                 onClick={handleRecompute}
+                toolTipEnabled={true}
+                tooltipValue='Please correct the first field before re-running the field mapping.'
                 sx={{
-                  width: '95px',
-                  minWidth: '95px',
+                  width: '105px',
+                  minWidth: '105px',
                   fontSize: '13px',
                   fontWeight: 400,
                 }}

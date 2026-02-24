@@ -177,10 +177,10 @@ const Cases: React.FC = () => {
     AllPermissions.CASES_VIEW_EDIT
   );
 
-  // const isCaseCreateEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CASES_CREATE
-  // );
+  const isCaseCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_CREATE
+  );
 
   const isCasesExportEnable = checkPermission(
     permission,
@@ -320,7 +320,11 @@ const Cases: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <TextButton label='New' onClick={handleCreateNewCase} />
+          <TextButton
+            label='New'
+            disabled={!isCaseCreateEnable}
+            onClick={handleCreateNewCase}
+          />
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'

@@ -104,6 +104,43 @@ export const Tasks: React.FC = () => {
     AllModules.ACTIVITIES_TASK
   );
 
+  // Set initial tab based on taskType from navigation state
+  useEffect(() => {
+    const navState = location.state as NavFilterState & {
+      taskType?: string;
+    };
+    const incomingTaskType = navState?.taskType;
+
+    if (incomingTaskType) {
+      const newParams = new URLSearchParams(searchParams);
+      // Normalize taskType to match tab values
+      const normalizedType = incomingTaskType.toLowerCase();
+
+      if (
+        normalizedType === 'milestone' &&
+        isWorkBreakdownEnable &&
+        tabParam !== 'milestone'
+      ) {
+        newParams.set('tab', 'milestone');
+        setSearchParams(newParams, { replace: true });
+      } else if (
+        normalizedType === 'activity' &&
+        isActivityTaskEnable &&
+        tabParam !== 'activity'
+      ) {
+        newParams.set('tab', 'activity');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [
+    location.state,
+    searchParams,
+    setSearchParams,
+    isWorkBreakdownEnable,
+    isActivityTaskEnable,
+    tabParam,
+  ]);
+
   const tabs = useMemo(() => {
     const list = [];
     if (isWorkBreakdownEnable) {
@@ -294,8 +331,6 @@ export const Tasks: React.FC = () => {
   }, [tabParam, statusesQuery.data, activityStatusesQuery.data]);
 
   useEffect(() => {
-    if (tabParam !== 'milestone') return;
-
     const navState = location.state as NavFilterState | null;
     const incomingFilters: NavFilter[] = navState?.filters ?? [];
 
