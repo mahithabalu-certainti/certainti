@@ -2,21 +2,25 @@ import { useQuery } from '@tanstack/react-query';
 import { accountServiceApi } from '../../../api/api';
 import { TimelineListApiResponse, TimelineParams } from '../../types/timeline';
 
-export const getTimelineListUrl = (
-  nextOffset: string | number,
-  limit: number,
-  accountId: string,
-  entityType: string
-): string => {
-  return `/api/accounts/fetchTimelines?entityType=${entityType}&nextOffset=${nextOffset}&limit=${limit}&accountId=${accountId}`;
+export const getTimelineListUrl = (params: TimelineParams): string => {
+  const queryParams = new URLSearchParams({
+    entityType: params.entityType,
+    nextOffset: String(params.nextOffset),
+    limit: String(params.limit),
+  });
+
+  if (params.entityType === 'project' && params.project_rid) {
+    queryParams.append('projectRid', params.project_rid);
+  } else if (params.entityType === 'case' && params.case_rid) {
+    queryParams.append('caseRid', params.case_rid);
+  } else if (params.account_rid) {
+    queryParams.append('accountId', params.account_rid);
+  }
+
+  return `/api/accounts/fetchTimelines?${queryParams.toString()}`;
 };
 export const fetchTimelineList = async (params: TimelineParams) => {
-  const url = getTimelineListUrl(
-    params.nextOffset,
-    params.limit,
-    params.account_rid,
-    params.entityType
-  );
+  const url = getTimelineListUrl(params);
   const response = await accountServiceApi.get<TimelineListApiResponse>(url);
   return response.data;
 };
@@ -31,6 +35,9 @@ export const useTimelineList = (
     queryFn: () => fetchTimelineList(params),
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
-    enabled: !!params.account_rid && !!params.entityType && isTimeLineView,
+    enabled:
+      !!(params.account_rid || params.project_rid || params.case_rid) &&
+      !!params.entityType &&
+      !!isTimeLineView,
   });
 };

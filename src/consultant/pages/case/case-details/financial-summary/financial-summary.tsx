@@ -113,11 +113,11 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
   );
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const initialTab = useMemo(() => {
-    if (isSummaryViewEnable) return 'overview';
+    if (isSummaryViewEnable) return 'summary';
     if (isStatewiseSummaryViewEnable) return 'state_wise_summary';
     if (isProjectCostViewEnable) return 'project_cost';
     if (isResourceCostViewEnable) return 'resource_cost';
-    return 'overview';
+    return 'summary';
   }, [
     isSummaryViewEnable,
     isStatewiseSummaryViewEnable,
@@ -136,7 +136,10 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab, searchParams]);
 
-  const tabParam = searchParams.get('tab') || initialTab;
+  const tabParam =
+    searchParams.get('tab') === 'overview'
+      ? 'summary'
+      : searchParams.get('tab') || initialTab;
 
   const fiscalYearOptions = getFiscalYears(26);
   const resourceTypeOptions = useGetResourceType();
@@ -313,14 +316,15 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
                 : ''
             }`}
           >
-            {tabParam === 'summary' && isSummaryViewEnable && (
-              <Summary
-                fiscalYear={fiscalYearValue}
-                accountDetails={accountDetails}
-                caseRid={caseRid}
-                accountId={accountId}
-              />
-            )}
+            {(tabParam === 'summary' || tabParam === 'overview') &&
+              isSummaryViewEnable && (
+                <Summary
+                  fiscalYear={fiscalYearValue}
+                  accountDetails={accountDetails}
+                  caseRid={caseRid}
+                  accountId={accountId}
+                />
+              )}
             {tabParam === 'state_wise_summary' &&
               isStatewiseSummaryViewEnable && (
                 <StateWiseSummary

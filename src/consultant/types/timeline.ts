@@ -22,6 +22,8 @@ export interface TimelineListApiResponse {
 export interface TimelineParams {
   nextOffset: string | number;
   limit: number;
-  account_rid: string;
+  account_rid?: string;
+  project_rid?: string;
+  case_rid?: string;
   entityType: string;
 }

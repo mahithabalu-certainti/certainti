@@ -845,7 +845,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           />
           {isTimeLineView ? (
             <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
-              <Timeline entitytype='cases' />
+              <Timeline entitytype='case' />
             </div>
           ) : (
             <>

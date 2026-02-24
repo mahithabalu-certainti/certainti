@@ -174,13 +174,15 @@ const LINE_LEFT = TIME_COL_W + DOT_COL_W / 2;
 
 const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
   const [searchParams] = useSearchParams();
-  const { accountid } = useParams();
-  const accountId = searchParams.get('accountID');
+  const { accountid, projectid, caseId } = useParams();
+  // const accountId = searchParams.get('accountID');
 
   const params: TimelineParams = {
     nextOffset: 1,
     limit: 10,
-    account_rid: accountid || accountId || '',
+    account_rid: entitytype === 'account' ? accountid : undefined,
+    project_rid: entitytype === 'project' ? projectid : undefined,
+    case_rid: entitytype === 'case' ? caseId : undefined,
     entityType: entitytype,
   };
   const isTimeLineView = searchParams.get('timelineview') === 'true';
