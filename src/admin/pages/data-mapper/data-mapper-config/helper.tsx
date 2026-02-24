@@ -430,7 +430,14 @@ interface ConditionalExpression {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
+  type:
+    | 'chip'
+    | 'operator'
+    | 'manual'
+    | 'function'
+    | 'number'
+    | 'conditional'
+    | 'bracket';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
@@ -539,12 +546,14 @@ export function validateMappingItem(
         current.type === 'chip' ||
         current.type === 'manual' ||
         current.type === 'number' ||
-        current.type === 'function';
+        current.type === 'function' ||
+        current.type === 'bracket';
       const isNextValue =
         next.type === 'chip' ||
         next.type === 'manual' ||
         next.type === 'number' ||
-        next.type === 'function';
+        next.type === 'function' ||
+        next.type === 'bracket';
 
       if (isCurrentValue && isNextValue) {
         errors.targetError = 'Missing operator between Object IDs';
