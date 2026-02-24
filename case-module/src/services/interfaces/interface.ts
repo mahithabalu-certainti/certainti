@@ -855,6 +855,12 @@ export interface IDataMapperService {
     errorMessage?: string;
     data?: any;
   }>;
+    updateDataMapperFormStatus(data: any, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
 }
 
 export interface IRDFormMapperService {
