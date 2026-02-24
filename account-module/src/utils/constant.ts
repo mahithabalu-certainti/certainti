@@ -3659,7 +3659,35 @@ export const rawQueries = {
     WHERE table_schema = '${schemaName}'
     AND table_name = 'cases'
     )`
-  }     
+  },
+  getCreateFourPartAssessmentTableQuery (schemaName : string) {
+    return `
+    CREATE TABLE IF NOT EXISTS ${schemaName}.four_part_assessment(
+    rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number VARCHAR(20) UNIQUE DEFAULT ('FPA-' || LPAD(nextval('"${schemaName}".four_part_assessment_sequence')::text, 10, '0')),
+    created_by VARCHAR(50),
+    modified_by VARCHAR(50),
+    created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+    modified_datetime TIMESTAMP,
+    account_rid VARCHAR(50),
+    project_rid VARCHAR(50),
+    project_fiscal_rid VARCHAR(50),
+    tracker_one_liner VARCHAR,
+    project_metadata VARCHAR,
+    permitted_purpose VARCHAR,
+    technological_uncertainty VARCHAR,
+    technological_in_nature VARCHAR,
+    process_of_experimentation VARCHAR,
+    rationale VARCHAR,
+    status VARCHAR,
+    summary_judgment VARCHAR,
+    rd_potential_category VARCHAR,
+    transaction_id);
+    `
+  },
+  getFourPartAssessmentSequenceQuery (schemaName : string) {
+    return `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".four_part_assessment_sequence START 1`
+  }
 };
 
 export const DEFAULT_ACCOUNT_DETAILS = {

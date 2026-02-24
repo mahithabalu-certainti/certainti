@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, UUIDV4, where } from "sequelize";
 import {
+  FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
   ICreateTemplateInteraction,
@@ -2439,6 +2440,26 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }>;
     return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
   }
+  async getInteractionAssessmentSourceByType(type: string) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const interactionSource = await this.mainDbSequelize.query(
+     rawQueries.getInteractionAssessmentSourceByNameQuery(),
+      {
+        replacements: { type },
+        type: "SELECT",
+      }
+    );
+
+    const sourceArr = interactionSource as Array<{
+      rid: string;
+      interaction_assessment_source_name: string;
+    }>;
+    return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
+  }
    async getInteractionLevelByRid(type: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
@@ -3965,9 +3986,74 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       throw new Error("Error fetching account info: " + (err as Error).message);
     }
   }
-   
 
-  
+  async fetchAccountFpaInfo(transactionId: string, accountNumber: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const [accountFpaInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchFpaRid(schemaName, transactionId),
+        { type: "SELECT" }
+      );
+
+      return accountFpaInfo;
+    } catch (err) {
+      logMessage(`Error fetching account info: ${err}`);
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+  async fetchInteractionBatch(accountNumber: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const interactionBatchInfo : any = await this.orgDbSequelize.query(
+        rawQueries.fetchBatchInInteraction(schemaName),
+        { type: "SELECT" }
+      );
+
+      return interactionBatchInfo[0][0].interaction_batch_id
+    } catch (err) {
+      logMessage(`Error fetching account info: ${err}`);
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId : string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const interactionBatchInfo : any = await this.orgDbSequelize.query(
+        rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
+        { type: "SELECT" }
+      );
+
+      return interactionBatchInfo[0][0].interaction_batch_id
+    } catch (err) {
+      logMessage(`Error fetching account info: ${err}`);
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+
   async updateAIProcessed(
     accountNumber: string,
     projectFiscalRid: string,
@@ -4818,6 +4904,27 @@ const existingTemplate = await InteractionTemplate.findOne({
       return templateDetails;
     }
 
+  async createFourPartAssessment (fourPartAssessment : FourPartAssessmentResponse, accountNumber : string, project_id : string, company_id : string, transaction_id : string) {
+    const {FourPartAssessment} = await this.interactionModelService.getModels(accountNumber);
+    await FourPartAssessment.create({
+      account_rid : company_id,
+      project_fiscal_rid : project_id,
+      created_by : process.env.SYSTEM_USER_ID!,
+      created_datetime : new Date(),
+      permitted_purpose : fourPartAssessment.four_part_assessment.permitted_purpose,
+      process_of_experimentation : fourPartAssessment.four_part_assessment.process_of_experimentation,
+      project_metadata : JSON.stringify(fourPartAssessment.assessment.project_metadata),
+      rationale : fourPartAssessment.four_part_assessment.rationale,
+      rd_potential_category : fourPartAssessment.four_part_assessment.rd_potential_category,
+      status : fourPartAssessment.four_part_assessment.status,
+      summary_judgment : fourPartAssessment.four_part_assessment.summary_judgment,
+      technological_in_nature : fourPartAssessment.four_part_assessment.technological_in_nature,
+      technological_uncertainty : fourPartAssessment.four_part_assessment.technological_uncertainty,
+      tracker_one_liner : fourPartAssessment.assessment.tracker_one_liner,
+      transaction_id : transaction_id
+    })
+}
+
   /**
    * Bulk fetch projects that do NOT have key contacts
    * Returns a Set of project fiscal RIDs that have no key contacts
@@ -4881,8 +4988,6 @@ const existingTemplate = await InteractionTemplate.findOne({
       return new Set();
     }
   }
-
-
 }
 
 

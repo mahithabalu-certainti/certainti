@@ -112,6 +112,7 @@ class SchemaService {
       await this.createInteractionHistoryTable(schemaName, sequelize);
       await this.createInteractionResponseTable(schemaName, sequelize);
       await this.createInteractionAttachments(schemaName, sequelize);
+      await this.createFourPartAssessmentTable(schemaName, sequelize);
       await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
       await this.createAIAssesmentAudit(schemaName, sequelize);
@@ -189,6 +190,15 @@ class SchemaService {
         rawQueries.getAiAssessmentQreIndexQuery(schemaName, field)
       );
     }
+  }
+
+  private async createFourPartAssessmentTable (schemaName : string, sequelize : Sequelize) {
+    await sequelize.query(
+      rawQueries.getFourPartAssessmentSequenceQuery(schemaName)
+    )
+    await sequelize.query(
+      rawQueries.getCreateFourPartAssessmentTableQuery(schemaName)
+    )
   }
 
   private async createAIAssesmentAudit(
