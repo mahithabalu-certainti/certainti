@@ -61,6 +61,7 @@ class SettingsService {
   }> {
     const org = await OrganizationLicenses.findOne({
       attributes: [
+        "auto_send_four_part_assessment",
         "auto_send_interaction",
         "auto_access_rd",
         "rid"
