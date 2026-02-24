@@ -88,6 +88,7 @@ export class WebHookService {
           email,
           this.graphClient
         );
+        logMessage(`[Webhook Handler] Final result for messageId ${messageId}: ${JSON.stringify(finalResult)}`);
 
         mailProcessedResults = finalResult;
 
@@ -773,7 +774,7 @@ export class WebHookService {
 
     const subject = message.subject;
     if (!subject.toLowerCase().includes("interaction invitation") && !subject.toLowerCase().includes("reminder: r&d credits claims process interaction")) {
-      this.logger.error("Subject is not related to interaction. Skipping.");
+      logMessage("Subject is not related to interaction. Skipping.");
       return {
         success: false,
       };
