@@ -1197,6 +1197,11 @@ const updateDataMapperMappingSchema = Joi.object({
   mappings: Joi.array().required()
 })
 
+const updateDataMapperFormSchema = Joi.object({
+  form_rid: Joi.string().required(),
+  form_status: Joi.string().valid("accept", "reject").required()
+})
+
 const updateDataMapperSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   form_name: Joi.string().max(120).optional()
@@ -1368,5 +1373,6 @@ export {
   cancelActivityMeetingSchema,
   completeActivityMeetingSchema,
   caseCloseSchema,
-  validateFile
+  validateFile,
+  updateDataMapperFormSchema
 };

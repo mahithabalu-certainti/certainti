@@ -33,6 +33,7 @@ interface DataMapperFormsAttributes {
     error_message?: string | null;
     field_array?: any | null;
     form_type?: string | null;
+    descriptions?: string | null;
 }
 
 export interface DataMapperFormsCreationAttributes
@@ -48,6 +49,7 @@ export interface DataMapperFormsCreationAttributes
         | "error_message"
         | "field_array"
         | "form_type"
+        | "descriptions"
     > { }
 
 export class DataMapperForms
@@ -80,6 +82,8 @@ export class DataMapperForms
 
     public error_message?: string | null;
     public form_type?: string | null;
+    public descriptions?: string | null | undefined;
+    public form_status_rid?: string | null ;
 
     static initialize(
         sequelize: Sequelize,
@@ -171,7 +175,11 @@ export class DataMapperForms
                 form_type: {
                     type: DataTypes.STRING(120),
                     allowNull: true,
-                }
+                },
+                descriptions: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                },
             },
             {
                 sequelize,
