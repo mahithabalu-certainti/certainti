@@ -317,8 +317,8 @@ const listTimeLineEntriesSchema = Joi.object({
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
   entityType: Joi.string().required(),
   accountId: Joi.string().required(),
-  projectRid: Joi.string().optional().allow('', null),
-  caseRid: Joi.string().optional().allow('', null)
+  projectId: Joi.string().optional().allow('', null),
+  caseId: Joi.string().optional().allow('', null)
 });
 export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema, colorCodesSchema ,
   listOrgAccountSchema,listTimeLineEntriesSchema

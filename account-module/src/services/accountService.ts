@@ -2254,7 +2254,7 @@ async accountList(
     }
   }
 
-  listTimeLineEntries = async (value: { nextOffset: string; limit: string; entityType: string; accountId: string, projectRid?: string, caseRid?: string }): Promise<{
+  listTimeLineEntries = async (value: { nextOffset: string; limit: string; entityType: string; accountId: string, projectId?: string, caseId?: string }): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -2281,14 +2281,14 @@ async accountList(
           limit: limitNum
         };
 
-        if (value.entityType === 'project' && value.projectRid) {
+        if (value.entityType === 'project' && value.projectId) {
           query = rawQueries.fetchProjectTimelineEntries(schemaName);
           countQueryStr = rawQueries.fetchProjectTimelineEntriesCount(schemaName);
-          replacements.projectRid = value.projectRid;
-        } else if (value.entityType === 'case' && value.caseRid) {
+          replacements.projectId = value.projectId;
+        } else if (value.entityType === 'case' && value.caseId) {
           query = rawQueries.fetchCaseTimelineEntries(schemaName);
           countQueryStr = rawQueries.fetchCaseTimelineEntriesCount(schemaName);
-          replacements.caseRid = value.caseRid;
+          replacements.caseId = value.caseId;
         } else {
           // Default to account timeline
           query = rawQueries.fetchAccountTimelineEntries(schemaName);

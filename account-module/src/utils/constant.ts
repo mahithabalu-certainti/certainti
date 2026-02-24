@@ -453,14 +453,14 @@ export const rawQueries = {
     return `
       SELECT count(*) as count
       FROM "${schemaName}".project_timeline
-      WHERE project_rid = :projectRid
+      WHERE project_rid = :projectId
     `;
   },
   fetchCaseTimelineEntriesCount(schemaName: string) {
     return `
       SELECT count(*) as count
       FROM "${schemaName}".case_timeline
-      WHERE case_rid = :caseRid
+      WHERE case_rid = :caseId
     `;
   },
   insertTimeLine(schemaName: string,tableName: string)
