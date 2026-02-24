@@ -97,7 +97,7 @@ export const eventNames = {
 }
 
 export const eventTypes = {
-   UI_HANDLER: "ui handler",
+   UI_HANDLER: "web",
 }
 
 export const STATUS_MESSAGE = {

@@ -86,7 +86,7 @@ export const eventNames = {
 }
 
 export const eventTypes = {
-   UI_HANDLER: "ui handler",
+   UI_HANDLER: "web",
 }
 export const sendEmailCount = 25
 export const OTP_EXPIRY_MINUTES = 10;
