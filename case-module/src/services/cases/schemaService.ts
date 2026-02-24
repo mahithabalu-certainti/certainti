@@ -3341,8 +3341,6 @@ class CaseSchemaService {
 
       await CaseTimeline.create({
         account_rid: accountRid,
-        event_status: eventStatus,
-        event_type: eventType,
         created_by_name: userEventInfo.full_name,
         event_type_rid: userEventInfo.event_type_rid,
         entity_rid: caseRid,

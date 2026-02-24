@@ -536,7 +536,8 @@ export class ProjectService {
           created_by_name: userEventInfo.full_name,
           event_type_rid: userEventInfo.event_type_rid,
           event_name: eventNames.UPDATE,
-          descriptions:projectData.project_code
+          descriptions:projectData.project_code,
+          project_rid: projectData?.project_fiscal_id!
         },["account","project"]);
 
       return {
