@@ -715,7 +715,7 @@ class SchemaService {
         }
         else if(entityType === "project")
         {
-            const [result] = await sequelize.query(rawQueries.insertTimeLine(schemaName,"project_timeline"), {
+            const [result] = await sequelize.query(rawQueries.insertProjectTimeLine(schemaName,"project_timeline"), {
             replacements: entryData,
             type: QueryTypes.INSERT,
         });

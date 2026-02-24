@@ -391,12 +391,12 @@ class CaseSchemaService {
             fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
         }
        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                          userId: caseRequest.modified_by!,
+                                          userId: caseRequest.created_by!,
                                           eventType: eventTypes.UI_HANDLER
                                         });
                 
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                    created_by: caseRequest.modified_by!,
+                                    created_by: caseRequest.created_by!,
                                     account_rid: caseRequest.account_rid,
                                     entity_rid: casecreationResponse.rid!,
                                     entity_name: entityTypes.CASE,
@@ -404,17 +404,17 @@ class CaseSchemaService {
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.CREATE,
                                     descriptions:caseRequest.case_name,
-                                    case_rid: caseRequest.case_rid,
+                                    case_rid: casecreationResponse.rid,
                                   },["account","case"]);
 
-        await this.addCaseManagementTimeline(
-          accountNumber,
-          casecreationResponse.rid,
-          caseRequest.account_rid,
-          caseRequest,
-          caseRequest.created_by || "",
-          "created"
-        );
+        // await this.addCaseManagementTimeline(
+        //   accountNumber,
+        //   casecreationResponse.rid,
+        //   caseRequest.account_rid,
+        //   caseRequest,
+        //   caseRequest.created_by || "",
+        //   "created"
+        // );
         await this.addJurisdiction(
           casecreationResponse.account_rid,
           casecreationResponse.rid,
@@ -679,12 +679,12 @@ class CaseSchemaService {
       // Add timeline entry for case update
       if (caseRequest.case_rid) {
         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                          userId: caseRequest.modified_by!,
+                                          userId: userId,
                                           eventType: eventTypes.UI_HANDLER
                                         });
                 
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                    created_by: caseRequest.modified_by!,
+                                    created_by: userId,
                                     account_rid: caseRequest.account_rid,
                                     entity_rid: caseRequest.case_rid!,
                                     entity_name: entityTypes.CASE,
@@ -712,6 +712,7 @@ class CaseSchemaService {
         data: caseUpdateResponse
       };
     } catch (error) {
+      console.log(error);
       logMessage(`Error updating cases: ${error}`);
       throw new Error("Error updating cases: " + error);
     }
@@ -3340,7 +3341,6 @@ class CaseSchemaService {
 
       await CaseTimeline.create({
         account_rid: accountRid,
-        event_name: eventName,
         event_status: eventStatus,
         event_type: eventType,
         created_by_name: userEventInfo.full_name,
@@ -3349,7 +3349,9 @@ class CaseSchemaService {
         description: description,
         created_by: userId,
         created_datetime: new Date(),
+        event_name: eventNames.CREATE,
       });
+      
     } catch (err) {
       logMessage(`Error creating case team timeline: ${err}`);
       // Don't throw error for timeline issues to avoid breaking main functionality

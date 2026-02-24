@@ -107,7 +107,7 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
 
             // Define mappings
             const fieldMappings = [
-                { header: "R Number", key: "r_number", permission: "r_number" },
+                { header: "Meeting ID", key: "r_number", permission: "r_number" },
                 { header: "Subject", key: "subject", permission: "subject" },
                 { header: "Status", key: "status_name", permission: "status_rid" },
                 { header: "Priority", key: "priority_name", permission: "priority_rid" },
@@ -117,6 +117,8 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
                 { header: "Description", key: "description", permission: "description" },
                 { header: "Participants", key: "meeting_participants", permission: "meeting_participants" },
                 { header: "Invited By", key: "invited_by", permission: "invited_by" },
+                { header: "Entity Type", key: "attachment_level", permission: "attachment_level" },
+                { header: "Entity Name", key: "attached_to", permission: "attached_to" },
                 { header: "Created By", key: "created_by_name", permission: "created_by" },
                 { header: "Modified By", key: "modified_by_name", permission: "modified_by" }
             ];
@@ -128,7 +130,7 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
                 if (isNaN(dateObj.getTime())) return "";
                 return moment(dateObj)
                     .tz(isValidTZ ? timezone : "UTC")
-                    .format("YYYY-MMM-DD, hh:mm:ss A");
+                    .format("YYYY-MMM-DD");
             };
 
             const finalStructuredData = result?.data?.map((d: any) => {
@@ -285,6 +287,7 @@ async function handleTaskExport(req: Request, res: Response, serviceMethod: Func
                 "Priority": item.priority_name,
                 "Fiscal Year": item.fiscal_year,
                 "Account Name": item.account_name,
+                "Task Type": item.task_type_name
             }));
 
             const base64 = await generateExcelBase64(data, fileName);

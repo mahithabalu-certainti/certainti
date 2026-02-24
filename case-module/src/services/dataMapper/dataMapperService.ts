@@ -4,7 +4,7 @@ import { DataMapperForms, setupDataMapperFormsSequence } from "../../models/data
 import { uploadToAzureBlob, logMessage, errorLog, generateSasUrl, deleteFromAzureBlob } from "../../utils/helpers";
 import { Kafka, Producer } from "kafkajs";
 import { ENV } from "../../config/kafka";
-import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries, mappingStatus } from "../../utils/constants";
 import moment from "moment";
 import { DataMapperFormMappings } from "../../models/dataMapperFormMappings";
 import { DataMapperObjects } from "../../models/dataMapperObjects";
@@ -825,6 +825,108 @@ export class DataMapperService implements IDataMapperService {
                 statusMessage: "Failed to update data mapper",
                 data: null,
             };
+        }
+    }
+
+    async recomputeMapping(data: any, userId: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+
+            const [result] = await sequelize.query<any>(
+                rawQueries.getFieldArrayByFormRid(data.rid),
+                { type: QueryTypes.SELECT }
+            );
+
+            let fieldList: any[] = result ? result.field_array : [];
+
+            if (!fieldList || fieldList.length === 0) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "No fields extracted for this form",
+                    data: data.mappings
+                };
+            }
+
+            if (!data.mappings || data.mappings.length === 0) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "Mappings array is empty",
+                    data: data.mappings
+                };
+            }
+
+            const textLikeTypes = ["text", "signature", "choice", "dropdown", "unknown"];
+            let textFields = fieldList.filter(f => {
+                const type = (f.field_type || "unknown").toLowerCase();
+                return textLikeTypes.includes(type);
+            });
+
+            textFields.sort((a, b) => {
+                const pageA = a.page || 1;
+                const pageB = b.page || 1;
+                if (pageA !== pageB) return pageA - pageB;
+
+                const centerA = a.center || [0, 0];
+                const centerB = b.center || [0, 0];
+
+                const yA = centerA[1];
+                const yB = centerB[1];
+
+                if (Math.abs(yB - yA) > 1) {
+                    return yB - yA;
+                }
+
+                const xA = centerA[0];
+                const xB = centerB[0];
+                return xA - xB;
+            });
+
+            let updatedMappings = [...data.mappings];
+            updatedMappings.sort((a, b) => (a.extraction_order || 0) - (b.extraction_order || 0));
+
+            const lastActiveMapping = [...updatedMappings].reverse().find((m: any) => m.status === mappingStatus.accepted);
+
+            let cursor = 0;
+            if (lastActiveMapping && lastActiveMapping.field_id) {
+                const startIndex = textFields.findIndex(f => f.field_id === lastActiveMapping.field_id);
+                if (startIndex !== -1) {
+                    cursor = startIndex + 1;
+                }
+            }
+
+            let reachedAnomaly = false;
+
+            for (let i = 0; i < updatedMappings.length; i++) {
+                if (updatedMappings[i].status === mappingStatus.anomaly) {
+                    reachedAnomaly = true;
+                }
+
+                if (reachedAnomaly && cursor < textFields.length) {
+                    if (updatedMappings[i].field_type !== "table") {
+                        updatedMappings[i].field_id = textFields[cursor].field_id;
+                        updatedMappings[i].status = mappingStatus.anomaly;
+                        cursor++;
+                    }
+                }
+            }
+
+            // Restore original order
+            const originalOrderMap = new Map();
+            data.mappings.forEach((m: any, index: number) => {
+                originalOrderMap.set(m.rid, index);
+            });
+
+            updatedMappings.sort((a, b) => originalOrderMap.get(a.rid) - originalOrderMap.get(b.rid));
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Mappings recomputed successfully",
+                data: updatedMappings
+            };
+
+        } catch (error) {
+            errorLog("recomputeMapping", (error as Error).message);
+            throw error;
         }
     }
 

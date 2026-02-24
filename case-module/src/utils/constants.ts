@@ -319,12 +319,17 @@ export const entityTypes = {
   ACTIVITY_TASK:"Task",
   CHECKLIST:"Checklist",
   CASE:"Case",
+  TASK:"Task",
+  TAG:"Tag",
+  COMMENTS:"COMMENTS"
 };
 
 export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
   CANCEL: "cancelled",
+  ADDED:  "added",
+  DELETE: "deleted"
 }
 
 export const eventTypes = {
@@ -857,9 +862,9 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name,project_rid
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
           )
           RETURNING *;
         ` 
@@ -870,7 +875,7 @@ export const rawQueries = {
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name,case_rid
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
           )
           RETURNING *;
         ` 
@@ -2542,4 +2547,10 @@ export const SignOffTypes = {
   financialWorking: "Financial Computation",
   case: "Case",
   rdForms: "RD Forms"
+}
+
+export const mappingStatus = {
+  accepted: "accepted",
+  rejected: "rejected",
+  anomaly: "anomaly"
 }
