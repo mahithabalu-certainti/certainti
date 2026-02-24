@@ -2396,9 +2396,9 @@ export const rawQueries = {
         account_rid varchar(50) NOT NULL,
         activity_rid varchar(50) NOT NULL,
         activity_type varchar(50),
-        attribute_name VARCHAR(100) NOT NULL,
-        old_value VARCHAR(2000),
-        new_value VARCHAR(2000),
+        attribute_name varchar(100) NOT NULL,
+        old_value text,
+        new_value text,
         CONSTRAINT activity_history_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE ON DELETE NO ACTION
       );
     `;
