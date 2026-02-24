@@ -17,7 +17,8 @@ export const getInteractionListColumns = (
   ) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
-  handleToggleRecordStatus: (row: InteractionList, checked: boolean) => void
+  handleToggleRecordStatus: (row: InteractionList, checked: boolean) => void,
+  handleFourPartNavigation?: (row: InteractionList) => void
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
@@ -58,14 +59,27 @@ export const getInteractionListColumns = (
     //   !projectPermissionMap?.['assessment_type']?.read,
   },
   {
-    id: 'four_part_assessment_id',
-    sortId: 'four_part_assessment_id',
+    id: 'four_part_assessment_rnumber',
+    sortId: 'four_part_assessment_rnumber',
     label: 'Four Part Assessment ID',
     width: 200,
     sortable: true,
     // hide:
-    //   !projectPermissionMap?.['four_part_assessment_id']?.edit &&
-    //   !projectPermissionMap?.['four_part_assessment_id']?.read,
+    //   !projectPermissionMap?.['four_part_assessment_rid']?.edit &&
+    //   !projectPermissionMap?.['four_part_assessment_rid']?.read,
+    render: (row: InteractionList) =>
+      row.four_part_assessment_rid &&
+      row.four_part_assessment_rnumber &&
+      handleFourPartNavigation ? (
+        <span
+          onClick={() => handleFourPartNavigation(row)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.four_part_assessment_rnumber}
+        </span>
+      ) : (
+        <span>{row.four_part_assessment_rnumber || '-'}</span>
+      ),
   },
   {
     id: 'batch_id',

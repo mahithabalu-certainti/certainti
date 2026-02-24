@@ -48,7 +48,11 @@ import {
   ActionItem,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
-import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
+import {
+  INTERACTIONS_CREATE,
+  INTERACTIONS_EDIT,
+  PROJECT_DETAILS,
+} from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
 import {
   ReInitiateModal,
@@ -725,13 +729,33 @@ const Interactions: React.FC<InteractionsProps> = ({
     console.log(`Toggling record status for ${row.rid} to ${updatedStatus}`);
   };
 
+  const handleFourPartNavigation = (row: InteractionList) => {
+    if (!row.four_part_assessment_rid) return;
+
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: projectid || '',
+    });
+
+    const searchParams = new URLSearchParams({
+      list: 'four_part_assessment',
+      fpa_id: row.four_part_assessment_rid,
+      navigate_source: 'interactions',
+    });
+
+    navigate(`${path}?${searchParams.toString()}`, {
+      state: { activeKey: 'four_part_assessment' },
+      replace: true,
+    });
+  };
+
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
     permissionMap,
-    handleToggleRecordStatus
+    handleToggleRecordStatus,
+    handleFourPartNavigation
   );
 
   const filterFields = !viewInteractionHistory

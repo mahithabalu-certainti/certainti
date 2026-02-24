@@ -215,7 +215,8 @@ export type InteractionList = {
   key_contact_name?: string | null;
   key_contact_email?: string | null;
   assessment_type: string | null;
-  four_part_assessment_id: string | null;
+  four_part_assessment_rid: string | null;
+  four_part_assessment_rnumber: string | null;
   batch_id: string | null;
   record_status: string | null;
 };

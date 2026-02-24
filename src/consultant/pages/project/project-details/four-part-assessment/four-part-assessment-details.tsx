@@ -1,5 +1,10 @@
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { useFourPartAssessmentDetails } from '../../../../services/four-part-assessment/four-part-assessment-service';
 import DetailsSection, {
@@ -10,12 +15,16 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { NotesSideIcon } from '../../../../../assets';
 import { ColorCode } from '../../../../types';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
+import { PROJECT_DETAILS } from '../../../../../routes';
 
 const FourPartAssessmentDetails: React.FC = () => {
   const navigate = useNavigate();
+  const { projectid: projectID } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const fourPartAssessmentId = searchParams.get('fpa_id') || '';
+  const isFromInteraction =
+    searchParams.get('navigate_source') === 'interactions';
 
   const { data, isLoading, isError } = useFourPartAssessmentDetails(
     accountId,
@@ -53,16 +62,31 @@ const FourPartAssessmentDetails: React.FC = () => {
   // }, [fourPartAssessmentEditFields]);
 
   const handleBackClick = () => {
-    searchParams.delete('fpa_id');
-    navigate({ search: searchParams.toString() }, { replace: true });
+    if (isFromInteraction) {
+      const path = generatePath(PROJECT_DETAILS, {
+        projectid: projectID || '',
+      });
+      const searchParams = new URLSearchParams({
+        list: 'interactions',
+      });
+      navigate(`${path}?${searchParams.toString()}`, {
+        state: { activeKey: 'interactions' },
+        replace: true,
+      });
+    } else {
+      searchParams.delete('fpa_id');
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
   };
 
   const headerButtons = [
     {
-      label: 'Back To Four Part Assessment',
+      label: isFromInteraction
+        ? 'Back To Interactions'
+        : 'Back To Four Part Assessment',
       variant: 'contained' as const,
       onClick: () => handleBackClick(),
-      sx: { width: '205px', minWidth: '205px' },
+      sx: { width: 'auto', padding: '0 9px' },
     },
   ];
 
