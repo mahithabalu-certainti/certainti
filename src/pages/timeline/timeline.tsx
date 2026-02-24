@@ -39,8 +39,6 @@ type IconConfig = {
   bg: string;
 };
 
-
-
 const getTypeIconConfig = (entity_name: string): IconConfig => {
   const iconStyle = { width: '10px', height: '10px' };
   const type = entity_name?.toLowerCase();
@@ -142,6 +140,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
 
     const groups: { [key: string]: TimelineItem[] } = {};
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data.data.timeLineEntries.forEach((item: any) => {
       const dateLabel = formatTimelineDate(item.created_datetime);
       const time = formatTimelineTime(item.created_datetime);
@@ -169,6 +168,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
       dateLabel,
       items: groups[dateLabel],
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isLoading]);
 
   if (isLoading) {
