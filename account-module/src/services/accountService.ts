@@ -2254,13 +2254,13 @@ async accountList(
     }
   }
 
-  listTimeLineEntries = async (value: { nextOffset: string; limit: string; entityType: string; accountId: string }): Promise<{
+  listTimeLineEntries = async (value: { nextOffset: string; limit: string; entityType: string; accountId: string, projectId?: string, caseId?: string }): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { timeLineEntries: any; count: number; nextOffset: number | null };
   }> => {
-    const mainDb = await initSequelize(); 
+    const mainDb = await initSequelize();
     try {
       const fetchParentAccountRnumber: any = await mainDb.query(
         await rawQueries.fetchParentAccount(value.accountId, mainDb)
@@ -2272,23 +2272,38 @@ async accountList(
         const sequelize = await initOrgSequelize();
         const offsetNum = Number(value.nextOffset) || 0;
         const limitNum = Number(value.limit) || 10;
-        const query = rawQueries.fetchAccountTimelineEntries(schemaName);
+
+        // Determine table, query, and replacements based on entityType
+        let query = '';
+        let countQueryStr = '';
+        let replacements: any = {
+          offset: offsetNum,
+          limit: limitNum
+        };
+
+        if (value.entityType === 'project' && value.projectId) {
+          query = rawQueries.fetchProjectTimelineEntries(schemaName);
+          countQueryStr = rawQueries.fetchProjectTimelineEntriesCount(schemaName);
+          replacements.projectId = value.projectId;
+        } else if (value.entityType === 'case' && value.caseId) {
+          query = rawQueries.fetchCaseTimelineEntries(schemaName);
+          countQueryStr = rawQueries.fetchCaseTimelineEntriesCount(schemaName);
+          replacements.caseId = value.caseId;
+        } else {
+          // Default to account timeline
+          query = rawQueries.fetchAccountTimelineEntries(schemaName);
+          countQueryStr = rawQueries.fetchAccountTimelineEntriesCount(schemaName);
+          replacements.accountId = value.accountId;
+        }
+
         const timeLineEntries = await sequelize.query(query, {
-          replacements: {
-            entityType: value.entityType,
-            accountId: value.accountId,
-            offset: offsetNum,
-            limit: limitNum,
-          },
+          replacements,
           type: QueryTypes.SELECT,
         });
 
         // Get total count (without limit/offset) for pagination
-        const countQuery:any = await sequelize.query(rawQueries.fetchAccountTimelineEntriesCount(schemaName), {
-          replacements: {
-            entityType: value.entityType,
-            accountId: value.accountId,
-          },
+        const countQuery: any = await sequelize.query(countQueryStr, {
+          replacements,
           type: QueryTypes.SELECT,
         });
 

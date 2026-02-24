@@ -292,7 +292,7 @@ class CaseSchemaService {
                             entity_rid: data.case_rid,
                             event_name: eventNames.UPDATE,
                             entity_name: entityTypes.TASK,
-                            description: data.task_name,
+                            descriptions: data.task_name,
                             case_rid: data.case_rid
                         })
                     }
@@ -611,7 +611,7 @@ class CaseSchemaService {
                                 event_name: eventNames.CREATE,
                                 created_by_name: userEventInfo.full_name,        
                                 event_type_rid: userEventInfo.event_type_rid,
-                                description: `Task ${existingTaskInfo.task_name}`
+                                descriptions: `Task ${existingTaskInfo.task_name}`
 
                              })
                             await CaseHistory.create({
@@ -688,7 +688,7 @@ class CaseSchemaService {
                         account_rid: accountRid,
                         entity_rid: caseRid,
                         event_name: eventNames.CREATE,
-                        description: `Task ${existingTaskInfo!.task_name}`,
+                        descriptions: `Task ${existingTaskInfo!.task_name}`,
                         created_by_name: userEventInfo.full_name,
                         event_type_rid: userEventInfo.event_type_rid,
 

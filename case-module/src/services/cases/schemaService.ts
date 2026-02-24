@@ -3346,7 +3346,7 @@ class CaseSchemaService {
         created_by_name: userEventInfo.full_name,
         event_type_rid: userEventInfo.event_type_rid,
         entity_rid: caseRid,
-        description: description,
+        descriptions: description,
         created_by: userId,
         created_datetime: new Date(),
         event_name: eventNames.CREATE,
