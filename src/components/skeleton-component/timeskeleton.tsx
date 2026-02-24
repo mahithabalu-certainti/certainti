@@ -61,10 +61,13 @@ const TimelineSkeleton: React.FC = () => {
                   flexShrink: 0,
                   display: 'flex',
                   justifyContent: 'center',
+                  position: 'relative',
                   zIndex: 1,
                 }}
               >
-                <SingleSkeleton width={22} height={22} variant='rounded' />
+                <div style={{ background: '#fff', borderRadius: '4px' }}>
+                  <SingleSkeleton width={22} height={22} variant='rounded' />
+                </div>
               </div>
 
               {/* Content Skeleton */}

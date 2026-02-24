@@ -37,9 +37,6 @@ export const useTimelineList = (
     queryFn: () => fetchTimelineList(params),
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
-    enabled:
-      !!params.account_rid &&
-      !!params.entityType &&
-      !!isTimeLineView,
+    enabled: !!params.account_rid && !!params.entityType && !!isTimeLineView,
   });
 };
