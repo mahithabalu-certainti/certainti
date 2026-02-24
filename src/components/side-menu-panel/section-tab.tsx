@@ -12,7 +12,10 @@ import { ActivityDropdownItem, SelectOption } from '../../consultant/types';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import SearchBar from '../search/search-bar';
 import { ActivityDropdown } from '../actions-dropdown';
-import { OverviewTabs } from '../../common-service';
+import { AllPermissions, OverviewTabs } from '../../common-service';
+import { RootState } from '../../store/store';
+import { useSelector } from 'react-redux';
+import { checkPermission } from '../../common-utils';
 
 interface TabPanelProps {
   tabs: OverviewTabs[];
@@ -115,16 +118,48 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   useEffect(() => {
     onTabChangeRef.current = onTabChange;
   });
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const isProjectsTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TIMELINE_VIEW
+  );
+  const isAccountsTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNTS_TIMELINE_VIEW
+  );
+  const isCasesTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TIMELINE_VIEW
+  );
+
+  const isAccount = location.pathname.includes('account');
+  const isProject = location.pathname.includes('project');
+  const isCase = location.pathname.includes('case');
+
+  const isTimelineVisible = isAccount
+    ? isAccountsTimelineViewEnable
+    : isProject
+      ? isProjectsTimelineViewEnable
+      : isCase
+        ? isCasesTimelineViewEnable
+        : true;
+
+  const updatedTabs = tabs?.map((tab) =>
+    tab.key === 'timeline'
+      ? { ...tab, hide: tab.hide || !isTimelineVisible }
+      : tab
+  );
 
   useEffect(() => {
     // prioritize timeline view from URL
     const isTimeline = searchParams.get('timelineview') === 'true';
     const activeTab =
-      tabs?.find(
+      updatedTabs?.find(
         (tab) =>
           !tab.hide &&
           (isTimeline ? tab.key === 'timeline' : tab.key === 'overview')
-      ) || tabs?.find((tab) => !tab.hide);
+      ) || updatedTabs?.find((tab) => !tab.hide);
 
     if (activeTab) {
       setTabValue(activeTab.key);
@@ -134,7 +169,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabs, searchParams]);
+  }, [tabs, searchParams, isTimelineVisible]);
 
   useEffect(() => {
     setAppliedFilters({});
@@ -150,7 +185,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     clearFilters(contextKey || 'resource');
     setSortFilterCount(0);
 
-    const selectedTab = tabs?.find((tab) => tab.key === newValue);
+    const selectedTab = updatedTabs?.find((tab) => tab.key === newValue);
     if (selectedTab?.key === 'timeline') {
       searchParams.set('timelineview', 'true');
     } else {
@@ -199,7 +234,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               '& .MuiTabs-indicator': { display: 'none' },
             }}
           >
-            {tabs?.map((tab, i) =>
+            {updatedTabs?.map((tab, i) =>
               tab.hide ? null : (
                 <Tab
                   key={i}
