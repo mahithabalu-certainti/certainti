@@ -214,6 +214,10 @@ export type InteractionList = {
   project_name?: string;
   key_contact_name?: string | null;
   key_contact_email?: string | null;
+  assessment_type: string | null;
+  four_part_assessment_id: string | null;
+  batch_id: string | null;
+  record_status: string | null;
 };
 
 export type InteractionTemplateList = {

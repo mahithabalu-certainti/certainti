@@ -31,15 +31,16 @@ export type FourPartAssessmentList = {
   attach_to: string;
   attached_to: string;
   attachment_level: string;
-  range: string | null;
+  range: 'Low' | 'Medium' | 'High';
   status_rid: string | null;
-  status_name: string | null;
+  status_name: 'Met' | 'Not Met';
   created_by: string;
   created_by_name: string;
   created_datetime: string;
   modified_by?: string | null;
   modified_by_name?: string | null;
   modified_datetime?: string | null;
+  tracker_one_liner?: string;
 };
 
 export interface FourPartAssessmentListApiResponse {
@@ -59,15 +60,11 @@ export interface FourPartAssessmentAttachment {
   fileType: string;
 }
 
-export interface FourPartAssessmentQuestion {
-  rid: string;
-  question_seq_num: string;
-  question: string;
-  notes: string;
-  is_mandatory: boolean;
-  attachments: FourPartAssessmentAttachment[];
-  is_editable: boolean;
-  response: string;
+export interface FourPartAssessmentQuestions {
+  permitted_purpose: 'Met' | 'Not Met';
+  technological_uncertainty: 'Met' | 'Not Met';
+  process_of_experimentation: 'Met' | 'Not Met';
+  technological_in_nature: 'Met' | 'Not Met';
 }
 
 export interface FourPartAssessmentDetails {
@@ -78,16 +75,17 @@ export interface FourPartAssessmentDetails {
   attach_to: string;
   attached_to: string;
   attachment_level: string;
-  range: string | null;
+  range: 'Low' | 'Medium' | 'High';
   status_rid: string | null;
-  status_name: string | null;
+  status_name: 'Met' | 'Not Met';
   created_by: string;
   created_by_name: string;
   created_datetime: string;
   modified_by?: string | null;
   modified_by_name?: string | null;
   modified_datetime?: string | null;
-  assessment_questions: FourPartAssessmentQuestion[];
+  tracker_one_liner: string;
+  assessment_questions: FourPartAssessmentQuestions;
 }
 
 export interface FourPartAssessmentDetailsResponse {

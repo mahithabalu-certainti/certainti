@@ -310,7 +310,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
       ) : (
         <>
           <SectionHeader
-            title='Four-Part Assessment'
+            title='Four Part Assessment'
             count={totalItems}
             showItemCount={true}
             titleIcon={
@@ -353,7 +353,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
               loading={isLoading}
               error={
                 isError
-                  ? 'Failed to load four-part assessment records'
+                  ? 'Failed to load four part assessment records'
                   : undefined
               }
               rowsPerPageOptions={[25, 50, 100]}

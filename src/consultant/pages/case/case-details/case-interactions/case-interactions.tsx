@@ -723,13 +723,20 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       filter: {},
     });
   };
+
+  const handleToggleRecordStatus = (row: InteractionList, checked: boolean) => {
+    const updatedStatus = checked ? 'active' : 'inactive';
+    console.log(`Toggling record status for ${row.rid} to ${updatedStatus}`);
+  };
+
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getCaseInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
     permissionMap,
-    projectPermissionMap
+    projectPermissionMap,
+    handleToggleRecordStatus
   );
 
   const filterFields = !viewInteractionHistory

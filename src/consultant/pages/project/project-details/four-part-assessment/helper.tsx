@@ -36,8 +36,8 @@ export const getProjectFourPartAssessmentTableColumns = (
   {
     id: 'r_number',
     sortId: 'r_number',
-    label: 'FPA ID',
-    width: 140,
+    label: 'Four Part Assessment ID',
+    width: 200,
     sortable: true,
     sticky: true,
     sx: {
@@ -128,7 +128,7 @@ export const getProjectFourPartAssessmentFilterFields = (
 ): FieldConfig[] => {
   return [
     {
-      name: 'FPA ID',
+      name: 'Four Part Assessment ID',
       value: 'r_number',
       type: 'text',
       operatorOption: textOptions,

@@ -629,12 +629,19 @@ const Interactions: React.FC<InteractionsProps> = ({
       hide: Boolean(!responseHistory),
     },
   ];
+
+  const handleToggleRecordStatus = (row: InteractionList, checked: boolean) => {
+    const updatedStatus = checked ? 'active' : 'inactive';
+    console.log(`Toggling record status for ${row.rid} to ${updatedStatus}`);
+  };
+
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
     permissionMap,
-    projectPermissionMap
+    projectPermissionMap,
+    handleToggleRecordStatus
   );
   const interactionModelColumn = getInteractionListModelColumns(
     // handleViewInteraction,

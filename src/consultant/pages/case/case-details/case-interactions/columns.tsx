@@ -1,3 +1,4 @@
+import { Switch, Tooltip } from '@mui/material';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { InteractionList } from '../../../../types';
@@ -15,7 +16,8 @@ export const getCaseInteractionListColumns = (
     rNumber: string
   ) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  handleToggleRecordStatus: (row: InteractionList, checked: boolean) => void
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
@@ -44,6 +46,36 @@ export const getCaseInteractionListColumns = (
         {row.r_number}
       </span>
     ),
+  },
+  {
+    id: 'assessment_type',
+    sortId: 'assessment_type',
+    label: 'Assessment Type',
+    width: 150,
+    sortable: true,
+    // hide:
+    //   !projectPermissionMap?.['assessment_type']?.edit &&
+    //   !projectPermissionMap?.['assessment_type']?.read,
+  },
+  {
+    id: 'four_part_assessment_id',
+    sortId: 'four_part_assessment_id',
+    label: 'Four Part Assessment ID',
+    width: 200,
+    sortable: true,
+    // hide:
+    //   !projectPermissionMap?.['four_part_assessment_id']?.edit &&
+    //   !projectPermissionMap?.['four_part_assessment_id']?.read,
+  },
+  {
+    id: 'batch_id',
+    sortId: 'batch_id',
+    label: 'Batch ID',
+    width: 140,
+    sortable: true,
+    // hide:
+    //   !projectPermissionMap?.['batch_id']?.edit &&
+    //   !projectPermissionMap?.['batch_id']?.read,
   },
   // {
   //   id: 'interaction_iteration',
@@ -315,5 +347,36 @@ export const getCaseInteractionListColumns = (
       !permissionMap?.['modified_datetime']?.read,
     render: (row: InteractionList) =>
       formatDateToYYYYMMDDWithTime(row.modified_datetime),
+  },
+  {
+    id: 'record_status',
+    sortId: 'record_status',
+    label: 'Record Status',
+    width: 120,
+    sortable: false,
+    // hide:
+    //   !permissionMap?.['record_status']?.edit &&
+    //   !permissionMap?.['record_status']?.read,
+    render: (row) => {
+      // const canEditStatus = !!permissionMap?.['record_status']?.edit;
+      const recordStatus = row.record_status?.toLowerCase() || 'inactive';
+      return (
+        <div className='text-center'>
+          <Tooltip
+            title={recordStatus === 'inactive' ? 'In Active' : 'Active'}
+            arrow
+            placement='top'
+          >
+            <Switch
+              size='small'
+              color={recordStatus === 'inactive' ? 'warning' : 'success'}
+              onChange={(_e, checked) => handleToggleRecordStatus(row, checked)}
+              checked={recordStatus === 'active'}
+              // disabled={!canEditStatus}
+            />
+          </Tooltip>
+        </div>
+      );
+    },
   },
 ];

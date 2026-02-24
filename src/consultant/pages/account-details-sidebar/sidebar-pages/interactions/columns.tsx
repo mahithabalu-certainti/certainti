@@ -1,3 +1,4 @@
+import { Switch, Tooltip } from '@mui/material';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { InteractionList } from '../../../../types';
@@ -15,7 +16,8 @@ export const getInteractionListColumns = (
     rNumber: string
   ) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  handleToggleRecordStatus: (row: InteractionList, checked: boolean) => void
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
@@ -64,6 +66,16 @@ export const getInteractionListColumns = (
     // hide:
     //   !projectPermissionMap?.['four_part_assessment_id']?.edit &&
     //   !projectPermissionMap?.['four_part_assessment_id']?.read,
+  },
+  {
+    id: 'batch_id',
+    sortId: 'batch_id',
+    label: 'Batch ID',
+    width: 140,
+    sortable: true,
+    // hide:
+    //   !projectPermissionMap?.['batch_id']?.edit &&
+    //   !projectPermissionMap?.['batch_id']?.read,
   },
   {
     id: 'project_code',
@@ -341,5 +353,36 @@ export const getInteractionListColumns = (
       !permissionMap?.['sent_on_datetime']?.read,
     render: (row: InteractionList) =>
       row.last_resent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
+  },
+  {
+    id: 'record_status',
+    sortId: 'record_status',
+    label: 'Record Status',
+    width: 120,
+    sortable: false,
+    // hide:
+    //   !permissionMap?.['record_status']?.edit &&
+    //   !permissionMap?.['record_status']?.read,
+    render: (row) => {
+      // const canEditStatus = !!permissionMap?.['record_status']?.edit;
+      const recordStatus = row.record_status?.toLowerCase() || 'inactive';
+      return (
+        <div className='text-center'>
+          <Tooltip
+            title={recordStatus === 'inactive' ? 'In Active' : 'Active'}
+            arrow
+            placement='top'
+          >
+            <Switch
+              size='small'
+              color={recordStatus === 'inactive' ? 'warning' : 'success'}
+              onChange={(_e, checked) => handleToggleRecordStatus(row, checked)}
+              checked={recordStatus === 'active'}
+              // disabled={!canEditStatus}
+            />
+          </Tooltip>
+        </div>
+      );
+    },
   },
 ];
