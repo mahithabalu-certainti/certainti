@@ -395,6 +395,9 @@ export enum AllPermissions {
   DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
   DOSSIER_RD_FORMS_SIGNOFF = 'rd_forms_sign_off',
   DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',
+  ACCOUNTS_TIMELINE_VIEW = 'accounts_timeline_view',
+  PROJECTS_TIMELINE_VIEW = 'projects_timeline_view',
+  CASES_TIMELINE_VIEW = 'cases_timeline_view',
   FOUR_PART_ASSESSMENT_OVERVIEW = 'four_part_assessment_overview',
   FOUR_PART_ASSESSMENT_TIMELINE = 'four_part_assessment_timeline',
   FOUR_PART_ASSESSMENT_VIEW_EDIT = 'four_part_assessment_view_edit',
@@ -463,6 +466,7 @@ export interface OverviewTabs {
   name: string;
   hide: boolean;
   disable?: boolean;
+  key: 'overview' | 'timeline';
 }
 
 export type FailedQueueItem = {

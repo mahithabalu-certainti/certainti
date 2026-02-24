@@ -56,6 +56,7 @@ import { checkPermission } from '../../../../../common-utils';
 import { reviewProjectFilterFields } from './review-projects/helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { TabItem } from '../../../../../components/side-menu-panel/section-header-tab';
+import Timeline from '../../../../../pages/timeline/timeline';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
@@ -77,13 +78,14 @@ const InteractionsTabs: OverviewTabs[] = [
     id: AllPermissions.INTERACTIONS_OVERVIEW, // permission need to be change
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.INTERACTIONS_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.INTERACTIONS_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 
 const CasesProjects: React.FC<casesProjectProps> = ({
@@ -500,7 +502,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         memoizedStatus,
         projectPermissionMap
       );
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const projectViewEditlistFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
@@ -679,118 +681,126 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <SectionHeader
-        title={isAssignProject ? 'Assign Projects' : 'Case Projects'}
-        titleIcon={
-          <ProjectsSideIcon
-            alt='financial-header-icon'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        }
-        count={count}
-        showItemCount={
-          DetailsTabParam === 'resource_cost'
-            ? true
-            : DetailsTabParam
-              ? false
-              : true
-        }
-        buttons={headerButtons.map((btn) => ({
-          ...btn,
-          hide: Boolean(btn.hide),
-        }))}
-        iconBg={ColorCode.caseBgColor}
-        bgType='circle'
-      />
-      {!isAssignProject && !projectDetailTab && (
-        <SectionHeaderTab
-          tabs={tabs.filter((tab): tab is TabItem => Boolean(tab))}
-          onTabChange={handleTabChange}
-          defaultValue={tabParam}
-        />
-      )}
-      {projectDetailTab && (
-        <SectionHeaderTab
-          tabs={detailsTabs}
-          onTabChange={handleDetailsTabChange}
-          defaultValue={DetailsTabParam ?? 'projects_details'}
-        />
-      )}
-      {projectDetailTab ? (
-        <div>
-          <ProjectTab
-            refreshTrigger={refreshTrigger}
-            setCount={setCount}
-            searchText={searchText}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-          />
-        </div>
-      ) : tabParam === 'assign_projects' ? (
-        // Only render Assign Projects section if user has PROJECTS_VIEW_EDIT permission
-
-        <div className='border border-[#CBD6E2] border-t-0'>
-          {isAssignProject ? (
-            <SelectProjects
-              accountInActive={accountInActive}
-              refreshTrigger={refreshTrigger}
-              setSelectedRows={setSelectedRows}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              visibleColumns={visibleColumns}
-              searchText={searchText}
-              setCount={setCount}
-              clearSelectedRows={clearSelectedRows}
-              fiscalYear={fiscalYear}
-              appliedFilters={appliedFilters}
-            />
-          ) : (
-            <AssignedProjects
-              accountInActive={accountInActive}
-              refreshTrigger={refreshTrigger}
-              setSelectedRows={setSelectedRows}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              visibleColumns={visibleColumns}
-              searchText={searchText}
-              setTableParams={setTableParams}
-              setCount={setCount}
-              clearSelectedRows={clearSelectedRows}
-              fiscalYear={fiscalYear}
-              setExportType={setExportType}
-              appliedFilters={appliedFilters}
-            />
-          )}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='case' />
         </div>
       ) : (
-        // Only render Review Projects section if user has REVIEW_PROJECTS_VIEW_EDIT permission
+        <>
+          <SectionHeader
+            title={isAssignProject ? 'Assign Projects' : 'Case Projects'}
+            titleIcon={
+              <ProjectsSideIcon
+                alt='financial-header-icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
+            }
+            count={count}
+            showItemCount={
+              DetailsTabParam === 'resource_cost'
+                ? true
+                : DetailsTabParam
+                  ? false
+                  : true
+            }
+            buttons={headerButtons.map((btn) => ({
+              ...btn,
+              hide: Boolean(btn.hide),
+            }))}
+            iconBg={ColorCode.caseBgColor}
+            bgType='circle'
+          />
+          {!isAssignProject && !projectDetailTab && (
+            <SectionHeaderTab
+              tabs={tabs.filter((tab): tab is TabItem => Boolean(tab))}
+              onTabChange={handleTabChange}
+              defaultValue={tabParam}
+            />
+          )}
+          {projectDetailTab && (
+            <SectionHeaderTab
+              tabs={detailsTabs}
+              onTabChange={handleDetailsTabChange}
+              defaultValue={DetailsTabParam ?? 'projects_details'}
+            />
+          )}
+          {projectDetailTab ? (
+            <div>
+              <ProjectTab
+                refreshTrigger={refreshTrigger}
+                setCount={setCount}
+                searchText={searchText}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+              />
+            </div>
+          ) : tabParam === 'assign_projects' ? (
+            // Only render Assign Projects section if user has PROJECTS_VIEW_EDIT permission
 
-        <div className='border border-[#CBD6E2] border-t-0'>
-          <ReviewProjectsList
-            accountInActive={accountInActive}
-            visibleColumns={visibleReviewColumns}
-            searchText={searchText}
-            refreshTrigger={refreshTrigger}
-            setTableParams={setReviewProjectParams}
-            setCount={setCount}
-            setExportType={setExportType}
-            appliedFilters={appliedFilters}
-            setSelectedRows={setReviewSelectedRows}
-            setSortParams={setSortParams}
-            clearSelectedRows={clearSelectedRows}
-          />
-          <EmailModalTemplate
-            title='Email Template'
-            isOpen={emailModalOpen}
-            onClose={() => setEmailModalOpen(false)}
-            selectedRows={reviewSelectedRows}
-            setSelectedRows={setReviewSelectedRows}
-            setClearSelectedRows={setClearSelectedRows}
-            appliedFilters={appliedFilters}
-            sortBy={sortParams.sortField}
-            sortOrder={sortParams.sortBy}
-          />
-        </div>
+            <div className='border border-[#CBD6E2] border-t-0'>
+              {isAssignProject ? (
+                <SelectProjects
+                  accountInActive={accountInActive}
+                  refreshTrigger={refreshTrigger}
+                  setSelectedRows={setSelectedRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  visibleColumns={visibleColumns}
+                  searchText={searchText}
+                  setCount={setCount}
+                  clearSelectedRows={clearSelectedRows}
+                  fiscalYear={fiscalYear}
+                  appliedFilters={appliedFilters}
+                />
+              ) : (
+                <AssignedProjects
+                  accountInActive={accountInActive}
+                  refreshTrigger={refreshTrigger}
+                  setSelectedRows={setSelectedRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  visibleColumns={visibleColumns}
+                  searchText={searchText}
+                  setTableParams={setTableParams}
+                  setCount={setCount}
+                  clearSelectedRows={clearSelectedRows}
+                  fiscalYear={fiscalYear}
+                  setExportType={setExportType}
+                  appliedFilters={appliedFilters}
+                />
+              )}
+            </div>
+          ) : (
+            // Only render Review Projects section if user has REVIEW_PROJECTS_VIEW_EDIT permission
+
+            <div className='border border-[#CBD6E2] border-t-0'>
+              <ReviewProjectsList
+                accountInActive={accountInActive}
+                visibleColumns={visibleReviewColumns}
+                searchText={searchText}
+                refreshTrigger={refreshTrigger}
+                setTableParams={setReviewProjectParams}
+                setCount={setCount}
+                setExportType={setExportType}
+                appliedFilters={appliedFilters}
+                setSelectedRows={setReviewSelectedRows}
+                setSortParams={setSortParams}
+                clearSelectedRows={clearSelectedRows}
+              />
+              <EmailModalTemplate
+                title='Email Template'
+                isOpen={emailModalOpen}
+                onClose={() => setEmailModalOpen(false)}
+                selectedRows={reviewSelectedRows}
+                setSelectedRows={setReviewSelectedRows}
+                setClearSelectedRows={setClearSelectedRows}
+                appliedFilters={appliedFilters}
+                sortBy={sortParams.sortField}
+                sortOrder={sortParams.sortBy}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -32,10 +32,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllModules,
   AllPermissions,
+  OverviewTabs,
   useGetStatus,
 } from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
@@ -61,12 +61,20 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { useQueryClient } from '@tanstack/react-query';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const ConfigTabs: ResourceTabs[] = [
+const ConfigTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
 ];
 
@@ -178,7 +186,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     }
     setIsFormChanged(false);
   }, [formData.team_members, originalTeamMembers]);
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const accountId = searchParams.get('accountID') || '';
   const queryClient = useQueryClient();
 
@@ -790,1037 +798,1066 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <SectionHeader
-        title={'Case Team'}
-        titleIcon={getTitleIcon()}
-        buttons={headerButtons}
-        count={
-          formData.team_members.filter(
-            (m) =>
-              m.user_name ||
-              m.user_role ||
-              m.start_date ||
-              m.end_date ||
-              m.status
-          ).length
-        }
-        showItemCount={true}
-        hideSection={false}
-        iconBg={ColorCode.caseBgColor}
-        bgType='circle'
-      />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='case' />
+        </div>
+      ) : (
+        <>
+          <SectionHeader
+            title={'Case Team'}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={
+              formData.team_members.filter(
+                (m) =>
+                  m.user_name ||
+                  m.user_role ||
+                  m.start_date ||
+                  m.end_date ||
+                  m.status
+              ).length
+            }
+            showItemCount={true}
+            hideSection={false}
+            iconBg={ColorCode.caseBgColor}
+            bgType='circle'
+          />
 
-      <div className='flex flex-col gap-0 border border-[#CBD6E2] pt-5'>
-        <div className='w-full mb-5'>
-          <div className='px-4'>
-            <TableContainer sx={{ overflowX: 'auto', width: '100%' }}>
-              <Table
-                className='border-l border-t border-[#CBD6E2]'
-                sx={{ minWidth: 800 }}
-              >
-                <TableHead
-                  sx={{
-                    '& .MuiTableCell-root': {
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      color: '#2A2A2A',
-                      padding: '0px 8px',
-                      height: '29px',
-                      boxSizing: 'border-box',
-                    },
-                  }}
-                >
-                  <TableRow sx={{ height: 29 }}>
-                    {teamTableColumns
-                      .filter(isColumnVisible)
-                      .map((col: CaseTeamTableColumn) => (
-                        <TableCell
-                          key={col.name}
-                          style={{
-                            width: col.width,
-                            textAlign: col.align ?? 'left',
-                            textWrap: 'nowrap',
-                          }}
-                        >
-                          {col.label}{' '}
-                          {col.required && (
-                            <span className='text-red-500 text-[16px]'>*</span>
-                          )}
-                        </TableCell>
-                      ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody
-                  sx={{
-                    '& .MuiTableCell-root': {
-                      padding: '0px',
-                      px: '8px',
-                      minHeight: '32px',
-                      maxHeight: '32px',
-                      height: '32px',
-                      '& input, & textarea': {
-                        border: 'none',
-                        outline: 'none',
-                        boxShadow: 'none',
-                        background: 'transparent',
-                        '&:disabled': {
-                          backgroundColor: '#f3f4f6',
-                          color: '#6b7280',
-                          WebkitTextFillColor: '#6b7280',
+          <div className='flex flex-col gap-0 border border-[#CBD6E2] pt-5'>
+            <div className='w-full mb-5'>
+              <div className='px-4'>
+                <TableContainer sx={{ overflowX: 'auto', width: '100%' }}>
+                  <Table
+                    className='border-l border-t border-[#CBD6E2]'
+                    sx={{ minWidth: 800 }}
+                  >
+                    <TableHead
+                      sx={{
+                        '& .MuiTableCell-root': {
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          color: '#2A2A2A',
+                          padding: '0px 8px',
+                          height: '29px',
+                          boxSizing: 'border-box',
                         },
-                        '&:focus': {
-                          border: '1px solid #60a5fa',
-                          backgroundColor: 'white',
-                        },
-                      },
-                    },
-                  }}
-                >
-                  {formLoading ? (
-                    <TableSkeleton rowsPerPage={4} columnsCount={7} />
-                  ) : (
-                    formData.team_members.map((member, index) => (
-                      <TableRow
-                        key={index}
-                        sx={{
-                          position: 'relative',
-                          p: 0,
-                        }}
-                        className={''}
-                      >
+                      }}
+                    >
+                      <TableRow sx={{ height: 29 }}>
                         {teamTableColumns
                           .filter(isColumnVisible)
-                          .map((col: CaseTeamTableColumn) => {
-                            const isDisabled = col.disabled;
-                            const isBtnDisabled = col.disabled;
-                            const error =
-                              errors.team_members?.[index]?.[
-                                col.name as keyof CaseTeamMemberErrors
-                              ];
+                          .map((col: CaseTeamTableColumn) => (
+                            <TableCell
+                              key={col.name}
+                              style={{
+                                width: col.width,
+                                textAlign: col.align ?? 'left',
+                                textWrap: 'nowrap',
+                              }}
+                            >
+                              {col.label}{' '}
+                              {col.required && (
+                                <span className='text-red-500 text-[16px]'>
+                                  *
+                                </span>
+                              )}
+                            </TableCell>
+                          ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody
+                      sx={{
+                        '& .MuiTableCell-root': {
+                          padding: '0px',
+                          px: '8px',
+                          minHeight: '32px',
+                          maxHeight: '32px',
+                          height: '32px',
+                          '& input, & textarea': {
+                            border: 'none',
+                            outline: 'none',
+                            boxShadow: 'none',
+                            background: 'transparent',
+                            '&:disabled': {
+                              backgroundColor: '#f3f4f6',
+                              color: '#6b7280',
+                              WebkitTextFillColor: '#6b7280',
+                            },
+                            '&:focus': {
+                              border: '1px solid #60a5fa',
+                              backgroundColor: 'white',
+                            },
+                          },
+                        },
+                      }}
+                    >
+                      {formLoading ? (
+                        <TableSkeleton rowsPerPage={4} columnsCount={7} />
+                      ) : (
+                        formData.team_members.map((member, index) => (
+                          <TableRow
+                            key={index}
+                            sx={{
+                              position: 'relative',
+                              p: 0,
+                            }}
+                            className={''}
+                          >
+                            {teamTableColumns
+                              .filter(isColumnVisible)
+                              .map((col: CaseTeamTableColumn) => {
+                                const isDisabled = col.disabled;
+                                const isBtnDisabled = col.disabled;
+                                const error =
+                                  errors.team_members?.[index]?.[
+                                    col.name as keyof CaseTeamMemberErrors
+                                  ];
 
-                            return (
-                              <TableCell
-                                key={`${col.name}-${index}`}
-                                ref={(el: HTMLTableCellElement | null) => {
-                                  if (el)
-                                    cellRefs.current[`${col.name}-${index}`] =
-                                      el;
-                                }}
-                                style={{
-                                  width: col.width,
-                                  textAlign: col.align ?? 'left',
-                                  position: 'relative',
-                                  backgroundColor: error
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: 0 }}
-                              >
-                                {col.name === 'user_role' && (
-                                  <div className='p-1'>
-                                    <Select
-                                      value={member.user_role}
-                                      onChange={(e) =>
-                                        handleTeamMemberChange(
-                                          index,
-                                          'user_role',
-                                          e.target.value
-                                        )
-                                      }
-                                      disabled={
-                                        isDisabled ||
-                                        !permissionMap.role_rid?.edit ||
-                                        !!member.rid
-                                      }
-                                      size='small'
-                                      fullWidth
-                                      displayEmpty
-                                      className='h-[28px]'
-                                      sx={{
-                                        width: '100%',
-                                        '& .MuiSelect-select': {
-                                          fontSize: '13px',
-                                          fontWeight: 500,
-                                          color: member.user_role
-                                            ? '#425A76'
-                                            : '#7D98B6',
-                                          padding: '4px 6px',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                          borderColor: '#CBD6E2',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            borderColor: '#CBD6E2',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            borderColor: '#CBD6E2',
-                                          },
-                                      }}
-                                      MenuProps={{
-                                        PaperProps: {
-                                          sx: {
-                                            marginTop: '4px',
-                                            maxHeight: '250px',
-                                            borderRadius: '0px',
-                                            overflowX: 'auto',
-                                            width: Math.max(
-                                              cellWidths[
-                                                `user_role-${index}`
-                                              ] || 0,
-                                              150
-                                            ),
-                                            boxShadow:
-                                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                                            '& .MuiMenuItem-root': {
-                                              fontSize: '13px',
-                                              fontWeight: 500,
-                                              padding: '6px 12px',
-                                              paddingRight: '24px',
-                                              whiteSpace: 'nowrap',
-                                              display: 'block',
-                                              width: '100%',
-                                              minWidth: 'max-content',
-                                              '&[data-value=""]': {
-                                                color: '#7D98B6',
-                                              },
-                                              '&:not([data-value=""])': {
-                                                color: '#425A76',
-                                              },
-                                              '&.Mui-selected': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.08)',
-                                              },
-                                              '&.Mui-selected:hover': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.12)',
-                                              },
-                                              '&:hover': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.04)',
-                                              },
-                                            },
-                                          },
-                                        },
-                                      }}
-                                    >
-                                      <MenuItem
-                                        value=''
-                                        sx={{
-                                          fontSize: '13px',
-                                          color: '#7D98B6 !important',
-                                          fontWeight: 500,
-                                        }}
-                                      >
-                                        Choose Case User Role
-                                      </MenuItem>
-                                      {getAvailableRoleOptions(index).map(
-                                        (role) => (
-                                          <MenuItem
-                                            key={role}
-                                            value={role}
-                                            title={role}
-                                            sx={{
-                                              fontSize: '13px',
-                                              color: '#425A76 !important',
-                                              fontWeight: 500,
-                                            }}
-                                          >
-                                            {role}
-                                          </MenuItem>
-                                        )
-                                      )}
-                                    </Select>
-                                  </div>
-                                )}
-
-                                {col.name === 'user_name' && (
-                                  <div className='p-1'>
-                                    <Select
-                                      value={member.user_name}
-                                      onChange={(e) =>
-                                        handleTeamMemberChange(
-                                          index,
-                                          'user_name',
-                                          e.target.value
-                                        )
-                                      }
-                                      disabled={
-                                        isDisabled ||
-                                        !permissionMap.user_rid?.edit ||
-                                        !!member.rid
-                                      }
-                                      size='small'
-                                      fullWidth
-                                      displayEmpty
-                                      className='h-[28px]'
-                                      sx={{
-                                        width: '100%',
-                                        '& .MuiSelect-select': {
-                                          fontSize: '13px',
-                                          fontWeight: 500,
-                                          color: member.user_name
-                                            ? '#425A76'
-                                            : '#7D98B6',
-                                          padding: '4px 6px',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                          borderColor: '#CBD6E2',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            borderColor: '#CBD6E2',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            borderColor: '#CBD6E2',
-                                          },
-                                      }}
-                                      MenuProps={{
-                                        PaperProps: {
-                                          sx: {
-                                            marginTop: '4px',
-                                            maxHeight: '250px',
-                                            borderRadius: '0px',
-                                            overflowX: 'auto',
-                                            width: Math.max(
-                                              cellWidths[
-                                                `user_name-${index}`
-                                              ] || 0,
-                                              150 // minimum width fallback
-                                            ),
-                                            boxShadow:
-                                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                                            '& .MuiMenuItem-root': {
-                                              fontSize: '13px',
-                                              fontWeight: 500,
-                                              padding: '6px 12px',
-                                              paddingRight: '24px',
-                                              whiteSpace: 'nowrap',
-                                              display: 'block',
-                                              width: '100%',
-                                              minWidth: 'max-content',
-                                              '&[data-value=""]': {
-                                                color: '#7D98B6',
-                                              },
-                                              '&:not([data-value=""])': {
-                                                color: '#425A76',
-                                              },
-                                              '&.Mui-selected': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.08)',
-                                              },
-                                              '&.Mui-selected:hover': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.12)',
-                                              },
-                                              '&:hover': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.04)',
-                                              },
-                                            },
-                                          },
-                                        },
-                                      }}
-                                    >
-                                      <MenuItem
-                                        value=''
-                                        sx={{
-                                          fontSize: '13px',
-                                          color: '#7D98B6 !important',
-                                          fontWeight: 500,
-                                        }}
-                                      >
-                                        Choose Case User
-                                      </MenuItem>
-                                      {getAvailableUserOptions(index).map(
-                                        (user) => (
-                                          <MenuItem
-                                            key={user}
-                                            value={user}
-                                            title={user}
-                                            sx={{
-                                              fontSize: '13px',
-                                              color: '#425A76 !important',
-                                              fontWeight: 500,
-                                            }}
-                                          >
-                                            {user}
-                                          </MenuItem>
-                                        )
-                                      )}
-                                    </Select>
-                                  </div>
-                                )}
-
-                                {col.name === 'is_primary' && (
-                                  <div className='p-1 flex justify-center items-center'>
-                                    <Checkbox
-                                      checked={member.is_primary || false}
-                                      onChange={(e) => {
-                                        const isChecking = e.target.checked;
-                                        if (!isChecking) {
-                                          const roleCount =
-                                            formData.team_members.filter(
-                                              (m) =>
-                                                m.user_role === member.user_role
-                                            ).length;
-                                          if (roleCount <= 1) {
-                                            return;
+                                return (
+                                  <TableCell
+                                    key={`${col.name}-${index}`}
+                                    ref={(el: HTMLTableCellElement | null) => {
+                                      if (el)
+                                        cellRefs.current[
+                                          `${col.name}-${index}`
+                                        ] = el;
+                                    }}
+                                    style={{
+                                      width: col.width,
+                                      textAlign: col.align ?? 'left',
+                                      position: 'relative',
+                                      backgroundColor: error
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: 0 }}
+                                  >
+                                    {col.name === 'user_role' && (
+                                      <div className='p-1'>
+                                        <Select
+                                          value={member.user_role}
+                                          onChange={(e) =>
+                                            handleTeamMemberChange(
+                                              index,
+                                              'user_role',
+                                              e.target.value
+                                            )
                                           }
-                                        }
+                                          disabled={
+                                            isDisabled ||
+                                            !permissionMap.role_rid?.edit ||
+                                            !!member.rid
+                                          }
+                                          size='small'
+                                          fullWidth
+                                          displayEmpty
+                                          className='h-[28px]'
+                                          sx={{
+                                            width: '100%',
+                                            '& .MuiSelect-select': {
+                                              fontSize: '13px',
+                                              fontWeight: 500,
+                                              color: member.user_role
+                                                ? '#425A76'
+                                                : '#7D98B6',
+                                              padding: '4px 6px',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                                borderColor: '#CBD6E2',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                borderColor: '#CBD6E2',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                borderColor: '#CBD6E2',
+                                              },
+                                          }}
+                                          MenuProps={{
+                                            PaperProps: {
+                                              sx: {
+                                                marginTop: '4px',
+                                                maxHeight: '250px',
+                                                borderRadius: '0px',
+                                                overflowX: 'auto',
+                                                width: Math.max(
+                                                  cellWidths[
+                                                    `user_role-${index}`
+                                                  ] || 0,
+                                                  150
+                                                ),
+                                                boxShadow:
+                                                  'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                                '& .MuiMenuItem-root': {
+                                                  fontSize: '13px',
+                                                  fontWeight: 500,
+                                                  padding: '6px 12px',
+                                                  paddingRight: '24px',
+                                                  whiteSpace: 'nowrap',
+                                                  display: 'block',
+                                                  width: '100%',
+                                                  minWidth: 'max-content',
+                                                  '&[data-value=""]': {
+                                                    color: '#7D98B6',
+                                                  },
+                                                  '&:not([data-value=""])': {
+                                                    color: '#425A76',
+                                                  },
+                                                  '&.Mui-selected': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.08)',
+                                                  },
+                                                  '&.Mui-selected:hover': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.12)',
+                                                  },
+                                                  '&:hover': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.04)',
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          }}
+                                        >
+                                          <MenuItem
+                                            value=''
+                                            sx={{
+                                              fontSize: '13px',
+                                              color: '#7D98B6 !important',
+                                              fontWeight: 500,
+                                            }}
+                                          >
+                                            Choose Case User Role
+                                          </MenuItem>
+                                          {getAvailableRoleOptions(index).map(
+                                            (role) => (
+                                              <MenuItem
+                                                key={role}
+                                                value={role}
+                                                title={role}
+                                                sx={{
+                                                  fontSize: '13px',
+                                                  color: '#425A76 !important',
+                                                  fontWeight: 500,
+                                                }}
+                                              >
+                                                {role}
+                                              </MenuItem>
+                                            )
+                                          )}
+                                        </Select>
+                                      </div>
+                                    )}
 
-                                        // Check if trying to set primary when another user in same role is already primary
-                                        if (isChecking && member.user_role) {
-                                          const existingPrimary =
-                                            formData.team_members.find(
-                                              (m, i) =>
-                                                i !== index &&
-                                                m.user_role ===
-                                                  member.user_role &&
-                                                m.user_role !== '' &&
-                                                m.is_primary
-                                            );
+                                    {col.name === 'user_name' && (
+                                      <div className='p-1'>
+                                        <Select
+                                          value={member.user_name}
+                                          onChange={(e) =>
+                                            handleTeamMemberChange(
+                                              index,
+                                              'user_name',
+                                              e.target.value
+                                            )
+                                          }
+                                          disabled={
+                                            isDisabled ||
+                                            !permissionMap.user_rid?.edit ||
+                                            !!member.rid
+                                          }
+                                          size='small'
+                                          fullWidth
+                                          displayEmpty
+                                          className='h-[28px]'
+                                          sx={{
+                                            width: '100%',
+                                            '& .MuiSelect-select': {
+                                              fontSize: '13px',
+                                              fontWeight: 500,
+                                              color: member.user_name
+                                                ? '#425A76'
+                                                : '#7D98B6',
+                                              padding: '4px 6px',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                                borderColor: '#CBD6E2',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                borderColor: '#CBD6E2',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                borderColor: '#CBD6E2',
+                                              },
+                                          }}
+                                          MenuProps={{
+                                            PaperProps: {
+                                              sx: {
+                                                marginTop: '4px',
+                                                maxHeight: '250px',
+                                                borderRadius: '0px',
+                                                overflowX: 'auto',
+                                                width: Math.max(
+                                                  cellWidths[
+                                                    `user_name-${index}`
+                                                  ] || 0,
+                                                  150 // minimum width fallback
+                                                ),
+                                                boxShadow:
+                                                  'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                                '& .MuiMenuItem-root': {
+                                                  fontSize: '13px',
+                                                  fontWeight: 500,
+                                                  padding: '6px 12px',
+                                                  paddingRight: '24px',
+                                                  whiteSpace: 'nowrap',
+                                                  display: 'block',
+                                                  width: '100%',
+                                                  minWidth: 'max-content',
+                                                  '&[data-value=""]': {
+                                                    color: '#7D98B6',
+                                                  },
+                                                  '&:not([data-value=""])': {
+                                                    color: '#425A76',
+                                                  },
+                                                  '&.Mui-selected': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.08)',
+                                                  },
+                                                  '&.Mui-selected:hover': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.12)',
+                                                  },
+                                                  '&:hover': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.04)',
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          }}
+                                        >
+                                          <MenuItem
+                                            value=''
+                                            sx={{
+                                              fontSize: '13px',
+                                              color: '#7D98B6 !important',
+                                              fontWeight: 500,
+                                            }}
+                                          >
+                                            Choose Case User
+                                          </MenuItem>
+                                          {getAvailableUserOptions(index).map(
+                                            (user) => (
+                                              <MenuItem
+                                                key={user}
+                                                value={user}
+                                                title={user}
+                                                sx={{
+                                                  fontSize: '13px',
+                                                  color: '#425A76 !important',
+                                                  fontWeight: 500,
+                                                }}
+                                              >
+                                                {user}
+                                              </MenuItem>
+                                            )
+                                          )}
+                                        </Select>
+                                      </div>
+                                    )}
 
-                                          if (existingPrimary) {
-                                            // Set error and don't update the checkbox
-                                            setErrors((prev) => {
-                                              const newMemberErrors = [
-                                                ...(prev.team_members || []),
-                                              ];
-                                              if (!newMemberErrors[index]) {
-                                                newMemberErrors[index] = {};
+                                    {col.name === 'is_primary' && (
+                                      <div className='p-1 flex justify-center items-center'>
+                                        <Checkbox
+                                          checked={member.is_primary || false}
+                                          onChange={(e) => {
+                                            const isChecking = e.target.checked;
+                                            if (!isChecking) {
+                                              const roleCount =
+                                                formData.team_members.filter(
+                                                  (m) =>
+                                                    m.user_role ===
+                                                    member.user_role
+                                                ).length;
+                                              if (roleCount <= 1) {
+                                                return;
                                               }
-                                              newMemberErrors[index] = {
-                                                ...newMemberErrors[index],
-                                                is_primary:
-                                                  'Only one primary contact allowed per role.',
-                                              };
-                                              return {
-                                                ...prev,
-                                                team_members: newMemberErrors,
-                                              };
-                                            });
-                                            return; // Don't update the checkbox state
+                                            }
+
+                                            // Check if trying to set primary when another user in same role is already primary
+                                            if (
+                                              isChecking &&
+                                              member.user_role
+                                            ) {
+                                              const existingPrimary =
+                                                formData.team_members.find(
+                                                  (m, i) =>
+                                                    i !== index &&
+                                                    m.user_role ===
+                                                      member.user_role &&
+                                                    m.user_role !== '' &&
+                                                    m.is_primary
+                                                );
+
+                                              if (existingPrimary) {
+                                                // Set error and don't update the checkbox
+                                                setErrors((prev) => {
+                                                  const newMemberErrors = [
+                                                    ...(prev.team_members ||
+                                                      []),
+                                                  ];
+                                                  if (!newMemberErrors[index]) {
+                                                    newMemberErrors[index] = {};
+                                                  }
+                                                  newMemberErrors[index] = {
+                                                    ...newMemberErrors[index],
+                                                    is_primary:
+                                                      'Only one primary contact allowed per role.',
+                                                  };
+                                                  return {
+                                                    ...prev,
+                                                    team_members:
+                                                      newMemberErrors,
+                                                  };
+                                                });
+                                                return; // Don't update the checkbox state
+                                              }
+                                            }
+
+                                            // If validation passes or unchecking, update normally
+                                            handleTeamMemberChange(
+                                              index,
+                                              'is_primary',
+                                              isChecking
+                                            );
+                                          }}
+                                          disabled={
+                                            isDisabled || !isCaseTeamEditable
                                           }
-                                        }
-
-                                        // If validation passes or unchecking, update normally
-                                        handleTeamMemberChange(
-                                          index,
-                                          'is_primary',
-                                          isChecking
-                                        );
-                                      }}
-                                      disabled={
-                                        isDisabled || !isCaseTeamEditable
-                                      }
-                                      size='small'
-                                      sx={{
-                                        padding: 0,
-                                        color: '#60A5FA',
-                                        '&.Mui-checked': {
-                                          color: '#60A5FA',
-                                        },
-                                        '&.Mui-disabled': {
-                                          color: '#CBD6E2',
-                                        },
-                                      }}
-                                    />
-                                  </div>
-                                )}
-
-                                {col.name === 'status' && (
-                                  <div className='p-1'>
-                                    <Select
-                                      value={member.status || ''}
-                                      onChange={(e) =>
-                                        handleStatusChange(e, member, index)
-                                      }
-                                      disabled={
-                                        isDisabled || !isCaseTeamEditable
-                                      }
-                                      size='small'
-                                      fullWidth
-                                      displayEmpty
-                                      className='h-[28px]'
-                                      sx={{
-                                        width: '100%',
-                                        '& .MuiSelect-select': {
-                                          fontSize: '13px',
-                                          fontWeight: 500,
-                                          color: member.status
-                                            ? '#425A76'
-                                            : '#7D98B6',
-                                          padding: '4px 6px',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                          borderColor: '#CBD6E2',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            borderColor: '#CBD6E2',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            borderColor: '#CBD6E2',
-                                          },
-                                      }}
-                                      MenuProps={{
-                                        PaperProps: {
-                                          sx: {
-                                            marginTop: '4px',
-                                            maxHeight: '250px',
-                                            borderRadius: '0px',
-                                            overflowX: 'auto',
-                                            width: Math.max(
-                                              cellWidths[`status-${index}`] ||
-                                                0,
-                                              150
-                                            ),
-                                            boxShadow:
-                                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                                            '& .MuiMenuItem-root': {
-                                              fontSize: '13px',
-                                              fontWeight: 500,
-                                              padding: '6px 12px',
-                                              paddingRight: '24px',
-                                              whiteSpace: 'nowrap',
-                                              display: 'block',
-                                              width: '100%',
-                                              minWidth: 'max-content',
-                                              '&[data-value=""]': {
-                                                color: '#7D98B6',
-                                              },
-                                              '&:not([data-value=""])': {
-                                                color: '#425A76',
-                                              },
-                                              '&.Mui-selected': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.08)',
-                                              },
-                                              '&.Mui-selected:hover': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.12)',
-                                              },
-                                              '&:hover': {
-                                                backgroundColor:
-                                                  'rgba(0, 0, 0, 0.04)',
-                                              },
-                                            },
-                                          },
-                                        },
-                                      }}
-                                    >
-                                      <MenuItem
-                                        value=''
-                                        sx={{
-                                          fontSize: '13px',
-                                          color: '#7D98B6 !important',
-                                          fontWeight: 500,
-                                        }}
-                                      >
-                                        Choose Status
-                                      </MenuItem>
-                                      {statusOptionsQuery.data?.data?.status?.map(
-                                        (status: {
-                                          rid: string;
-                                          status_name: string;
-                                          status_description?: string;
-                                        }) => (
-                                          <MenuItem
-                                            key={status.rid}
-                                            value={status.status_name}
-                                            sx={{
-                                              fontSize: '13px',
-                                              color: '#425A76 !important',
-                                              fontWeight: 500,
-                                            }}
-                                          >
-                                            {status.status_name}
-                                          </MenuItem>
-                                        )
-                                      )}
-                                    </Select>
-                                  </div>
-                                )}
-
-                                {col.name === 'start_date' && (
-                                  <div
-                                    onKeyDown={(e) => e.stopPropagation()}
-                                    className='w-full min-w-[140px]'
-                                  >
-                                    <LocalizationProvider
-                                      dateAdapter={AdapterDayjs}
-                                    >
-                                      <DatePicker
-                                        value={
-                                          member.start_date
-                                            ? dayjs(member.start_date)
-                                            : null
-                                        }
-                                        onChange={(newValue) =>
-                                          handleTeamMemberChange(
-                                            index,
-                                            'start_date',
-                                            newValue
-                                              ? dayjs(newValue).format(
-                                                  'YYYY-MM-DD'
-                                                )
-                                              : ''
-                                          )
-                                        }
-                                        format='YYYY-MMM-DD'
-                                        minDate={
-                                          fiscalYear
-                                            ? dayjs(`${fiscalYear - 1}-04-01`)
-                                            : dayjs().startOf('day')
-                                        }
-                                        disabled={
-                                          isDisabled ||
-                                          !permissionMap.effective_startdate
-                                            ?.edit
-                                        }
-                                        sx={{
-                                          width: '100%',
-                                          minWidth: '140px',
-                                          backgroundColor:
-                                            'transparent !important',
-                                          margin: 0,
-                                          padding: 0,
-                                          '& .MuiOutlinedInput-root': {
-                                            height: '28px',
-                                            borderRadius: '2px',
-                                            minWidth: '140px',
-                                            backgroundColor:
-                                              'transparent !important',
-                                            '&.Mui-disabled': {
-                                              backgroundColor:
-                                                'transparent !important',
-                                              '& input': {
-                                                color: '#6b7280',
-                                                WebkitTextFillColor: '#6b7280',
-                                                backgroundColor:
-                                                  'transparent !important',
-                                              },
-                                            },
-                                            '& fieldset': {
-                                              border: error
-                                                ? '1px solid #ef4444'
-                                                : 'none',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                            '&:hover fieldset': {
-                                              borderColor: error
-                                                ? '#ef4444'
-                                                : 'transparent',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                            '&.Mui-focused fieldset': {
-                                              borderColor: error
-                                                ? '#ef4444'
-                                                : 'transparent',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                          },
-                                          '& .MuiOutlinedInput-notchedOutline':
-                                            {
-                                              borderColor:
-                                                'transparent !important',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                          '& .MuiInputBase-input': {
-                                            fontSize: '12px',
-                                            fontWeight: 500,
-                                            padding: '4px 6px',
-                                            height: '20px',
-                                            minWidth: '100px',
-                                            textAlign: 'left',
-                                            color: member.start_date
-                                              ? '#425A76'
-                                              : '#7D98B6',
-                                            backgroundColor:
-                                              'transparent !important',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            '&::placeholder': {
-                                              fontSize: '12px',
-                                              color: '#7D98B6 !important',
-                                              opacity: 1,
-                                            },
-                                            '&[placeholder]': {
-                                              color: '#7D98B6 !important',
-                                              opacity: 1,
-                                            },
-                                            '&.Mui-disabled::placeholder': {
-                                              color: '#7D98B6 !important',
-                                              WebkitTextFillColor:
-                                                '#7D98B6 !important',
-                                              opacity: 1,
+                                          size='small'
+                                          sx={{
+                                            padding: 0,
+                                            color: '#60A5FA',
+                                            '&.Mui-checked': {
+                                              color: '#60A5FA',
                                             },
                                             '&.Mui-disabled': {
-                                              color: '#6b7280',
-                                              WebkitTextFillColor: '#6b7280',
+                                              color: '#CBD6E2',
                                             },
-                                          },
-                                          '& .MuiInputAdornment-root': {
-                                            marginLeft: '2px',
-                                            gap: '2px',
-                                            backgroundColor:
-                                              'transparent !important',
-                                          },
-                                        }}
-                                        slotProps={{
-                                          field: { clearable: true },
-                                          clearButton: {
-                                            tabIndex: -1,
-                                          },
-                                          openPickerButton: {
-                                            tabIndex: -1,
-                                          },
-                                          textField: {
-                                            size: 'small',
-                                            error: !!error,
-                                            placeholder: 'YYYY-MMM-DD',
-                                            InputProps: {
-                                              disabled: true,
-                                              onPaste: (
-                                                e: React.ClipboardEvent<HTMLInputElement>
-                                              ) => {
-                                                e.preventDefault();
-                                                return false;
-                                              },
-                                            },
-                                            InputLabelProps: {
-                                              shrink: true,
-                                            },
-                                          },
-                                          inputAdornment: {
-                                            position: 'end',
-                                          },
-                                          popper: {
-                                            sx: {
-                                              '& .MuiPaper-root': {
-                                                marginTop: '7px',
-                                                marginLeft: '-10px',
-                                                borderRadius: '0px',
-                                              },
-                                            },
-                                          },
-                                        }}
-                                        slots={{
-                                          openPickerIcon: () => (
-                                            <CalendarIcon
-                                              alt='calendar'
-                                              className='w-3 h-3 flex-shrink-0'
-                                            />
-                                          ),
-                                          clearIcon: () => (
-                                            <CloseIcon
-                                              alt='calendar'
-                                              className='w-[9px] h-[9px] flex-shrink-0'
-                                            />
-                                          ),
-                                        }}
-                                      />
-                                    </LocalizationProvider>
-                                  </div>
-                                )}
-
-                                {col.name === 'end_date' && (
-                                  <div
-                                    onKeyDown={(e) => e.stopPropagation()}
-                                    className='w-full min-w-[140px]'
-                                  >
-                                    <LocalizationProvider
-                                      dateAdapter={AdapterDayjs}
-                                    >
-                                      <DatePicker
-                                        value={
-                                          member.end_date
-                                            ? dayjs(member.end_date)
-                                            : null
-                                        }
-                                        onChange={(newValue) =>
-                                          handleTeamMemberChange(
-                                            index,
-                                            'end_date',
-                                            newValue
-                                              ? dayjs(newValue).format(
-                                                  'YYYY-MM-DD'
-                                                )
-                                              : ''
-                                          )
-                                        }
-                                        format='YYYY-MMM-DD'
-                                        minDate={
-                                          member.start_date
-                                            ? dayjs(member.start_date)
-                                            : dayjs('1950-01-01')
-                                        }
-                                        disabled={
-                                          isDisabled ||
-                                          !permissionMap.effective_enddate?.edit
-                                        }
-                                        sx={{
-                                          width: '100%',
-                                          minWidth: '140px',
-                                          backgroundColor:
-                                            'transparent !important',
-                                          margin: 0,
-                                          padding: 0,
-                                          '& .MuiOutlinedInput-root': {
-                                            height: '28px',
-                                            borderRadius: '2px',
-                                            minWidth: '140px',
-                                            backgroundColor:
-                                              'transparent !important',
-                                            '&.Mui-disabled': {
-                                              backgroundColor:
-                                                'transparent !important',
-                                              '& input': {
-                                                color: '#6b7280',
-                                                WebkitTextFillColor: '#6b7280',
-                                                backgroundColor:
-                                                  'transparent !important',
-                                              },
-                                            },
-                                            '& fieldset': {
-                                              border: error
-                                                ? '1px solid #ef4444'
-                                                : 'none',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                            '&:hover fieldset': {
-                                              borderColor: error
-                                                ? '#ef4444'
-                                                : 'transparent',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                            '&.Mui-focused fieldset': {
-                                              borderColor: error
-                                                ? '#ef4444'
-                                                : 'transparent',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                          },
-                                          '& .MuiOutlinedInput-notchedOutline':
-                                            {
-                                              borderColor:
-                                                'transparent !important',
-                                              backgroundColor:
-                                                'transparent !important',
-                                            },
-                                          '& .MuiInputBase-input': {
-                                            fontSize: '12px',
-                                            fontWeight: 500,
-                                            padding: '4px 6px',
-                                            height: '20px',
-                                            minWidth: '100px',
-                                            textAlign: 'left',
-                                            color: member.end_date
-                                              ? '#425A76'
-                                              : '#7D98B6',
-                                            backgroundColor:
-                                              'transparent !important',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            '&::placeholder': {
-                                              fontSize: '12px',
-                                              color: '#7D98B6 !important',
-                                              opacity: 1,
-                                            },
-                                            '&[placeholder]': {
-                                              color: '#7D98B6 !important',
-                                              opacity: 1,
-                                            },
-                                            '&.Mui-disabled::placeholder': {
-                                              color: '#7D98B6 !important',
-                                              WebkitTextFillColor:
-                                                '#7D98B6 !important',
-                                              opacity: 1,
-                                            },
-                                            '&.Mui-disabled': {
-                                              color: '#6b7280',
-                                              WebkitTextFillColor: '#6b7280',
-                                            },
-                                          },
-                                          '& .MuiInputAdornment-root': {
-                                            marginLeft: '2px',
-                                            gap: '2px',
-                                            backgroundColor:
-                                              'transparent !important',
-                                          },
-                                        }}
-                                        slotProps={{
-                                          field: { clearable: true },
-                                          clearButton: {
-                                            tabIndex: -1,
-                                          },
-                                          openPickerButton: {
-                                            tabIndex: -1,
-                                          },
-                                          textField: {
-                                            size: 'small',
-                                            error: !!error,
-                                            placeholder: 'YYYY-MMM-DD',
-                                            InputProps: {
-                                              disabled: true,
-                                              onPaste: (
-                                                e: React.ClipboardEvent<HTMLInputElement>
-                                              ) => {
-                                                e.preventDefault();
-                                                return false;
-                                              },
-                                            },
-                                            InputLabelProps: {
-                                              shrink: true,
-                                            },
-                                          },
-                                          inputAdornment: {
-                                            position: 'end',
-                                          },
-                                          popper: {
-                                            sx: {
-                                              '& .MuiPaper-root': {
-                                                marginTop: '7px',
-                                                marginLeft: '-10px',
-                                                borderRadius: '0px',
-                                              },
-                                            },
-                                          },
-                                        }}
-                                        slots={{
-                                          openPickerIcon: () => (
-                                            <CalendarIcon
-                                              alt='calendar'
-                                              className='w-3 h-3 flex-shrink-0'
-                                            />
-                                          ),
-                                          clearIcon: () => (
-                                            <CloseIcon
-                                              alt='calendar'
-                                              className='w-[9px] h-[9px] flex-shrink-0'
-                                            />
-                                          ),
-                                        }}
-                                      />
-                                    </LocalizationProvider>
-                                  </div>
-                                )}
-
-                                {col.name === 'action' && showDeleteButton && (
-                                  <Tooltip
-                                    title={'Remove team member'}
-                                    disableHoverListener={isBtnDisabled}
-                                    arrow
-                                    placement='top'
-                                  >
-                                    <button
-                                      type='button'
-                                      onClick={() =>
-                                        handleRemoveTeamMember(index)
-                                      }
-                                      style={{
-                                        cursor:
-                                          isBtnDisabled ||
-                                          !isDeleteButtonEnabled
-                                            ? 'default'
-                                            : 'pointer',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        padding: 0,
-                                        marginTop: '6px',
-                                      }}
-                                      aria-label='Remove team member' // prettier-ignore
-                                      disabled={
-                                        isBtnDisabled ||
-                                        !isCaseTeamEditable ||
-                                        !isDeleteButtonEnabled
-                                      }
-                                    >
-                                      <React.Suspense fallback={null}>
-                                        <KeyContactRemoveIcon
-                                          alt='Remove'
-                                          style={{
-                                            width: 20,
-                                            height: 20,
                                           }}
                                         />
-                                      </React.Suspense>
-                                    </button>
-                                  </Tooltip>
-                                )}
+                                      </div>
+                                    )}
 
-                                {error && (
-                                  <Tooltip
-                                    title={error}
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            );
-                          })}
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </div>
+                                    {col.name === 'status' && (
+                                      <div className='p-1'>
+                                        <Select
+                                          value={member.status || ''}
+                                          onChange={(e) =>
+                                            handleStatusChange(e, member, index)
+                                          }
+                                          disabled={
+                                            isDisabled || !isCaseTeamEditable
+                                          }
+                                          size='small'
+                                          fullWidth
+                                          displayEmpty
+                                          className='h-[28px]'
+                                          sx={{
+                                            width: '100%',
+                                            '& .MuiSelect-select': {
+                                              fontSize: '13px',
+                                              fontWeight: 500,
+                                              color: member.status
+                                                ? '#425A76'
+                                                : '#7D98B6',
+                                              padding: '4px 6px',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                                borderColor: '#CBD6E2',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                borderColor: '#CBD6E2',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                borderColor: '#CBD6E2',
+                                              },
+                                          }}
+                                          MenuProps={{
+                                            PaperProps: {
+                                              sx: {
+                                                marginTop: '4px',
+                                                maxHeight: '250px',
+                                                borderRadius: '0px',
+                                                overflowX: 'auto',
+                                                width: Math.max(
+                                                  cellWidths[
+                                                    `status-${index}`
+                                                  ] || 0,
+                                                  150
+                                                ),
+                                                boxShadow:
+                                                  'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                                '& .MuiMenuItem-root': {
+                                                  fontSize: '13px',
+                                                  fontWeight: 500,
+                                                  padding: '6px 12px',
+                                                  paddingRight: '24px',
+                                                  whiteSpace: 'nowrap',
+                                                  display: 'block',
+                                                  width: '100%',
+                                                  minWidth: 'max-content',
+                                                  '&[data-value=""]': {
+                                                    color: '#7D98B6',
+                                                  },
+                                                  '&:not([data-value=""])': {
+                                                    color: '#425A76',
+                                                  },
+                                                  '&.Mui-selected': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.08)',
+                                                  },
+                                                  '&.Mui-selected:hover': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.12)',
+                                                  },
+                                                  '&:hover': {
+                                                    backgroundColor:
+                                                      'rgba(0, 0, 0, 0.04)',
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          }}
+                                        >
+                                          <MenuItem
+                                            value=''
+                                            sx={{
+                                              fontSize: '13px',
+                                              color: '#7D98B6 !important',
+                                              fontWeight: 500,
+                                            }}
+                                          >
+                                            Choose Status
+                                          </MenuItem>
+                                          {statusOptionsQuery.data?.data?.status?.map(
+                                            (status: {
+                                              rid: string;
+                                              status_name: string;
+                                              status_description?: string;
+                                            }) => (
+                                              <MenuItem
+                                                key={status.rid}
+                                                value={status.status_name}
+                                                sx={{
+                                                  fontSize: '13px',
+                                                  color: '#425A76 !important',
+                                                  fontWeight: 500,
+                                                }}
+                                              >
+                                                {status.status_name}
+                                              </MenuItem>
+                                            )
+                                          )}
+                                        </Select>
+                                      </div>
+                                    )}
 
-          {showAddButton && (
-            <div className='mt-2 pl-4'>
-              <button
-                className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
-                type='button'
-                onClick={handleAddTeamMember}
-                disabled={
-                  formLoading || !isCaseTeamEditable || !isAddButtonEnabled
-                }
-              >
-                <span>
-                  <React.Suspense fallback={null}>
-                    <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
-                  </React.Suspense>
-                </span>
-                Add Case Team Member
-              </button>
+                                    {col.name === 'start_date' && (
+                                      <div
+                                        onKeyDown={(e) => e.stopPropagation()}
+                                        className='w-full min-w-[140px]'
+                                      >
+                                        <LocalizationProvider
+                                          dateAdapter={AdapterDayjs}
+                                        >
+                                          <DatePicker
+                                            value={
+                                              member.start_date
+                                                ? dayjs(member.start_date)
+                                                : null
+                                            }
+                                            onChange={(newValue) =>
+                                              handleTeamMemberChange(
+                                                index,
+                                                'start_date',
+                                                newValue
+                                                  ? dayjs(newValue).format(
+                                                      'YYYY-MM-DD'
+                                                    )
+                                                  : ''
+                                              )
+                                            }
+                                            format='YYYY-MMM-DD'
+                                            minDate={
+                                              fiscalYear
+                                                ? dayjs(
+                                                    `${fiscalYear - 1}-04-01`
+                                                  )
+                                                : dayjs().startOf('day')
+                                            }
+                                            disabled={
+                                              isDisabled ||
+                                              !permissionMap.effective_startdate
+                                                ?.edit
+                                            }
+                                            sx={{
+                                              width: '100%',
+                                              minWidth: '140px',
+                                              backgroundColor:
+                                                'transparent !important',
+                                              margin: 0,
+                                              padding: 0,
+                                              '& .MuiOutlinedInput-root': {
+                                                height: '28px',
+                                                borderRadius: '2px',
+                                                minWidth: '140px',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                                '&.Mui-disabled': {
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                  '& input': {
+                                                    color: '#6b7280',
+                                                    WebkitTextFillColor:
+                                                      '#6b7280',
+                                                    backgroundColor:
+                                                      'transparent !important',
+                                                  },
+                                                },
+                                                '& fieldset': {
+                                                  border: error
+                                                    ? '1px solid #ef4444'
+                                                    : 'none',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                                '&:hover fieldset': {
+                                                  borderColor: error
+                                                    ? '#ef4444'
+                                                    : 'transparent',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                                '&.Mui-focused fieldset': {
+                                                  borderColor: error
+                                                    ? '#ef4444'
+                                                    : 'transparent',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                              },
+                                              '& .MuiOutlinedInput-notchedOutline':
+                                                {
+                                                  borderColor:
+                                                    'transparent !important',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                              '& .MuiInputBase-input': {
+                                                fontSize: '12px',
+                                                fontWeight: 500,
+                                                padding: '4px 6px',
+                                                height: '20px',
+                                                minWidth: '100px',
+                                                textAlign: 'left',
+                                                color: member.start_date
+                                                  ? '#425A76'
+                                                  : '#7D98B6',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                '&::placeholder': {
+                                                  fontSize: '12px',
+                                                  color: '#7D98B6 !important',
+                                                  opacity: 1,
+                                                },
+                                                '&[placeholder]': {
+                                                  color: '#7D98B6 !important',
+                                                  opacity: 1,
+                                                },
+                                                '&.Mui-disabled::placeholder': {
+                                                  color: '#7D98B6 !important',
+                                                  WebkitTextFillColor:
+                                                    '#7D98B6 !important',
+                                                  opacity: 1,
+                                                },
+                                                '&.Mui-disabled': {
+                                                  color: '#6b7280',
+                                                  WebkitTextFillColor:
+                                                    '#6b7280',
+                                                },
+                                              },
+                                              '& .MuiInputAdornment-root': {
+                                                marginLeft: '2px',
+                                                gap: '2px',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                              },
+                                            }}
+                                            slotProps={{
+                                              field: { clearable: true },
+                                              clearButton: {
+                                                tabIndex: -1,
+                                              },
+                                              openPickerButton: {
+                                                tabIndex: -1,
+                                              },
+                                              textField: {
+                                                size: 'small',
+                                                error: !!error,
+                                                placeholder: 'YYYY-MMM-DD',
+                                                InputProps: {
+                                                  disabled: true,
+                                                  onPaste: (
+                                                    e: React.ClipboardEvent<HTMLInputElement>
+                                                  ) => {
+                                                    e.preventDefault();
+                                                    return false;
+                                                  },
+                                                },
+                                                InputLabelProps: {
+                                                  shrink: true,
+                                                },
+                                              },
+                                              inputAdornment: {
+                                                position: 'end',
+                                              },
+                                              popper: {
+                                                sx: {
+                                                  '& .MuiPaper-root': {
+                                                    marginTop: '7px',
+                                                    marginLeft: '-10px',
+                                                    borderRadius: '0px',
+                                                  },
+                                                },
+                                              },
+                                            }}
+                                            slots={{
+                                              openPickerIcon: () => (
+                                                <CalendarIcon
+                                                  alt='calendar'
+                                                  className='w-3 h-3 flex-shrink-0'
+                                                />
+                                              ),
+                                              clearIcon: () => (
+                                                <CloseIcon
+                                                  alt='calendar'
+                                                  className='w-[9px] h-[9px] flex-shrink-0'
+                                                />
+                                              ),
+                                            }}
+                                          />
+                                        </LocalizationProvider>
+                                      </div>
+                                    )}
+
+                                    {col.name === 'end_date' && (
+                                      <div
+                                        onKeyDown={(e) => e.stopPropagation()}
+                                        className='w-full min-w-[140px]'
+                                      >
+                                        <LocalizationProvider
+                                          dateAdapter={AdapterDayjs}
+                                        >
+                                          <DatePicker
+                                            value={
+                                              member.end_date
+                                                ? dayjs(member.end_date)
+                                                : null
+                                            }
+                                            onChange={(newValue) =>
+                                              handleTeamMemberChange(
+                                                index,
+                                                'end_date',
+                                                newValue
+                                                  ? dayjs(newValue).format(
+                                                      'YYYY-MM-DD'
+                                                    )
+                                                  : ''
+                                              )
+                                            }
+                                            format='YYYY-MMM-DD'
+                                            minDate={
+                                              member.start_date
+                                                ? dayjs(member.start_date)
+                                                : dayjs('1950-01-01')
+                                            }
+                                            disabled={
+                                              isDisabled ||
+                                              !permissionMap.effective_enddate
+                                                ?.edit
+                                            }
+                                            sx={{
+                                              width: '100%',
+                                              minWidth: '140px',
+                                              backgroundColor:
+                                                'transparent !important',
+                                              margin: 0,
+                                              padding: 0,
+                                              '& .MuiOutlinedInput-root': {
+                                                height: '28px',
+                                                borderRadius: '2px',
+                                                minWidth: '140px',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                                '&.Mui-disabled': {
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                  '& input': {
+                                                    color: '#6b7280',
+                                                    WebkitTextFillColor:
+                                                      '#6b7280',
+                                                    backgroundColor:
+                                                      'transparent !important',
+                                                  },
+                                                },
+                                                '& fieldset': {
+                                                  border: error
+                                                    ? '1px solid #ef4444'
+                                                    : 'none',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                                '&:hover fieldset': {
+                                                  borderColor: error
+                                                    ? '#ef4444'
+                                                    : 'transparent',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                                '&.Mui-focused fieldset': {
+                                                  borderColor: error
+                                                    ? '#ef4444'
+                                                    : 'transparent',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                              },
+                                              '& .MuiOutlinedInput-notchedOutline':
+                                                {
+                                                  borderColor:
+                                                    'transparent !important',
+                                                  backgroundColor:
+                                                    'transparent !important',
+                                                },
+                                              '& .MuiInputBase-input': {
+                                                fontSize: '12px',
+                                                fontWeight: 500,
+                                                padding: '4px 6px',
+                                                height: '20px',
+                                                minWidth: '100px',
+                                                textAlign: 'left',
+                                                color: member.end_date
+                                                  ? '#425A76'
+                                                  : '#7D98B6',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                '&::placeholder': {
+                                                  fontSize: '12px',
+                                                  color: '#7D98B6 !important',
+                                                  opacity: 1,
+                                                },
+                                                '&[placeholder]': {
+                                                  color: '#7D98B6 !important',
+                                                  opacity: 1,
+                                                },
+                                                '&.Mui-disabled::placeholder': {
+                                                  color: '#7D98B6 !important',
+                                                  WebkitTextFillColor:
+                                                    '#7D98B6 !important',
+                                                  opacity: 1,
+                                                },
+                                                '&.Mui-disabled': {
+                                                  color: '#6b7280',
+                                                  WebkitTextFillColor:
+                                                    '#6b7280',
+                                                },
+                                              },
+                                              '& .MuiInputAdornment-root': {
+                                                marginLeft: '2px',
+                                                gap: '2px',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                              },
+                                            }}
+                                            slotProps={{
+                                              field: { clearable: true },
+                                              clearButton: {
+                                                tabIndex: -1,
+                                              },
+                                              openPickerButton: {
+                                                tabIndex: -1,
+                                              },
+                                              textField: {
+                                                size: 'small',
+                                                error: !!error,
+                                                placeholder: 'YYYY-MMM-DD',
+                                                InputProps: {
+                                                  disabled: true,
+                                                  onPaste: (
+                                                    e: React.ClipboardEvent<HTMLInputElement>
+                                                  ) => {
+                                                    e.preventDefault();
+                                                    return false;
+                                                  },
+                                                },
+                                                InputLabelProps: {
+                                                  shrink: true,
+                                                },
+                                              },
+                                              inputAdornment: {
+                                                position: 'end',
+                                              },
+                                              popper: {
+                                                sx: {
+                                                  '& .MuiPaper-root': {
+                                                    marginTop: '7px',
+                                                    marginLeft: '-10px',
+                                                    borderRadius: '0px',
+                                                  },
+                                                },
+                                              },
+                                            }}
+                                            slots={{
+                                              openPickerIcon: () => (
+                                                <CalendarIcon
+                                                  alt='calendar'
+                                                  className='w-3 h-3 flex-shrink-0'
+                                                />
+                                              ),
+                                              clearIcon: () => (
+                                                <CloseIcon
+                                                  alt='calendar'
+                                                  className='w-[9px] h-[9px] flex-shrink-0'
+                                                />
+                                              ),
+                                            }}
+                                          />
+                                        </LocalizationProvider>
+                                      </div>
+                                    )}
+
+                                    {col.name === 'action' &&
+                                      showDeleteButton && (
+                                        <Tooltip
+                                          title={'Remove team member'}
+                                          disableHoverListener={isBtnDisabled}
+                                          arrow
+                                          placement='top'
+                                        >
+                                          <button
+                                            type='button'
+                                            onClick={() =>
+                                              handleRemoveTeamMember(index)
+                                            }
+                                            style={{
+                                              cursor:
+                                                isBtnDisabled ||
+                                                !isDeleteButtonEnabled
+                                                  ? 'default'
+                                                  : 'pointer',
+                                              background: 'transparent',
+                                              border: 'none',
+                                              padding: 0,
+                                              marginTop: '6px',
+                                            }}
+                                            aria-label='Remove team member' // prettier-ignore
+                                            disabled={
+                                              isBtnDisabled ||
+                                              !isCaseTeamEditable ||
+                                              !isDeleteButtonEnabled
+                                            }
+                                          >
+                                            <React.Suspense fallback={null}>
+                                              <KeyContactRemoveIcon
+                                                alt='Remove'
+                                                style={{
+                                                  width: 20,
+                                                  height: 20,
+                                                }}
+                                              />
+                                            </React.Suspense>
+                                          </button>
+                                        </Tooltip>
+                                      )}
+
+                                    {error && (
+                                      <Tooltip
+                                        title={error}
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                );
+                              })}
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </div>
+
+              {showAddButton && (
+                <div className='mt-2 pl-4'>
+                  <button
+                    className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
+                    type='button'
+                    onClick={handleAddTeamMember}
+                    disabled={
+                      formLoading || !isCaseTeamEditable || !isAddButtonEnabled
+                    }
+                  >
+                    <span>
+                      <React.Suspense fallback={null}>
+                        <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                      </React.Suspense>
+                    </span>
+                    Add Case Team Member
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
     </>
   );
 };

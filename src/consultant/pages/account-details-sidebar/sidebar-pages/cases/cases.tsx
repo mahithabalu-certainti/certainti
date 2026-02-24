@@ -16,7 +16,12 @@ import {
   ExportType,
 } from '../../../../types';
 import { CASE_CREATE } from '../../../../../routes';
-import { generatePath, useNavigate, useParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { getCaseFilterFields } from './helper';
 import { accountDetailsProps } from '../../../account-details/utils';
 import {
@@ -28,18 +33,21 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const CasesTabs: OverviewTabs[] = [
   {
     id: AllPermissions.CASES_OVERVIEW, // need to change persmission
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
   {
     id: AllPermissions.CASES_TIMELINE,
     name: 'Timeline',
-    hide: true,
-    disable: true,
+    hide: false,
+    // disable: true,
+    key: 'timeline',
   },
 ];
 
@@ -87,7 +95,8 @@ const Cases: React.FC<CaseProps> = ({
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
-
+  const [searchParams] = useSearchParams();
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const caseFillingTypes = useGetCaseFilingTypes();
@@ -279,37 +288,45 @@ const Cases: React.FC<CaseProps> = ({
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <SectionHeader
-        title={'Cases'}
-        titleIcon={
-          <CasesIcon
-            alt='cases-header-icon'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='account' />
+        </div>
+      ) : (
+        <div>
+          <SectionHeader
+            title={'Cases'}
+            titleIcon={
+              <CasesIcon
+                alt='cases-header-icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
+            }
+            count={totalCount}
+            showItemCount={true}
+            showBackArrow={false}
+            buttons={headerButtons}
+            iconBg={ColorCode.accountBgColor}
+            bgType='circle'
           />
-        }
-        count={totalCount}
-        showItemCount={true}
-        showBackArrow={false}
-        buttons={headerButtons}
-        iconBg={ColorCode.accountBgColor}
-        bgType='circle'
-      />
-      <div className='border border-[#CBD6E2]'>
-        <CaseListTable
-          appliedFilters={appliedFilters}
-          tableParams={tableParams}
-          setTableParams={setTableParams}
-          setTotalCount={setTotalCount}
-          refreshTrigger={refreshCaseTrigger}
-          setColumnAnchorEl={setColumnAnchorEl}
-          columnAnchorEl={columnAnchorEl}
-          accountDetails={accountDetails}
-          searchText={searchText}
-          accountInActive={accountInActive}
-          caseFilingTypesOptions={caseFilingTypesOptions}
-          caseOwnersOptions={caseOwnersOptions}
-        />
-      </div>
+          <div className='border border-[#CBD6E2]'>
+            <CaseListTable
+              appliedFilters={appliedFilters}
+              tableParams={tableParams}
+              setTableParams={setTableParams}
+              setTotalCount={setTotalCount}
+              refreshTrigger={refreshCaseTrigger}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
+              accountDetails={accountDetails}
+              searchText={searchText}
+              accountInActive={accountInActive}
+              caseFilingTypesOptions={caseFilingTypesOptions}
+              caseOwnersOptions={caseOwnersOptions}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
