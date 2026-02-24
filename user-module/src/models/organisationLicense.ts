@@ -11,6 +11,7 @@ interface OrganizationLicensesAttributes {
   modified_by?: string;
   auto_send_interaction?: boolean;
   auto_access_rd?: boolean
+  auto_send_four_part_assessment? : boolean
 }
 
 interface OrganizationLicensesCreationAttributes
@@ -35,6 +36,7 @@ export class OrganizationLicenses
   public modified_by?: string;
   public auto_send_interaction?: boolean;
   public auto_access_rd?: boolean
+  public auto_send_four_part_assessment? : boolean
 
   static initialize(sequelize: Sequelize) {
     OrganizationLicenses.init(
@@ -83,6 +85,10 @@ export class OrganizationLicenses
         auto_access_rd: {
           type: DataTypes.BOOLEAN,
           allowNull: true,
+        },
+        auto_send_four_part_assessment : {
+          type : DataTypes.BOOLEAN,
+          defaultValue : false
         }
       },
       {
