@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AllPermissions,
+  OverviewTabs,
   useGetAllCountries,
   useGetStatus,
 } from '../../../../../common-service';
@@ -13,7 +14,6 @@ import {
   TimeSheetList,
   TimeSheetListURLParams,
 } from '../../../../types';
-import { ResourceTabs } from '../resources/resources';
 import { getTimesheetFilterFields } from './helpers';
 import { getTimesheetProjectTabFilterFields } from './timesheet-details-tab/project-tab/project-tab-filters';
 import { useSelector } from 'react-redux';
@@ -35,6 +35,7 @@ import { TimesheetProjectExportListURLParams } from '../../../../types/timesheet
 import { useFetchState } from '../../../../services/account';
 import { FilterValue } from '../../components/filter/filterType';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 interface TimeSheetProps {
   setExportType?: (type: ExportType) => void;
@@ -53,11 +54,18 @@ interface TimeSheetProps {
   activityMenuItems: ActivityDropdownItem[];
 }
 
-const TimesheetTabs: ResourceTabs[] = [
+const TimesheetTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_TIMESHEET_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNT_TIMESHEET_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
 ];
 
@@ -355,7 +363,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   const [columnOrder, setColumnOrder] = useState(
     timesheetColumns.map((col) => col.id)
   );
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     const newVisibility = Object.fromEntries(
       updatedColumns.map((col) => [col.id, !col.hide])
@@ -400,74 +408,82 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         showAddActivity={viewDetails ? false : true}
         activityMenuItems={activityMenuItems}
       />
-      {viewDetails ? (
-        <TimesheetDetails
-          handleBackClick={handleBackClick}
-          bothParentAndChild={false}
-          appliedFilters={appliedFilters}
-          setExportType={setExportType}
-          onRefreshClick={refreshTimesheet}
-          setTimesheetProjectParams={setTimesheetProjectParams}
-          setTimesheetResourceParams={setTimesheetResourceParams}
-          setTimesheetTaskParams={setTimesheetTaskParams}
-        />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='account' />
+        </div>
       ) : (
-        <>
-          <SectionHeader
-            title='Timesheets'
-            count={totalItems}
-            showItemCount={true}
-            buttons={headerButtons}
-            titleIcon={
-              <TimeSheetIcon
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-                alt='Timesheet-header-icon'
+        <div>
+          {viewDetails ? (
+            <TimesheetDetails
+              handleBackClick={handleBackClick}
+              bothParentAndChild={false}
+              appliedFilters={appliedFilters}
+              setExportType={setExportType}
+              onRefreshClick={refreshTimesheet}
+              setTimesheetProjectParams={setTimesheetProjectParams}
+              setTimesheetResourceParams={setTimesheetResourceParams}
+              setTimesheetTaskParams={setTimesheetTaskParams}
+            />
+          ) : (
+            <>
+              <SectionHeader
+                title='Timesheets'
+                count={totalItems}
+                showItemCount={true}
+                buttons={headerButtons}
+                titleIcon={
+                  <TimeSheetIcon
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                    alt='Timesheet-header-icon'
+                  />
+                }
+                iconBg={ColorCode.accountBgColor}
+                bgType='circle'
               />
-            }
-            iconBg={ColorCode.accountBgColor}
-            bgType='circle'
-          />
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={timesheetColumns}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
-            />
-            <ListTable
-              data={timesheetList}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={false}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={[]}
-              loading={isLoading}
-              error={isError ? 'Failed to load imports records' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
-              onSort={handleSortRequest}
-            />
-          </div>
-        </>
+              <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={timesheetColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={timesheetList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 320px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={[]}
+                  loading={isLoading}
+                  error={isError ? 'Failed to load imports records' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
+                  onSort={handleSortRequest}
+                />
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
