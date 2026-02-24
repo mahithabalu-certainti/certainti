@@ -1,5 +1,6 @@
 import React from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Typography } from '@mui/material';
 import { useFourPartAssessmentDetails } from '../../../../services/four-part-assessment/four-part-assessment-service';
 import DetailsSection, {
   DetailItem,
@@ -7,18 +8,17 @@ import DetailsSection, {
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { NotesSideIcon } from '../../../../../assets';
-import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
-import { Typography } from '@mui/material';
 import { ColorCode } from '../../../../types';
+import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 
 const FourPartAssessmentDetails: React.FC = () => {
   const navigate = useNavigate();
-  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
   const fourPartAssessmentId = searchParams.get('fpa_id') || '';
 
   const { data, isLoading, isError } = useFourPartAssessmentDetails(
-    accountid,
+    accountId,
     fourPartAssessmentId,
     true
   );
@@ -128,13 +128,13 @@ const FourPartAssessmentDetails: React.FC = () => {
           subValue={data?.r_number || ''}
           titleIcon={
             <NotesSideIcon
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${ColorCode.caseTextColor}] w-[14px] h-[14px]`}
               alt='Notes-header-icon'
             />
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           buttons={headerButtons}
-          iconBg={ColorCode.accountBgColor}
+          iconBg={ColorCode.caseBgColor}
           bgType='circle'
         />
         {isLoading ? (

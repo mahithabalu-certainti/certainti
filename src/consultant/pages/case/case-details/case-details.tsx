@@ -35,6 +35,7 @@ import {
   ColorCode,
   FinancialHighlightsResponse,
   AuditTimelineListExportParams,
+  FourPartAssessmentListExportURLParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -122,6 +123,8 @@ import {
 import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
 import { CircularProgress } from '@mui/material';
 import { Dossier } from './dossier';
+import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
+import { FourPartAssessment } from './four-part-assessment';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -182,6 +185,8 @@ export const CaseDetails = () => {
   const projectResourceDetails = searchParams.get('resourceId');
   const caseProjectTaskDetails = searchParams.get('caseProjectTask');
   const technicalSummaryDetails = searchParams.get('technical_summary_id');
+  const fourPartAssessmentView = !!searchParams.get('fpa_id');
+
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
@@ -284,6 +289,13 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
       activity_type: 'all',
+    });
+
+  const [fourPartParams, setFourPartParams] =
+    useState<FourPartAssessmentListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
     });
 
   const [financialResCostParams, setFinancialResCostParams] =
@@ -488,7 +500,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'projectTask' &&
       searchParams.get('list') !== 'projectResource' &&
       searchParams.get('list') !== 'financialHighlights' &&
-      searchParams.get('list') !== 'technicalSummary'
+      searchParams.get('list') !== 'technicalSummary' &&
+      searchParams.get('list') !== 'four_part_assessment'
     ) {
       return;
     }
@@ -546,6 +559,8 @@ export const CaseDetails = () => {
         { ...activityParams, ...activityPayload },
         activityType as ActivityType
       );
+    } else if (exportType === 'four_part_assessment') {
+      ExportFourPartAssessmentList(fourPartParams);
     } else if (
       (list === 'caseProjects' && exportType === 'cases_projects') ||
       (list === 'dossier' && exportType === 'dossier-qualified-projects')
@@ -658,6 +673,8 @@ export const CaseDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
+    } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
+      return false;
     } else if (list === 'activities' && !activityViewDetails) {
       const tab = searchParams.get('tab') || 'all';
       if (tab === 'all') {
@@ -959,6 +976,14 @@ export const CaseDetails = () => {
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
+      case 'four_part_assessment':
+        return (
+          <FourPartAssessment
+            setExportType={setExportType}
+            setFourPartAssessmentParams={setFourPartParams}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       case 'projectResource':
         return (
           <CaseProjectResource
@@ -1093,6 +1118,13 @@ export const CaseDetails = () => {
         name: 'Interactions',
         key: 'interactions',
         id: AllModules.INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
+      },
+      {
+        name: 'Four Part Assessment',
+        key: 'four_part_assessment',
+        id: AllModules.FOUR_PART_ASSESSMENT,
         disabled: false,
         icon: InteractionsIcon,
       },
