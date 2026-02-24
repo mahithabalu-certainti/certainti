@@ -320,11 +320,10 @@ const Cases: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <TextButton
+          {isCaseCreateEnable && <TextButton
             label='New'
-            disabled={!isCaseCreateEnable}
             onClick={handleCreateNewCase}
-          />
+          />}
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
@@ -386,7 +385,7 @@ const Cases: React.FC = () => {
             <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-            sortFilterCount > 0 ? (
+              sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>

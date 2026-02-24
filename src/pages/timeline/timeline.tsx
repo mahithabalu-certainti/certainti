@@ -175,12 +175,12 @@ const LINE_LEFT = TIME_COL_W + DOT_COL_W / 2;
 const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
   const [searchParams] = useSearchParams();
   const { accountid, projectid, caseId } = useParams();
-  // const accountId = searchParams.get('accountID');
+  const accountId = searchParams.get('accountID');
 
   const params: TimelineParams = {
     nextOffset: 1,
     limit: 10,
-    account_rid: entitytype === 'account' ? accountid : undefined,
+    account_rid: accountid || accountId || '',
     project_rid: entitytype === 'project' ? projectid : undefined,
     case_rid: entitytype === 'case' ? caseId : undefined,
     entityType: entitytype,

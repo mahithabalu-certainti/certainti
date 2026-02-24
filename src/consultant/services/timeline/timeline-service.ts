@@ -9,12 +9,14 @@ export const getTimelineListUrl = (params: TimelineParams): string => {
     limit: String(params.limit),
   });
 
-  if (params.entityType === 'project' && params.project_rid) {
-    queryParams.append('projectRid', params.project_rid);
-  } else if (params.entityType === 'case' && params.case_rid) {
-    queryParams.append('caseRid', params.case_rid);
-  } else if (params.account_rid) {
+  if (params.account_rid) {
     queryParams.append('accountId', params.account_rid);
+  }
+
+  if (params.entityType === 'project' && params.project_rid) {
+    queryParams.append('projectId', params.project_rid);
+  } else if (params.entityType === 'case' && params.case_rid) {
+    queryParams.append('caseId', params.case_rid);
   }
 
   return `/api/accounts/fetchTimelines?${queryParams.toString()}`;
@@ -36,7 +38,7 @@ export const useTimelineList = (
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
     enabled:
-      !!(params.account_rid || params.project_rid || params.case_rid) &&
+      !!params.account_rid &&
       !!params.entityType &&
       !!isTimeLineView,
   });
