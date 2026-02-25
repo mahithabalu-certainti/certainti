@@ -2451,6 +2451,10 @@ export const rawQueries = {
         is_ai_processed boolean default false,
         interaction_version integer,
         interaction_level_rid varchar(50),
+        interaction_assessment_source_rid varchar(50),
+        interaction_batch_id varchar(50),
+        transaction_id varchar(50),
+        four_part_assessment_rid varchar(50),
         CONSTRAINT interactions_rid_unique UNIQUE (rid)
       );
     `;
@@ -3713,7 +3717,7 @@ export const rawQueries = {
     status VARCHAR,
     summary_judgment VARCHAR,
     rd_potential_category VARCHAR,
-    transaction_id);
+    transaction_id VARCHAR);
     `
   },
   getFourPartAssessmentSequenceQuery (schemaName : string) {
