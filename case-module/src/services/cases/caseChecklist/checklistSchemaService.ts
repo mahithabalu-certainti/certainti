@@ -1026,13 +1026,13 @@ export class ChecklistSchemaService {
         { transaction }
       );
        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                  userId: caseRequest.modified_by!,
+                                  userId: caseRequest.created_by!,
                                   eventType: eventTypes.UI_HANDLER
                                 });
       const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(caseRequest.attachment_level);
             
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                            created_by: caseRequest.modified_by!,
+                            created_by: caseRequest.created_by!,
                             account_rid: caseRequest.account_rid,
                             entity_rid: createdChecklist.rid!,
                             entity_name: entityTypes.CHECKLIST,
