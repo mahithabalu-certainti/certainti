@@ -374,5 +374,20 @@ class SchemaService {
 
         return result;
     }
+
+    async computeGlobalAccountFilter(globalFilters: Record<string, string[]>) {
+        try {
+            const result = [];
+
+            for (const key of Object.keys(globalFilters)) {
+                const values = globalFilters[key] ?? [];
+                result.push(key, ...values);
+            }
+
+            return result;
+        } catch (err) {
+            throw new Error("Error computing global account filter");
+        }
+    }
 }
 export default SchemaService;
