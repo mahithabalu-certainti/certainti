@@ -222,7 +222,7 @@ export const getDataMapperColumns = (
     id: 'status_name',
     sortId: 'status_name',
     label: 'Status',
-    width: 120,
+    width: 160,
     sortable: true,
     render: (row) => {
       const failedStatus = row?.status_name?.toLowerCase() === 'failed';

@@ -39,12 +39,22 @@ import {
   getWeeklyProductivityListURL,
 } from '../urls';
 
+// Common payload interface for all dashboard APIs
+export interface DashboardPayload {
+  flag: string;
+  fiscalYear: number;
+  globalFilters: unknown;
+  countryType?: 'all' | 'active';
+  countryRid?: string;
+}
+
 export const fetchDashboardCountDetails = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<DashboardCountDetail[]> => {
   try {
-    const response = await reportServiceApi.get<DashboardCountDetailsResponse>(
-      getDashboardCountDetailsURL(flag)
+    const response = await reportServiceApi.post<DashboardCountDetailsResponse>(
+      getDashboardCountDetailsURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -54,24 +64,24 @@ export const fetchDashboardCountDetails = async (
 };
 
 export const useGetDashboardCountDetails = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<DashboardCountDetail[], Error> => {
   return useQuery<DashboardCountDetail[], Error>({
-    queryKey: ['dashboard-count-details', flag],
-    queryFn: () => fetchDashboardCountDetails(flag),
+    queryKey: ['dashboard-count-details', payload],
+    queryFn: () => fetchDashboardCountDetails(payload),
     retry: 0,
-    enabled: isEnable && !!flag,
+    enabled: isEnable,
   });
 };
 
 export const fetchCasesByHealthStatus = async (
-  flag: string,
-  fiscalYear?: number
+  payload: DashboardPayload
 ): Promise<HealthStatusDetail[]> => {
   try {
-    const response = await reportServiceApi.get<HealthStatusResponse>(
-      getCasesByHealthStatusURL(flag, fiscalYear)
+    const response = await reportServiceApi.post<HealthStatusResponse>(
+      getCasesByHealthStatusURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -81,26 +91,24 @@ export const fetchCasesByHealthStatus = async (
 };
 
 export const useGetCasesByHealthStatus = (
-  flag: string = 'all',
-  fiscalYear?: number,
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<HealthStatusDetail[], Error> => {
   return useQuery<HealthStatusDetail[], Error>({
-    queryKey: ['cases-by-health-status', flag, fiscalYear],
-    queryFn: () => fetchCasesByHealthStatus(flag, fiscalYear),
+    queryKey: ['cases-by-health-status', payload],
+    queryFn: () => fetchCasesByHealthStatus(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchOverallProjectValue = async (
-  flag: string,
-  countryType: 'all' | 'active',
-  fiscalYear?: number
+  payload: DashboardPayload
 ): Promise<OverallProjectValueDetail[]> => {
   try {
-    const response = await reportServiceApi.get<OverallProjectValueResponse>(
-      getOverallProjectValueURL(flag, countryType, fiscalYear)
+    const response = await reportServiceApi.post<OverallProjectValueResponse>(
+      getOverallProjectValueURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -110,28 +118,24 @@ export const fetchOverallProjectValue = async (
 };
 
 export const useGetOverallProjectValue = (
-  flag: string = 'all',
-  countryType: 'all' | 'active',
-  fiscalYear?: number,
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<OverallProjectValueDetail[], Error> => {
   return useQuery<OverallProjectValueDetail[], Error>({
-    queryKey: ['overall-project-value', flag, fiscalYear, countryType],
-    queryFn: () => fetchOverallProjectValue(flag, countryType, fiscalYear),
+    queryKey: ['overall-project-value', payload],
+    queryFn: () => fetchOverallProjectValue(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchGlobalLevelChart = async (
-  flag: string,
-  countryType: 'all' | 'active',
-  fiscalYear?: number,
-  countryRid?: string
+  payload: DashboardPayload
 ): Promise<GlobalLevelChartData> => {
   try {
-    const response = await reportServiceApi.get<GlobalLevelChartResponse>(
-      getGlobalLevelChartURL(flag, countryType, fiscalYear, countryRid)
+    const response = await reportServiceApi.post<GlobalLevelChartResponse>(
+      getGlobalLevelChartURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -141,27 +145,24 @@ export const fetchGlobalLevelChart = async (
 };
 
 export const useGetGlobalLevelChart = (
-  flag: string = 'all',
-  countryType: 'all' | 'active',
-  fiscalYear?: number,
-  countryRid?: string,
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<GlobalLevelChartData, Error> => {
   return useQuery<GlobalLevelChartData, Error>({
-    queryKey: ['global-level-chart', flag, fiscalYear, countryRid, countryType],
-    queryFn: () =>
-      fetchGlobalLevelChart(flag, countryType, fiscalYear, countryRid),
+    queryKey: ['global-level-chart', payload],
+    queryFn: () => fetchGlobalLevelChart(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchWeeklyProductivity = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<WeeklyProductivityDetail[]> => {
   try {
-    const response = await reportServiceApi.get<WeeklyProductivityResponse>(
-      getWeeklyProductivityListURL(flag)
+    const response = await reportServiceApi.post<WeeklyProductivityResponse>(
+      getWeeklyProductivityListURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -171,23 +172,24 @@ export const fetchWeeklyProductivity = async (
 };
 
 export const useGetWeeklyProductivity = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<WeeklyProductivityDetail[], Error> => {
   return useQuery<WeeklyProductivityDetail[], Error>({
-    queryKey: ['weekly-productivity', flag],
-    queryFn: () => fetchWeeklyProductivity(flag),
+    queryKey: ['weekly-productivity', payload],
+    queryFn: () => fetchWeeklyProductivity(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchOverdueApprovals = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<OverdueApprovalsDetail[]> => {
   try {
-    const response = await reportServiceApi.get<OverdueApprovalsResponse>(
-      getOverdueApprovalsListURL(flag)
+    const response = await reportServiceApi.post<OverdueApprovalsResponse>(
+      getOverdueApprovalsListURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -197,23 +199,24 @@ export const fetchOverdueApprovals = async (
 };
 
 export const useGetOverdueApprovals = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<OverdueApprovalsDetail[], Error> => {
   return useQuery<OverdueApprovalsDetail[], Error>({
-    queryKey: ['overdue-approvals', flag],
-    queryFn: () => fetchOverdueApprovals(flag),
+    queryKey: ['overdue-approvals', payload],
+    queryFn: () => fetchOverdueApprovals(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchUpcomingTasks = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<DashboardTaskDetail[]> => {
   try {
-    const response = await reportServiceApi.get<UpcomingTasksResponse>(
-      getUpcomingTasksListURL(flag)
+    const response = await reportServiceApi.post<UpcomingTasksResponse>(
+      getUpcomingTasksListURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -223,23 +226,24 @@ export const fetchUpcomingTasks = async (
 };
 
 export const useGetUpcomingTasks = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
-    queryKey: ['upcoming-tasks', flag],
-    queryFn: () => fetchUpcomingTasks(flag),
+    queryKey: ['upcoming-tasks', payload],
+    queryFn: () => fetchUpcomingTasks(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchDueTodayOverdueTasks = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<DashboardTaskDetail[]> => {
   try {
-    const response = await reportServiceApi.get<DueTodayOverdueTasksResponse>(
-      getDueTodayOverdueTasksListURL(flag)
+    const response = await reportServiceApi.post<DueTodayOverdueTasksResponse>(
+      getDueTodayOverdueTasksListURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -249,23 +253,24 @@ export const fetchDueTodayOverdueTasks = async (
 };
 
 export const useGetDueTodayOverdueTasks = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
-    queryKey: ['due-today-overdue-tasks', flag],
-    queryFn: () => fetchDueTodayOverdueTasks(flag),
+    queryKey: ['due-today-overdue-tasks', payload],
+    queryFn: () => fetchDueTodayOverdueTasks(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchOpenTasks = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<DashboardTaskDetail[]> => {
   try {
-    const response = await reportServiceApi.get<OpenTasksResponse>(
-      getOpenTasksListURL(flag)
+    const response = await reportServiceApi.post<OpenTasksResponse>(
+      getOpenTasksListURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -275,24 +280,26 @@ export const fetchOpenTasks = async (
 };
 
 export const useGetOpenTasks = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
-    queryKey: ['open-tasks', flag],
-    queryFn: () => fetchOpenTasks(flag),
+    queryKey: ['open-tasks', payload],
+    queryFn: () => fetchOpenTasks(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchCompletedTasksThisWeek = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<DashboardTaskDetail[]> => {
   try {
-    const response = await reportServiceApi.get<CompletedTasksThisWeekResponse>(
-      getCompletedTasksThisWeekListURL(flag)
-    );
+    const response =
+      await reportServiceApi.post<CompletedTasksThisWeekResponse>(
+        getCompletedTasksThisWeekListURL(),
+        payload
+      );
     return response.data.data;
   } catch (error) {
     console.error('Error fetching completed tasks this week:', error);
@@ -301,23 +308,24 @@ export const fetchCompletedTasksThisWeek = async (
 };
 
 export const useGetCompletedTasksThisWeek = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
-    queryKey: ['completed-tasks-this-week', flag],
-    queryFn: () => fetchCompletedTasksThisWeek(flag),
+    queryKey: ['completed-tasks-this-week', payload],
+    queryFn: () => fetchCompletedTasksThisWeek(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchMeetingList = async (
-  flag: string
+  payload: Omit<DashboardPayload, 'fiscalYear'>
 ): Promise<DashboardMeetingDetail[]> => {
   try {
-    const response = await reportServiceApi.get<DashboardMeetingListResponse>(
-      getMeetingListURL(flag)
+    const response = await reportServiceApi.post<DashboardMeetingListResponse>(
+      getMeetingListURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -327,23 +335,24 @@ export const fetchMeetingList = async (
 };
 
 export const useGetMeetingList = (
-  flag: string = 'all',
+  payload: Omit<DashboardPayload, 'fiscalYear'>,
   isEnable: boolean = true
 ): UseQueryResult<DashboardMeetingDetail[], Error> => {
   return useQuery<DashboardMeetingDetail[], Error>({
-    queryKey: ['meeting-list', flag],
-    queryFn: () => fetchMeetingList(flag),
+    queryKey: ['meeting-list', payload],
+    queryFn: () => fetchMeetingList(payload),
     retry: 0,
     enabled: isEnable,
   });
 };
 
 export const fetchPendingFollowUps = async (
-  flag: string
+  payload: DashboardPayload
 ): Promise<PendingFollowUpDetail[]> => {
   try {
-    const response = await reportServiceApi.get<PendingFollowUpListResponse>(
-      getPendingFollowUpsURL(flag)
+    const response = await reportServiceApi.post<PendingFollowUpListResponse>(
+      getPendingFollowUpsURL(),
+      payload
     );
     return response.data.data;
   } catch (error) {
@@ -353,12 +362,12 @@ export const fetchPendingFollowUps = async (
 };
 
 export const useGetPendingFollowUps = (
-  flag: string = 'all',
+  payload: DashboardPayload,
   isEnable: boolean = true
 ): UseQueryResult<PendingFollowUpDetail[], Error> => {
   return useQuery<PendingFollowUpDetail[], Error>({
-    queryKey: ['pending-follow-ups', flag],
-    queryFn: () => fetchPendingFollowUps(flag),
+    queryKey: ['pending-follow-ups', payload],
+    queryFn: () => fetchPendingFollowUps(payload),
     retry: 0,
     enabled: isEnable,
   });
@@ -366,7 +375,7 @@ export const useGetPendingFollowUps = (
 
 export const ExportDashboardReport = async (
   type: ExportReportType,
-  flag: string = 'all'
+  payload: DashboardPayload | Omit<DashboardPayload, 'fiscalYear'>
 ) => {
   const getFilename = (type: ExportReportType) => {
     switch (type) {
@@ -392,10 +401,9 @@ export const ExportDashboardReport = async (
   };
 
   try {
-    // Construct the URL dynamically as all reports follow the same pattern
-    const url = `/api/report/${type}Export?flag=${flag}`;
+    const url = `/api/report/${type}Export`;
 
-    const response = await reportServiceApi.get(url);
+    const response = await reportServiceApi.post(url, payload);
     const base64Data = response.data?.data;
 
     if (!base64Data) {

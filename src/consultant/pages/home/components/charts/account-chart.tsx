@@ -1,14 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Chart from 'react-google-charts';
-import { MenuItem, Select, Skeleton } from '@mui/material';
-import {
-  blendWithWhite,
-  COMMON_MENU_PROPS,
-  getDynamicSvgIcon,
-  getSelectStyles,
-} from '../../helpers';
+import { Skeleton } from '@mui/material';
+import { blendWithWhite, getDynamicSvgIcon } from '../../helpers';
 import { AccountYearData } from '../../../../types/dashboard';
-import { getFiscalYears } from '../../../../../common-utils';
 
 interface Props {
   title: string;
@@ -17,8 +11,6 @@ interface Props {
   colors: string[];
   className?: string;
   isLoading?: boolean;
-  selectedYear: string;
-  onYearChange: (year: string) => void;
 }
 
 const AccountChart: React.FC<Props> = ({
@@ -28,16 +20,9 @@ const AccountChart: React.FC<Props> = ({
   colors,
   className = '',
   isLoading = false,
-  selectedYear,
-  onYearChange,
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState('100%');
-
-  const minYear = 1950;
-  const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
-  const yearValues = fiscalYears.slice(0, 4).map((fy) => Number(fy.value));
 
   // BUILD GOOGLE-CHART ROWS
   const chartRows = React.useMemo(() => {
@@ -105,42 +90,6 @@ const AccountChart: React.FC<Props> = ({
             )}
           </div>
         </div>
-
-        <Select
-          name='fiscal_year'
-          value={selectedYear}
-          onChange={(e) => onYearChange(e.target.value as string)}
-          displayEmpty
-          size='small'
-          className={`custom-select-no-arrow w-[150px] max-w-[150px] sm:text-sm ${
-            selectedYear === '' ? 'text-[#7D98B6]' : 'text-black'
-          }`}
-          MenuProps={COMMON_MENU_PROPS}
-          sx={getSelectStyles(false, false)}
-          disabled={isLoading}
-        >
-          <MenuItem
-            value='all'
-            sx={{ color: '#425A76', fontSize: '13px', fontWeight: 500 }}
-          >
-            Last 4 Years
-          </MenuItem>
-
-          {fiscalYears?.map((year, i) => (
-            <MenuItem
-              key={`${year.value}-${i}`}
-              value={year.value}
-              title={year.label}
-              sx={{
-                color: '#425A76',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-            >
-              {year.label}
-            </MenuItem>
-          ))}
-        </Select>
       </div>
 
       {isLoading ? (
@@ -210,7 +159,7 @@ const AccountChart: React.FC<Props> = ({
             data={chartData}
             options={{
               legend: 'none',
-              bar: { groupWidth: selectedYear === 'all' ? '80%' : '40%' },
+              bar: { groupWidth: '80%' },
 
               chartArea: {
                 left: 90,
@@ -246,17 +195,17 @@ const AccountChart: React.FC<Props> = ({
 
           {/* Custom Legend */}
           <div className='flex justify-center gap-4 flex-wrap p-3 mb-1'>
-            {(selectedYear === 'all' ? yearValues : [Number(selectedYear)]).map(
-              (year) => (
-                <div key={year} className='flex items-center gap-1 text-sm'>
-                  <span
-                    className='inline-block w-4 h-4 rounded'
-                    style={{ backgroundColor: colors[year % colors.length] }}
-                  ></span>
-                  {year}
-                </div>
-              )
-            )}
+            {Array.from(
+              new Set(data.flatMap((acc) => acc.years.map((y) => y.year)))
+            ).map((year) => (
+              <div key={year} className='flex items-center gap-1 text-sm'>
+                <span
+                  className='inline-block w-4 h-4 rounded'
+                  style={{ backgroundColor: colors[year % colors.length] }}
+                ></span>
+                {year}
+              </div>
+            ))}
           </div>
         </>
       )}

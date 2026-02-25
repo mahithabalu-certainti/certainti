@@ -2537,7 +2537,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
         clause.returnError = 'Then value is required';
         hasValidationErrors = true;
       } else if (returnExpressions.length > 0) {
-        // Validate return expressions (similar to Target field validation)
+        // Validate return expressions (similar to Source field validation)
 
         // Rule: Number validation
         returnExpressions.forEach((exp) => {
@@ -2982,11 +2982,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
               }}
               className='flex items-center justify-between'
             >
-              <span>Target</span>
+              <span>Source</span>
               <span>
                 <Tooltip
                   title={
-                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type ( then press Enter to add bracket expression (e.g., (#A - #B))\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
+                    'How to add fields to Source:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type ( then press Enter to add bracket expression (e.g., (#A - #B))\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
                   }
                   arrow
                   placement='left'
@@ -3928,7 +3928,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               Build {functionPopover.type} Function
             </div>
 
-            {/* Field Container - Same as Target Field */}
+            {/* Field Container - Same as Source Field */}
             <div className='relative'>
               <div
                 className={`w-full max-h-[100px] overflow-y-auto px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${

@@ -2,18 +2,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Chart, { ReactGoogleChartEvent } from 'react-google-charts';
 import StackedBarChart from './stacked-bar-chart';
-import {
-  formatAmount,
-  getDynamicSvgIcon,
-  COMMON_MENU_PROPS,
-  getSelectStyles,
-  blendWithWhite,
-} from '../../helpers';
-import { MenuItem, Select } from '@mui/material';
+import { formatAmount, getDynamicSvgIcon, blendWithWhite } from '../../helpers';
 import { useGetGlobalLevelChart } from '../../../../services/dashboard/dashboard-service';
 import { AccountWiseConsolidation } from '../../../../types/dashboard';
 import { PROJECT_COLORS } from '../../../../../admin/pages/workflow-builder/form/helper';
-import { getFiscalYears } from '../../../../../common-utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { reshapeGlobalFilter } from '../../../../../common-utils';
+import { FilterState } from '../../../../types';
 
 interface MapChartProps {
   title: string;
@@ -21,13 +17,14 @@ interface MapChartProps {
 }
 
 const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
-  const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [chartKey, setChartKey] = useState(0);
 
-  const minYear = 1950;
-  const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   // Handle window resize to adjust charts when sidebar opens/closes
   useEffect(() => {
@@ -49,12 +46,13 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
   }, []);
 
   // Fetch data from API
-  const { data: apiData, isLoading } = useGetGlobalLevelChart(
-    'all',
-    'active',
-    selectedYear === 'all' ? undefined : Number(selectedYear),
-    selectedCountry || undefined
-  );
+  const { data: apiData, isLoading } = useGetGlobalLevelChart({
+    flag: 'all',
+    fiscalYear: newFiscalYear,
+    globalFilters: reshapeGlobalFilter(filters as FilterState),
+    countryType: 'active' as const,
+    countryRid: selectedCountry || undefined,
+  });
 
   // Prepare map data for Google Charts
   const mapData = useMemo(() => {
@@ -112,32 +110,28 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
     }
   };
 
-  const handleYearChange = (year: string) => {
-    setSelectedYear(year);
-    // Reset country selection when year changes
-    setSelectedCountry(null);
-  };
+  const fyLabel = newFiscalYear === 0 ? 'All' : String(newFiscalYear);
 
   const chartTitle = useMemo(() => {
     if (!selectedCountry || !apiData?.countryWiseConsolidation) {
-      return `Global Account RD Credits Submitted (FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear})`;
+      return `Global Account RD Credits Submitted (FY-${fyLabel})`;
     }
     const country = apiData.countryWiseConsolidation.find(
       (c) => c.country_rid === selectedCountry
     );
-    return `${country?.country_name} - Account RD Credits Submitted (FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear})`;
-  }, [selectedCountry, apiData, selectedYear]);
+    return `${country?.country_name} - Account RD Credits Submitted (FY-${fyLabel})`;
+  }, [selectedCountry, apiData, fyLabel]);
 
   const chartSubtitle = useMemo(() => {
     const count = chartData.length;
     if (!selectedCountry) {
-      return `${count} total accounts across all countries for FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear}`;
+      return `${count} total accounts across all countries for FY-${fyLabel}`;
     }
     const country = apiData?.countryWiseConsolidation.find(
       (c) => c.country_rid === selectedCountry
     );
-    return `${count} accounts in ${country?.country_name} for FY-${selectedYear === 'all' ? 'Last 4 Years' : selectedYear}`;
-  }, [chartData, selectedCountry, apiData, selectedYear]);
+    return `${count} accounts in ${country?.country_name} for FY-${fyLabel}`;
+  }, [chartData, selectedCountry, apiData, fyLabel]);
 
   const mapOptions = {
     region: 'world',
@@ -199,43 +193,6 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
               <p className='text-sm text-[#425A76] mt-0.5'>{subtitle}</p>
             )}
           </div>
-        </div>
-        <div className='flex items-center gap-3'>
-          {/* Year Selector */}
-          <Select
-            value={selectedYear}
-            onChange={(e) => handleYearChange(e.target.value as string)}
-            size='small'
-            className='custom-select-no-arrow w-[130px] max-w-[130px] sm:text-sm'
-            MenuProps={COMMON_MENU_PROPS}
-            sx={getSelectStyles(false, false)}
-            disabled={isLoading}
-          >
-            <MenuItem
-              value='all'
-              sx={{
-                color: '#425A76',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-            >
-              Last 4 Years
-            </MenuItem>
-            {fiscalYears.map((year, i) => (
-              <MenuItem
-                key={`${year.value}-${i}`}
-                value={year.value}
-                title={year.label}
-                sx={{
-                  color: '#425A76',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                {year.label}
-              </MenuItem>
-            ))}
-          </Select>
         </div>
       </div>
 

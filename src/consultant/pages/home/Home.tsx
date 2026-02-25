@@ -2,7 +2,11 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../../store/store';
-import { checkPermission, navigateWithFilters } from '../../../common-utils';
+import {
+  checkPermission,
+  navigateWithFilters,
+  reshapeGlobalFilter,
+} from '../../../common-utils';
 import { AllModules, MenuOption } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { ACCOUNT, CASE, TASKS } from '../../../routes';
@@ -54,12 +58,11 @@ import { Tooltip } from '@mui/material';
 import { TickIcon } from '../../../assets';
 import { useToast } from '../../../hooks';
 import dayjs from 'dayjs';
+import { FilterState } from '../../types';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
-  const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [donutFiscalYear, setDonutFiscalYear] = useState<string>('all');
   const [followUpsList, setFollowUpsList] = useState<PendingFollowUpDetail[]>(
     []
   );
@@ -68,6 +71,40 @@ export const HomePage: React.FC = () => {
   const [updateTaskSummaryInline] = useMutation(UPDATE_TASK_SUMMARY_INLINE, {
     client: taskClient,
   });
+
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
+  // Common payload for all dashboard APIs
+  const dashboardPayload = useMemo(
+    () => ({
+      flag: 'all',
+      fiscalYear: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+    }),
+    [newFiscalYear, filters]
+  );
+
+  const userDashboardPayload = useMemo(
+    () => ({
+      flag: 'user',
+      fiscalYear: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+    }),
+    [newFiscalYear, filters]
+  );
+
+  // Meeting payload without fiscalYear
+  const meetingPayload = useMemo(
+    () => ({
+      flag: 'user',
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+    }),
+    [filters]
+  );
 
   // Permission Mangement
   const { menus, modules } = useSelector(
@@ -83,108 +120,30 @@ export const HomePage: React.FC = () => {
     AllModules.ACTIVITIES_TASK
   );
 
-  // Helper function to check if a card is accessible based on permissions
-  const isCardAccessible = useCallback(
-    (cardKey: string): boolean => {
-      if (cardKey === 'active_accounts') {
-        return isAccountEnable || false;
-      } else if (
-        cardKey === 'active_cases' ||
-        cardKey === 'total_completed_cases' ||
-        cardKey === 'stalled_cases'
-      ) {
-        return isCasesEnable || false;
-      } else if (
-        cardKey === 'open_tasks' ||
-        cardKey === 'due_today_overdue_tasks' ||
-        cardKey === 'upcoming_tasks_7_days' ||
-        cardKey === 'tasks_completed_this_week'
-      ) {
-        return isCaseTaskEnable || false;
-      }
-      return true;
-    },
-    [isAccountEnable, isCasesEnable, isCaseTaskEnable]
-  );
-
-  // Helper function to get access restricted message
-  const getAccessRestrictedMessage = useCallback((cardKey: string): string => {
-    let pageName = '';
-    if (cardKey === 'active_accounts') {
-      pageName = 'Account';
-    } else if (
-      cardKey === 'active_cases' ||
-      cardKey === 'total_completed_cases' ||
-      cardKey === 'stalled_cases'
-    ) {
-      pageName = 'Case';
-    } else if (
-      cardKey === 'open_tasks' ||
-      cardKey === 'due_today_overdue_tasks' ||
-      cardKey === 'upcoming_tasks_7_days' ||
-      cardKey === 'tasks_completed_this_week'
-    ) {
-      pageName = 'Task';
-    }
-    return `Access Restricted: You do not have permission to access the ${pageName} page.\nPlease contact administrator to gain access.`;
-  }, []);
-
-  // Helper function to check if a task item is accessible based on its type
-  const isTaskItemAccessible = useCallback(
-    (task: DashboardTaskDetail | PendingFollowUpDetail): boolean => {
-      const taskType = task.task_type_name?.toLowerCase();
-      if (taskType === 'activity') {
-        return isActivityTaskEnable || false;
-      } else if (taskType === 'milestone') {
-        return isCaseTaskEnable || false;
-      }
-      // If type is unknown, allow access if user has any task permission
-      return isCaseTaskEnable || isActivityTaskEnable || false;
-    },
-    [isCaseTaskEnable, isActivityTaskEnable]
-  );
-
-  // Helper function to get tooltip message for restricted task items
-  const getTaskItemTooltipMessage = useCallback(
-    (task: DashboardTaskDetail | PendingFollowUpDetail): string => {
-      const taskType = task.task_type_name?.toLowerCase();
-      const typeName = taskType === 'activity' ? 'Activity' : 'Case';
-      return `Access Restricted: You do not have permission to access ${typeName} tasks.\nPlease contact administrator to gain access.`;
-    },
-    []
-  );
-
   const { data: countDetails, isLoading: isCountsLoading } =
-    useGetDashboardCountDetails('all');
+    useGetDashboardCountDetails(dashboardPayload);
 
   const { data: healthStatusData, isLoading: isHealthLoading } =
-    useGetCasesByHealthStatus(
-      'all',
-      selectedYear === 'all' ? undefined : Number(selectedYear)
-    );
+    useGetCasesByHealthStatus(dashboardPayload);
 
   const { data: overallProjectValue, isLoading: isProjectValueLoading } =
-    useGetOverallProjectValue(
-      'all',
-      'active',
-      donutFiscalYear === 'all' ? undefined : Number(donutFiscalYear)
-    );
+    useGetOverallProjectValue({ ...dashboardPayload, countryType: 'active' });
   const { data: weeklyProductivity, isLoading: isWeeklyProductivityLoading } =
-    useGetWeeklyProductivity('user');
+    useGetWeeklyProductivity(userDashboardPayload);
   const { data: overdueApprovals, isLoading: isOverdueLoading } =
-    useGetOverdueApprovals('user');
+    useGetOverdueApprovals(userDashboardPayload);
   const { data: upcomingTasks, isLoading: isUpcomingLoading } =
-    useGetUpcomingTasks('user');
+    useGetUpcomingTasks(userDashboardPayload);
   const { data: dueTodayOverdueTasks, isLoading: isDueTodayLoading } =
-    useGetDueTodayOverdueTasks('user');
+    useGetDueTodayOverdueTasks(userDashboardPayload);
   const { data: openTasks, isLoading: isOpenTasksLoading } =
-    useGetOpenTasks('user');
+    useGetOpenTasks(userDashboardPayload);
   const { data: completedTasks, isLoading: isCompletedLoading } =
-    useGetCompletedTasksThisWeek('user');
+    useGetCompletedTasksThisWeek(userDashboardPayload);
   const { data: meetingList, isLoading: isMeetingsLoading } =
-    useGetMeetingList('user');
+    useGetMeetingList(meetingPayload);
   const { data: pendingFollowUps, isLoading: isPendingFollowUpsLoading } =
-    useGetPendingFollowUps('user');
+    useGetPendingFollowUps(userDashboardPayload);
 
   const { data: taskStatuses } = useGetTaskStatuses();
 
@@ -300,8 +259,81 @@ export const HomePage: React.FC = () => {
     return Object.values(grouped);
   }, [healthStatusData]);
 
+  // Helper function to check if a card is accessible based on permissions
+  const isCardAccessible = useCallback(
+    (cardKey: string): boolean => {
+      if (cardKey === 'active_accounts') {
+        return isAccountEnable || false;
+      } else if (
+        cardKey === 'active_cases' ||
+        cardKey === 'total_completed_cases' ||
+        cardKey === 'stalled_cases'
+      ) {
+        return isCasesEnable || false;
+      } else if (
+        cardKey === 'open_tasks' ||
+        cardKey === 'due_today_overdue_tasks' ||
+        cardKey === 'upcoming_tasks_7_days' ||
+        cardKey === 'tasks_completed_this_week'
+      ) {
+        return isCaseTaskEnable || false;
+      }
+      return true;
+    },
+    [isAccountEnable, isCasesEnable, isCaseTaskEnable]
+  );
+
+  // Helper function to get access restricted message
+  const getAccessRestrictedMessage = useCallback((cardKey: string): string => {
+    let pageName = '';
+    if (cardKey === 'active_accounts') {
+      pageName = 'Account';
+    } else if (
+      cardKey === 'active_cases' ||
+      cardKey === 'total_completed_cases' ||
+      cardKey === 'stalled_cases'
+    ) {
+      pageName = 'Case';
+    } else if (
+      cardKey === 'open_tasks' ||
+      cardKey === 'due_today_overdue_tasks' ||
+      cardKey === 'upcoming_tasks_7_days' ||
+      cardKey === 'tasks_completed_this_week'
+    ) {
+      pageName = 'Task';
+    }
+    return `Access Restricted: You do not have permission to access the ${pageName} page.\nPlease contact administrator to gain access.`;
+  }, []);
+
+  // Helper function to check if a task item is accessible based on its type
+  const isTaskItemAccessible = useCallback(
+    (task: DashboardTaskDetail | PendingFollowUpDetail): boolean => {
+      const taskType = task.task_type_name?.toLowerCase();
+      if (taskType === 'activity') {
+        return isActivityTaskEnable || false;
+      } else if (taskType === 'milestone') {
+        return isCaseTaskEnable || false;
+      }
+      // If type is unknown, allow access if user has any task permission
+      return isCaseTaskEnable || isActivityTaskEnable || false;
+    },
+    [isCaseTaskEnable, isActivityTaskEnable]
+  );
+
+  // Helper function to get tooltip message for restricted task items
+  const getTaskItemTooltipMessage = useCallback(
+    (task: DashboardTaskDetail | PendingFollowUpDetail): string => {
+      const taskType = task.task_type_name?.toLowerCase();
+      const typeName = taskType === 'activity' ? 'Activity' : 'Case';
+      return `Access Restricted: You do not have permission to access ${typeName} tasks.\nPlease contact administrator to gain access.`;
+    },
+    []
+  );
+
   const handleExport = async (key: ExportReportType) => {
-    await ExportDashboardReport(key, 'user');
+    const payload =
+      key === 'meetingList' ? meetingPayload : userDashboardPayload;
+    await ExportDashboardReport(key, payload);
   };
 
   const handleTaskItemClick = useCallback(
@@ -320,7 +352,7 @@ export const HomePage: React.FC = () => {
             filterKey: 'attach_to_name',
             type: 'text',
             operator: 'equals',
-            value: t.attach_to_name,
+            value: t.attached_to,
           },
         ],
         { openTaskId: t.rid, taskType: t.task_type_name?.toLowerCase() }
@@ -459,26 +491,32 @@ export const HomePage: React.FC = () => {
 
       {/* Dashboard Report Cards */}
       <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4'>
-        {isCountsLoading
-          ? Array.from({ length: 8 }).map((_, index) => (
-              <ReportCard key={index} isLoading={true} />
-            ))
-          : countDetails?.map((card, index) => {
-              const isAccessible = isCardAccessible(card.key);
-              return (
-                <ReportCard
-                  key={card.key ?? index}
-                  title={card.name}
-                  value={card.count}
-                  color={PROJECT_COLORS[index % PROJECT_COLORS.length]}
-                  onClick={() => handleCardClick(card.key)}
-                  disabled={!isAccessible}
-                  tooltipMessage={
-                    !isAccessible ? getAccessRestrictedMessage(card.key) : ''
-                  }
-                />
-              );
-            })}
+        {isCountsLoading ? (
+          Array.from({ length: 8 }).map((_, index) => (
+            <ReportCard key={index} isLoading={true} />
+          ))
+        ) : countDetails && countDetails.length > 0 ? (
+          countDetails.map((card, index) => {
+            const isAccessible = isCardAccessible(card.key);
+            return (
+              <ReportCard
+                key={card.key ?? index}
+                title={card.name}
+                value={card.count}
+                color={PROJECT_COLORS[index % PROJECT_COLORS.length]}
+                onClick={() => handleCardClick(card.key)}
+                disabled={!isAccessible}
+                tooltipMessage={
+                  !isAccessible ? getAccessRestrictedMessage(card.key) : ''
+                }
+              />
+            );
+          })
+        ) : (
+          <div className='col-span-full flex justify-center items-center h-[80px] text-sm text-[#425A76] bg-white rounded-lg border border-[#CBD6E2]'>
+            No data available
+          </div>
+        )}
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
@@ -488,8 +526,6 @@ export const HomePage: React.FC = () => {
           data={transformedHealthData}
           colors={PROJECT_COLORS}
           isLoading={isHealthLoading}
-          selectedYear={selectedYear}
-          onYearChange={setSelectedYear}
         />
 
         <CardList
@@ -871,8 +907,6 @@ export const HomePage: React.FC = () => {
         data={overallProjectValue || []}
         colors={DONUT_COLORS}
         isLoading={isProjectValueLoading}
-        selectedYear={donutFiscalYear}
-        onYearChange={setDonutFiscalYear}
       />
 
       <WorldMapChart

@@ -1,23 +1,17 @@
 import React, { useMemo } from 'react';
 import { Chart } from 'react-google-charts';
-import { MenuItem, Select, Skeleton } from '@mui/material';
+import { Skeleton } from '@mui/material';
 import { OverallProjectValueDetail } from '../../../../types/dashboard';
-import {
-  blendWithWhite,
-  COMMON_MENU_PROPS,
-  getDynamicSvgIcon,
-  getSelectStyles,
-} from '../../helpers';
-import { getFiscalYears } from '../../../../../common-utils';
+import { blendWithWhite, getDynamicSvgIcon } from '../../helpers';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 export interface DonutMetricItem {
   country: string;
   projectCost: number;
-  qualifiedCost: number;
-  qreCost: number;
-  computed: number;
-  submitted: number;
-  approved: number;
+  fteCost: number;
+  subconCost: number;
+  nonlaborCost: number;
 }
 
 interface DonutChartsGroupProps {
@@ -27,8 +21,6 @@ interface DonutChartsGroupProps {
   colors: Record<string, string>;
   minHeight?: number;
   isLoading?: boolean;
-  selectedYear: string;
-  onYearChange: (year: string) => void;
 }
 
 const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
@@ -38,33 +30,28 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
   colors,
   minHeight = 260,
   isLoading = false,
-  selectedYear,
-  onYearChange,
 }) => {
-  const minYear = 1950;
-  const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   // Transform to DonutMetricItem format using data directly
   const transformedData = useMemo(() => {
     return data.map((item) => ({
       country: item.country_name || item.country_code,
       projectCost: Number(item.total_project_cost),
-      qualifiedCost: Number(item.qualified_project_cost),
-      qreCost: Number(item.qre_cost),
-      computed: Number(item.final_credit_computed),
-      submitted: Number(item.final_credit_submitted),
-      approved: Number(item.final_credit_approved),
+      fteCost: Number(item.total_fte_cost),
+      subconCost: Number(item.total_subcon_cost),
+      nonlaborCost: Number(item.total_nonlabor_cost),
     }));
   }, [data]);
 
   const metrics = [
     { key: 'projectCost', label: 'Total Project Cost' },
-    { key: 'qualifiedCost', label: 'Qualified Project Cost' },
-    { key: 'qreCost', label: 'QRE Cost' },
-    { key: 'computed', label: 'RD Credits Computed' },
-    { key: 'submitted', label: 'RD Credits Submitted' },
-    { key: 'approved', label: 'RD Credits Approved' },
+    { key: 'fteCost', label: 'FTE Cost' },
+    { key: 'subconCost', label: 'SubCon Cost' },
+    { key: 'nonlaborCost', label: 'Non-Labor Cost' },
   ];
 
   const chartOptions = {
@@ -93,48 +80,15 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
             )}
           </div>
         </div>
-
-        {/* Year Selector */}
-        <Select
-          value={selectedYear}
-          onChange={(e) => onYearChange(e.target.value as string)}
-          displayEmpty
-          size='small'
-          className='custom-select-no-arrow w-[150px] max-w-[150px] sm:text-sm'
-          MenuProps={COMMON_MENU_PROPS}
-          sx={getSelectStyles(false, false)}
-          disabled={isLoading}
-        >
-          <MenuItem
-            value='all'
-            sx={{ color: '#425A76', fontSize: '13px', fontWeight: 500 }}
-          >
-            Last 4 Years
-          </MenuItem>
-          {fiscalYears.map((year, i) => (
-            <MenuItem
-              key={`${year.value}-${i}`}
-              value={year.value}
-              title={year.label}
-              sx={{
-                color: '#425A76',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-            >
-              {year.label}
-            </MenuItem>
-          ))}
-        </Select>
       </div>
 
       {isLoading ? (
         <div>
           <div
-            className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4'
+            className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4'
             style={{ minHeight }}
           >
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
                 className='flex flex-col items-center justify-center text-center'
@@ -169,7 +123,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
           </div>
           {/* Legend Skeleton */}
           <div className='flex justify-center gap-6 border-t border-[#CBD6E2] p-3'>
-            {[...Array(6)].map((_, i) => (
+            {[...Array(4)].map((_, i) => (
               <div key={i} className='flex items-center gap-2'>
                 <Skeleton
                   variant='rectangular'
@@ -188,7 +142,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
             <>
               {/* Donut Charts Grid */}
               <div
-                className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4'
+                className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4'
                 style={{ minHeight }}
               >
                 {transformedData.map((country, idx) => {
@@ -232,7 +186,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
                         {country.country}
                       </p>
                       <p className='text-xs text-[#425A76] mt-1'>
-                        {selectedYear === 'all' ? '' : `FY-${selectedYear}`}
+                        {newFiscalYear === 0 ? 'FY-All' : `FY-${newFiscalYear}`}
                       </p>
                     </div>
                   );
