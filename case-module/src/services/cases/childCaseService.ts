@@ -3,7 +3,7 @@ import { CaseService } from "./caseService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
-import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, ENV_PREFIX, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, entityTypes, ENV_PREFIX, eventNames, eventTypes, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
 import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, StateType } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
@@ -92,6 +92,22 @@ export class ChildCaseService extends CaseService {
                 if(query) {
                     await orgDb.query(query)
                 }
+                const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                          userId: data.userId!,
+                                                          eventType: eventTypes.UI_HANDLER
+                                                        });
+                                
+                await this.helperMethod.createAccountTimelineEntry(parentAccount[0][0].r_number!, {
+                                                    created_by: data.userId!,
+                                                    account_rid: data.account_rid,
+                                                    entity_rid: data.case_rid!,
+                                                    entity_name: entityTypes.CASE,
+                                                    created_by_name: userEventInfo.full_name,
+                                                    event_type_rid: userEventInfo.event_type_rid,
+                                                    event_name: eventNames.CREATE,
+                                                    descriptions:data.case_name,
+                                                    case_rid: data.case_rid,
+                                                  },["case"]);
                 return {
                     statusCode : HttpStatus.SUCCESS,
                     statusMessage : STATUS_MESSAGE.financialWorkingSignedOff

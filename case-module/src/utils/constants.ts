@@ -319,9 +319,13 @@ export const entityTypes = {
   ACTIVITY_TASK:"Task",
   CHECKLIST:"Checklist",
   CASE:"Case",
+  CASE_TEAM:"Case Team",
   TASK:"Task",
   TAG:"Tag",
-  COMMENTS:"COMMENTS"
+  COMMENTS:"Comments",
+  FINANCIAL_WORKING:"Financial Working",
+  HISTORICAL_SUBMISSION:"Historical Submission",
+
 };
 
 export const eventNames = {
