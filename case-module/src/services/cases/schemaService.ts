@@ -3676,7 +3676,7 @@ class CaseSchemaService {
     userId: string
   ) {
     try {
-      const { CaseTeam } = await this.caseModelService.getModels(accountNumber);
+      const { CaseTeam,Case } = await this.caseModelService.getModels(accountNumber);
       const results: any[] = [];
 
       // Check if case team already exists
@@ -3722,27 +3722,39 @@ class CaseSchemaService {
       // Determine event name based on existing team and operations
       let eventName = "Case Team Management";
       if (!hasExistingTeam && operationGroups.addOperations.length > 0) {
-        eventName = "Case Team Member Added";
+        eventName = eventNames.CREATE;
       } else if (
         hasExistingTeam &&
         (operationGroups.editOperations.length > 0 ||
           operationGroups.deleteOperations.length > 0 ||
           operationGroups.addOperations.length > 0)
       ) {
-        eventName = "Case Team Member Updated";
+        eventName = eventNames.UPDATE;
       }
 
-      // Add timeline entry for the team management request
-      await this.addCaseTeamTimelineEntry(
-        accountNumber,
-        caseTeamRequest.case_rid,
-        caseTeamRequest.account_rid,
-        results,
-        userId,
-        response.success ? "success" : "partial_success",
-        eventName,
-        "ui_handler"
-      );
+
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: userId!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+      const caseInfo:any = await Case.findOne({
+        where: {
+          rid: caseTeamRequest.case_rid,
+          account_rid: caseTeamRequest.account_rid,
+        },
+        raw: true,
+      });
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: userId!,
+                                    account_rid: caseTeamRequest.account_rid,
+                                    entity_rid: caseTeamRequest.case_rid!,
+                                    entity_name: entityTypes.CASE_TEAM,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventName,
+                                    descriptions:caseInfo?.case_name || '',
+                                    case_rid: caseTeamRequest.case_rid,
+                                  },["case"]);
 
       return response;
     } catch (error) {

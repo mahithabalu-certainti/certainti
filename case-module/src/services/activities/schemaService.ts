@@ -239,17 +239,24 @@ class ActivitySchemaService {
         transaction,
       });
 
-      await this.addTaskManagementTimeline(
-        accountNumber,
-        casecreationResponse.rid,
-        taskRequest.account_rid!,
-        taskRequest,
-        taskRequest.created_by || "",
-        "created",
-        "success",
-        null,
-        taskRequest.attachment_level || "case"
-      );
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: taskRequest.created_by!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
+      
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: taskRequest.created_by!,
+                      account_rid: activityData.account_rid,
+                      entity_rid: casecreationResponse.rid!,
+                      entity_name: entityTypes.ACTIVITY_TASK,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.CREATE,
+                      descriptions:taskRequest.task_name,
+                      project_rid:activityData.attachment_level === 'project' ? activityData.attach_to : '',
+                      case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+                    },timelineTypes);
 
       return casecreationResponse;
     } catch (error) {
@@ -439,16 +446,34 @@ class ActivitySchemaService {
           }
         }
       }
-      await this.addTaskManagementTimeline(
-        accountNumber,
-        taskRequest.task_rid,
-        taskRequest.account_rid!,
-        taskRequest,
-        userId,
-        "updated",
-        "success",
-        existingTask
-      );
+      // await this.addTaskManagementTimeline(
+      //   accountNumber,
+      //   taskRequest.task_rid,
+      //   taskRequest.account_rid!,
+      //   taskRequest,
+      //   userId,
+      //   "updated",
+      //   "success",
+      //   existingTask
+      // );
+       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                            userId: taskRequest.created_by!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(taskRequest.attachment_level);
+      
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                      created_by: taskRequest.created_by!,
+                      account_rid: taskRequest.account_rid!,
+                      entity_rid: taskRequest.task_rid!,
+                      entity_name: entityTypes.ACTIVITY_TASK,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
+                      event_name: eventNames.UPDATE,
+                      descriptions:taskRequest.task_name,
+                      project_rid:taskRequest.attachment_level === 'project' ? taskRequest.attach_to : '',
+                      case_rid: taskRequest.attachment_level === 'case' ? taskRequest.attach_to : '',
+                    },timelineTypes);
 
       return updatedResult;
     } catch (error) {
@@ -2091,16 +2116,16 @@ class ActivitySchemaService {
 
         await this.addMeetingSummary(accountNumber, activityRequest, response.rid, response.r_number as string);
         await this.uploadActivityFiles(files, activityRequest, accountNumber);
-        await this.addTaskTimeline(
-          accountNumber,
-          activityData.activity_rid,
-          activityData.account_rid,
-          `Meeting Activity Created with subject: ${activityRequest.subject}`,
-          userId,
-          `Meeting Activity Created: ${activityRequest.subject}`,
-          "success",
-          activityData.activity_rid
-        );
+        // await this.addTaskTimeline(
+        //   accountNumber,
+        //   activityData.activity_rid,
+        //   activityData.account_rid,
+        //   `Meeting Activity Created with subject: ${activityRequest.subject}`,
+        //   userId,
+        //   `Meeting Activity Created: ${activityRequest.subject}`,
+        //   "success",
+        //   activityData.activity_rid
+        // );
         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
                             userId: userId!,
                             eventType: eventTypes.UI_HANDLER
@@ -2457,16 +2482,16 @@ class ActivitySchemaService {
                       event_name: eventNames.UPDATE,
                       descriptions:activityRequest.subject
                     },timelineTypes);
-    await this.addTaskTimeline(
-      accountNumber,
-      activityRequest.activity_rid,
-      activityRequest.account_rid!,
-      `Meeting Activity updated with subject: ${activityRequest.subject}`,
-      userId,
-      `Meeting Activity updated: ${activityRequest.subject}`,
-      "success",
-      activityRequest.activity_rid
-    );
+    // await this.addTaskTimeline(
+    //   accountNumber,
+    //   activityRequest.activity_rid,
+    //   activityRequest.account_rid!,
+    //   `Meeting Activity updated with subject: ${activityRequest.subject}`,
+    //   userId,
+    //   `Meeting Activity updated: ${activityRequest.subject}`,
+    //   "success",
+    //   activityRequest.activity_rid
+    // );
     return response;
   }
 
@@ -2636,16 +2661,16 @@ class ActivitySchemaService {
         { where: { rid: data.rid } }
       );
       if (updateFile === 1) {
-        await this.addTaskTimeline(
-          accountNumber,
-          checkIsFileExists.rid,
-          data.account_rid,
-          `Activity Attachments Deleted : ${checkIsFileExists.document_name}`,
-          userId,
-          `Attachment deleted for Email  ${data?.rid}`,
-          "success",
-          data.task_rid
-        );
+        // await this.addTaskTimeline(
+        //   accountNumber,
+        //   checkIsFileExists.rid,
+        //   data.account_rid,
+        //   `Activity Attachments Deleted : ${checkIsFileExists.document_name}`,
+        //   userId,
+        //   `Attachment deleted for Email  ${data?.rid}`,
+        //   "success",
+        //   data.task_rid
+        // );
 
         return {
           statusCode: HttpStatus.SUCCESS,

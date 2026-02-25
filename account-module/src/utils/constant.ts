@@ -3428,6 +3428,7 @@ export const rawQueries = {
         created_by VARCHAR(50) NOT NULL,
         created_datetime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         account_rid VARCHAR(50) NOT NULL,
+        document_rid VARCHAR(50),
         event_type_rid VARCHAR(50)  NULL,
         event_name VARCHAR(255),
         entity_rid VARCHAR(50) NOT NULL,  
