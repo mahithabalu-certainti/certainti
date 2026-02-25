@@ -180,7 +180,7 @@ export const fetchInteractionForProjectLevelQuery = (
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
             pf.project_code,pf.project_name, fpr.r_number AS four_part_r_number, i.interaction_batch_id,
-            i.interaction_assessment_source_rid,
+            i.interaction_assessment_source_rid, i.four_part_assessment_rid,
             CASE 
                 WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
                 ELSE pf.fiscal_year
@@ -275,7 +275,8 @@ export const fetchInteractionForProjectLevelQuery = (
         'has_account_recipient', i.has_account_recipient,
         'interaction_batch_id', i.interaction_batch_id,
         'four_part_r_number', i.four_part_r_number,
-        'interaction_assessment_source_rid', i.interaction_assessment_source_rid
+        'interaction_assessment_source_rid', i.interaction_assessment_source_rid,
+        'four_part_assessment_rid', i.four_part_assessment_rid
         ${aggregatedQuery}
         ) ) AS interactions
 
