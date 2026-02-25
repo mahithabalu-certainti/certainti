@@ -114,8 +114,8 @@ import { ExportCaseList } from '../../services/cases/case-service';
 import { ExportChecklistList } from '../../services/checklist/checklist-service';
 import { ExportActivityList } from '../../services/activities/activities-service';
 import HistorySubmission from '../case/case-details/history-submission/history-submission';
-import { FourPartAssessment } from '../account-details-sidebar/sidebar-pages/four-part-assessment';
 import { ExportFourPartAssessmentList } from '../../services/four-part-assessment/four-part-assessment-service';
+import { FourPartAssessment } from '../four-part-assessment';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -915,6 +915,7 @@ export const AccountDetails = () => {
             setExportType={setExportType}
             setFourPartAssessmentParams={setFourPartParams}
             activityMenuItems={activityMenuItems}
+            moduleLevel='account'
           />
         );
       case 'cases':

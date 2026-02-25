@@ -124,7 +124,7 @@ import { exportCasesTechnicalSummary } from '../../../services/case-technical-su
 import { CircularProgress } from '@mui/material';
 import { Dossier } from './dossier';
 import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
-import { FourPartAssessment } from './four-part-assessment';
+import { FourPartAssessment } from '../../four-part-assessment';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -982,6 +982,7 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setFourPartAssessmentParams={setFourPartParams}
             activityMenuItems={activityMenuItems}
+            moduleLevel='case'
           />
         );
       case 'projectResource':

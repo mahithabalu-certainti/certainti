@@ -104,7 +104,7 @@ import { Checklist } from './checklist';
 import ProjectActivities from './project-activities/project-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
 import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
-import { FourPartAssessment } from './four-part-assessment';
+import { FourPartAssessment } from '../../four-part-assessment';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -824,6 +824,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setFourPartAssessmentParams={setFourPartParams}
             activityMenuItems={activityMenuItems}
+            moduleLevel='project'
           />
         );
       case 'technicalSummary':

@@ -5,28 +5,39 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { useFourPartAssessmentDetails } from '../../../../services/four-part-assessment/four-part-assessment-service';
+import { useFourPartAssessmentDetails } from '../../services/four-part-assessment/four-part-assessment-service';
+import {
+  ACCOUNT_DETAILS,
+  CASE_DETAILS,
+  PROJECT_DETAILS,
+} from '../../../routes';
 import DetailsSection, {
   DetailItem,
-} from '../../../../../components/details-section/details';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import { NotesSideIcon } from '../../../../../assets';
-import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
+} from '../../../components/details-section/details';
+import { formatDateToYYYYMMDDWithTime } from '../../../common-utils';
+import SectionHeader from '../../../components/details-section/section-header';
+import { NotesSideIcon } from '../../../assets';
+import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
-import { ColorCode } from '../../../../types';
-import { ACCOUNT_DETAILS } from '../../../../../routes';
+import { moduleColorMap } from './helper';
 
-const FourPartAssessmentDetails: React.FC = () => {
+interface FourPartAssessmentDetailsProps {
+  moduleLevel: 'account' | 'project' | 'case';
+}
+
+const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
+  moduleLevel,
+}) => {
   const navigate = useNavigate();
-  const { accountid } = useParams();
+  const { accountid, caseId, projectid } = useParams();
   const [searchParams] = useSearchParams();
+  const accountID = searchParams.get('accountID') || '';
   const fourPartAssessmentId = searchParams.get('fpa_id') || '';
   const isFromInteraction =
     searchParams.get('navigate_source') === 'interactions';
 
   const { data, isLoading, isError } = useFourPartAssessmentDetails(
-    accountid,
+    accountid || accountID,
     fourPartAssessmentId,
     true
   );
@@ -62,18 +73,42 @@ const FourPartAssessmentDetails: React.FC = () => {
 
   const handleBackClick = () => {
     if (isFromInteraction) {
-      const path = generatePath(ACCOUNT_DETAILS, {
-        accountid: accountid || '',
-      });
+      if (moduleLevel === 'account') {
+        const path = generatePath(ACCOUNT_DETAILS, {
+          accountid: accountid || '',
+        });
 
-      const searchParams = new URLSearchParams({
-        list: 'interactions',
-      });
+        const searchParams = new URLSearchParams({
+          list: 'interactions',
+        });
 
-      navigate(`${path}?${searchParams.toString()}`, {
-        state: { activeKey: 'interactions' },
-        replace: true,
-      });
+        navigate(`${path}?${searchParams.toString()}`, {
+          state: { activeKey: 'interactions' },
+          replace: true,
+        });
+      } else if (moduleLevel === 'project') {
+        const path = generatePath(PROJECT_DETAILS, {
+          projectid: projectid || '',
+        });
+        const searchParams = new URLSearchParams({
+          list: 'interactions',
+        });
+        navigate(`${path}?${searchParams.toString()}`, {
+          state: { activeKey: 'interactions' },
+          replace: true,
+        });
+      } else if (moduleLevel === 'case') {
+        const path = generatePath(CASE_DETAILS, {
+          caseId: caseId || '',
+        });
+        const searchParams = new URLSearchParams({
+          list: 'interactions',
+        });
+        navigate(`${path}?${searchParams.toString()}`, {
+          state: { activeKey: 'interactions' },
+          replace: true,
+        });
+      }
     } else {
       searchParams.delete('fpa_id');
       navigate({ search: searchParams.toString() }, { replace: true });
@@ -129,6 +164,7 @@ const FourPartAssessmentDetails: React.FC = () => {
       label: 'Project Code',
       value: data?.project_code,
       key: 'project_code',
+      hide: moduleLevel === 'project',
     },
     {
       label: 'Range',
@@ -157,6 +193,8 @@ const FourPartAssessmentDetails: React.FC = () => {
   //   permissionMap
   // );
 
+  const currentModuleColors = moduleColorMap[moduleLevel];
+
   return (
     <>
       <div className='border border-[#CBD6E2]'>
@@ -165,13 +203,14 @@ const FourPartAssessmentDetails: React.FC = () => {
           subValue={data?.r_number || ''}
           titleIcon={
             <NotesSideIcon
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              className='w-[14px] h-[14px]'
+              style={{ stroke: currentModuleColors.text }}
               alt='Notes-header-icon'
             />
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           buttons={headerButtons}
-          iconBg={ColorCode.accountBgColor}
+          iconBg={currentModuleColors.bg}
           bgType='circle'
         />
         {isLoading ? (

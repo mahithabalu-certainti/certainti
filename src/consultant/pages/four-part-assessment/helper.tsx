@@ -1,7 +1,7 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
-import { FourPartAssessmentList } from '../../../../types';
-import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
+import { formatDateToYYYYMMDDWithTime } from '../../../common-utils';
+import { ListTableColumn } from '../../../components/table/types';
+import { ColorCode, FourPartAssessmentList } from '../../types';
+import { FieldConfig } from '../account-details-sidebar/components/filter/filterType';
 
 const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -29,8 +29,9 @@ const enumOptions = [
   { option: 'In', value: 'in' },
 ];
 
-export const getProjectFourPartAssessmentTableColumns = (
-  handleFourPartAssessmentView: (rowId: string) => void
+export const getFourPartAssessmentTableColumns = (
+  handleFourPartAssessmentView: (rowId: string) => void,
+  moduleLevel: 'account' | 'project' | 'case'
   //   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<FourPartAssessmentList>[] => [
   {
@@ -61,6 +62,17 @@ export const getProjectFourPartAssessmentTableColumns = (
       ) : (
         <span>{row.r_number}</span>
       ),
+  },
+  {
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    width: 120,
+    sortable: true,
+    hide: moduleLevel === 'project',
+    // hide:
+    //   !projectPermissionMap?.['project_code']?.edit &&
+    //   !projectPermissionMap?.['project_code']?.read,
   },
   {
     id: 'range',
@@ -122,8 +134,9 @@ export const getProjectFourPartAssessmentTableColumns = (
   },
 ];
 
-export const getProjectFourPartAssessmentFilterFields = (
-  statusOptions: { option: string; value: string }[]
+export const getFourPartAssessmentFilterFields = (
+  statusOptions: { option: string; value: string }[],
+  moduleLevel: 'account' | 'project' | 'case'
   //   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
@@ -135,6 +148,16 @@ export const getProjectFourPartAssessmentFilterFields = (
       //   hide:
       //     !permissionMap?.['r_number']?.edit &&
       //     !permissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Project Code',
+      value: 'project_code',
+      type: 'text',
+      operatorOption: textOptions,
+      hide: moduleLevel === 'project',
+      //   hide:
+      //     !permissionMap?.['project_code']?.edit &&
+      //     !permissionMap?.['project_code']?.read,
     },
     {
       name: 'Range',
@@ -191,4 +214,19 @@ export const getProjectFourPartAssessmentFilterFields = (
       //     !permissionMap?.['modified_datetime']?.read,
     },
   ];
+};
+
+export const moduleColorMap = {
+  account: {
+    text: ColorCode.accountTextColor,
+    bg: ColorCode.accountBgColor,
+  },
+  project: {
+    text: ColorCode.projectTextColor,
+    bg: ColorCode.projectBgColor,
+  },
+  case: {
+    text: ColorCode.caseTextColor,
+    bg: ColorCode.caseBgColor,
+  },
 };

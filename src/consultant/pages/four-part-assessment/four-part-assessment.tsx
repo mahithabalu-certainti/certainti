@@ -1,48 +1,46 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  getFourPartAssessmentFilterFields,
+  getFourPartAssessmentTableColumns,
+  moduleColorMap,
+} from './helper';
 import {
   AllPermissions,
   FilterTypes,
   OverviewTabs,
   useGetInteractionStatus,
-} from '../../../../../common-service';
+} from '../../../common-service';
 import {
   ActivityDropdownItem,
-  ColorCode,
   ExportType,
   FourPartAssessmentList,
   FourPartAssessmentListExportURLParams,
   FourPartAssessmentListURLParams,
-} from '../../../../types';
-import { RootState } from '../../../../../store/store';
-import { useFourPartAssessmentList } from '../../../../services/four-part-assessment/four-part-assessment-service';
-import {
-  getCaseFourPartAssessmentFilterFields,
-  getCaseFourPartAssessmentTableColumns,
-} from './helper';
-import { ShowHideTableColumn } from '../../../../../components/table/types';
-import { SectionTabPanel } from '../../../../../components';
+} from '../../types';
+import { RootState } from '../../../store/store';
+import { useFourPartAssessmentList } from '../../services/four-part-assessment/four-part-assessment-service';
+import { ShowHideTableColumn } from '../../../components/table/types';
+import { SectionTabPanel } from '../../../components';
 import FourPartAssessmentDetails from './four-part-assessment-details';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import { NotesSideIcon } from '../../../../../assets';
-import {
-  ListTable,
-  ManageColumnsPopover,
-} from '../../../../../components/table';
+import SectionHeader from '../../../components/details-section/section-header';
+import { NotesSideIcon } from '../../../assets';
+import { ListTable, ManageColumnsPopover } from '../../../components/table';
 
 const FourPartAssessmentTabs: OverviewTabs[] = [
   {
     id: AllPermissions.FOUR_PART_ASSESSMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.FOUR_PART_ASSESSMENT_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.FOUR_PART_ASSESSMENT_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 
 interface FourPartAssessmentProps {
@@ -51,16 +49,18 @@ interface FourPartAssessmentProps {
     React.SetStateAction<FourPartAssessmentListExportURLParams>
   >;
   activityMenuItems: ActivityDropdownItem[];
+  moduleLevel: 'account' | 'project' | 'case';
 }
 
 const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
   setExportType,
   setFourPartAssessmentParams,
   activityMenuItems,
+  moduleLevel,
 }) => {
+  const { accountid, caseId, projectid } = useParams();
   const [searchParams] = useSearchParams();
-  const { caseId } = useParams();
-  const accountId = searchParams.get('accountID') || '';
+  const accountID = searchParams.get('accountID') || '';
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -108,9 +108,9 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
-      attachmentLevel: 'case',
-      accountRid: accountId || '',
-      entityId: caseId || '',
+      attachmentLevel: moduleLevel || 'account',
+      accountRid: accountid || accountID || '',
+      entityId: accountid || caseId || projectid || '',
       search: searchText,
       fiscalYear: convertedFiscalYear,
     },
@@ -232,12 +232,15 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
     }
   };
 
-  const fourPartAssessmentColumns = getCaseFourPartAssessmentTableColumns(
-    handleFourPartAssessmentView
+  const fourPartAssessmentColumns = getFourPartAssessmentTableColumns(
+    handleFourPartAssessmentView,
+    moduleLevel
   );
 
-  const fourPartAssessmentFilterFields =
-    getCaseFourPartAssessmentFilterFields(statusOptions);
+  const fourPartAssessmentFilterFields = getFourPartAssessmentFilterFields(
+    statusOptions,
+    moduleLevel
+  );
 
   const getRowId = (row: FourPartAssessmentList) => row.rid;
 
@@ -246,7 +249,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
   };
 
   const modalId = isModalOpen
-    ? 'project-four-part-assessment-list-column-visibility-popover'
+    ? `${moduleLevel}-four-part-assessment-list-column-visibility-popover`
     : undefined;
 
   const restrictedColumns = [
@@ -281,6 +284,16 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
     .map((id) => fourPartAssessmentColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
+  const tableStyle = {
+    borderBottom: '1px solid #CBD6E2',
+    height: '100%',
+    maxHeight:
+      moduleLevel === 'account' ? 'calc(100vh - 320px)' : 'calc(100vh - 380px)',
+    overflow: 'auto',
+  };
+
+  const currentModuleColors = moduleColorMap[moduleLevel];
+
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
@@ -288,7 +301,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
         filterMenu={fourPartAssessmentFilterFields}
         filterVisibility={viewDetails ? false : true}
         showFilter={showFilter}
-        contextKey='fourPartAssessment'
+        contextKey={`${moduleLevel}-fourPartAssessment`}
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={(page) =>
@@ -307,7 +320,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
         activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
-        <FourPartAssessmentDetails />
+        <FourPartAssessmentDetails moduleLevel={moduleLevel} />
       ) : (
         <>
           <SectionHeader
@@ -316,12 +329,13 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-                className={`[&>path]:stroke-[${ColorCode.caseTextColor}] w-[14px] h-[14px]`}
+                className='w-[14px] h-[14px]'
+                style={{ stroke: currentModuleColors.text }}
                 alt='Notes-header-icon'
               />
             }
             buttons={headerButtons}
-            iconBg={ColorCode.caseBgColor}
+            iconBg={currentModuleColors.bg}
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
@@ -339,12 +353,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
               columns={visibleColumns}
               getRowId={getRowId}
               hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 380px)',
-                overflow: 'auto',
-              }}
+              tableStyle={tableStyle}
               stickyHeader={true}
               stickyColumnsCount={1}
               selectable={false}
