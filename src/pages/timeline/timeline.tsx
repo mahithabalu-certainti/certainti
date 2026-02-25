@@ -1,17 +1,32 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import {
-  NotesIcon,
   CallLogIcon,
-  MeetingIcon,
-  AttachmentIcon,
-  SurveyIcon,
   TaskCreateIcon,
   NotesSideIcon,
+  AccountDeatilsIcon,
+  ProjectsSideIcon,
+  CasesIcon,
+  AttachmentsSideIcon,
+  DraftEmailIcon,
+  ResourcesIcon,
+  FinancialIcon,
+  InteractionsIcon,
+  HistorySubmissionIcon,
+  ChecklistIcon,
+  TimeSheetIcon,
+  ImportsIcon,
+  SettingIcon,
+  ProjectTaskIcon,
+  TechSummaryIcon,
+  MeetingIcon,
+  CaseTeamIcon,
+  DossierIcon,
 } from '../../assets/icons';
 import { useParams, useSearchParams } from 'react-router';
 import { TimelineParams } from '../../consultant/types/timeline';
 import { useTimelineList } from '../../consultant/services/timeline/timeline-service';
 import TimelineSkeleton from '../../components/skeleton-component/timeskeleton';
+import { ColorCode } from '../../consultant/types';
 
 type TimelineItem = {
   rid: string;
@@ -33,58 +48,250 @@ type TimelineGroup = {
   dateLabel: string;
   items: TimelineItem[];
 };
-// Icon config: returns { icon component, bg color, stroke color } per type
+
+// Icon config: returns { icon component, bg color } per type
 type IconConfig = {
   icon: React.ReactNode;
   bg: string;
 };
 
-const getTypeIconConfig = (entity_name: string): IconConfig => {
-  const iconStyle = { width: '10px', height: '10px' };
-  const type = entity_name?.toLowerCase();
+const getTypeIconConfig = (
+  entity_name: string,
+  entitytype: string
+): IconConfig => {
+  const type = entity_name;
+  const bgColor =
+    entitytype === 'account'
+      ? ColorCode.accountBgColor
+      : entitytype === 'project'
+        ? ColorCode.projectBgColor
+        : ColorCode.caseBgColor;
+
   switch (type) {
-    case 'task':
-    case 'project':
+    case 'Account':
       return {
-        icon: <TaskCreateIcon alt='task' style={iconStyle} />,
-        bg: '#EBF3FD',
+        icon: (
+          <AccountDeatilsIcon
+            alt='account'
+            className={`[&>path]:stroke-white w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
-    case 'call':
+    case 'Project':
       return {
-        icon: <CallLogIcon alt='call' style={iconStyle} />,
-        bg: '#F0EBFD',
+        icon: (
+          <ProjectsSideIcon
+            alt='project'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
-    case 'meeting':
+    case 'Case':
       return {
-        icon: <MeetingIcon alt='meeting' style={iconStyle} />,
-        bg: '#FEEBEB',
+        icon: (
+          <CasesIcon
+            alt='case'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
-    case 'attachment':
+    case 'Call log':
       return {
-        icon: <AttachmentIcon alt='attachment' style={iconStyle} />,
-        bg: '#EBF7FE',
+        icon: (
+          <CallLogIcon
+            alt='call'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
-    case 'survey':
+    case 'Meeting':
       return {
-        icon: <SurveyIcon alt='survey' style={iconStyle} />,
-        bg: '#FEEBF5',
+        icon: (
+          <MeetingIcon
+            alt='meeting'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
-    case 'note':
+    case 'Attachment':
       return {
-        icon: <NotesSideIcon alt='note' style={iconStyle} />,
-        bg: '#FEFAEB',
+        icon: (
+          <AttachmentsSideIcon
+            alt='attachment'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
-    case 'contact':
-    case 'resource':
-    case 'resource cost':
+    case 'Email':
       return {
-        icon: <NotesIcon alt='contact' style={iconStyle} />,
-        bg: '#EBEBFD',
+        icon: (
+          <DraftEmailIcon
+            alt='email'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Task':
+    case 'Tag':
+    case 'Comments':
+      return {
+        icon: (
+          <TaskCreateIcon
+            alt='task'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Notes':
+      return {
+        icon: (
+          <NotesSideIcon
+            alt='note'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Resource':
+    case 'Project Resources':
+    case 'Resource Skill':
+    case 'Resource Cost':
+      return {
+        icon: (
+          <ResourcesIcon
+            alt='resource'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Financial Working':
+      return {
+        icon: (
+          <FinancialIcon
+            alt='financial'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Interactions':
+      return {
+        icon: (
+          <InteractionsIcon
+            alt='interactions'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Historical Submission':
+      return {
+        icon: (
+          <HistorySubmissionIcon
+            alt='history'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Checklists':
+      return {
+        icon: (
+          <ChecklistIcon
+            alt='checklist'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Timesheets':
+      return {
+        icon: (
+          <TimeSheetIcon
+            alt='timesheet'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Imports':
+      return {
+        icon: (
+          <ImportsIcon
+            alt='imports'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Project Tasks':
+      return {
+        icon: (
+          <ProjectTaskIcon
+            alt='project-task'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Technical Summary':
+      return {
+        icon: (
+          <TechSummaryIcon
+            alt='tech-summary'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Setting':
+      return {
+        icon: (
+          <SettingIcon
+            alt='setting'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Case Team':
+      return {
+        icon: (
+          <CaseTeamIcon
+            alt='case-team'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Dossier':
+      return {
+        icon: (
+          <DossierIcon
+            alt='dossier'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
     default:
       return {
-        icon: <NotesIcon alt='default' style={iconStyle} />,
-        bg: '#F0F0F0',
+        icon: (
+          <AccountDeatilsIcon
+            alt='default'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
       };
   }
 };
@@ -96,86 +303,139 @@ const DOT_COL_W = 24;
 // TIME_COL_W + DOT_COL_W / 2 = 62 + 12 = 74px from group container left
 const LINE_LEFT = TIME_COL_W + DOT_COL_W / 2;
 
+const formatTimelineDate = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const formatTimelineTime = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+// Merge new API items into accumulated grouped data
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const transformEntries = (entries: any[]): TimelineGroup[] => {
+  const groups: { [key: string]: TimelineItem[] } = {};
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  entries.forEach((item: any) => {
+    const dateLabel = formatTimelineDate(item.created_datetime);
+    const time = formatTimelineTime(item.created_datetime);
+
+    const transformedItem: TimelineItem = {
+      rid: item.rid,
+      date: '',
+      time,
+      entity_name: item.entity_name,
+      title: `${item.entity_name} ${item.event_name} (${item.r_number || ''})`,
+      created_by_name: item.created_by_name
+        ? `by ${item.created_by_name}`
+        : undefined,
+      descriptions: item.descriptions,
+      event_name: item.event_name,
+    };
+
+    if (!groups[dateLabel]) {
+      groups[dateLabel] = [];
+    }
+    groups[dateLabel].push(transformedItem);
+  });
+
+  return Object.keys(groups).map((dateLabel) => ({
+    dateLabel,
+    items: groups[dateLabel],
+  }));
+};
+
 const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
   const [searchParams] = useSearchParams();
   const { accountid, projectid, caseId } = useParams();
   const accountId = searchParams.get('accountID');
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
+
+  // ── Pagination state ──────────────────────────────────────────────
+  // nextOffset from the API is a number (e.g. 11), so store as number | null
+  const [currentOffset, setCurrentOffset] = useState<number>(1);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [localItems, setLocalItems] = useState<TimelineGroup[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Use a ref to know whether the incoming data is the first page
+  const isFirstPageRef = useRef(true);
 
   const params: TimelineParams = {
-    nextOffset: 1,
+    nextOffset: currentOffset,
     limit: 10,
     account_rid: accountid || accountId || '',
     project_rid: entitytype === 'project' ? projectid : undefined,
     case_rid: entitytype === 'case' ? caseId : undefined,
     entityType: entitytype,
   };
-  const isTimeLineView = searchParams.get('timelineview') === 'true';
+
   const { data, isLoading } = useTimelineList(params, isTimeLineView);
 
-  const formatTimelineDate = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  // ── Accumulate pages into localItems ──────────────────────────────
+  useEffect(() => {
+    if (data?.data?.timeLineEntries) {
+      const newGroups = transformEntries(data.data.timeLineEntries);
 
-  const formatTimelineTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
-
-  const displayData: TimelineGroup[] = React.useMemo(() => {
-    if (
-      !data?.data?.timeLineEntries ||
-      data.data.timeLineEntries.length === 0
-    ) {
-      return [];
-    }
-
-    const groups: { [key: string]: TimelineItem[] } = {};
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data.data.timeLineEntries.forEach((item: any) => {
-      const dateLabel = formatTimelineDate(item.created_datetime);
-      const time = formatTimelineTime(item.created_datetime);
-
-      const transformedItem: TimelineItem = {
-        rid: item.rid,
-        date: '',
-        time: time,
-        entity_name: item.entity_name,
-        title: `${item.entity_name} ${item.event_name} (${item.r_number || ''})`,
-        created_by_name: item.created_by_name
-          ? `by ${item.created_by_name}`
-          : undefined,
-        descriptions: item.descriptions,
-        event_name: item.event_name,
-      };
-
-      if (!groups[dateLabel]) {
-        groups[dateLabel] = [];
+      if (isFirstPageRef.current) {
+        // First page — replace all items
+        setLocalItems(newGroups);
+        isFirstPageRef.current = false;
+      } else {
+        // Subsequent pages — merge into existing groups
+        setLocalItems((prev) => {
+          const merged = [...prev];
+          newGroups.forEach((newGroup) => {
+            const existingGroup = merged.find(
+              (g) => g.dateLabel === newGroup.dateLabel
+            );
+            if (existingGroup) {
+              existingGroup.items = [...existingGroup.items, ...newGroup.items];
+            } else {
+              merged.push(newGroup);
+            }
+          });
+          return merged;
+        });
       }
-      groups[dateLabel].push(transformedItem);
-    });
 
-    return Object.keys(groups).map((dateLabel) => ({
-      dateLabel,
-      items: groups[dateLabel],
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, isLoading]);
+      // API returns nextOffset as a number; null / undefined means no more pages
+      const rawNext = data.data.nextOffset;
+      setNextOffset(rawNext != null ? Number(rawNext) : null);
+    }
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (isLoading) {
+  // ── Infinite scroll handler ───────────────────────────────────────
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+
+    // Trigger load when within 100px of bottom, there is a next page, and not already loading
+    if (
+      scrollHeight - scrollTop <= clientHeight + 100 &&
+      nextOffset !== null &&
+      !isLoading
+    ) {
+      setCurrentOffset(nextOffset);
+    }
+  };
+
+  // ── Initial skeleton (first load only) ───────────────────────────
+  if (isLoading && localItems.length === 0) {
     return <TimelineSkeleton />;
   }
 
-  if (displayData.length === 0) {
+  // ── No data ──────────────────────────────────────────────────────
+  if (!isLoading && localItems.length === 0) {
     return (
       <div
         style={{
@@ -194,8 +454,20 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
     );
   }
 
+  // ── Render ────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '12px 16px 8px 16px', background: '#fff' }}>
+    <div
+      ref={scrollContainerRef}
+      onScroll={handleScroll}
+      style={{
+        padding: '12px 16px 8px 16px',
+        background: '#fff',
+        overflowY: 'auto',
+        // Concrete height is required so the div actually creates a scroll region.
+        // '100%' doesn't work when the parent has no fixed height.
+        maxHeight: 'calc(100vh - 260px)',
+      }}
+    >
       {/* Single continuous vertical line spanning all groups */}
       <div style={{ position: 'relative' }}>
         <div
@@ -210,11 +482,11 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
           }}
         />
 
-        {displayData.map((group, gIdx) => (
+        {localItems.map((group, gIdx) => (
           <div
             key={group.dateLabel}
             style={{
-              marginBottom: gIdx < displayData.length - 1 ? '4px' : '8px',
+              marginBottom: gIdx < localItems.length - 1 ? '4px' : '8px',
             }}
           >
             {/* ── Date section divider: date badge ── */}
@@ -227,7 +499,6 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
                 marginTop: gIdx === 0 ? 0 : '16px',
               }}
             >
-              {/* Badge with white background to mask the line behind it */}
               <span
                 style={{
                   position: 'relative',
@@ -276,7 +547,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
             {/* ── Items ── */}
             {group.items.map((item, iIdx) => (
               <div
-                key={item.rid}
+                key={`${item.rid}-${iIdx}`}
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -319,7 +590,10 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
                   }}
                 >
                   {(() => {
-                    const { icon, bg } = getTypeIconConfig(item.entity_name);
+                    const { icon, bg } = getTypeIconConfig(
+                      item.entity_name,
+                      entitytype
+                    );
                     return (
                       <div
                         style={{
@@ -343,7 +617,6 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
 
                 {/* ── Content column ── */}
                 <div style={{ flex: 1, paddingLeft: '6px' }}>
-                  {/* Title */}
                   <div
                     style={{
                       fontSize: '13px',
@@ -355,7 +628,6 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
                     {item.entity_name} {item.event_name} {item.descriptions}
                   </div>
 
-                  {/* Subtitle — by user */}
                   {item.created_by_name && (
                     <div
                       style={{
@@ -374,6 +646,11 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
           </div>
         ))}
       </div>
+
+      {/* ── Load-more skeleton (3 rows, no outer padding) ── */}
+      {isLoading && localItems.length > 0 && (
+        <TimelineSkeleton count={3} inline={true} />
+      )}
     </div>
   );
 };

@@ -15,7 +15,7 @@ export interface TimelineListApiResponse {
     timeLineEntries: TimelineItem[];
     total: number;
     unreadCount: number;
-    nextOffset: string | null;
+    nextOffset: number | null;
   };
 }
 
