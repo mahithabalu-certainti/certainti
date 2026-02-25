@@ -333,7 +333,8 @@ export const eventNames = {
   UPDATE: "updated",
   CANCEL: "cancelled",
   ADDED:  "added",
-  DELETE: "deleted"
+  DELETE: "deleted",
+  REMOVED: "removed",
 }
 
 export const eventTypes = {
