@@ -22,7 +22,14 @@ interface ObjectRidMap {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
+  type:
+    | 'chip'
+    | 'operator'
+    | 'manual'
+    | 'function'
+    | 'number'
+    | 'conditional'
+    | 'bracket';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];

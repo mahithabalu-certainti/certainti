@@ -210,6 +210,7 @@ const TabPanel: React.FC<TabProps> = ({
         onTabChange(activeTab.id);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceTab, onTabChange, searchParams, isTimelineVisible]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {

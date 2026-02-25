@@ -31,7 +31,10 @@ import {
 } from '../../../../common-utils';
 import { ColorCode, FilterState, SelectOption } from '../../../types';
 import { exportTasksData } from '../../../services/tasks/tasks-service';
-import { storeFilters } from '../../account-details-sidebar/components/filter/utils';
+import {
+  clearFilters,
+  storeFilters,
+} from '../../account-details-sidebar/components/filter/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
@@ -448,6 +451,7 @@ export const Tasks: React.FC = () => {
     setAppliedFilters({});
     searchParams.set('tab', value);
     setSearchParams(searchParams, { replace: true });
+    clearFilters('global-tasks');
   };
 
   return (
