@@ -54,8 +54,11 @@ export class ChildCaseService extends CaseService {
     }
 
     async signOffFinancialWorking (data : any, file : any) {
-        const mainDb = await this.mainDbConfiguration();
-        const orgDb = await this.orgDbConfiguration();
+      const mainDb = await this.mainDbConfiguration();
+      const orgDb = await this.orgDbConfiguration();
+      const transaction = await orgDb.transaction();
+      const mainDbTransaction = await mainDb.transaction()
+      try {
         const parentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
         if(parentAccount[0].length > 0) {
             let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
@@ -74,15 +77,15 @@ export class ChildCaseService extends CaseService {
             const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
             if(file !== undefined) {
                 const fileUploadedResult = await uploadToAzureBlob(file, data.account_rid, '', parentAccount[0][0].r_number, 'signoff')
-                await orgDb.query(rawQueries.insertDataIntoAttachments(schemaName, data.case_rid, data.userId, data.account_rid, fileUploadedResult.url, fileUploadedResult.name, caseDetails?.fiscal_year, fileUploadedResult.extension, fileUploadedResult.size, data.comments))
+                await orgDb.query(rawQueries.insertDataIntoAttachments(schemaName, data.case_rid, data.userId, data.account_rid, fileUploadedResult.url, fileUploadedResult.name, caseDetails?.fiscal_year, fileUploadedResult.extension, fileUploadedResult.size, data.comments), {transaction : transaction})
             }
-            const caseResult : any = await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, data.sign_off));
-            if(caseResult[1].rowCount) {
-                const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.financialWorking));
-                await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findFinancialWorkingId[0][0].rid, data.case_rid, data.account_rid, schemaName, data.comments))
-                await orgDb.query(rawQueries.updateClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName));
-                await orgDb.query(rawQueries.updateClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName));
-                await mainDb.query(rawQueries.updateClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid))
+            const caseResult : any = await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, data.sign_off), {transaction : transaction});
+            if(caseResult[1].rowCount > 0) {
+                const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.financialWorking), {transaction : mainDbTransaction});
+                await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findFinancialWorkingId[0][0].rid, data.case_rid, data.account_rid, schemaName, data.comments), {transaction : transaction})
+                await orgDb.query(rawQueries.updateClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName), {transaction : transaction});
+                await orgDb.query(rawQueries.updateClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName), {transaction : transaction});
+                await mainDb.query(rawQueries.updateClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid), {transaction : mainDbTransaction})
                 let mapIdsForCaseProjectregions : any[] = []
                 let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
                 caseProjectIds.forEach((d) => {
@@ -90,40 +93,52 @@ export class ChildCaseService extends CaseService {
                 })
                 let query = rawQueries.updateClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName)
                 if(query) {
-                    await orgDb.query(query)
+                    await orgDb.query(query, {transaction : transaction})
                 }
                 const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                          userId: data.userId!,
-                                                          eventType: eventTypes.UI_HANDLER
-                                                        });
+                userId: data.userId!,
+                eventType: eventTypes.UI_HANDLER
+              });
                                 
                 await this.helperMethod.createAccountTimelineEntry(parentAccount[0][0].r_number!, {
-                                                    created_by: data.userId!,
-                                                    account_rid: data.account_rid,
-                                                    entity_rid: data.case_rid!,
-                                                    entity_name: entityTypes.CASE,
-                                                    created_by_name: userEventInfo.full_name,
-                                                    event_type_rid: userEventInfo.event_type_rid,
-                                                    event_name: eventNames.CREATE,
-                                                    descriptions:data.case_name,
-                                                    case_rid: data.case_rid,
-                                                  },["case"]);
+                created_by: data.userId!,
+                account_rid: data.account_rid,
+                entity_rid: data.case_rid!,
+                entity_name: entityTypes.CASE,
+                created_by_name: userEventInfo.full_name,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.CREATE,
+                descriptions:caseDetails.case_name,
+                case_rid: data.case_rid,
+              },["case"]);
+                await transaction.commit()
+                await mainDbTransaction.commit()
                 return {
                     statusCode : HttpStatus.SUCCESS,
                     statusMessage : STATUS_MESSAGE.financialWorkingSignedOff
                 }
             } else {
+              await transaction.rollback()
+              await mainDbTransaction.rollback()
                 return {
-                    statusCode : HttpStatus.FAILED,
-                    statusMessage : STATUS_MESSAGE.financialWorkingSignedOffFailed
-                }
+                  statusCode : HttpStatus.FAILED,
+                  statusMessage : STATUS_MESSAGE.financialWorkingSignedOffFailed
+              }
             }
         } else {
-            return {
-                    statusCode : HttpStatus.FAILED,
-                    statusMessage : STATUS_MESSAGE.accountNoFound
-                }
+          return {
+              statusCode : HttpStatus.FAILED,
+              statusMessage : STATUS_MESSAGE.accountNoFound
+          }
         }
+      } catch (error) {
+        await transaction.rollback()
+        await mainDbTransaction.rollback()
+        return {
+            statusCode : HttpStatus.FAILED,
+            statusMessage : STATUS_MESSAGE.financialWorkingSignedOffFailed
+        }
+      }
     }
     async stateWiseRegionList (data : any) {
         const mainDb = await this.getMainDb();
