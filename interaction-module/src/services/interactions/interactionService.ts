@@ -174,6 +174,7 @@ export class InteractionService {
     const transaction = await dbInit.transaction();
     try {
       interactionData.created_by = userId;
+      if(interactionData.interaction_assessment_source_rid == undefined) interactionData.interaction_assessment_source_rid = interactionAssessmentSourceType.RD
       const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData.account_rid
@@ -2321,6 +2322,7 @@ export class InteractionService {
                     : modifiedMap.get(d.modified_by),
                 has_email_recipient: hasEmailRecipient,
                 interaction_batch_id : d.interaction_batch_id,
+                four_part_assessment_rid : d.four_part_assessment_rid,
                 four_part_r_number : d.four_part_r_number,
                 interaction_assessment_source_rid : d.interaction_assessment_source_rid,
                 interaction_assessment_source_name : interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null
