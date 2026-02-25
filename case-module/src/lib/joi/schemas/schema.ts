@@ -1116,6 +1116,7 @@ const createDataMapperSchema = Joi.object({
       'string.max': 'Name must be less than or equal to 120 characters'
     }),
   descriptions: Joi.string().optional().allow(""),
+  is_federal: Joi.boolean().required(),
   effective_from_date: Joi.date().required()
     .messages({
       'any.required': 'Effective from date is required',
@@ -1206,6 +1207,7 @@ const updateDataMapperFormSchema = Joi.object({
 const updateDataMapperSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   descriptions: Joi.string().optional().allow(""),
+  is_federal: Joi.boolean().required(),
   form_name: Joi.string().max(120).optional()
     .messages({
       'string.empty': 'Name cannot be empty',

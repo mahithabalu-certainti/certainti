@@ -34,6 +34,7 @@ interface DataMapperFormsAttributes {
     field_array?: any | null;
     form_type?: string | null;
     descriptions?: string | null;
+    is_federal?: boolean;
 }
 
 export interface DataMapperFormsCreationAttributes
@@ -50,6 +51,7 @@ export interface DataMapperFormsCreationAttributes
         | "field_array"
         | "form_type"
         | "descriptions"
+        | "is_federal"
     > { }
 
 export class DataMapperForms
@@ -83,7 +85,7 @@ export class DataMapperForms
     public error_message?: string | null;
     public form_type?: string | null;
     public descriptions?: string | null | undefined;
-    public form_status_rid?: string | null ;
+    public is_federal?: boolean;
 
     static initialize(
         sequelize: Sequelize,
@@ -179,6 +181,11 @@ export class DataMapperForms
                 descriptions: {
                     type: DataTypes.TEXT,
                     allowNull: true,
+                },
+                is_federal: {
+                    type: DataTypes.BOOLEAN,
+                    allowNull: false,
+                    defaultValue: false,
                 },
             },
             {
