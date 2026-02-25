@@ -321,7 +321,7 @@ export const getQualifiedProjectsFilterFields = (
 
   {
     name: 'Project Classification',
-    value: 'classification_name',
+    value: 'project_classification_rid',
     type: 'enum',
     options: classificationOption,
     operatorOption: enumOptions,
@@ -408,8 +408,8 @@ export const getQualifiedProjectsFilterFields = (
     type: 'number',
     operatorOption: numberOptions,
     hide:
-      !projectPermissionMap?.['rd_percent_final']?.read &&
-      !projectPermissionMap?.['rd_percent_final']?.edit,
+      !projectPermissionMap?.['qre_final']?.read &&
+      !projectPermissionMap?.['qre_final']?.edit,
   },
   {
     name: 'QRE Final',
@@ -417,8 +417,8 @@ export const getQualifiedProjectsFilterFields = (
     type: 'number',
     operatorOption: numberOptions,
     hide:
-      !projectPermissionMap?.['qre_final']?.read &&
-      !projectPermissionMap?.['qre_final']?.edit,
+      !projectPermissionMap?.['qre']?.read &&
+      !projectPermissionMap?.['qre']?.edit,
   },
   {
     name: 'Project Point of Contact',

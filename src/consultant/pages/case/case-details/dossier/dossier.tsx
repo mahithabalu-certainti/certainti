@@ -159,19 +159,19 @@ const Dossier: React.FC<DossierProps> = ({
   );
   const isQualifiedProjectsView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_QUALIFIED_PROJECTS_VIEW
+    AllPermissions.PROJECTS_VIEW_EDIT
   );
   const isTechnicalSummaryView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_TECHNICAL_SUMMARY_VIEW
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
   );
   const isProjectDocumentsView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_PROJECT_DOCUMENTS_VIEW
+    AllPermissions.ATTACHMENT_VIEW_EDIT
   );
   const isResourceSummaryView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_RESOURCE_SUMMARY_VIEW
+    AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
   );
   const isRdFormsView = checkPermission(
     permission,
@@ -366,7 +366,7 @@ const Dossier: React.FC<DossierProps> = ({
       refetchDossierInitiate(payload, {
         onSuccess: () => {
           setDossierCreditStatus(
-            'Dossier Package is Inprogress. Refresh the page to check the status'
+            'Dossier Packages is In-Progress. Refresh the page to check the status'
           );
           // handleStatusUpdate(data);
         },
@@ -399,7 +399,7 @@ const Dossier: React.FC<DossierProps> = ({
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
         option: data.classification_name,
-        value: data.classification_name,
+        value: data.rid,
       })) || [],
     [Classification.data?.data.projectClassifications]
   );

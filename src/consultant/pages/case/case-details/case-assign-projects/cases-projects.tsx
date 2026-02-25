@@ -413,7 +413,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
         option: data.classification_name,
-        value: data.classification_name,
+        value: data.rid,
       })) || [],
     [Classification.data?.data.projectClassifications]
   );

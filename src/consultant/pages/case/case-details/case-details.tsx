@@ -62,6 +62,7 @@ import {
   DossierIcon,
   DraftEmailIcon,
   FinancialIcon,
+  InProgressIcon,
   InteractionsIcon,
   MeetingIcon,
   NotesSideIcon,
@@ -1296,7 +1297,7 @@ export const CaseDetails = () => {
               <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
                 <div>
                   <React.Suspense fallback={null}>
-                    <DetailsKeyContactErrorIcon alt='key-contact' />
+                    <InProgressIcon alt='in-progress' className='w-4 h-4' />
                   </React.Suspense>
                 </div>
                 <div>
