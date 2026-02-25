@@ -4,6 +4,8 @@ import {
   createSelectField,
   createDateField,
   REGEX_PATTERNS,
+  createTextAreaField,
+  YES_NO_OPTIONS,
 } from '../../../../common-utils';
 import dayjs from 'dayjs';
 
@@ -11,6 +13,7 @@ export const DataMapperFormData = (
   countryOptions: SelectOption[],
   stateOptions: SelectOption[],
   statesLoading: boolean,
+  isFederal: boolean,
   effectiveFromDate?: Date
 ): FormType[] => {
   return [
@@ -49,18 +52,38 @@ export const DataMapperFormData = (
             ? dayjs(effectiveFromDate).add(1, 'day').toDate()
             : undefined,
         }),
+        createSelectField('is_federal', 'Federal', {
+          options: YES_NO_OPTIONS,
+          placeholder: 'Choose Federal',
+          required: true,
+          onChange: true,
+          resetDependsFields: ['state_rid'],
+        }),
         createSelectField('country_rid', 'Country', {
           options: countryOptions,
           placeholder: 'Choose Country',
           required: true,
           onChange: true,
+          resetDependsFields: ['state_rid'],
         }),
         createSelectField('state_rid', 'Region', {
           options: stateOptions,
           placeholder: 'Choose Region',
-          required: false,
-          disabled: statesLoading,
+          required: isFederal ? false : true,
           isLoading: statesLoading,
+          disabled: statesLoading || isFederal,
+        }),
+      ],
+    },
+    {
+      sectionName: '',
+      fillType: 'full',
+      fields: [
+        createTextAreaField('description', 'Description', {
+          required: false,
+          placeholder: 'Enter Description',
+          regexErrorMessage: 'Description must be within 2000 characters',
+          regex: REGEX_PATTERNS.DESCRIPTION,
         }),
       ],
     },

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Chart from 'react-google-charts';
-import { MenuItem, Select, Skeleton } from '@mui/material';
+import { MenuItem, Select, SelectChangeEvent, Skeleton } from '@mui/material';
 import {
   blendWithWhite,
   COMMON_MENU_PROPS,
@@ -8,7 +8,6 @@ import {
   getSelectStyles,
 } from '../../helpers';
 import { AccountYearData } from '../../../../types/dashboard';
-import { getFiscalYears } from '../../../../../common-utils';
 
 interface Props {
   title: string;
@@ -17,8 +16,9 @@ interface Props {
   colors: string[];
   className?: string;
   isLoading?: boolean;
-  selectedYear: string;
-  onYearChange: (year: string) => void;
+  filingType?: string;
+  filingTypeOptions?: { value: string; label: string }[];
+  onFilingTypeChange?: (value: string) => void;
 }
 
 const AccountChart: React.FC<Props> = ({
@@ -28,33 +28,38 @@ const AccountChart: React.FC<Props> = ({
   colors,
   className = '',
   isLoading = false,
-  selectedYear,
-  onYearChange,
+  filingType,
+  filingTypeOptions = [],
+  onFilingTypeChange,
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState('100%');
-
-  const minYear = 1950;
-  const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
-  const yearValues = fiscalYears.slice(0, 4).map((fy) => Number(fy.value));
 
   // BUILD GOOGLE-CHART ROWS
   const chartRows = React.useMemo(() => {
     const rows: (string | number | null)[][] = [];
 
-    data.forEach((acc) => {
-      acc.years.forEach((y, index) => {
-        rows.push([
-          index === 0 ? acc.account : '',
-          y.progress,
-          blendWithWhite(colors[y.year % colors.length], 0.5),
-          `FY-${y.year}:  ${y.progress}%`,
-        ]);
-      });
+    const colorMap: Record<string, string> = {
+      GREEN: '#3EA72F',
+      RED: '#FF3C03',
+      ORANGE: '#FF9800',
+    };
 
-      // GAP ROW (no bar, invisible)
-      rows.push(['', 0, 'opacity: 0', '']);
+    data.forEach((acc) => {
+      // Since response is now single year per account, we take the first item
+      const y = acc.years[0];
+      if (!y) return;
+
+      const barColor = y.color
+        ? colorMap[y.color.toUpperCase()] || y.color
+        : colors[y.year % colors.length];
+
+      rows.push([
+        acc.account,
+        y.progress,
+        blendWithWhite(barColor, 0.5),
+        `FY-${y.year}:  ${y.progress}%`,
+      ]);
     });
 
     return rows;
@@ -105,39 +110,34 @@ const AccountChart: React.FC<Props> = ({
             )}
           </div>
         </div>
-
         <Select
-          name='fiscal_year'
-          value={selectedYear}
-          onChange={(e) => onYearChange(e.target.value as string)}
           displayEmpty
           size='small'
-          className={`custom-select-no-arrow w-[150px] max-w-[150px] sm:text-sm ${
-            selectedYear === '' ? 'text-[#7D98B6]' : 'text-black'
+          value={filingType || ''}
+          onChange={(e: SelectChangeEvent) =>
+            onFilingTypeChange?.(e.target.value)
+          }
+          className={`custom-select-no-arrow w-[160px] max-w-[160px] sm:text-sm ${
+            !filingType ? 'text-[#7D98B6]' : 'text-black'
           }`}
           MenuProps={COMMON_MENU_PROPS}
-          sx={getSelectStyles(false, false)}
+          sx={getSelectStyles(false, !filingType)}
           disabled={isLoading}
         >
-          <MenuItem
-            value='all'
-            sx={{ color: '#425A76', fontSize: '13px', fontWeight: 500 }}
-          >
-            Last 4 Years
+          <MenuItem value='' sx={{ color: '#7D98B6', fontSize: '13px' }}>
+            Choose Filing Type
           </MenuItem>
-
-          {fiscalYears?.map((year, i) => (
+          {filingTypeOptions.map((option) => (
             <MenuItem
-              key={`${year.value}-${i}`}
-              value={year.value}
-              title={year.label}
+              key={option.value}
+              value={option.value}
               sx={{
                 color: '#425A76',
                 fontSize: '13px',
                 fontWeight: 500,
               }}
             >
-              {year.label}
+              {option.label}
             </MenuItem>
           ))}
         </Select>
@@ -160,30 +160,23 @@ const AccountChart: React.FC<Props> = ({
               ))}
             </div>
 
-            {/* Simulating 4 account groups with bars */}
-            {[...Array(4)].map((_, groupIndex) => (
-              <div
-                key={groupIndex}
-                className='flex items-end gap-1 h-full z-10'
-              >
-                {[...Array(4)].map((_, barIndex) => (
-                  <Skeleton
-                    key={barIndex}
-                    variant='rectangular'
-                    width={18}
-                    sx={{
-                      height: `${20 + Math.random() * 60}%`,
-                      borderRadius: '2px 2px 0 0',
-                      bgcolor: 'rgba(0,0,0,0.05)',
-                    }}
-                  />
-                ))}
-              </div>
+            {/* Simulating individual bars */}
+            {[...Array(8)].map((_, i) => (
+              <Skeleton
+                key={i}
+                variant='rectangular'
+                width={'6%'}
+                sx={{
+                  height: `${20 + Math.random() * 60}%`,
+                  borderRadius: '2px 2px 0 0',
+                  bgcolor: 'rgba(0,0,0,0.05)',
+                }}
+              />
             ))}
           </div>
 
           {/* Legend Skeleton */}
-          <div className='flex justify-center gap-6 mt-8'>
+          <div className='flex justify-center gap-6 mt-6'>
             {[...Array(4)].map((_, i) => (
               <div key={i} className='flex items-center gap-2'>
                 <Skeleton
@@ -202,7 +195,7 @@ const AccountChart: React.FC<Props> = ({
           No data available
         </div>
       ) : (
-        <>
+        <div className='mb-4'>
           <Chart
             chartType='ColumnChart'
             width={chartWidth}
@@ -210,7 +203,7 @@ const AccountChart: React.FC<Props> = ({
             data={chartData}
             options={{
               legend: 'none',
-              bar: { groupWidth: selectedYear === 'all' ? '80%' : '40%' },
+              bar: { groupWidth: '80%' },
 
               chartArea: {
                 left: 90,
@@ -243,22 +236,7 @@ const AccountChart: React.FC<Props> = ({
               backgroundColor: 'transparent',
             }}
           />
-
-          {/* Custom Legend */}
-          <div className='flex justify-center gap-4 flex-wrap p-3 mb-1'>
-            {(selectedYear === 'all' ? yearValues : [Number(selectedYear)]).map(
-              (year) => (
-                <div key={year} className='flex items-center gap-1 text-sm'>
-                  <span
-                    className='inline-block w-4 h-4 rounded'
-                    style={{ backgroundColor: colors[year % colors.length] }}
-                  ></span>
-                  {year}
-                </div>
-              )
-            )}
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

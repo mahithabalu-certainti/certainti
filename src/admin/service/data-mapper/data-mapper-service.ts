@@ -22,6 +22,8 @@ import {
   DataMapperStatusApiResponse,
   RecomputeRequest,
   RecomputeResponse,
+  UpdateFormStatusPayload,
+  UpdateFormStatusResponse,
 } from '../../types/data-mapper';
 
 const useApiMutationService = <T, V = void>(
@@ -265,5 +267,27 @@ export const useRecomputeDataMapper = (): UseMutationResult<
   return useMutation({
     mutationKey: ['recompute-data-mapper'],
     mutationFn: (payload: RecomputeRequest) => recomputeDataMapper(payload),
+  });
+};
+
+// --------- Update Form Status ----------
+const updateFormStatus = async (
+  payload: UpdateFormStatusPayload
+): Promise<UpdateFormStatusResponse> => {
+  const response = await caseServiceApi.post<UpdateFormStatusResponse>(
+    '/api/dataMapper/updateFormStatus',
+    payload
+  );
+  return response.data;
+};
+
+export const useUpdateFormStatus = (): UseMutationResult<
+  UpdateFormStatusResponse,
+  Error,
+  UpdateFormStatusPayload
+> => {
+  return useMutation({
+    mutationKey: ['update-form-status'],
+    mutationFn: (payload: UpdateFormStatusPayload) => updateFormStatus(payload),
   });
 };

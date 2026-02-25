@@ -50,6 +50,7 @@ export const CaseFormData = (
   isParentCaseLoading?: boolean,
   isCaseClosed?: boolean
 ): FormType[] => {
+  const isCreateAndAmendmentType = !isEditView && isAmendmentType;
   return useMemo(
     () => [
       {
@@ -117,7 +118,7 @@ export const CaseFormData = (
             required: true,
             onChange: true,
             isFiscalYear: true,
-            disabled: isEditView || isCaseClosed,
+            disabled: isEditView || isCaseClosed || isCreateAndAmendmentType,
             hide:
               isEditView &&
               !permissionMap?.['fiscal_year']?.edit &&
@@ -153,6 +154,7 @@ export const CaseFormData = (
             required: true,
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['case_owner_rid']?.edit &&
                 permissionMap?.['case_owner_rid']?.read),
@@ -206,6 +208,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['heat_light_power']?.edit &&
                 permissionMap?.['heat_light_power']?.read),
@@ -231,6 +234,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['total_nonlabor_cost']?.edit &&
                 permissionMap?.['total_nonlabor_cost']?.read),
@@ -251,6 +255,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['tax_liability']?.edit &&
                 permissionMap?.['tax_liability']?.read),
@@ -276,6 +281,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['employers_pension_contribution']?.edit &&
                   permissionMap?.['employers_pension_contribution']?.read),
@@ -302,6 +308,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['material_software_cost']?.edit &&
                   permissionMap?.['material_software_cost']?.read),
@@ -324,6 +331,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['sub_contracts']?.edit &&
                 permissionMap?.['sub_contracts']?.read),
@@ -346,6 +354,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['cloud_software']?.edit &&
                 permissionMap?.['cloud_software']?.read),
@@ -368,6 +377,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['unpaid_amounts_paid']?.edit &&
                 permissionMap?.['unpaid_amounts_paid']?.read),
@@ -392,6 +402,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['unpaid_amounts']?.edit &&
                 permissionMap?.['unpaid_amounts']?.read),
@@ -416,6 +427,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['aggregated_turnover']?.edit &&
                 permissionMap?.['aggregated_turnover']?.read),
@@ -438,6 +450,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['total_expenses']?.edit &&
                 permissionMap?.['total_expenses']?.read),
@@ -460,6 +473,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['taxable_income']?.edit &&
                 permissionMap?.['taxable_income']?.read),
@@ -482,6 +496,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['export_sales_revenue']?.edit &&
                 permissionMap?.['export_sales_revenue']?.read),
@@ -507,6 +522,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['lease_costs_of_computers']?.edit &&
                   permissionMap?.['lease_costs_of_computers']?.read),
@@ -533,6 +549,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['illinois_rd_credit_partnership_corp']
                     ?.edit &&
@@ -562,6 +579,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['illinois_research_payments_corp_only']
                     ?.edit &&
@@ -592,6 +610,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['basic_research_payments']?.edit &&
                   permissionMap?.['basic_research_payments']?.read),
@@ -618,6 +637,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['qualified_computer_rental_time_expenses']
                     ?.edit &&
@@ -644,6 +664,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['current_year_gross_receipts']?.edit &&
                 permissionMap?.['current_year_gross_receipts']?.read),
@@ -669,6 +690,7 @@ export const CaseFormData = (
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
+                isCreateAndAmendmentType ||
                 (isEditView &&
                   !permissionMap?.['credit_carry_forward_py']?.edit &&
                   permissionMap?.['credit_carry_forward_py']?.read),
@@ -692,6 +714,7 @@ export const CaseFormData = (
               'Numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['other_credits_total']?.edit &&
                 permissionMap?.['other_credits_total']?.read),
@@ -713,6 +736,7 @@ export const CaseFormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['other']?.edit &&
                 permissionMap?.['other']?.read),
@@ -841,6 +865,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.DESCRIPTION,
             disabled:
               isCaseClosed ||
+              isCreateAndAmendmentType ||
               (isEditView &&
                 !permissionMap?.['case_description']?.edit &&
                 permissionMap?.['case_description']?.read),
@@ -929,6 +954,7 @@ export const CaseFormData = (
       isAmendmentType,
       isParentCaseLoading,
       isCaseClosed,
+      isCreateAndAmendmentType,
     ]
   );
 };
