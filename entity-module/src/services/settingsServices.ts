@@ -294,7 +294,7 @@ export default class SettingService {
                 created_by: data.userId!,
                 account_rid: data.account_rid,
                 created_by_name: userEventInfo.full_name,
-                entity_rid: data.project_rid,
+                entity_rid: data.account_rid,
                 entity_name: entityTypes.SETTINGS,
                 event_type_rid: userEventInfo.event_type_rid,
                 event_name: eventNames.UPDATE,

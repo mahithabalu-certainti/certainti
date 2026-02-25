@@ -215,11 +215,37 @@ class CaseSchemaService {
       );
       caseRequest.filing_type_rid = amendmentType?.rid;
       caseRequest.case_rid = caseRequest.parent_case_rid;
-      const casecreationResponse = await Case.create(caseRequest, {
+      // Clone the original case model, excluding specified fields
+      const originalCase = await Case.findOne({
+        where: { rid: caseRequest.parent_case_rid },
+        raw: true
+      });
+      if (!originalCase) {
+        throw new Error('Case not found for cloning');
+      }
+      const {
+        rid,
+        created_by,
+        created_datetime,
+        modified_datetime,
+        modified_by,
+        filing_type_rid,
+        r_number,
+        financial_working_signoff,
+        rd_form_signoff,
+        ...caseCloneRest
+      } = originalCase;
+      // Use the incoming caseRequest for fields that must be set (e.g., parent_case_rid, filing_type_rid, created_by)
+      const casecreationResponse = await Case.create({
+        ...caseCloneRest,
+        filing_type_rid: amendmentType?.rid,
+        created_by: caseRequest.created_by,
+        created_datetime: new Date(),
+      }, {
         transaction,
       });
       // Clone case tasks
-      const { CaseTask,CaseTeam, CheckList, CheckListItem,CaseMilestone } = await this.caseModelService.getModels(accountNumber);
+      const { CaseTask,CaseTeam, CheckList, CheckListItem,CaseMilestone, Activities } = await this.caseModelService.getModels(accountNumber);
       
       // Clone case milestones
       const originalCaseMilestones = await CaseMilestone.findAll({
@@ -353,6 +379,59 @@ class CaseSchemaService {
           created_by: caseRequest.created_by
         }, { transaction });
       }
+      // Clone activities with attach_to as parent_case_rid and attachment_level 'case'
+         
+      const originalActivities = await Activities.findAll({
+            where: {
+              attach_to: caseRequest.parent_case_rid,
+              attachment_level: 'case'
+            },
+            raw: true
+          });
+          for (const activity of originalActivities) {
+            const {
+              rid,
+              r_number,
+              created_by,
+              created_datetime,
+              modified_datetime,
+              modified_by,
+              ...activityRest
+            } = activity;
+            await Activities.create({
+              ...activityRest,
+              attach_to: casecreationResponse.rid,
+              created_by: caseRequest.created_by,
+              created_datetime: new Date(),
+            }, { transaction });
+          }
+          // Clone attachments linked to the parent case
+      const { Attachment } = await this.caseModelService.getModels(accountNumber);
+          const originalAttachments = await Attachment.findAll({
+            where: {
+              attach_to: caseRequest.parent_case_rid,
+              attachment_level: 'case'
+            },
+            raw: true
+          });
+          for (const attachment of originalAttachments) {
+            const {
+              rid,
+              r_number,
+              created_by,
+              created_datetime,
+              modified_datetime,
+              modified_by,
+              ...attachmentRest
+            } = attachment;
+            await Attachment.create({
+              ...attachmentRest,
+              attach_to: casecreationResponse.rid,
+              created_by: caseRequest.created_by,
+              created_datetime: new Date(),
+            }, { transaction });
+          }
+        
       return casecreationResponse;
 
   }
