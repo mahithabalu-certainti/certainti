@@ -16,7 +16,7 @@ import DetailsSection, {
 } from '../../../components/details-section/details';
 import { formatDateToYYYYMMDDWithTime } from '../../../common-utils';
 import SectionHeader from '../../../components/details-section/section-header';
-import { NotesSideIcon } from '../../../assets';
+import { FourPartIcon } from '../../../assets';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
 import { moduleColorMap } from './helper';
@@ -202,10 +202,9 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
           title='Four Part Assessment'
           subValue={data?.r_number || ''}
           titleIcon={
-            <NotesSideIcon
-              className='w-[14px] h-[14px]'
-              style={{ stroke: currentModuleColors.text }}
-              alt='Notes-header-icon'
+            <FourPartIcon
+              className={`[&_path]:fill-[${currentModuleColors.text}!important] [&_path]:stroke-[${currentModuleColors.text}!important] w-[13px] h-[14px]`}
+              alt='header-icon'
             />
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'

@@ -49,18 +49,18 @@ export const getCaseInteractionListColumns = (
     ),
   },
   {
-    id: 'assessment_type',
-    sortId: 'assessment_type',
+    id: 'interaction_assessment_source_name',
+    sortId: 'interaction_assessment_source_name',
     label: 'Assessment Type',
     width: 150,
     sortable: true,
     // hide:
-    //   !projectPermissionMap?.['assessment_type']?.edit &&
-    //   !projectPermissionMap?.['assessment_type']?.read,
+    //   !projectPermissionMap?.['interaction_assessment_source_name']?.edit &&
+    //   !projectPermissionMap?.['interaction_assessment_source_name']?.read,
   },
   {
-    id: 'four_part_assessment_rnumber',
-    sortId: 'four_part_assessment_rnumber',
+    id: 'four_part_r_number',
+    sortId: 'four_part_r_number',
     label: 'Four Part Assessment ID',
     width: 200,
     sortable: true,
@@ -69,27 +69,27 @@ export const getCaseInteractionListColumns = (
     //   !projectPermissionMap?.['four_part_assessment_rid']?.read,
     render: (row: InteractionList) =>
       row.four_part_assessment_rid &&
-      row.four_part_assessment_rnumber &&
+      row.four_part_r_number &&
       handleFourPartNavigation ? (
         <span
           onClick={() => handleFourPartNavigation(row)}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
-          {row.four_part_assessment_rnumber}
+          {row.four_part_r_number}
         </span>
       ) : (
-        <span>{row.four_part_assessment_rnumber || '-'}</span>
+        <span>{row.four_part_r_number || '-'}</span>
       ),
   },
   {
-    id: 'batch_id',
-    sortId: 'batch_id',
+    id: 'interaction_batch_id',
+    sortId: 'interaction_batch_id',
     label: 'Batch ID',
     width: 140,
     sortable: true,
     // hide:
-    //   !projectPermissionMap?.['batch_id']?.edit &&
-    //   !projectPermissionMap?.['batch_id']?.read,
+    //   !projectPermissionMap?.['interaction_batch_id']?.edit &&
+    //   !projectPermissionMap?.['interaction_batch_id']?.read,
   },
   // {
   //   id: 'interaction_iteration',

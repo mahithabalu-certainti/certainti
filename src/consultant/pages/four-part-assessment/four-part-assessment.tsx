@@ -25,7 +25,7 @@ import { ShowHideTableColumn } from '../../../components/table/types';
 import { SectionTabPanel } from '../../../components';
 import FourPartAssessmentDetails from './four-part-assessment-details';
 import SectionHeader from '../../../components/details-section/section-header';
-import { NotesSideIcon } from '../../../assets';
+import { FourPartIcon } from '../../../assets';
 import { ListTable, ManageColumnsPopover } from '../../../components/table';
 
 const FourPartAssessmentTabs: OverviewTabs[] = [
@@ -328,10 +328,9 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
             count={totalItems}
             showItemCount={true}
             titleIcon={
-              <NotesSideIcon
-                className='w-[14px] h-[14px]'
-                style={{ stroke: currentModuleColors.text }}
-                alt='Notes-header-icon'
+              <FourPartIcon
+                className={`[&_path]:fill-[${currentModuleColors.text}!important] [&_path]:stroke-[${currentModuleColors.text}!important] w-[13px] h-[13px]`}
+                alt='header-icon'
               />
             }
             buttons={headerButtons}

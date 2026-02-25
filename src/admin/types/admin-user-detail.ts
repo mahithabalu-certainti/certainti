@@ -81,7 +81,7 @@ export type ManageSetting = {
   rid: string;
   auto_send_interaction: boolean;
   auto_access_rd: boolean;
-  four_part_assessment: boolean;
+  auto_send_four_part_assessment: boolean;
 };
 export type ConfigureManageSettingApiResponse = {
   statusCode: number;

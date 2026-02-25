@@ -62,7 +62,7 @@ const ConfigureSetting = () => {
       auto_send_ai_interaction: data?.data.settings?.auto_send_interaction
         ? 'Yes'
         : 'No',
-      four_part_assessment: data?.data.settings?.four_part_assessment
+      four_part_assessment: data?.data.settings?.auto_send_four_part_assessment
         ? 'Yes'
         : 'No',
     };
@@ -76,7 +76,7 @@ const ConfigureSetting = () => {
       rid: data?.data.settings.rid ?? '',
       auto_send_interaction: formData.auto_send_ai_interaction === 'Yes',
       auto_access_rd: formData.auto_assessment === 'Yes',
-      four_part_assessment: formData.four_part_assessment === 'Yes',
+      auto_send_four_part_assessment: formData.four_part_assessment === 'Yes',
     };
     updateManageSettings.mutate(payload, {
       onSuccess: (res: UpdateSettingsSuccess) => {

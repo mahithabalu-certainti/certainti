@@ -28,6 +28,7 @@ import {
   AccountsIcon,
   ManageGroupAccount,
   HistorySubmissionIcon,
+  FourPartIcon,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -1059,7 +1060,7 @@ export const AccountDetails = () => {
         id: AllModules.FOUR_PART_ASSESSMENT,
         disabled: disable,
         hide: disable,
-        icon: InteractionsIcon,
+        icon: FourPartIcon,
       },
       {
         name: 'Cases',
