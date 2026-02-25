@@ -788,7 +788,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   //   return map;
   // }, [taskViewEditFields]);
 
-  const getRowId = (row: TaskList) => row.task_rid;
+  const getRowId = (row: TaskList) => row.rid;
 
   const handleTaskClick = useCallback((row: TaskList) => {
     setSelectedTask(row);
@@ -868,7 +868,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousTaskList = [...taskList];
-    const selectedTask = taskList.find((task) => task.task_rid === rowId);
+    const selectedTask = taskList.find((task) => task.rid === rowId);
 
     if (!selectedTask) {
       errorToast('Task not found');
