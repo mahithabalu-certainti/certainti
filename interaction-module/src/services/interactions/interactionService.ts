@@ -174,6 +174,7 @@ export class InteractionService {
     const transaction = await dbInit.transaction();
     try {
       interactionData.created_by = userId;
+      if(interactionData.interaction_assessment_source_rid == undefined) interactionData.interaction_assessment_source_rid = interactionAssessmentSourceType.RD
       const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData.account_rid
