@@ -3,7 +3,7 @@ import configurations from "../config/config";
 import { handleErrorResponse, errorLog, handleCustomResponse, validateRequest, generateExcelBase64, handleSuccessResponse, isValidTimezone } from "../utils/helpers";
 import moment from "moment-timezone";
 import { HttpStatus } from "../utils/constants";
-import { reportFlagSchema, getOverallProjectValueSchema, globalLevelChartSchema, casesByHealthStatusSchema } from "../lib/joi/schemas/schema";
+import { reportFlagSchema, getOverallProjectValueSchema, globalLevelChartSchema, casesByHealthStatusSchema, meetingListSchema } from "../lib/joi/schemas/schema";
 
 
 const reportService = configurations.getInstance().getServices().reportService;
@@ -13,7 +13,7 @@ async function getCountDetails(req: Request, res: Response): Promise<void> {
     try {
         const userId = req.headers["x-user-id"] as string;
 
-        const value = await validateRequest(req, reportFlagSchema, res, "GET");
+        const value = await validateRequest(req, reportFlagSchema, res, "POST");
 
         if (!value) return;
 
@@ -24,7 +24,9 @@ async function getCountDetails(req: Request, res: Response): Promise<void> {
 
         const result = await reportService.getCountDetails(
             userId,
-            value.flag
+            value.flag,
+            value.fiscalYear,
+            value.globalFilters
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -45,7 +47,7 @@ async function getMeetingList(req: Request, res: Response): Promise<void> {
     try {
         const userId = req.headers["x-user-id"] as string;
 
-        const value = await validateRequest(req, reportFlagSchema, res, "GET");
+        const value = await validateRequest(req, meetingListSchema, res, "POST");
 
         if (!value) return;
 
@@ -56,7 +58,8 @@ async function getMeetingList(req: Request, res: Response): Promise<void> {
 
         const result = await reportService.getMeetingList(
             userId,
-            value.flag
+            value.flag,
+            value.globalFilters
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -80,7 +83,7 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
         // Manually extract timezone as it's not in reportFlagSchema
         const timezone = req.query.timezone as string;
 
-        const value = await validateRequest(req, reportFlagSchema, res, "GET");
+        const value = await validateRequest(req, meetingListSchema, res, "POST");
 
         if (!value) return;
 
@@ -91,7 +94,8 @@ async function exportMeetingList(req: Request, res: Response): Promise<void> {
 
         const result = await reportService.getMeetingList(
             userId,
-            value.flag
+            value.flag,
+            value.globalFilters
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -174,7 +178,7 @@ async function getWeeklyProductivityList(req: Request, res: Response): Promise<v
     const methodName = "getWeeklyProductivityList";
     try {
         const userId = req.headers["x-user-id"] as string;
-        const value = await validateRequest(req, reportFlagSchema, res, "GET");
+        const value = await validateRequest(req, reportFlagSchema, res, "POST");
 
         if (!value) return;
 
@@ -185,7 +189,9 @@ async function getWeeklyProductivityList(req: Request, res: Response): Promise<v
 
         const result = await reportService.getWeeklyProductivityList(
             userId,
-            value.flag
+            value.flag,
+            value.fiscalYear,
+            value.globalFilters,
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -205,7 +211,7 @@ async function exportWeeklyProductivity(req: Request, res: Response): Promise<vo
     const methodName = "exportWeeklyProductivity";
     try {
         const userId = req.headers["x-user-id"] as string;
-        const value = await validateRequest(req, reportFlagSchema, res, "GET");
+        const value = await validateRequest(req, reportFlagSchema, res, "POST");
 
         if (!value) return;
 
@@ -216,7 +222,9 @@ async function exportWeeklyProductivity(req: Request, res: Response): Promise<vo
 
         const result = await reportService.getWeeklyProductivityList(
             userId,
-            value.flag
+            value.flag,
+            value.fiscalYear,
+            value.globalFilters,
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -236,7 +244,7 @@ async function exportWeeklyProductivity(req: Request, res: Response): Promise<vo
 async function handleTaskList(req: Request, res: Response, serviceMethod: Function, methodName: string): Promise<void> {
     try {
         const userId = req.headers["x-user-id"] as string;
-        const value = await validateRequest(req, reportFlagSchema, res, "GET");
+        const value = await validateRequest(req, reportFlagSchema, res, "POST");
 
         if (!value) return;
 
@@ -245,7 +253,7 @@ async function handleTaskList(req: Request, res: Response, serviceMethod: Functi
             return;
         }
 
-        const result = await serviceMethod.call(reportService, userId, value.flag);
+        const result = await serviceMethod.call(reportService, userId, value.flag, value.fiscalYear, value.globalFilters);
 
         if (result.statusCode === HttpStatus.SUCCESS) {
             handleCustomResponse(res, result.data, result.message);
@@ -263,7 +271,7 @@ async function handleTaskList(req: Request, res: Response, serviceMethod: Functi
 async function handleTaskExport(req: Request, res: Response, serviceMethod: Function, methodName: string, fileName: string): Promise<void> {
     try {
         const userId = req.headers["x-user-id"] as string;
-        const value = await validateRequest(req, reportFlagSchema, res, "GET");
+        const value = await validateRequest(req, reportFlagSchema, res, "POST");
 
         if (!value) return;
 
@@ -272,17 +280,17 @@ async function handleTaskExport(req: Request, res: Response, serviceMethod: Func
             return;
         }
 
-        const result = await serviceMethod.call(reportService, userId, value.flag);
+        const result = await serviceMethod.call(reportService, userId, value.flag, value.fiscalYear, value.globalFilters);
 
         if (result.statusCode === HttpStatus.SUCCESS) {
             const data = result.data.map((item: any) => ({
                 "Task ID": item.r_number,
                 "Task Name": item.task_name,
-                "Status": item.status,
+                "Status": item.status || item.status_name,
                 "Start Date": item.effective_start_datetime ? moment(item.effective_start_datetime).format("YYYY-MMM-DD") : "",
                 "End Date": item.effective_end_datetime ? moment(item.effective_end_datetime).format("YYYY-MMM-DD") : "",
-                "Case ID": item.case_r_number,
-                "Case Name": item.case_name,
+                "Related Entity": item.attachment_level,
+                "Related To": item.attached_to,
                 "Assigned To": item.assigned_to_name,
                 "Priority": item.priority_name,
                 "Fiscal Year": item.fiscal_year,
@@ -356,7 +364,7 @@ async function getOverallProjectValue(req: Request, res: Response): Promise<void
     try {
         const userId = req.headers["x-user-id"] as string;
 
-        const value = await validateRequest(req, getOverallProjectValueSchema, res, "GET");
+        const value = await validateRequest(req, getOverallProjectValueSchema, res, "POST");
 
         if (!value) return;
 
@@ -369,7 +377,8 @@ async function getOverallProjectValue(req: Request, res: Response): Promise<void
             userId,
             value.flag,
             value.fiscalYear,
-            value.countryType
+            value.countryType,
+            value.globalFilters
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -390,7 +399,7 @@ async function getGlobalLevelChart(req: Request, res: Response): Promise<void> {
     try {
         const userId = req.headers["x-user-id"] as string;
 
-        const value = await validateRequest(req, globalLevelChartSchema, res, "GET");
+        const value = await validateRequest(req, globalLevelChartSchema, res, "POST");
 
         if (!value) return;
 
@@ -404,7 +413,8 @@ async function getGlobalLevelChart(req: Request, res: Response): Promise<void> {
             value.flag,
             value.fiscalYear,
             value.countryRid,
-            value.countryType
+            value.countryType,
+            value.globalFilters
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {
@@ -425,7 +435,7 @@ async function getCasesByHealthStatus(req: Request, res: Response): Promise<void
     try {
         const userId = req.headers["x-user-id"] as string;
 
-        const value = await validateRequest(req, casesByHealthStatusSchema, res, "GET");
+        const value = await validateRequest(req, casesByHealthStatusSchema, res, "POST");
 
         if (!value) return;
 
@@ -437,7 +447,9 @@ async function getCasesByHealthStatus(req: Request, res: Response): Promise<void
         const result = await reportService.getCasesByHealthStatus(
             userId,
             value.flag,
-            value.fiscalYear
+            value.fiscalYear,
+            value.filingType,
+            value.globalFilters
         );
 
         if (result.statusCode === HttpStatus.SUCCESS) {

@@ -64,7 +64,7 @@ def process_kafka_message(message):
             # Update DB on success
             if data_mapper_rid:
                 with DBPool.get_connection() as conn:
-                    update_extraction_status(conn, data_mapper_rid, 'Completed', extracted_data=extracted.model_dump_json(), user_id=user_id, country_code=country_code, state_code=state_code)
+                    update_extraction_status(conn, data_mapper_rid, 'Waiting for approval', extracted_data=extracted.model_dump_json(), user_id=user_id, country_code=country_code, state_code=state_code)
             
         except Exception as e:
             error_msg = f"Extraction failed: {e}"

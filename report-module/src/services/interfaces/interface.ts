@@ -56,29 +56,29 @@ export interface IResponse<T> {
 }
 
 export interface IReportService {
-    getCountDetails(userId: string, flag: string): Promise<IResponse<ICountDetails[] | { account: any[], count: number }>>;
+    getCountDetails(userId: string, flag: string, fiscalYear: number, globalFilters: Record<string, any>): Promise<IResponse<ICountDetails[] | { account: any[], count: number }>>;
 
-    getMeetingList(userId: string, flag: string): Promise<IResponse<IMeeting[]>>;
+    getMeetingList(userId: string, flag: string, globalFilters: Record<string, any>): Promise<IResponse<IMeeting[]>>;
 
     getAllowedExportFields(userId: string, permissionName: string): Promise<any>;
 
-    getWeeklyProductivityList(userId: string, flag: string): Promise<IResponse<IWeeklyProductivity[]>>;
+    getWeeklyProductivityList(userId: string, flag: string, fiscalYear: number, globalFilters: Record<string, any>): Promise<IResponse<IWeeklyProductivity[]>>;
 
-    getUpcomingTasksList(userId: string, flag: string): Promise<IResponse<ITask[]>>;
+    getUpcomingTasksList(userId: string, flag: string, fiscal_year: string, globalFilters: any): Promise<IResponse<ITask[]>>;
 
-    getDueTodayOverdueTasksList(userId: string, flag: string): Promise<IResponse<ITask[]>>;
+    getDueTodayOverdueTasksList(userId: string, flag: string, fiscal_year: string, globalFilters: any): Promise<IResponse<ITask[]>>;
 
-    getOpenTasksList(userId: string, flag: string): Promise<IResponse<ITask[]>>;
+    getOpenTasksList(userId: string, flag: string, fiscal_year: string, globalFilters: any): Promise<IResponse<ITask[]>>;
 
-    getCompletedTasksThisWeekList(userId: string, flag: string): Promise<IResponse<ITask[]>>;
+    getCompletedTasksThisWeekList(userId: string, flag: string, fiscal_year: string, globalFilters: any): Promise<IResponse<ITask[]>>;
 
-    getPendingFollowUpsList(userId: string, flag: string): Promise<IResponse<ITask[]>>;
+    getPendingFollowUpsList(userId: string, flag: string, fiscal_year: string, globalFilters: any): Promise<IResponse<ITask[]>>;
 
-    getOverdueApprovalsList(userId: string, flag: string): Promise<IResponse<ITask[]>>;
+    getOverdueApprovalsList(userId: string, flag: string, fiscal_year: string, globalFilters: any): Promise<IResponse<ITask[]>>;
 
-    getOverallProjectValue(userId: string, flag: string, fiscalYear?: string, countryType?: string): Promise<IResponse<any[]>>;
+    getOverallProjectValue(userId: string, flag: string, fiscalYear?: string, countryType?: string, globalFilters?: Record<string, any>): Promise<IResponse<any[]>>;
 
-    getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string, countryType?: string): Promise<IResponse<IGlobalLevelChart>>;
+    getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string, countryType?: string, globalFilters?: Record<string, any>): Promise<IResponse<IGlobalLevelChart>>;
 
-    getCasesByHealthStatus(userId: string, flag: string, fiscalYear?: string): Promise<IResponse<any[]>>;
+    getCasesByHealthStatus(userId: string, flag: string, fiscalYear: number, filingType?: string, globalFilters?: Record<string, any>): Promise<IResponse<any[]>>;
 }
