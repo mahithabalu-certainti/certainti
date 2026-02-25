@@ -329,7 +329,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
             showItemCount={true}
             titleIcon={
               <FourPartIcon
-                className={`[&_path]:fill-[${currentModuleColors.text}!important] [&_path]:stroke-[${currentModuleColors.text}!important] w-[13px] h-[13px]`}
+                className={`[&_path]:fill-[${currentModuleColors.text}!important] [&_path]:stroke-[${currentModuleColors.text}!important] w-[13px] h-[14px]`}
                 alt='header-icon'
               />
             }

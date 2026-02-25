@@ -33,6 +33,7 @@ import {
   ProjectTaskIcon,
   ManageGroupAccount,
   DetailsKeyContactErrorIcon,
+  FourPartIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -946,7 +947,7 @@ export const ProjectDetails = () => {
         key: 'four_part_assessment',
         id: AllModules.FOUR_PART_ASSESSMENT,
         disabled: false,
-        icon: InteractionsIcon,
+        icon: FourPartIcon,
       },
       {
         name: 'Technical Summary',

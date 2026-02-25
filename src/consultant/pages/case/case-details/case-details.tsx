@@ -63,6 +63,7 @@ import {
   DossierIcon,
   DraftEmailIcon,
   FinancialIcon,
+  FourPartIcon,
   InteractionsIcon,
   MeetingIcon,
   NotesSideIcon,
@@ -1127,7 +1128,7 @@ export const CaseDetails = () => {
         key: 'four_part_assessment',
         id: AllModules.FOUR_PART_ASSESSMENT,
         disabled: false,
-        icon: InteractionsIcon,
+        icon: FourPartIcon,
       },
       {
         name: 'Technical Summary',
