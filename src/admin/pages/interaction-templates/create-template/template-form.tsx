@@ -135,20 +135,20 @@ const TemplateForm: React.FC = () => {
         questions:
           templateData.questions.length > 0
             ? templateData.questions.map((qus, index) => ({
-              question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
-              question: qus.question.trim() || '',
-              is_mandatory: qus.is_mandatory ?? false,
-              notes: qus.notes.trim() || '',
-              rid: qus.rid,
-            }))
+                question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
+                question: qus.question.trim() || '',
+                is_mandatory: qus.is_mandatory ?? false,
+                notes: qus.notes.trim() || '',
+                rid: qus.rid,
+              }))
             : [
-              {
-                question_seq_num: 'SNO_1',
-                question: '',
-                is_mandatory: false,
-                notes: '',
-              },
-            ],
+                {
+                  question_seq_num: 'SNO_1',
+                  question: '',
+                  is_mandatory: false,
+                  notes: '',
+                },
+              ],
       }));
     }
   }, [isEditView, templateData]);
@@ -436,10 +436,11 @@ const TemplateForm: React.FC = () => {
                     isEditView,
                     permissionMap
                   )}
-                  className={`custom-select-no-arrow sm:text-sm ${formData.interactionLevel === ''
-                    ? 'text-[#7D98B6]'
-                    : 'text-black'
-                    } ${errors?.interactionLevel ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                  className={`custom-select-no-arrow sm:text-sm ${
+                    formData.interactionLevel === ''
+                      ? 'text-[#7D98B6]'
+                      : 'text-black'
+                  } ${errors?.interactionLevel ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                   MenuProps={{
                     PaperProps: {
                       sx: {
@@ -551,8 +552,9 @@ const TemplateForm: React.FC = () => {
                     isEditView,
                     permissionMap
                   )}
-                  className={`custom-select-no-arrow sm:text-sm ${formData.status === '' ? 'text-[#7D98B6]' : 'text-black'
-                    } ${errors?.status ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                  className={`custom-select-no-arrow sm:text-sm ${
+                    formData.status === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.status ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                   MenuProps={{
                     PaperProps: {
                       sx: {
@@ -731,7 +733,7 @@ const TemplateForm: React.FC = () => {
                                 permissionDisabled || col.disabled;
                               const error =
                                 errors.questions?.[index]?.[
-                                col.name as keyof TemplateQuestionErrors
+                                  col.name as keyof TemplateQuestionErrors
                                 ];
 
                               return (

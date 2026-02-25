@@ -35,7 +35,7 @@ interface SectionHeaderProps {
   iconBg?: string;
   bgType?: 'circle' | 'react';
   isExpanded?: boolean;
-  onToggleExpand?: () => void;
+  onToggleExpand?: (expanded: boolean) => void;
   onRefreshClick?: () => void;
   showRefresh?: boolean;
 }
@@ -157,7 +157,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             )}
             {onToggleExpand && (
               <button
-                onClick={onToggleExpand}
+                onClick={() => onToggleExpand(!isExpanded)}
                 className='flex border border-[#CBD6E2] w-[22px] h-[22px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
                 title={isExpanded ? 'Collapse' : 'Expand'}
               >

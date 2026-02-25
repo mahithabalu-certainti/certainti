@@ -129,7 +129,9 @@ export const AccountForm: React.FC = () => {
   const isCaseExists = account?.accountDetails?.is_case_exists;
   const logoUrl = account?.accountById?.logo_url;
   const logoName = logoUrl
-    ? decodeURIComponent(logoUrl.substring(logoUrl.lastIndexOf('/') + 1))
+    ? decodeURIComponent(
+        logoUrl.substring(logoUrl.lastIndexOf('/') + 1).split('?')[0]
+      )
     : '';
   const getMimeTypeFromExtension = (fileName: string): string => {
     const ext = fileName.split('.').pop()?.toLowerCase();
