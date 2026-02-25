@@ -57,11 +57,15 @@ export class DataMapperService implements IDataMapperService {
 
             // Check for overlapping effective_from_date and effective_to_date
             // Only check for forms with the same country/state and active status
-            const whereOverlap: any = {
+            let whereOverlap: any = {
                 country_rid: data.country_rid,
-                state_rid: data.state_rid,
                 is_active: true
             };
+            if (data.is_federal) {
+                whereOverlap.state_rid = null;
+            } else {
+                whereOverlap.state_rid = data.state_rid;
+            }
             // Find all forms with same country/state that overlap with the new date range
             const overlapForms = await DataMapperModel.findAll({ where: whereOverlap });
             const newFrom = new Date(data.effective_from_date);
@@ -91,7 +95,7 @@ export class DataMapperService implements IDataMapperService {
             if (isOverlap) {
                 return {
                     statusCode: HttpStatus.BAD_REQUEST,
-                    message: "Overlapping effective date range exists for the same country/state.",
+                    message: "A Form already exists for the selected effective date range and country/state combination",
                 };
             }
 
@@ -582,15 +586,25 @@ export class DataMapperService implements IDataMapperService {
 
             // Overlapping date range validation (skip current record)
             const countryRid = data.country_rid !== undefined ? data.country_rid : record.country_rid;
-            const stateRid = data.state_rid !== undefined ? data.state_rid : record.state_rid;
+            const isFederal = data.is_federal !== undefined ? data.is_federal : record.is_federal;
+            let stateRid: any;
+            if (isFederal) {
+                stateRid = null;
+            } else {
+                stateRid = data.state_rid !== undefined ? data.state_rid : record.state_rid;
+            }
             const newFrom = data.effective_from_date !== undefined ? new Date(data.effective_from_date) : (record.effective_from_date ? new Date(record.effective_from_date) : null);
             const newTo = data.effective_to_date !== undefined ? (data.effective_to_date ? new Date(data.effective_to_date) : null) : (record.effective_to_date ? new Date(record.effective_to_date) : null);
             const whereOverlap: any = {
                 country_rid: countryRid,
-                state_rid: stateRid,
                 is_active: true,
                 rid: { [Op.ne]: data.rid }
             };
+            if (isFederal) {
+                whereOverlap.state_rid = null;
+            } else {
+                whereOverlap.state_rid = stateRid;
+            }
             const overlapForms = await DataMapperModel.findAll({ where: whereOverlap });
             const isOverlap = overlapForms.some((form: any) => {
                 const existingFrom = form.effective_from_date ? new Date(form.effective_from_date) : null;

@@ -65,7 +65,7 @@ export default class SettingService {
  *   - `statusCode`: Number indicating success or failure
  *   - `statusMessage`: Descriptive message indicating operation result
  */
-  async updateSettings(data: any,userId:string) {
+  async updateSettings(data: any) {
     let mainDb = await this.getMainDbSequelize();
     let orgDb = await this.getOrgDbSequelize();
 
@@ -113,11 +113,11 @@ export default class SettingService {
         );
         await orgDb.query(rawQueries.insertProjectTimeline(schemaName, data));
         const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                userId: userId!,
+                userId: data.userId!,
                 eventType: eventTypes.UI_HANDLER
               });
         await this.schemaService.createAccountTimelineEntry(fetchParent[0][0].r_number!, {
-                created_by: userId!,
+                created_by: data.userId!,
                 account_rid: data.account_rid,
                 created_by_name: userEventInfo.full_name,
                 entity_rid: data.project_rid,
@@ -287,11 +287,11 @@ export default class SettingService {
       );
       }
        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                userId: userId!,
+                userId: data.userId!,
                 eventType: eventTypes.UI_HANDLER
               });
         await this.schemaService.createAccountTimelineEntry(fetchParent[0][0].r_number!, {
-                created_by: userId!,
+                created_by: data.userId!,
                 account_rid: data.account_rid,
                 created_by_name: userEventInfo.full_name,
                 entity_rid: data.project_rid,

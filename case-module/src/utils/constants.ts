@@ -1793,6 +1793,8 @@ export const rawQueries = {
     f.status_rid,
     f.is_active,
     f.error_message,
+    f.is_federal,
+    f.descriptions,
     f.form_type,
     c.country_name,
     s.state_name,
