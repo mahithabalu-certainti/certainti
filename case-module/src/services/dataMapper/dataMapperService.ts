@@ -77,7 +77,9 @@ export class DataMapperService implements IDataMapperService {
                 throw new Error("File is required");
             }
 
-            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
+            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
+                replacements: { statusName: 'Initiated' }
+            });
             const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
             if (!statusRid) {
@@ -169,7 +171,9 @@ export class DataMapperService implements IDataMapperService {
             await setupDataMapperFormsSequence(sequelize, MAIN_SCHEMA_NAME);
 
             // Fetch status RID for 'Active'
-            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperFailedStatus);
+            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
+                replacements: { statusName: 'Failed' }
+            });
             const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
             if (!statusRid) {
@@ -608,7 +612,9 @@ export class DataMapperService implements IDataMapperService {
                 updatePayload.format = uploadResult.extension.replace('.', '');
 
                 // Reset status to Initiated
-                const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
+                const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
+                    replacements: { statusName: 'Initiated' }
+                });
                 const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
                 if (statusRid) {
@@ -1011,6 +1017,44 @@ export class DataMapperService implements IDataMapperService {
             errorLog("listDataMapperUploadStatus", (error as Error).message);
             throw error;
         }
+    }
+
+    async updateDataMapperFormStatus(payload: { form_rid: string; form_status: "accept" | "reject"; }, userId: string): Promise<{ statusCode: number; message: string; data?: any }> {
+            try {
+                const sequelize = await this.getMainSequelize();
+                // Map form_status to DB status name
+                const statusName = payload.form_status === "accept" ? "accepted" : "rejected";
+                // Fetch status_rid from DB
+                const [statusResult]: any = await sequelize.query(
+                    rawQueries.getDataMapperStatusByName,
+                    { replacements: { statusName }, type: QueryTypes.SELECT }
+                );
+                const statusRid = statusResult?.rid;
+                if (!statusRid) {
+                    return { statusCode: HttpStatus.BAD_REQUEST, message: `Status '${statusName}' not found.` };
+                }
+                // Update form status
+                const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
+                const [updated] = await DataMapperModel.update(
+                    {
+                        status_rid: statusRid,
+                        modified_by: userId,
+                        modified_datetime: new Date()
+                    },
+                    { where: { rid: payload.form_rid } }
+                );
+                if (updated === 0) {
+                    return { statusCode: HttpStatus.NOT_FOUND, message: "Form not found or not updated." };
+                }
+                return {
+                    statusCode: HttpStatus.SUCCESS,
+                    message: `Status updated to '${statusName}'.`,
+                    data: { rid: payload.form_rid, status_rid: statusRid, status_name: statusName }
+                };
+            } catch (error) {
+                errorLog("updateDataMapperFormStatus", (error as Error).message);
+                return { statusCode: HttpStatus.BAD_REQUEST, message: (error as Error).message };
+            }
     }
 }
 

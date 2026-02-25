@@ -88,7 +88,8 @@ export const entityTypes = {
   ATTACHMENT: "Attachment",
   PROJECT_RESOURCE: "Project Resource",
   TASK: "Task",
-  TAG:"Tag"
+  TAG:"Tag",
+  SETTINGS:"Settings",
 };
 
 export const eventNames = {
@@ -97,7 +98,7 @@ export const eventNames = {
 }
 
 export const eventTypes = {
-   UI_HANDLER: "ui handler",
+   UI_HANDLER: "web",
 }
 
 export const STATUS_MESSAGE = {
@@ -1530,9 +1531,9 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :description, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
         ` 

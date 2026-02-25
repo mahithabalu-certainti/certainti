@@ -95,7 +95,7 @@ export interface IAccountService {
     data?: { keyContactRoles: any };
   }>;
   listTimeLineEntries(
-   value: { nextOffset: string; limit: string; entityType: string, accountId: string }
+   value: { nextOffset: string; limit: string; entityType: string, accountId: string, projectId?: string, caseId?: string }
   ): Promise<{
     statusCode: number;
     message: string;

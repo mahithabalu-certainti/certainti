@@ -324,16 +324,17 @@ export class ProjectInjestionTaskService {
           created_by_name: userEventInfo.full_name,
           event_type_rid: userEventInfo.event_type_rid,
           event_name: eventNames.CREATE,
-          descriptions:projectTaskData.resource_code
+          descriptions:projectTaskData.resource_code,
+          project_rid: projectTaskData.project_fiscal_rid
         },["project"]);
-        await this.projectTaskSchema.addProjectTaskTimeline(
-          accountNumber,
-          "create",
-          projectTaskData,
-          newTask.rid,
-          userId,
-          transaction
-        );
+        // await this.projectTaskSchema.addProjectTaskTimeline(
+        //   accountNumber,
+        //   "create",
+        //   projectTaskData,
+        //   newTask.rid,
+        //   userId,
+        //   transaction
+        // );
       }
       const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(accountNumber);
       const { projectResourceFiscalCreated, newProjectFiscalRegion } = await this.projectTaskSchema.startAggregation(
@@ -674,16 +675,17 @@ export class ProjectInjestionTaskService {
           created_by_name: userEventInfo.full_name,
           event_type_rid: userEventInfo.event_type_rid,
           event_name: eventNames.UPDATE,
-          descriptions:projectTaskData.resource_code
+          descriptions:projectTaskData.resource_code,
+          project_rid: projectTaskData.project_fiscal_rid
         },["project"]);
-        await this.projectTaskSchema.addProjectTaskTimeline(
-          accountNumber,
-          "update",
-          projectTaskData,
-          projectTaskData.project_task_rid,
-          userId,
-          transaction
-        );
+        // await this.projectTaskSchema.addProjectTaskTimeline(
+        //   accountNumber,
+        //   "update",
+        //   projectTaskData,
+        //   projectTaskData.project_task_rid,
+        //   userId,
+        //   transaction
+        // );
         await this.projectTaskSchema.addProjctTaskHistory(
           accountNumber,
           projectTaskData,

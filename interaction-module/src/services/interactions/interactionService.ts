@@ -266,7 +266,7 @@ export class InteractionService {
       }
 
       logMessage(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
-      if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
+      if((interactionStatus === statusAction.DRAFT && (isEmailRecipientAvailable || interactionData.email_info?.email)) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel, parentAccountId);
        else
        {
@@ -1635,7 +1635,7 @@ export class InteractionService {
         if(!is_interaction_followup){
         if(interaction_level.toLowerCase() === 'account') {
           const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
-          if(fetchResNameEmail[0].length > 0) {
+            if(fetchResNameEmail[0].length > 0 || data.email !== "" && data.email !== null && data.email !== undefined) {
             if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
               email = data.email;
               name = data.name;

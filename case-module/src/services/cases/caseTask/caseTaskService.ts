@@ -264,6 +264,10 @@ export class CaseTaskService {
           };
           } else {
             await transaction.rollback();
+             return {
+              statusCode: result.statusCode,
+              statusMessage: result.statusMessage,
+            };
           }
           
         }

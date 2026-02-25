@@ -1115,6 +1115,7 @@ const createDataMapperSchema = Joi.object({
       'string.empty': 'Name cannot be empty',
       'string.max': 'Name must be less than or equal to 120 characters'
     }),
+  descriptions: Joi.string().optional().allow(""),
   effective_from_date: Joi.date().required()
     .messages({
       'any.required': 'Effective from date is required',
@@ -1197,8 +1198,14 @@ const updateDataMapperMappingSchema = Joi.object({
   mappings: Joi.array().required()
 })
 
+const updateDataMapperFormSchema = Joi.object({
+  form_rid: Joi.string().required(),
+  form_status: Joi.string().valid("accept", "reject").required()
+})
+
 const updateDataMapperSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
+  descriptions: Joi.string().optional().allow(""),
   form_name: Joi.string().max(120).optional()
     .messages({
       'string.empty': 'Name cannot be empty',
@@ -1368,5 +1375,6 @@ export {
   cancelActivityMeetingSchema,
   completeActivityMeetingSchema,
   caseCloseSchema,
-  validateFile
+  validateFile,
+  updateDataMapperFormSchema
 };

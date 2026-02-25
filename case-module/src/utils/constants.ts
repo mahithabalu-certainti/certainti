@@ -319,9 +319,13 @@ export const entityTypes = {
   ACTIVITY_TASK:"Task",
   CHECKLIST:"Checklist",
   CASE:"Case",
+  CASE_TEAM:"Case Team",
   TASK:"Task",
   TAG:"Tag",
-  COMMENTS:"COMMENTS"
+  COMMENTS:"Comments",
+  FINANCIAL_WORKING:"Financial Working",
+  HISTORICAL_SUBMISSION:"Historical Submission",
+
 };
 
 export const eventNames = {
@@ -333,7 +337,7 @@ export const eventNames = {
 }
 
 export const eventTypes = {
-   UI_HANDLER: "ui handler",
+   UI_HANDLER: "web",
 }
 
 export const rawQueries = {
@@ -873,7 +877,7 @@ export const rawQueries = {
   {
    return  `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, description,account_rid,entity_name,entity_rid,created_by_name,case_rid
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
           )
@@ -1810,8 +1814,7 @@ export const rawQueries = {
   getFieldArrayByFormRid(form_rid: string) {
     return `SELECT field_array FROM ${MAIN_SCHEMA_NAME}.data_mapper_forms WHERE rid = '${form_rid}'`
   },
-  getDataMapperInitiatedStatus: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Initiated' LIMIT 1`,
-  getDataMapperFailedStatus: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = 'Failed' LIMIT 1`,
+  getDataMapperStatusByName: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = :statusName LIMIT 1`,
   getDataMapperUploadStatuses: `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE rid IN (:rids)`,
   fetchAccountStartEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`

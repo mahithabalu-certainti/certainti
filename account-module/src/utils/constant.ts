@@ -79,7 +79,7 @@ export const eventNames = {
 }
 
 export const eventTypes = {
-   UI_HANDLER: "ui handler",
+   UI_HANDLER: "web",
 }
 
 export const rawQueries = {
@@ -424,11 +424,43 @@ export const rawQueries = {
       LIMIT :limit OFFSET :offset
     `;
   },
+  fetchCaseTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
+      FROM "${schemaName}".case_timeline
+      WHERE case_rid = :caseId
+      ORDER BY created_datetime DESC
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchProjectTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
+      FROM "${schemaName}".project_timeline
+      WHERE project_rid = :projectId
+      ORDER BY created_datetime DESC
+      LIMIT :limit OFFSET :offset
+    `;
+  },
   fetchAccountTimelineEntriesCount(schemaName: string) {
     return `
       SELECT count(*) as count
       FROM "${schemaName}".account_timeline
       WHERE account_rid = :accountId
+    `;
+  },
+  fetchProjectTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".project_timeline
+      WHERE project_rid = :projectId
+    `;
+  },
+  fetchCaseTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".case_timeline
+      WHERE case_rid = :caseId
     `;
   },
   insertTimeLine(schemaName: string,tableName: string)
@@ -3395,13 +3427,13 @@ export const rawQueries = {
         r_number VARCHAR(20) UNIQUE DEFAULT ('ACT-' || LPAD(nextval('"${schemaName}".account_timeline_seq')::TEXT, 10, '0')),
         created_by VARCHAR(50) NOT NULL,
         created_datetime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        title VARCHAR(64) NULL,
+        account_rid VARCHAR(50) NOT NULL,
+        document_rid VARCHAR(50),
         event_type_rid VARCHAR(50)  NULL,
         event_name VARCHAR(255),
         entity_rid VARCHAR(50) NOT NULL,  
         entity_name VARCHAR(255) NOT NULL,
         created_by_name VARCHAR(255) NULL,
-        account_rid VARCHAR(50) NOT NULL,
         descriptions VARCHAR(2000)
       );
     `;

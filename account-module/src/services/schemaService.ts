@@ -1484,11 +1484,7 @@ class SchemaService {
 
     const fieldsToIndex = [
       "created_by",
-      "modified_by",
-      "attachment_level",
-      "event_type",
-      "event_status",
-      "event_datetime"
+      "account_rid",
     ];
   
     for (const field of fieldsToIndex) {

@@ -69,7 +69,7 @@ export class CaseService {
   protected logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
-  private helperMethod: HelperMethods
+  protected helperMethod: HelperMethods
 
   constructor(logger: Logger) {
     this.logger = logger;
