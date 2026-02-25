@@ -156,6 +156,7 @@ const icons = {
   zoomOutIcon: () => import('./zoom-out-icon.svg?react'),
   dataMapperIcon: () => import('./data-mapper.svg?react'),
   exportIcon: () => import('./export-icon.svg?react'),
+  inProgressIcon: () => import('./in-progress.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -319,3 +320,4 @@ export const ZoomInIcon = createLazySvgIcon('zoomInIcon');
 export const ZoomOutIcon = createLazySvgIcon('zoomOutIcon');
 export const DataMapperIcon = createLazySvgIcon('dataMapperIcon');
 export const ExportIcon = createLazySvgIcon('exportIcon');
+export const InProgressIcon = createLazySvgIcon('inProgressIcon');
