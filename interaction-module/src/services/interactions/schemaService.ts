@@ -420,6 +420,7 @@ class InteractionSchemaService {
       throw new Error("Error creating interaction: " + error);
     }
   }
+  
 
   /**
    * Bulk fetch projects that do NOT have key contacts
