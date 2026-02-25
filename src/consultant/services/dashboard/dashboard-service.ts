@@ -46,6 +46,7 @@ export interface DashboardPayload {
   globalFilters: unknown;
   countryType?: 'all' | 'active';
   countryRid?: string;
+  filingType?: string;
 }
 
 export const fetchDashboardCountDetails = async (

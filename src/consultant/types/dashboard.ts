@@ -12,17 +12,20 @@ export interface DashboardCountDetailsResponse {
   data: DashboardCountDetail[];
 }
 
-// Account Chart type
 export interface AccountYearData {
   account: string;
-  years: { year: number; progress: number }[];
+  years: { year: number; progress: number; color?: string }[];
 }
 
 export interface HealthStatusDetail {
   account_rid: string;
   account_name: string;
+  case_completion_percentage: string;
+  case_startdate: string;
   fiscal_year: number;
-  progress: string;
+  planned_submission_date: string;
+  effective_progress: string;
+  colour: string;
 }
 
 export interface HealthStatusResponse {

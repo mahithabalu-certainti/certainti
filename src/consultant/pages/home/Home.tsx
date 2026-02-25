@@ -27,6 +27,7 @@ import { useMutation } from '@apollo/client';
 import { taskClient } from '../../../api/graphql/clients/client';
 import { UPDATE_TASK_SUMMARY_INLINE } from '../../../api/graphql/queries/task-query';
 import { useGetTaskStatuses } from '../../services/work-breakdown/work-breakdown-service';
+import { useGetCaseFilingTypes } from '../../services/cases/case-service';
 import { PROJECT_COLORS } from '../../../admin/pages/workflow-builder/form/helper';
 import {
   AccountYearData,
@@ -66,6 +67,7 @@ export const HomePage: React.FC = () => {
   const [followUpsList, setFollowUpsList] = useState<PendingFollowUpDetail[]>(
     []
   );
+  const [selectedFilingType, setSelectedFilingType] = useState<string>('');
 
   // GraphQL mutation
   const [updateTaskSummaryInline] = useMutation(UPDATE_TASK_SUMMARY_INLINE, {
@@ -120,11 +122,24 @@ export const HomePage: React.FC = () => {
     AllModules.ACTIVITIES_TASK
   );
 
+  const caseFillingTypes = useGetCaseFilingTypes();
+  const caseFilingTypesOptions = useMemo(() => {
+    return (
+      caseFillingTypes?.data?.data?.caseFilingType?.map((item) => ({
+        value: item.filing_type_name,
+        label: item.filing_type_name,
+      })) || []
+    );
+  }, [caseFillingTypes]);
+
   const { data: countDetails, isLoading: isCountsLoading } =
     useGetDashboardCountDetails(dashboardPayload);
 
   const { data: healthStatusData, isLoading: isHealthLoading } =
-    useGetCasesByHealthStatus(dashboardPayload);
+    useGetCasesByHealthStatus({
+      ...dashboardPayload,
+      filingType: selectedFilingType || undefined,
+    });
 
   const { data: overallProjectValue, isLoading: isProjectValueLoading } =
     useGetOverallProjectValue({ ...dashboardPayload, countryType: 'active' });
@@ -249,7 +264,8 @@ export const HomePage: React.FC = () => {
         }
         acc[id].years.push({
           year: item.fiscal_year,
-          progress: Number(item.progress),
+          progress: Number(item.case_completion_percentage),
+          color: item.colour,
         });
         return acc;
       },
@@ -526,6 +542,9 @@ export const HomePage: React.FC = () => {
           data={transformedHealthData}
           colors={PROJECT_COLORS}
           isLoading={isHealthLoading}
+          filingType={selectedFilingType}
+          filingTypeOptions={caseFilingTypesOptions}
+          onFilingTypeChange={setSelectedFilingType}
         />
 
         <CardList

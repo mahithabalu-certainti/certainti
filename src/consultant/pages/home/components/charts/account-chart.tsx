@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Chart from 'react-google-charts';
-import { Skeleton } from '@mui/material';
-import { blendWithWhite, getDynamicSvgIcon } from '../../helpers';
+import { MenuItem, Select, SelectChangeEvent, Skeleton } from '@mui/material';
+import {
+  blendWithWhite,
+  COMMON_MENU_PROPS,
+  getDynamicSvgIcon,
+  getSelectStyles,
+} from '../../helpers';
 import { AccountYearData } from '../../../../types/dashboard';
 
 interface Props {
@@ -11,6 +16,9 @@ interface Props {
   colors: string[];
   className?: string;
   isLoading?: boolean;
+  filingType?: string;
+  filingTypeOptions?: { value: string; label: string }[];
+  onFilingTypeChange?: (value: string) => void;
 }
 
 const AccountChart: React.FC<Props> = ({
@@ -20,6 +28,9 @@ const AccountChart: React.FC<Props> = ({
   colors,
   className = '',
   isLoading = false,
+  filingType,
+  filingTypeOptions = [],
+  onFilingTypeChange,
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState('100%');
@@ -28,12 +39,22 @@ const AccountChart: React.FC<Props> = ({
   const chartRows = React.useMemo(() => {
     const rows: (string | number | null)[][] = [];
 
+    const colorMap: Record<string, string> = {
+      GREEN: '#3EA72F',
+      RED: '#FF3C03',
+      ORANGE: '#FF9800',
+    };
+
     data.forEach((acc) => {
       acc.years.forEach((y, index) => {
+        const barColor = y.color
+          ? colorMap[y.color.toUpperCase()] || y.color
+          : colors[y.year % colors.length];
+
         rows.push([
           index === 0 ? acc.account : '',
           y.progress,
-          blendWithWhite(colors[y.year % colors.length], 0.5),
+          blendWithWhite(barColor, 0.5),
           `FY-${y.year}:  ${y.progress}%`,
         ]);
       });
@@ -90,6 +111,37 @@ const AccountChart: React.FC<Props> = ({
             )}
           </div>
         </div>
+        <Select
+          displayEmpty
+          size='small'
+          value={filingType || ''}
+          onChange={(e: SelectChangeEvent) =>
+            onFilingTypeChange?.(e.target.value)
+          }
+          className={`custom-select-no-arrow w-[160px] max-w-[160px] sm:text-sm ${
+            !filingType ? 'text-[#7D98B6]' : 'text-black'
+          }`}
+          MenuProps={COMMON_MENU_PROPS}
+          sx={getSelectStyles(false, !filingType)}
+          disabled={isLoading}
+        >
+          <MenuItem value='' sx={{ color: '#7D98B6', fontSize: '13px' }}>
+            Choose Filing Type
+          </MenuItem>
+          {filingTypeOptions.map((option) => (
+            <MenuItem
+              key={option.value}
+              value={option.value}
+              sx={{
+                color: '#425A76',
+                fontSize: '13px',
+                fontWeight: 500,
+              }}
+            >
+              {option.label}
+            </MenuItem>
+          ))}
+        </Select>
       </div>
 
       {isLoading ? (
@@ -194,16 +246,23 @@ const AccountChart: React.FC<Props> = ({
           />
 
           {/* Custom Legend */}
-          <div className='flex justify-center gap-4 flex-wrap p-3 mb-1'>
-            {Array.from(
-              new Set(data.flatMap((acc) => acc.years.map((y) => y.year)))
-            ).map((year) => (
-              <div key={year} className='flex items-center gap-1 text-sm'>
+          <div className='flex justify-center gap-6 flex-wrap p-3 mb-1 border-t border-[#CBD6E2]'>
+            {[
+              { label: 'On Track', color: '#3EA72F' },
+              { label: 'Attention Needed', color: '#FF9800' },
+              { label: 'At Risk', color: '#FF3C03' },
+            ].map((status) => (
+              <div
+                key={status.label}
+                className='flex items-center gap-2 text-sm'
+              >
                 <span
-                  className='inline-block w-4 h-4 rounded'
-                  style={{ backgroundColor: colors[year % colors.length] }}
+                  className='inline-block w-3 h-3 rounded-full'
+                  style={{ backgroundColor: status.color }}
                 ></span>
-                {year}
+                <span className='text-[#2A2A2A] font-medium'>
+                  {status.label}
+                </span>
               </div>
             ))}
           </div>
