@@ -413,7 +413,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
       const rawNext = data.data.nextOffset;
       setNextOffset(rawNext != null ? Number(rawNext) : null);
     }
-  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data]);
 
   // ── Infinite scroll handler ───────────────────────────────────────
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
