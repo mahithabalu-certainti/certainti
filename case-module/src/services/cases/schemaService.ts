@@ -231,6 +231,8 @@ class CaseSchemaService {
         modified_by,
         filing_type_rid,
         r_number,
+        financial_working_signoff,
+        rd_form_signoff,
         ...caseCloneRest
       } = originalCase;
       // Use the incoming caseRequest for fields that must be set (e.g., parent_case_rid, filing_type_rid, created_by)
