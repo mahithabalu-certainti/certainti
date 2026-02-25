@@ -2726,6 +2726,21 @@ class CaseSchemaService {
         total_nonlabor_from_tasks: projectFiscal?.total_nonlabor_from_tasks || 0,
 
       });
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: data.created_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: data.created_by!,
+                                    account_rid: data.account_rid,
+                                    entity_rid: p.project_fiscal_rid!,
+                                    entity_name: entityTypes.PROJECT,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.ADDED,
+                                    descriptions:p?.project_code || '' + "to Case",
+                                    case_rid: data.case_rid,
+                                  },["case"]);
       p.project_case_rid = createdCaseProject.rid;
       iterationCount += 1;
     }
@@ -2907,6 +2922,21 @@ class CaseSchemaService {
           project_fiscal_rid: p.project_fiscal_rid,
         },
       });
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: data.created_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: data.created_by!,
+                                    account_rid: data.account_rid,
+                                    entity_rid: p.project_fiscal_rid!,
+                                    entity_name: entityTypes.PROJECT,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.REMOVED,
+                                    descriptions:p?.project_code || '' + "from Case",
+                                    case_rid: data.case_rid,
+                                  },["case"]);
       iterationCount += 1;
     }
     if (totalCount === iterationCount) {
