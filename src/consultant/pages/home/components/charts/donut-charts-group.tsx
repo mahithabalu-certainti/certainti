@@ -85,10 +85,10 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
       {isLoading ? (
         <div>
           <div
-            className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4'
+            className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4'
             style={{ minHeight }}
           >
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
                 className='flex flex-col items-center justify-center text-center'
@@ -123,7 +123,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
           </div>
           {/* Legend Skeleton */}
           <div className='flex justify-center gap-6 border-t border-[#CBD6E2] p-3'>
-            {[...Array(4)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
               <div key={i} className='flex items-center gap-2'>
                 <Skeleton
                   variant='rectangular'
@@ -142,7 +142,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
             <>
               {/* Donut Charts Grid */}
               <div
-                className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4'
+                className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4'
                 style={{ minHeight }}
               >
                 {transformedData.map((country, idx) => {

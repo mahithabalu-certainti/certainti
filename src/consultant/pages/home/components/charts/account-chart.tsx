@@ -46,21 +46,20 @@ const AccountChart: React.FC<Props> = ({
     };
 
     data.forEach((acc) => {
-      acc.years.forEach((y, index) => {
-        const barColor = y.color
-          ? colorMap[y.color.toUpperCase()] || y.color
-          : colors[y.year % colors.length];
+      // Since response is now single year per account, we take the first item
+      const y = acc.years[0];
+      if (!y) return;
 
-        rows.push([
-          index === 0 ? acc.account : '',
-          y.progress,
-          blendWithWhite(barColor, 0.5),
-          `FY-${y.year}:  ${y.progress}%`,
-        ]);
-      });
+      const barColor = y.color
+        ? colorMap[y.color.toUpperCase()] || y.color
+        : colors[y.year % colors.length];
 
-      // GAP ROW (no bar, invisible)
-      rows.push(['', 0, 'opacity: 0', '']);
+      rows.push([
+        acc.account,
+        y.progress,
+        blendWithWhite(barColor, 0.5),
+        `FY-${y.year}:  ${y.progress}%`,
+      ]);
     });
 
     return rows;
@@ -161,30 +160,23 @@ const AccountChart: React.FC<Props> = ({
               ))}
             </div>
 
-            {/* Simulating 4 account groups with bars */}
-            {[...Array(4)].map((_, groupIndex) => (
-              <div
-                key={groupIndex}
-                className='flex items-end gap-1 h-full z-10'
-              >
-                {[...Array(4)].map((_, barIndex) => (
-                  <Skeleton
-                    key={barIndex}
-                    variant='rectangular'
-                    width={18}
-                    sx={{
-                      height: `${20 + Math.random() * 60}%`,
-                      borderRadius: '2px 2px 0 0',
-                      bgcolor: 'rgba(0,0,0,0.05)',
-                    }}
-                  />
-                ))}
-              </div>
+            {/* Simulating individual bars */}
+            {[...Array(8)].map((_, i) => (
+              <Skeleton
+                key={i}
+                variant='rectangular'
+                width={'6%'}
+                sx={{
+                  height: `${20 + Math.random() * 60}%`,
+                  borderRadius: '2px 2px 0 0',
+                  bgcolor: 'rgba(0,0,0,0.05)',
+                }}
+              />
             ))}
           </div>
 
           {/* Legend Skeleton */}
-          <div className='flex justify-center gap-6 mt-8'>
+          <div className='flex justify-center gap-6 mt-6'>
             {[...Array(4)].map((_, i) => (
               <div key={i} className='flex items-center gap-2'>
                 <Skeleton
@@ -203,7 +195,7 @@ const AccountChart: React.FC<Props> = ({
           No data available
         </div>
       ) : (
-        <>
+        <div className='mb-4'>
           <Chart
             chartType='ColumnChart'
             width={chartWidth}
@@ -244,29 +236,7 @@ const AccountChart: React.FC<Props> = ({
               backgroundColor: 'transparent',
             }}
           />
-
-          {/* Custom Legend */}
-          <div className='flex justify-center gap-6 flex-wrap p-3 mb-1 border-t border-[#CBD6E2]'>
-            {[
-              { label: 'On Track', color: '#3EA72F' },
-              { label: 'Attention Needed', color: '#FF9800' },
-              { label: 'At Risk', color: '#FF3C03' },
-            ].map((status) => (
-              <div
-                key={status.label}
-                className='flex items-center gap-2 text-sm'
-              >
-                <span
-                  className='inline-block w-3 h-3 rounded-full'
-                  style={{ backgroundColor: status.color }}
-                ></span>
-                <span className='text-[#2A2A2A] font-medium'>
-                  {status.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

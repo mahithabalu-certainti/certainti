@@ -253,26 +253,16 @@ export const HomePage: React.FC = () => {
   const transformedHealthData = React.useMemo<AccountYearData[]>(() => {
     if (!healthStatusData) return [];
 
-    const grouped = healthStatusData.reduce<Record<string, AccountYearData>>(
-      (acc, item) => {
-        const id = item.account_rid;
-        if (!acc[id]) {
-          acc[id] = {
-            account: item.account_name,
-            years: [],
-          };
-        }
-        acc[id].years.push({
+    return healthStatusData.map((item) => ({
+      account: item.account_name,
+      years: [
+        {
           year: item.fiscal_year,
           progress: Number(item.case_completion_percentage),
           color: item.colour,
-        });
-        return acc;
-      },
-      {}
-    );
-
-    return Object.values(grouped);
+        },
+      ],
+    }));
   }, [healthStatusData]);
 
   // Helper function to check if a card is accessible based on permissions
@@ -826,7 +816,7 @@ export const HomePage: React.FC = () => {
           getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
-            description: t.case_name,
+            attachedTo: t.attached_to,
             assignee: t.assigned_to_name,
             priority: t.priority_name || undefined,
             status: t.status,
@@ -851,7 +841,7 @@ export const HomePage: React.FC = () => {
           getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
-            description: t.case_name,
+            attachedTo: t.attached_to,
             assignee: t.assigned_to_name,
             priority: t.priority_name || undefined,
             status: t.status,
@@ -882,7 +872,7 @@ export const HomePage: React.FC = () => {
           getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
-            description: t.case_name,
+            attachedTo: t.attached_to,
             assignee: t.assigned_to_name,
             priority: t.priority_name || undefined,
             status: t.status,
@@ -907,7 +897,7 @@ export const HomePage: React.FC = () => {
           getItemTooltipMessage={getTaskItemTooltipMessage}
           mapItem={(t: DashboardTaskDetail) => ({
             title: t.task_name,
-            description: t.case_name,
+            attachedTo: t.attached_to,
             assignee: t.assigned_to_name,
             priority: t.priority_name || undefined,
             status: t.status,
