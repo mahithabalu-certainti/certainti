@@ -3790,7 +3790,7 @@ class CaseSchemaService {
     accessToken: string
   ) {
     try {
-      const { CaseTask, CaseTeam, Case } =
+      const { CaseTask, CaseTeam, Case, TaskSummary } =
         await this.caseModelService.getModels(accountNumber);
       const teamMembers = await CaseTeam.findAll({
         attributes: ['user_rid', 'role_rid'],
@@ -3878,6 +3878,32 @@ class CaseSchemaService {
             returning: true
           }
         );
+        await TaskSummary.update(
+          {
+            assigned_to : newAssignedTo
+          }, 
+          {
+            where : {
+              attach_to: caseReq.case_rid,
+              account_rid: caseReq.account_rid,
+              case_team_member_role_rid: member.role_rid,
+              [Op.and]: [
+                {
+                  [Op.or]: [
+                    { assigned_to: '' },
+                    { assigned_to: null },
+                    { status_rid: todoStatus.rid }
+                  ]
+                },
+                {
+                  [Op.or]: [
+                    { assigned_to: null },
+                    { assigned_to: { [Op.ne]: newAssignedTo } }
+                  ]
+                }
+              ]
+            }
+          })
         // For each updated row, trigger rule engine payload with the updated rid
         if (response[0] > 0 && response[1] && Array.isArray(response[1])) {
           for (const updatedRow of response[1]) {
@@ -4621,6 +4647,7 @@ class CaseSchemaService {
               created_by: createdBy || "",
               created_datetime: new Date(),
               task_type_rid: taskTypeRid || "",
+              case_team_member_role_rid : d.case_team_member_role_rid
             }
           })
           await TaskSummary.bulkCreate(filteredDataForSummary)

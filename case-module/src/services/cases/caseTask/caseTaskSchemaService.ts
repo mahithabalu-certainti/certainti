@@ -104,6 +104,7 @@ export class CaseTaskSchemaService {
         created_datetime: new Date(),
         task_type_rid: data.task_type_rid || "",
         task_category_rid: data.task_category_rid || "",
+        case_team_member_role_rid: data.case_team_member_role_rid
       });
       if (data?.checklist_template_rid) {
         const response = await this.helperMethod.fetchChecklistTemplateDetailsById(
