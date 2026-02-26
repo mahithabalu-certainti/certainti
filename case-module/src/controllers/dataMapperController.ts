@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { handleSuccessResponse, handleErrorResponse, logMessage, errorLog, validateRequest, isValidTimezone, generateExcelBase64, handleCustomResponse } from "../utils/helpers";
 import { HttpStatus } from "../utils/constants";
 import configurations from "../config/config";
-import { createDataMapperSchema, listDataMapperSchema, exportDataMapperSchema, updateDataMapperSchema, updateDataMapperMappingSchema, getObjectsListSchema } from "../lib/joi/schemas/schema";
+import { createDataMapperSchema, listDataMapperSchema, exportDataMapperSchema, updateDataMapperSchema, updateDataMapperMappingSchema, getObjectsListSchema, updateDataMapperFormSchema } from "../lib/joi/schemas/schema";
 import moment from "moment";
 import { dataMapperFieldMappings } from "../utils/excelExportMapping";
 
@@ -377,6 +377,54 @@ async function editDataMapperMapping(req: Request, res: Response): Promise<void>
     }
 }
 
+async function recomputeMapping(req: Request, res: Response): Promise<void> {
+    const methodName = "recomputeMapping";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+
+        logMessage(`Request received for recomputeMapping with userId: ${userId}`);
+
+        if (!userId) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required");
+            return;
+        }
+
+        const value = await validateRequest(req, updateDataMapperMappingSchema, res, "POST");
+        if (!value) return;
+
+        const result = await dataMapperService.recomputeMapping(value, userId);
+
+        handleCustomResponse(res, result.data, result.message);
+
+    } catch (error) {
+        const err = error as Error;
+        errorLog(methodName, err.message);
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, err.message);
+    }
+}
+
+async function updateDataMapperFormStatus(req: Request, res: Response): Promise<void> {
+    const methodName = "updateDataMapperFormStatus";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+
+        logMessage(`Request received for updateDataMapperFormStatus with userId: ${userId}`);
+        if (!userId) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required");
+            return;
+        }
+        const value = await validateRequest(req, updateDataMapperFormSchema, res, "POST");
+        if (!value) return;
+        const result = await dataMapperService.updateDataMapperFormStatus(value, userId);
+
+        handleCustomResponse(res, result.data, result.message);
+    } catch (error) {
+        const err = error as Error;
+        errorLog(methodName, err.message);
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, err.message);
+    }
+}
+
 export default {
     createDataMapper,
     listDataMapperForms,
@@ -385,6 +433,8 @@ export default {
     editDataMapper,
     getDataMapperFormsMappingDetail,
     editDataMapperMapping,
+    recomputeMapping,
     getObjectsList,
-    listDataMapperUploadStatus
+    listDataMapperUploadStatus,
+    updateDataMapperFormStatus
 };

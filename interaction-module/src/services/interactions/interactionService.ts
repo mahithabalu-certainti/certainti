@@ -1,5 +1,6 @@
 import { Logger } from "winston";
 import {
+  FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
   ICreateTemplateInteraction,
@@ -25,6 +26,10 @@ import {
   interactionTaskName,
   interactionSource,
   interactionTemplateName,
+  entityTypes,
+  eventNames,
+  eventTypes,
+  interactionAssessmentSourceType,
 } from "../../utils/constants";
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -169,6 +174,7 @@ export class InteractionService {
     const transaction = await dbInit.transaction();
     try {
       interactionData.created_by = userId;
+      if(interactionData.interaction_assessment_source_rid == undefined) interactionData.interaction_assessment_source_rid = interactionAssessmentSourceType.RD
       const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData.account_rid
@@ -181,8 +187,10 @@ export class InteractionService {
       const { intSource, intType } = await this.getInteractionStatusAndSource(
         interactionSource
       );
+      const intResponseSource = await this.getInteractionAssessmentStatus(interactionData.interaction_assessment_source_rid!)
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
+      interactionData.interaction_assessment_source_rid = intResponseSource || ""
 
       const interaction =
         await this.interactionSchemaService.createInteractions(
@@ -208,6 +216,27 @@ export class InteractionService {
           interaction.get("interaction_iteration") || 0,
           interaction.get("parent_interaction_rid") || null
         );
+        const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
+                                                  userId: userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        let timelineTypes = ["account"];
+        if(intLevel.toLowerCase() === 'project')
+        {
+          timelineTypes = ["project"]
+        }
+                        
+        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: userId!,
+                                            account_rid: interactionData.account_rid,
+                                            entity_rid: interaction.rid!,
+                                            entity_name: entityTypes.INTERACTION,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.CREATE,
+                                            descriptions:'',
+                                            project_rid: intLevel === 'Project' ? interactionData.project_fiscal_rid : '',
+                                          }, timelineTypes);
         await this.interactionSchemaService.addInteractionTimeline(
           accountNumber,
           "create",
@@ -237,7 +266,7 @@ export class InteractionService {
       }
 
       logMessage(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
-      if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
+      if((interactionStatus === statusAction.DRAFT && (isEmailRecipientAvailable || interactionData.email_info?.email)) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel, parentAccountId);
        else
        {
@@ -483,6 +512,14 @@ export class InteractionService {
 
     return { intSource, intType };
   }
+  async getInteractionAssessmentStatus(interactionSource: string) {
+    const intSource =
+      await this.interactionSchemaService.getInteractionAssessmentSourceByType(
+        interactionSource
+      );
+
+    return intSource!
+  }
 
   async updateInteraction(
     interactionData: IUpdateInteraction,
@@ -529,6 +566,27 @@ export class InteractionService {
           transaction,
           userId
         );
+        const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
+                                                  userId: userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        let timelineTypes = ["account"];
+        if(interactionData?.interaction_level?.toLowerCase() === 'project')
+        {
+          timelineTypes = ["project"]
+        }
+                        
+        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: userId!,
+                                            account_rid: interactionData.account_rid,
+                                            entity_rid: interactionData.interaction_rid!,
+                                            entity_name: entityTypes.INTERACTION,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.UPDATE,
+                                            descriptions:'',
+                                            project_rid: interactionData?.interaction_level?.toLowerCase() === 'project' ? interactionData.project_fiscal_rid : '',
+                                          }, timelineTypes);
         await this.interactionSchemaService.addInteractionTimeline(
           accountNumber,
           "update",
@@ -1577,7 +1635,7 @@ export class InteractionService {
         if(!is_interaction_followup){
         if(interaction_level.toLowerCase() === 'account') {
           const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
-          if(fetchResNameEmail[0].length > 0) {
+            if(fetchResNameEmail[0].length > 0 || data.email !== "" && data.email !== null && data.email !== undefined) {
             if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
               email = data.email;
               name = data.name;
@@ -1594,7 +1652,7 @@ export class InteractionService {
         } 
         else {
           const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
-          if(fetchResNameEmail[0].length > 0) {
+          if(fetchResNameEmail[0].length > 0 || data.email !== "" && data.email !== null && data.email !== undefined) {
             if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
             email = data.email;
             name = data.name;
@@ -1699,7 +1757,6 @@ export class InteractionService {
       "Questions",
       "Answers",
       "Notes",
-      "Is Mandatory",
       "Question No",
     ]);
     worksheet.getRow(6).eachCell((cell) => {
@@ -1712,7 +1769,6 @@ export class InteractionService {
       { key: "question", width: 50 },
       { key: "answer", width: 50 },
       { key: "notes", width: 30 },
-      { key: "is_mandatory", width: 15 },
       { key: "question no", width: 15 },
     ];
 
@@ -1726,7 +1782,6 @@ export class InteractionService {
         question: plain.question,
         answer: "",
         notes: "",
-        is_mandatory: plain.is_mandatory ? "Yes" : "No",
         "question no": plain.question_seq_num
       });
 
@@ -1736,7 +1791,6 @@ export class InteractionService {
       row.getCell(3).protection = { locked: false };
       row.getCell(4).protection = { locked: true };
       row.getCell(5).protection = { locked: true };
-      row.getCell(6).protection = { locked: true };
     });
 
     // Now protect worksheet AFTER all protections are set
@@ -1783,9 +1837,9 @@ export class InteractionService {
        let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       if (is_interaction_followup) {
          if(interactionLevel.toLowerCase() === 'project') {
-        templateName = interactionTemplateName.interactionProjectRemainder
+        templateName = interactionTemplateName.interactionProjectReminder
        } else {
-        templateName = interactionTemplateName.interactionAccountRemainder
+        templateName = interactionTemplateName.interactionAccountReminder
        }
       emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       
@@ -2053,6 +2107,10 @@ export class InteractionService {
       sourceFilter = data.filters.interaction_source_name;
       sourceConditions = detectConditions(sourceFilter);
     }
+    if (data.filters?.interaction_source_name) {
+      sourceFilter = data.filters.interaction_source_name;
+      sourceConditions = detectConditions(sourceFilter);
+    }
 
     [
       "created_user_name",
@@ -2111,6 +2169,9 @@ export class InteractionService {
       let statusIds: any[] = [
         ...new Set(result[0][0].interactions.map((d: any) => d.status)),
       ];
+      let interactionAssessmentRids: any[] = [
+        ...new Set(result[0][0].interactions.map((d: any) => d.interaction_assessment_source_rid)),
+      ];
       let typeIds: any[] = [
         ...new Set(
           result[0][0].interactions.map((d: any) => d.interaction_type)
@@ -2151,6 +2212,9 @@ export class InteractionService {
       let fetchStatus = await mainDb.query(
         rawQueries.fetchInteractionStatus(statusIds)
       );
+      let fetchInteractionAssessment = await mainDb.query(
+        rawQueries.fetchInteractionAssessmentSource(interactionAssessmentRids)
+      );
       let fetchTypes = await mainDb.query(
         rawQueries.fetchInteractionTypes(typeIds)
       );
@@ -2174,6 +2238,9 @@ export class InteractionService {
 
       let statusMap: Map<string, string> = new Map(
         fetchStatus[0].map((status: any) => [status.rid, status.status_name])
+      );
+      let interactionAssessmentMap: Map<string, string> = new Map(
+        fetchInteractionAssessment[0].map((intAccess: any) => [intAccess.rid, intAccess.interaction_assessment_source_name])
       );
       let typeMap: Map<string, string> = new Map(
         fetchTypes[0].map((types: any) => [
@@ -2254,6 +2321,11 @@ export class InteractionService {
                     ? d.modified_by
                     : modifiedMap.get(d.modified_by),
                 has_email_recipient: hasEmailRecipient,
+                interaction_batch_id : d.interaction_batch_id,
+                four_part_assessment_rid : d.four_part_assessment_rid,
+                four_part_r_number : d.four_part_r_number,
+                interaction_assessment_source_rid : d.interaction_assessment_source_rid,
+                interaction_assessment_source_name : interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null
               };
             });
       const applyFilters = (
@@ -3222,6 +3294,7 @@ export class InteractionService {
         transaction_id,
         interaction_questions,
         detailed_breakdown,
+        four_part_assessment
       } = parsedMessage.data;
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -3235,6 +3308,18 @@ export class InteractionService {
         if (!company_id || !project_id || !type) {
           logMessage(`Kafka message missing required fields: ${JSON.stringify(parsedMessage)}`);
           return;
+        }
+
+        if(type === "four_part_assessment") {
+          let fourPartPayload : FourPartAssessmentResponse;
+          fourPartPayload = four_part_assessment
+          await this.interactionSchemaService.createFourPartAssessment(
+            four_part_assessment,
+            accountNumber,
+            project_id,
+            company_id,
+            transaction_id            
+          )
         }
 
         if (type === "qre_percent") {
@@ -3258,7 +3343,38 @@ export class InteractionService {
             parsedMessage
           );
         }
-        if (type === "interaction_questions") {
+        if (type === "interaction_questions" || type === 'four_part_assessment') {
+          let interactionAssessmentSource : string;
+          let fourPartAssessmentRid : string | null;
+          let fourPartPayload : FourPartAssessmentResponse;
+          let batchId : string;
+          fourPartPayload = four_part_assessment
+          let dynamicQuestions : any[];
+          if(type === 'four_part_assessment') {
+            interactionAssessmentSource = interactionAssessmentSourceType.FPA
+            const findFpaRid = await this.interactionSchemaService.fetchAccountFpaInfo(transaction_id, accountNumber);
+            fourPartAssessmentRid = findFpaRid.rid;
+            dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => {
+              return {
+                question : d
+              }
+            })
+            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber);
+            if(findBatchAndIncrement) {
+              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1]);
+              batchId = `BATCH_${splitBatchNumber + 1}`
+            } else {
+              batchId = `BATCH_000001`
+            }
+          }
+          else {
+            interactionAssessmentSource = interactionAssessmentSourceType.RD
+            fourPartAssessmentRid = null;
+            dynamicQuestions = interaction_questions
+            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id);
+            batchId = findBatchAndIncrement
+          }
+
           const projectInfo =
             await this.interactionSchemaService.fetchProjectInfo(
               accountNumber,
@@ -3268,8 +3384,8 @@ export class InteractionService {
             await this.interactionSchemaService.getInteractionStatusByType(
               statusAction.DRAFT
             );
-          const questionsWithActionType = Array.isArray(interaction_questions)
-            ? interaction_questions.map((q: any) => ({
+          const questionsWithActionType = Array.isArray(dynamicQuestions)
+            ? dynamicQuestions.map((q: any) => ({
                 ...q,
                 action_type: "add",
               }))
@@ -3286,6 +3402,10 @@ export class InteractionService {
             interaction_type_rid: interactionType.RD,
             created_by: process.env.SYSTEM_USER_ID!,
             interaction_level_rid: "Project",
+            interaction_assessment_source_rid : interactionAssessmentSource,
+            transaction_id : transaction_id,
+            four_part_assessment_rid : fourPartAssessmentRid,
+            interaction_batch_id : batchId
           };
           await this.createInteraction(
             interactionData,

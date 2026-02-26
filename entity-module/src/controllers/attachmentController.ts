@@ -267,7 +267,8 @@ async function exportAllAttachments(
       value.sortOrder,
       value.fiscalYear,
       {},
-      value.timezone
+      value.timezone,
+      value.type
     );
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {

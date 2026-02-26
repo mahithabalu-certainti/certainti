@@ -3,7 +3,7 @@ import { MAIN_SCHEMA_NAME, ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant
 import { DocumentCategory } from "./documentCategory";
 import { DocumentType } from "./documentType";
 
-interface AttachmentAttributes {
+export interface AttachmentAttributes {
   rid: string;
   r_number?: string;
   created_datetime: Date;
@@ -25,7 +25,7 @@ interface AttachmentAttributes {
   comments?: string | null;
 }
 
-interface AttachmentCreationAttributes 
+export interface AttachmentCreationAttributes 
   extends Optional<AttachmentAttributes, "rid" | "r_number" | "created_datetime" | "modified_datetime"> {}
 
 export class Attachment

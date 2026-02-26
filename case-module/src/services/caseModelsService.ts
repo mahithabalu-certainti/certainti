@@ -49,6 +49,8 @@ import { RdCreditStateCalculations } from "../models/rdCreditStateCalcModel";
 import { RdCreditProcess } from "../models/rdCreditProcessModel";
 import { RdCreditCalculationsSummary } from "../models/rdCreditCalculationsSummaryModel";
 import { MeetingSummary } from "../models/meetingSummaryModel";
+import { SignoffDetails } from "../models/signoffDetails";
+import { Attachment } from "../models/attachments";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -93,6 +95,8 @@ export class CaseModelService {
       KeyContact: ReturnType<typeof KeyContact.initialize>;
       RdCreditCalculationsSummary: ReturnType<typeof RdCreditCalculationsSummary.initialize>;
       MeetingSummary: ReturnType<typeof MeetingSummary.initialize>;
+      SignoffDetails : ReturnType<typeof SignoffDetails.initialize>;
+      Attachment : ReturnType<typeof Attachment.initialize>;
     }
   > = new Map();
 
@@ -167,6 +171,8 @@ export class CaseModelService {
     const RdCreditProcessModel = RdCreditProcess.initialize(sequelize, schemaName);
     const RdCreditCalculationsSummaryModel = RdCreditCalculationsSummary.initialize(mainDbSequelize, "");
     const MeetingSummaryModel = MeetingSummary.initialize(mainDbSequelize, "");
+    const SignoffDetailsModel = SignoffDetails.initialize(sequelize, schemaName);
+    const AttachmentModel = Attachment.initialize(sequelize, schemaName);
 
     CaseProjectModel.belongsTo(ProjectFiscalModel, {
       foreignKey: "project_fiscal_rid",
@@ -222,7 +228,9 @@ export class CaseModelService {
       RdCreditStateCalculations: RdCreditStateCalculationsModel,
       RdCreditProcess: RdCreditProcessModel,
       RdCreditCalculationsSummary: RdCreditCalculationsSummaryModel,
-      MeetingSummary: MeetingSummaryModel
+      MeetingSummary: MeetingSummaryModel,
+      SignoffDetails : SignoffDetailsModel,
+      Attachment : AttachmentModel
     };
 
     this.modelCache.set(schemaName, models);

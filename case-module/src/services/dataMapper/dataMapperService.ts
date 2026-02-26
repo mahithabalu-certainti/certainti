@@ -4,7 +4,7 @@ import { DataMapperForms, setupDataMapperFormsSequence } from "../../models/data
 import { uploadToAzureBlob, logMessage, errorLog, generateSasUrl, deleteFromAzureBlob } from "../../utils/helpers";
 import { Kafka, Producer } from "kafkajs";
 import { ENV } from "../../config/kafka";
-import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, HttpStatus, rawQueries, mappingStatus } from "../../utils/constants";
 import moment from "moment";
 import { DataMapperFormMappings } from "../../models/dataMapperFormMappings";
 import { DataMapperObjects } from "../../models/dataMapperObjects";
@@ -55,6 +55,50 @@ export class DataMapperService implements IDataMapperService {
                 };
             }
 
+            // Check for overlapping effective_from_date and effective_to_date
+            // Only check for forms with the same country/state and active status
+            let whereOverlap: any = {
+                country_rid: data.country_rid,
+                is_active: true
+            };
+            if (data.is_federal) {
+                whereOverlap.state_rid = null;
+            } else {
+                whereOverlap.state_rid = data.state_rid;
+            }
+            // Find all forms with same country/state that overlap with the new date range
+            const overlapForms = await DataMapperModel.findAll({ where: whereOverlap });
+            const newFrom = new Date(data.effective_from_date);
+            const newTo = data.effective_to_date ? new Date(data.effective_to_date) : null;
+            const isOverlap = overlapForms.some((form: any) => {
+                const existingFrom = form.effective_from_date ? new Date(form.effective_from_date) : null;
+                const existingTo = form.effective_to_date ? new Date(form.effective_to_date) : null;
+                if (!existingFrom || !newFrom) return false;
+                // If both have no end date, always overlap
+                if (!existingTo && !newTo) {
+                    return true;
+                }
+                // If existing has no end date, overlap if newFrom <= existingFrom or newFrom <= newTo (which is null)
+                if (!existingTo) {
+                    if (!newTo) return true;
+                    return (newFrom <= existingFrom) || (newFrom <= newTo);
+                }
+                // If new has no end date, overlap if existingFrom <= newFrom <= existingTo
+                if (!newTo) {
+                    return newFrom <= existingTo;
+                }
+                // Both have end dates, check for overlap
+                return (
+                    (existingFrom <= newTo) && (newFrom <= existingTo)
+                );
+            });
+            if (isOverlap) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "A Form already exists for the selected effective date range and country/state combination",
+                };
+            }
+
             // Handle File Upload
             let fileUrl = "";
             let fileName = "";
@@ -77,7 +121,9 @@ export class DataMapperService implements IDataMapperService {
                 throw new Error("File is required");
             }
 
-            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
+            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
+                replacements: { statusName: 'Initiated' }
+            });
             const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
             if (!statusRid) {
@@ -98,7 +144,8 @@ export class DataMapperService implements IDataMapperService {
                 status_rid: statusRid,
                 is_active: true,
                 created_by: userId,
-                created_datetime: new Date()
+                created_datetime: new Date(),
+                is_federal: data.is_federal || false
             });
 
             const sasUrl = await generateSasUrl(fileUrl)
@@ -169,7 +216,9 @@ export class DataMapperService implements IDataMapperService {
             await setupDataMapperFormsSequence(sequelize, MAIN_SCHEMA_NAME);
 
             // Fetch status RID for 'Active'
-            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperFailedStatus);
+            const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
+                replacements: { statusName: 'Failed' }
+            });
             const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
             if (!statusRid) {
@@ -535,6 +584,53 @@ export class DataMapperService implements IDataMapperService {
                 };
             }
 
+            // Overlapping date range validation (skip current record)
+            const countryRid = data.country_rid !== undefined ? data.country_rid : record.country_rid;
+            const isFederal = data.is_federal !== undefined ? data.is_federal : record.is_federal;
+            let stateRid: any;
+            if (isFederal) {
+                stateRid = null;
+            } else {
+                stateRid = data.state_rid !== undefined ? data.state_rid : record.state_rid;
+            }
+            const newFrom = data.effective_from_date !== undefined ? new Date(data.effective_from_date) : (record.effective_from_date ? new Date(record.effective_from_date) : null);
+            const newTo = data.effective_to_date !== undefined ? (data.effective_to_date ? new Date(data.effective_to_date) : null) : (record.effective_to_date ? new Date(record.effective_to_date) : null);
+            const whereOverlap: any = {
+                country_rid: countryRid,
+                is_active: true,
+                rid: { [Op.ne]: data.rid }
+            };
+            if (isFederal) {
+                whereOverlap.state_rid = null;
+            } else {
+                whereOverlap.state_rid = stateRid;
+            }
+            const overlapForms = await DataMapperModel.findAll({ where: whereOverlap });
+            const isOverlap = overlapForms.some((form: any) => {
+                const existingFrom = form.effective_from_date ? new Date(form.effective_from_date) : null;
+                const existingTo = form.effective_to_date ? new Date(form.effective_to_date) : null;
+                if (!existingFrom || !newFrom) return false;
+                if (!existingTo && !newTo) {
+                    return true;
+                }
+                if (!existingTo) {
+                    if (!newTo) return true;
+                    return (newFrom <= existingFrom) || (newFrom <= newTo);
+                }
+                if (!newTo) {
+                    return newFrom <= existingTo;
+                }
+                return (
+                    (existingFrom <= newTo) && (newFrom <= existingTo)
+                );
+            });
+            if (isOverlap) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "Overlapping effective date range exists for the same country/state.",
+                };
+            }
+
             if (data.form_name) {
                 const existingForm = await DataMapperModel.findOne({
                     where: {
@@ -563,6 +659,7 @@ export class DataMapperService implements IDataMapperService {
             if (data.country_rid) updatePayload.country_rid = data.country_rid;
             if (data.state_rid !== undefined) updatePayload.state_rid = data.state_rid;
             if (data.is_active !== undefined) updatePayload.is_active = data.is_active;
+            if(data.is_federal !== undefined) updatePayload.is_federal = data.is_federal;
 
             let shouldTriggerKafka = false;
             let fileSasUrl = "";
@@ -608,7 +705,9 @@ export class DataMapperService implements IDataMapperService {
                 updatePayload.format = uploadResult.extension.replace('.', '');
 
                 // Reset status to Initiated
-                const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperInitiatedStatus);
+                const [statusResult]: any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
+                    replacements: { statusName: 'Initiated' }
+                });
                 const statusRid = statusResult.length > 0 ? statusResult[0].rid : null;
 
                 if (statusRid) {
@@ -704,7 +803,8 @@ export class DataMapperService implements IDataMapperService {
                         modified_datetime: new Date(),
                         field_id: mapping.field_id,
                         calculation_config: mapping.calculation_config,
-                        column_id: columnRid
+                        column_id: columnRid,
+                        status: mapping.status
                     }, {
                         where: {
                             rid: mapping.rid
@@ -827,6 +927,108 @@ export class DataMapperService implements IDataMapperService {
         }
     }
 
+    async recomputeMapping(data: any, userId: string): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+
+            const [result] = await sequelize.query<any>(
+                rawQueries.getFieldArrayByFormRid(data.rid),
+                { type: QueryTypes.SELECT }
+            );
+
+            let fieldList: any[] = result ? result.field_array : [];
+
+            if (!fieldList || fieldList.length === 0) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "No fields extracted for this form",
+                    data: data.mappings
+                };
+            }
+
+            if (!data.mappings || data.mappings.length === 0) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "Mappings array is empty",
+                    data: data.mappings
+                };
+            }
+
+            const textLikeTypes = ["text", "signature", "choice", "dropdown", "unknown"];
+            let textFields = fieldList.filter(f => {
+                const type = (f.field_type || "unknown").toLowerCase();
+                return textLikeTypes.includes(type);
+            });
+
+            textFields.sort((a, b) => {
+                const pageA = a.page || 1;
+                const pageB = b.page || 1;
+                if (pageA !== pageB) return pageA - pageB;
+
+                const centerA = a.center || [0, 0];
+                const centerB = b.center || [0, 0];
+
+                const yA = centerA[1];
+                const yB = centerB[1];
+
+                if (Math.abs(yB - yA) > 1) {
+                    return yB - yA;
+                }
+
+                const xA = centerA[0];
+                const xB = centerB[0];
+                return xA - xB;
+            });
+
+            let updatedMappings = [...data.mappings];
+            updatedMappings.sort((a, b) => (a.extraction_order || 0) - (b.extraction_order || 0));
+
+            const lastActiveMapping = [...updatedMappings].reverse().find((m: any) => m.status === mappingStatus.accepted);
+
+            let cursor = 0;
+            if (lastActiveMapping && lastActiveMapping.field_id) {
+                const startIndex = textFields.findIndex(f => f.field_id === lastActiveMapping.field_id);
+                if (startIndex !== -1) {
+                    cursor = startIndex + 1;
+                }
+            }
+
+            let reachedAnomaly = false;
+
+            for (let i = 0; i < updatedMappings.length; i++) {
+                if (updatedMappings[i].status === mappingStatus.anomaly) {
+                    reachedAnomaly = true;
+                }
+
+                if (reachedAnomaly && cursor < textFields.length) {
+                    if (updatedMappings[i].field_type !== "table") {
+                        updatedMappings[i].field_id = textFields[cursor].field_id;
+                        updatedMappings[i].status = mappingStatus.anomaly;
+                        cursor++;
+                    }
+                }
+            }
+
+            // Restore original order
+            const originalOrderMap = new Map();
+            data.mappings.forEach((m: any, index: number) => {
+                originalOrderMap.set(m.rid, index);
+            });
+
+            updatedMappings.sort((a, b) => originalOrderMap.get(a.rid) - originalOrderMap.get(b.rid));
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Mappings recomputed successfully",
+                data: updatedMappings
+            };
+
+        } catch (error) {
+            errorLog("recomputeMapping", (error as Error).message);
+            throw error;
+        }
+    }
+
     async getObjectsList(data: any): Promise<{ statusCode: number; message: string; errorMessage?: string; data?: any }> {
         try {
             const sequelize = await this.getMainSequelize();
@@ -908,6 +1110,44 @@ export class DataMapperService implements IDataMapperService {
             errorLog("listDataMapperUploadStatus", (error as Error).message);
             throw error;
         }
+    }
+
+    async updateDataMapperFormStatus(payload: { form_rid: string; form_status: "accept" | "reject"; }, userId: string): Promise<{ statusCode: number; message: string; data?: any }> {
+            try {
+                const sequelize = await this.getMainSequelize();
+                // Map form_status to DB status name
+                const statusName = payload.form_status === "accept" ? "Accepted" : "Rejected";
+                // Fetch status_rid from DB
+                const [statusResult]: any = await sequelize.query(
+                    rawQueries.getDataMapperStatusByName,
+                    { replacements: { statusName }, type: QueryTypes.SELECT }
+                );
+                const statusRid = statusResult?.rid;
+                if (!statusRid) {
+                    return { statusCode: HttpStatus.BAD_REQUEST, message: `Status '${statusName}' not found.` };
+                }
+                // Update form status
+                const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
+                const [updated] = await DataMapperModel.update(
+                    {
+                        status_rid: statusRid,
+                        modified_by: userId,
+                        modified_datetime: new Date()
+                    },
+                    { where: { rid: payload.form_rid } }
+                );
+                if (updated === 0) {
+                    return { statusCode: HttpStatus.NOT_FOUND, message: "Form not found or not updated." };
+                }
+                return {
+                    statusCode: HttpStatus.SUCCESS,
+                    message: `Status updated to '${statusName}'.`,
+                    data: { rid: payload.form_rid, status_rid: statusRid, status_name: statusName }
+                };
+            } catch (error) {
+                errorLog("updateDataMapperFormStatus", (error as Error).message);
+                return { statusCode: HttpStatus.BAD_REQUEST, message: (error as Error).message };
+            }
     }
 }
 

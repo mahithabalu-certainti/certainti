@@ -46,7 +46,13 @@ export class RdCreditCalculatorForNJ {
             inputFields,
             computedFields,
             finalCredit: this.round2(part5DevelopmentTaxCreditCalculationInfo.tot_available_credit),
-            totalQRE: this.round2(part4ASCCreditCalculationInfo.total_current_year_qre)
+            totalQRE: this.round2(part4ASCCreditCalculationInfo.total_current_year_qre),
+            prev1yearQRE: this.round2(part4ASCCreditCalculationInfo.prev1yearQRE) || 0,
+            prev2yearQRE: this.round2(part4ASCCreditCalculationInfo.prev2yearQRE) || 0,
+            prev3yearQRE: this.round2(part4ASCCreditCalculationInfo.prev3yearQRE) || 0,
+            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
         }
 
     }
@@ -66,7 +72,13 @@ export class RdCreditCalculatorForNJ {
         const leaseComputerCost = new Decimal(caseDetails.lease_costs_of_computers || 0.00)
 
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(costOfSupplies).plus(leaseComputerCost);
+        const prev1_qre = new Decimal(prior3YearsQREs[0]?.qre || 0);
 
+        //----Line3a: Enter 2 years prior QRE for TX State
+        const prev2_qre = new Decimal(prior3YearsQREs[1]?.qre || 0);
+
+        //----Line4a: Enter 3 years prior QRE for TX State
+        const prev3_qre = new Decimal(prior3YearsQREs[2]?.qre || 0);
         const qreSum = prior3YearsQREs.map(item => ({
             fiscalYear: item.fiscalYear,
             wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
@@ -92,7 +104,10 @@ export class RdCreditCalculatorForNJ {
             sub_credit: this.round2(sub_credit),
             final_credit: this.round2(final_credit),
             costOfSupplies : this.round2(costOfSupplies),
-            leaseComputerCost : this.round2(leaseComputerCost)
+            leaseComputerCost : this.round2(leaseComputerCost),
+            prev1yearQRE: this.round2(prev1_qre),
+            prev2yearQRE: this.round2(prev2_qre),
+            prev3yearQRE: this.round2(prev3_qre),
         }
     }
 

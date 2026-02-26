@@ -597,6 +597,9 @@ export async function uploadToAzureBlob(
     else if (flag === "data-mapper") {
       blobName = `${account_id}/data-mapper/${task_number ? task_number + '/' : ''}${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
+    else if (flag === "signoff") {
+      blobName = `${account_id}/cases/dossier/${timestamp}-${sanitizedBaseName}${originalExtension}`
+    }
     else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
@@ -902,3 +905,44 @@ export const applyFilters = (filters: Record<string, any>, whereClause: any) => 
   }
   return whereClause;
 };
+
+export const uploadMultipleFilesToAzureBlob = async (accountRid : string, accountNumber : string ,files : Express.Multer.File[]) => {
+  if(files.length < 1) throw new Error("File is required");
+  if(!accountRid) throw new Error("Account RID is required");
+
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  if(!connectionString) throw new Error("Connection string is invalid");
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerName = accountNumber.toLowerCase();
+  const container = blobServiceClient.getContainerClient(containerName);
+  await container.createIfNotExists();
+  const uploadedResult = await Promise.all(
+    files.map(async (file : Express.Multer.File) => {
+      const extension = file.originalname.includes(".") ? file.originalname.substring(file.originalname.lastIndexOf(".")) : "";
+      const baseName = file.originalname.replace(/\.[^/.]+$/, "");
+      const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, "");
+      const timestamp = Date.now()
+      const blobName = `${accountRid}/cases/dossier/${timestamp}-${sanitizedBaseName}${extension}`
+      const blockBlobClient = container.getBlockBlobClient(blobName);
+      const uploadOptions = {
+        blobHTTPHeaders : {
+          blobContentType : file.mimetype || "application/octet-stream"
+        }
+      }
+      await blockBlobClient.uploadData(file.buffer, uploadOptions);
+      const sizeInMb = parseFloat((file.size / (1024 * 1024)).toFixed(2))
+      return {
+        url : blockBlobClient.url,
+        name : sanitizedBaseName,
+        extension : extension,
+        size : sizeInMb
+      }
+    })
+  )
+  return uploadedResult;
+}
+
+export const addLog = (methodName : string, timestamp : string, message : string) => {
+  const logger = getLogger();
+  return logger.info(`MethodName : ${methodName}, Timestamp : ${timestamp}, Error : ${message}`)
+}

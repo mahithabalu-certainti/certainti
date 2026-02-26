@@ -1423,12 +1423,12 @@ export class RdFormMapperService {
 
         replaced = this.transformIfExpressions(replaced);
 
-        logMessage(
-          `Resolved expression for field ${item.field_label || item.field_id}: ${normalizedExpression} (resolved=${replaced})`,
-        );
-        logMessage(
-          `Resolved values for field ${item.field_label || item.field_id}: ${JSON.stringify(resolvedValues)}`,
-        );
+        // logMessage(
+        //   `Resolved expression for field ${item.field_label || item.field_id}: ${normalizedExpression} (resolved=${replaced})`,
+        // );
+        // logMessage(
+        //   `Resolved values for field ${item.field_label || item.field_id}: ${JSON.stringify(resolvedValues)}`,
+        // );
 
         const validationTarget = replaced.replace(/Math\.(min|max)\(/g, "(");
         if (!/^[0-9+\-*/().,\sNaN?:<>=!&|]+$/.test(validationTarget)) {

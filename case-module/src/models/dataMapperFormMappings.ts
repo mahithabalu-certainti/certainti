@@ -18,6 +18,7 @@ interface DataMapperFormMappingsAttributes {
     field_type?: string | null;
     column_id?: string | null;
     extraction_order?: number | null;
+    status: string;
 }
 
 export interface DataMapperFormMappingsCreationAttributes
@@ -51,6 +52,7 @@ export class DataMapperFormMappings
     public field_type?: string | null;
     public column_id?: string | null;
     public extraction_order?: number | null;
+    public status!: string;
 
     static initialize(
         sequelize: Sequelize,
@@ -108,6 +110,10 @@ export class DataMapperFormMappings
                 extraction_order: {
                     type: DataTypes.INTEGER,
                     allowNull: true,
+                },
+                status: {
+                    type: DataTypes.STRING(50),
+                    allowNull: false
                 },
             },
             {

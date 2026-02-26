@@ -77,6 +77,30 @@ export const R_NUMBER_PREFIX = {
   NOTES_SUMMARY: "NOTS",
 };
 
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  RESOURCE_COST: "Resource Cost",
+  RESOURCE_SKILL: "Resource Skill",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+  ATTACHMENT: "Attachment",
+  PROJECT_RESOURCE: "Project Resource",
+  TASK: "Task",
+  TAG:"Tag",
+  SETTINGS:"Settings",
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+}
+
+export const eventTypes = {
+   UI_HANDLER: "web",
+}
+
 export const STATUS_MESSAGE = {
   accountInactive: "Inactive Account",
   accountNoFound: "Account not found",
@@ -214,6 +238,10 @@ export const rawQueries = {
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
     }
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d: any) => `'${d}'`).join(',')})`;
   },
   fetchAccountDetailsByRid(accountRid: string) {
     return `
@@ -368,6 +396,10 @@ export const rawQueries = {
   },
   checkRegionExists(data: any) {
     return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = '${data.region_rid}'`;
+  },
+  fetchGlobalAutoTriggerAccess() {
+    return `
+    SELECT auto_access_rd FROM ${MAIN_SCHEMA_NAME}.organization_licenses limit 1`;
   },
   isResourceCodeDuplicate(schemaName: string, data: any) {
     return `
@@ -1475,6 +1507,44 @@ export const rawQueries = {
       SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountId}'
     `;
   },
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
+      INSERT INTO "${schemaName}".${tableName} (
+        created_by, event_type_rid, event_name, descriptions, account_rid, entity_name, entity_rid, created_by_name
+      ) VALUES (
+        :created_by, :event_type_rid, :event_name, :descriptions, :account_rid, :entity_name, :entity_rid, :created_by_name
+      )
+      RETURNING *;
+    `;
+  },
+  insertProjectTimeLine(schemaName: string, tableName: string) {
+    return `
+      INSERT INTO "${schemaName}".${tableName} (
+        created_by, event_type_rid, event_name, descriptions, account_rid, entity_name, entity_rid, created_by_name, project_rid
+      ) VALUES (
+        :created_by, :event_type_rid, :event_name, :descriptions, :account_rid, :entity_name, :entity_rid, :created_by_name, COALESCE(:project_rid, NULL)
+      )
+      RETURNING *;
+    `;
+  },
+  insertCaseTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
+    `;
+  },
   fetchAttachmentSummaryByTask() {
     return `
       SELECT 
@@ -2270,6 +2340,13 @@ export const rawQueries = {
     if (newRid === null) newRid = ''
     return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
+  getEventTypeQuery() {
+    return `SELECT rid, event_type_name FROM ${MAIN_SCHEMA_NAME}.event_type where event_type_name = :eventType`
+  },
+  getEventNameQuery() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.event_type where event_name = :eventName`
+  },
+
   fetchCheckLists(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''
@@ -2363,6 +2440,14 @@ export const rawQueries = {
   fetchAccountDetailsInfo(rid: string) {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+   fetchAccountLevelInfoForTriggerAI(rid: string,schemaName: string) {
+    return `
+    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,auto_access_rd FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+  },
+  fetchisAutoTriggerEnabled(projectFiscalRid: string, schemaName: string) {
+    return `
+    SELECT auto_access_rd FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`;
   },
   fetchAllPlatformConfig(rid: string) {
     return `

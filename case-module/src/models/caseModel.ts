@@ -55,6 +55,7 @@ interface CaseAttributes {
   other_credits_total?: number
   rrc_credit_280_c? : string
   asc_credit_280_c? : string
+  parent_case_rid?: string;
 
 }
 
@@ -116,7 +117,7 @@ export class Case
   public other_credits_total?: number
   public rrc_credit_280_c? : string
   public asc_credit_280_c? : string
-
+  public parent_case_rid?: string;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -187,7 +188,8 @@ export class Case
         current_year_gross_receipts: {type : DataTypes.DECIMAL, allowNull : true},
         other_credits_total : {type : DataTypes.DECIMAL, allowNull : true},
         rrc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
-        asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"}
+        asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
+        parent_case_rid : {type : DataTypes.STRING(50), allowNull : true   }
       },
       {
         sequelize,

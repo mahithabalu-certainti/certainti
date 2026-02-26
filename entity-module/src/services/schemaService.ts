@@ -42,7 +42,7 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
-import { SCHEMANAME_PREFIX, primaryKeyContacts, rawQueries } from "../utils/constants";
+import { SCHEMANAME_PREFIX, entityTypes, eventNames, eventTypes, primaryKeyContacts, rawQueries } from "../utils/constants";
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
@@ -50,6 +50,7 @@ import {
 import { errorLog } from "../utils/helpers";
 import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
 import  ProjectIngestionService  from "./projectIngestionService";
+import { raw } from "express";
 
 
 
@@ -622,12 +623,114 @@ class SchemaService {
           resource.account_rid
         );
       }
+      const userEventInfo:any = await this.fetchUserAndEventInfo({
+        userId: resourceData.created_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
+     
+      await this.createAccountTimelineEntry(accountNumber!, {
+        created_by: resourceData.created_by!,
+        account_rid: resourceData.account_id,
+        entity_rid: resource?.rid!,
+        entity_name: entityTypes.RESOURCE,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.CREATE,
+        descriptions:resourceData.resource_code
+      },["account"]);
 
       return resource;
     } catch (err) {
       throw new Error((err as Error).message);
     }
   }
+
+  /**
+   * Fetches user full name, event type, and event name in a single query.
+   * @param params Object with userId, eventType, eventName
+   * @returns Object with fullName, eventType, eventName
+   */
+  async fetchUserAndEventInfo(params: { userId: string; eventType: string;}) {
+    const sequelize = await initMainDbSequelize();
+    // Assumes the rawQueries have the correct SQL for each subquery
+    // This query returns a single row with all three values
+    const query = rawQueries.fetchUserAndEventInfo();
+    const [result] = await sequelize.query(query, {
+      replacements: {
+        userId: params.userId,
+        eventType: params.eventType
+      },
+      type: "SELECT",
+    });
+    return result;
+  }
+    /**
+   * Returns timeline entity types for a given attachment_level.
+   * Used for timeline entry creation in NotesService and elsewhere.
+   */
+  getTimelineTypesForAttachmentLevel(attachmentLevel: string): string[] {
+    const accountLevels = ["account", "resource", "resource_cost", "resource_skill"];
+    const projectLevels = ["project_task", "project_resource"];
+    const caseLevels = ["case"];
+    if (attachmentLevel === "project") {
+      return ["project"];
+    } else if (accountLevels.includes(attachmentLevel)) {
+      return ["account"];
+    } else if (projectLevels.includes(attachmentLevel)) {
+      return ["project"];
+    } else if (caseLevels.includes(attachmentLevel)) {
+      return ["case"];
+    }
+    return [];
+  }
+  /**
+   * Create an entry in the account_timeline table for the given schema.
+   * @param sequelize Sequelize instance connected to the main DB
+   * @param schemaName The schema name where the account_timeline table exists
+   * @param entryData Object containing the timeline entry fields
+   */
+  async createAccountTimelineEntry(accountNumber: string,
+    entryData: {
+      created_by: string;
+      account_rid: string;
+      entity_rid: string;
+      entity_name: string;
+      created_by_name: string;
+      event_type_rid: string;
+      event_name?: string;
+      descriptions?: string;
+      project_rid?: string;
+    },
+    entityTypes: string[]
+  ) {
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+    const sequelize = await initOrgSequelize();
+    for (const entityType of entityTypes) {
+      if(entityType === "account")
+        {
+            const [result] = await sequelize.query(rawQueries.insertTimeLine(schemaName,"account_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+        else if(entityType === "project")
+        {
+            const [result] = await sequelize.query(rawQueries.insertProjectTimeLine(schemaName,"project_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+        else if(entityType === "case")
+        {
+            const [result] = await sequelize.query(rawQueries.insertCaseTimeLine(schemaName,"case_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+
+    }
+  }
+
 
   /**
    * Fetches paginated and filtered list of resources for excel download.
@@ -1084,6 +1187,21 @@ class SchemaService {
           },
         }
       );
+
+      const userEventInfo:any = await this.fetchUserAndEventInfo({
+        userId: resourceData.modified_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
+      await this.createAccountTimelineEntry(accountNumber!, {
+        created_by: resourceData.modified_by!,
+        account_rid: accountId,
+        created_by_name: userEventInfo.full_name,
+        entity_rid: resourceData.resource_id,
+        entity_name: entityTypes.RESOURCE,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.UPDATE,
+        descriptions: resourceData.resource_code
+      },["account"]);
 
       // await this.updateResourceFiscal(
       //   resourceData,

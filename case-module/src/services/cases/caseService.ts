@@ -69,7 +69,7 @@ export class CaseService {
   protected logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
-  private helperMethod: HelperMethods
+  protected helperMethod: HelperMethods
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -1904,16 +1904,16 @@ export class CaseService {
         const activityresponse = await Activities.create(activityData);
         activityData.activity_rid = activityresponse.rid;
         await this.activitySchemaService.uploadActivityFiles(files, activityData, accountNumber);
-        await this.caseSchemaService.addCaseTimeline(
-          accountNumber,
-          data.case_rid,
-          data.account_rid,
-          "Sent Review Projects",
-          userId,
-          "success",
-          "Review Projects sent via email from UI",
-          "ui handler"
-        );
+        // await this.caseSchemaService.addCaseTimeline(
+        //   accountNumber,
+        //   data.case_rid,
+        //   data.account_rid,
+        //   "Sent Review Projects",
+        //   userId,
+        //   "success",
+        //   "Review Projects sent via email from UI",
+        //   "ui handler"
+        // );
 
 
       }
