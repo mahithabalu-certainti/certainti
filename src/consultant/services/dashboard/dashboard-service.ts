@@ -95,13 +95,13 @@ export const fetchCasesByHealthStatus = async (
 
 export const useGetCasesByHealthStatus = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<HealthStatusDetail[], Error> => {
   return useQuery<HealthStatusDetail[], Error>({
     queryKey: ['cases-by-health-status', payload],
     queryFn: () => fetchCasesByHealthStatus(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -176,13 +176,13 @@ export const fetchWeeklyProductivity = async (
 
 export const useGetWeeklyProductivity = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<WeeklyProductivityDetail[], Error> => {
   return useQuery<WeeklyProductivityDetail[], Error>({
     queryKey: ['weekly-productivity', payload],
     queryFn: () => fetchWeeklyProductivity(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -203,13 +203,13 @@ export const fetchOverdueApprovals = async (
 
 export const useGetOverdueApprovals = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<OverdueApprovalsDetail[], Error> => {
   return useQuery<OverdueApprovalsDetail[], Error>({
     queryKey: ['overdue-approvals', payload],
     queryFn: () => fetchOverdueApprovals(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -230,13 +230,13 @@ export const fetchUpcomingTasks = async (
 
 export const useGetUpcomingTasks = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
     queryKey: ['upcoming-tasks', payload],
     queryFn: () => fetchUpcomingTasks(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -257,13 +257,13 @@ export const fetchDueTodayOverdueTasks = async (
 
 export const useGetDueTodayOverdueTasks = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
     queryKey: ['due-today-overdue-tasks', payload],
     queryFn: () => fetchDueTodayOverdueTasks(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -284,13 +284,13 @@ export const fetchOpenTasks = async (
 
 export const useGetOpenTasks = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
     queryKey: ['open-tasks', payload],
     queryFn: () => fetchOpenTasks(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -312,13 +312,13 @@ export const fetchCompletedTasksThisWeek = async (
 
 export const useGetCompletedTasksThisWeek = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<DashboardTaskDetail[], Error> => {
   return useQuery<DashboardTaskDetail[], Error>({
     queryKey: ['completed-tasks-this-week', payload],
     queryFn: () => fetchCompletedTasksThisWeek(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -339,13 +339,13 @@ export const fetchMeetingList = async (
 
 export const useGetMeetingList = (
   payload: Omit<DashboardPayload, 'fiscalYear'>,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<DashboardMeetingDetail[], Error> => {
   return useQuery<DashboardMeetingDetail[], Error>({
     queryKey: ['meeting-list', payload],
     queryFn: () => fetchMeetingList(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -366,13 +366,13 @@ export const fetchPendingFollowUps = async (
 
 export const useGetPendingFollowUps = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<PendingFollowUpDetail[], Error> => {
   return useQuery<PendingFollowUpDetail[], Error>({
     queryKey: ['pending-follow-ups', payload],
     queryFn: () => fetchPendingFollowUps(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 

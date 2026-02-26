@@ -465,7 +465,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
         overflowY: 'auto',
         // Concrete height is required so the div actually creates a scroll region.
         // '100%' doesn't work when the parent has no fixed height.
-        maxHeight: 'calc(100vh - 260px)',
+        // maxHeight: 'calc(100vh - 260px)',
       }}
     >
       {/* Single continuous vertical line spanning all groups */}

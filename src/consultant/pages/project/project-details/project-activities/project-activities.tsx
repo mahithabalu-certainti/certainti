@@ -67,8 +67,7 @@ const ActivityTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACTIVITIES_TIMELINE,
     name: 'Timeline',
-    hide: true,
-    // disable: true,
+    hide: false,
     key: 'timeline',
   },
 ];

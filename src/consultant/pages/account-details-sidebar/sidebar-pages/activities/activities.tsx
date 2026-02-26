@@ -68,7 +68,7 @@ const ActivityTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACTIVITIES_TIMELINE,
     name: 'Timeline',
-    hide: true,
+    hide: false,
     key: 'timeline',
   },
 ];
@@ -548,27 +548,26 @@ const Activities: React.FC<ActivitiesProps> = ({
           showAddActivity={tabParam === 'all'}
           activityMenuItems={activityMenuItems}
         />
-
-        <SectionHeader
-          title='Activities'
-          titleIcon={
-            <ActivitiesIcon
-              alt='activity-header-icon'
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-            />
-          }
-          count={count}
-          showItemCount={!viewDetails}
-          iconBg={ColorCode.accountBgColor}
-          bgType='circle'
-          buttons={headerButtons}
-        />
         {isTimeLineView ? (
-          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <div className='border border-[#CBD6E2] rounded-[2px]'>
             <Timeline entitytype='account' />
           </div>
         ) : (
-          <div>
+          <>
+            <SectionHeader
+              title='Activities'
+              titleIcon={
+                <ActivitiesIcon
+                  alt='activity-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              }
+              count={count}
+              showItemCount={!viewDetails}
+              iconBg={ColorCode.accountBgColor}
+              bgType='circle'
+              buttons={headerButtons}
+            />
             <SectionHeaderTab
               tabs={tabs}
               onTabChange={handleTabChange}
@@ -693,7 +692,7 @@ const Activities: React.FC<ActivitiesProps> = ({
                 )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
