@@ -65,29 +65,51 @@ export const getFinancialHighlightsURL = (): string => {
   return `/api/rd-credit/federal/calculate`;
 };
 
-export const getSignOffFinancialHighlightsURL = (): string => {
-  return `/api/cases/financialWorking/signoff`;
+export const getSignOffFinancialHighlightsURL = (isRdform: boolean): string => {
+  return `/api/${isRdform ? 'rdformMapper' : 'cases/financialWorking'}/signoff`;
 };
 export const getUserPreferenceURL = (): string => {
   return `/api/rd-credit/federal/userPreference`;
 };
 
-export const getClosingRemarksListURL = (
-  accountRid: string,
-  caseRid: string
-): string => {
-  return `/api/cases/closureRemarks/${accountRid}/${caseRid}`;
+export const getClosingRemarksListURL = () // accountRid: string,
+// caseRid: string
+: string => {
+  return `/api/cases/closureRemarks`;
 };
 
 export const getRDFormMapperURL = (): string => {
   return `/api/rdFormMapper/process/initiate`;
 };
 
+export const getRDFormMapperGenerateURL = (
+  accountRid: string,
+  caseRid: string,
+  fiscalYear: number
+): string => {
+  return `/api/rdFormMapper/rdForms/generate?account_rid=${accountRid}&case_rid=${caseRid}&fiscal_year=${fiscalYear}`;
+};
+
 export const getRDFormMapperPreviewURL = (
   accountRid: string,
   caseRid: string,
   countryRid: string,
-  isFederal: boolean = true
+  isFederal: boolean = true,
+  stateRid?: string
 ): string => {
-  return `/api/rdFormMapper/preview?account_rid=${accountRid}&case_rid=${caseRid}&is_federal=${isFederal}&country_rid=${countryRid}`;
+  let url = `/api/rdFormMapper/preview?account_rid=${accountRid}&case_rid=${caseRid}&is_federal=${isFederal}&country_rid=${countryRid}`;
+  if (stateRid) {
+    url += `&state_rid=${stateRid}`;
+  }
+  return url;
+};
+
+export const getDossierInitiateURL = (): string => {
+  return `/api/cases/dossier/create`;
+};
+export const getDossierSheetStatusURL = (
+  accountRid: string,
+  caseRid: string
+): string => {
+  return `/api/cases/dossierPackage/${accountRid}/${caseRid}`;
 };

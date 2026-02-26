@@ -1,26 +1,32 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Select,
-  MenuItem,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormControl,
-} from '@mui/material';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Select, MenuItem } from '@mui/material';
 import { CaseDetails } from '../../../../../../types';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { useFetchState } from '../../../../../../services/account';
 import { AllPermissions } from '../../../../../../../common-service';
-import TextButton from '../../../../../../../components/button/text-button';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
 import PdfViewer from './pdf-viewer';
 import { useParams, useSearchParams } from 'react-router';
+import { SectionHeaderTab } from '../../../../../../../components';
+import {
+  useRDFormMapperGenerateMutation,
+  useRDFormMapperPreviewMutation,
+} from '../../../../../../services/case-dossier/case-dossier-service';
+import DetailsSectionSkeleton from '../../../../../../../components/skeleton-component/detailsskeleton';
+import { setRdformGenerateStatus as setRdformGenerateStatusAction } from '../../../../../../../store/slices/account-slice';
 import { useToast } from '../../../../../../../hooks';
-import { useRDFormMapperPreviewMutation } from '../../../../../../services/case-dossier/cases-financial-services';
+import { RDFormResponse } from '../../../../../../types';
+import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
+import TextButton from '../../../../../../../components/button/text-button';
+import { checkPermission } from '../../../../../../../common-utils';
+import SignOffModal from '../financial-working/sign-off-modal';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
+  isFinancialWorkingSignoff?: boolean;
+  isDetailLoading?: boolean;
+  refetchCaseDetails: () => void;
 }
 
 interface FormErrors {
@@ -28,39 +34,157 @@ interface FormErrors {
   region?: string;
 }
 
-const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
-  const [isFederal, setIsFederal] = useState<string>('yes');
+const RDForm: React.FC<RDFormProps> = ({
+  caseDetails,
+  isFinancialWorkingSignoff,
+  isDetailLoading,
+  refetchCaseDetails,
+}) => {
+  const [activeTab, setActiveTab] = useState<string>('federal');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [showPdfViewer, setShowPdfViewer] = useState<boolean>(false);
-  const [rdFormData, setRdFormData] = useState<string | null>('');
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
-  const { errorToast } = useToast();
-  const {
-    mutate: previewRDCredit,
-    isPending: isPreviewLoading,
-    isError: isPreviewError,
-  } = useRDFormMapperPreviewMutation();
+  const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
     country_code: caseDetails?.country_code || '',
     country_id: caseDetails?.country_rid || '',
   };
+  const dispatch = useDispatch();
+  const { rdformGenerateStatus } = useSelector(
+    (state: RootState) => state.account
+  );
+  const { data } = useFetchCasesConfigFields(
+    accountid as string,
+    'case',
+    caseId as string
+  );
+  const configDetails = data?.data.states;
+  const [previewData, setPreviewData] = useState<RDFormResponse | null>(null);
+  const [isPreviewError, setIsPreviewError] = useState<boolean>(false);
+  const { successToast, errorToast } = useToast();
 
-  const region = useFetchState(caseDetails?.country_rid || '');
+  const setRdformGenerateStatus = (status: boolean) => {
+    dispatch(setRdformGenerateStatusAction(status));
+  };
 
-  const regionListOptions = useMemo(
-    () =>
-      region.data?.data.states.map((state) => ({
+  const { mutate: generateRDForm, isPending: isGenerating } =
+    useRDFormMapperGenerateMutation();
+  const { mutate: previewRDForm, isPending: isPreviewLoading } =
+    useRDFormMapperPreviewMutation();
+
+  const handleRDFormMapperGenerate = async () => {
+    generateRDForm(
+      {
+        accountRid: accountid,
+        caseRid: caseId ?? '',
+        fiscalYear: Number(caseDetails?.fiscal_year || 0),
+      },
+      {
+        onSuccess: (data) => {
+          if (data.statusCode === 200) {
+            setRdformGenerateStatus(true);
+            successToast(
+              data.statusMessage || 'RD Form generated successfully'
+            );
+          }
+        },
+        onError: (error) => {
+          console.error('Error generating RD form', error);
+          errorToast('Failed to generate RD form');
+        },
+      }
+    );
+  };
+
+  const handleRDFormMapperPreview = async () => {
+    if (activeTab === 'state_wise' && !selectedRegion) {
+      return;
+    }
+    setIsPreviewError(false);
+    previewRDForm(
+      {
+        accountRid: accountid,
+        caseRid: caseId ?? '',
+        countryRid: caseCountryDetails.country_id,
+        isFederal: activeTab === 'federal',
+        stateRid: selectedRegion || undefined,
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.data) {
+            setPreviewData(response);
+          } else {
+            setPreviewData(null);
+            setIsPreviewError(true);
+            errorToast('No preview available');
+          }
+        },
+        onError: (error) => {
+          console.error(error);
+          setPreviewData(null);
+          setIsPreviewError(true);
+          errorToast('Failed to fetch RD form preview');
+        },
+      }
+    );
+  };
+
+  // Auto-initiate Generate if not already done
+  useEffect(() => {
+    if (
+      !rdformGenerateStatus &&
+      isFinancialWorkingSignoff &&
+      caseDetails?.case_total_projects &&
+      caseDetails?.case_total_projects !== 0 &&
+      caseDetails?.case_total_projects !== '0'
+    ) {
+      handleRDFormMapperGenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFinancialWorkingSignoff, rdformGenerateStatus, caseDetails]);
+
+  // Call Preview when status is true or tab/region changes
+  useEffect(() => {
+    if (rdformGenerateStatus) {
+      handleRDFormMapperPreview();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rdformGenerateStatus, activeTab, selectedRegion]);
+
+  const region = useFetchState(caseDetails?.country_rid || '', 'active');
+
+  const regionListOptions = useMemo(() => {
+    const states = region.data?.data.states || [];
+    if (Array.isArray(configDetails) && configDetails.length > 0) {
+      return states
+        .filter((state) => configDetails.includes(state.rid))
+        .map((state) => ({
+          label: state.state_name,
+          value: state.rid,
+        }));
+    }
+    return (
+      states.map((state) => ({
         label: state.state_name,
         value: state.rid,
-      })) || [],
-    [region.data?.data.states]
-  );
+      })) || []
+    );
+  }, [region.data?.data.states, configDetails]);
+  // Auto-select first region when switching to state-wise tab
+  useEffect(() => {
+    if (
+      activeTab === 'state_wise' &&
+      regionListOptions.length > 0 &&
+      !selectedRegion
+    ) {
+      setSelectedRegion(regionListOptions[0].value);
+    }
+  }, [activeTab, regionListOptions, selectedRegion]);
 
   // Permission
   const accountViewEditFields = useMemo(
@@ -69,6 +193,11 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
         ?.fields ?? [],
     [permission]
   );
+  const isSignoffVisible = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_RD_FORMS_SIGNOFF
+  );
+
   const accountPermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     accountViewEditFields.forEach((item) => {
@@ -77,136 +206,81 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
     return map;
   }, [accountViewEditFields]);
 
-  const handleFederalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setIsFederal(value);
-    setShowPdfViewer(false);
-    setSelectedRegion('');
-    setErrors((prev) => ({ ...prev, region: '' }));
-  };
-
   const handleRegionChange = (value: string) => {
     setSelectedRegion(value);
     setErrors((prev) => ({ ...prev, region: '' }));
+  };
 
-    // Reset PDF when region changes (but not shown yet)
-    if (showPdfViewer) {
-      setShowPdfViewer(false);
+  const tabs = [
+    {
+      label: 'Federal',
+      value: 'federal',
+      hide: false,
+    },
+    {
+      label: 'State-wise',
+      value: 'state_wise',
+      hide: false,
+    },
+  ];
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'federal') {
+      setSelectedRegion('');
+    } else {
+      setPreviewData(null);
     }
   };
 
-  const handleViewFinancialHighlightsForRegion = async () => {
-    if (isFederal === 'no' && !selectedRegion) {
-      setErrors((prev) => ({ ...prev, region: 'Please select a region' }));
-      return;
-    }
-    previewRDCredit(
-      {
-        accountrid: accountid,
-        caseId: caseId ?? '',
-        stateRid: selectedRegion,
-        isFederal: isFederal === 'yes',
-      },
-      {
-        onSuccess: (response) => {
-          if (response?.data) {
-            setRdFormData(response?.data?.rdformUrl);
-            setShowPdfViewer(true);
-          } else {
-            errorToast('No data available');
-          }
-        },
-        onError: (error) => {
-          console.error(error);
-          setRdFormData(null);
-          errorToast('Failed to fetch financial highlights');
-        },
-      }
+  if (isDetailLoading || isGenerating) {
+    return <DetailsSectionSkeleton sectionCount={2} />;
+  }
+
+  if (!isFinancialWorkingSignoff)
+    return (
+      <div className='flex items-center justify-center p-8'>
+        <div className='text-center'>
+          <div className='text-[14px] text-[#2D3E4F] font-semibold mb-2'>
+            Financial Working Sign-off Required
+          </div>
+          <div className='text-[13px] text-[#7D98B6]'>
+            Please complete the financial working sign-off to view the RD form
+          </div>
+        </div>
+      </div>
     );
-  };
-
-  const isViewButtonEnabled = () => {
-    if (isFederal === 'yes') {
-      return true;
-    } else if (isFederal === 'no') {
-      return selectedRegion !== '';
-    }
-    return false;
-  };
 
   return (
     <div className='w-full'>
-      {/* Federal Level Radio Buttons */}
-      <div className='pb-2'>
-        <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-          <div>Jurisdiction Information</div>
+      <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+        <div>{caseDetails?.country_name} RD Form Information</div>
+        <div>
           <TextButton
-            label={'View'}
-            loading={isPreviewLoading}
-            onClick={handleViewFinancialHighlightsForRegion}
-            disabled={!isViewButtonEnabled() || isPreviewLoading}
+            label={'Approve'}
+            onClick={() => setIsSignOffModalOpen(true)}
+            disabled={
+              !isFinancialWorkingSignoff ||
+              !previewData?.data?.rdformUrl ||
+              caseDetails?.rd_form_signoff === true
+            }
+            hide={!isSignoffVisible}
             sx={{
-              width: '55px',
-              minWidth: '55px',
+              width: 'auto',
+              minWidth: '65px',
               fontSize: '13px',
               fontWeight: 400,
             }}
           />
         </div>
-        <div className='px-4 pt-3'>
-          <FormControl component='fieldset'>
-            <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-2 block'>
-              Federal Level
-            </label>
-            <RadioGroup
-              row
-              value={isFederal}
-              onChange={handleFederalChange}
-              className='gap-6'
-            >
-              <FormControlLabel
-                value='yes'
-                control={
-                  <Radio
-                    disableRipple
-                    sx={{
-                      color: '#CBD6E2',
-                      '&.Mui-checked': {
-                        color: '#3B82F6',
-                      },
-                      padding: '4px 8px',
-                    }}
-                  />
-                }
-                label={
-                  <span className='text-[13px] text-[#2D3E4F] font-medium'>
-                    Yes
-                  </span>
-                }
-              />
-              <FormControlLabel
-                value='no'
-                control={
-                  <Radio
-                    disableRipple
-                    sx={{
-                      color: '#CBD6E2',
-                      '&.Mui-checked': {
-                        color: '#3B82F6',
-                      },
-                      padding: '4px 8px',
-                    }}
-                  />
-                }
-                label={
-                  <span className='text-[13px] text-[#2D3E4F] font-medium'>
-                    No
-                  </span>
-                }
-              />
-            </RadioGroup>
-          </FormControl>
-        </div>
+      </div>
+      <SectionHeaderTab
+        tabs={tabs}
+        onTabChange={handleTabChange}
+        defaultValue={activeTab}
+        className='flex flex-col gap-0 border-b border-[#CBD6E2] pl-3'
+      />
+      <div className='pb-2'>
         {/* Country and Region Fields */}
         <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
           <div
@@ -222,7 +296,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
               className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1'
               htmlFor='country_name'
             >
-              Country <span className='text-red-500'> *</span>
+              Country <span className='text-red-500'>*</span>
             </label>
             <input
               type='text'
@@ -243,7 +317,7 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
             )}
           </div>
 
-          {isFederal === 'no' && (
+          {activeTab === 'state_wise' && (
             <div
               style={{
                 display:
@@ -272,10 +346,6 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
                 } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
-                disabled={
-                  accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
-                }
               >
                 <MenuItem
                   value=''
@@ -312,22 +382,35 @@ const RDForm: React.FC<RDFormProps> = ({ caseDetails }) => {
           )}
         </div>
       </div>
-
-      {/* PDF Viewer Section - Only shown after clicking View button */}
-      {showPdfViewer && (
+      {previewData?.data && (
         <div>
           <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
             PDF Viewer
           </div>
           <div className='max-h-[600px] overflow-auto p-3'>
-            <PdfViewer
-              pdfUrl={rdFormData || ''}
-              isLoadingPdf={isPreviewLoading}
-              isPdfError={isPreviewError}
-            />
+            {previewData.data.rdformUrl ? (
+              <PdfViewer
+                base64={previewData.data.rdformUrl}
+                isLoadingPdf={isPreviewLoading}
+                isPdfError={isPreviewError}
+              />
+            ) : (
+              <div className='flex items-center justify-center h-[100px] text-[#7D98B6] text-[13px]'>
+                {previewData.data.rdErrorMessage || 'No data available'}
+              </div>
+            )}
           </div>
         </div>
       )}
+      <SignOffModal
+        isOpen={isSignOffModalOpen}
+        onClose={() => setIsSignOffModalOpen(false)}
+        caseId={caseId ?? ''}
+        accountId={accountid}
+        refetchCaseDetails={refetchCaseDetails}
+        title='RD Form'
+        isRdform={true}
+      />
     </div>
   );
 };

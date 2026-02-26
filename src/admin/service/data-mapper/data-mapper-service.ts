@@ -1,4 +1,9 @@
-import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationResult,
+  useQuery,
+  UseQueryResult,
+} from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import {
   DataMapperCreateResponse,
@@ -15,6 +20,10 @@ import {
   MappingDetailsResponse,
   ObjectsListResponse,
   DataMapperStatusApiResponse,
+  RecomputeRequest,
+  RecomputeResponse,
+  UpdateFormStatusPayload,
+  UpdateFormStatusResponse,
 } from '../../types/data-mapper';
 
 const useApiMutationService = <T, V = void>(
@@ -235,5 +244,50 @@ export const useGetDataMapperStatus = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+  });
+};
+
+// --------- Recompute Data Mapper ----------
+export const recomputeDataMapper = async (
+  payload: RecomputeRequest
+): Promise<RecomputeResponse> => {
+  const response = await caseServiceApi.post<RecomputeResponse>(
+    '/api/dataMapper/recompute',
+    payload
+  );
+
+  return response.data;
+};
+
+export const useRecomputeDataMapper = (): UseMutationResult<
+  RecomputeResponse,
+  Error,
+  RecomputeRequest
+> => {
+  return useMutation({
+    mutationKey: ['recompute-data-mapper'],
+    mutationFn: (payload: RecomputeRequest) => recomputeDataMapper(payload),
+  });
+};
+
+// --------- Update Form Status ----------
+const updateFormStatus = async (
+  payload: UpdateFormStatusPayload
+): Promise<UpdateFormStatusResponse> => {
+  const response = await caseServiceApi.post<UpdateFormStatusResponse>(
+    '/api/dataMapper/updateFormStatus',
+    payload
+  );
+  return response.data;
+};
+
+export const useUpdateFormStatus = (): UseMutationResult<
+  UpdateFormStatusResponse,
+  Error,
+  UpdateFormStatusPayload
+> => {
+  return useMutation({
+    mutationKey: ['update-form-status'],
+    mutationFn: (payload: UpdateFormStatusPayload) => updateFormStatus(payload),
   });
 };

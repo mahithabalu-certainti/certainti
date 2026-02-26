@@ -7,7 +7,7 @@ export const getClosingRemarksColumns =
     {
       id: 'signoff_type_name',
       sortId: 'signoff_type_name',
-      label: 'Signoff Type',
+      label: 'Approved Type',
       width: 180,
       sortable: true,
       // hide:
@@ -17,7 +17,7 @@ export const getClosingRemarksColumns =
     {
       id: 'created_by_name',
       sortId: 'created_by_name',
-      label: 'Created By',
+      label: 'Approved By',
       width: 180,
       sortable: true,
       // hide:
@@ -27,7 +27,7 @@ export const getClosingRemarksColumns =
     {
       id: 'signoff_at',
       sortId: 'signoff_at',
-      label: 'Signoff Date',
+      label: 'Approved On',
       width: 200,
       sortable: true,
       // hide:

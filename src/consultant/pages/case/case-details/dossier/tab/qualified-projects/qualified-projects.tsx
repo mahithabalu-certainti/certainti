@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+  CaseAssignedExportParams,
   ExportType,
   QualifiedProjectItem,
-  QualifiedProjectsListExportParams,
   QualifiedProjectsListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -24,7 +24,9 @@ interface QualifiedProjectsProps {
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: QualifiedProjectsListExportParams) => void;
+  setExportParams?: React.Dispatch<
+    React.SetStateAction<CaseAssignedExportParams>
+  >;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -71,6 +73,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       case_rid: caseId,
       account_rid: accountId,
       fiscal_year: fiscalYear,
+      type: 'qualifiedProjects',
     },
     refreshTrigger
   );
@@ -97,13 +100,25 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
       setExportType('dossier-qualified-projects');
     }
     setExportParams?.({
-      sortBy: tableParams.sortBy,
-      sortOrder: tableParams.sortOrder,
-      filters: appliedFilters,
+      page: 1,
+      limit: tableParams.limit,
+      sort: tableParams.sortBy,
+      sort_by: tableParams.sortOrder,
+      filter: appliedFilters,
       search: searchValue,
+      case_rid: caseId,
+      account_rid: accountId,
+      fiscal_year: fiscalYear,
+      type: 'qualifiedProjects',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
+  }, [
+    appliedFilters,
+    searchValue,
+    tableParams.sortBy,
+    tableParams.sortOrder,
+    tableParams.limit,
+  ]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';

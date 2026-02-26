@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
+  AuditTimelineListExportParams,
   ClosingRemarksItems,
   ExportType,
-  ResourceSummaryListExportParams,
   ResourceSummaryListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -19,7 +19,7 @@ interface ClosingRemarksProps {
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ResourceSummaryListExportParams) => void;
+  setExportParams?: (params: AuditTimelineListExportParams) => void;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -48,13 +48,17 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
   const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'resource_code',
+    sortBy: 'signoff_at',
     sortOrder: 'ASC',
   });
 
   const { data, isLoading, isError } = useClosingRemarksList(
-    accountId,
-    caseId ?? '',
+    {
+      case_rid: caseId ?? '',
+      account_rid: accountId ?? '',
+      sort: tableParams.sortBy,
+      sort_by: tableParams.sortOrder,
+    },
     refreshTrigger
   );
 
@@ -79,13 +83,11 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
 
   useEffect(() => {
     if (setExportType) {
-      setExportType('dossier-resource-summary');
+      setExportType('dossier-audit-timeline');
     }
     setExportParams?.({
-      sortBy: tableParams.sortBy,
-      sortOrder: tableParams.sortOrder,
-      filters: appliedFilters,
-      search: searchValue,
+      sort: tableParams.sortBy,
+      sort_by: tableParams.sortOrder,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);

@@ -28,6 +28,7 @@ import {
   AccountsIcon,
   ManageGroupAccount,
   HistorySubmissionIcon,
+  DashboardIcon,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -113,6 +114,7 @@ import { ExportCaseList } from '../../services/cases/case-service';
 import { ExportChecklistList } from '../../services/checklist/checklist-service';
 import { ExportActivityList } from '../../services/activities/activities-service';
 import HistorySubmission from '../case/case-details/history-submission/history-submission';
+import Dashboard from '../account-details-sidebar/sidebar-pages/dashboard/dashboard';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -944,6 +946,12 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'dashboard':
+        return (
+          <Dashboard
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+          />
+        );
       case 'timesheet':
         return (
           <Timesheet
@@ -996,6 +1004,14 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: FinancialIcon,
+      },
+      {
+        name: 'Dashboard',
+        key: 'dashboard',
+        id: AllModules.ACCOUNTS,
+        disabled: disable,
+        hide: disable,
+        icon: DashboardIcon,
       },
       {
         name: 'Details',

@@ -182,6 +182,14 @@ const EmailTemplateForm: React.FC = () => {
     return map;
   }, [emailTemplateViewEditFields]);
 
+  // Check if selected category is "General"
+  const isGeneralCategory = useMemo(() => {
+    const selectedCategory = categoryOptions.find(
+      (option) => option.value === formData.category
+    );
+    return selectedCategory?.label?.toLowerCase() === 'general';
+  }, [formData.category, categoryOptions]);
+
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -285,6 +293,18 @@ const EmailTemplateForm: React.FC = () => {
 
   // Handle mention trigger logic
   const handleMentionTrigger = useCallback(() => {
+    // Don't show suggestions for General category
+    if (isGeneralCategory) {
+      setMentionState((prev) => ({
+        ...prev,
+        show: false,
+        search: '',
+        suggestions: [],
+        selectionIndex: 0,
+      }));
+      return;
+    }
+
     const quill = quillRef.current?.getEditor();
     if (!quill) return;
 
@@ -353,7 +373,7 @@ const EmailTemplateForm: React.FC = () => {
         selectionIndex: 0,
       }));
     }
-  }, [filterPlaceholders]);
+  }, [filterPlaceholders, isGeneralCategory]);
 
   // Insert selected placeholder - Only bold the placeholder, not user text
   const insertPlaceholder = useCallback(
@@ -411,6 +431,18 @@ const EmailTemplateForm: React.FC = () => {
 
   // Handle subject mention trigger logic
   const handleSubjectMentionTrigger = useCallback(() => {
+    // Don't show suggestions for General category
+    if (isGeneralCategory) {
+      setSubjectMentionState((prev) => ({
+        ...prev,
+        show: false,
+        search: '',
+        suggestions: [],
+        selectionIndex: 0,
+      }));
+      return;
+    }
+
     const input = subjectInputRef.current;
     if (!input) return;
 
@@ -483,7 +515,7 @@ const EmailTemplateForm: React.FC = () => {
         selectionIndex: 0,
       }));
     }
-  }, [filterPlaceholders]);
+  }, [filterPlaceholders, isGeneralCategory]);
 
   // Insert placeholder into subject field
   const insertSubjectPlaceholder = useCallback(
@@ -826,6 +858,33 @@ const EmailTemplateForm: React.FC = () => {
     const { isValid, errors: validationErrors } =
       validateEmailTemplateForm(formData);
     setErrors(validationErrors);
+
+    // Check if General category contains placeholders
+    if (isGeneralCategory) {
+      const generalErrors: Record<string, string> = {};
+
+      // Use separate regex instances to avoid lastIndex issues with global flag
+      const subjectHasPlaceholder = /\{\{[^}]+\}\}/.test(formData.subject);
+      const bodyHasPlaceholder = /\{\{[^}]+\}\}/.test(formData.emailBody);
+
+      if (subjectHasPlaceholder) {
+        generalErrors.subject =
+          'General category cannot contain placeholders in subject';
+      }
+
+      if (bodyHasPlaceholder) {
+        generalErrors.emailBody =
+          'General category cannot contain placeholders in email body';
+      }
+
+      if (Object.keys(generalErrors).length > 0) {
+        setErrors((prev) => ({
+          ...prev,
+          ...generalErrors,
+        }));
+        return false;
+      }
+    }
 
     // Additional validation for required placeholders based on applicable_to
     const placeholderErrors = validateRequiredPlaceholders();

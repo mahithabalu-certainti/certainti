@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { SectionHeaderTab, TruncateWithTooltip } from '../../../../components';
+import { TruncateWithTooltip } from '../../../../components';
 import PDFViewer from './pdf-viewer';
 import MappingTable from './mapping-table';
 import {
   useMappingDetails,
   useObjectsList,
+  useRecomputeDataMapper,
   useUpdateDataMapperConfig,
 } from '../../../service/data-mapper/data-mapper-service';
 import { PDFField } from '../../../types';
@@ -12,7 +13,7 @@ import { useParams } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
-import { DataMapperIcon } from '../../../../assets';
+import { DataMapperIcon, ArrowIcon } from '../../../../assets';
 import { useToast } from '../../../../hooks';
 import { extractPDFFields, validateMappingItem } from './helper';
 
@@ -21,7 +22,14 @@ interface ObjectRidMap {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
+  type:
+    | 'chip'
+    | 'operator'
+    | 'manual'
+    | 'function'
+    | 'number'
+    | 'conditional'
+    | 'bracket';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
@@ -47,26 +55,31 @@ interface MappingItem {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
   targetError?: string;
   column_id?: string | null;
+  status?: string;
 }
+
+const SIDEBAR_WIDTH = '38.1vw';
 
 const DataMapperConfig: React.FC = () => {
   const { mapperId } = useParams();
   const { successToast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>('pdf_view');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [fields, setFields] = useState<PDFField[]>([]);
   const [selectedField, setSelectedField] = useState<PDFField | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
   const [mappings, setMappings] = useState<MappingItem[]>([]);
+  const [isPdfSidebarOpen, setIsPdfSidebarOpen] = useState(true);
 
   const updateDataMapperConfig = useUpdateDataMapperConfig();
+  const { mutate: recompute, isPending: isRecomputing } =
+    useRecomputeDataMapper();
   const { data: mappingData, isLoading } = useMappingDetails(mapperId, true);
   const { data: objectsList, isLoading: isLoadingObjects } = useObjectsList(
     mappingData?.formDetail?.country_rid || '',
@@ -75,7 +88,19 @@ const DataMapperConfig: React.FC = () => {
 
   useEffect(() => {
     if (mappingData?.mappings) {
-      setMappings(mappingData.mappings as MappingItem[]);
+      const sanitizedMappings = (mappingData.mappings as MappingItem[]).map(
+        (mapping) => {
+          // If field_id is empty, force status to 'rejected'
+          if (!mapping.field_id || mapping.field_id.trim() === '') {
+            return {
+              ...mapping,
+              status: 'rejected',
+            };
+          }
+          return mapping;
+        }
+      );
+      setMappings(sanitizedMappings);
     }
   }, [mappingData?.mappings]);
 
@@ -118,23 +143,6 @@ const DataMapperConfig: React.FC = () => {
     loadPdfData();
   }, [mappingData?.base64File]);
 
-  const tabs = [
-    {
-      label: 'Original Form',
-      value: 'pdf_view',
-      hide: false,
-    },
-    {
-      label: 'Field Mapping',
-      value: 'table_view',
-      hide: false,
-    },
-  ];
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
   const handleFieldClick = (field: PDFField) => {
     setSelectedField(field);
   };
@@ -168,12 +176,7 @@ const DataMapperConfig: React.FC = () => {
 
     // Update mappings with validation errors
     setMappings(validatedMappings);
-
-    if (hasErrors) {
-      // Switch to table view to show errors
-      setActiveTab('table_view');
-      return;
-    }
+    if (hasErrors) return;
 
     const payload = {
       rid: mapperId || '',
@@ -189,6 +192,7 @@ const DataMapperConfig: React.FC = () => {
         calculation_config: mapping.calculation_config,
         field_type: mapping.field_type,
         column_id: mapping.column_id || null,
+        status: mapping.status,
       })),
     };
 
@@ -200,10 +204,50 @@ const DataMapperConfig: React.FC = () => {
     });
   };
 
+  const handleRecompute = () => {
+    const payload = {
+      rid: mapperId || '',
+      mappings: mappings.map((mapping) => ({
+        rid: mapping.rid,
+        created_datetime: mapping.created_datetime || '',
+        created_by: mapping.created_by || '',
+        modified_datetime: mapping.modified_datetime || null,
+        modified_by: mapping.modified_by || null,
+        form_rid: mapperId || '',
+        field_label: mapping.field_label,
+        field_id: mapping.field_id,
+        calculation_config: mapping.calculation_config,
+        field_type: mapping.field_type,
+        column_id: mapping.column_id || null,
+        status: mapping.status,
+      })),
+    };
+    recompute(payload, {
+      onSuccess: (data) => {
+        if (data?.data) {
+          const sanitizedMappings = (data.data as MappingItem[]).map(
+            (mapping) => {
+              // If field_id is empty, force status to 'rejected'
+              if (!mapping.field_id || mapping.field_id.trim() === '') {
+                return {
+                  ...mapping,
+                  status: 'rejected',
+                };
+              }
+              return mapping;
+            }
+          );
+          setMappings(sanitizedMappings);
+          successToast('Mappings recomputed successfully');
+        }
+      },
+    });
+  };
+
   const formLoading = isLoading || isLoadingObjects || isLoadingPdf;
 
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <React.Suspense fallback={null}>
@@ -219,11 +263,11 @@ const DataMapperConfig: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {`RD Form Configuration ${mappingData?.formDetail?.r_number ? `> ${mappingData?.formDetail?.r_number || ''}` : ''}`}
+                {`RD Forms ${mappingData?.formDetail?.r_number ? `> ${mappingData?.formDetail?.r_number || ''}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-              {'Configuration'}
+              Configuration
             </h5>
           </div>
         </div>
@@ -257,7 +301,7 @@ const DataMapperConfig: React.FC = () => {
         {formLoading ? (
           <SkeletonForm />
         ) : (
-          <div>
+          <div style={{ pointerEvents: isRecomputing ? 'none' : 'all' }}>
             {/* Section 1 */}
             <div className='flex items-center align-middle px-10 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
               Basic Information
@@ -301,50 +345,96 @@ const DataMapperConfig: React.FC = () => {
               ))}
             </div>
             {/* Section 2 */}
-            <div className='flex items-center align-middle px-10 h-[30px] border border-b-0 border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Data Mapping
+            <div className='flex items-center justify-between align-middle px-10 h-[30px] border border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+              <span>Data Mapping</span>
+              <TextButton
+                label='Re-Map Fields'
+                loading={isRecomputing}
+                onClick={handleRecompute}
+                toolTipEnabled={true}
+                tooltipValue='Please correct the first field before re-running the field mapping.'
+                sx={{
+                  width: '105px',
+                  minWidth: '105px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
+              />
             </div>
-            <SectionHeaderTab
-              key={activeTab}
-              tabs={tabs}
-              onTabChange={handleTabChange}
-              defaultValue={activeTab}
-              className='flex flex-col gap-0 border border-[#CBD6E2] border-r-0 border-l-0  px-10'
-            />
-
-            {/* Tab Content */}
             <div className='mt-4 px-10'>
-              <div className={activeTab === 'pdf_view' ? 'block' : 'hidden'}>
-                {pdfFile ? (
-                  <PDFViewer
-                    file={pdfFile}
-                    fields={fields}
-                    onFieldClick={handleFieldClick}
-                    selectedField={selectedField}
-                  />
-                ) : (
-                  <div className='flex items-center justify-center h-[200px] bg-gray-50 border border-gray-200 rounded'>
-                    <span
-                      className={`font-medium ${
-                        pdfLoadError ? 'text-red-500' : 'text-gray-500'
-                      }`}
-                    >
-                      {pdfLoadError || 'No PDF available'}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className={activeTab === 'table_view' ? 'block' : 'hidden'}>
-                <MappingTable
-                  mappings={mappings}
-                  objectsList={objectsList || []}
-                  onMappingsChange={handleMappingsChange}
-                  formType={mappingData?.formDetail?.form_type}
-                />
-              </div>
+              <MappingTable
+                mappings={mappings}
+                objectsList={objectsList || []}
+                onMappingsChange={handleMappingsChange}
+                formType={mappingData?.formDetail?.form_type}
+              />
             </div>
           </div>
         )}
+      </div>
+
+      <button
+        onClick={() => setIsPdfSidebarOpen((prev) => !prev)}
+        title={isPdfSidebarOpen ? 'Close Original Form' : 'Open Original Form'}
+        aria-label={isPdfSidebarOpen ? 'Close PDF sidebar' : 'Open PDF sidebar'}
+        className='fixed top-[calc(50%+45px)] -translate-y-1/2 z-[1300] w-[22px] h-14 bg-[#2D3E4F] border-none rounded-l-lg flex items-center justify-center shadow-[-2px_2px_10px_rgba(0,0,0,0.22)] p-0 outline-none cursor-pointer'
+        style={{
+          right: isPdfSidebarOpen ? SIDEBAR_WIDTH : '0px',
+          transition: 'right 0.35s cubic-bezier(0.4,0,0.2,1)',
+        }}
+      >
+        <ArrowIcon
+          className='w-4 h-4 [&>path]:stroke-white'
+          style={{
+            transform: isPdfSidebarOpen ? 'rotate(-90deg)' : 'rotate(90deg)',
+            transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+            display: 'block',
+          }}
+        />
+      </button>
+
+      <div
+        className='fixed top-[90px] right-0 bottom-0 z-[1200] pointer-events-none'
+        style={{
+          width: SIDEBAR_WIDTH,
+          transform: isPdfSidebarOpen
+            ? 'translateX(0)'
+            : `translateX(${SIDEBAR_WIDTH})`,
+          transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+          willChange: 'transform',
+        }}
+      >
+        <div className='pointer-events-auto w-full h-full bg-white shadow-[-4px_0_28px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden'>
+          <div className='px-4 py-1 bg-[#F3F6FA] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold shrink-0 tracking-[0.01em]'>
+            Original Form — PDF Viewer
+          </div>
+          <div className='flex-1 overflow-hidden flex flex-col min-h-0'>
+            {formLoading ? (
+              <div className='bg-white h-full flex items-center justify-center text-gray-500'>
+                <div className='text-center'>
+                  <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+                </div>
+              </div>
+            ) : pdfFile ? (
+              <div className='flex-1 min-h-0 p-3 flex flex-col'>
+                <PDFViewer
+                  file={pdfFile}
+                  fields={fields}
+                  onFieldClick={handleFieldClick}
+                  selectedField={selectedField}
+                />
+              </div>
+            ) : (
+              <div className='flex-1 flex items-center justify-center bg-[#F8FAFC]'>
+                <span
+                  className={`font-medium text-[13px] ${pdfLoadError ? 'text-red-600' : 'text-[#7D98B6]'}`}
+                >
+                  {pdfLoadError || 'No PDF available'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

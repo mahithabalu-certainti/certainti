@@ -1,17 +1,25 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   ResourceSummaryItem,
   ResourceSummaryListURLParams,
   DossierSummary,
   ClosingRemarksItems,
   ClosingRemarksResponse,
+  RDFormResponse,
+  ClosingRemarksParams,
+  ComputedDataResponse,
+  ComputedDataPayload,
+  CaseClosePayload,
 } from '../../types';
 import {
   ResourceSummaryMockData,
   DossierSummaryMockData,
 } from '../../mockdata/dossier';
 import { caseServiceApi } from '../../../api/api';
-import { getClosingRemarksListURL } from '../urls/dossier-url';
+import {
+  getClosingRemarksListURL,
+  getRDFormMapperPreviewURL,
+} from '../urls/dossier-url';
 
 // Resource Summary
 export const fetchResourceSummaryList = async (
@@ -112,11 +120,11 @@ export const downloadPdfFromBase64 = (
 
 // closing remarks list
 export const fetchClosingRemarksList = async (
-  accountid: string,
-  caseid: string
+  params: ClosingRemarksParams
 ): Promise<{ closingRemarks: ClosingRemarksItems[]; count: number }> => {
-  const response = await caseServiceApi.get<ClosingRemarksResponse>(
-    getClosingRemarksListURL(accountid, caseid)
+  const response = await caseServiceApi.post<ClosingRemarksResponse>(
+    getClosingRemarksListURL(),
+    params
   );
   return {
     closingRemarks: response.data.data.closing_remarks,
@@ -125,8 +133,7 @@ export const fetchClosingRemarksList = async (
 };
 
 export const useClosingRemarksList = (
-  accountId: string,
-  caseId: string,
+  params: ClosingRemarksParams,
   refreshList?: number
 ): UseQueryResult<
   { closingRemarks: ClosingRemarksItems[]; count: number },
@@ -136,10 +143,207 @@ export const useClosingRemarksList = (
     { closingRemarks: ClosingRemarksItems[]; count: number },
     Error
   >({
-    queryKey: ['closing-remarks-list', accountId, caseId, refreshList],
-    queryFn: () => fetchClosingRemarksList(accountId, caseId),
+    queryKey: ['closing-remarks-list', params, refreshList],
+    queryFn: () => fetchClosingRemarksList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!accountId && !!caseId,
+    enabled: !!params.case_rid && !!params.account_rid,
+  });
+};
+
+// RD Form Mapper Generate
+export const fetchRDFormMapperGenerate = async (
+  accountRid: string,
+  caseRid: string,
+  fiscalYear?: number
+): Promise<{
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+}> => {
+  const response = await caseServiceApi.post(
+    `/api/rdFormMapper/generate`,
+    { account_rid: accountRid, case_rid: caseRid, fiscal_year: fiscalYear } // moved to payload
+  );
+  return response.data;
+};
+
+export const useRDFormMapperGenerate = (
+  accountRid: string,
+  caseRid: string,
+  fiscalYear?: number,
+  enabled: boolean = true
+): UseQueryResult<
+  { statusCode: number; statusCodeValue: string; statusMessage: string },
+  Error
+> => {
+  return useQuery<
+    { statusCode: number; statusCodeValue: string; statusMessage: string },
+    Error
+  >({
+    queryKey: ['rd-form-mapper-generate', accountRid, caseRid, fiscalYear],
+    queryFn: () => fetchRDFormMapperGenerate(accountRid, caseRid, fiscalYear),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!accountRid && !!caseRid && !!fiscalYear && enabled,
+  });
+};
+
+export const useRDFormMapperGenerateMutation = () => {
+  return useMutation<
+    { statusCode: number; statusCodeValue: string; statusMessage: string },
+    Error,
+    { accountRid: string; caseRid: string; fiscalYear?: number }
+  >({
+    mutationFn: ({ accountRid, caseRid, fiscalYear }) =>
+      fetchRDFormMapperGenerate(accountRid, caseRid, fiscalYear),
+  });
+};
+
+export const fetchRDFormMapperPreview = async (
+  accountRid: string,
+  caseRid: string,
+  countryRid: string,
+  isFederal: boolean,
+  stateRid?: string
+): Promise<RDFormResponse> => {
+  const url = getRDFormMapperPreviewURL(
+    accountRid,
+    caseRid,
+    countryRid,
+    isFederal,
+    stateRid
+  );
+  const response = await caseServiceApi.get(url);
+  return response.data;
+};
+
+export const useRDFormMapperPreview = (
+  accountRid: string,
+  caseRid: string,
+  countryRid: string,
+  isFederal: boolean,
+  stateRid?: string,
+  enabled: boolean = true
+): UseQueryResult<RDFormResponse, Error> => {
+  return useQuery<RDFormResponse, Error>({
+    queryKey: [
+      'rd-form-mapper-preview',
+      accountRid,
+      caseRid,
+      countryRid,
+      isFederal,
+      stateRid,
+    ],
+    queryFn: () =>
+      fetchRDFormMapperPreview(
+        accountRid,
+        caseRid,
+        countryRid,
+        isFederal,
+        stateRid
+      ),
+    retry: 0,
+    gcTime: 0,
+    enabled:
+      !!accountRid &&
+      !!caseRid &&
+      !!countryRid &&
+      (isFederal || !!stateRid) &&
+      enabled,
+  });
+};
+
+export const useRDFormMapperPreviewMutation = () => {
+  return useMutation<
+    RDFormResponse,
+    Error,
+    {
+      accountRid: string;
+      caseRid: string;
+      countryRid: string;
+      isFederal: boolean;
+      stateRid?: string;
+    }
+  >({
+    mutationFn: ({ accountRid, caseRid, countryRid, isFederal, stateRid }) =>
+      fetchRDFormMapperPreview(
+        accountRid,
+        caseRid,
+        countryRid,
+        isFederal,
+        stateRid
+      ),
+  });
+};
+
+// ComputedData
+
+export const fetchComputedData = async (
+  payload: ComputedDataPayload
+): Promise<ComputedDataResponse> => {
+  const response = await caseServiceApi.post<ComputedDataResponse>(
+    '/api/cases/computedValues',
+    payload
+  );
+
+  return response.data;
+};
+
+export const useComputedData = (
+  payload: ComputedDataPayload,
+  enabled: boolean
+): UseQueryResult<ComputedDataResponse, Error> => {
+  return useQuery<ComputedDataResponse, Error>({
+    queryKey: ['computed-data', payload],
+    queryFn: () => fetchComputedData(payload),
+    retry: 0,
+    gcTime: 0,
+    enabled:
+      enabled &&
+      !!payload.account_rid &&
+      !!payload.case_rid &&
+      !!payload.country_rid &&
+      !!payload.country_code,
+  });
+};
+
+// ─── Case Close ───────────────────────────────────────────────────────────────
+
+export const fetchCaseClose = async (
+  payload: CaseClosePayload
+): Promise<{ data: unknown }> => {
+  const formData = new FormData();
+
+  formData.append('case_rid', payload.case_rid);
+  formData.append('account_rid', payload.account_rid);
+  formData.append('country_credits', JSON.stringify(payload.country_credits));
+  formData.append('state_credits', JSON.stringify(payload.state_credits));
+
+  if (payload.fiscal_year !== undefined) {
+    formData.append('fiscal_year', String(payload.fiscal_year));
+  }
+
+  if (payload.user_preference !== undefined) {
+    formData.append('user_preference', payload.user_preference);
+  }
+
+  // Append per-row files with their named keys (file_country_{rid} / file_state_{rid})
+  if (payload.files) {
+    Object.entries(payload.files).forEach(([key, file]) => {
+      formData.append(key, file);
+    });
+  }
+
+  const response = await caseServiceApi.post('/api/cases/close', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
+
+export const useCaseCloseMutation = () => {
+  return useMutation<{ data: unknown }, Error, CaseClosePayload>({
+    mutationFn: (payload) => fetchCaseClose(payload),
   });
 };

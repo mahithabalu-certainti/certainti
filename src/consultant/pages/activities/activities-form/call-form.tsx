@@ -884,7 +884,7 @@ const CallForm: React.FC<CallFormProps> = ({
         </div>
       </div>
       <div
-        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
+        className={`${isFrom === 'modal' ? 'min-h-[70vh] max-h-[75vh] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
       >
         {formLoading ? (
           <SkeletonForm />

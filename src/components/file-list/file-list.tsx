@@ -15,6 +15,7 @@ interface FileListProps {
   existingFiles?: ExistingFile[];
   onRemoveExistingFile?: (index: number) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 export const FileList: React.FC<FileListProps> = ({
@@ -24,13 +25,16 @@ export const FileList: React.FC<FileListProps> = ({
   setSelectedFiles,
   onRemoveExistingFile,
   disabled,
+  className,
 }) => {
   const hasFiles = selectedFiles.length > 0 || existingFiles.length > 0;
 
   if (!hasFiles) return null;
 
   return (
-    <div className='w-[502px] max-w-[502px] space-y-2'>
+    <div
+      className={className ? className : 'w-[502px] max-w-[502px] space-y-2'}
+    >
       <div className='text-sm font-medium text-[#2D3E4F] mb-2'>
         Selected File:
       </div>

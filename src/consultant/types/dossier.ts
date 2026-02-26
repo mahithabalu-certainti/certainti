@@ -73,6 +73,7 @@ export interface QualifiedProjectsListURLParams {
   caseRid?: string;
   accountRid?: string;
   search?: string;
+  type?: string;
 }
 
 export interface QualifiedProjectsListExportParams {
@@ -163,6 +164,7 @@ export interface ResourceSummaryListURLParams {
   caseRid?: string;
   accountRid?: string;
   search?: string;
+  type?: string;
 }
 
 export interface ResourceSummaryListExportParams {
@@ -174,6 +176,13 @@ export interface ResourceSummaryListExportParams {
   accountRid?: string;
   search?: string;
   timezone?: string;
+}
+export interface AuditTimelineListExportParams {
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  timezone?: string;
+  case_rid?: string;
+  account_rid?: string;
 }
 
 export type ResourceSummaryItem = {
@@ -263,6 +272,14 @@ export type ClosingRemarksItems = {
   signoff_at: string;
   rid: string;
 };
+
+export interface ClosingRemarksParams {
+  case_rid: string;
+  account_rid: string;
+  sort: string;
+  sort_by: string;
+}
+
 export interface ClosingRemarksResponse {
   statusCode: number;
   statusCodeValue: string;
@@ -387,6 +404,8 @@ export interface RDFormResponse {
   statusMessage: string;
   data: {
     rdformUrl: string;
+    base64?: string;
+    rdErrorMessage: string | null;
   };
 }
 
@@ -415,6 +434,7 @@ export interface SignOffFinancialHighlightsPayload {
   sign_off: boolean;
   file: File | null;
   comments: string;
+  isRdform: boolean;
 }
 export interface InputParams {
   country: string;
@@ -564,4 +584,82 @@ export interface RDCreditInitiateResponse {
   statusMessage: string;
   status: string;
   data: CaseSummaryData | string; // Adjusted to allow string (from previous usage or just flexible)
+}
+
+export interface DossierPackageResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    rid: string;
+    r_number: string | null;
+    created_by: string;
+    modified_by: string;
+    created_datetime: string;
+    modified_datetime: string;
+    case_rid: string;
+    account_rid: string;
+    browse_url: string;
+    document_name: string;
+    size: string;
+    extension: string;
+  };
+}
+
+// ComputedData
+
+export interface ComputedDataPayload {
+  case_rid: string;
+  account_rid: string;
+  country_rid: string;
+  state_rid?: string[];
+  country_code: string;
+}
+
+export interface CountryComputedData {
+  final_credit: string;
+  country_rid: string;
+  country_name: string;
+}
+
+export interface StateComputedData {
+  final_credit: string;
+  state_rid: string;
+  state_name: string;
+}
+
+export interface ComputedDataResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    countryComputedData: CountryComputedData;
+    stateComputedData: StateComputedData[];
+  };
+}
+
+export interface CaseCloseCountryCredits {
+  country_rid: string;
+  rd_credits_computed: string;
+  rd_credits_submitted: string;
+  rd_credits_approved: string;
+  comments: string;
+}
+
+export interface CaseCloseStateCredit {
+  state_rid: string;
+  rd_credits_computed: string;
+  rd_credits_submitted: string;
+  rd_credits_approved: string;
+  comments: string;
+}
+
+export interface CaseClosePayload {
+  case_rid: string;
+  account_rid: string;
+  country_credits: Partial<CaseCloseCountryCredits>;
+  state_credits: CaseCloseStateCredit[];
+  files?: Record<string, File>; // key: file_country_{rid} or file_state_{rid}
+  fiscal_year?: string | number;
+  user_preference?: string; // 'true' or ''
 }

@@ -5,6 +5,8 @@ export interface DataMapperFormPayload {
   effective_to_date: string;
   country_rid: string;
   state_rid: string;
+  description: string;
+  is_federal: boolean;
   file?: File;
 }
 
@@ -32,6 +34,8 @@ export interface DataMapperDetails {
   status_name: string;
   created_by_name: string;
   modified_by_name: string;
+  descriptions: string;
+  is_federal: boolean;
 }
 
 export interface DataMapperDetailsResponse {
@@ -162,8 +166,10 @@ export interface FieldMapping {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   column_id: string | null;
+  extraction_order: number;
+  status: 'accepted' | 'rejected' | 'anomaly';
 }
 
 export interface MappingDetailsData {
@@ -193,7 +199,7 @@ export interface ObjectItem {
   parent_object: string;
   object_name: string;
   is_json: boolean;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
 }
 
 export interface ObjectsListResponse {
@@ -214,7 +220,7 @@ export interface DataMapperFieldMapping {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   column_id: string | null;
 }
 
@@ -249,4 +255,29 @@ export interface DataMapperStatusApiResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: DataMapperStatus[];
+}
+
+// Re-compute
+export interface RecomputeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: FieldMapping[];
+}
+
+export interface RecomputeRequest {
+  rid: string;
+  mappings: DataMapperFieldMapping[];
+}
+
+// ----------- Update Form Status Types --------
+export interface UpdateFormStatusPayload {
+  form_rid: string;
+  form_status: 'accept' | 'reject';
+}
+
+export interface UpdateFormStatusResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
 }

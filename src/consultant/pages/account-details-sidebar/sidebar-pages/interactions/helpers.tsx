@@ -25,7 +25,8 @@ export const getInteractionFilterFields = (
   interactionResponseSources: { option: string; value: string }[],
   interactionStatus: { option: string; value: string }[],
   InteractionLevel: { option: string; value: string }[],
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -43,8 +44,8 @@ export const getInteractionFilterFields = (
       type: 'text',
       operatorOption: textOptions,
       hide:
-        !permissionMap?.['project_code']?.edit &&
-        !permissionMap?.['project_code']?.read,
+        !projectPermissionMap?.['project_code']?.edit &&
+        !projectPermissionMap?.['project_code']?.read,
     },
     {
       name: 'Interaction Level',

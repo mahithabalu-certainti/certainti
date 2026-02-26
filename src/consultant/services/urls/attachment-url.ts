@@ -65,6 +65,7 @@ export const AttachmentExportListURL = ({
   accountRid,
   attachmentLevel,
   search,
+  type,
 }: AttachmentsListExportParams): string => {
   const baseUrl = attachmentLevel
     ? `/api/attachment/list/export`
@@ -92,6 +93,9 @@ export const AttachmentExportListURL = ({
   if (timezone !== undefined) searchParams.set('timezone', timezone);
   if (search) {
     searchParams.set('search', search);
+  }
+  if (type !== undefined) {
+    searchParams.set('type', type);
   }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

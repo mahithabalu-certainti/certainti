@@ -71,6 +71,7 @@ export interface AttachmentsListExportParams {
   page?: number;
   limit?: number;
   search?: string;
+  type?: string;
 }
 
 export interface AttachmentUploadPayload {

@@ -11,7 +11,12 @@ import {
   Popover,
   IconButton,
 } from '@mui/material';
-import { CloseIcon, ErrorInfoIcon } from '../../../../assets';
+import {
+  AcceptIcon,
+  CloseIcon,
+  ErrorInfoIcon,
+  RejectIcon,
+} from '../../../../assets';
 import TruncateWithTooltip from '../../../../components/truncate-with-tooltip/truncate-with-tooltip';
 import TextButton from '../../../../components/button/text-button';
 
@@ -21,7 +26,7 @@ interface ObjectItem {
   object_name: string;
   ref_table: string;
   field_name: string | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
 }
 
 interface ConditionalClause {
@@ -44,13 +49,26 @@ interface ConditionalClause {
 interface ConditionalExpression {
   clauses: ConditionalClause[];
 }
+interface BracketItem {
+  type: 'chip' | 'operator' | 'manual' | 'number' | 'bracket';
+  value: string;
+  nestedItems?: BracketItem[]; // for nested bracket sub-expressions
+}
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
+  type:
+    | 'chip'
+    | 'operator'
+    | 'manual'
+    | 'function'
+    | 'number'
+    | 'conditional'
+    | 'bracket';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[]; // Array of arguments (object RIDs or manual values)
   conditionalData?: ConditionalExpression;
+  bracketItems?: BracketItem[]; // Inner items for bracket expressions
 }
 
 interface ObjectRidMap {
@@ -62,11 +80,12 @@ interface MappingItem {
   field_label: string;
   field_id: string | null;
   calculation_config: ObjectRidMap | null;
-  field_type: 'line-item' | 'table';
+  field_type: 'line-item' | 'table-item' | string;
   fieldExpressions?: FieldExpression[];
   inputValue?: string;
   fieldIdError?: string;
   targetError?: string;
+  status?: string;
 }
 
 interface MappingTableProps {
@@ -108,6 +127,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
   const clauseContainerRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const returnInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const returnContainerRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const bracketPopoverInputRef = useRef<HTMLInputElement | null>(null);
 
   // Conditional popover state
   const [conditionalPopover, setConditionalPopover] = useState<{
@@ -116,6 +136,20 @@ const MappingTable: React.FC<MappingTableProps> = ({
     anchorEl: HTMLElement | null;
     editingIndex?: number;
     error?: string;
+  } | null>(null);
+
+  // Bracket popover state
+  const [bracketPopover, setBracketPopover] = useState<{
+    rid: string;
+    items: BracketItem[];
+    inputValue: string;
+    anchorEl: HTMLElement | null;
+    editingIndex?: number;
+    error?: string;
+    showAutocomplete?: boolean;
+    autocompleteIndex?: number;
+    nestedMode?: boolean; // whether we are currently building a nested bracket
+    nestedItems?: BracketItem[]; // items collected for the nested bracket in progress
   } | null>(null);
 
   useEffect(() => {
@@ -151,6 +185,116 @@ const MappingTable: React.FC<MappingTableProps> = ({
                     value: operatorMap[value] || value,
                   };
                 } else {
+                  // Check if this is a bracket expression like (#FieldID1 - #FieldID2)
+                  if (
+                    typeof value === 'string' &&
+                    value.startsWith('(') &&
+                    value.endsWith(')')
+                  ) {
+                    const innerStr = value.slice(1, -1).trim();
+                    // Parse inner items for refill
+                    // Bracket-aware tokenizer: respects nested (...) groups
+                    const tokenizeBracketStr = (s: string): string[] => {
+                      const toks: string[] = [];
+                      let i = 0;
+                      let cur = '';
+                      while (i < s.length) {
+                        const ch = s[i];
+                        if (ch === '(') {
+                          // Collect balanced nested bracket as one token
+                          if (cur.trim()) {
+                            toks.push(cur.trim());
+                            cur = '';
+                          }
+                          let depth = 1;
+                          let j = i + 1;
+                          while (j < s.length && depth > 0) {
+                            if (s[j] === '(') depth++;
+                            if (s[j] === ')') depth--;
+                            j++;
+                          }
+                          toks.push(s.slice(i, j)); // includes outer ( )
+                          i = j;
+                        } else if (ch === ' ') {
+                          if (cur.trim()) {
+                            toks.push(cur.trim());
+                            cur = '';
+                          }
+                          i++;
+                        } else {
+                          cur += ch;
+                          i++;
+                        }
+                      }
+                      if (cur.trim()) toks.push(cur.trim());
+                      return toks;
+                    };
+
+                    // Recursively parse tokens into BracketItems
+                    const parseBracketTokens = (
+                      tokens: string[]
+                    ): BracketItem[] => {
+                      const result: BracketItem[] = [];
+                      const mathOpsList = ['+', '-', '*', '/', '%'];
+                      for (const tok of tokens) {
+                        if (!tok) continue;
+                        if (mathOpsList.includes(tok)) {
+                          result.push({ type: 'operator', value: tok });
+                        } else if (tok.startsWith('(') && tok.endsWith(')')) {
+                          // Nested bracket
+                          const nestedInner = tok.slice(1, -1).trim();
+                          const nestedTokens = tokenizeBracketStr(nestedInner);
+                          const nestedItems = parseBracketTokens(nestedTokens);
+                          result.push({
+                            type: 'bracket',
+                            value: tok,
+                            nestedItems,
+                          });
+                        } else if (tok.startsWith('#')) {
+                          result.push({ type: 'manual', value: tok });
+                        } else {
+                          // RID lookup
+                          const objByRid = objectsList.find(
+                            (obj) => obj.rid === tok
+                          );
+                          if (objByRid) {
+                            result.push({
+                              type: 'chip',
+                              value: `${objByRid.parent_object}.${objByRid.object_name}`,
+                            });
+                          } else {
+                            // Parent.Child format
+                            const objByPath = objectsList.find(
+                              (obj) =>
+                                `${obj.parent_object}.${obj.object_name}` ===
+                                tok
+                            );
+                            if (objByPath) {
+                              result.push({ type: 'chip', value: tok });
+                            } else if (
+                              !isNaN(Number(tok)) &&
+                              tok.trim() !== ''
+                            ) {
+                              result.push({ type: 'number', value: tok });
+                            } else {
+                              result.push({ type: 'manual', value: tok });
+                            }
+                          }
+                        }
+                      }
+                      return result;
+                    };
+
+                    const parsedItems = parseBracketTokens(
+                      tokenizeBracketStr(innerStr)
+                    );
+                    return {
+                      type: 'bracket' as const,
+                      value,
+                      bracketItems: parsedItems,
+                    };
+                  }
+
                   // Check if this is a MIN or MAX function
                   if (
                     typeof value === 'string' &&
@@ -531,6 +675,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
           objectRidMap[currentIndex] = funcStr;
           currentIndex += 2;
         }
+      } else if (exp.type === 'bracket') {
+        objectRidMap[currentIndex] = exp.value;
+        currentIndex += 2;
       } else if (exp.type === 'conditional') {
         objectRidMap[currentIndex] = exp.value;
         currentIndex += 2;
@@ -553,8 +700,53 @@ const MappingTable: React.FC<MappingTableProps> = ({
   const handleFieldIdChange = (rid: string, value: string): void => {
     const updatedMappings = localMappings.map((mapping) => {
       if (mapping.rid === rid) {
-        // Only clear fieldIdError if it exists, don't validate
-        return { ...mapping, field_id: value, fieldIdError: undefined };
+        let newStatus = mapping.status;
+        if (!value || value.trim() === '') {
+          // If field_id is empty, always set status to 'rejected'
+          newStatus = 'rejected';
+        } else if (mapping.status !== 'anomaly') {
+          // If field_id has value and not in anomaly state, set to 'accepted'
+          newStatus = 'accepted';
+        }
+        // If status is 'anomaly', it stays as 'anomaly' until accepted/rejected
+
+        return {
+          ...mapping,
+          field_id: value,
+          fieldIdError: undefined,
+          status: newStatus,
+        };
+      }
+      return mapping;
+    });
+    setLocalMappings(updatedMappings);
+    onMappingsChange(updatedMappings);
+  };
+
+  const handleAcceptAnomaly = (rid: string): void => {
+    const updatedMappings = localMappings.map((mapping) => {
+      if (mapping.rid === rid) {
+        return {
+          ...mapping,
+          status: 'accepted',
+          fieldIdError: undefined,
+        };
+      }
+      return mapping;
+    });
+    setLocalMappings(updatedMappings);
+    onMappingsChange(updatedMappings);
+  };
+
+  const handleRejectAnomaly = (rid: string): void => {
+    const updatedMappings = localMappings.map((mapping) => {
+      if (mapping.rid === rid) {
+        return {
+          ...mapping,
+          field_id: '', // Clear field ID on reject
+          status: 'rejected',
+          fieldIdError: undefined,
+        };
       }
       return mapping;
     });
@@ -750,6 +942,24 @@ const MappingTable: React.FC<MappingTableProps> = ({
     // Check if user typed MIN or MAX and pressed Enter
     if (event.key === 'Enter') {
       const functionInput = currentInput.trim().toUpperCase();
+
+      // Check if user typed '(' and pressed Enter -> open bracket popover
+      if (currentInput.trim() === '(') {
+        event.preventDefault();
+        const containerElement = containerRefs.current[rid];
+        if (containerElement) {
+          setBracketPopover({
+            rid,
+            items: [],
+            inputValue: '',
+            anchorEl: containerElement,
+          });
+          setLocalMappings((prev) =>
+            prev.map((m) => (m.rid === rid ? { ...m, inputValue: '' } : m))
+          );
+        }
+        return;
+      }
 
       if (functionInput === 'MIN' || functionInput === 'MAX') {
         event.preventDefault();
@@ -1024,7 +1234,8 @@ const MappingTable: React.FC<MappingTableProps> = ({
   };
 
   const getPopoverFilteredOptions = (searchText: string): string[] => {
-    const rid = functionPopover?.rid || conditionalPopover?.rid;
+    const rid =
+      functionPopover?.rid || conditionalPopover?.rid || bracketPopover?.rid;
     if (!rid) return [];
 
     // Reuse main getFilteredOptions function with custom search text
@@ -1032,11 +1243,469 @@ const MappingTable: React.FC<MappingTableProps> = ({
   };
 
   const getPopoverDisplayName = (option: string): string => {
-    const rid = functionPopover?.rid || conditionalPopover?.rid;
+    const rid =
+      functionPopover?.rid || conditionalPopover?.rid || bracketPopover?.rid;
     if (!rid) return option;
 
     // Reuse main getDisplayName function
     return getDisplayName(option, rid);
+  };
+
+  // Builds a human-readable display string from BracketItem[], used for chip labels in the main table
+  const buildBracketDisplayLabel = (
+    items: BracketItem[],
+    rid: string
+  ): string => {
+    if (!items || items.length === 0) return '(...)';
+    const parts = items.map((it) => {
+      if (it.type === 'chip') {
+        // Show the object's display label, not the RID
+        return getDisplayName(it.value, rid);
+      } else if (it.type === 'bracket' && it.nestedItems) {
+        return `(${buildBracketDisplayLabel(it.nestedItems, rid)})`;
+      }
+      return it.value; // manual (keeps #), operator, number
+    });
+    return parts.join(' ');
+  };
+
+  // ==================== BRACKET POPOVER HANDLERS ====================
+
+  const handleBracketPopoverInputChange = (value: string): void => {
+    if (!bracketPopover) return;
+
+    const mathOps = ['+', '-', '*', '/', '%'];
+
+    // Auto-add operator immediately when user types a single operator character
+    if (mathOps.includes(value)) {
+      const targetList = bracketPopover.nestedMode
+        ? bracketPopover.nestedItems || []
+        : bracketPopover.items;
+      const newItem: BracketItem = { type: 'operator', value };
+      if (bracketPopover.nestedMode) {
+        setBracketPopover({
+          ...bracketPopover,
+          nestedItems: [...targetList, newItem],
+          inputValue: '',
+          error: undefined,
+        });
+      } else {
+        setBracketPopover({
+          ...bracketPopover,
+          items: [...targetList, newItem],
+          inputValue: '',
+          error: undefined,
+        });
+      }
+      return;
+    }
+
+    // Typing '(' → enter nested bracket mode
+    if (value === '(' && !bracketPopover.nestedMode) {
+      setBracketPopover({
+        ...bracketPopover,
+        inputValue: '',
+        nestedMode: true,
+        nestedItems: [],
+        error: undefined,
+        showAutocomplete: false,
+      });
+      return;
+    }
+
+    // Typing ')' → close nested bracket mode
+    if (value === ')' && bracketPopover.nestedMode) {
+      const nestedItems = bracketPopover.nestedItems || [];
+      // Validate: nested sub-expression must have at least one operator
+      const hasOp = nestedItems.some((it) => it.type === 'operator');
+      if (nestedItems.length === 0 || !hasOp) {
+        setBracketPopover({
+          ...bracketPopover,
+          inputValue: '',
+          error:
+            'Nested bracket must contain at least one operation (e.g., (#A * @B))',
+        });
+        return;
+      }
+      // Build nested bracket string
+      const nestedStr = nestedItems
+        .map((it) => {
+          if (it.type === 'chip') return `@${it.value}`;
+          if (it.type === 'bracket') return it.value;
+          return it.value;
+        })
+        .join(' ');
+      const nestedValue = `(${nestedStr})`;
+      const nestedBracketItem: BracketItem = {
+        type: 'bracket',
+        value: nestedValue,
+        nestedItems,
+      };
+      setBracketPopover({
+        ...bracketPopover,
+        items: [...bracketPopover.items, nestedBracketItem],
+        inputValue: '',
+        nestedMode: false,
+        nestedItems: [],
+        error: undefined,
+        showAutocomplete: false,
+      });
+      return;
+    }
+
+    const atIndex = value.lastIndexOf('@');
+    const shouldShow = atIndex !== -1;
+    setBracketPopover({
+      ...bracketPopover,
+      inputValue: value,
+      error: undefined,
+      showAutocomplete: shouldShow,
+      autocompleteIndex: shouldShow ? 0 : bracketPopover.autocompleteIndex,
+    });
+  };
+
+  const handleBracketPopoverAutocompleteSelect = (
+    selectedValue: string
+  ): void => {
+    if (!bracketPopover) return;
+    const isCompleteProperty = selectedValue.includes('.');
+    if (!isCompleteProperty) {
+      const atIndex = bracketPopover.inputValue.lastIndexOf('@');
+      if (atIndex !== -1) {
+        const newInputValue =
+          bracketPopover.inputValue.substring(0, atIndex + 1) +
+          selectedValue +
+          '.';
+        setBracketPopover({
+          ...bracketPopover,
+          inputValue: newInputValue,
+          showAutocomplete: true,
+          autocompleteIndex: 0,
+        });
+      }
+      return;
+    }
+    // Complete selection - add as chip to either nestedItems or main items
+    const chipItem: BracketItem = { type: 'chip', value: selectedValue };
+    if (bracketPopover.nestedMode) {
+      setBracketPopover({
+        ...bracketPopover,
+        nestedItems: [...(bracketPopover.nestedItems || []), chipItem],
+        inputValue: '',
+        showAutocomplete: false,
+        error: undefined,
+      });
+    } else {
+      setBracketPopover({
+        ...bracketPopover,
+        items: [...bracketPopover.items, chipItem],
+        inputValue: '',
+        showAutocomplete: false,
+        error: undefined,
+      });
+    }
+  };
+
+  const handleBracketPopoverKeyDown = (event: React.KeyboardEvent): void => {
+    if (!bracketPopover) return;
+    const currentInput = bracketPopover.inputValue;
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+
+      // Autocomplete selection
+      if (bracketPopover.showAutocomplete) {
+        const searchText = currentInput.substring(
+          currentInput.lastIndexOf('@') + 1
+        );
+        const options = getPopoverFilteredOptions(searchText);
+        const selected = options[bracketPopover.autocompleteIndex || 0];
+        if (selected) {
+          handleBracketPopoverAutocompleteSelect(selected);
+          return;
+        }
+      }
+
+      // Manual entry (#) — goes to nested or main list
+      if (
+        currentInput.trim().startsWith('#') &&
+        currentInput.trim().length > 1
+      ) {
+        const manualItem: BracketItem = {
+          type: 'manual',
+          value: currentInput.trim(),
+        };
+        if (bracketPopover.nestedMode) {
+          setBracketPopover({
+            ...bracketPopover,
+            nestedItems: [...(bracketPopover.nestedItems || []), manualItem],
+            inputValue: '',
+            showAutocomplete: false,
+            error: undefined,
+          });
+        } else {
+          setBracketPopover({
+            ...bracketPopover,
+            items: [...bracketPopover.items, manualItem],
+            inputValue: '',
+            showAutocomplete: false,
+            error: undefined,
+          });
+        }
+        return;
+      }
+
+      // Number entry — goes to nested or main list
+      const numberRegex = /^-?\d+(\.\d+)?$/;
+      if (numberRegex.test(currentInput.trim())) {
+        const numItem: BracketItem = {
+          type: 'number',
+          value: currentInput.trim(),
+        };
+        if (bracketPopover.nestedMode) {
+          setBracketPopover({
+            ...bracketPopover,
+            nestedItems: [...(bracketPopover.nestedItems || []), numItem],
+            inputValue: '',
+            showAutocomplete: false,
+            error: undefined,
+          });
+        } else {
+          setBracketPopover({
+            ...bracketPopover,
+            items: [...bracketPopover.items, numItem],
+            inputValue: '',
+            showAutocomplete: false,
+            error: undefined,
+          });
+        }
+        return;
+      }
+
+      // Invalid input
+      if (currentInput.trim()) {
+        setBracketPopover({
+          ...bracketPopover,
+          error: `Invalid input "${currentInput.trim()}". Use @ for fields, # for manual IDs, or numbers. Operators (+,-,*,/,%) are auto-added when typed.`,
+        });
+      }
+      return;
+    }
+
+    // Escape key: if in nested mode, cancel it; else close autocomplete
+    if (event.key === 'Escape') {
+      if (bracketPopover.nestedMode) {
+        setBracketPopover({
+          ...bracketPopover,
+          nestedMode: false,
+          nestedItems: [],
+          inputValue: '',
+          showAutocomplete: false,
+        });
+        return;
+      }
+      setBracketPopover({ ...bracketPopover, showAutocomplete: false });
+      return;
+    }
+
+    // Autocomplete navigation
+    if (bracketPopover.showAutocomplete) {
+      const searchText = currentInput.substring(
+        currentInput.lastIndexOf('@') + 1
+      );
+      const options = getPopoverFilteredOptions(searchText);
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setBracketPopover({
+          ...bracketPopover,
+          autocompleteIndex: Math.min(
+            (bracketPopover.autocompleteIndex || 0) + 1,
+            options.length - 1
+          ),
+        });
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setBracketPopover({
+          ...bracketPopover,
+          autocompleteIndex: Math.max(
+            (bracketPopover.autocompleteIndex || 0) - 1,
+            0
+          ),
+        });
+      }
+    }
+  };
+
+  const removeBracketItem = (
+    indexToRemove: number,
+    fromNested = false
+  ): void => {
+    if (!bracketPopover) return;
+    if (fromNested) {
+      setBracketPopover({
+        ...bracketPopover,
+        nestedItems: (bracketPopover.nestedItems || []).filter(
+          (_, i) => i !== indexToRemove
+        ),
+      });
+    } else {
+      setBracketPopover({
+        ...bracketPopover,
+        items: bracketPopover.items.filter((_, i) => i !== indexToRemove),
+      });
+    }
+  };
+
+  const validateBracketExpression = (items: BracketItem[]): string | null => {
+    if (items.length === 0) return 'Bracket expression cannot be empty';
+
+    // Must have at least one operator (can't be just a single value or wrapped number)
+    const hasOperator = items.some((it) => it.type === 'operator');
+    if (!hasOperator) {
+      return 'Bracket expression must contain at least one operator (e.g., (#A - #B))';
+    }
+
+    // Cannot start with an operator
+    if (items[0].type === 'operator') {
+      return 'Bracket expression cannot start with an operator';
+    }
+
+    // Cannot end with an operator
+    if (items[items.length - 1].type === 'operator') {
+      return 'Bracket expression cannot end with an operator';
+    }
+
+    // Check consecutive operators and consecutive values
+    for (let i = 0; i < items.length - 1; i++) {
+      const cur = items[i];
+      const nxt = items[i + 1];
+
+      if (cur.type === 'operator' && nxt.type === 'operator') {
+        return `Invalid: consecutive operators "${cur.value}${nxt.value}" are not allowed`;
+      }
+
+      const isValue = (it: BracketItem) =>
+        it.type === 'chip' ||
+        it.type === 'manual' ||
+        it.type === 'number' ||
+        it.type === 'bracket';
+      if (isValue(cur) && isValue(nxt)) {
+        return 'Missing operator between values';
+      }
+    }
+
+    // Validate numbers (max 3 decimal places)
+    for (const it of items) {
+      if (it.type === 'number') {
+        const decMatch = it.value.match(/\.(\d+)$/);
+        if (decMatch && decMatch[1].length > 3) {
+          return `Number "${it.value}" exceeds 3 decimal places`;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const handleBracketPopoverSave = (): void => {
+    if (!bracketPopover) return;
+
+    // Cannot save while in nested bracket mode
+    if (bracketPopover.nestedMode) {
+      setBracketPopover({
+        ...bracketPopover,
+        error: 'Close the nested bracket first by typing ) in the input field.',
+      });
+      return;
+    }
+
+    // Check for uncommitted input
+    if (bracketPopover.inputValue.trim()) {
+      setBracketPopover({
+        ...bracketPopover,
+        error:
+          'Please press Enter to confirm the current input before saving, or clear it.',
+      });
+      return;
+    }
+
+    const validationError = validateBracketExpression(bracketPopover.items);
+    if (validationError) {
+      setBracketPopover({ ...bracketPopover, error: validationError });
+      return;
+    }
+
+    // Build the bracket string value — no @ prefix for chips; # kept for manual entries
+    const buildInnerStr = (items: BracketItem[]): string =>
+      items
+        .map((it) => {
+          if (it.type === 'chip') {
+            // Use actual RID for real field references (no @ prefix)
+            const [parent, child] = it.value.split('.', 2);
+            const objectId = targetOptions[parent]?.[child];
+            return objectId || it.value; // RID if available, else Parent.Child
+          } else if (it.type === 'bracket' && it.nestedItems) {
+            return `(${buildInnerStr(it.nestedItems)})`;
+          }
+          return it.value; // operator, manual (keeps #), number
+        })
+        .join(' ');
+
+    const bracketValue = `(${buildInnerStr(bracketPopover.items)})`;
+
+    setLocalMappings((prev) => {
+      const updated = prev.map((m) => {
+        if (m.rid === bracketPopover.rid) {
+          const newExpressions = [...(m.fieldExpressions || [])];
+          const bracketExpression: FieldExpression = {
+            type: 'bracket' as const,
+            value: bracketValue,
+            bracketItems: bracketPopover.items,
+          };
+
+          if (bracketPopover.editingIndex !== undefined) {
+            newExpressions[bracketPopover.editingIndex] = bracketExpression;
+          } else {
+            newExpressions.push(bracketExpression);
+          }
+
+          return {
+            ...m,
+            fieldExpressions: newExpressions,
+            calculation_config: buildCalculationConfig(newExpressions),
+            targetError: undefined,
+            inputValue: '',
+          };
+        }
+        return m;
+      });
+      onMappingsChange(updated);
+      return updated;
+    });
+
+    setBracketPopover(null);
+  };
+
+  const handleBracketPopoverCancel = (): void => {
+    setBracketPopover(null);
+  };
+
+  const handleBracketChipClick = (rid: string, index: number): void => {
+    const mapping = localMappings.find((m) => m.rid === rid);
+    if (!mapping) return;
+    const expression = mapping.fieldExpressions?.[index];
+    if (!expression || expression.type !== 'bracket') return;
+
+    const containerElement = containerRefs.current[rid];
+    if (containerElement) {
+      setBracketPopover({
+        rid,
+        items: expression.bracketItems || [],
+        inputValue: '',
+        anchorEl: containerElement,
+        editingIndex: index,
+      });
+    }
   };
 
   const removeFunctionPopoverChip = (indexToRemove: number): void => {
@@ -1868,7 +2537,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
         clause.returnError = 'Then value is required';
         hasValidationErrors = true;
       } else if (returnExpressions.length > 0) {
-        // Validate return expressions (similar to Target field validation)
+        // Validate return expressions (similar to Source field validation)
 
         // Rule: Number validation
         returnExpressions.forEach((exp) => {
@@ -2211,7 +2880,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
       sx={{
         boxShadow: 'none',
         overflow: 'auto',
-        maxHeight: 'calc(100vh - 290px)',
+        maxHeight: 'calc(100vh - 250px)',
         minHeight: 'auto',
         height: 'fit-content',
         border: '1px solid #CBD6E2',
@@ -2262,67 +2931,65 @@ const MappingTable: React.FC<MappingTableProps> = ({
           <TableRow>
             <TableCell
               sx={{
-                width: formType === 'non-fillable' ? '35%' : '30%',
+                width: '30%',
               }}
             >
               Field Label
             </TableCell>
-            {formType !== 'non-fillable' && (
-              <TableCell
-                sx={{
-                  width: '20%',
-                }}
-                className='flex items-center justify-between'
-              >
-                <span>Field ID</span>
-                <span>
-                  <Tooltip
-                    title={
-                      'Go to "Original Form" tab, select a field to copy its Field ID, then paste it here to map the field.'
-                    }
-                    arrow
-                    placement='top'
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          mr: 1,
-                        },
-                      },
-                    }}
-                  >
-                    <span className='h-[21px] w-5 flex items-center justify-center absolute top-1 right-[4px] cursor-pointer'>
-                      <React.Suspense fallback={null}>
-                        <ErrorInfoIcon
-                          alt='error'
-                          className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]'
-                        />
-                      </React.Suspense>
-                    </span>
-                  </Tooltip>
-                </span>
-              </TableCell>
-            )}
             <TableCell
               sx={{
-                width: formType === 'non-fillable' ? '15%' : '10%',
+                width: '20%',
+              }}
+              className='flex items-center justify-between'
+            >
+              <span>Field ID</span>
+              <span>
+                <Tooltip
+                  title={
+                    'Click the arrow icon on the right side to open "Original Form", select a field to copy its Field ID, then paste it here to map the field.'
+                  }
+                  arrow
+                  placement='top'
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        mr: 1,
+                      },
+                    },
+                  }}
+                >
+                  <span className='h-[21px] w-5 flex items-center justify-center absolute top-1 right-[4px] cursor-pointer'>
+                    <React.Suspense fallback={null}>
+                      <ErrorInfoIcon
+                        alt='error'
+                        className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]'
+                      />
+                    </React.Suspense>
+                  </span>
+                </Tooltip>
+              </span>
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '10%',
               }}
             >
               Field Type
             </TableCell>
             <TableCell
               sx={{
-                width: formType === 'non-fillable' ? '50%' : '40%',
+                width: '40%',
               }}
               className='flex items-center justify-between'
             >
-              <span>Target</span>
+              <span>Source</span>
               <span>
                 <Tooltip
                   title={
-                    'How to add fields to Target:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for manual text entry, then press Enter (e.g., #Custom Value)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
+                    'How to add fields to Source:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type ( then press Enter to add bracket expression (e.g., (#A - #B))\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
                   }
                   arrow
-                  placement='top'
+                  placement='left'
                   slotProps={{
                     tooltip: {
                       sx: {
@@ -2385,10 +3052,10 @@ const MappingTable: React.FC<MappingTableProps> = ({
                     }
                   />
                 </TableCell>
-                {formType !== 'non-fillable' && (
-                  <TableCell sx={{ p: '8px' }}>
+                <TableCell sx={{ p: '8px' }}>
+                  <div className='flex flex-col gap-1 h-full'>
                     <div
-                      className={`flex relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
+                      className={`flex flex-col relative w-full h-full ${mapping.fieldIdError ? 'bg-[#FEF2F2]' : ''}`}
                     >
                       <textarea
                         value={mapping.field_id || ''}
@@ -2398,8 +3065,9 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           e.target.style.height = 'auto';
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
+                        disabled={formType === 'non-fillable'}
                         placeholder='Enter Field ID'
-                        className={`w-full h-full min-h-[32px] max-h-[90px] px-2 py-1 border rounded-[2px] text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
+                        className={`w-full flex-1 min-h-[32px] max-h-[90px] px-2 py-1 ${mapping.status === 'anomaly' && formType !== 'non-fillable' ? 'pb-9' : ''} border rounded-[2px] disabled:bg-gray-100 text-sm outline-none focus:border-2 resize-none overflow-y-auto ${
                           mapping.fieldIdError
                             ? 'border-red-500 bg-[#FEF2F2] focus:border-red-500'
                             : 'border-gray-300 focus:border-blue-400'
@@ -2429,9 +3097,38 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           </span>
                         </Tooltip>
                       )}
+                      {mapping.status === 'anomaly' &&
+                        formType !== 'non-fillable' && (
+                          <div className='absolute bottom-1 right-1 flex justify-end items-center gap-2 bg-white/95 p-1 rounded'>
+                            <button
+                              onClick={() => handleAcceptAnomaly(mapping.rid)}
+                              className='inline-flex items-center gap-1 p-1.5 rounded text-[11px] w-auto cursor-pointer h-[20px] bg-[#3EA72F1A] hover:bg-[#3da72ff4] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
+                            >
+                              <React.Suspense fallback={null}>
+                                <AcceptIcon
+                                  alt='accept'
+                                  className='w-3.5 h-3.5'
+                                />
+                              </React.Suspense>
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => handleRejectAnomaly(mapping.rid)}
+                              className='inline-flex items-center gap-1 p-1.5 rounded text-[12px] cursor-pointer w-auto h-[20px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default'
+                            >
+                              <React.Suspense fallback={null}>
+                                <RejectIcon
+                                  alt='reject'
+                                  className='w-3.5 h-3.5'
+                                />
+                              </React.Suspense>
+                              Reject
+                            </button>
+                          </div>
+                        )}
                     </div>
-                  </TableCell>
-                )}
+                  </div>
+                </TableCell>
                 <TableCell sx={{ p: '8px' }}>
                   <span className='text-[13px] font-medium text-[#425A76] capitalize'>
                     {mapping.field_type}
@@ -2452,7 +3149,8 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           mapping.targetError
                             ? 'border-red-500 bg-[#FEF2F2] border-2 pr-8'
                             : functionPopover?.rid === mapping.rid ||
-                                conditionalPopover?.rid === mapping.rid
+                                conditionalPopover?.rid === mapping.rid ||
+                                bracketPopover?.rid === mapping.rid
                               ? 'border-blue-400 bg-white border-2'
                               : 'border-gray-300 bg-white focus-within:border-2 focus-within:border-blue-400'
                         }`}
@@ -2608,6 +3306,50 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                   }}
                                 />
                               </Tooltip>
+                            ) : item.type === 'bracket' ? (
+                              <Tooltip
+                                title={`(${buildBracketDisplayLabel(item.bracketItems || [], mapping.rid)})`}
+                                arrow
+                                placement='top'
+                              >
+                                <Chip
+                                  label={`(${buildBracketDisplayLabel(item.bracketItems || [], mapping.rid)})`}
+                                  size='small'
+                                  variant='outlined'
+                                  onClick={() =>
+                                    handleBracketChipClick(mapping.rid, idx)
+                                  }
+                                  onDelete={() => removeChip(mapping.rid, idx)}
+                                  sx={{
+                                    fontSize: '11px',
+                                    height: '20px',
+                                    maxWidth: '200px',
+                                    backgroundColor: '#fdf4e9',
+                                    borderColor: '#c2803b',
+                                    color: '#7c4a15',
+                                    margin: '1px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                      backgroundColor: '#fae5c8',
+                                    },
+                                    '& .MuiChip-deleteIcon': {
+                                      fontSize: '14px',
+                                      color: '#7c4a15',
+                                      '&:hover': {
+                                        color: '#ef4444',
+                                      },
+                                    },
+                                    '& .MuiChip-label': {
+                                      paddingLeft: '6px',
+                                      paddingRight: '6px',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    },
+                                  }}
+                                />
+                              </Tooltip>
                             ) : item.type === 'conditional' ? (
                               <Tooltip title={item.value} arrow placement='top'>
                                 <Chip
@@ -2700,7 +3442,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onBlur={() => handleInputBlur(mapping.rid)}
                           placeholder={
                             (mapping.fieldExpressions || []).length === 0
-                              ? 'Type @ fields, # manual, numbers, MIN/MAX, if/else/else if or +, -, *, / for operators'
+                              ? 'Type @ fields, # for IDs, numbers, ( for Expression, MIN/MAX, IF or +, -, *, / for operators'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -2784,6 +3526,365 @@ const MappingTable: React.FC<MappingTableProps> = ({
         </TableBody>
       </MuiTable>
 
+      {/* Bracket Popover Dialog */}
+      <Popover
+        open={Boolean(bracketPopover)}
+        anchorEl={bracketPopover?.anchorEl}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        TransitionProps={{ timeout: 0 }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
+        slotProps={{
+          paper: {
+            sx: {
+              pointerEvents: 'auto',
+              zIndex: 1100,
+              width: bracketPopover?.anchorEl
+                ? bracketPopover.anchorEl.clientWidth + 5
+                : '450px',
+              maxHeight: '400px',
+              overflow: 'visible',
+              mt: '3px',
+            },
+          },
+        }}
+      >
+        {bracketPopover && (
+          <div className='flex flex-col p-4 gap-3'>
+            {/* Header */}
+            <div className='flex items-center gap-2'>
+              <span className='text-sm font-semibold text-gray-700'>
+                Build Bracket Expression
+              </span>
+              <span className='text-xs text-gray-400 '>( ... )</span>
+            </div>
+            <div className='text-xs text-gray-500 -mt-1'>
+              Supports: <span className=''>@field</span>,{' '}
+              <span className=''>#manual</span>, numbers, operators{' '}
+              <span className=''>+ - * / %</span> and{' '}
+              <span className=''>(</span> for nested sub-expressions
+            </div>
+
+            {/* Field Container */}
+            <div className='relative'>
+              <div
+                className={`w-full max-h-[140px] overflow-y-auto px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${
+                  bracketPopover.error
+                    ? 'border-red-500 bg-[#FEF2F2] focus-within:border-red-500'
+                    : bracketPopover.nestedMode
+                      ? 'border-teal-400 bg-white border-2'
+                      : 'border-gray-300 bg-white focus-within:border-blue-400'
+                }`}
+                onClick={() => bracketPopoverInputRef.current?.focus()}
+              >
+                {/* Opening bracket indicator */}
+                <span className='text-[13px] font-extrabold text-teal-600 self-center'>
+                  ({' '}
+                </span>
+
+                {/* Main item chips */}
+                {bracketPopover.items.map((item, idx) => (
+                  <Tooltip
+                    key={idx}
+                    title={
+                      item.type === 'chip'
+                        ? getPopoverDisplayName(item.value)
+                        : item.type === 'bracket' && item.nestedItems
+                          ? `(${buildBracketDisplayLabel(item.nestedItems, bracketPopover.rid)})`
+                          : item.value
+                    }
+                    arrow
+                    placement='top'
+                  >
+                    <Chip
+                      label={
+                        item.type === 'chip'
+                          ? getPopoverDisplayName(item.value)
+                          : item.type === 'bracket' && item.nestedItems
+                            ? `(${buildBracketDisplayLabel(item.nestedItems, bracketPopover.rid)})`
+                            : item.value
+                      }
+                      size='small'
+                      variant='outlined'
+                      onDelete={() => removeBracketItem(idx)}
+                      sx={{
+                        fontSize: '11px',
+                        height: '20px',
+                        maxWidth: '180px',
+                        borderRadius: '4px',
+                        margin: '1px',
+                        backgroundColor:
+                          item.type === 'chip'
+                            ? '#f0f9ff'
+                            : item.type === 'manual'
+                              ? '#f0fdf4'
+                              : item.type === 'number'
+                                ? '#fff7ed'
+                                : item.type === 'bracket'
+                                  ? '#fdf4e9'
+                                  : '#fef9c3',
+                        borderColor:
+                          item.type === 'chip'
+                            ? '#0176D3'
+                            : item.type === 'manual'
+                              ? '#22c55e'
+                              : item.type === 'number'
+                                ? '#f97316'
+                                : item.type === 'bracket'
+                                  ? '#c2803b'
+                                  : '#eab308',
+                        color:
+                          item.type === 'chip'
+                            ? '#0176D3'
+                            : item.type === 'manual'
+                              ? '#16a34a'
+                              : item.type === 'number'
+                                ? '#ea580c'
+                                : item.type === 'bracket'
+                                  ? '#7c4a15'
+                                  : '#854d0e',
+                        fontWeight: item.type === 'operator' ? 700 : 400,
+                        borderStyle:
+                          item.type === 'bracket' ? 'dashed' : 'solid',
+                        '& .MuiChip-deleteIcon': {
+                          fontSize: '14px',
+                          color:
+                            item.type === 'chip'
+                              ? '#0176D3'
+                              : item.type === 'manual'
+                                ? '#16a34a'
+                                : item.type === 'number'
+                                  ? '#ea580c'
+                                  : item.type === 'bracket'
+                                    ? '#7c4a15'
+                                    : '#854d0e',
+                          '&:hover': { color: '#ef4444' },
+                        },
+                        '& .MuiChip-label': {
+                          paddingLeft: '5px',
+                          paddingRight: '5px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        },
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+
+                {/* Nested mode: show in-progress sub-bracket builder inline */}
+                {bracketPopover.nestedMode && (
+                  <div className='flex items-center gap-1 flex-wrap border border-dashed border-teal-400 bg-teal-50 rounded px-1.5 py-0.5 mx-0.5 w-full'>
+                    <span className='text-[12px] font-extrabold text-[#7c4a15]'>
+                      ({' '}
+                    </span>
+                    {(bracketPopover.nestedItems || []).map((nit, nIdx) => (
+                      <Tooltip
+                        key={nIdx}
+                        title={
+                          nit.type === 'chip'
+                            ? getPopoverDisplayName(nit.value)
+                            : nit.value
+                        }
+                        arrow
+                        placement='top'
+                      >
+                        <Chip
+                          label={
+                            nit.type === 'chip'
+                              ? getPopoverDisplayName(nit.value)
+                              : nit.value
+                          }
+                          size='small'
+                          variant='outlined'
+                          onDelete={() => removeBracketItem(nIdx, true)}
+                          sx={{
+                            fontSize: '11px',
+                            height: '18px',
+                            maxWidth: '160px',
+                            borderRadius: '3px',
+                            margin: '0px',
+                            backgroundColor:
+                              nit.type === 'chip'
+                                ? '#eff6ff'
+                                : nit.type === 'manual'
+                                  ? '#f0fdf4'
+                                  : nit.type === 'number'
+                                    ? '#fff7ed'
+                                    : '#fef9c3',
+                            borderColor:
+                              nit.type === 'chip'
+                                ? '#3b82f6'
+                                : nit.type === 'manual'
+                                  ? '#22c55e'
+                                  : nit.type === 'number'
+                                    ? '#f97316'
+                                    : '#eab308',
+                            color:
+                              nit.type === 'chip'
+                                ? '#1d4ed8'
+                                : nit.type === 'manual'
+                                  ? '#15803d'
+                                  : nit.type === 'number'
+                                    ? '#c2410c'
+                                    : '#854d0e',
+                            fontWeight: nit.type === 'operator' ? 700 : 400,
+                            '& .MuiChip-deleteIcon': {
+                              fontSize: '12px',
+                              color:
+                                nit.type === 'chip'
+                                  ? '#1d4ed8'
+                                  : nit.type === 'manual'
+                                    ? '#15803d'
+                                    : nit.type === 'number'
+                                      ? '#c2410c'
+                                      : '#854d0e',
+                              '&:hover': { color: '#ef4444' },
+                            },
+                            '& .MuiChip-label': {
+                              paddingLeft: '4px',
+                              paddingRight: '4px',
+                            },
+                          }}
+                        />
+                      </Tooltip>
+                    ))}
+                    <input
+                      ref={bracketPopoverInputRef}
+                      type='text'
+                      value={bracketPopover.inputValue}
+                      onChange={(e) =>
+                        handleBracketPopoverInputChange(e.target.value)
+                      }
+                      onKeyDown={handleBracketPopoverKeyDown}
+                      placeholder={
+                        (bracketPopover.nestedItems || []).length === 0
+                          ? '@ field, # ID, number...'
+                          : 'Add more...'
+                      }
+                      className='flex-1 min-w-0 border-none outline-none bg-transparent text-sm placeholder-gray-400'
+                      style={{ minWidth: '60px' }}
+                      autoFocus
+                    />
+                    <span className='text-[12px] font-extrabold text-[#7c4a15]'>
+                      {' '}
+                      )
+                    </span>
+                  </div>
+                )}
+
+                {/* Normal input (when NOT in nested mode) */}
+                {!bracketPopover.nestedMode && (
+                  <input
+                    ref={bracketPopoverInputRef}
+                    type='text'
+                    value={bracketPopover.inputValue}
+                    onChange={(e) =>
+                      handleBracketPopoverInputChange(e.target.value)
+                    }
+                    onKeyDown={handleBracketPopoverKeyDown}
+                    placeholder={
+                      bracketPopover.items.length === 0
+                        ? '@ field, # ID, number, ( for nested...'
+                        : 'Add more...'
+                    }
+                    className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
+                    style={{ minWidth: '80px' }}
+                    autoFocus
+                  />
+                )}
+
+                {/* Closing bracket indicator */}
+                <span className='text-[13px] font-extrabold text-teal-600  self-center'>
+                  {' '}
+                  )
+                </span>
+              </div>
+
+              {/* Autocomplete */}
+              {bracketPopover.showAutocomplete && (
+                <div
+                  className='absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto z-[10000]'
+                  style={{ maxHeight: '150px' }}
+                >
+                  {getPopoverFilteredOptions(
+                    bracketPopover.inputValue.substring(
+                      bracketPopover.inputValue.lastIndexOf('@') + 1
+                    )
+                  ).map((option, idx) => (
+                    <div
+                      key={idx}
+                      className={`px-3 py-2 text-sm cursor-pointer ${
+                        idx === (bracketPopover.autocompleteIndex || 0)
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'hover:bg-blue-50 hover:text-blue-700'
+                      }`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() =>
+                        handleBracketPopoverAutocompleteSelect(option)
+                      }
+                    >
+                      {getPopoverDisplayName(option)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Nested mode hint — shows when building a sub-bracket */}
+            {bracketPopover.nestedMode && (
+              <div className='text-xs -mt-1 flex items-center gap-1.5 flex-wrap'>
+                <span>Building nested bracket - type</span>
+                <span className='bg-teal-50 border border-teal-300 rounded px-1 py-0.5'>
+                  )
+                </span>
+                <span>to close it,</span>
+                <span className='bg-teal-50 border border-teal-300 rounded px-1 py-0.5'>
+                  Esc
+                </span>
+                <span>to cancel</span>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {bracketPopover.error && (
+              <div className='text-xs text-red-600 -mt-1.5'>
+                {bracketPopover.error}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className='flex justify-end gap-2'>
+              <TextButton
+                label='Cancel'
+                onClick={handleBracketPopoverCancel}
+                sx={{
+                  width: '70px',
+                  minWidth: '70px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
+              />
+              <TextButton
+                label='Save'
+                onClick={handleBracketPopoverSave}
+                sx={{
+                  width: '64px',
+                  minWidth: '64px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </Popover>
+
       {/* Function Popover Dialog */}
       <Popover
         open={Boolean(functionPopover)}
@@ -2797,11 +3898,19 @@ const MappingTable: React.FC<MappingTableProps> = ({
           horizontal: 'left',
         }}
         TransitionProps={{
-          timeout: 0, // Remove animation for instant appearance
+          timeout: 0,
         }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {
+              pointerEvents: 'auto',
+              zIndex: 1100,
               width: functionPopover?.anchorEl
                 ? functionPopover.anchorEl.clientWidth + 5
                 : '450px',
@@ -2819,7 +3928,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               Build {functionPopover.type} Function
             </div>
 
-            {/* Field Container - Same as Target Field */}
+            {/* Field Container - Same as Source Field */}
             <div className='relative'>
               <div
                 className={`w-full max-h-[100px] overflow-y-auto px-2 py-1 border rounded-[2px] flex flex-wrap items-start gap-1 cursor-text focus-within:border-2 ${
@@ -2881,7 +3990,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                   onKeyDown={handleFunctionPopoverKeyDown}
                   placeholder={
                     functionPopover.args.length === 0
-                      ? 'Type @ to add fields or # for manual entry'
+                      ? 'Type @ to add fields or # for IDs'
                       : 'Add more...'
                   }
                   className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -2966,9 +4075,17 @@ const MappingTable: React.FC<MappingTableProps> = ({
         TransitionProps={{
           timeout: 0,
         }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {
+              pointerEvents: 'auto',
+              zIndex: 1100,
               width: conditionalPopover?.anchorEl
                 ? conditionalPopover.anchorEl.clientWidth + 5
                 : '500px',
@@ -3191,7 +4308,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                             onKeyDown={(e) => handleClauseKeyDown(index, e)}
                             placeholder={
                               (clause.expressions || []).length === 0
-                                ? 'Type @ fields, # manual, &&, ||, operators...'
+                                ? 'Type @ fields, # for IDs, &&, ||, operators...'
                                 : 'Add more...'
                             }
                             className='flex-1 min-w-[120px] rounded-[2px] border-none outline-none bg-transparent text-sm placeholder-gray-400'
@@ -3274,14 +4391,14 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         )}
                       </div>
 
-                      <div className='text-sm font-bold text-gray-800 font-mono'>
+                      <div className='text-sm font-bold text-gray-800 '>
                         {` ) {`}
                       </div>
                     </div>
                   )}
 
                   {clause.type === 'ELSE' && (
-                    <div className='text-sm font-bold text-gray-800 font-mono mb-2'>
+                    <div className='text-sm font-bold text-gray-800  mb-2'>
                       else {'{'}
                     </div>
                   )}
@@ -3444,7 +4561,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onKeyDown={(e) => handleReturnKeyDown(index, e)}
                           placeholder={
                             (clause.returnExpressions || []).length === 0
-                              ? 'Type @ fields, # manual, numbers...'
+                              ? 'Type @ fields, # for IDs, numbers...'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-[120px] border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
@@ -3526,7 +4643,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                       )}
                     </div>
 
-                    <div className='text-sm font-bold text-gray-800 font-mono'>
+                    <div className='text-sm font-bold text-gray-800 '>
                       {'}'}
                     </div>
                   </div>

@@ -430,7 +430,14 @@ interface ConditionalExpression {
 }
 
 interface FieldExpression {
-  type: 'chip' | 'operator' | 'manual' | 'function' | 'number' | 'conditional';
+  type:
+    | 'chip'
+    | 'operator'
+    | 'manual'
+    | 'function'
+    | 'number'
+    | 'conditional'
+    | 'bracket';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
@@ -468,13 +475,13 @@ export function validateMappingItem(
 
   // Validate Field ID requirement (skip for non-fillable forms)
   if (hasTarget && !hasFieldId && !isNonFillable && !hasInputValue) {
-    errors.fieldIdError = 'Field ID is required when Target is specified';
+    errors.fieldIdError = 'Field ID is required when Source is specified';
   }
 
   // Check for pending input value (unconverted text)
   if (hasInputValue) {
     errors.targetError =
-      'Invalid input in the Target field. Select an option from the dropdown, or use # for manual entry / enter a number (press Enter to add), or apply a supported operator.';
+      'Invalid input in the Source field. Select an option from the dropdown, or use # for IDs / enter a number (press Enter to add), or apply a supported operator.';
     return errors;
   }
 
@@ -484,7 +491,7 @@ export function validateMappingItem(
 
     // Check if first item is an operator
     if (expressions.length > 0 && expressions[0].type === 'operator') {
-      errors.targetError = 'Target cannot start with an operator';
+      errors.targetError = 'Source cannot start with an operator';
       return errors;
     }
 
@@ -493,7 +500,7 @@ export function validateMappingItem(
       expressions.length > 0 &&
       expressions[expressions.length - 1].type === 'operator'
     ) {
-      errors.targetError = 'Target must end with an Object ID, not an operator';
+      errors.targetError = 'Source must end with an Object ID, not an operator';
       return errors;
     }
 
@@ -539,12 +546,14 @@ export function validateMappingItem(
         current.type === 'chip' ||
         current.type === 'manual' ||
         current.type === 'number' ||
-        current.type === 'function';
+        current.type === 'function' ||
+        current.type === 'bracket';
       const isNextValue =
         next.type === 'chip' ||
         next.type === 'manual' ||
         next.type === 'number' ||
-        next.type === 'function';
+        next.type === 'function' ||
+        next.type === 'bracket';
 
       if (isCurrentValue && isNextValue) {
         errors.targetError = 'Missing operator between Object IDs';
@@ -553,7 +562,7 @@ export function validateMappingItem(
     }
   }
 
-  // Validate Target structure in calculation_config (for saved data)
+  // Validate Source structure in calculation_config (for saved data)
   if (hasCalculationConfig && mapping.calculation_config) {
     const keys = Object.keys(mapping.calculation_config)
       .map(Number)
@@ -588,7 +597,7 @@ export function validateMappingItem(
       const lastKey = keys[keys.length - 1];
       if (lastKey % 2 === 0) {
         errors.targetError =
-          'Target must end with an Object ID, not an operator';
+          'Source must end with an Object ID, not an operator';
         return errors;
       }
 

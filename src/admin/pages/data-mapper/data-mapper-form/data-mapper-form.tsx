@@ -20,7 +20,7 @@ import {
 } from '../../../service/data-mapper/data-mapper-service';
 import { DataMapperFormData } from './form-data';
 import { DataMapperFormPayload } from '../../../types/data-mapper';
-import { SelectOption } from '../../../../consultant/types';
+import { SelectOption, YesNo } from '../../../../consultant/types';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 
 const MAX_FILE_SIZE_MB = 100;
@@ -59,6 +59,7 @@ const DataMapperForm: React.FC = () => {
     updated_on: '',
     updated_by: '',
   });
+  const [isFederal, setIsFederal] = useState<boolean>(false);
 
   // API Hooks
   const allCountries = useGetAllCountries('Active');
@@ -98,6 +99,8 @@ const DataMapperForm: React.FC = () => {
         effective_to_date: mapperData.effective_to_date || '',
         country_rid: mapperData.country_rid || '',
         state_rid: mapperData.state_rid || '',
+        description: mapperData.descriptions || '',
+        is_federal: mapperData.is_federal ? YesNo.Yes : YesNo.No,
       }),
     }),
     [mapperData]
@@ -149,6 +152,7 @@ const DataMapperForm: React.FC = () => {
           ? formatDateToYYYYMMDDWithTime(mapperData.modified_datetime || '-')
           : '-',
       });
+      setIsFederal(mapperData.is_federal ?? false);
     }
   }, [isEditView, mapperData]);
 
@@ -160,8 +164,8 @@ const DataMapperForm: React.FC = () => {
     if (commonSuccess) {
       successToast(
         isEditView
-          ? 'RD Form Configuration updated successfully'
-          : 'RD Form Configuration created successfully'
+          ? 'RD Form updated successfully'
+          : 'RD Form created successfully'
       );
       goBack();
     }
@@ -263,6 +267,8 @@ const DataMapperForm: React.FC = () => {
     );
     formDataPayload.append('effective_to_date', data.effective_to_date || '');
     formDataPayload.append('country_rid', data.country_rid || '');
+    formDataPayload.append('descriptions', data.description || '');
+    formDataPayload.append('is_federal', data.is_federal ? 'true' : 'false');
     if (data.state_rid) {
       formDataPayload.append('state_rid', data.state_rid || '');
     }
@@ -291,6 +297,13 @@ const DataMapperForm: React.FC = () => {
         setEffectiveFromDate(undefined);
       }
     }
+    if (data.fieldName === 'is_federal') {
+      if (data.fieldValue === YesNo.Yes) {
+        setIsFederal(true);
+      } else {
+        setIsFederal(false);
+      }
+    }
   };
 
   const goBack = () => {
@@ -301,6 +314,7 @@ const DataMapperForm: React.FC = () => {
     memoizedCountries,
     memoizedStates,
     states.isLoading,
+    isFederal,
     effectiveFromDate
   );
 
@@ -323,13 +337,11 @@ const DataMapperForm: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {isEditView
-                  ? `RD Form Configuration > ${mapperData?.r_number}`
-                  : 'RD Form Configuration'}
+                {isEditView ? `RD Forms > ${mapperData?.r_number}` : 'RD Forms'}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Configuration' : 'Create Configuration'}
+              {isEditView ? 'Edit RD Form' : 'Create RD Form'}
             </h5>
           </div>
         </div>

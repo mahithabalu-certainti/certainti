@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExportType,
-  ProjectDocumentsListExportParams,
   ProjectDocumentsListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -12,14 +11,23 @@ import {
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
 import { getProjectDocumentsColumns } from './columns';
 import { useAttachmentList } from '../../../../../../services/attachments/attachments-service';
-import { AttachmentList } from '../../../../../../types/attachment';
+import {
+  AttachmentList,
+  AttachmentsListExportParams,
+} from '../../../../../../types/attachment';
+import { checkPermission } from '../../../../../../../common-utils';
+import { AllPermissions } from '../../../../../../../common-service';
+import { RootState } from '../../../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 interface ProjectDocumentsProps {
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ProjectDocumentsListExportParams) => void;
+  setExportParams?: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -49,7 +57,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     {
       page: currentPage + 1,
       limit: 100,
-      sortBy: 'r_number',
+      sortBy: 'project_code',
       sortOrder: 'ASC',
     }
   );
@@ -87,6 +95,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       page: currentPage + 1,
       filters: appliedFilters,
       search: searchValue,
+      type: 'dossier_project_document',
     }));
   }, [currentPage, appliedFilters, searchValue]);
 
@@ -99,6 +108,8 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       search: searchValue,
+      fiscalYear: 0,
+      type: 'dossier_project_document',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
@@ -129,8 +140,45 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const RestrictedColumns = [
     { id: 'r_number', canHide: false, canDrag: false },
   ];
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  const projectDocumentsColumns = getProjectDocumentsColumns();
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+  const projectDocumentsColumns = getProjectDocumentsColumns(
+    projectPermissionMap,
+    permissionMap,
+    isAttachmentExportEnable
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
