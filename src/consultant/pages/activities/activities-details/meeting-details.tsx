@@ -18,7 +18,11 @@ import {
 } from '../../../../common-utils';
 import { ACTIVITY_EDIT } from '../../../../routes';
 import { ActivityType } from '../../../types';
-import { useMeetingActivityDetails } from '../../../services/activities/activities-service';
+import {
+  useCancelledActivityMeeting,
+  useCompletedActivityMeeting,
+  useMeetingActivityDetails,
+} from '../../../services/activities/activities-service';
 import {
   getPermissionMap,
   parseToStringArray,
@@ -27,6 +31,7 @@ import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../common-service';
 import { TruncateWithTooltip } from '../../../../components';
+import { useToast } from '../../../../hooks';
 
 interface MeetingDetailsProps {
   accountInActive: boolean;
@@ -53,12 +58,48 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
 
   const { permission } = useSelector((state: RootState) => state.permission);
 
+  const completeMeeting = useCompletedActivityMeeting();
+  const cancelMeeting = useCancelledActivityMeeting();
+
   // Fetch Meeting Details
   const {
     data: meeting,
     isLoading,
     error,
+    refetch,
   } = useMeetingActivityDetails(accountId || accountid || '', activityId, true);
+
+  const { successToast } = useToast();
+
+  const handleCompleteMeeting = () => {
+    completeMeeting.mutate(
+      {
+        account_rid: accountId || accountid || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          refetch();
+        },
+      }
+    );
+  };
+
+  const handleCancelMeeting = () => {
+    cancelMeeting.mutate(
+      {
+        account_rid: accountId || accountid || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          refetch();
+        },
+      }
+    );
+  };
 
   // Permission
   const meetingPermissionMap = useMemo(
@@ -101,6 +142,26 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
   };
 
   const headerButtons = [
+    {
+      label: 'Cancel Meeting',
+      variant: 'outlined' as const,
+      disabled: accountInActive,
+      loading: cancelMeeting.isPending,
+      onClick: handleCancelMeeting,
+      sx: { width: '120px', minWidth: '120px' },
+      hide:
+        !meetingActivityFieldsEditable || meeting?.status_name !== 'Scheduled',
+    },
+    {
+      label: 'Complete Meeting',
+      variant: 'contained' as const,
+      disabled: accountInActive,
+      loading: completeMeeting.isPending,
+      onClick: handleCompleteMeeting,
+      sx: { width: '120px', minWidth: '120px' },
+      hide:
+        !meetingActivityFieldsEditable || meeting?.status_name !== 'Scheduled',
+    },
     {
       label: 'Edit',
       variant: 'outlined' as const,

@@ -44,13 +44,18 @@ import ActivityDetails from '../../../activities/activities-details/activity-det
 import { ActivityListTable } from '../../../activities';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
-import { useGetActivityStatus } from '../../../../services/activities/activities-service';
+import {
+  useCancelledActivityMeeting,
+  useCompletedActivityMeeting,
+  useGetActivityStatus,
+} from '../../../../services/activities/activities-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { capitalize } from '@mui/material';
 import Timeline from '../../../../../pages/timeline/timeline';
+import { useToast } from '../../../../../hooks';
 
 const ActivityTabs: OverviewTabs[] = [
   {
@@ -265,6 +270,10 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     setResetSearch(true);
   };
 
+  const completeMeeting = useCompletedActivityMeeting();
+  const cancelMeeting = useCancelledActivityMeeting();
+  const { successToast } = useToast();
+
   const handleSearchReset = () => {
     setResetSearch(false);
   };
@@ -405,6 +414,35 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
       hide: viewDetails,
     },
   ];
+  const handleCompleteMeeting = async (activityId: string) => {
+    completeMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+      }
+    );
+  };
+
+  const handleCancelMeeting = async (activityId: string) => {
+    cancelMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+      }
+    );
+  };
 
   const handleViewActivity = (rowId: string, activityType: ActivityType) => {
     const type = activityType?.toLowerCase();
@@ -431,7 +469,9 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
       case 'meeting':
         return getActivityMeetingListColumns(
           handleViewActivity,
-          meetingPermissionMap
+          meetingPermissionMap,
+          handleCancelMeeting,
+          handleCompleteMeeting
         );
       case 'call':
         return getActivityCallLogListColumns(

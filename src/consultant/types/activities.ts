@@ -309,6 +309,11 @@ export interface CallActivityDetailsResponse {
   };
 }
 
+export interface ActivityStatusUpdatePayload {
+  account_rid: string;
+  activity_rid: string;
+}
+
 // Task Activity form payload
 export interface ActivityTaskFormPayload {
   account_rid: string;

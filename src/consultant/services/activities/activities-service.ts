@@ -12,6 +12,7 @@ import {
   ActivityListExportURLParams,
   ActivityListURLParams,
   ActivityStatusResponse,
+  ActivityStatusUpdatePayload,
   ActivityTaskFormPayload,
   ActivityType,
   CallActivityDetails,
@@ -27,6 +28,8 @@ import {
 } from '../../types';
 import {
   ActivityListURL,
+  cancelActivityMeetingURL,
+  completeActivityMeetingURL,
   createActivityCallURL,
   createActivityEmailURL,
   createActivityMeetingURL,
@@ -195,6 +198,18 @@ export const useCreateActivityMeeting = () => {
 export const useUpdateActivityMeeting = () => {
   return useApiMutationSericve<unknown, FormData>(
     updateActivityMeetingURL(),
+    'post'
+  );
+};
+export const useCancelledActivityMeeting = () => {
+  return useApiMutationSericve<unknown, ActivityStatusUpdatePayload>(
+    cancelActivityMeetingURL(),
+    'post'
+  );
+};
+export const useCompletedActivityMeeting = () => {
+  return useApiMutationSericve<unknown, ActivityStatusUpdatePayload>(
+    completeActivityMeetingURL(),
     'post'
   );
 };
