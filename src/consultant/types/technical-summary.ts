@@ -8,6 +8,7 @@ export interface TechnicalSummaryListURLParams {
   project_rid?: string;
   project_fiscal_rid?: string;
   case_rid?: string;
+  type?: string;
 }
 
 export interface TechnicalSummaryExportListParams {
@@ -19,6 +20,8 @@ export interface TechnicalSummaryExportListParams {
   project_fiscal_rid?: string;
   timezone?: string;
   case_rid?: string;
+  type?: string;
+  summaryType?: string;
 }
 
 export type TechnicalSummaryList = {

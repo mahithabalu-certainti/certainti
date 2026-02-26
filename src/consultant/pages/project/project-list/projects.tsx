@@ -205,6 +205,11 @@ export const Projects: React.FC = () => {
     return map;
   }, [accountViewEditFields]);
 
+  const projectCreateIsEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_CREATE
+  );
+
   const projectFilterFields = getAllProjectFilterFields(
     memoizedClassification.map((item) => ({
       label: item.option,
@@ -258,13 +263,9 @@ export const Projects: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <div>
-            <TextButton
-              label='New'
-              onClick={() => handleNewProjectCLick()}
-              // sx={ ...BUTTON_STYLES, width: '48px', minWidth: '48px' }
-            />
-          </div>
+          {projectCreateIsEnable && (
+            <TextButton label='New' onClick={() => handleNewProjectCLick()} />
+          )}
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'

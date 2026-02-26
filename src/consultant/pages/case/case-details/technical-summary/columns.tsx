@@ -3,8 +3,8 @@ import { ListTableColumn } from '../../../../../components/table/types';
 import { TechnicalSummaryList } from '../../../../types';
 
 export const getTechnicalSummaryListColumns = (
-  handleView: (row: TechnicalSummaryList) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  handleView?: (row: TechnicalSummaryList) => void,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TechnicalSummaryList>[] => [
   {
     id: 'r_number',
@@ -23,19 +23,22 @@ export const getTechnicalSummaryListColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: TechnicalSummaryList) => (
-      <span
-        onClick={() => handleView(row)}
-        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-      >
-        {row.r_number}
-      </span>
-    ),
+    render: (row: TechnicalSummaryList) =>
+      handleView ? (
+        <span
+          onClick={() => handleView(row)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.r_number}
+        </span>
+      ) : (
+        row.r_number
+      ),
   },
   {
     id: 'project_code',
     sortId: 'project_code',
-    label: 'Project code',
+    label: 'Project Code',
     width: 160,
     sortable: true,
     sx: { textAlign: 'right' },

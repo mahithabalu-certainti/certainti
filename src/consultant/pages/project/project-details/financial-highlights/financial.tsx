@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
   AllPermissions,
+  OverviewTabs,
   useGetAllCountries,
 } from '../../../../../common-service';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -26,19 +27,22 @@ import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const FinancialTabs = [
+const FinancialTabs: OverviewTabs[] = [
   {
     id: AllPermissions.PROJECT_FINANCIAL_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.PROJECT_FINANCIAL_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.PROJECT_FINANCIAL_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 interface ProjectFinancialProps {
@@ -111,7 +115,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   const countriesList = useGetAllCountries();
   const region = useFetchState(currentCountry);
   const resourceTypeOptions = useGetResourceType();
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const memoizedResourceType = useMemo(
     () =>
       resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
@@ -210,52 +214,60 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <SectionHeader
-        title='Financial Summary'
-        titleIcon={
-          <FinancialIcon
-            alt='financial-header-icon'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='project' />
+        </div>
+      ) : (
+        <div>
+          <SectionHeader
+            title='Financial Summary'
+            titleIcon={
+              <FinancialIcon
+                alt='financial-header-icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
+            }
+            count={resourceCostCount}
+            showItemCount={tabParam === 'resource_cost'}
+            iconBg={ColorCode.projectBgColor}
+            bgType='circle'
+            buttons={headerButtons}
           />
-        }
-        count={resourceCostCount}
-        showItemCount={tabParam === 'resource_cost'}
-        iconBg={ColorCode.projectBgColor}
-        bgType='circle'
-        buttons={headerButtons}
-      />
-      <SectionHeaderTab
-        tabs={tabs}
-        onTabChange={handleTabChange}
-        defaultValue={tabParam}
-      />
+          <SectionHeaderTab
+            tabs={tabs}
+            onTabChange={handleTabChange}
+            defaultValue={tabParam}
+          />
 
-      <div
-        className={`border border-t-0 border-[#CBD6E2] ${
-          tabParam !== 'resource_cost' ? 'p-3' : ''
-        }`}
-      >
-        {tabParam === 'summary' && isSummaryViewEnable && (
-          <SummayListTable
-            projectDetails={projectDetails}
-            onQreAdjustmentUpdated={onQreAdjustmentUpdated}
-          />
-        )}
-        {tabParam === 'resource_cost' && isResourceCostViewEnable && (
-          <ResourceCost
-            projectDetails={projectDetails}
-            refreshTrigger={refreshResourceCost}
-            setCount={setResourceCostCount}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setResCostExportParams={setResCostExportParams}
-            setExportType={setExportType}
-            setColumnAnchorEl={setColumnAnchorEl}
-            columnAnchorEl={columnAnchorEl}
-            searchValue={searchText}
-          />
-        )}
-      </div>
+          <div
+            className={`border border-t-0 border-[#CBD6E2] ${
+              tabParam !== 'resource_cost' ? 'p-3' : ''
+            }`}
+          >
+            {tabParam === 'summary' && isSummaryViewEnable && (
+              <SummayListTable
+                projectDetails={projectDetails}
+                onQreAdjustmentUpdated={onQreAdjustmentUpdated}
+              />
+            )}
+            {tabParam === 'resource_cost' && isResourceCostViewEnable && (
+              <ResourceCost
+                projectDetails={projectDetails}
+                refreshTrigger={refreshResourceCost}
+                setCount={setResourceCostCount}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+                setResCostExportParams={setResCostExportParams}
+                setExportType={setExportType}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
+                searchValue={searchText}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

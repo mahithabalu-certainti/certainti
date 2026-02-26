@@ -26,8 +26,11 @@ import {
 } from '../../../../../assets';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { TableSkeleton } from '../../../../../components/table';
@@ -57,12 +60,20 @@ import {
 } from '../../../../../common-utils/common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { accountDetailsProps } from '../../../account-details/utils';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const ConfigTabs: ResourceTabs[] = [
+const ConfigTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
 ];
 
@@ -106,6 +117,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
   const [searchParams] = useSearchParams();
   const { successToast, errorToast } = useToast();
   const accountId = searchParams.get('accountID') || accountid || '';
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const [formData, setFormData] = useState<HistoryFormData>({
     historicalSubmissions: [],
     region: '', // Region selection - empty initially for country-based data
@@ -1022,1166 +1034,1200 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <SectionHeader
-        title={'Historical Submission'}
-        titleIcon={getTitleIcon()}
-        buttons={headerButtons}
-        count={formData.historicalSubmissions.length}
-        showItemCount={true}
-        hideSection={false}
-        iconBg={ColorCode.accountBgColor}
-        bgType='circle'
-      />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='account' />
+        </div>
+      ) : (
+        <div>
+          <SectionHeader
+            title={'Historical Submission'}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={formData.historicalSubmissions.length}
+            showItemCount={true}
+            hideSection={false}
+            iconBg={ColorCode.accountBgColor}
+            bgType='circle'
+          />
 
-      <div className='flex flex-col gap-0 border border-[#CBD6E2]'>
-        <div className='w-full mb-5'>
-          <div className='capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-            Jurisdiction Information
-          </div>
-          <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
-            <div
-              style={{
-                display:
-                  !accountPermissionMap?.['country_rid']?.read &&
-                  !accountPermissionMap?.['country_rid']?.edit
-                    ? 'none'
-                    : 'block',
-              }}
-            >
-              <label
-                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                htmlFor='country_name'
-              >
-                Country <span className='text-red-500'> *</span>
-              </label>
-              <input
-                type='text'
-                name='country_name'
-                placeholder='-'
-                autoComplete='off'
-                className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
-                disabled={true}
-                value={accountCountryDetails.country_name}
-              />
-              {errors?.country && (
-                <span className='text-[12px] text-red-400 col-span-full'>
-                  {errors.country}
-                </span>
-              )}
-            </div>
-
-            <div
-              style={{
-                display:
-                  !accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
-                    ? 'none'
-                    : 'block',
-              }}
-            >
-              <label
-                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                htmlFor='region'
-              >
-                Region
-                {/* Region is optional, so no required asterisk */}
-              </label>
-
-              <Select
-                name='region'
-                value={selectedRegion}
-                onChange={(e) => handleRegionChange(e.target.value)}
-                displayEmpty
-                fullWidth
-                size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
-                MenuProps={COMMON_MENU_PROPS}
-                sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
-                disabled={
-                  accountPermissionMap?.['region_rid']?.read &&
-                  !accountPermissionMap?.['region_rid']?.edit
-                }
-              >
-                <MenuItem
-                  value=''
-                  sx={{
-                    color: '#7D98B6',
-                    fontSize: '13px',
-                    fontWeight: 500,
+          <div className='flex flex-col gap-0 border border-[#CBD6E2]'>
+            <div className='w-full mb-5'>
+              <div className='capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+                Jurisdiction Information
+              </div>
+              <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
+                <div
+                  style={{
+                    display:
+                      !accountPermissionMap?.['country_rid']?.read &&
+                      !accountPermissionMap?.['country_rid']?.edit
+                        ? 'none'
+                        : 'block',
                   }}
                 >
-                  Choose Region
-                </MenuItem>
-                {regionListOptions?.map((option, i) => (
-                  <MenuItem
-                    key={`${option.value}-${i}`}
-                    value={option.value}
-                    title={option.label}
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                    }}
+                  <label
+                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                    htmlFor='country_name'
                   >
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
+                    Country <span className='text-red-500'> *</span>
+                  </label>
+                  <input
+                    type='text'
+                    name='country_name'
+                    placeholder='-'
+                    autoComplete='off'
+                    className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
+                    disabled={true}
+                    value={accountCountryDetails.country_name}
+                  />
+                  {errors?.country && (
+                    <span className='text-[12px] text-red-400 col-span-full'>
+                      {errors.country}
+                    </span>
+                  )}
+                </div>
 
-              {errors?.region && (
-                <span className='text-[12px] text-red-400 col-span-full'>
-                  {errors.region}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className='capitalize mb-4 h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
-            Historical Information
-            {selectedRegion ? ' (For Region)' : ' (For Federal)'}
-          </div>
-          <div className='px-3.5'>
-            <TableContainer
-              sx={{
-                overflowX: 'auto',
-                maxHeight: 'calc(100vh - 400px)',
-                position: 'relative',
-                border: '1px solid #CBD6E2 !important',
-                '& .MuiTableRow-root > .MuiTableCell-root:last-of-type': {
-                  borderRight: 'none',
-                },
-              }}
-            >
-              <Table stickyHeader>
-                <TableHead
-                  sx={{
-                    '& .MuiTableCell-root': {
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      color: '#2A2A2A',
-                      padding: '0px 8px',
-                      height: '29px',
-                      boxSizing: 'border-box',
-                    },
+                <div
+                  style={{
+                    display:
+                      !accountPermissionMap?.['region_rid']?.read &&
+                      !accountPermissionMap?.['region_rid']?.edit
+                        ? 'none'
+                        : 'block',
                   }}
                 >
-                  <TableRow sx={{ height: 29 }}>
-                    {visibleHistoricalFields.map((field) => (
-                      <TableCell
-                        key={field.key}
-                        style={{
-                          width: field.width,
-                          minWidth: field.width,
-                          maxWidth: field.width,
-                          textAlign: 'left',
-                          textWrap: 'nowrap',
-                          ...(field.sx || {}),
-                          ...(field.showTooltip
-                            ? {
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 3,
-                              }
-                            : {}),
-                        }}
-                      >
-                        {field.label}{' '}
-                        {field.required && (
-                          <span className='text-red-500 text-[16px]'>*</span>
-                        )}
-                        {field.showTooltip && (
-                          <Tooltip
-                            title={field.tooltipMessage || ''}
-                            arrow
-                            placement='top'
-                            slotProps={{
-                              tooltip: {
-                                sx: {
-                                  mr: 1,
-                                },
-                              },
-                            }}
-                          >
-                            <span className='w-5 mt-1 inline-flex items-center justify-center cursor-pointer'>
-                              <React.Suspense fallback={null}>
-                                <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]' />
-                              </React.Suspense>
-                            </span>
-                          </Tooltip>
-                        )}
-                      </TableCell>
-                    ))}
-                    <TableCell style={{ width: '140px' }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody
-                  sx={{
-                    '& .MuiTableCell-root': {
-                      padding: '0px',
-                      px: '8px',
-                      minHeight: '32px',
-                      maxHeight: '32px',
-                      height: '32px',
-                      '& input, & textarea': {
-                        border: 'none',
-                        outline: 'none',
-                        boxShadow: 'none',
-                        background: 'transparent',
-                        '&:disabled': {
-                          backgroundColor: '#f3f4f6',
-                          color: '#6b7280',
-                        },
-                        '&:focus': {
-                          border: '1px solid #60a5fa',
-                          backgroundColor: 'white',
-                        },
-                      },
-                      '& radio': {
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      },
-                    },
-                  }}
-                >
-                  {formLoading ? (
-                    <TableSkeleton
-                      rowsPerPage={4}
-                      columnsCount={visibleHistoricalFields.length + 1}
-                    />
-                  ) : formData.historicalSubmissions.length > 0 ? (
-                    formData.historicalSubmissions.map(
-                      (submission, rowIndex) => {
-                        const isNewRow = !submission.rid;
-                        return (
-                          <TableRow
-                            key={submission.user_id}
-                            sx={{
-                              position: 'relative',
-                              p: 0,
-                            }}
-                          >
-                            {/* Fiscal Year Dropdown - Sticky First Column */}
-                            {shouldShowField('fiscal_year') && (
-                              <TableCell
-                                ref={(el: HTMLTableCellElement | null) => {
-                                  if (el)
-                                    cellRefs.current[
-                                      `fiscal_year-${rowIndex}`
-                                    ] = el;
-                                }}
-                                style={{
-                                  position: 'relative',
-                                }}
-                                sx={{
-                                  padding: '0px !important',
-                                  position: 'sticky !important',
-                                  left: 0,
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.fiscal_year
-                                    ? '#FEF2F2 !important'
-                                    : '#fff !important',
-                                  borderRight: '1px solid #CBD6E2',
-                                  borderBottom: '1px solid #CBD6E2 !important',
-                                  zIndex: 6,
-                                }}
-                              >
-                                <div>
-                                  <Select
-                                    value={submission.fiscal_year}
-                                    onChange={(e) =>
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'fiscal_year',
-                                        e.target.value
-                                      )
-                                    }
-                                    disabled={
-                                      !isFieldEditable('fiscal_year', isNewRow)
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    displayEmpty
-                                    className='h-[28px]'
-                                    sx={{
-                                      width: '100%',
-                                      '& .MuiSelect-select': {
-                                        fontSize: '13px',
-                                        fontWeight: 500,
-                                        color: submission.fiscal_year
-                                          ? '#425A76'
-                                          : '#7D98B6',
-                                        padding: '4px 8px',
-                                      },
-                                      '& .MuiOutlinedInput-notchedOutline': {
-                                        border: 'none',
-                                        borderColor: '#CBD6E2',
-                                      },
-                                      '&:hover .MuiOutlinedInput-notchedOutline':
-                                        {
-                                          borderColor: '#CBD6E2',
-                                        },
-                                      '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                        {
-                                          borderColor: '#CBD6E2',
-                                        },
-                                      '&.Mui-disabled .MuiSelect-select': {
-                                        backgroundColor: '#F3F4F6', // Tailwind bg-gray-100
-                                      },
-                                    }}
-                                    MenuProps={{
-                                      PaperProps: {
-                                        sx: {
-                                          marginTop: '4px',
-                                          maxHeight: '250px',
-                                          borderRadius: '0px',
-                                          width: Math.max(
-                                            cellWidths[
-                                              `fiscal_year-${rowIndex}`
-                                            ] || 0,
-                                            150
-                                          ),
-                                          boxShadow:
-                                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                                          '& .MuiMenuItem-root': {
-                                            fontSize: '13px',
-                                            fontWeight: 500,
-                                            padding: '6px 12px',
-                                            '&[data-value=""]': {
-                                              color: '#7D98B6',
-                                            },
-                                            '&:not([data-value=""])': {
-                                              color: '#425A76',
-                                            },
-                                          },
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <MenuItem
-                                      value=''
-                                      sx={{
-                                        fontSize: '13px',
-                                        color: '#7D98B6 !important',
-                                        fontWeight: 500,
-                                      }}
-                                    >
-                                      Choose Fiscal Year
-                                    </MenuItem>
-                                    {yearOptions.map((year) => (
-                                      <MenuItem
-                                        key={year.value}
-                                        value={year.value.toString()}
-                                        sx={{
-                                          fontSize: '13px',
-                                          color: '#425A76 !important',
-                                          fontWeight: 500,
-                                        }}
-                                      >
-                                        {year.label}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.fiscal_year && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .fiscal_year
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
+                  <label
+                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                    htmlFor='region'
+                  >
+                    Region
+                    {/* Region is optional, so no required asterisk */}
+                  </label>
 
-                            {/* Total FTE Cost Text Field */}
-                            {shouldShowField('total_fte_cost') && (
-                              <TableCell
-                                style={{
-                                  position: 'relative',
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.total_fte_cost
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: '0px !important' }}
-                              >
-                                <div>
-                                  <TextField
-                                    value={
-                                      submission.total_fte_cost
-                                        ? costDisplay(
-                                            submission.total_fte_cost || '',
-                                            submission.currency_symbol
-                                          )
-                                        : ''
-                                    }
-                                    onChange={(e) => {
-                                      const rawValue = removeCommas(
-                                        e.target.value
-                                      );
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'total_fte_cost',
-                                        rawValue
-                                      );
-                                    }}
-                                    disabled={
-                                      !isFieldEditable(
-                                        'total_fte_cost',
-                                        isNewRow
-                                      )
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    placeholder='Enter Total FTE Cost'
-                                    sx={{
-                                      '& .MuiInputBase-root': {
-                                        height: '28px',
-                                        fontSize: '13px',
-                                        '& input': {
-                                          padding: '4px 8px',
-                                          color: '#425A76',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                      },
-                                    }}
-                                  />
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.total_fte_cost && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .total_fte_cost
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
-
-                            {/* Total Subcon Cost Text Field */}
-                            {shouldShowField('total_subcon_cost') && (
-                              <TableCell
-                                style={{
-                                  position: 'relative',
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.total_subcon_cost
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: '0px !important' }}
-                              >
-                                <div>
-                                  <TextField
-                                    value={
-                                      submission.total_subcon_cost
-                                        ? costDisplay(
-                                            submission.total_subcon_cost || '',
-                                            submission.currency_symbol
-                                          )
-                                        : ''
-                                    }
-                                    onChange={(e) => {
-                                      const rawValue = removeCommas(
-                                        e.target.value
-                                      );
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'total_subcon_cost',
-                                        rawValue
-                                      );
-                                    }}
-                                    disabled={
-                                      !isFieldEditable(
-                                        'total_subcon_cost',
-                                        isNewRow
-                                      )
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    placeholder='Enter Total Subcon Cost'
-                                    sx={{
-                                      '& .MuiInputBase-root': {
-                                        height: '28px',
-                                        fontSize: '13px',
-                                        '& input': {
-                                          padding: '4px 8px',
-                                          color: '#425A76',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                      },
-                                    }}
-                                  />
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.total_subcon_cost && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .total_subcon_cost
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
-
-                            {/* Total Non-Labor Cost Text Field */}
-                            {shouldShowField('total_nonlabor_cost') && (
-                              <TableCell
-                                style={{
-                                  position: 'relative',
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.total_nonlabor_cost
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: '0px !important' }}
-                              >
-                                <div>
-                                  <TextField
-                                    value={
-                                      submission.total_nonlabor_cost
-                                        ? costDisplay(
-                                            submission.total_nonlabor_cost ||
-                                              '',
-                                            submission.currency_symbol
-                                          )
-                                        : ''
-                                    }
-                                    onChange={(e) => {
-                                      const rawValue = removeCommas(
-                                        e.target.value
-                                      );
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'total_nonlabor_cost',
-                                        rawValue
-                                      );
-                                    }}
-                                    disabled={
-                                      !isFieldEditable(
-                                        'total_nonlabor_cost',
-                                        isNewRow
-                                      )
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    placeholder='Enter Total Non-Labor Cost'
-                                    sx={{
-                                      '& .MuiInputBase-root': {
-                                        height: '28px',
-                                        fontSize: '13px',
-                                        '& input': {
-                                          padding: '4px 8px',
-                                          color: '#425A76',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                      },
-                                    }}
-                                  />
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.total_nonlabor_cost && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .total_nonlabor_cost
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
-
-                            {/* Total Project Cost Text Field */}
-                            {shouldShowField('total_project_cost') && (
-                              <TableCell
-                                style={{
-                                  position: 'relative',
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.total_project_cost
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: '0px !important' }}
-                              >
-                                <div>
-                                  <TextField
-                                    value={
-                                      submission.total_project_cost
-                                        ? costDisplay(
-                                            submission.total_project_cost || '',
-                                            submission.currency_symbol
-                                          )
-                                        : ''
-                                    }
-                                    onChange={(e) => {
-                                      const rawValue = removeCommas(
-                                        e.target.value
-                                      );
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'total_project_cost',
-                                        rawValue
-                                      );
-                                    }}
-                                    disabled={
-                                      !isFieldEditable(
-                                        'total_project_cost',
-                                        isNewRow
-                                      )
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    placeholder='Enter Total Project Cost'
-                                    sx={{
-                                      '& .MuiInputBase-root': {
-                                        height: '28px',
-                                        fontSize: '13px',
-                                        '& input': {
-                                          padding: '4px 8px',
-                                          color: '#425A76',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                      },
-                                    }}
-                                  />
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.total_project_cost && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .total_project_cost
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
-
-                            {/* Total QRE Text Field */}
-                            {shouldShowField('total_qre') && (
-                              <TableCell
-                                style={{
-                                  position: 'relative',
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.total_qre
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: '0px !important' }}
-                              >
-                                <div>
-                                  <TextField
-                                    value={
-                                      submission.total_qre
-                                        ? costDisplay(
-                                            submission.total_qre || '',
-                                            submission.currency_symbol
-                                          )
-                                        : ''
-                                    }
-                                    onChange={(e) => {
-                                      const rawValue = removeCommas(
-                                        e.target.value
-                                      );
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'total_qre',
-                                        rawValue
-                                      );
-                                    }}
-                                    disabled={
-                                      !isFieldEditable('total_qre', isNewRow)
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    placeholder='Enter Total QRE'
-                                    sx={{
-                                      '& .MuiInputBase-root': {
-                                        height: '28px',
-                                        fontSize: '13px',
-                                        '& input': {
-                                          padding: '4px 8px',
-                                          color: '#425A76',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                      },
-                                    }}
-                                  />
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.total_qre && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .total_qre
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
-
-                            {/* Total RD Credits Text Field */}
-                            {shouldShowField('total_rd_credits') && (
-                              <TableCell
-                                style={{
-                                  position: 'relative',
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.total_rd_credits
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: '0px !important' }}
-                              >
-                                <div>
-                                  <TextField
-                                    value={
-                                      submission.total_rd_credits
-                                        ? valueDisplay(
-                                            submission.total_rd_credits || ''
-                                          )
-                                        : ''
-                                    }
-                                    onChange={(e) => {
-                                      const rawValue = removeCommas(
-                                        e.target.value
-                                      );
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'total_rd_credits',
-                                        rawValue
-                                      );
-                                    }}
-                                    disabled={
-                                      !isFieldEditable(
-                                        'total_rd_credits',
-                                        isNewRow
-                                      )
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    placeholder='Enter Total RD Credits'
-                                    sx={{
-                                      '& .MuiInputBase-root': {
-                                        height: '28px',
-                                        fontSize: '13px',
-                                        '& input': {
-                                          padding: '4px 8px',
-                                          color: '#425A76',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                      },
-                                    }}
-                                  />
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.total_rd_credits && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .total_rd_credits
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
-
-                            {/* Annual Gross Receipts Text Field */}
-                            {shouldShowField('annual_gross_receipts') && (
-                              <TableCell
-                                style={{
-                                  position: 'relative',
-                                  backgroundColor: errors
-                                    .historicalSubmissions?.[rowIndex]
-                                    ?.annual_gross_receipts
-                                    ? '#FEF2F2'
-                                    : 'transparent',
-                                }}
-                                sx={{ padding: '0px !important' }}
-                              >
-                                <div>
-                                  <TextField
-                                    value={
-                                      submission.annual_gross_receipts
-                                        ? valueDisplay(
-                                            submission.annual_gross_receipts ||
-                                              ''
-                                          )
-                                        : ''
-                                    }
-                                    onChange={(e) => {
-                                      const rawValue = removeCommas(
-                                        e.target.value
-                                      );
-                                      handleSubmissionChange(
-                                        rowIndex,
-                                        'annual_gross_receipts',
-                                        rawValue
-                                      );
-                                    }}
-                                    disabled={
-                                      !isFieldEditable(
-                                        'annual_gross_receipts',
-                                        isNewRow
-                                      )
-                                    }
-                                    size='small'
-                                    fullWidth
-                                    placeholder='Enter Annual Gross Receipts'
-                                    sx={{
-                                      '& .MuiInputBase-root': {
-                                        height: '28px',
-                                        fontSize: '13px',
-                                        '& input': {
-                                          padding: '4px 8px',
-                                          color: '#425A76',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                          border: 'none',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                          {
-                                            border: 'none',
-                                          },
-                                      },
-                                    }}
-                                  />
-                                </div>
-                                {errors.historicalSubmissions?.[rowIndex]
-                                  ?.annual_gross_receipts && (
-                                  <Tooltip
-                                    title={
-                                      errors.historicalSubmissions[rowIndex]
-                                        .annual_gross_receipts
-                                    }
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <React.Suspense fallback={null}>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </React.Suspense>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </TableCell>
-                            )}
-
-                            {/* Actions Column */}
-                            <TableCell sx={{ width: '140px', padding: 0 }}>
-                              <Tooltip
-                                title={'Remove Entry'}
-                                disableHoverListener={
-                                  (!isHistoricalSubmissionDelete &&
-                                    !isNewRow) ||
-                                  !isNewRow
-                                }
-                                arrow
-                                placement='top'
-                              >
-                                <button
-                                  type='button'
-                                  onClick={() =>
-                                    handleRemoveSubmission(rowIndex)
-                                  }
-                                  style={{
-                                    cursor: !isNewRow
-                                      ? 'default'
-                                      : !isHistoricalSubmissionDelete &&
-                                          !isNewRow
-                                        ? 'default'
-                                        : 'pointer',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    padding: 0,
-                                    marginTop: '6px',
-                                    opacity: !isNewRow ? 0.5 : 1,
-                                  }}
-                                  aria-label='Remove entry'
-                                  className='ml-4'
-                                  disabled={
-                                    !isNewRow ||
-                                    (!isHistoricalSubmissionDelete && !isNewRow)
-                                  }
-                                >
-                                  <React.Suspense fallback={null}>
-                                    <KeyContactRemoveIcon
-                                      alt='Remove'
-                                      style={{
-                                        width: 20,
-                                        height: 20,
-                                      }}
-                                    />
-                                  </React.Suspense>
-                                </button>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-                    )
-                  ) : (
-                    <TableRow sx={{ height: '32px' }}>
-                      <TableCell
-                        colSpan={historicalFields.length + 1}
-                        align='center'
+                  <Select
+                    name='region'
+                    value={selectedRegion}
+                    onChange={(e) => handleRegionChange(e.target.value)}
+                    displayEmpty
+                    fullWidth
+                    size='small'
+                    className={`custom-select-no-arrow sm:text-sm ${
+                      selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                    } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                    MenuProps={COMMON_MENU_PROPS}
+                    sx={getSelectStyles(
+                      !!errors?.region,
+                      selectedRegion === ''
+                    )}
+                    disabled={
+                      accountPermissionMap?.['region_rid']?.read &&
+                      !accountPermissionMap?.['region_rid']?.edit
+                    }
+                  >
+                    <MenuItem
+                      value=''
+                      sx={{
+                        color: '#7D98B6',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Choose Region
+                    </MenuItem>
+                    {regionListOptions?.map((option, i) => (
+                      <MenuItem
+                        key={`${option.value}-${i}`}
+                        value={option.value}
+                        title={option.label}
                         sx={{
-                          borderBottom: '1px solid #CBD6E2',
-                          height: '32px',
                           color: '#425A76',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           fontWeight: 500,
                         }}
                       >
-                        No data available
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </div>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
 
-          <div className='mt-2 pl-4'>
-            <button
-              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-default'
-              type='button'
-              onClick={handleAddSubmission}
-              disabled={
-                formLoading ||
-                !isHistoricalSubmissionCreate ||
-                !accountDetails?.accountById?.country_rid
-              }
-            >
-              <span>
-                <React.Suspense fallback={null}>
-                  <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
-                </React.Suspense>
-              </span>
-              Add New
-            </button>
+                  {errors?.region && (
+                    <span className='text-[12px] text-red-400 col-span-full'>
+                      {errors.region}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className='capitalize mb-4 h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+                Historical Information
+                {selectedRegion ? ' (For Region)' : ' (For Federal)'}
+              </div>
+              <div className='px-3.5'>
+                <TableContainer
+                  sx={{
+                    overflowX: 'auto',
+                    maxHeight: 'calc(100vh - 400px)',
+                    position: 'relative',
+                    border: '1px solid #CBD6E2 !important',
+                    '& .MuiTableRow-root > .MuiTableCell-root:last-of-type': {
+                      borderRight: 'none',
+                    },
+                  }}
+                >
+                  <Table stickyHeader>
+                    <TableHead
+                      sx={{
+                        '& .MuiTableCell-root': {
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          color: '#2A2A2A',
+                          padding: '0px 8px',
+                          height: '29px',
+                          boxSizing: 'border-box',
+                        },
+                      }}
+                    >
+                      <TableRow sx={{ height: 29 }}>
+                        {visibleHistoricalFields.map((field) => (
+                          <TableCell
+                            key={field.key}
+                            style={{
+                              width: field.width,
+                              minWidth: field.width,
+                              maxWidth: field.width,
+                              textAlign: 'left',
+                              textWrap: 'nowrap',
+                              ...(field.sx || {}),
+                              ...(field.showTooltip
+                                ? {
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                  }
+                                : {}),
+                            }}
+                          >
+                            {field.label}{' '}
+                            {field.required && (
+                              <span className='text-red-500 text-[16px]'>
+                                *
+                              </span>
+                            )}
+                            {field.showTooltip && (
+                              <Tooltip
+                                title={field.tooltipMessage || ''}
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      mr: 1,
+                                    },
+                                  },
+                                }}
+                              >
+                                <span className='w-5 mt-1 inline-flex items-center justify-center cursor-pointer'>
+                                  <React.Suspense fallback={null}>
+                                    <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]' />
+                                  </React.Suspense>
+                                </span>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                        ))}
+                        <TableCell style={{ width: '140px' }}>
+                          Actions
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody
+                      sx={{
+                        '& .MuiTableCell-root': {
+                          padding: '0px',
+                          px: '8px',
+                          minHeight: '32px',
+                          maxHeight: '32px',
+                          height: '32px',
+                          '& input, & textarea': {
+                            border: 'none',
+                            outline: 'none',
+                            boxShadow: 'none',
+                            background: 'transparent',
+                            '&:disabled': {
+                              backgroundColor: '#f3f4f6',
+                              color: '#6b7280',
+                            },
+                            '&:focus': {
+                              border: '1px solid #60a5fa',
+                              backgroundColor: 'white',
+                            },
+                          },
+                          '& radio': {
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          },
+                        },
+                      }}
+                    >
+                      {formLoading ? (
+                        <TableSkeleton
+                          rowsPerPage={4}
+                          columnsCount={visibleHistoricalFields.length + 1}
+                        />
+                      ) : formData.historicalSubmissions.length > 0 ? (
+                        formData.historicalSubmissions.map(
+                          (submission, rowIndex) => {
+                            const isNewRow = !submission.rid;
+                            return (
+                              <TableRow
+                                key={submission.user_id}
+                                sx={{
+                                  position: 'relative',
+                                  p: 0,
+                                }}
+                              >
+                                {/* Fiscal Year Dropdown - Sticky First Column */}
+                                {shouldShowField('fiscal_year') && (
+                                  <TableCell
+                                    ref={(el: HTMLTableCellElement | null) => {
+                                      if (el)
+                                        cellRefs.current[
+                                          `fiscal_year-${rowIndex}`
+                                        ] = el;
+                                    }}
+                                    style={{
+                                      position: 'relative',
+                                    }}
+                                    sx={{
+                                      padding: '0px !important',
+                                      position: 'sticky !important',
+                                      left: 0,
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.fiscal_year
+                                        ? '#FEF2F2 !important'
+                                        : '#fff !important',
+                                      borderRight: '1px solid #CBD6E2',
+                                      borderBottom:
+                                        '1px solid #CBD6E2 !important',
+                                      zIndex: 6,
+                                    }}
+                                  >
+                                    <div>
+                                      <Select
+                                        value={submission.fiscal_year}
+                                        onChange={(e) =>
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'fiscal_year',
+                                            e.target.value
+                                          )
+                                        }
+                                        disabled={
+                                          !isFieldEditable(
+                                            'fiscal_year',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        displayEmpty
+                                        className='h-[28px]'
+                                        sx={{
+                                          width: '100%',
+                                          '& .MuiSelect-select': {
+                                            fontSize: '13px',
+                                            fontWeight: 500,
+                                            color: submission.fiscal_year
+                                              ? '#425A76'
+                                              : '#7D98B6',
+                                            padding: '4px 8px',
+                                          },
+                                          '& .MuiOutlinedInput-notchedOutline':
+                                            {
+                                              border: 'none',
+                                              borderColor: '#CBD6E2',
+                                            },
+                                          '&:hover .MuiOutlinedInput-notchedOutline':
+                                            {
+                                              borderColor: '#CBD6E2',
+                                            },
+                                          '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                            {
+                                              borderColor: '#CBD6E2',
+                                            },
+                                          '&.Mui-disabled .MuiSelect-select': {
+                                            backgroundColor: '#F3F4F6', // Tailwind bg-gray-100
+                                          },
+                                        }}
+                                        MenuProps={{
+                                          PaperProps: {
+                                            sx: {
+                                              marginTop: '4px',
+                                              maxHeight: '250px',
+                                              borderRadius: '0px',
+                                              width: Math.max(
+                                                cellWidths[
+                                                  `fiscal_year-${rowIndex}`
+                                                ] || 0,
+                                                150
+                                              ),
+                                              boxShadow:
+                                                'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                              '& .MuiMenuItem-root': {
+                                                fontSize: '13px',
+                                                fontWeight: 500,
+                                                padding: '6px 12px',
+                                                '&[data-value=""]': {
+                                                  color: '#7D98B6',
+                                                },
+                                                '&:not([data-value=""])': {
+                                                  color: '#425A76',
+                                                },
+                                              },
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <MenuItem
+                                          value=''
+                                          sx={{
+                                            fontSize: '13px',
+                                            color: '#7D98B6 !important',
+                                            fontWeight: 500,
+                                          }}
+                                        >
+                                          Choose Fiscal Year
+                                        </MenuItem>
+                                        {yearOptions.map((year) => (
+                                          <MenuItem
+                                            key={year.value}
+                                            value={year.value.toString()}
+                                            sx={{
+                                              fontSize: '13px',
+                                              color: '#425A76 !important',
+                                              fontWeight: 500,
+                                            }}
+                                          >
+                                            {year.label}
+                                          </MenuItem>
+                                        ))}
+                                      </Select>
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.fiscal_year && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .fiscal_year
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Total FTE Cost Text Field */}
+                                {shouldShowField('total_fte_cost') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.total_fte_cost
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.total_fte_cost
+                                            ? costDisplay(
+                                                submission.total_fte_cost || '',
+                                                submission.currency_symbol
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'total_fte_cost',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'total_fte_cost',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Total FTE Cost'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.total_fte_cost && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .total_fte_cost
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Total Subcon Cost Text Field */}
+                                {shouldShowField('total_subcon_cost') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.total_subcon_cost
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.total_subcon_cost
+                                            ? costDisplay(
+                                                submission.total_subcon_cost ||
+                                                  '',
+                                                submission.currency_symbol
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'total_subcon_cost',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'total_subcon_cost',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Total Subcon Cost'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.total_subcon_cost && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .total_subcon_cost
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Total Non-Labor Cost Text Field */}
+                                {shouldShowField('total_nonlabor_cost') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.total_nonlabor_cost
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.total_nonlabor_cost
+                                            ? costDisplay(
+                                                submission.total_nonlabor_cost ||
+                                                  '',
+                                                submission.currency_symbol
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'total_nonlabor_cost',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'total_nonlabor_cost',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Total Non-Labor Cost'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.total_nonlabor_cost && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .total_nonlabor_cost
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Total Project Cost Text Field */}
+                                {shouldShowField('total_project_cost') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.total_project_cost
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.total_project_cost
+                                            ? costDisplay(
+                                                submission.total_project_cost ||
+                                                  '',
+                                                submission.currency_symbol
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'total_project_cost',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'total_project_cost',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Total Project Cost'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.total_project_cost && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .total_project_cost
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Total QRE Text Field */}
+                                {shouldShowField('total_qre') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.total_qre
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.total_qre
+                                            ? costDisplay(
+                                                submission.total_qre || '',
+                                                submission.currency_symbol
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'total_qre',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'total_qre',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Total QRE'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.total_qre && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .total_qre
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Total RD Credits Text Field */}
+                                {shouldShowField('total_rd_credits') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.total_rd_credits
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.total_rd_credits
+                                            ? valueDisplay(
+                                                submission.total_rd_credits ||
+                                                  ''
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'total_rd_credits',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'total_rd_credits',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Total RD Credits'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.total_rd_credits && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .total_rd_credits
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Annual Gross Receipts Text Field */}
+                                {shouldShowField('annual_gross_receipts') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.annual_gross_receipts
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.annual_gross_receipts
+                                            ? valueDisplay(
+                                                submission.annual_gross_receipts ||
+                                                  ''
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'annual_gross_receipts',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'annual_gross_receipts',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Annual Gross Receipts'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.annual_gross_receipts && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .annual_gross_receipts
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {/* Actions Column */}
+                                <TableCell sx={{ width: '140px', padding: 0 }}>
+                                  <Tooltip
+                                    title={'Remove Entry'}
+                                    disableHoverListener={
+                                      (!isHistoricalSubmissionDelete &&
+                                        !isNewRow) ||
+                                      !isNewRow
+                                    }
+                                    arrow
+                                    placement='top'
+                                  >
+                                    <button
+                                      type='button'
+                                      onClick={() =>
+                                        handleRemoveSubmission(rowIndex)
+                                      }
+                                      style={{
+                                        cursor: !isNewRow
+                                          ? 'default'
+                                          : !isHistoricalSubmissionDelete &&
+                                              !isNewRow
+                                            ? 'default'
+                                            : 'pointer',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        padding: 0,
+                                        marginTop: '6px',
+                                        opacity: !isNewRow ? 0.5 : 1,
+                                      }}
+                                      aria-label='Remove entry'
+                                      className='ml-4'
+                                      disabled={
+                                        !isNewRow ||
+                                        (!isHistoricalSubmissionDelete &&
+                                          !isNewRow)
+                                      }
+                                    >
+                                      <React.Suspense fallback={null}>
+                                        <KeyContactRemoveIcon
+                                          alt='Remove'
+                                          style={{
+                                            width: 20,
+                                            height: 20,
+                                          }}
+                                        />
+                                      </React.Suspense>
+                                    </button>
+                                  </Tooltip>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+                        )
+                      ) : (
+                        <TableRow sx={{ height: '32px' }}>
+                          <TableCell
+                            colSpan={historicalFields.length + 1}
+                            align='center'
+                            sx={{
+                              borderBottom: '1px solid #CBD6E2',
+                              height: '32px',
+                              color: '#425A76',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                            }}
+                          >
+                            No data available
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </div>
+
+              <div className='mt-2 pl-4'>
+                <button
+                  className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-default'
+                  type='button'
+                  onClick={handleAddSubmission}
+                  disabled={
+                    formLoading ||
+                    !isHistoricalSubmissionCreate ||
+                    !accountDetails?.accountById?.country_rid
+                  }
+                >
+                  <span>
+                    <React.Suspense fallback={null}>
+                      <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                    </React.Suspense>
+                  </span>
+                  Add New
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

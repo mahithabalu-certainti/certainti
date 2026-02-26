@@ -9,11 +9,13 @@ import { NewProjectData } from '../../../../types/project';
 import {
   AllMenus,
   AllPermissions,
+  OverviewTabs,
   Permissions,
 } from '../../../../../common-service';
 import { Box } from '@mui/material';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import { SectionTabPanel } from '../../../../../components';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -41,18 +43,20 @@ export interface DetailsTabs {
   disable?: boolean;
 }
 
-const detailsTabs = [
+const detailsTabs: OverviewTabs[] = [
   {
     id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllMenus.TIMESHEETS,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.PROJECTS_VIEW_EDIT,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
@@ -121,6 +125,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       hide: sourceTab !== 'timesheet_project',
     },
   ];
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
 
   //   const handleProject = (project: ProjectList) => {
   //     const path = generatePath(PROJECT_DETAILS, {
@@ -163,23 +168,31 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           sortFilterCount={0}
           setSortFilterCount={() => {}}
         />
-        <ProjectOverview
-          title='Projects'
-          titleIcon={
-            <ProjectsSideIcon
-              alt='project-header-icon'
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline entitytype='project' />
+          </div>
+        ) : (
+          <div>
+            <ProjectOverview
+              title='Projects'
+              titleIcon={
+                <ProjectsSideIcon
+                  alt='project-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              }
+              headerButtons={headerButtons}
+              projectDetails={projectDetails}
+              isDetailsLoading={isDetailsLoading}
+              detailsError={detailsError}
+              isKeyContactAvailable={isKeyContactAvailable}
+              permission={permission}
+              iconBg={ColorCode.projectBgColor}
+              bgType='circle'
             />
-          }
-          headerButtons={headerButtons}
-          projectDetails={projectDetails}
-          isDetailsLoading={isDetailsLoading}
-          detailsError={detailsError}
-          isKeyContactAvailable={isKeyContactAvailable}
-          permission={permission}
-          iconBg={ColorCode.projectBgColor}
-          bgType='circle'
-        />
+          </div>
+        )}
       </Box>
     </div>
   );

@@ -28,19 +28,22 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const TechnicalSummaryTabs: OverviewTabs[] = [
   {
     id: AllPermissions.PROJECT_TECHNICAL_SUMMARY_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.PROJECT_TECHNICAL_SUMMARY_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.PROJECT_TECHNICAL_SUMMARY_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 interface TechnicalSummaryProps {
@@ -80,7 +83,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const viewTechSummaryDetails = !!technicalSummaryId;
 
@@ -280,6 +283,10 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
           isActionItemsExpanded={isActionItemsExpanded}
           setIsActionItemsExpanded={setIsActionItemsExpanded}
         />
+      ) : isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='project' />
+        </div>
       ) : (
         <>
           <SectionHeader

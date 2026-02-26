@@ -1,0 +1,658 @@
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import {
+  CallLogIcon,
+  TaskCreateIcon,
+  NotesSideIcon,
+  AccountDeatilsIcon,
+  ProjectsSideIcon,
+  CasesIcon,
+  AttachmentsSideIcon,
+  DraftEmailIcon,
+  ResourcesIcon,
+  FinancialIcon,
+  InteractionsIcon,
+  HistorySubmissionIcon,
+  ChecklistIcon,
+  TimeSheetIcon,
+  ImportsIcon,
+  SettingIcon,
+  ProjectTaskIcon,
+  TechSummaryIcon,
+  MeetingIcon,
+  CaseTeamIcon,
+  DossierIcon,
+} from '../../assets/icons';
+import { useParams, useSearchParams } from 'react-router';
+import { TimelineParams } from '../../consultant/types/timeline';
+import { useTimelineList } from '../../consultant/services/timeline/timeline-service';
+import TimelineSkeleton from '../../components/skeleton-component/timeskeleton';
+import { ColorCode } from '../../consultant/types';
+
+type TimelineItem = {
+  rid: string;
+  date: string;
+  time: string;
+  entity_name: string;
+  title: string;
+  created_by_name?: string;
+  descriptions?: string;
+  event_name?: string;
+  linkText?: string;
+};
+
+type TimelineProps = {
+  entitytype: string;
+};
+
+type TimelineGroup = {
+  dateLabel: string;
+  items: TimelineItem[];
+};
+
+// Icon config: returns { icon component, bg color } per type
+type IconConfig = {
+  icon: React.ReactNode;
+  bg: string;
+};
+
+const getTypeIconConfig = (
+  entity_name: string,
+  entitytype: string
+): IconConfig => {
+  const type = entity_name;
+  const bgColor =
+    entitytype === 'account'
+      ? ColorCode.accountBgColor
+      : entitytype === 'project'
+        ? ColorCode.projectBgColor
+        : ColorCode.caseBgColor;
+
+  switch (type) {
+    case 'Account':
+      return {
+        icon: (
+          <AccountDeatilsIcon
+            alt='account'
+            className={`[&>path]:stroke-white w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Project':
+      return {
+        icon: (
+          <ProjectsSideIcon
+            alt='project'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Case':
+      return {
+        icon: (
+          <CasesIcon
+            alt='case'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Call log':
+      return {
+        icon: (
+          <CallLogIcon
+            alt='call'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Meeting':
+      return {
+        icon: (
+          <MeetingIcon
+            alt='meeting'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Attachment':
+      return {
+        icon: (
+          <AttachmentsSideIcon
+            alt='attachment'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Email':
+      return {
+        icon: (
+          <DraftEmailIcon
+            alt='email'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Task':
+    case 'Tag':
+    case 'Comments':
+      return {
+        icon: (
+          <TaskCreateIcon
+            alt='task'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Notes':
+      return {
+        icon: (
+          <NotesSideIcon
+            alt='note'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Resource':
+    case 'Project Resources':
+    case 'Resource Skill':
+    case 'Resource Cost':
+      return {
+        icon: (
+          <ResourcesIcon
+            alt='resource'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Financial Working':
+      return {
+        icon: (
+          <FinancialIcon
+            alt='financial'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Interactions':
+      return {
+        icon: (
+          <InteractionsIcon
+            alt='interactions'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Historical Submission':
+      return {
+        icon: (
+          <HistorySubmissionIcon
+            alt='history'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Checklists':
+      return {
+        icon: (
+          <ChecklistIcon
+            alt='checklist'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Timesheets':
+      return {
+        icon: (
+          <TimeSheetIcon
+            alt='timesheet'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Imports':
+      return {
+        icon: (
+          <ImportsIcon
+            alt='imports'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Project Tasks':
+      return {
+        icon: (
+          <ProjectTaskIcon
+            alt='project-task'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Technical Summary':
+      return {
+        icon: (
+          <TechSummaryIcon
+            alt='tech-summary'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Setting':
+      return {
+        icon: (
+          <SettingIcon
+            alt='setting'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Case Team':
+      return {
+        icon: (
+          <CaseTeamIcon
+            alt='case-team'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Dossier':
+      return {
+        icon: (
+          <DossierIcon
+            alt='dossier'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    default:
+      return {
+        icon: (
+          <AccountDeatilsIcon
+            alt='default'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+  }
+};
+
+// Width of time column (px) — keep in sync with the absolute line position
+const TIME_COL_W = 62;
+const DOT_COL_W = 24;
+// The vertical line sits at the horizontal center of the dot column:
+// TIME_COL_W + DOT_COL_W / 2 = 62 + 12 = 74px from group container left
+const LINE_LEFT = TIME_COL_W + DOT_COL_W / 2;
+
+const formatTimelineDate = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const formatTimelineTime = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+// Merge new API items into accumulated grouped data
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const transformEntries = (entries: any[]): TimelineGroup[] => {
+  const groups: { [key: string]: TimelineItem[] } = {};
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  entries.forEach((item: any) => {
+    const dateLabel = formatTimelineDate(item.created_datetime);
+    const time = formatTimelineTime(item.created_datetime);
+
+    const transformedItem: TimelineItem = {
+      rid: item.rid,
+      date: '',
+      time,
+      entity_name: item.entity_name,
+      title: `${item.entity_name} ${item.event_name} (${item.r_number || ''})`,
+      created_by_name: item.created_by_name
+        ? `by ${item.created_by_name}`
+        : undefined,
+      descriptions: item.descriptions,
+      event_name: item.event_name,
+    };
+
+    if (!groups[dateLabel]) {
+      groups[dateLabel] = [];
+    }
+    groups[dateLabel].push(transformedItem);
+  });
+
+  return Object.keys(groups).map((dateLabel) => ({
+    dateLabel,
+    items: groups[dateLabel],
+  }));
+};
+
+const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
+  const [searchParams] = useSearchParams();
+  const { accountid, projectid, caseId } = useParams();
+  const accountId = searchParams.get('accountID');
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
+
+  // ── Pagination state ──────────────────────────────────────────────
+  // nextOffset from the API is a number (e.g. 11), so store as number | null
+  const [currentOffset, setCurrentOffset] = useState<number>(1);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [localItems, setLocalItems] = useState<TimelineGroup[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Use a ref to know whether the incoming data is the first page
+  const isFirstPageRef = useRef(true);
+
+  const params: TimelineParams = {
+    nextOffset: currentOffset,
+    limit: 10,
+    account_rid: accountid || accountId || '',
+    project_rid: entitytype === 'project' ? projectid : undefined,
+    case_rid: entitytype === 'case' ? caseId : undefined,
+    entityType: entitytype,
+  };
+
+  const { data, isLoading } = useTimelineList(params, isTimeLineView);
+
+  // ── Accumulate pages into localItems ──────────────────────────────
+  useEffect(() => {
+    if (data?.data?.timeLineEntries) {
+      const newGroups = transformEntries(data.data.timeLineEntries);
+
+      if (isFirstPageRef.current) {
+        // First page — replace all items
+        setLocalItems(newGroups);
+        isFirstPageRef.current = false;
+      } else {
+        // Subsequent pages — merge into existing groups
+        setLocalItems((prev) => {
+          const merged = [...prev];
+          newGroups.forEach((newGroup) => {
+            const existingGroup = merged.find(
+              (g) => g.dateLabel === newGroup.dateLabel
+            );
+            if (existingGroup) {
+              existingGroup.items = [...existingGroup.items, ...newGroup.items];
+            } else {
+              merged.push(newGroup);
+            }
+          });
+          return merged;
+        });
+      }
+
+      // API returns nextOffset as a number; null / undefined means no more pages
+      const rawNext = data.data.nextOffset;
+      setNextOffset(rawNext != null ? Number(rawNext) : null);
+    }
+  }, [data]);
+
+  // ── Infinite scroll handler ───────────────────────────────────────
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+
+    // Trigger load when within 100px of bottom, there is a next page, and not already loading
+    if (
+      scrollHeight - scrollTop <= clientHeight + 100 &&
+      nextOffset !== null &&
+      !isLoading
+    ) {
+      setCurrentOffset(nextOffset);
+    }
+  };
+
+  // ── Initial skeleton (first load only) ───────────────────────────
+  if (isLoading && localItems.length === 0) {
+    return <TimelineSkeleton />;
+  }
+
+  // ── No data ──────────────────────────────────────────────────────
+  if (!isLoading && localItems.length === 0) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          minHeight: '120px',
+          color: '#7D98B6',
+          fontSize: '13px',
+          fontWeight: 500,
+        }}
+      >
+        No data available
+      </div>
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────
+  return (
+    <div
+      ref={scrollContainerRef}
+      onScroll={handleScroll}
+      style={{
+        padding: '12px 16px 8px 16px',
+        background: '#fff',
+        overflowY: 'auto',
+        // Concrete height is required so the div actually creates a scroll region.
+        // '100%' doesn't work when the parent has no fixed height.
+        // maxHeight: 'calc(100vh - 260px)',
+      }}
+    >
+      {/* Single continuous vertical line spanning all groups */}
+      <div style={{ position: 'relative' }}>
+        <div
+          style={{
+            position: 'absolute',
+            left: `${LINE_LEFT}px`,
+            top: '0px',
+            bottom: '0px',
+            width: '1px',
+            background: '#CBD6E2',
+            zIndex: 0,
+          }}
+        />
+
+        {localItems.map((group, gIdx) => (
+          <div
+            key={group.dateLabel}
+            style={{
+              marginBottom: gIdx < localItems.length - 1 ? '4px' : '8px',
+            }}
+          >
+            {/* ── Date section divider: date badge ── */}
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '14px',
+                marginTop: gIdx === 0 ? 0 : '16px',
+              }}
+            >
+              <span
+                style={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: '#EEF2F7',
+                  color: '#425A76',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '3px 10px',
+                  borderRadius: '3px',
+                  border: '1px solid #CBD6E2',
+                  zIndex: 1,
+                }}
+              >
+                {/* calendar icon */}
+                <svg
+                  width='11'
+                  height='11'
+                  viewBox='0 0 14 14'
+                  fill='none'
+                  style={{ marginTop: '-1px' }}
+                >
+                  <rect
+                    x='1'
+                    y='2.5'
+                    width='12'
+                    height='10.5'
+                    rx='1.5'
+                    stroke='#425A76'
+                    strokeWidth='1.2'
+                  />
+                  <path d='M1 5.5h12' stroke='#425A76' strokeWidth='1.2' />
+                  <path
+                    d='M4.5 1v3M9.5 1v3'
+                    stroke='#425A76'
+                    strokeWidth='1.2'
+                    strokeLinecap='round'
+                  />
+                </svg>
+                {group.dateLabel}
+              </span>
+            </div>
+
+            {/* ── Items ── */}
+            {group.items.map((item, iIdx) => (
+              <div
+                key={`${item.rid}-${iIdx}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  paddingBottom: iIdx < group.items.length - 1 ? '14px' : '4px',
+                  position: 'relative',
+                }}
+              >
+                {/* ── Time column (left of line) ── */}
+                <div
+                  style={{
+                    width: `${TIME_COL_W}px`,
+                    flexShrink: 0,
+                    textAlign: 'right',
+                    paddingRight: '10px',
+                    paddingTop: '1px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#2D3E4F',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {item.time}
+                  </span>
+                </div>
+
+                {/* ── Icon column (on top of the vertical line) ── */}
+                <div
+                  style={{
+                    width: `${DOT_COL_W}px`,
+                    flexShrink: 0,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '0px',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                >
+                  {(() => {
+                    const { icon, bg } = getTypeIconConfig(
+                      item.entity_name,
+                      entitytype
+                    );
+                    return (
+                      <div
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '4px',
+                          background: bg,
+                          border: '1px solid #CBD6E2',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <Suspense fallback={null}>{icon}</Suspense>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* ── Content column ── */}
+                <div style={{ flex: 1, paddingLeft: '6px' }}>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: '#2D3E4F',
+                      lineHeight: '1.4',
+                    }}
+                  >
+                    {item.entity_name} {item.event_name} {item.descriptions}
+                  </div>
+
+                  {item.created_by_name && (
+                    <div
+                      style={{
+                        marginTop: '2px',
+                        fontSize: '11px',
+                        color: '#425A76',
+                        lineHeight: '1.4',
+                      }}
+                    >
+                      {item.created_by_name}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Load-more skeleton (3 rows, no outer padding) ── */}
+      {isLoading && localItems.length > 0 && (
+        <TimelineSkeleton count={3} inline={true} />
+      )}
+    </div>
+  );
+};
+
+export default Timeline;

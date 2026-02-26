@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- License: PD. Made by Mary Akveo: https://maryakveo.com/ -->
+<svg
+  width="800px"
+  height="800px"
+  viewBox="0 0 24 24"
+  xmlns="http://www.w3.org/2000/svg"
+  class="icon line-color"
+>
+  <!-- Minus sign (path, not line) -->
+  <path
+    d="M8 11h6"
+    fill="none"
+    stroke="#2D3E4F"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+  />
+
+  <!-- Magnifier -->
+  <path
+    d="M21 21l-4.34-4.34
+       M19 11a8 8 0 1 1 -8 -8
+       A8 8 0 0 1 19 11Z"
+    fill="none"
+    stroke="#2D3E4F"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+  />
+</svg>

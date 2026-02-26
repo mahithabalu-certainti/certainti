@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -21,12 +21,20 @@ import {
   useGetStatus,
 } from '../../../../common-service';
 import {
+  buildApiFilters,
+  buildFilterStates,
   checkPermission,
   getFiscalYears,
+  NavFilter,
+  NavFilterState,
   reshapeGlobalFilter,
 } from '../../../../common-utils';
 import { ColorCode, FilterState, SelectOption } from '../../../types';
 import { exportTasksData } from '../../../services/tasks/tasks-service';
+import {
+  clearFilters,
+  storeFilters,
+} from '../../account-details-sidebar/components/filter/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
@@ -60,12 +68,19 @@ export const Tasks: React.FC = () => {
     isGlobal: true,
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [urlFilterApplied, setUrlFilterApplied] = useState<boolean>(false);
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') || 'milestone';
+
+  const openTaskIdRef = useRef(
+    (location.state as { openTaskId?: string } | null)?.openTaskId
+  );
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -281,6 +296,62 @@ export const Tasks: React.FC = () => {
     }
   }, [tabParam, statusesQuery.data, activityStatusesQuery.data]);
 
+  useEffect(() => {
+    const navState = location.state as NavFilterState | null;
+    const incomingFilters: NavFilter[] = navState?.filters ?? [];
+
+    if (incomingFilters.length === 0 || urlFilterApplied) return;
+
+    // Wait for statusOptions to load before resolving enum labels
+    if (statusOptions.length === 0) return;
+
+    // Resolve enum filter values: label string → RID
+    const resolvedFilters: NavFilter[] = incomingFilters.map((f) => {
+      if (f.type !== 'enum') return f;
+
+      const resolveValue = (val: string): string => {
+        const match = statusOptions.find(
+          (opt) => opt.label.toLowerCase() === val.toLowerCase()
+        );
+        return match ? match.value : val;
+      };
+
+      const rawValue = f.value;
+      let resolvedValue: any = rawValue;
+
+      if (typeof rawValue === 'string') {
+        resolvedValue = resolveValue(rawValue);
+      } else if (Array.isArray(rawValue)) {
+        resolvedValue = rawValue.map((v) =>
+          typeof v === 'string' ? resolveValue(v) : v
+        );
+      }
+
+      return { ...f, value: resolvedValue };
+    });
+
+    // Build the internal FilterState format and store in localStorage
+    const filterStates = buildFilterStates(resolvedFilters);
+    storeFilters(filterStates, 'global-tasks');
+
+    // Build and apply the API filter format
+    const apiFilters = buildApiFilters(resolvedFilters);
+    setAppliedFilters(apiFilters);
+    setUrlFilterApplied(true);
+
+    // Clear navigation state so refreshing doesn't re-apply
+    // Use pathname + search to preserve ?tab= and other query params
+    navigate(location.pathname + location.search, { replace: true });
+  }, [
+    location.state,
+    location.search,
+    tabParam,
+    statusOptions,
+    urlFilterApplied,
+    navigate,
+    location.pathname,
+  ]);
+
   const accountStatusOptions = useMemo(
     () =>
       accountStatusQuery?.data?.data?.status.map((status) => ({
@@ -345,6 +416,7 @@ export const Tasks: React.FC = () => {
     setAppliedFilters({});
     searchParams.set('tab', value);
     setSearchParams(searchParams, { replace: true });
+    clearFilters('global-tasks');
   };
 
   return (
@@ -439,6 +511,7 @@ export const Tasks: React.FC = () => {
           </button>
           <Suspense fallback={null}>
             <Filter
+              key={String(urlFilterApplied)}
               value='global-tasks'
               isOpen={isFilterOpen}
               filterAnchorEl={anchorEl}
@@ -480,6 +553,7 @@ export const Tasks: React.FC = () => {
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             taskType='milestone'
+            openTaskId={openTaskIdRef.current}
           />
         )}
         {tabParam === 'activity' && isActivityTaskEnable && (
@@ -495,6 +569,7 @@ export const Tasks: React.FC = () => {
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             taskType='activity'
+            openTaskId={openTaskIdRef.current}
           />
         )}
       </div>

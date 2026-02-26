@@ -46,12 +46,20 @@ import { useMutation } from '@apollo/client';
 import { CHECKLIST_UPDATE } from '../../../../../api/graphql/queries/checklist-query';
 import { caseClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const ChecklistTabs: OverviewTabs[] = [
   {
     id: AllPermissions.CHECKLIST_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.CHECKLIST_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
   // Future tabs like timeline can be added here
 ];
@@ -319,7 +327,7 @@ const Checklist: React.FC<ChecklistProps> = ({
     setColumnVisibility(newVisibility);
     setColumnOrder(updatedColumns.map((col) => col.id));
   };
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const visibleColumns = columnOrder
     .map((id) => checklistColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
@@ -397,71 +405,80 @@ const Checklist: React.FC<ChecklistProps> = ({
         showAddActivity={!viewDetails}
         activityMenuItems={activityMenuItems}
       />
-
-      {viewDetails ? (
-        <ChecklistDetails
-          accountInActive={accountInActive}
-          caseDetails={caseDetails}
-        />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='case' />
+        </div>
       ) : (
         <>
-          <SectionHeader
-            title='Checklist'
-            count={totalItems}
-            showItemCount={true}
-            titleIcon={
-              <ChecklistIcon
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-                alt='Checklist-header-icon'
+          {viewDetails ? (
+            <ChecklistDetails
+              accountInActive={accountInActive}
+              caseDetails={caseDetails}
+            />
+          ) : (
+            <>
+              <SectionHeader
+                title='Checklist'
+                count={totalItems}
+                showItemCount={true}
+                titleIcon={
+                  <ChecklistIcon
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                    alt='Checklist-header-icon'
+                  />
+                }
+                buttons={headerButtons}
+                iconBg={ColorCode.caseBgColor}
+                bgType='circle'
               />
-            }
-            buttons={headerButtons}
-            iconBg={ColorCode.caseBgColor}
-            bgType='circle'
-          />
 
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={checklistColumns}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
-            />
+              <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={checklistColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
 
-            <ListTable
-              data={checklistList}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 380px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={false}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={actionMenuItems}
-              loading={isLoading}
-              error={isError ? 'Failed to load checklist records' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
-              onSort={handleSortRequest}
-              onCellEdit={handleCellEdit}
-            />
-          </div>
+                <ListTable
+                  data={checklistList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 380px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionMenuItems}
+                  loading={isLoading}
+                  error={
+                    isError ? 'Failed to load checklist records' : undefined
+                  }
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
+                  onSort={handleSortRequest}
+                  onCellEdit={handleCellEdit}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

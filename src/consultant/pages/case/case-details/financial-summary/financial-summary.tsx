@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AllPermissions,
+  OverviewTabs,
   useGetAllCountries,
 } from '../../../../../common-service';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
@@ -27,19 +28,22 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { clearFilters } from '../../../account-details-sidebar/components/filter/utils';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const FinancialTabs = [
+const FinancialTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_FINANCIAL_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 interface ProjectFinancialProps {
   countryId?: string | null;
@@ -107,7 +111,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
     permission,
     AllPermissions.ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW
   );
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const initialTab = useMemo(() => {
     if (isSummaryViewEnable) return 'summary';
     if (isStatewiseSummaryViewEnable) return 'state_wise_summary';
@@ -132,7 +136,10 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab, searchParams]);
 
-  const tabParam = searchParams.get('tab') || initialTab;
+  const tabParam =
+    searchParams.get('tab') === 'overview'
+      ? 'summary'
+      : searchParams.get('tab') || initialTab;
 
   const fiscalYearOptions = getFiscalYears(26);
   const resourceTypeOptions = useGetResourceType();
@@ -275,86 +282,96 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
       />
-      <SectionHeader
-        title='Financial Summary'
-        titleIcon={
-          <FinancialIcon
-            alt='financial-header-icon'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='case' />
+        </div>
+      ) : (
+        <>
+          <SectionHeader
+            title='Financial Summary'
+            titleIcon={
+              <FinancialIcon
+                alt='financial-header-icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
+            }
+            buttons={headerButtons}
+            count={count}
+            showItemCount={
+              tabParam === 'project_cost' || tabParam === 'resource_cost'
+            }
+            iconBg={ColorCode.caseBgColor}
+            bgType='circle'
           />
-        }
-        buttons={headerButtons}
-        count={count}
-        showItemCount={
-          tabParam === 'project_cost' || tabParam === 'resource_cost'
-        }
-        iconBg={ColorCode.caseBgColor}
-        bgType='circle'
-      />
-      <SectionHeaderTab
-        tabs={tabs}
-        onTabChange={handleTabChange}
-        defaultValue={tabParam}
-      />
-      <div
-        className={`border border-t-0 border-[#CBD6E2] ${
-          tabParam === 'summary' || tabParam === 'state_wise_summary'
-            ? 'p-3'
-            : ''
-        }`}
-      >
-        {tabParam === 'summary' && isSummaryViewEnable && (
-          <Summary
-            fiscalYear={fiscalYearValue}
-            accountDetails={accountDetails}
-            caseRid={caseRid}
-            accountId={accountId}
+          <SectionHeaderTab
+            tabs={tabs}
+            onTabChange={handleTabChange}
+            defaultValue={tabParam}
           />
-        )}
-        {tabParam === 'state_wise_summary' && isStatewiseSummaryViewEnable && (
-          <StateWiseSummary
-            fiscalYear={fiscalYearValue}
-            countryId={countryId}
-            stateId={stateId}
-            accountDetails={accountDetails}
-            caseRid={caseRid}
-            accountId={accountId}
-          />
-        )}
-        {tabParam === 'project_cost' && isProjectCostViewEnable && (
-          <FinancialProjectCost
-            fiscalyear={fiscalYearValue}
-            reFetchData={reFetchData}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setFinancialProjectCostParams={setFinancialProjectCostParams}
-            setExportType={setExportType}
-            setColumnAnchorEl={setColumnAnchorEl}
-            columnAnchorEl={columnAnchorEl}
-            searchValue={searchText}
-            accountId={accountId}
-            caseRid={caseRid}
-          />
-        )}
-        {tabParam === 'resource_cost' && isResourceCostViewEnable && (
-          <FinancialResourceCost
-            accountDetails={accountDetails}
-            fiscalyear={fiscalYearValue}
-            currentPage={currentPage}
-            refreshTrigger={reFetchData}
-            appliedFilters={appliedFilters}
-            setCount={setCount}
-            setResCostExportParams={setResCostExportParams}
-            setExportType={setExportType}
-            setColumnAnchorEl={setColumnAnchorEl}
-            columnAnchorEl={columnAnchorEl}
-            searchValue={searchText}
-            accountId={accountId}
-            caseRid={caseRid}
-          />
-        )}
-      </div>
+          <div
+            className={`border border-t-0 border-[#CBD6E2] ${
+              tabParam === 'summary' || tabParam === 'state_wise_summary'
+                ? 'p-3'
+                : ''
+            }`}
+          >
+            {(tabParam === 'summary' || tabParam === 'overview') &&
+              isSummaryViewEnable && (
+                <Summary
+                  fiscalYear={fiscalYearValue}
+                  accountDetails={accountDetails}
+                  caseRid={caseRid}
+                  accountId={accountId}
+                />
+              )}
+            {tabParam === 'state_wise_summary' &&
+              isStatewiseSummaryViewEnable && (
+                <StateWiseSummary
+                  fiscalYear={fiscalYearValue}
+                  countryId={countryId}
+                  stateId={stateId}
+                  accountDetails={accountDetails}
+                  caseRid={caseRid}
+                  accountId={accountId}
+                />
+              )}
+            {tabParam === 'project_cost' && isProjectCostViewEnable && (
+              <FinancialProjectCost
+                fiscalyear={fiscalYearValue}
+                reFetchData={reFetchData}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+                setCount={setCount}
+                setFinancialProjectCostParams={setFinancialProjectCostParams}
+                setExportType={setExportType}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
+                searchValue={searchText}
+                accountId={accountId}
+                caseRid={caseRid}
+              />
+            )}
+            {tabParam === 'resource_cost' && isResourceCostViewEnable && (
+              <FinancialResourceCost
+                accountDetails={accountDetails}
+                fiscalyear={fiscalYearValue}
+                currentPage={currentPage}
+                refreshTrigger={reFetchData}
+                appliedFilters={appliedFilters}
+                setCount={setCount}
+                setResCostExportParams={setResCostExportParams}
+                setExportType={setExportType}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
+                searchValue={searchText}
+                accountId={accountId}
+                caseRid={caseRid}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

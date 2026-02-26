@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box,
@@ -11,12 +12,16 @@ import {
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
-import { ArrowBackIcon } from '../../../../../../../assets';
+import {
+  ArrowBackIcon,
+  ZoomInIcon,
+  ZoomOutIcon,
+} from '../../../../../../../assets';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface PdfViewerProps {
-  pdfUrl: string; // Can be a URL or base64 string
+  base64?: string; // Can be base64 string
   isLoadingPdf?: boolean;
   isPdfError?: boolean;
 }
@@ -36,18 +41,10 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return bytes;
 };
 
-// Helper function to detect if string is base64
-const isBase64 = (str: string): boolean => {
-  return (
-    str.startsWith('data:application/pdf;base64,') ||
-    /^[A-Za-z0-9+/=]+$/.test(str.substring(0, 100))
-  );
-};
-
 const ZOOM_LEVELS = [50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300];
 
 const PdfViewer: React.FC<PdfViewerProps> = ({
-  pdfUrl,
+  base64,
   isLoadingPdf,
   isPdfError,
 }) => {
@@ -59,30 +56,21 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    if (!pdfUrl) return;
+  const renderTaskRef = useRef<any>(null);
 
+  useEffect(() => {
     const loadPDF = async () => {
+      if (!base64) return;
+
       setIsLoading(true);
       setError('');
 
       try {
-        let loadingTask;
-
-        // Check if pdfUrl is base64 or a URL
-        if (isBase64(pdfUrl)) {
-          // Convert base64 to Uint8Array
-          const pdfData = base64ToUint8Array(pdfUrl);
-          loadingTask = pdfjsLib.getDocument({ data: pdfData });
-        } else {
-          // Load from URL
-          loadingTask = pdfjsLib.getDocument(pdfUrl);
-        }
-
-        const pdf = await loadingTask.promise;
+        const pdfData = base64ToUint8Array(base64);
+        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
         setPdfDoc(pdf);
         setIsLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading PDF:', err);
         setError('Failed to load PDF. Please try again.');
         setIsLoading(false);
@@ -90,18 +78,21 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     };
 
     loadPDF();
-
-    return () => {
-      if (pdfDoc) {
-        pdfDoc.destroy();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfUrl]);
+  }, [base64]);
 
   const renderPage = useCallback(
     async (pageNum: number) => {
       if (!pdfDoc || !canvasRef.current) return;
+
+      // Cancel any ongoing render task
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+        } catch {
+          // Ignore cancellation errors
+        }
+        renderTaskRef.current = null;
+      }
 
       try {
         const page = await pdfDoc.getPage(pageNum);
@@ -120,10 +111,20 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           canvas: canvas,
         };
 
-        await page.render(renderContext).promise;
-      } catch (err) {
-        console.error('Error rendering page:', err);
-        setError('Failed to load PDF. Please try again.');
+        const renderTask = page.render(renderContext);
+        renderTaskRef.current = renderTask;
+        await renderTask.promise;
+        renderTaskRef.current = null;
+      } catch (err: any) {
+        // Ignore cancellation errors
+        const isCancelled =
+          err?.name === 'RenderingCancelledException' ||
+          err?.name === 'TransportException';
+
+        if (!isCancelled) {
+          console.error('Error rendering page:', err);
+          setError('Failed to load PDF. Please try again.');
+        }
       }
     },
     [pdfDoc, scale]
@@ -191,6 +192,19 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             >
               Zoom:
             </Typography>
+            <IconButton
+              size='small'
+              onClick={handleZoomOut}
+              disabled={scale <= 0.5}
+              disableRipple
+              sx={{
+                '&.Mui-disabled': { color: '#CBD6E2' },
+              }}
+            >
+              <ZoomOutIcon
+                className={`w-4.5 h-4.5 ${scale <= 0.5 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
+              />
+            </IconButton>
             <FormControl size='small'>
               <Select
                 value={Math.round(scale * 100)}
@@ -207,19 +221,16 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             </FormControl>
             <IconButton
               size='small'
-              onClick={handleZoomOut}
-              disabled={scale <= 0.5}
-              disableRipple
-            >
-              <span className='text-xl font-bold'>-</span>
-            </IconButton>
-            <IconButton
-              size='small'
               onClick={handleZoomIn}
               disabled={scale >= 3}
               disableRipple
+              sx={{
+                '&.Mui-disabled': { color: '#CBD6E2' },
+              }}
             >
-              <span className='text-xl font-bold'>+</span>
+              <ZoomInIcon
+                className={`w-4.5 h-4.5 ${scale >= 3 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
+              />
             </IconButton>
           </Box>
 
@@ -243,15 +254,15 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                 className={`w-3 h-3 ${currentPage === 1 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
               />
             </IconButton>
-            <FormControl size='small'>
-              <Select
-                value={currentPage}
-                onChange={handlePageChange}
-                MenuProps={COMMON_MENU_PROPS}
-                sx={getSelectStyles(false, false)}
-              >
-                {pdfDoc &&
-                  Array.from({ length: pdfDoc.numPages }, (_, i) => (
+            {pdfDoc && (
+              <FormControl size='small'>
+                <Select
+                  value={currentPage}
+                  onChange={handlePageChange}
+                  MenuProps={COMMON_MENU_PROPS}
+                  sx={getSelectStyles(false, false)}
+                >
+                  {Array.from({ length: pdfDoc.numPages }, (_, i) => (
                     <MenuItem
                       key={i + 1}
                       value={i + 1}
@@ -260,8 +271,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                       Page {i + 1}
                     </MenuItem>
                   ))}
-              </Select>
-            </FormControl>
+                </Select>
+              </FormControl>
+            )}
             <IconButton
               onClick={handleNextPage}
               size='small'
@@ -271,7 +283,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               }}
             >
               <ArrowBackIcon
-                className={`w-3 h-3 ${currentPage === 1 ? '[&>path]:stroke-[#CBD6E2]' : ''} rotate-180`}
+                className={`w-3 h-3 ${currentPage === pdfDoc?.numPages ? '[&>path]:stroke-[#CBD6E2]' : ''} rotate-180`}
               />
             </IconButton>
           </Box>

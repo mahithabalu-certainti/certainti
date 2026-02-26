@@ -8,7 +8,6 @@ import {
   ProjectsIcon,
   SettingsIcon,
   TaskTemplateIcon,
-  TimeLineIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { INavItem } from '../../consultant/types';
@@ -31,7 +30,6 @@ export const accountNavItems: INavItem[] = [
     link: MAIN_ROUTE,
     type: 'link',
     matchLink: MAIN_ROUTE,
-    noRedirect: true,
     activePath: 'dashboard',
   },
   {
@@ -51,14 +49,6 @@ export const accountNavItems: INavItem[] = [
     type: 'link',
     matchLink: PROJECT,
     activePath: 'project',
-  },
-  {
-    id: MenuOption.TIMESHEET,
-    icon: TimeLineIcon,
-    name: 'Timeline',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
   },
   {
     id: MenuOption.CASES,

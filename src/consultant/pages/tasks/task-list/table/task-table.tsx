@@ -72,6 +72,7 @@ interface ITaskTableProps {
   searchValue?: string;
   fixedFilters?: Record<string, any>;
   taskType: 'milestone' | 'activity';
+  openTaskId?: string;
 }
 
 export const TaskTable: React.FC<ITaskTableProps> = ({
@@ -85,6 +86,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   searchValue,
   fixedFilters,
   taskType,
+  openTaskId,
 }) => {
   const { errorToast, successToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -731,6 +733,15 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     }
   }, [data]);
 
+  // Auto-open the task detail modal when navigated from the dashboard
+  useEffect(() => {
+    if (!openTaskId || taskList.length === 0) return;
+    const match = taskList.find((task) => task.rid === openTaskId);
+    if (match) {
+      setSelectedTask(match);
+    }
+  }, [openTaskId, taskList]);
+
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({
@@ -777,7 +788,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   //   return map;
   // }, [taskViewEditFields]);
 
-  const getRowId = (row: TaskList) => row.task_rid;
+  const getRowId = (row: TaskList) => row.rid;
 
   const handleTaskClick = useCallback((row: TaskList) => {
     setSelectedTask(row);
@@ -857,7 +868,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousTaskList = [...taskList];
-    const selectedTask = taskList.find((task) => task.task_rid === rowId);
+    const selectedTask = taskList.find((task) => task.rid === rowId);
 
     if (!selectedTask) {
       errorToast('Task not found');

@@ -25,12 +25,20 @@ import CaseProjectResourceDetails from './case-project-resource-details/case-pro
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import TabPanel from '../../../account-details-sidebar/components/tab';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const ProjectResourceTabs: ResourceTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
 ];
 interface ProjectResourceProps {
@@ -84,7 +92,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     (state: RootState) => state.account
   );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const { data, isLoading, isError } = useCaseProjectResourceList(
     {
       page: currentPage + 1,
@@ -315,79 +323,85 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <>
-        <SectionHeader
-          title={
-            resourceId
-              ? 'Case Project Resource Details'
-              : 'Case Project Resource'
-          }
-          titleIcon={
-            <ResourcesIcon
-              alt='attachment-header-icon'
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-            />
-          }
-          count={totalItems}
-          showItemCount={resourceId ? false : true}
-          buttons={headerButtons.map((btn) => ({
-            ...btn,
-            hide: Boolean(btn.hide),
-          }))}
-          iconBg={ColorCode.caseBgColor}
-          bgType='circle'
-        />
-        {resourceId ? (
-          <CaseProjectResourceDetails
-            resource={projectResourceDetail ?? null}
-            isLoading={detailresponseLoading}
-            error={
-              detailresponseError ? 'Failed to load Attachment data' : null
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='case' />
+        </div>
+      ) : (
+        <>
+          <SectionHeader
+            title={
+              resourceId
+                ? 'Case Project Resource Details'
+                : 'Case Project Resource'
             }
+            titleIcon={
+              <ResourcesIcon
+                alt='attachment-header-icon'
+                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+              />
+            }
+            count={totalItems}
+            showItemCount={resourceId ? false : true}
+            buttons={headerButtons.map((btn) => ({
+              ...btn,
+              hide: Boolean(btn.hide),
+            }))}
+            iconBg={ColorCode.caseBgColor}
+            bgType='circle'
           />
-        ) : (
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={projectResourceColumn}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
+          {resourceId ? (
+            <CaseProjectResourceDetails
+              resource={projectResourceDetail ?? null}
+              isLoading={detailresponseLoading}
+              error={
+                detailresponseError ? 'Failed to load Attachment data' : null
+              }
             />
-            <ListTable
-              data={resourceRowList}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={false}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={[]}
-              loading={isLoading}
-              error={isError ? 'Failed to load Attachment data' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSortRequest}
-            />
-          </div>
-        )}
-      </>
+          ) : (
+            <div className='border border-[#CBD6E2]'>
+              <ManageColumnsPopover
+                anchorEl={columnAnchorEl}
+                open={isModalOpen}
+                popoverId={modalId}
+                onClose={handlePopoverClose}
+                columns={projectResourceColumn}
+                onColumnsChange={handleColumnsChange}
+                columnRestrictions={RestrictedColumns}
+              />
+              <ListTable
+                data={resourceRowList}
+                columns={visibleColumns}
+                getRowId={getRowId}
+                hoverHighlight={false}
+                tableStyle={{
+                  borderBottom: '1px solid #CBD6E2',
+                  height: '100%',
+                  maxHeight: 'calc(100vh - 320px)',
+                  overflow: 'auto',
+                }}
+                stickyHeader={true}
+                stickyColumnsCount={1}
+                selectable={false}
+                actionWidth={80}
+                actionDisplayMode='dropdown'
+                actionMenuItems={[]}
+                loading={isLoading}
+                error={isError ? 'Failed to load Attachment data' : undefined}
+                rowsPerPageOptions={[25, 50, 100]}
+                rowsPerPage={rowsPerPage}
+                currentPage={currentPage}
+                totalItems={totalItems}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                sortBy={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSortRequest}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

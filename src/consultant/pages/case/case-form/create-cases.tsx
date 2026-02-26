@@ -20,6 +20,7 @@ import {
 } from '../../../types';
 import {
   useCaseDetails,
+  useClosedCaseList,
   useCreateCase,
   useGetCaseFilingTypes,
   useGetCaseOwners,
@@ -57,6 +58,8 @@ export const CreateCases: React.FC = () => {
   const [selectedCountryCode, setSelectedCountryCode] = useState<string>('');
   const [selectedCountryRid, setSelectedCountryRid] = useState<string>('');
   const [selectedAccountRid, setSelectedAccountRid] = useState<string>('');
+  const [isAmendmentType, setIsAmendmentType] = useState<boolean>(false);
+  const [isCaseClosed, setIsCaseClosed] = useState<boolean>(false);
   const [calculatedStatutoryDate, setCalculatedStatutoryDate] =
     useState<string>('');
   const [dateConstraints, setDateConstraints] = useState<{
@@ -101,6 +104,9 @@ export const CreateCases: React.FC = () => {
   const allCountries = useGetAllCountries();
   const caseOwners = useGetCaseOwners();
   const caseStatuses = useGetCaseStatuses();
+  const closedCaseList = useClosedCaseList(
+    accountId || selectedAccountRid || ''
+  );
 
   const effectiveCountryRid = isEditView
     ? caseData?.country_rid || countryRid || selectedCountryRid
@@ -146,6 +152,7 @@ export const CreateCases: React.FC = () => {
         filing_type: caseData.filing_type_rid || '',
         case_name: caseData.case_name || '',
         case_owner: caseData.case_owner_rid || '',
+        parent_case_rid: caseData.parent_case_rid || '',
         fiscal_year: caseData.fiscal_year || '',
         country: caseData.country_rid || countryRid || '',
         status_rid: caseData.status_rid || '',
@@ -243,11 +250,21 @@ export const CreateCases: React.FC = () => {
     );
   }, [caseOwners]);
 
+  const parentCaseOptions = useMemo(() => {
+    return (
+      closedCaseList?.data?.data?.cases?.map((item) => ({
+        value: item.rid,
+        label: item.case_name || '',
+      })) || []
+    );
+  }, [closedCaseList]);
+
   const caseStatusOptions = useMemo(() => {
     return (
       caseStatuses?.data?.data?.caseStatus?.map((item) => ({
         value: item.rid,
         label: item.status_name || '',
+        disabled: item.status_name?.toLowerCase() === 'closed',
       })) || []
     );
   }, [caseStatuses]);
@@ -287,6 +304,24 @@ export const CreateCases: React.FC = () => {
         })) || [],
     }));
   }, [accounts]);
+
+  useEffect(() => {
+    if (isEditView) {
+      const selectedFilingType = caseFilingTypesOptions.find(
+        (option) => String(option.value) === String(caseFormData.filing_type)
+      );
+
+      setIsAmendmentType(
+        selectedFilingType?.label.toLowerCase() === 'amendment'
+      );
+    }
+  }, [caseFilingTypesOptions, caseFormData, isEditView]);
+
+  useEffect(() => {
+    if (isEditView) {
+      setIsCaseClosed(caseData?.status_name?.toLowerCase() === 'closed');
+    }
+  }, [caseData, isEditView]);
 
   //Permission
   const casesEditFields = useMemo(
@@ -412,6 +447,16 @@ export const CreateCases: React.FC = () => {
       setCaseNamePrefix(newPrefix);
       setSelectedFiscalYear(year);
     }
+
+    if (fieldName === 'filing_type') {
+      const selectedFilingType = caseFilingTypesOptions?.find(
+        (option) => String(option.value) === String(fieldValue)
+      );
+
+      setIsAmendmentType(
+        selectedFilingType?.label.toLowerCase() === 'amendment'
+      );
+    }
   };
 
   const submitData = (formValues: Partial<CaseFormPayload>) => {
@@ -419,7 +464,8 @@ export const CreateCases: React.FC = () => {
       accountId,
       formValues as CaseFormFields,
       isEditView,
-      caseData
+      caseData,
+      isAmendmentType
     );
     if (isEditView) {
       updateCase.mutate(payload);
@@ -442,6 +488,7 @@ export const CreateCases: React.FC = () => {
     accountPermissionMap,
     caseFilingTypesOptions,
     caseOwnersOptions,
+    parentCaseOptions,
     countryOptions,
     memoizedAccounts,
     dateConstraints,
@@ -455,7 +502,10 @@ export const CreateCases: React.FC = () => {
       : calculatedStatutoryDate,
     caseStatusOptions,
     isAustralianCountry,
-    countryName ?? undefined
+    countryName ?? undefined,
+    isAmendmentType,
+    closedCaseList.isLoading,
+    isCaseClosed
   );
 
   const formLoading =
@@ -497,6 +547,7 @@ export const CreateCases: React.FC = () => {
           <TextButton
             label='Save'
             loading={createCase.isPending || updateCase.isPending}
+            disabled={isCaseClosed}
             onClick={handleExternalSubmit}
             sx={{
               width: '64px',
@@ -520,6 +571,18 @@ export const CreateCases: React.FC = () => {
       </div>
 
       <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+        {isCaseClosed && (
+          <div className='flex items-center gap-2 h-8 sticky top-[50px] z-10 border-b border-[#B7EB8F] bg-[#F6FFED] text-[14px] text-[#2D3E4F] px-10 py-2'>
+            <div className='text-[#52c41a] font-bold'>✔</div>
+            <div>
+              <span className='font-bold mr-2'>Case Closed:</span>
+              <span className='font-medium'>
+                This case has been finalized and closed. No further
+                modifications are allowed.
+              </span>
+            </div>
+          </div>
+        )}
         {formLoading ? (
           <SkeletonForm />
         ) : (
