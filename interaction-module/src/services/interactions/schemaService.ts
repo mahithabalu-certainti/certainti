@@ -4043,7 +4043,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
         { type: "SELECT" }
       );
-      return interactionBatchInfo[0].interaction_batch_id
+      return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
