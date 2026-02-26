@@ -390,7 +390,7 @@ const Imports: React.FC<ImportsProps> = ({
                     alt='Imports-header-icon'
                   />
                 }
-                ActionName='Download Templete'
+                ActionName='Download Template'
                 actionItems={menuItems}
                 buttons={headerButtons}
                 iconBg={ColorCode.accountBgColor}

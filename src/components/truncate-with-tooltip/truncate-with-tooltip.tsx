@@ -59,13 +59,10 @@ const TruncateWithTooltip = ({
     const checkOverflow = () => {
       const element = textRef.current;
       if (element) {
-        // Use setTimeout to ensure styles are fully applied
-        setTimeout(() => {
-          setIsOverflowing(
-            element.scrollWidth > element.clientWidth ||
-              element.scrollHeight > element.clientHeight
-          );
-        }, 0);
+        setIsOverflowing(
+          element.scrollWidth > element.clientWidth ||
+          element.scrollHeight > element.clientHeight
+        );
       }
     };
 
@@ -89,8 +86,18 @@ const TruncateWithTooltip = ({
   };
 
   const tooltipContent = enableCopy ? (
-    <div className='flex items-center gap-1'>
-      <span className='break-all'>{textForTooltipAndCopy}</span>
+    <div className='flex items-start gap-1'>
+      <span
+        style={{
+          overflowY: 'auto',
+          maxHeight: '200px',
+          display: 'block',
+          wordBreak: 'break-word',
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {textForTooltipAndCopy}
+      </span>
       <IconButton
         size='small'
         onClick={(e) => {
@@ -110,7 +117,17 @@ const TruncateWithTooltip = ({
       </IconButton>
     </div>
   ) : (
-    textForTooltipAndCopy
+    <span
+      style={{
+        overflowY: 'auto',
+        maxHeight: '200px',
+        display: 'block',
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap',
+      }}
+    >
+      {textForTooltipAndCopy}
+    </span>
   );
 
   const content = (
@@ -134,6 +151,7 @@ const TruncateWithTooltip = ({
           sx: {
             maxWidth: tooltipMaxWidth,
             mr: 1,
+            padding: '8px 10px',
           },
         },
       }}

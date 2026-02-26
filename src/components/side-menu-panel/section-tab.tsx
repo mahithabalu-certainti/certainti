@@ -282,7 +282,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 />
               </div>
             ))}
-          {showSearch && (
+          {showSearch && !isTimelineView && (
             <Box>
               <SearchBar
                 initialSearchText={searchText}
@@ -339,7 +339,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               </Box>
             </>
           )}
-          {showRefresh && (
+          {showRefresh && !isTimelineView && (
             <button
               className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
               onClick={onRefreshClick}
