@@ -15,7 +15,7 @@ interface TimelineSkeletonProps {
 }
 
 const TimelineSkeleton: React.FC<TimelineSkeletonProps> = ({
-  count = 7,
+  count = 6,
   inline = false,
 }) => {
   const rows = Array.from({ length: count }, (_, i) => i + 1);

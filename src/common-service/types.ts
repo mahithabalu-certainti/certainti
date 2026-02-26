@@ -188,6 +188,7 @@ export enum AllMenus {
 }
 
 export enum AllModules {
+  DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
   PROJECTS = 'projects',
   PROJECT_RESOURCES = 'project_resources',
@@ -397,6 +398,15 @@ export enum AllPermissions {
   ACCOUNTS_TIMELINE_VIEW = 'accounts_timeline_view',
   PROJECTS_TIMELINE_VIEW = 'projects_timeline_view',
   CASES_TIMELINE_VIEW = 'cases_timeline_view',
+  PENDING_FOLLOWUPS_VIEW = 'pending_followups_view',
+  WEEKLY_PRODUCTIVITY_VIEW = 'weekly_productivity_view',
+  OVERDUE_APPROVALS_VIEW = 'overdue_approvals_view',
+  OPEN_TASKS_VIEW = 'open_tasks_view',
+  MY_MEETINGS_VIEW = 'my_meetings_view',
+  DUE_TODAY_OVERDUE_TASKS_VIEW = 'due_today_overdue_tasks_view',
+  COMPLETED_TASKS_WEEK_VIEW = 'completed_tasks_week_view',
+  CASES_BY_HEALTH_STATUS_VIEW = 'cases_by_health_status_view',
+  UPCOMING_TASKS_VIEW = 'upcoming_tasks_view',
 }
 
 export interface Country {

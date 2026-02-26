@@ -107,43 +107,6 @@ export const Tasks: React.FC = () => {
     AllModules.ACTIVITIES_TASK
   );
 
-  // Set initial tab based on taskType from navigation state
-  useEffect(() => {
-    const navState = location.state as NavFilterState & {
-      taskType?: string;
-    };
-    const incomingTaskType = navState?.taskType;
-
-    if (incomingTaskType) {
-      const newParams = new URLSearchParams(searchParams);
-      // Normalize taskType to match tab values
-      const normalizedType = incomingTaskType.toLowerCase();
-
-      if (
-        normalizedType === 'milestone' &&
-        isWorkBreakdownEnable &&
-        tabParam !== 'milestone'
-      ) {
-        newParams.set('tab', 'milestone');
-        setSearchParams(newParams, { replace: true });
-      } else if (
-        normalizedType === 'activity' &&
-        isActivityTaskEnable &&
-        tabParam !== 'activity'
-      ) {
-        newParams.set('tab', 'activity');
-        setSearchParams(newParams, { replace: true });
-      }
-    }
-  }, [
-    location.state,
-    searchParams,
-    setSearchParams,
-    isWorkBreakdownEnable,
-    isActivityTaskEnable,
-    tabParam,
-  ]);
-
   const tabs = useMemo(() => {
     const list = [];
     if (isWorkBreakdownEnable) {
@@ -377,9 +340,11 @@ export const Tasks: React.FC = () => {
     setUrlFilterApplied(true);
 
     // Clear navigation state so refreshing doesn't re-apply
-    navigate(location.pathname, { replace: true });
+    // Use pathname + search to preserve ?tab= and other query params
+    navigate(location.pathname + location.search, { replace: true });
   }, [
     location.state,
+    location.search,
     tabParam,
     statusOptions,
     urlFilterApplied,

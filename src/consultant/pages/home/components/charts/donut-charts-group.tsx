@@ -69,6 +69,11 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
 
   return (
     <div className='bg-white rounded-lg border border-[#CBD6E2] overflow-hidden'>
+      <style>{`
+        .google-visualization-tooltip {
+          pointer-events: none !important;
+        }
+      `}</style>
       {/* Header with Year Selector */}
       <div className='flex items-center justify-between px-4 py-3 border-b border-[#CBD6E2]'>
         <div className='flex items-center gap-3'>
@@ -200,7 +205,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
                 {metrics.map((m) => (
                   <div key={m.key} className='flex items-center gap-2'>
                     <span
-                      className='inline-block h-3 w-3 rounded-full'
+                      className='inline-block h-3 w-3 rounded-[2px]'
                       style={{ backgroundColor: colors[m.key] }}
                     />
                     <span className='text-sm text-[#2A2A2A]'>{m.label}</span>

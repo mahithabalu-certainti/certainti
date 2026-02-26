@@ -57,27 +57,37 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
   // Prepare map data for Google Charts
   const mapData = useMemo(() => {
     if (!apiData?.countryWiseConsolidation) {
-      return [['Country', 'Total RD Credits Approved']];
+      return [
+        [
+          'Country',
+          'Total RD Credits Approved',
+          { role: 'tooltip', type: 'string', p: { html: true } },
+        ],
+      ];
     }
 
-    const data: any[] = [['Country', 'Total RD Credits Approved']];
+    const data: any[] = [
+      [
+        'Country',
+        'Total RD Credits Approved',
+        { role: 'tooltip', type: 'string', p: { html: true } },
+      ],
+    ];
 
     apiData.countryWiseConsolidation.forEach((country, index) => {
+      const tooltipHtml = `<div style="bachfont-size:12px;white-space:nowrap;">
+        <span style="color:#000;">Total RD Credits Approved:</span>  <span style="color:#000;font-weight:bold;">${formatAmount(country.approved)}</span>
+      </div>`;
+
       if (selectedCountry) {
-        // Highlight only selected country, gray others
         const isSelected = country.country_rid === selectedCountry;
         data.push([
           country.country_name,
-          isSelected
-            ? { v: country.approved, f: formatAmount(country.approved) }
-            : 0,
+          isSelected ? country.approved : 0,
+          tooltipHtml,
         ]);
       } else {
-        // Global view normal values
-        data.push([
-          country.country_name,
-          { v: index + 1, f: formatAmount(country.approved) },
-        ]);
+        data.push([country.country_name, index + 1, tooltipHtml]);
       }
     });
 
@@ -148,6 +158,7 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
               )
             : ['#A2CD5A'],
         },
+    tooltip: { isHtml: true, trigger: 'both' },
     legend: 'none',
     backgroundColor: '#fff',
     datalessRegionColor: '#e5e7eb',

@@ -123,6 +123,11 @@ const GroupedTrendChart: React.FC<TrendChartProps> = ({
 
   return (
     <div ref={chartRef}>
+      <style>{`
+        .google-visualization-tooltip {
+          pointer-events: none !important;
+        }
+      `}</style>
       <div className='flex justify-center items-center p-3 font-semibold'>
         {title}
       </div>

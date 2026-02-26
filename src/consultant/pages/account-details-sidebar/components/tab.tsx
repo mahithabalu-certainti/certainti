@@ -753,7 +753,7 @@ const TabPanel: React.FC<TabProps> = ({
           )}
 
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-          {(showToggle || !isTimelineView) && (
+          {showToggle && !isTimelineView && (
             <div className='flex items-center gap-2'>
               <span className='font-semibold text-[13px] text-[#425A76]'>
                 {toggleLabel}

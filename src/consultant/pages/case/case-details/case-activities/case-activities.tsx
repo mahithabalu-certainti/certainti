@@ -68,7 +68,7 @@ const ActivityTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACTIVITIES_TIMELINE,
     name: 'Timeline',
-    hide: true,
+    hide: false,
     key: 'timeline',
   },
 ];
@@ -531,35 +531,35 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
             </div>
           </div>
         )}
-      {isTimeLineView ? (
-        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
-          <Timeline entitytype='case' />
-        </div>
-      ) : (
-        <>
-          <div className='w-full pt-2 pl-2 pr-4 mb-1'>
-            <SectionTabPanel
-              tabs={ActivityTabs}
-              filterMenu={filterFields}
-              filterVisibility={!viewDetails}
-              showFilter={showFilter}
-              contextKey='case-activities'
-              appliedFilters={appliedFilters}
-              setAppliedFilters={setAppliedFilters}
-              setCurrentPage={setCurrentPage}
-              handleFilter={handleFilter}
-              sortFilterCount={0}
-              setSortFilterCount={() => {}}
-              showRefresh={!viewDetails}
-              onRefreshClick={handleRefresh}
-              showSearch={!viewDetails}
-              onSearch={(text) => setSearchText(text)}
-              searchReset={resetSearch}
-              onSearchReset={handleSearchReset}
-              showAddActivity={tabParam === 'all'}
-              activityMenuItems={activityMenuItems}
-            />
+      <div className='w-full pt-2 pl-2 pr-4 mb-1'>
+        <SectionTabPanel
+          tabs={ActivityTabs}
+          filterMenu={filterFields}
+          filterVisibility={!viewDetails}
+          showFilter={showFilter}
+          contextKey='case-activities'
+          appliedFilters={appliedFilters}
+          setAppliedFilters={setAppliedFilters}
+          setCurrentPage={setCurrentPage}
+          handleFilter={handleFilter}
+          sortFilterCount={0}
+          setSortFilterCount={() => {}}
+          showRefresh={!viewDetails}
+          onRefreshClick={handleRefresh}
+          showSearch={!viewDetails}
+          onSearch={(text) => setSearchText(text)}
+          searchReset={resetSearch}
+          onSearchReset={handleSearchReset}
+          showAddActivity={tabParam === 'all'}
+          activityMenuItems={activityMenuItems}
+        />
 
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline entitytype='case' />
+          </div>
+        ) : (
+          <>
             <SectionHeader
               title='Activities'
               titleIcon={
@@ -700,9 +700,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
                 )}
               </div>
             )}
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

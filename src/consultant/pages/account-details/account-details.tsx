@@ -1008,7 +1008,7 @@ export const AccountDetails = () => {
       {
         name: 'Dashboard',
         key: 'dashboard',
-        id: AllModules.ACCOUNTS,
+        id: AllModules.DASHBOARD,
         disabled: disable,
         hide: disable,
         icon: DashboardIcon,
