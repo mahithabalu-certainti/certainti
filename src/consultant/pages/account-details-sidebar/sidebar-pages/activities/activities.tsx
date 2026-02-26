@@ -45,10 +45,15 @@ import ActivityDetails from '../../../activities/activities-details/activity-det
 import { ActivityListTable } from '../../../activities';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
-import { useGetActivityStatus } from '../../../../services/activities/activities-service';
+import {
+  useCancelledActivityMeeting,
+  useCompletedActivityMeeting,
+  useGetActivityStatus,
+} from '../../../../services/activities/activities-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
+import { useToast } from '../../../../../hooks';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { capitalize } from '@mui/material';
 import Timeline from '../../../../../pages/timeline/timeline';
@@ -102,6 +107,40 @@ const Activities: React.FC<ActivitiesProps> = ({
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
+
+  const completeMeeting = useCompletedActivityMeeting();
+  const cancelMeeting = useCancelledActivityMeeting();
+  const { successToast } = useToast();
+
+  const handleCompleteMeeting = async (activityId: string) => {
+    completeMeeting.mutate(
+      {
+        account_rid: accountid || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+      }
+    );
+  };
+
+  const handleCancelMeeting = async (activityId: string) => {
+    cancelMeeting.mutate(
+      {
+        account_rid: accountid || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+      }
+    );
+  };
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -425,7 +464,9 @@ const Activities: React.FC<ActivitiesProps> = ({
       case 'meeting':
         return getActivityMeetingListColumns(
           handleViewActivity,
-          meetingPermissionMap
+          meetingPermissionMap,
+          handleCancelMeeting,
+          handleCompleteMeeting
         );
       case 'call':
         return getActivityCallLogListColumns(

@@ -230,6 +230,10 @@ const FileUploadCell: React.FC<{
       onError(`"${f.name}" must not contain spaces.`);
       return;
     }
+    if (f.name.length > 100) {
+      onError(`File name must not exceed 100 characters.`);
+      return;
+    }
     if (RESTRICTED_EXTENSIONS.test(f.name)) {
       onError(`"${f.name}" type is not allowed.`);
       return;

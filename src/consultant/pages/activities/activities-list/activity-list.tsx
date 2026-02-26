@@ -209,6 +209,7 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
 
   const RestrictedColumns = [
     { id: 'r_number', canHide: false, canDrag: false },
+    { id: 'status_action', canHide: false, canDrag: false },
   ];
 
   const [columnVisibility, setColumnVisibility] = useState<
