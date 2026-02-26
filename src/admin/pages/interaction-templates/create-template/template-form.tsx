@@ -814,7 +814,7 @@ const TemplateForm: React.FC = () => {
                                     </div>
                                   )}
 
-                                  {col.name === 'mandatory' && (
+                                  {/* {col.name === 'mandatory' && (
                                     <div style={{ textAlign: 'center' }}>
                                       <input
                                         type='checkbox'
@@ -830,7 +830,7 @@ const TemplateForm: React.FC = () => {
                                         className='cursor-pointer disabled:cursor-default scale-105'
                                       />
                                     </div>
-                                  )}
+                                  )} */}
 
                                   {col.name === 'notes' && (
                                     <div

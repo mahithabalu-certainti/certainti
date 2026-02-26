@@ -73,7 +73,7 @@ export const getQuestionTableColumns = (
     width: '57%',
     required: true,
   },
-  { name: 'mandatory', label: 'Mandatory', width: '5%' },
+  // { name: 'mandatory', label: 'Mandatory', width: '5%' },
   {
     name: 'notes',
     label: 'Notes',

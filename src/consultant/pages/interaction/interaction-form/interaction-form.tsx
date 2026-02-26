@@ -1360,7 +1360,7 @@ const InteractionForm = () => {
                                     </div>
                                   )}
 
-                                  {col.name === 'mandatory' && (
+                                  {/* {col.name === 'mandatory' && (
                                     <div style={{ textAlign: 'center' }}>
                                       <input
                                         type='checkbox'
@@ -1376,7 +1376,7 @@ const InteractionForm = () => {
                                         className='cursor-pointer disabled:cursor-default scale-105'
                                       />
                                     </div>
-                                  )}
+                                  )} */}
 
                                   {col.name === 'notes' && (
                                     <div
