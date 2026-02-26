@@ -50,6 +50,7 @@ export class WebHookService {
         }
 
         if (this.processedMessageIds.has(messageId)) {
+          logMessage(`[Webhook Handler] Duplicate message received with messageId ${messageId}. Skipping processing.`);
           return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -88,6 +89,7 @@ export class WebHookService {
           email,
           this.graphClient
         );
+        logMessage(`[Webhook Handler] Final result for messageId ${messageId}: ${JSON.stringify(finalResult)}`);
 
         mailProcessedResults = finalResult;
 

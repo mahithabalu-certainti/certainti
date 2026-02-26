@@ -16,6 +16,7 @@ import {
   exportAccountSchema,
   updateAccountSchema,
   listOrgAccountSchema,
+  listTimeLineEntriesSchema,
 } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
@@ -550,6 +551,40 @@ async function getKeyContactRoles(req: Request, res: Response): Promise<void> {
   }
 }
 
+
+async function listTimeLineEntries(req: Request, res: Response): Promise<void> {
+  const methodName = "List account timeline entries";
+  try {
+    const value = await validateRequest(req, listTimeLineEntriesSchema, res, "GET");
+    if (!value) {
+      return;
+    }
+    const account = await accountServices.listTimeLineEntries(value);
+
+    if (account.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, account.data);
+    }
+      else {
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        account.errorMessage
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   accounts,
   exportAccounts,
@@ -560,4 +595,5 @@ export default {
   ListGlobalAccounts,
   getKeyContactRoles,
   listOrgAccounts,
+  listTimeLineEntries
 };

@@ -32,5 +32,5 @@ routes.get("/industry", checkUserStatusMiddleware("NA"), controller.geoDataContr
 routes.get("/keycontactroles", checkUserStatusMiddleware("NA"), controller.accountController.getKeyContactRoles);
 
 routes.get('/importEntityTypes', controller.geoDataController.fetchImportEntityTypes)
-
+routes.get("/fetchTimelines", checkUserStatusMiddleware("NA"), controller.accountController.listTimeLineEntries);
 export default routes;

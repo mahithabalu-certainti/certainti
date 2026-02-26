@@ -43,6 +43,11 @@ export const interactionType = {
   RD: "RD",
   GREENENERGY: "Green Energy",
 };
+export const interactionAssessmentSourceType = {
+  RD: "RD Assessment",
+  FPA: "Four Part Assessment",
+};
+
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
 export const SCHEMANAME_PREFIX = "trd365_";
@@ -62,6 +67,32 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+  ATTACHMENT: "Attachment",
+  PROJECT_RESOURCE: "Project Resource",
+  ACTIVITY_CALL:"Call",
+  ACTIVITY_MEETING:"Meeting",
+  ACTIVITY_EMAIL:"Email",
+  ACTIVITY_TASK:"Task",
+  CHECKLIST:"Checklist",
+  CASE:"Case",
+  INTERACTION:"Interaction"
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+  CANCEL: "cancelled",
+}
+
+export const eventTypes = {
+   UI_HANDLER: "web",
+}
 export const sendEmailCount = 25
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
@@ -92,7 +123,10 @@ export const filtersColumns : Record<string, string> =
     interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
     createdAt : "createdAt",
-    template_name : "template_name"
+    template_name : "template_name",
+    interaction_assessment_source_rid : "interaction_assessment_source_rid",
+    interaction_batch_id : "interaction_batch_id",
+    four_part_r_number : "four_part_r_number"
   }
 
   export const templatefiltersColumns : Record<string, string> =
@@ -137,15 +171,18 @@ export const filtersColumns : Record<string, string> =
     createdAt:"datetime",
     template_name : "string",
     created_user_name : "string",
-    modified_user_name : "string"
+    modified_user_name : "string",
+    interaction_assessment_source_rid : "string",
+    interaction_batch_id : "string",
+    four_part_r_number : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
   equals: "equals",
   notEquals: "not_equals",
   contains: "contains",
-  isEmpty: "is_empty",
-  IN: "in",
+  is_empty: "is_empty",
+  in: "in",
   less_than: "less_than",
   greater_than: "greater_than",
   between: "between",
@@ -170,7 +207,8 @@ export const mainTableFilters : Record<any, any> = {
   modified_by: "modified_by",
   modified_user_name:"modified_user_name",
   project_name : "project_name",
-  project_code : "project_code"
+  project_code : "project_code",
+  interaction_assessment_source_name : "interaction_assessment_source_name"
 }
 
 export const STATUS_MESSAGE = {
@@ -327,6 +365,19 @@ export const rawQueries = {
     }
     return `
     SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
+  },
+
+  fetchInteractionAssessmentSource(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
+    return `
+    SELECT rid, interaction_assessment_source_name  FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source WHERE rid IN (${ids})`;
   },
 
   fetchActiveStatus() {
@@ -524,7 +575,35 @@ export const rawQueries = {
     return `
     SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,max_ai_interactions FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
   },
-  
+   fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
+    `;
+  },
+  insertTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+   insertProjectTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
+          )
+          RETURNING *;
+        ` 
+  },
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
     return `
     SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`;
@@ -967,6 +1046,14 @@ export const rawQueries = {
       LIMIT 1
     `;
   },
+  getInteractionAssessmentSourceByNameQuery() {
+    return `
+      SELECT rid, interaction_assessment_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source 
+      WHERE interaction_assessment_source_name = :type 
+      LIMIT 1
+    `;
+  },
   getInteractionLevelNameByIdQuery() {
     return `
       SELECT interaction_level_name 
@@ -1048,15 +1135,48 @@ export const rawQueries = {
       LIMIT 1;
     `;
   },
-  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
-    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string, summaryType? : string) {
+    if(summaryType === 'qualifiedProjects') {
+      return `SELECT pf.rid AS project_fiscal_rid 
+       FROM ${schemaName}.project_fiscal pf
+       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+       WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true`
+    } else {
+        return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+    }
   },
   fetchEmailTemplateByCategory (categoryName : string) {
     return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
   },
   fetchInteractionEmailSubject(){
     return `SELECT interaction_email_subject,interaction_remainder_email_subject FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`
-   }
+   },
+     fetchFpaRid (schemaName : string, transactionId : string) {
+    return `SELECT rid FROM ${schemaName}.four_part_assessment WHERE transaction_id = '${transactionId}'`
+  },
+  fetchBatchInInteraction(schemaName : string) {
+    return `
+    SELECT interaction_batch_id 
+    FROM 
+    (
+    SELECT interaction_batch_id, 
+    RANK() OVER(PARTITION BY interaction_batch_id ORDER BY created_datetime DESC) AS rank
+    FROM
+    ${schemaName}.interactions
+    )
+    WHERE
+    rank = 1
+    `
+  },
+  fetchBatchInInteractionByTransId(schemaName : string, transactionId : string) {
+    return `
+    SELECT interaction_batch_id 
+    FROM
+    ${schemaName}.interactions
+    WHERE
+    transaction_id = '${transactionId}'
+    `
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -1191,6 +1311,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
    export const techSummaryFieldMappings = [
      
     { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+    { permissionField: 'project_name', exportField: 'Project Name', dataField: 'project_name' },
     { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
     { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
     { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },

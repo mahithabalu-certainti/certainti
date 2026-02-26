@@ -1,5 +1,7 @@
 import Decimal from "decimal.js";
 import Joi from "joi";
+
+
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
@@ -55,11 +57,11 @@ const createCaseSchema = Joi.object({
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
   other: positiveDecimal18_2,
-  lease_costs_of_computers : positiveDecimal18_2,
-  illinois_rd_credit_partnership_corp : positiveDecimal18_2,
-  illinois_research_payments_corp_only : positiveDecimal18_2,
-  basic_research_payments : positiveDecimal18_2,
-  qualified_computer_rental_time_expenses : positiveDecimal18_2,
+  lease_costs_of_computers: positiveDecimal18_2,
+  illinois_rd_credit_partnership_corp: positiveDecimal18_2,
+  illinois_research_payments_corp_only: positiveDecimal18_2,
+  basic_research_payments: positiveDecimal18_2,
+  qualified_computer_rental_time_expenses: positiveDecimal18_2,
   credit_carry_forward_py: positiveDecimal18_2,
   current_year_gross_receipts: positiveDecimal18_2,
   other_credits_total: positiveDecimal18_2
@@ -68,6 +70,7 @@ const createCaseSchema = Joi.object({
 
 const updateCaseSchema = Joi.object({
   case_rid: Joi.string().required(),
+  parent_case_rid: Joi.string().optional().allow("", null),
   account_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().optional().allow(""),
@@ -96,11 +99,11 @@ const updateCaseSchema = Joi.object({
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
   other: positiveDecimal18_2,
-  lease_costs_of_computers : positiveDecimal18_2,
-  illinois_rd_credit_partnership_corp : positiveDecimal18_2,
-  illinois_research_payments_corp_only : positiveDecimal18_2,
-  basic_research_payments : positiveDecimal18_2,
-  qualified_computer_rental_time_expenses : positiveDecimal18_2,
+  lease_costs_of_computers: positiveDecimal18_2,
+  illinois_rd_credit_partnership_corp: positiveDecimal18_2,
+  illinois_research_payments_corp_only: positiveDecimal18_2,
+  basic_research_payments: positiveDecimal18_2,
+  qualified_computer_rental_time_expenses: positiveDecimal18_2,
   credit_carry_forward_py: positiveDecimal18_2,
   current_year_gross_receipts: positiveDecimal18_2,
   other_credits_total: positiveDecimal18_2
@@ -797,6 +800,11 @@ const createActivityEmailSchema = Joi.object({
   email_status: Joi.string().required(),
 });
 
+const cancelActivityMeetingSchema = Joi.object({
+  activity_rid: Joi.string().max(255).required(),
+  account_rid: Joi.string().max(255).required()
+});
+
 const createActivityMeetingSchema = Joi.object({
   account_rid: Joi.string().max(255).required(),
   attach_to: Joi.string().required(),
@@ -958,6 +966,7 @@ const exportListProjectResourceSchema = Joi.object({
     .optional()
     .allow(""),
   timezone: Joi.string().optional(),
+  type: Joi.string().optional().allow(null),
   search: Joi.string()
     .max(255)
     .allow('')
@@ -999,6 +1008,7 @@ const listResourceSchema = Joi.object({
   ).optional(),
   apiSource: Joi.string().optional().default("Project"),
   accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
+  type: Joi.string().optional().allow("")
 });
 
 const exportListProjectTasksSchema = Joi.object({
@@ -1098,10 +1108,55 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
     }),
 });
 
+const createDataMapperSchema = Joi.object({
+  form_name: Joi.string().max(120).required()
+    .messages({
+      'any.required': 'Name is required',
+      'string.empty': 'Name cannot be empty',
+      'string.max': 'Name must be less than or equal to 120 characters'
+    }),
+  descriptions: Joi.string().optional().allow(""),
+  is_federal: Joi.boolean().required(),
+  effective_from_date: Joi.date().required()
+    .messages({
+      'any.required': 'Effective from date is required',
+      'date.base': 'Effective from date must be a valid date'
+    }),
+  effective_to_date: Joi.date().optional().allow(null, '')
+    .messages({
+      'date.base': 'Effective to date must be a valid date'
+    }),
+  country_rid: Joi.string().pattern(uuidRegex).required()
+    .messages({
+      'any.required': 'Country is required',
+      'string.empty': 'Country cannot be empty'
+    }),
+  state_rid: Joi.string().pattern(uuidRegex).optional().allow(null, '')
+    .messages({
+      'any.required': 'State is required',
+      'string.empty': 'State cannot be empty'
+    })
+})
+  .custom((value, helpers) => {
+    const { effective_from_date, effective_to_date } = value;
+    if (
+      effective_from_date &&
+      effective_to_date &&
+      new Date(effective_to_date) < new Date(effective_from_date)
+    ) {
+      return helpers.error('any.custom', {
+        message: 'Effective to date should be greater than effective from date'
+      });
+    }
+    return value;
+  })
+  .messages({
+    'any.custom': 'Effective to date should be greater than effective from date'
+  });
 const rdCreditGenerationSchema = Joi.object({
-  account_rid : Joi.string().max(255).required(),
-  case_rid : Joi.string().max(255).required(),
-  fiscal_year : Joi.number().required()
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
+  fiscal_year: Joi.number().required()
 });
 
 const rdCreditProcessSchema = Joi.object({
@@ -1114,6 +1169,141 @@ const rdCreditDataSchema = Joi.object({
   caseRid: Joi.string().max(255).required(),
   stateCode: Joi.string().max(255).required(),
 });
+
+const listDataMapperSchema = Joi.object({
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).optional(),
+  search: Joi.string().allow("", null).optional(),
+  filters: Joi.object().default({}).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC").optional(),
+});
+
+const getObjectsListSchema = Joi.object({
+  country_rid: Joi.string().required(),
+  state_rid: Joi.string().optional(),
+});
+
+const exportDataMapperSchema = Joi.object({
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).optional(),
+  search: Joi.string().allow("", null).optional(),
+  filters: Joi.object().default({}).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC").optional(),
+  timezone: Joi.string().optional(),
+});
+
+const updateDataMapperMappingSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  mappings: Joi.array().required()
+})
+
+const updateDataMapperFormSchema = Joi.object({
+  form_rid: Joi.string().required(),
+  form_status: Joi.string().valid("accept", "reject").required()
+})
+
+const updateDataMapperSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  descriptions: Joi.string().optional().allow(""),
+  is_federal: Joi.boolean().required(),
+  form_name: Joi.string().max(120).optional()
+    .messages({
+      'string.empty': 'Name cannot be empty',
+      'string.max': 'Name must be less than or equal to 120 characters'
+    }),
+  effective_from_date: Joi.date().optional()
+    .messages({
+      'date.base': 'Effective from date must be a valid date'
+    }),
+  effective_to_date: Joi.date().optional().allow(null, '')
+    .messages({
+      'date.base': 'Effective to date must be a valid date'
+    }),
+  country_rid: Joi.string().pattern(uuidRegex).optional()
+    .messages({
+      'string.empty': 'Country cannot be empty'
+    }),
+  state_rid: Joi.string().pattern(uuidRegex).optional()
+    .messages({
+      'string.empty': 'State cannot be empty'
+    }),
+  is_active: Joi.boolean().optional()
+})
+  .custom((value, helpers) => {
+    const { effective_from_date, effective_to_date } = value;
+    if (
+      effective_from_date &&
+      effective_to_date &&
+      new Date(effective_to_date) < new Date(effective_from_date)
+    ) {
+      return helpers.error('any.custom', {
+        message: 'Effective to date should be greater than effective from date'
+      });
+    }
+    return value;
+  })
+  .messages({
+    'any.custom': 'Effective to date should be greater than effective from date'
+  });
+
+
+const rdFormGenerationSchema = Joi.object({
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
+  fiscal_year: Joi.number().required()
+});
+
+const rdFormPreviewSchema = Joi.object({
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
+  is_federal: Joi.boolean().required(),
+  country_rid: Joi.string().max(255).required(),
+  state_rid: Joi.string().max(255).optional().allow("", null)
+});
+
+const rdFormSignOffSchema = Joi.object({
+  account_rid: Joi.string().max(255).required(),
+  case_rid: Joi.string().max(255).required(),
+  comments: Joi.string().max(2000).optional().allow("", null),
+  sign_off: Joi.boolean().required()
+});
+
+const completeActivityMeetingSchema = Joi.object({
+  activity_rid: Joi.string().max(255).required(),
+  account_rid: Joi.string().max(255).required()
+});
+const stateCreditSchema = Joi.object({
+  state_rid : Joi.string().required().max(50),
+  rd_credits_computed : Joi.string().required(),
+  rd_credits_approved : Joi.string().required(),
+  rd_credits_submitted : Joi.string().required(),
+  comments : Joi.string().optional().allow(""),
+})
+
+const caseCloseSchema = Joi.object({
+  account_rid : Joi.string().required().max(50),
+  case_rid : Joi.string().required().max(50),
+  country_credits : Joi.object({
+    country_rid : Joi.string().required().max(50),
+    rd_credits_computed : Joi.string().required(),
+    rd_credits_approved : Joi.string().required(),
+    rd_credits_submitted : Joi.string().required(),
+    comments : Joi.string().optional().allow(""),
+  }).allow({}),
+  state_credits : Joi.array().items(stateCreditSchema),
+  fiscal_year : Joi.string().required(),
+  user_preference : Joi.string().allow(""),
+  country_rid : Joi.string().optional().allow(""),
+})
+const singleFileSchema = Joi.object({
+  mimetype: Joi.string().required(),
+  size: Joi.number().required(),
+  originalname: Joi.string().required()
+})
+const validateFile = Joi.array().items(singleFileSchema).optional()
+
 
 export {
   createCaseSchema,
@@ -1171,8 +1361,22 @@ export {
   jurisdictionRDConfigSchemaForNew,
   caseSubmissionDateSchema,
   listResourceCostSchemaForFinancialHighlights,
-   rdCreditGenerationSchema,
+  createDataMapperSchema,
+  rdCreditGenerationSchema,
   rdCreditProcessSchema,
   rdCreditDataSchema,
-  caseClosedListSchema
+  listDataMapperSchema,
+  exportDataMapperSchema,
+  updateDataMapperSchema,
+  updateDataMapperMappingSchema,
+  getObjectsListSchema,
+  caseClosedListSchema,
+  rdFormGenerationSchema,
+  rdFormPreviewSchema,
+  rdFormSignOffSchema,
+  cancelActivityMeetingSchema,
+  completeActivityMeetingSchema,
+  caseCloseSchema,
+  validateFile,
+  updateDataMapperFormSchema
 };

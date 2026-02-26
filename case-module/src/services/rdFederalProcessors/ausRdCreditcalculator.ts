@@ -113,7 +113,10 @@ export class RdCreditCalculatorForAus {
                 currency : this.currency
             },
           computedFields : finalData,
-          finalCredit: nonRefundableRdTaxOffset
+          finalCredit: nonRefundableRdTaxOffset,
+          totalQRE: totalAccountExpenditure,
+          totalSubCon: totalSubconQreCost,
+          totalFTE: totalFteQreCost
         }
       }
     }

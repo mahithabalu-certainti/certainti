@@ -23,6 +23,7 @@ import { AutoSendInteractionAudit } from "../models/autoSendInteractionAudit";
 import { InteractionTemplate } from "../models/interactionTemplate";
 import { InteractionTemplateItem } from "../models/interactionTemplateItems";
 import { AiAssessmentEventTracker } from "../models/aiAssessmentEventTracker";
+import { FourPartAssessment } from "../models/fourPartAssessment";
 
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -43,6 +44,7 @@ export class InteractionModelService {
       WebhookEmailLog: ReturnType<
         typeof WebhookEmailLog.initialize
       >;
+      FourPartAssessment: ReturnType<typeof FourPartAssessment.initialise>
     }
   > = new Map();
 
@@ -128,6 +130,7 @@ export class InteractionModelService {
       sequelize,
       schemaName
     );
+    const FourPartAssessmentModel = FourPartAssessment.initialise(sequelize, schemaName)
 
     const models = {
       Interaction: InteractionModel,
@@ -150,7 +153,8 @@ export class InteractionModelService {
       AutoSendInteractionAudit: AutoSendInteractionAuditModel,
       InteractionTemplate: InteractionTemplateModel,
       InteractionTemplateItem: InteractionTemplateItemModel,
-      AiAssessmentEventTracker: AiAssessmentEventTrackerModel
+      AiAssessmentEventTracker: AiAssessmentEventTrackerModel,
+      FourPartAssessment : FourPartAssessmentModel
     };
 
     this.modelCache.set(schemaName, models);

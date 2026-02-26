@@ -2,7 +2,7 @@ import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
 import { AddCommentsType, CaseTaskQueryType, CaseTaskWorkFlowCreate, CreateCaseTaskType, DeleteCommentsType, FilterType, UpdateCaseTaskType, UpdateCommentsType, WeightageType } from "../../../utils/types";
 import { CaseModelService } from "../../caseModelsService";
 import { v4 as uuidv4 } from 'uuid'
-import { entityNames, ENV_PREFIX, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, relationshipTypes, ruleNames, ruleTemplateNames, STATUS_MESSAGE } from "../../../utils/constants";
+import { entityNames, entityTypes, ENV_PREFIX, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, relationshipTypes, ruleNames, ruleTemplateNames, STATUS_MESSAGE } from "../../../utils/constants";
 import { HelperMethods } from "../helperMethods";
 import { initMainDbSequelize } from "../../../config/mainDataSource";
 import CaseSchemaService from "../schemaService";
@@ -23,8 +23,8 @@ export class CaseTaskSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
-  private caseSchemaService : CaseSchemaService
-  private helperMethod : HelperMethods
+  private caseSchemaService: CaseSchemaService
+  private helperMethod: HelperMethods
 
   constructor() {
     this.caseModelService = new CaseModelService();
@@ -103,6 +103,8 @@ export class CaseTaskSchemaService {
         created_by: data.created_by || "",
         created_datetime: new Date(),
         task_type_rid: data.task_type_rid || "",
+        task_category_rid: data.task_category_rid || "",
+        case_team_member_role_rid: data.case_team_member_role_rid
       });
       if (data?.checklist_template_rid) {
         const response = await this.helperMethod.fetchChecklistTemplateDetailsById(
@@ -170,17 +172,22 @@ export class CaseTaskSchemaService {
           }
         }
       }
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.created_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
       await CaseTimeline.create(
         {
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
           created_by: data.created_by,
           created_datetime: new Date(),
           account_rid: data.account_rid,
-          entity_rid: data.case_rid,
-          event_name: "Task Created",
-          event_type: "ui handler",
-          event_status: "success",
-          event_datetime: new Date(),
-          description: `Task created with title : ${createdTaskResult.task_name}`,
+          entity_rid: createdTaskResult.dataValues.rid,
+          case_rid:data.case_rid,
+          event_name: eventNames.CREATE,
+          entity_name: entityTypes.TASK,
+          descriptions: `${createdTaskResult.task_name}`,
         },
         { transaction }
       );
@@ -235,9 +242,8 @@ export class CaseTaskSchemaService {
                 }
               }
             }
-            const [currentStatus]:any[] = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(isTaskExists.task_status_rid,data.task_status_rid), { type: QueryTypes.SELECT });
-            if(currentStatus === 'Closed')
-            {
+            const [currentStatus]: any[] = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(isTaskExists.task_status_rid, data.task_status_rid), { type: QueryTypes.SELECT });
+            if (currentStatus === 'Closed') {
               data.is_flagged = false;
             }
           }
@@ -255,11 +261,11 @@ export class CaseTaskSchemaService {
             }, transaction
           });
           const [caseInfo]: any[] = await this.mainDbSequelize.query(
-                  rawQueries.fetchCasesInfo(data.case_rid),
-                  {
-                    replacements: { case_rid: data.case_rid },
-                    type: "SELECT"
-                  });
+            rawQueries.fetchCasesInfo(data.case_rid),
+            {
+              replacements: { case_rid: data.case_rid },
+              type: "SELECT"
+            });
           let baseRuleEnginePayload: any = {
             userId: data.modified_by,
             accountRid: data.account_rid,
@@ -269,7 +275,7 @@ export class CaseTaskSchemaService {
             entity: entityNames.task,
             caseName: caseInfo ? caseInfo.case_name : ""
           };
-      
+
           if (data?.checklist_template_rid) {
             if (data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
               if (isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
@@ -328,6 +334,7 @@ export class CaseTaskSchemaService {
               effective_end_datetime: data.effective_end_datetime,
               modified_by: data.modified_by || "",
               modified_datetime: new Date(),
+              task_category_rid: data.task_category_rid || ""
             },
             {
               where: {
@@ -371,18 +378,24 @@ export class CaseTaskSchemaService {
                 }
               }
               if (data.workflow_connector.is_new_changes) {
-                await CaseTimeline.create({
-                  created_by: data.modified_by,
-                  created_datetime: new Date(),
-                  account_rid: data.account_rid,
-                  entity_rid: data.case_rid,
-                  event_name:
-                    `Case Task Workflow Connector updated`,
-                  event_type: "ui handler",
-                  event_status: "success",
-                  event_datetime: new Date(),
-                  description: `Case Task Workflow Connector updated`
-                }, { transaction });
+                const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                // await CaseTimeline.create({
+                //   created_by: data.modified_by,
+                //   created_datetime: new Date(),
+                //   created_by_name: userEventInfo.full_name,
+                //   event_type_rid: userEventInfo.event_type_rid,
+                //   account_rid: data.account_rid,
+                //   entity_rid: data.case_rid,
+                //   event_name:
+                //     `Case Task Workflow Connector updated`,
+                //   event_type: "ui handler",
+                //   event_status: "success",
+                //   event_datetime: new Date(),
+                //   description: `Case Task Workflow Connector updated`
+                // }, { transaction });
                 await CaseHistory.create({
                   created_by: data.modified_by,
                   created_datetime: new Date(),
@@ -409,7 +422,7 @@ export class CaseTaskSchemaService {
                 oldValue = (isTaskExists as any)[c]
                 newValue = (data as any)[c]
                 columnName = c
-  
+
                 if (columnName == "assigned_to") {
                   labelName = "Assigned To"
                   const result: any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
@@ -423,9 +436,9 @@ export class CaseTaskSchemaService {
                   baseRuleEnginePayload.targetUserID = newValue;
                   baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
                   baseRuleEnginePayload.task = "Assigned";
-                 
+
                   logMessage(`Triggering rule engine for assignee change with payload ${JSON.stringify(baseRuleEnginePayload)}`)
-                   
+
                 }
                 else if (columnName === "checklist_template_rid") {
                   labelName = "Checklist"
@@ -446,25 +459,24 @@ export class CaseTaskSchemaService {
                   newValueString = columnMapping.get(newValue);
                 }
                 else if (columnName === "task_status_rid") {
-                  
+
                   labelName = "Status"
                   const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(oldValue, newValue));
-                 
+
                   for (let r of result[0]) {
                     columnMapping.set(r.rid, r.task_status_name)
                   }
-                  if(data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined)
-            {
-                  const [userInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserDetails(data.assigned_to), { type: QueryTypes.SELECT });
-                  baseRuleEnginePayload.targetEmail = userInfo?.email || '';
+                  if (data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
+                    const [userInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserDetails(data.assigned_to), { type: QueryTypes.SELECT });
+                    baseRuleEnginePayload.targetEmail = userInfo?.email || '';
                   }
-                 
+
                   oldValueString = columnMapping.get(oldValue)
                   newValueString = columnMapping.get(newValue);
-                  baseRuleEnginePayload.status  = newValueString;
+                  baseRuleEnginePayload.status = newValueString;
                   baseRuleEnginePayload.targetUserID = data.assigned_to;
-                  
-                   
+
+
                   // await this.helperMethod.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
                   //   newValue: newValueString,
                   //   oldValue: oldValueString
@@ -507,67 +519,71 @@ export class CaseTaskSchemaService {
                 })
                 updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
               }
-            
+
               if (updatedColumnsStorage.length > 0) {
                 combinedColumns = updatedColumnsStorage.join(', ')
               }
+              const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+              
               await CaseTimeline.create({
+                created_by_name: userEventInfo.full_name,
+                event_type_rid: userEventInfo.event_type_rid,
                 created_by: data.modified_by,
                 created_datetime: new Date(),
                 account_rid: data.account_rid,
-                entity_rid: data.case_rid,
-                event_name: "Task Updated",
-                event_type: "ui handler",
-                event_status: "success",
-                event_datetime: new Date(),
-                description: `Task Updated : ${combinedColumns}`
-              })
-            }    
-            await transaction.commit();
-            const findAllTaskByCaseIds = await CaseTask.findAll({
-            attributes : ['weightage_rid', 'task_status_rid'],
-            where : {
-              case_rid : data.case_rid
-            }, 
-            raw : true
-          });
-          if(findAllTaskByCaseIds.length > 0) {
-            const allTasksWeightageIds = [...new Set(findAllTaskByCaseIds.map((d : CaseTask) => d.weightage_rid!))];
-            const findCompletedTaskStatus : any = await this.mainDbSequelize.query(getCompletedTaskStatusId());
-            const completedTaskStatusId = findCompletedTaskStatus[0][0].rid
-            const allCompletedTaskWeightageIds = findAllTaskByCaseIds.filter((d : CaseTask) => d.task_status_rid === completedTaskStatusId).map((f : CaseTask) => f.weightage_rid!)
-            const findWeightageValues = await this.mainDbSequelize.query<WeightageType>(findTaskWeightageDetails(allTasksWeightageIds), {type : QueryTypes.SELECT});
-            if(findWeightageValues.length > 0) {
-              const mapAllWeightageWithValue = new Map(findWeightageValues.map((d : WeightageType) => [d.rid, d.weightage_value]));
-              let totalAllWeightageValues : Decimal = new Decimal(0)
-              let completedWeightValues : Decimal = new Decimal(0)
-              findAllTaskByCaseIds.forEach((data : CaseTask) => {
-                if(mapAllWeightageWithValue.get(data.weightage_rid!) !== undefined) {
-                  totalAllWeightageValues = totalAllWeightageValues.add(mapAllWeightageWithValue.get(data.weightage_rid!)!)
-                }
-              });
-              allCompletedTaskWeightageIds.forEach((data : any) => {
-                 if(mapAllWeightageWithValue.get(data!) !== undefined) {
-                  completedWeightValues = completedWeightValues.add(mapAllWeightageWithValue.get(data!)!)
-                }
-              })
-              console.log("completedWeightValues ===> ", completedWeightValues)
-              console.log("totalAllWeightageValues ===> ", totalAllWeightageValues)
-              const caseCompletionPercentage = (completedWeightValues.div(totalAllWeightageValues)).mul(100) || new Decimal(0)
-              await Case.update({
-                case_completion_percentage : parseFloat(caseCompletionPercentage.toFixed(2))
-              }, {
-                where : {
-                  rid : data.case_rid
-                }
+                entity_rid: data.rid,
+                case_rid:data.case_rid,
+                event_name: eventNames.UPDATE,
+                entity_name: entityTypes.TASK,
+                descriptions: `${data.task_name}`
               })
             }
-          }
-           await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
-                    newValue: "newValueString",
-                    oldValue: "oldValueString"
-                  }, accessToken);
-           return {
+            await transaction.commit();
+            const findAllTaskByCaseIds = await CaseTask.findAll({
+              attributes: ['weightage_rid', 'task_status_rid'],
+              where: {
+                case_rid: data.case_rid
+              },
+              raw: true
+            });
+            if (findAllTaskByCaseIds.length > 0) {
+              const allTasksWeightageIds = [...new Set(findAllTaskByCaseIds.map((d: CaseTask) => d.weightage_rid!))];
+              const findCompletedTaskStatus: any = await this.mainDbSequelize.query(getCompletedTaskStatusId());
+              const completedTaskStatusId = findCompletedTaskStatus[0][0].rid
+              const allCompletedTaskWeightageIds = findAllTaskByCaseIds.filter((d: CaseTask) => d.task_status_rid === completedTaskStatusId).map((f: CaseTask) => f.weightage_rid!)
+              const findWeightageValues = await this.mainDbSequelize.query<WeightageType>(findTaskWeightageDetails(allTasksWeightageIds), { type: QueryTypes.SELECT });
+              if (findWeightageValues.length > 0) {
+                const mapAllWeightageWithValue = new Map(findWeightageValues.map((d: WeightageType) => [d.rid, d.weightage_value]));
+                let totalAllWeightageValues: Decimal = new Decimal(0)
+                let completedWeightValues: Decimal = new Decimal(0)
+                findAllTaskByCaseIds.forEach((data: CaseTask) => {
+                  if (mapAllWeightageWithValue.get(data.weightage_rid!) !== undefined) {
+                    totalAllWeightageValues = totalAllWeightageValues.add(mapAllWeightageWithValue.get(data.weightage_rid!)!)
+                  }
+                });
+                allCompletedTaskWeightageIds.forEach((data: any) => {
+                  if (mapAllWeightageWithValue.get(data!) !== undefined) {
+                    completedWeightValues = completedWeightValues.add(mapAllWeightageWithValue.get(data!)!)
+                  }
+                })
+                const caseCompletionPercentage = (completedWeightValues.div(totalAllWeightageValues)).mul(100) || new Decimal(0)
+                await Case.update({
+                  case_completion_percentage: parseFloat(caseCompletionPercentage.toFixed(2))
+                }, {
+                  where: {
+                    rid: data.case_rid
+                  }
+                })
+              }
+            }
+            await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
+              newValue: "newValueString",
+              oldValue: "oldValueString"
+            }, accessToken);
+            return {
               statusCode: HttpStatus.SUCCESS,
               statusMessage: STATUS_MESSAGE.taskUpdatedSuccess
             }
@@ -584,7 +600,7 @@ export class CaseTaskSchemaService {
       logMessage(`Error in updateUserLevelTask: ${error}`);
       return {
         statusCode: HttpStatus.FAILED,
-        statusMessage:  'Task update failed due to an unexpected error.'
+        statusMessage: 'Task update failed due to an unexpected error.'
       }
     }
   }
@@ -832,16 +848,21 @@ export class CaseTaskSchemaService {
           const finalResult = await TaskTag.create(tagPayload);
           if (finalResult) {
             if (taskType !== "activity") {
+              const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: userId,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
               await CaseTimeline.create({
                 created_by: userId,
                 created_datetime: new Date(),
                 account_rid: accountRid,
-                entity_rid: caseRid,
-                event_name: `Tag added for Task`,
-                event_type: "ui handler",
-                event_status: "success",
-                event_datetime: new Date(),
-                description: `Tag added for task : ${result.tag_name}`,
+                entity_rid: taskRid,
+                case_rid:caseRid,
+                event_name: eventNames.ADDED,
+                entity_name:entityTypes.TAG,
+                event_type_rid: userEventInfo.event_type_rid,
+                descriptions: `Task ${result.tag_name}`,
+                created_by_name: userEventInfo.full_name
               });
               await CaseHistory.create({
                 created_by: userId,
@@ -853,6 +874,7 @@ export class CaseTaskSchemaService {
                 task_rid: taskRid,
               });
             } else {
+              
               await this.addTaskTimeline(
                 accountNumber,
                 taskRid,
@@ -917,16 +939,30 @@ export class CaseTaskSchemaService {
           created_datetime: new Date(),
         });
         if (taskType !== "activity") {
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: userId,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+         const existingTaskInfo:any = await CaseTask.findOne({
+        where: {
+          rid: taskRid,
+          account_rid: accountRid,
+          case_rid: caseRid,
+        },
+        raw: true,
+      });
           await CaseTimeline.create({
             created_by: userId,
             created_datetime: new Date(),
             account_rid: accountRid,
-            entity_rid: caseRid,
-            event_name: `Tag added for Task`,
-            event_type: "ui handler",
-            event_status: "success",
-            event_datetime: new Date(),
-            description: `Tag added for task : ${tagDetails!.tag_name}`,
+            entity_rid: taskRid,
+            case_rid:caseRid,
+            entity_name:entityTypes.TAG,
+            event_name: eventNames.UPDATE,
+           // description: `Tag added for task : ${tagDetails!.tag_name}`,
+            descriptions:`Task ${existingTaskInfo!.task_name}`,
+            created_by_name: userEventInfo.full_name,
+            event_type_rid: userEventInfo.event_type_rid,
           });
           await CaseHistory.create({
             case_rid: caseRid,
@@ -1036,8 +1072,9 @@ export class CaseTaskSchemaService {
       TaskAttachments,
       CaseTimeline,
       TaskCollaborators,
-      Activities,
       ActivityHistory,
+      CaseTask
+
     } = await this.caseModelService.getModels(accountNumber);
     const commentPayload: any = {
       created_by: data.created_by,
@@ -1145,16 +1182,29 @@ export class CaseTaskSchemaService {
         }
       }
       if (data.task_type !== "activity") {
+         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.created_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+      const existingTaskInfo:any = await CaseTask.findOne({
+        where: {
+          rid: data.task_rid,
+          account_rid: data.account_rid,
+          case_rid: data.case_rid,
+        },
+        raw: true,
+      });
         await CaseTimeline.create({
           created_by: data.created_by,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
           created_datetime: new Date(),
           account_rid: data.account_rid,
           entity_rid: data.case_rid,
-          event_name: "Task Comments Created",
-          event_type: "ui handler",
-          event_status: "success",
-          event_datetime: new Date(),
-          description: `Task Comments : ${createComments.comments}`,
+          case_rid:data.task_rid,
+          event_name: eventNames.UPDATE,
+          entity_name:entityTypes.COMMENTS,
+          descriptions: `Task ${existingTaskInfo.task_name}`,
         });
         await CaseHistory.create({
           created_by: data.created_by,
@@ -1366,16 +1416,30 @@ export class CaseTaskSchemaService {
                       case_rid: data.case_rid,
                     });
                   } else {
+                    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                    const existingTaskInfo:any = await CaseTask.findOne({
+                    where: {
+                      rid: data.task_rid,
+                      account_rid: data.account_rid,
+                      case_rid: data.case_rid,
+                    },
+                    raw: true,
+                  });
+                    
                     await CaseTimeline.create({
                       created_by: data.modified_by,
+                      created_by_name: userEventInfo.full_name,
+                      event_type_rid: userEventInfo.event_type_rid,
                       created_datetime: new Date(),
                       account_rid: data.account_rid,
-                      entity_rid: data.case_rid,
-                      event_name: "Task Comments Attachments deleted",
-                      event_type: "ui handler",
-                      event_status: "success",
-                      event_datetime: new Date(),
-                      description: `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`,
+                      entity_rid: data.task_rid,
+                      case_rid:data.case_rid,
+                      event_name: eventNames.DELETE,
+                      entity_name:entityTypes.ATTACHMENT,
+                      descriptions: `${fetchCommentsAttachmentDetails.document_name} in comments for task ${existingTaskInfo.task_name}`,
                     });
                   }
                 }
@@ -1421,16 +1485,28 @@ export class CaseTaskSchemaService {
             combinedColumns = updatedColumnsStorage.join(", ");
           }
           if (data.task_type !== "activity") {
+            const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+            const existingTaskInfo:any = await CaseTask.findOne({
+            where: {
+              rid: data.task_rid,
+              account_rid: data.account_rid,
+              case_rid: data.case_rid,
+            },
+            raw: true,
+          });
             await CaseTimeline.create({
               created_by: data.modified_by,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
               created_datetime: new Date(),
               account_rid: data.account_rid,
               entity_rid: data.case_rid,
-              event_name: "Task Comments Updated",
-              event_type: "ui handler",
-              event_status: "success",
-              event_datetime: new Date(),
-              description: `Task Comments Updated : ${combinedColumns}`,
+              entity_name:entityTypes.COMMENTS,
+              event_name: eventNames.UPDATE,
+              descriptions: `Task ${existingTaskInfo.task_name}`,
             });
           } else {
             await this.addTaskTimeline(
@@ -1489,49 +1565,65 @@ export class CaseTaskSchemaService {
           ""
         )}`;
         let insertQuery = "";
-        if (attachmentLevel === "case") {
-          /*const { CaseTimeline } = await this.caseModelService.getModels(
-            accountNumber
-          );
-          console.log("Adding case timeline...", entity_rid, accountRid, userId);
-          await CaseTimeline.create({
-            account_rid: accountRid,
-            event_name: eventName,
-            event_status: eventStatus,
-            event_type: "ui handler",
-            entity_rid: entity_rid || "",
-            description: description,
-            created_by: userId,
-            event_datetime: new Date(),
-            created_datetime: new Date(),
-          }); */
-          insertQuery = rawQueries.insertTimeline(schemaName, "case_timeline");
-        } else if (attachmentLevel === "project") {
-          insertQuery = rawQueries.insertTimeline(
-            schemaName,
-            "project_timeline"
-          );
-        } else if (attachmentLevel === "project_resource") {
-          insertQuery = rawQueries.insertTimeline(
-            schemaName,
-            "project_resource_timeline"
-          );
-        } else if (attachmentLevel === "project_task") {
-          insertQuery = rawQueries.insertTimeline(
-            schemaName,
-            "project_task_timeline"
-          );
-        } else if (attachmentLevel === "resource") {
-          insertQuery = rawQueries.insertTimeline(
-            schemaName,
-            "resource_timeline"
-          );
-        } else {
-          insertQuery = rawQueries.insertTimeline(
-            schemaName,
-            "account_timeline"
-          );
-        }
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: userId,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });          
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: userId!,
+                                    account_rid: accountRid,
+                                    entity_rid: taskRid,
+                                    entity_name: entityTypes.ACTIVITY_TASK,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.CREATE,
+                                    descriptions:entityresponse.task_name,
+                                    project_rid: attachmentLevel === 'project' ? entityresponse.attach_to : undefined,
+                                    case_rid: attachmentLevel === 'case' ? entityresponse.attach_to : undefined,
+                                  },[attachmentLevel]);
+        // if (attachmentLevel === "case") {
+        //   /*const { CaseTimeline } = await this.caseModelService.getModels(
+        //     accountNumber
+        //   );
+        //   console.log("Adding case timeline...", entity_rid, accountRid, userId);
+        //   await CaseTimeline.create({
+        //     account_rid: accountRid,
+        //     event_name: eventName,
+        //     event_status: eventStatus,
+        //     event_type: "ui handler",
+        //     entity_rid: entity_rid || "",
+        //     description: description,
+        //     created_by: userId,
+        //     event_datetime: new Date(),
+        //     created_datetime: new Date(),
+        //   }); */
+        //   insertQuery = rawQueries.insertTimeline(schemaName, "case_timeline");
+        // } else if (attachmentLevel === "project") {
+        //   insertQuery = rawQueries.insertTimeline(
+        //     schemaName,
+        //     "project_timeline"
+        //   );
+        // } else if (attachmentLevel === "project_resource") {
+        //   insertQuery = rawQueries.insertTimeline(
+        //     schemaName,
+        //     "project_resource_timeline"
+        //   );
+        // } else if (attachmentLevel === "project_task") {
+        //   insertQuery = rawQueries.insertTimeline(
+        //     schemaName,
+        //     "project_task_timeline"
+        //   );
+        // } else if (attachmentLevel === "resource") {
+        //   insertQuery = rawQueries.insertTimeline(
+        //     schemaName,
+        //     "resource_timeline"
+        //   );
+        // } else {
+        //   insertQuery = rawQueries.insertTimeline(
+        //     schemaName,
+        //     "account_timeline"
+        //   );
+        // }
 
         await this.orgDbSequelize.query(insertQuery, {
           type: QueryTypes.INSERT,
@@ -1589,16 +1681,29 @@ export class CaseTaskSchemaService {
                 }
               );
               if (data.task_type !== "activity") {
+                const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                const existingTaskInfo:any = await CaseTask.findOne({
+                  where: {
+                    rid: data.task_rid,
+                    account_rid: data.account_rid,
+                    case_rid: data.case_rid,
+                  },
+                  raw: true,
+                });
+                                                      
                 await CaseTimeline.create({
                   created_by: data.modified_by,
                   created_datetime: new Date(),
+                  created_by_name: userEventInfo.full_name,
+                  event_type_rid: userEventInfo.event_type_rid,
                   account_rid: data.account_rid,
                   entity_rid: data.case_rid,
-                  event_name: "Task Comments Attachments deleted",
-                  event_type: "ui handler",
-                  event_status: "success",
-                  event_datetime: new Date(),
-                  description: `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`,
+                  event_name: eventNames.DELETE,
+                  entity_name:entityTypes.COMMENTS,
+                  descriptions: `Task ${existingTaskInfo.task_name}`,
                 });
               } else {
                 await this.addTaskTimeline(
@@ -1647,17 +1752,23 @@ export class CaseTaskSchemaService {
                 }
               );
               if (data.task_type !== "activity") {
-                await CaseTimeline.create({
-                  created_by: data.modified_by,
-                  created_datetime: new Date(),
-                  account_rid: data.account_rid,
-                  entity_rid: data.case_rid,
-                  event_name: "Task Comments Attachments deleted",
-                  event_type: "ui handler",
-                  event_status: "success",
-                  event_datetime: new Date(),
-                  description: `Task Comments : ${d.document_name}`,
-                });
+                const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                // await CaseTimeline.create({
+                //   created_by: data.modified_by,
+                //   created_by_name: userEventInfo.full_name,
+                //   event_type_rid: userEventInfo.event_type_rid,
+                //   created_datetime: new Date(),
+                //   account_rid: data.account_rid,
+                //   entity_rid: data.case_rid,
+                //   event_name: "Task Comments Attachments deleted",
+                //   event_type: "ui handler",
+                //   event_status: "success",
+                //   event_datetime: new Date(),
+                //   description: `Task Comments : ${d.document_name}`,
+                // });
               } else {
                 await this.addTaskTimeline(
                   accountNumber,
@@ -1674,17 +1785,23 @@ export class CaseTaskSchemaService {
           }
         }
         if (data.task_type !== "activity") {
-          await CaseTimeline.create({
-            created_by: data.modified_by,
-            created_datetime: new Date(),
-            account_rid: data.account_rid,
-            entity_rid: data.case_rid,
-            event_name: "Task Comment Deleted",
-            event_type: "ui handler",
-            event_status: "success",
-            event_datetime: new Date(),
-            description: `Task Comments Deleted : ${isCommentExists.comments}`,
-          });
+          const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+          // await CaseTimeline.create({
+          //   created_by: data.modified_by,
+          //   created_by_name: userEventInfo.full_name,
+          //   event_type_rid: userEventInfo.event_type_rid,
+          //   created_datetime: new Date(),
+          //   account_rid: data.account_rid,
+          //   entity_rid: data.case_rid,
+          //   event_name: "Task Comment Deleted",
+          //   event_type: "ui handler",
+          //   event_status: "success",
+          //   event_datetime: new Date(),
+          //   description: `Task Comments Deleted : ${isCommentExists.comments}`,
+          // });
         } else {
           await this.addTaskTimeline(
             accountNumber,
@@ -1795,16 +1912,28 @@ export class CaseTaskSchemaService {
             // Only add case_rid if not activity
             const result = await TaskAttachments.create(taskAttachmentPayload);
             if (data.task_type !== "activity") {
+              const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+              const existingTaskInfo:any = await CaseTask.findOne({
+                where: {
+                  rid: data.task_rid,
+                  account_rid: data.account_rid,
+                  case_rid: data.case_rid,
+                },
+                raw: true,
+              });
               await CaseTimeline.create({
                 created_by: userId,
                 created_datetime: new Date(),
+                created_by_name: userEventInfo.full_name,
+                event_type_rid: userEventInfo.event_type_rid,
                 account_rid: data.account_rid,
                 entity_rid: data.case_rid,
-                event_name: `Attachment added for task ${findTaskDetails?.task_name}`,
-                event_type: "ui handler",
-                event_status: "success",
-                event_datetime: new Date(),
-                description: `Task Attachments Added : ${uploadFile.url}`,
+                event_name: eventNames.ADDED,
+                entity_name:entityTypes.ATTACHMENT,
+                descriptions: `Task ${existingTaskInfo.task_name}`,
               });
               await CaseHistory.create({
                 created_by: userId,
@@ -1851,7 +1980,7 @@ export class CaseTaskSchemaService {
   }
 
   async deleteAttachment(accountNumber: string, data: any, userId: string) {
-    const { TaskAttachments,ActivityHistory } = await this.caseModelService.getModels(
+    const { TaskAttachments, ActivityHistory } = await this.caseModelService.getModels(
       accountNumber
     );
     const findTaskDetails = await this.findTaskById(
@@ -1879,16 +2008,20 @@ export class CaseTaskSchemaService {
       );
       if (updateFile === 1) {
         if (data.task_type !== "activity") {
+          const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.modified_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
           await CaseTimeline.create({
             created_by: userId,
             created_datetime: new Date(),
+            created_by_name: userEventInfo.full_name,
+            event_type_rid: userEventInfo.event_type_rid,
             account_rid: data.account_rid,
             entity_rid: data.case_rid,
-            event_name: `Attachment deleted for task ${findTaskDetails?.task_name}`,
-            event_type: "ui handler",
-            event_status: "success",
-            event_datetime: new Date(),
-            description: `Task Attachments Deleted : ${checkIsFileExists.document_name}`,
+            event_name: eventNames.DELETE,
+            entity_name:entityTypes.ATTACHMENT,
+            descriptions: `Task ${findTaskDetails?.task_name}`,
           });
           await CaseHistory.create({
             created_by: userId,
@@ -2332,17 +2465,23 @@ export class CaseTaskSchemaService {
                   relationship_connector_rid: data.relationship_connector_rid,
                 },
               });
-              await CaseTimeline.create({
-                created_by: data.created_by,
-                created_datetime: new Date(),
-                account_rid: data.account_rid,
-                entity_rid: data.case_rid,
-                event_name: `Case Task Workflow Connector deleted`,
-                event_type: "ui handler",
-                event_status: "success",
-                event_datetime: new Date(),
-                description: ``,
-              });
+               const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                        userId: data.created_by,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+              // await CaseTimeline.create({
+              //   created_by: data.created_by,
+              //   created_datetime: new Date(),
+              //   account_rid: data.account_rid,
+              //   entity_rid: data.case_rid,
+              //   event_name: `Case Task Workflow Connector deleted`,
+              //   event_type: "ui handler",
+              //   event_status: "success",
+              //   event_datetime: new Date(),
+              //   description: ``,
+              //   created_by_name: userEventInfo.full_name,
+              //   event_type_rid: userEventInfo.event_type_rid,
+              // });
             } else {
               return {
                 statusCode: HttpStatus.FAILED,
@@ -2665,9 +2804,8 @@ export class CaseTaskSchemaService {
                   return {
                     success: true,
                     statusCode: HttpStatus.BAD_REQUEST,
-                    statusMessage: `This task cannot be completed because it is enabled by ${
-                      mapTargetTasks.get(f.target_rid)?.task_name
-                    }`,
+                    statusMessage: `This task cannot be completed because it is enabled by ${mapTargetTasks.get(f.target_rid)?.task_name
+                      }`,
                   };
                 }
               }
@@ -2683,9 +2821,8 @@ export class CaseTaskSchemaService {
                 return {
                   success: true,
                   statusCode: HttpStatus.BAD_REQUEST,
-                  statusMessage: `This task is blocked by ${
-                    mapTargetTasks.get(f.target_rid)?.task_name
-                  }. Please complete that task before proceeding.`,
+                  statusMessage: `This task is blocked by ${mapTargetTasks.get(f.target_rid)?.task_name
+                    }. Please complete that task before proceeding.`,
                 };
               }
             } else {
@@ -2700,6 +2837,6 @@ export class CaseTaskSchemaService {
       }
     }
   }
-  
- 
+
+
 }

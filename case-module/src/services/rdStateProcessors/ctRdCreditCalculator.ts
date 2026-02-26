@@ -45,7 +45,7 @@ export class RdCreditCalculatorForCT {
             inputFields,
             computedFields,
             finalCredit: part2Computation.final_credit,
-            totalQRE: part1Computation.total_qre
+            totalQRE: part1TentativeComputation.tentative_total_qre
         }
     }
 

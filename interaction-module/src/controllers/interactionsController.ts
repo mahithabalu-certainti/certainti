@@ -2083,10 +2083,20 @@ async function exportTechnicalSummary(req: Request, res: Response) {
       userId,
       "projects_tech_summary_view_edit"
     );
+    const projectFields = await interactionService.getAllowedExportFields(
+      userId,
+      "projects_view_edit"
+    )
     const allowedFieldSet = new Set<string>();
+     const allowedProjectFieldSet = new Set<string>();
     for (const field of fields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
+      }
+    }
+    for(let p of projectFields) {
+      if(p.read) {
+        allowedProjectFieldSet.add(p.field_name)
       }
     }
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
@@ -2109,24 +2119,26 @@ async function exportTechnicalSummary(req: Request, res: Response) {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
                 project_code: d.project_code,
+                project_name : d.project_name, 
                 fiscal_year: d.fiscal_year,
                 status_name: d.status_name,
                 version: d.version,
                 summary_context: d.summary_context,
                 technical_summary: d.technical_summary,
                 created_by: d.created_user_name,
-                created_datetime: formatDate(d.created_datetime),
+                created_datetime: d.created_datetime ? value.timezone && isValidTimezone(value.timezone) ? moment.tz(d.created_datetime.toISOString(), value.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.created_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
                 modified_by: d.modified_user_name,
-                modified_datetime:
-                  d.modified_datetime == null
-                    ? ""
-                    : formatDate(d.modified_datetime),
+                modified_datetime: d.modified_datetime ? value.timezone && isValidTimezone(value.timezone) ? moment.tz(d.modified_datetime.toISOString(), value.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.modified_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
               };
 
               // Build exportRecord using allowed fields and resultMap
               const exportRecord: Record<string, any> = {};
               techSummaryFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+                if(allowedProjectFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }

@@ -1,5 +1,5 @@
 import { Op, Order, Sequelize } from "sequelize";
-import { HttpStatus, rawQueries } from "../../utils/constants";
+import { entityTypes, eventNames, eventTypes, HttpStatus, rawQueries } from "../../utils/constants";
 import {
   IAnomalyStatus,
   ICreateProjectResource,
@@ -17,6 +17,7 @@ import Decimal from "decimal.js";
 import { ProjectResource } from "../../models/projectResource";
 import { errorLog, logMessage } from "../../utils/helpers";
 import { Case } from "../../models/caseModel";
+import SchemaService from "../schemaService";
 
 
 
@@ -24,11 +25,13 @@ export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
   private projectIngestion: ProjectIngestionService;
   private logger: Logger;
+   private schemaService: SchemaService;
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.projectResourceSchema = new ProjectResourceSchemaService();
     this.projectIngestion = new ProjectIngestionService(this.logger);
+    this.schemaService = new SchemaService();
   }
 
   /**
@@ -239,6 +242,21 @@ export class ProjectResourceService {
           );
 
         if (projectResource) {
+          const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                                                userId: userId!,
+                                                                eventType: eventTypes.UI_HANDLER
+                                                              });    
+          await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+                          created_by: userId!,
+                          account_rid: account_rid,
+                          entity_rid: projectResource.rid,
+                          entity_name: entityTypes.PROJECT_RESOURCE,
+                          created_by_name: userEventInfo.full_name,
+                          event_type_rid: userEventInfo.event_type_rid,
+                          event_name: eventNames.CREATE,
+                          descriptions: projectResourceData.resource_code || '',
+                          project_rid: projectResourceData.project_fiscal_rid,
+                        }, ["project"]);
           await this.projectResourceSchema.addProjectResourceTimeline(
             accountNumber,
             "create",
@@ -1022,6 +1040,22 @@ export class ProjectResourceService {
         projectData.fiscal_year,
         transaction
       );
+
+       const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                                                userId: userId!,
+                                                                eventType: eventTypes.UI_HANDLER
+                                                              });    
+      await this.schemaService.createAccountTimelineEntry(validAccountNumber!, {
+                          created_by: userId!,
+                          account_rid: account_rid,
+                          entity_rid: projectResourceData.project_resource_rid,
+                          entity_name: entityTypes.PROJECT_RESOURCE,
+                          created_by_name: userEventInfo.full_name,
+                          event_type_rid: userEventInfo.event_type_rid,
+                          event_name: eventNames.UPDATE,
+                          descriptions: (existingProjectResource as any).resource_code || '',
+                          project_rid: projectData.project_rid,
+                        }, ["project"]);
 
       await this.recordTimelineAndHistory(
         validAccountNumber,

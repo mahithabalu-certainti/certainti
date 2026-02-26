@@ -10,10 +10,10 @@ const PORT = process.env.SERVER_PORT || 3000;
 
 async function startServer() {
   try {
-    const { app } = await initExpressServer();
+    const { app, server } = await initExpressServer();
     // const { graphqlPath } = await initGraphQLServer(app);
 
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
       logMessage(`Server running on port : ${PORT}`);
     });

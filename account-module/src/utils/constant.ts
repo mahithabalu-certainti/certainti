@@ -1,3 +1,5 @@
+import { Sequelize } from "sequelize/types/sequelize";
+
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -60,7 +62,25 @@ export const STATUS_MESSAGE = {
   invalidStatus: "Invalid Status. Status should either Active/In-Active.",
   noDataToUpdate: "Data is requried to update",
   storeInParent: "store_in_parent",
+  separateDb: "separate_db",
 };
+
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+}
+
+export const eventTypes = {
+   UI_HANDLER: "web",
+}
 
 export const rawQueries = {
   fetchAccountDetails(schemaName: string, accountRid: string) {
@@ -372,6 +392,93 @@ export const rawQueries = {
       FROM "${cleanedSchema}".key_contact_details 
       WHERE entity_rid IN (:accountRids) 
         AND entity_type = 'Account'
+    `;
+  },
+   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  async fetchParentAccount(
+    accountRid: any,
+    mainSequelize: Sequelize
+  ): Promise<any> {
+    let checkIsSeparateDb: any = await mainSequelize.query(
+      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    );
+    if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
+      return `SELECT rid, r_number, account_name, storage_type, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+    } else {
+      return `
+      with fetch_account_details AS (
+      SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      )
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
+      WHERE a.rid = ad.parent_account_rid`;
+    }
+  },
+  fetchAccountTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid,r_number,event_name, descriptions, created_datetime,created_by_name, entity_name
+      FROM "${schemaName}".account_timeline
+      WHERE account_rid = :accountId
+      ORDER BY created_datetime DESC
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchCaseTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
+      FROM "${schemaName}".case_timeline
+      WHERE case_rid = :caseId
+      ORDER BY created_datetime DESC
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchProjectTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
+      FROM "${schemaName}".project_timeline
+      WHERE project_rid = :projectId
+      ORDER BY created_datetime DESC
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchAccountTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".account_timeline
+      WHERE account_rid = :accountId
+    `;
+  },
+  fetchProjectTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".project_timeline
+      WHERE project_rid = :projectId
+    `;
+  },
+  fetchCaseTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".case_timeline
+      WHERE case_rid = :caseId
+    `;
+  },
+  insertTimeLine(schemaName: string,tableName: string)
+  {
+   return  `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        ` 
+  },
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
     `;
   },
   getAccountFiscalSummaryByAccountRidsQuery(schemaName: string) {
@@ -1051,15 +1158,19 @@ export const rawQueries = {
         r_number VARCHAR(20) DEFAULT ('PRT-' || LPAD(nextval('"${schemaName}".project_timeline_seq')::TEXT, 10, '0')) NULL,
         created_by VARCHAR(50) NOT NULL,
         modified_by VARCHAR(50),
-        created_datetime TIMESTAMP DEFAULT NOW(),
-        modified_datetime TIMESTAMP,
+        created_datetime TIMESTAMPTZ DEFAULT NOW(),
+        modified_datetime TIMESTAMPTZ,
         account_rid VARCHAR(50) NOT NULL,
         document_rid VARCHAR(50),
         entity_rid VARCHAR(50) NOT NULL,
         event_name VARCHAR(100) NOT NULL,
-        event_type VARCHAR(100) NOT NULL,
-        event_status VARCHAR(100) NOT NULL,
-        event_datetime TIMESTAMPTZ NOT NULL,
+        event_type VARCHAR(100) NULL,
+        event_type_rid VARCHAR(50) NULL,
+        event_status VARCHAR(100) NULL,
+        event_datetime TIMESTAMPTZ  NULL,
+        project_rid VARCHAR(50) NULL,
+        entity_name VARCHAR(255) NULL,
+        created_by_name VARCHAR(255) NULL,
         CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
       );
     `;
@@ -1070,11 +1181,7 @@ export const rawQueries = {
       ADD CONSTRAINT project_timeline_account_rid_fkey
         FOREIGN KEY (account_rid)
         REFERENCES "${schemaName}".account_details(account_rid)
-        ON UPDATE CASCADE,
-      ADD CONSTRAINT project_timeline_entity_rid_fkey
-        FOREIGN KEY (entity_rid)
-        REFERENCES "${schemaName}".project_fiscal(rid)
-        ON UPDATE CASCADE;
+        ON UPDATE CASCADE
     `;
   },
   getCreateDocumentSequenceQuery(schemaName: string): string {
@@ -2344,6 +2451,10 @@ export const rawQueries = {
         is_ai_processed boolean default false,
         interaction_version integer,
         interaction_level_rid varchar(50),
+        interaction_assessment_source_rid varchar(50),
+        interaction_batch_id varchar(50),
+        transaction_id varchar(50),
+        four_part_assessment_rid varchar(50),
         CONSTRAINT interactions_rid_unique UNIQUE (rid)
       );
     `;
@@ -3315,15 +3426,14 @@ export const rawQueries = {
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) UNIQUE DEFAULT ('ACT-' || LPAD(nextval('"${schemaName}".account_timeline_seq')::TEXT, 10, '0')),
         created_by VARCHAR(50) NOT NULL,
-        modified_by VARCHAR(50),
-        document_name VARCHAR(255) NULL,
-        title VARCHAR(64) NOT NULL,
-        attach_to VARCHAR(50) NOT NULL,
-        attachment_level VARCHAR(50) NOT NULL,
-        event_type VARCHAR(50) NOT NULL,
-        event_status VARCHAR(50) NOT NULL,
+        created_datetime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        account_rid VARCHAR(50) NOT NULL,
+        document_rid VARCHAR(50),
+        event_type_rid VARCHAR(50)  NULL,
         event_name VARCHAR(255),
-        event_datetime TIMESTAMPTZ NOT NULL,
+        entity_rid VARCHAR(50) NOT NULL,  
+        entity_name VARCHAR(255) NOT NULL,
+        created_by_name VARCHAR(255) NULL,
         descriptions VARCHAR(2000)
       );
     `;
@@ -3585,7 +3695,35 @@ export const rawQueries = {
     WHERE table_schema = '${schemaName}'
     AND table_name = 'cases'
     )`
-  }     
+  },
+  getCreateFourPartAssessmentTableQuery (schemaName : string) {
+    return `
+    CREATE TABLE IF NOT EXISTS ${schemaName}.four_part_assessment(
+    rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number VARCHAR(20) UNIQUE DEFAULT ('FPA-' || LPAD(nextval('"${schemaName}".four_part_assessment_sequence')::text, 10, '0')),
+    created_by VARCHAR(50),
+    modified_by VARCHAR(50),
+    created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+    modified_datetime TIMESTAMP,
+    account_rid VARCHAR(50),
+    project_rid VARCHAR(50),
+    project_fiscal_rid VARCHAR(50),
+    tracker_one_liner VARCHAR,
+    project_metadata VARCHAR,
+    permitted_purpose VARCHAR,
+    technological_uncertainty VARCHAR,
+    technological_in_nature VARCHAR,
+    process_of_experimentation VARCHAR,
+    rationale VARCHAR,
+    status VARCHAR,
+    summary_judgment VARCHAR,
+    rd_potential_category VARCHAR,
+    transaction_id VARCHAR);
+    `
+  },
+  getFourPartAssessmentSequenceQuery (schemaName : string) {
+    return `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".four_part_assessment_sequence START 1`
+  }
 };
 
 export const DEFAULT_ACCOUNT_DETAILS = {

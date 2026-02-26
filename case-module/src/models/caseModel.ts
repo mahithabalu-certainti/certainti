@@ -32,7 +32,8 @@ interface CaseAttributes {
   submitted_datetime?: Date;
   approved_datetime?: Date;
   tax_liability?: number;
-  financial_working_signoff? : boolean
+  financial_working_signoff? : boolean;
+  rd_form_signoff?:boolean;
   employers_pension_contribution? : number
   other? : number
   material_software_cost? : number;
@@ -54,6 +55,7 @@ interface CaseAttributes {
   other_credits_total?: number
   rrc_credit_280_c? : string
   asc_credit_280_c? : string
+  parent_case_rid?: string;
 
 }
 
@@ -92,7 +94,8 @@ export class Case
   public total_nonlabor_cost?: number;
   public heat_light_power?: number;
   public tax_liability?: number;
-  public financial_working_signoff? : boolean
+  public financial_working_signoff? : boolean;
+  public rd_form_signoff?: boolean;
   public employers_pension_contribution? : number
   public other? : number
   public material_software_cost? : number;
@@ -114,7 +117,7 @@ export class Case
   public other_credits_total?: number
   public rrc_credit_280_c? : string
   public asc_credit_280_c? : string
-
+  public parent_case_rid?: string;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -164,6 +167,7 @@ export class Case
         heat_light_power: { type: DataTypes.DECIMAL, allowNull: true },
         tax_liability: { type: DataTypes.DECIMAL, allowNull: true },
         financial_working_signoff : {type : DataTypes.BOOLEAN, defaultValue : false},
+        rd_form_signoff : {type : DataTypes.BOOLEAN, defaultValue : false},
         employers_pension_contribution : {type : DataTypes.DECIMAL, allowNull : true},
         other : {type : DataTypes.DECIMAL, allowNull : true},
         material_software_cost : {type : DataTypes.DECIMAL, allowNull : true},
@@ -184,7 +188,8 @@ export class Case
         current_year_gross_receipts: {type : DataTypes.DECIMAL, allowNull : true},
         other_credits_total : {type : DataTypes.DECIMAL, allowNull : true},
         rrc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
-        asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"}
+        asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
+        parent_case_rid : {type : DataTypes.STRING(50), allowNull : true   }
       },
       {
         sequelize,
