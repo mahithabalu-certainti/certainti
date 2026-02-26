@@ -4023,8 +4023,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchBatchInInteraction(schemaName),
         { type: "SELECT" }
       );
-
-      return interactionBatchInfo[0][0].interaction_batch_id
+      return interactionBatchInfo[0][0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
@@ -4040,13 +4039,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
-
       const interactionBatchInfo : any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
         { type: "SELECT" }
       );
-
-      return interactionBatchInfo[0][0].interaction_batch_id
+      return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
@@ -4911,15 +4908,15 @@ const existingTemplate = await InteractionTemplate.findOne({
       project_fiscal_rid : project_id,
       created_by : process.env.SYSTEM_USER_ID!,
       created_datetime : new Date(),
-      permitted_purpose : fourPartAssessment.four_part_assessment.permitted_purpose,
-      process_of_experimentation : fourPartAssessment.four_part_assessment.process_of_experimentation,
+      permitted_purpose : fourPartAssessment.assessment.four_part_assessment.permitted_purpose,
+      process_of_experimentation : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation,
       project_metadata : JSON.stringify(fourPartAssessment.assessment.project_metadata),
-      rationale : fourPartAssessment.four_part_assessment.rationale,
-      rd_potential_category : fourPartAssessment.four_part_assessment.rd_potential_category,
-      status : fourPartAssessment.four_part_assessment.status,
-      summary_judgment : fourPartAssessment.four_part_assessment.summary_judgment,
-      technological_in_nature : fourPartAssessment.four_part_assessment.technological_in_nature,
-      technological_uncertainty : fourPartAssessment.four_part_assessment.technological_uncertainty,
+      rationale : fourPartAssessment.assessment.four_part_assessment.rationale,
+      rd_potential_category : fourPartAssessment.assessment.four_part_assessment.rd_potential_category,
+      status : fourPartAssessment.assessment.four_part_assessment.status,
+      summary_judgment : fourPartAssessment.assessment.four_part_assessment.summary_judgment,
+      technological_in_nature : fourPartAssessment.assessment.four_part_assessment.technological_in_nature,
+      technological_uncertainty : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty,
       tracker_one_liner : fourPartAssessment.assessment.tracker_one_liner,
       transaction_id : transaction_id
     })

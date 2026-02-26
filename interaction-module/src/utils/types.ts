@@ -198,11 +198,11 @@ export interface FourPartAssessment {
 export interface Assessment {
   tracker_one_liner : string
   project_metadata : ProjectMetadata
+  four_part_assessment : FourPartAssessment
 }
 
 export interface FourPartAssessmentResponse {
   assessment : Assessment
-  four_part_assessment : FourPartAssessment
   summary_judgment : string
   rd_potential_category : string
   follow_up_questions : string[]
