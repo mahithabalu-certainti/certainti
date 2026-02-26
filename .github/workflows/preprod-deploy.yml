@@ -598,9 +598,9 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           SUBSCRIPTION_RENEW_TIMER = "subscription-renewal-timer"
-          TRIGGER_AI_REFINE_SUMMARY=https://rdc-model-v1.certainti.ai/refine_summary
           EOF
           echo "$ENV_FILE file created successfully!"
+          
       - name: Copy .env file to VM
         run: |
           scp -o StrictHostKeyChecking=no .env.interactionmodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
@@ -1054,15 +1054,15 @@ jobs:
           KAFKA_CLIENT_ID=rd-credit-service
           KAFKA_TOPIC=rd_credit_processing
           KAFKA_GROUP_ID=rd-credit-consumers
-          KAFKA_CLIENT_ID_RD_FORM=rd-form-filler-service
-          KAFKA_TOPIC_RD_FORM=rd_form_processor
-          KAFKA_GROUP_ID_FORM=rd-form-filler-consumers
-          KAFKA_DATA_MAPPER_TOPIC = data_mapper_request
           DOSSIER_KAFKA_TOPIC=create-dossier-form
           DOSSIER_CLIENT_ID=dossier-form
           DOSSIER_GROUP_ID=dossier-form-consumers
           EOF
           echo "$ENV_FILE file created successfully!"
+
+
+
+
       - name: Copy .env file to VM
         run: |
           scp -o StrictHostKeyChecking=no .env.casemodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
