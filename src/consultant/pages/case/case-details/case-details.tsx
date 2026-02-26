@@ -687,7 +687,7 @@ export const CaseDetails = () => {
         return !isProjectResourceExportEnable;
       } else if (dossierTab === 'technical_summary') {
         return !technicalSummaryExportEnable;
-      } else if (dossierTab === 'audit_timeline') {
+      } else if (dossierTab === 'approval_status') {
         return false;
       }
       return true;
