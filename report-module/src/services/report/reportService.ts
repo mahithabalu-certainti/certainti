@@ -929,4 +929,34 @@ export class ReportService implements IReportService {
             throw error;
         }
     }
+
+    async getAccountFiscalCost(userId: string, account_id: string): Promise<{ statusCode: number, message: string, data: any[] }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+
+            if (!account_id) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "Account ID is required",
+                    data: []
+                };
+            }
+
+            const { query, replacements } = rawQueries.fetchAccountFiscalCost(account_id);
+            const result: any[] = await sequelize.query(query, {
+                replacements,
+                type: QueryTypes.SELECT
+            });
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Success",
+                data: result
+            };
+
+        } catch (error) {
+            errorLog("getAccountFiscalCost", (error as Error).message);
+            throw error;
+        }
+    }
 }

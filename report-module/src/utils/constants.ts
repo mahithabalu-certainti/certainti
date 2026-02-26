@@ -1426,5 +1426,24 @@ export const rawQueries = {
     WHERE case_rid IN (:caseRids)
     `;
   },
+  fetchAccountFiscalCost(account_id: string) {
+    return {
+      query: `
+        SELECT 
+            p.account_rid,
+            p.fiscal_year,
+            coalesce(SUM(p.total_cost_prj), 0) AS total_project_cost,
+            coalesce(SUM(p.qre_final), 0) AS qre_cost
+        FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
+        WHERE p.account_rid = :accountId
+          AND p.fiscal_year BETWEEN 
+                EXTRACT(YEAR FROM CURRENT_DATE) - 6
+                AND EXTRACT(YEAR FROM CURRENT_DATE)
+        GROUP BY p.account_rid, p.fiscal_year
+        ORDER BY p.fiscal_year DESC;
+      `,
+      replacements: { accountId: account_id }
+    };
+  }
 
 };
