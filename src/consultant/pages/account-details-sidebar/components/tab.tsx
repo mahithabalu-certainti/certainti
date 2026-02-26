@@ -138,6 +138,7 @@ const TabPanel: React.FC<TabProps> = ({
   const { accountid } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
+  const isTimelineView = searchParams.get('timelineview') === 'true';
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -743,7 +744,7 @@ const TabPanel: React.FC<TabProps> = ({
                 }}
                 placeholder={searchPlaceholder || ''}
                 disabled={searchDisabled}
-                hide={searchHidden}
+                hide={searchHidden || isTimelineView}
                 reset={resetSearch}
                 onReset={onSearchReset}
                 setCurrentPage={setCurrentPage}
@@ -752,7 +753,7 @@ const TabPanel: React.FC<TabProps> = ({
           )}
 
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-          {showToggle && (
+          {(showToggle || !isTimelineView) && (
             <div className='flex items-center gap-2'>
               <span className='font-semibold text-[13px] text-[#425A76]'>
                 {toggleLabel}
@@ -765,7 +766,7 @@ const TabPanel: React.FC<TabProps> = ({
               />
             </div>
           )}
-          {filterVisibility && value !== 'details' && (
+          {filterVisibility && value !== 'details' && !isTimelineView && (
             <>
               <Box className='relative'>
                 <Box

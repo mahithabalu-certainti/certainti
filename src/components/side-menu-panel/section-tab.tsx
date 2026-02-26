@@ -103,6 +103,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
 }) => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isTimelineView = searchParams.get('timelineview') === 'true';
   const [tabValue, setTabValue] = useState('');
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -292,14 +293,14 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 }}
                 placeholder={searchPlaceholder || ''}
                 disabled={searchDisabled}
-                hide={searchHidden}
+                hide={searchHidden || isTimelineView}
                 reset={searchReset}
                 onReset={onSearchReset}
                 setCurrentPage={setCurrentPage}
               />
             </Box>
           )}
-          {filterVisibility && contextKey !== 'details' && (
+          {filterVisibility && !isTimelineView && contextKey !== 'details' && (
             <>
               <Box className='relative'>
                 <Box

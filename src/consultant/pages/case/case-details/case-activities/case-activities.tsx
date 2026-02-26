@@ -45,13 +45,18 @@ import { ActivityListTable } from '../../../activities';
 import { ACTIVITY_CREATE } from '../../../../../routes';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
-import { useGetActivityStatus } from '../../../../services/activities/activities-service';
+import {
+  useCancelledActivityMeeting,
+  useCompletedActivityMeeting,
+  useGetActivityStatus,
+} from '../../../../services/activities/activities-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { capitalize } from '@mui/material';
 import Timeline from '../../../../../pages/timeline/timeline';
+import { useToast } from '../../../../../hooks';
 
 const ActivityTabs: OverviewTabs[] = [
   {
@@ -220,6 +225,10 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
         ?.fields?.some((field) => field.edit),
     [permission]
   );
+
+  const completeMeeting = useCompletedActivityMeeting();
+  const cancelMeeting = useCancelledActivityMeeting();
+  const { successToast } = useToast();
 
   const initialTab = useMemo(() => {
     if (allActivitiesEnabled) return 'all';
@@ -405,6 +414,36 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     },
   ];
 
+  const handleCompleteMeeting = async (activityId: string) => {
+    completeMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+      }
+    );
+  };
+
+  const handleCancelMeeting = async (activityId: string) => {
+    cancelMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+      }
+    );
+  };
+
   const handleViewActivity = (rowId: string, activityType: ActivityType) => {
     const type = activityType?.toLowerCase();
     if (rowId) {
@@ -430,7 +469,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
       case 'meeting':
         return getActivityMeetingListColumns(
           handleViewActivity,
-          meetingPermissionMap
+          meetingPermissionMap,
+          handleCancelMeeting,
+          handleCompleteMeeting
         );
       case 'call':
         return getActivityCallLogListColumns(
