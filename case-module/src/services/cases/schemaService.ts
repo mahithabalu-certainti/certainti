@@ -17,7 +17,10 @@ import {
   ALPHANUMERIC_CONDITIONS,
   caseFilingTypes,
   entityNames,
+  entityTypes,
   ENV_PREFIX,
+  eventNames,
+  eventTypes,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -84,6 +87,7 @@ import { RdCreditProcess, setupRdCreditProcessSequence } from "../../models/rdCr
 import { RdCreditStateCalculations, setupRdCreditStateCalculationSequence } from "../../models/rdCreditStateCalcModel";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { setupSignoffDetailsSequence, SignoffDetails } from "../../models/signoffDetails";
+import { DossierForm, setupDossierFormSequence } from "../../models/dossierForm";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -211,11 +215,37 @@ class CaseSchemaService {
       );
       caseRequest.filing_type_rid = amendmentType?.rid;
       caseRequest.case_rid = caseRequest.parent_case_rid;
-      const casecreationResponse = await Case.create(caseRequest, {
+      // Clone the original case model, excluding specified fields
+      const originalCase = await Case.findOne({
+        where: { rid: caseRequest.parent_case_rid },
+        raw: true
+      });
+      if (!originalCase) {
+        throw new Error('Case not found for cloning');
+      }
+      const {
+        rid,
+        created_by,
+        created_datetime,
+        modified_datetime,
+        modified_by,
+        filing_type_rid,
+        r_number,
+        financial_working_signoff,
+        rd_form_signoff,
+        ...caseCloneRest
+      } = originalCase;
+      // Use the incoming caseRequest for fields that must be set (e.g., parent_case_rid, filing_type_rid, created_by)
+      const casecreationResponse = await Case.create({
+        ...caseCloneRest,
+        filing_type_rid: amendmentType?.rid,
+        created_by: caseRequest.created_by,
+        created_datetime: new Date(),
+      }, {
         transaction,
       });
       // Clone case tasks
-      const { CaseTask,CaseTeam, CheckList, CheckListItem,CaseMilestone } = await this.caseModelService.getModels(accountNumber);
+      const { CaseTask,CaseTeam, CheckList, CheckListItem,CaseMilestone, Activities } = await this.caseModelService.getModels(accountNumber);
       
       // Clone case milestones
       const originalCaseMilestones = await CaseMilestone.findAll({
@@ -349,6 +379,59 @@ class CaseSchemaService {
           created_by: caseRequest.created_by
         }, { transaction });
       }
+      // Clone activities with attach_to as parent_case_rid and attachment_level 'case'
+         
+      const originalActivities = await Activities.findAll({
+            where: {
+              attach_to: caseRequest.parent_case_rid,
+              attachment_level: 'case'
+            },
+            raw: true
+          });
+          for (const activity of originalActivities) {
+            const {
+              rid,
+              r_number,
+              created_by,
+              created_datetime,
+              modified_datetime,
+              modified_by,
+              ...activityRest
+            } = activity;
+            await Activities.create({
+              ...activityRest,
+              attach_to: casecreationResponse.rid,
+              created_by: caseRequest.created_by,
+              created_datetime: new Date(),
+            }, { transaction });
+          }
+          // Clone attachments linked to the parent case
+      const { Attachment } = await this.caseModelService.getModels(accountNumber);
+          const originalAttachments = await Attachment.findAll({
+            where: {
+              attach_to: caseRequest.parent_case_rid,
+              attachment_level: 'case'
+            },
+            raw: true
+          });
+          for (const attachment of originalAttachments) {
+            const {
+              rid,
+              r_number,
+              created_by,
+              created_datetime,
+              modified_datetime,
+              modified_by,
+              ...attachmentRest
+            } = attachment;
+            await Attachment.create({
+              ...attachmentRest,
+              attach_to: casecreationResponse.rid,
+              created_by: caseRequest.created_by,
+              created_datetime: new Date(),
+            }, { transaction });
+          }
+        
       return casecreationResponse;
 
   }
@@ -386,14 +469,31 @@ class CaseSchemaService {
             casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
             fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
         }
-        await this.addCaseManagementTimeline(
-          accountNumber,
-          casecreationResponse.rid,
-          caseRequest.account_rid,
-          caseRequest,
-          caseRequest.created_by || "",
-          "created"
-        );
+       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: caseRequest.created_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+                
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: caseRequest.created_by!,
+                                    account_rid: caseRequest.account_rid,
+                                    entity_rid: casecreationResponse.rid!,
+                                    entity_name: entityTypes.CASE,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.CREATE,
+                                    descriptions:caseRequest.case_name,
+                                    case_rid: casecreationResponse.rid,
+                                  },["account","case"]);
+
+        // await this.addCaseManagementTimeline(
+        //   accountNumber,
+        //   casecreationResponse.rid,
+        //   caseRequest.account_rid,
+        //   caseRequest,
+        //   caseRequest.created_by || "",
+        //   "created"
+        // );
         await this.addJurisdiction(
           casecreationResponse.account_rid,
           casecreationResponse.rid,
@@ -657,16 +757,32 @@ class CaseSchemaService {
 
       // Add timeline entry for case update
       if (caseRequest.case_rid) {
-        await this.addCaseManagementTimeline(
-          accountNumber,
-          caseRequest.case_rid,
-          caseRequest.account_rid,
-          caseRequest,
-          userId,
-          "updated",
-          "success",
-          existingCase
-        );
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: userId,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+                
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: userId,
+                                    account_rid: caseRequest.account_rid,
+                                    entity_rid: caseRequest.case_rid!,
+                                    entity_name: entityTypes.CASE,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.UPDATE,
+                                    descriptions:caseRequest.case_name,
+                                    case_rid: caseRequest.case_rid,
+                                  },["account","case"]);
+        // await this.addCaseManagementTimeline(
+        //   accountNumber,
+        //   caseRequest.case_rid,
+        //   caseRequest.account_rid,
+        //   caseRequest,
+        //   userId,
+        //   "updated",
+        //   "success",
+        //   existingCase
+        // );
       }
 
       return {
@@ -675,6 +791,7 @@ class CaseSchemaService {
         data: caseUpdateResponse
       };
     } catch (error) {
+      console.log(error);
       logMessage(`Error updating cases: ${error}`);
       throw new Error("Error updating cases: " + error);
     }
@@ -921,6 +1038,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const dossierFormModel = DossierForm.initialise(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -957,6 +1078,8 @@ class CaseSchemaService {
       await setupRdCreditStateCalculationSequence(orgDbSequlize, schemaName);
       await SignoffDetailsModel.sync({force : false});
       await setupSignoffDetailsSequence(orgDbSequlize, schemaName)
+      await dossierFormModel.sync({force : false});
+      await setupDossierFormSequence(orgDbSequlize, schemaName);
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
@@ -2682,6 +2805,21 @@ class CaseSchemaService {
         total_nonlabor_from_tasks: projectFiscal?.total_nonlabor_from_tasks || 0,
 
       });
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: data.created_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: data.created_by!,
+                                    account_rid: data.account_rid,
+                                    entity_rid: p.project_fiscal_rid!,
+                                    entity_name: entityTypes.PROJECT,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.ADDED,
+                                    descriptions:p?.project_code || '' + "to Case",
+                                    case_rid: data.case_rid,
+                                  },["case"]);
       p.project_case_rid = createdCaseProject.rid;
       iterationCount += 1;
     }
@@ -2863,6 +3001,21 @@ class CaseSchemaService {
           project_fiscal_rid: p.project_fiscal_rid,
         },
       });
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: data.created_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: data.created_by!,
+                                    account_rid: data.account_rid,
+                                    entity_rid: p.project_fiscal_rid!,
+                                    entity_name: entityTypes.PROJECT,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.REMOVED,
+                                    descriptions:p?.project_code || '' + "from Case",
+                                    case_rid: data.case_rid,
+                                  },["case"]);
       iterationCount += 1;
     }
     if (totalCount === iterationCount) {
@@ -3290,18 +3443,22 @@ class CaseSchemaService {
       const { CaseTimeline } = await this.caseModelService.getModels(
         accountNumber
       );
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: userId,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
 
       await CaseTimeline.create({
         account_rid: accountRid,
-        event_name: eventName,
-        event_status: eventStatus,
-        event_type: eventType,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
         entity_rid: caseRid,
-        description: description,
+        descriptions: description,
         created_by: userId,
-        event_datetime: new Date(),
         created_datetime: new Date(),
+        event_name: eventNames.CREATE,
       });
+      
     } catch (err) {
       logMessage(`Error creating case team timeline: ${err}`);
       // Don't throw error for timeline issues to avoid breaking main functionality
@@ -3628,7 +3785,7 @@ class CaseSchemaService {
     userId: string
   ) {
     try {
-      const { CaseTeam } = await this.caseModelService.getModels(accountNumber);
+      const { CaseTeam,Case } = await this.caseModelService.getModels(accountNumber);
       const results: any[] = [];
 
       // Check if case team already exists
@@ -3674,27 +3831,39 @@ class CaseSchemaService {
       // Determine event name based on existing team and operations
       let eventName = "Case Team Management";
       if (!hasExistingTeam && operationGroups.addOperations.length > 0) {
-        eventName = "Case Team Member Added";
+        eventName = eventNames.CREATE;
       } else if (
         hasExistingTeam &&
         (operationGroups.editOperations.length > 0 ||
           operationGroups.deleteOperations.length > 0 ||
           operationGroups.addOperations.length > 0)
       ) {
-        eventName = "Case Team Member Updated";
+        eventName = eventNames.UPDATE;
       }
 
-      // Add timeline entry for the team management request
-      await this.addCaseTeamTimelineEntry(
-        accountNumber,
-        caseTeamRequest.case_rid,
-        caseTeamRequest.account_rid,
-        results,
-        userId,
-        response.success ? "success" : "partial_success",
-        eventName,
-        "ui_handler"
-      );
+
+      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: userId!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+      const caseInfo:any = await Case.findOne({
+        where: {
+          rid: caseTeamRequest.case_rid,
+          account_rid: caseTeamRequest.account_rid,
+        },
+        raw: true,
+      });
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: userId!,
+                                    account_rid: caseTeamRequest.account_rid,
+                                    entity_rid: caseTeamRequest.case_rid!,
+                                    entity_name: entityTypes.CASE_TEAM,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventName,
+                                    descriptions:caseInfo?.case_name || '',
+                                    case_rid: caseTeamRequest.case_rid,
+                                  },["case"]);
 
       return response;
     } catch (error) {
@@ -3730,7 +3899,7 @@ class CaseSchemaService {
     accessToken: string
   ) {
     try {
-      const { CaseTask, CaseTeam, Case } =
+      const { CaseTask, CaseTeam, Case, TaskSummary } =
         await this.caseModelService.getModels(accountNumber);
       const teamMembers = await CaseTeam.findAll({
         attributes: ['user_rid', 'role_rid'],
@@ -3818,6 +3987,32 @@ class CaseSchemaService {
             returning: true
           }
         );
+        await TaskSummary.update(
+          {
+            assigned_to : newAssignedTo
+          }, 
+          {
+            where : {
+              attach_to: caseReq.case_rid,
+              account_rid: caseReq.account_rid,
+              case_team_member_role_rid: member.role_rid,
+              [Op.and]: [
+                {
+                  [Op.or]: [
+                    { assigned_to: '' },
+                    { assigned_to: null },
+                    { status_rid: todoStatus.rid }
+                  ]
+                },
+                {
+                  [Op.or]: [
+                    { assigned_to: null },
+                    { assigned_to: { [Op.ne]: newAssignedTo } }
+                  ]
+                }
+              ]
+            }
+          })
         // For each updated row, trigger rule engine payload with the updated rid
         if (response[0] > 0 && response[1] && Array.isArray(response[1])) {
           for (const updatedRow of response[1]) {
@@ -4561,6 +4756,7 @@ class CaseSchemaService {
               created_by: createdBy || "",
               created_datetime: new Date(),
               task_type_rid: taskTypeRid || "",
+              case_team_member_role_rid : d.case_team_member_role_rid
             }
           })
           await TaskSummary.bulkCreate(filteredDataForSummary)

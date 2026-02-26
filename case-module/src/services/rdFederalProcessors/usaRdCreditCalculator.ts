@@ -76,7 +76,13 @@ export class RdCreditCalculatorForUSA {
             return {
                 inputFields,
                 computedFields,
-                finalCredit:taxCredit
+                finalCredit:taxCredit,
+                totalQRE:totalCurrentYearQRE,
+                averageAnnualGrossReceipts:totalGrossReceipts.div(annualGrossReceiptsCount),
+                prev1yearQRE: federalRdData.prior3YearsQREs[0]?.qre || 0,
+                prev2yearQRE: federalRdData.prior3YearsQREs[1]?.qre || 0,
+                prev3yearQRE: federalRdData.prior3YearsQREs[2]?.qre || 0,
+
             }
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);

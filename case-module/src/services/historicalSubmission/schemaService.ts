@@ -4,18 +4,24 @@ import CaseSchemaService from "../cases/schemaService";
 import { logMessage, errorLog } from "../../utils/helpers";
 import { ICreateHistoricalSubmission, CaseHistorySubmission, CurrencyType } from "../../utils/types";
 import { fetchCaseDetails } from "../../utils/rawQueries";
-import { rawQueries, SCHEMANAME_PREFIX } from "../../utils/constants";
+import { entityTypes, eventTypes, rawQueries, SCHEMANAME_PREFIX , eventNames} from "../../utils/constants";
 import { initMainDbSequelize } from "../../config/mainDataSource";
+import { HelperMethods } from "../cases/helperMethods";
 
 export class HistoricalSubmissionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
   private caseSchemaService: CaseSchemaService;
   private mainDbSequelize : Sequelize | null = null
+  private helperMethod: HelperMethods
+ 
 
   constructor() {
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
+     this.helperMethod = new HelperMethods(
+          this.caseModelService
+        );
   }
 
   async getMainDb () {
@@ -75,7 +81,9 @@ export class HistoricalSubmissionSchemaService {
     CaseHistorySubmission: any,
     deleteOperations: CaseHistorySubmission[],
     results: any[],
-    historySubmissionRequest: ICreateHistoricalSubmission
+    historySubmissionRequest: ICreateHistoricalSubmission,
+    accountNumber: string,
+    userId: string
   ): Promise<void> {
     logMessage(`Processing ${deleteOperations.length} delete operations for historical submissions...`);
 
@@ -86,6 +94,22 @@ export class HistoricalSubmissionSchemaService {
             rid: submission.history_submission_rid,
           },
         });
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                userId: userId!,
+                                                eventType: eventTypes.UI_HANDLER
+                                              });
+    
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                          created_by: userId!,
+                                          account_rid: historySubmissionRequest.account_rid,
+                                          entity_rid: historySubmissionRequest.account_rid,
+                                          entity_name: entityTypes.HISTORICAL_SUBMISSION,
+                                          created_by_name: userEventInfo.full_name,
+                                          event_type_rid: userEventInfo.event_type_rid,
+                                          event_name: eventNames.DELETE,
+                                          descriptions:submission.fiscal_year || '',
+                                         
+                                        },["account"]);
 
         results.push({
           action: "deleted",
@@ -117,7 +141,8 @@ export class HistoricalSubmissionSchemaService {
     editOperations: CaseHistorySubmission[],
     historySubmissionRequest: ICreateHistoricalSubmission,
     userId: string,
-    results: any[]
+    results: any[],
+    accountNumber: string
   ): Promise<void> {
     logMessage(`Processing ${editOperations.length} edit operations for history submissions...`);
 
@@ -167,6 +192,22 @@ export class HistoricalSubmissionSchemaService {
             },
           }
         );
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                userId: userId!,
+                                                eventType: eventTypes.UI_HANDLER
+                                              });
+    
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                          created_by: userId!,
+                                          account_rid: historySubmissionRequest.account_rid,
+                                          entity_rid: historySubmissionRequest.account_rid,
+                                          entity_name: entityTypes.HISTORICAL_SUBMISSION,
+                                          created_by_name: userEventInfo.full_name,
+                                          event_type_rid: userEventInfo.event_type_rid,
+                                          event_name: eventNames.UPDATE,
+                                          descriptions:submission.fiscal_year || '',
+                                         
+                                        },["account"]);
 
         results.push({
           action: "updated",
@@ -198,7 +239,8 @@ export class HistoricalSubmissionSchemaService {
     addOperations: CaseHistorySubmission[],
     historySubmissionRequest: ICreateHistoricalSubmission,
     userId: string,
-    results: any[]
+    results: any[],
+    accountNumber: string
   ): Promise<void> {
     logMessage(`Processing ${addOperations.length} add operations for history submissions...`);
 
@@ -241,6 +283,23 @@ export class HistoricalSubmissionSchemaService {
           created_by: userId,
           created_datetime: new Date(),
         });
+
+         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                userId: userId!,
+                                                eventType: eventTypes.UI_HANDLER
+                                              });
+    
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                          created_by: userId!,
+                                          account_rid: historySubmissionRequest.account_rid,
+                                          entity_rid: historySubmissionRequest.account_rid,
+                                          entity_name: entityTypes.HISTORICAL_SUBMISSION,
+                                          created_by_name: userEventInfo.full_name,
+                                          event_type_rid: userEventInfo.event_type_rid,
+                                          event_name: eventNames.ADDED,
+                                          descriptions:submission.fiscal_year || '',
+                                         
+                                        },["account"]);
 
         results.push({
           action: "inserted",
@@ -374,20 +433,24 @@ export class HistoricalSubmissionSchemaService {
         operationGroups.deleteOperations,
         results,
         submissionRequest,
+        accountNumber,
+        userId
       );
       await this.processEditOperations(
         CaseHistorySubmission,
         operationGroups.editOperations,
         submissionRequest,
         userId,
-        results
+        results,
+        accountNumber
       );
       await this.processAddOperations(
         CaseHistorySubmission,
         operationGroups.addOperations,
         submissionRequest,
         userId,
-        results
+        results,
+        accountNumber
       );
 
       // Generate response summary

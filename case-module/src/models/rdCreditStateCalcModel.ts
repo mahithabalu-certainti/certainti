@@ -12,8 +12,19 @@ export interface RdCreditStateCalcAttributes {
     computed_fields?: object | null;
     final_credit?: number | null;
     total_qre?: number | null;
+    average_annual_gross_receipts?: number | null;
+    prev_year1_qre?: number | null;
+    prev_year2_qre?: number | null;
+    prev_year3_qre?: number | null;
+    total_wages?: number | null;
+    total_supplies?: number | null;
+    total_subcontract?: number | null;
     created_datetime?: Date;
     modified_datetime?: Date;
+    final_credit_submitted?: number | null;
+    final_credit_approved?: number | null;
+    rd_form_url? : string | null
+    form_error_message? : string | null
 }
 
 export interface RdCreditStateCalcCreationAttributes
@@ -33,9 +44,20 @@ export class RdCreditStateCalculations
     public input_params?: object | null;
     public computed_fields?: object | null;
     public final_credit?: number | null;
+    public total_qre?: number | null;
+    public average_annual_gross_receipts?: number | null
+    public prev_year1_qre?: number | null;
+    public prev_year2_qre?: number | null
+    public prev_year3_qre?: number | null;
+    public total_wages?: number | null;
+    public total_supplies?: number | null;
+    public total_subcontract?: number | null;
     public created_datetime?: Date;
     public modified_datetime?: Date;
-    public total_qre?: number | null;
+    public final_credit_submitted?: number | null;
+    public final_credit_approved?: number | null;
+    public rd_form_url? : string | null
+    public form_error_message? : string | null
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditStateCalculations.init(
@@ -77,6 +99,25 @@ export class RdCreditStateCalculations
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },
+                average_annual_gross_receipts: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                prev_year1_qre: {   
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                prev_year2_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                prev_year3_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                total_wages: {type: DataTypes.DECIMAL(18, 2), allowNull: true, }, 
+                total_supplies: { type: DataTypes.DECIMAL(18, 2), allowNull: true, },
+                total_subcontract: { type: DataTypes.DECIMAL(18, 2), allowNull: true, },
                 created_datetime: {
                     type: DataTypes.DATE,
                     allowNull: true,
@@ -87,6 +128,22 @@ export class RdCreditStateCalculations
                     allowNull: true,
                     defaultValue: DataTypes.NOW,
                 },
+                final_credit_submitted: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                final_credit_approved: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                rd_form_url : {
+                    type : DataTypes.STRING(500),
+                    allowNull : true
+                },
+                form_error_message : {
+                    type : DataTypes.STRING(500),
+                    allowNull : true
+                }
             },
             {
                 sequelize,

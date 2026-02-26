@@ -7,16 +7,15 @@ export interface CaseTimelineAttributes {
   rid?: string;
   r_number?: string;
   created_by: string;
-  modified_by?: string;
   created_datetime?: Date;
-  modified_datetime?: Date;
   account_rid: string;
   entity_rid: string;
+  event_type_rid: string;
+  case_rid?: string;
   event_name?: string;
-  event_type?: string;
-  event_status?: string;
-  event_datetime?: Date;
-  description?: string;
+  descriptions?: string;
+  entity_name?: string;
+  created_by_name?: string;
 }
 
 export interface CaseTimelineCreationAttributes
@@ -31,17 +30,16 @@ export class CaseTimeline
 {
   public rid?: string;
   public r_number?: string;
-  public created_by!: string;
-  public modified_by?: string;
+  public created_by!: string
   public created_datetime?: Date;
-  public modified_datetime?: Date;
   public account_rid!: string;
   public entity_rid!: string;
+  public event_type_rid!: string;
+  public case_rid?: string;
   public event_name?: string;
-  public event_type?: string;
-  public event_status?: string;
-  public event_datetime?: Date;
-  public description?: string;
+  public descriptions?: string;
+  public entity_name?: string;
+  public created_by_name?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return CaseTimeline.init(
@@ -61,18 +59,10 @@ export class CaseTimeline
           type: DataTypes.STRING(50),
           allowNull: false,
         },
-        modified_by: {
-          type: DataTypes.STRING(50),
-          allowNull: true,
-        },
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
           defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
         },
         account_rid: {
           type: DataTypes.STRING(50),
@@ -89,29 +79,28 @@ export class CaseTimeline
         entity_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
-          references: {
-            model: 'cases',
-            key: 'rid'
-          },
-          onUpdate: 'CASCADE'
         },
         event_name: {
           type: DataTypes.STRING(100),
           allowNull: true,
         },
-        event_type: {
+        event_type_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        created_by_name: {
+          type: DataTypes.STRING(100),
+          allowNull: false,
+        },
+        case_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        entity_name: {
           type: DataTypes.STRING(100),
           allowNull: true,
         },
-        event_status: {
-          type: DataTypes.STRING(100),
-          allowNull: true,
-        },
-        event_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-        },
-        description: {
+        descriptions: {
           type: DataTypes.TEXT,
           allowNull: true,
         },

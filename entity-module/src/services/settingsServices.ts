@@ -2,6 +2,9 @@ import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import {
+  entityTypes,
+  eventNames,
+  eventTypes,
   HttpStatus,
   rawQueries,
   STATUS_MESSAGE,
@@ -12,14 +15,17 @@ import { Logger } from "winston";
 import { ClientSecretCredential } from "@azure/identity";
 import { Client } from "@microsoft/microsoft-graph-client";
 import { decryptClientSecret, errorLog } from "../utils/helpers";
+import SchemaService from "./schemaService";
 export default class SettingService {
   private mainDbSequelize: Sequelize | null = null;
   private orgDbSequelize: Sequelize | null = null;
   private projectIngestion: ProjectIngestionService;
   private logger: Logger;
+  private schemaService: SchemaService;
   constructor(logger: Logger) {
     this.logger = logger;
     this.projectIngestion = new ProjectIngestionService(this.logger);
+    this.schemaService = new SchemaService();
   }
 
   private async getMainDbSequelize() {
@@ -106,6 +112,21 @@ export default class SettingService {
           findProjectFiscal[0][0].project_code
         );
         await orgDb.query(rawQueries.insertProjectTimeline(schemaName, data));
+        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                userId: data.userId!,
+                eventType: eventTypes.UI_HANDLER
+              });
+        await this.schemaService.createAccountTimelineEntry(fetchParent[0][0].r_number!, {
+                created_by: data.userId!,
+                account_rid: data.account_rid,
+                created_by_name: userEventInfo.full_name,
+                entity_rid: data.project_rid,
+                entity_name: entityTypes.SETTINGS,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.UPDATE,
+                descriptions:'',
+                project_rid: data.project_rid
+              },["project"]);
         let attributeName: string;
         let oldValue: string;
         let newValue: string;
@@ -265,6 +286,20 @@ export default class SettingService {
         ''
       );
       }
+       const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                userId: data.userId!,
+                eventType: eventTypes.UI_HANDLER
+              });
+        await this.schemaService.createAccountTimelineEntry(fetchParent[0][0].r_number!, {
+                created_by: data.userId!,
+                account_rid: data.account_rid,
+                created_by_name: userEventInfo.full_name,
+                entity_rid: data.account_rid,
+                entity_name: entityTypes.SETTINGS,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.UPDATE,
+                descriptions:'',
+              },["account"]);
 
       return {
         statusCode: HttpStatus.SUCCESS,

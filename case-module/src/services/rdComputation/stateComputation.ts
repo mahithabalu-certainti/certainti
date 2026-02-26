@@ -73,7 +73,7 @@ export class StateComputationService {
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
-            const processRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentAccountRnumber[0][0].r_number, caseRid);
+            const processRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentAccountRnumber[0][0].r_number, caseRid, 'financial_computation');
             // Publish to Kafka
             await kafkaProducerService.publish(accountRid, fetchParentAccountRnumber[0][0].r_number, processRid, caseRid, effectiveStart, effectiveEnd);
 
@@ -213,7 +213,7 @@ export class StateComputationService {
                     
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                         fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
-                        result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null
+                        result.inputFields, result.computedFields, result.finalCredit,result?.totalQRE ?? null, result
                     );
                 }
             } catch (err) {

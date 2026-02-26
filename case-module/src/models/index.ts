@@ -16,7 +16,14 @@ import { TaskAttachments } from "./taskAttachmentModel";
 import { CaseTaskWorkflowConnector } from "./caseTaskWorkflowConnectorModel";
 import { ProjectResourceFiscal } from "./projectResourceFiscal";
 import { ProjectTask } from "./projectTask";
+import { DataMapperForms } from "./dataMapperForms";
+import { DataMapperFormMappings } from "./dataMapperFormMappings";
+import { DataMapperObjects } from "./dataMapperObjects";
+import { DataMapperUploadStatus } from "./dataMapperUploadStatus";
 import { SignoffDetails } from "./signoffDetails";
+import { MeetingSummary } from "./meetingSummaryModel";
+import { Attachment } from "./attachments";
+import { FourPartAssessment } from "./fourPartAssessment";
 
 export const models = {
   Case,
@@ -35,7 +42,14 @@ export const models = {
   CaseProjectTask,
   ProjectResourceFiscal,
   ProjectTask,
-  SignoffDetails
+  DataMapperForms,
+  DataMapperFormMappings,
+  DataMapperObjects,
+  DataMapperUploadStatus,
+  SignoffDetails,
+  MeetingSummary,
+  Attachment,
+  FourPartAssessment
 };
 
 export async function initModels() {

@@ -1,6 +1,6 @@
 import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
-import { constants, MAIN_SCHEMA_NAME, rawQuery } from "../utils/constant";
+import { constants, MAIN_SCHEMA_NAME, rawQuery, statusMessage } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints, DataTypes, QueryTypes } from "sequelize";
 import ExcelJS from "exceljs";
@@ -185,6 +185,36 @@ class UserService {
           errorMessage: "User not found",
         };
       }
+       if (status_rid) {
+      const statusRecord = await Status.findOne({
+        where: { rid: status_rid },
+      });
+      if (!statusRecord) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid status_rid provided",
+        };
+      }
+      else if (statusRecord.status_description === "inactive") {
+        // Check for existing tasks before allowing user to be set inactive
+        const mainDbSequelize = await initSequelize();
+        const [existingTasks]: any[] = await mainDbSequelize.query(
+         rawQuery.checkOpenTasksForUser(),
+          {
+            replacements: { userId },
+            type: "SELECT"
+          }
+        );
+        if (existingTasks && existingTasks.length > 0) {
+          return {
+            statusCode: constants.CONFLICT,
+            message: statusMessage.cannotSetUserInactive,
+            errorMessage: statusMessage.cannotSetUserInactive,
+          };
+        }
+      }
+    }
       if (remove_group_memberships) {
         this.revokeAllGroupAccessForUser(userId);
       }

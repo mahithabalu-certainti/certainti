@@ -22,7 +22,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     rid = f.project_fiscal_rid
     )
 
-    SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
+    SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,c.parent_case_rid,
     c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,f.case_total_qualified_projects,
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
@@ -30,7 +30,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
     c.employers_pension_contribution, c.other, c.material_software_cost, 
     c.sub_contracts, c.cloud_software,c.unpaid_amounts_paid, c.unpaid_amounts,
-    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,
+    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,rd_form_signoff,
     c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
     rcc.final_credit,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
@@ -127,17 +127,17 @@ export const fetchProjectsForCases = (
       validColumnsForSorting[sort] === "project_point_of_contact"
     ) {
       dynamicAlias = `poc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (
       sort.includes(validColumnsForSorting[sort]) &&
-      validColumnsForSorting[sort] === "project_point_of_contact"
+      validColumnsForSorting[sort] === "project_technical_point_of_contact"
     ) {
       dynamicAlias = `tpoc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (sort.includes(validColumnsForSorting[sort])) {
       dynamicAlias = `pf`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
-    } else sortValue = `ORDER BY pf.project_code ASC`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
+    } else sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
   } else {
     sortValue = ``;
   }
@@ -226,22 +226,22 @@ export const fetchProjectsForCases = (
             case "date": {
               if (cond === "equals") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} = '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) = '${value}'`
                 );
               }
               if (cond === "after") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} > '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) > '${value}'`
                 );
               }
               if (cond === "before") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} < '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) < '${value}'`
                 );
               }
               if (cond === "is_empty") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} IS NULL`
+                  `DATE(${dynamicAlias}.${validKey}) IS NULL`
                 );
               }
               if (cond === "between") {
@@ -262,7 +262,7 @@ export const fetchProjectsForCases = (
     filterQueryConditions = [];
   }
   if (filterQueryConditions.length > 0) {
-    combinedFilterQuery = filterQueryConditions.join("AND");
+    combinedFilterQuery = filterQueryConditions.join(" AND ");
   } else {
     combinedFilterQuery = ` `;
   }

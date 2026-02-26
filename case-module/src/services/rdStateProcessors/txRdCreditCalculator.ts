@@ -44,7 +44,10 @@ export class RdCreditCalculatorForTX {
             inputFields,
             computedFields,
             finalCredit: this.round2(qreActivitiesCreditInfo.rd_credit_activities_avail),
-            totalQRE: this.round2(qretInfo.total_current_year_qre)
+            totalQRE: this.round2(qretInfo.total_current_year_qre),
+            prev1yearQRE: qretInfo.prev1_qre || 0,
+            prev2yearQRE: qretInfo.prev2_qre || 0,
+            prev3yearQRE: qretInfo.prev3_qre || 0,
         }
     }
 

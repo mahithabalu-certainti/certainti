@@ -238,6 +238,7 @@ const listAllTechnicalSummarySchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   case_rid: Joi.string().optional().allow(""),
+  summaryType: Joi.string().optional().allow("")
 }); 
 
 const exportTechnicalSummarySchema = Joi.object({
@@ -248,6 +249,7 @@ const exportTechnicalSummarySchema = Joi.object({
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   timezone: Joi.string().optional(),
   case_rid: Joi.string().optional().allow(""),
+  summaryType: Joi.string().optional().allow("")
 }); 
 
 const listInteractionTemplatesSchema = Joi.object({

@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, UUIDV4, where } from "sequelize";
 import {
+  FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
   ICreateTemplateInteraction,
@@ -18,6 +19,7 @@ import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
+import axios from "axios";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -420,72 +422,6 @@ class InteractionSchemaService {
       throw new Error("Error creating interaction: " + error);
     }
   }
-  
-
-  /**
-   * Bulk fetch projects that do NOT have key contacts
-   * Returns a Set of project fiscal RIDs that have no key contacts
-   * 
-   * @param {string[]} projectFiscalRids - Array of project fiscal RIDs to check
-   * @param {string} schemaName - Schema name
-   * @returns {Promise<Set<string>>} Set of project fiscal RIDs without key contacts
-   */
-  private async getProjectsWithoutKeyContacts(
-    projectFiscalRids: string[],
-    schemaName: string
-  ): Promise<Set<string>> {
-    try {
-      // Short-circuit if there are no projects to check
-      if (!projectFiscalRids || projectFiscalRids.length === 0) {
-        return new Set<string>();
-      }
-
-      if (!this.orgDbSequelize) {
-        this.orgDbSequelize = await this.interactionModelService.getSequelize();
-      }
-
-      // Limit the number of project RIDs per query to avoid very large IN clauses
-      const BATCH_SIZE = 1000;
-      const projectsWithKeyContacts = new Set<string>();
-
-      // Fetch key contacts for projects in batches
-      for (let i = 0; i < projectFiscalRids.length; i += BATCH_SIZE) {
-        const batch = projectFiscalRids.slice(i, i + BATCH_SIZE);
-
-        const batchKeyContacts: any[] = await this.orgDbSequelize.query(
-          rawQueries.fetchProjectsWithoutKeyContacts(schemaName, batch),
-          {
-            type: "SELECT",
-          }
-        );
-
-        for (const row of batchKeyContacts) {
-          if (row && row.entity_rid) {
-            projectsWithKeyContacts.add(row.entity_rid);
-          }
-        }
-      }
-      // Return projects that DON'T have key contacts
-      const projectsWithoutKeyContacts = new Set(
-        projectFiscalRids.filter(rid => !projectsWithKeyContacts.has(rid))
-      );
-
-      if (projectsWithoutKeyContacts.size > 0) {
-        logMessage(
-          `[getProjectsWithoutKeyContacts] ${projectsWithoutKeyContacts.size} projects have no key contacts`
-        );
-      }
-
-      return projectsWithoutKeyContacts;
-    } catch (error) {
-      logMessage(
-        `Error fetching projects without key contacts: ${error}`
-      );
-      // Return empty set on error to avoid filtering out projects
-      return new Set();
-    }
-  }
-  
 
   private async handleAddQuestion(
     InteractionItem: any,
@@ -822,6 +758,71 @@ class InteractionSchemaService {
       ),
     ]);
   }
+
+  
+    /**
+       * Fetches user full name, event type, and event name in a single query.
+       * @param params Object with userId, eventType, eventName
+       * @returns Object with fullName, eventType, eventName
+       */
+    async fetchUserAndEventInfo(params: { userId: string; eventType: string;}) {
+      const sequelize = await initMainDbSequelize();
+      // Assumes the rawQueries have the correct SQL for each subquery
+      // This query returns a single row with all three values
+      const query = rawQueries.fetchUserAndEventInfo();
+      const [result] = await sequelize.query(query, {
+        replacements: {
+          userId: params.userId,
+          eventType: params.eventType
+        },
+        type: "SELECT",
+      });
+      return result;
+    }
+  
+    /**
+     * Create an entry in the account_timeline table for the given schema.
+     * @param sequelize Sequelize instance connected to the main DB
+     * @param schemaName The schema name where the account_timeline table exists
+     * @param entryData Object containing the timeline entry fields
+     */
+    async createAccountTimelineEntry(accountNumber: string,
+      entryData: {
+        created_by: string;
+        account_rid: string;
+        entity_rid: string;
+        entity_name: string;
+        created_by_name: string;
+        event_type_rid: string;
+        event_name?: string;
+        descriptions?: string;
+        project_rid?: string;
+        case_rid?: string;
+      },
+      entityTypes: string[]
+    ) {
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+        if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      for (const entityType of entityTypes) {
+        if(entityType === "account")
+          {
+              const [result] = await this.orgDbSequelize.query(rawQueries.insertTimeLine(schemaName,"account_timeline"), {
+              replacements: entryData,
+              type: QueryTypes.INSERT,
+          });
+          }
+          else if(entityType === "project")
+          {
+              const [result] = await this.orgDbSequelize.query(rawQueries.insertProjectTimeLine(schemaName,"project_timeline"), {
+              replacements: entryData,
+              type: QueryTypes.INSERT,
+          });
+          }
+  
+      }
+    }
 
   async addInteractionHistory(
     accountNumber: string,
@@ -1336,7 +1337,8 @@ class InteractionSchemaService {
     sortOrder: string = "ASC",
     type: string = "list",
     caseRid? : string,
-    accountRid? : string
+    accountRid? : string,
+    summaryType? : string 
   ) {
     try {
       if(!this.orgDbSequelize) {
@@ -1405,7 +1407,7 @@ class InteractionSchemaService {
       // Fetch technical summaries and count
       let whereCondition;
       if(caseRid !== undefined && caseRid !== '') {
-        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
         whereCondition = {
           account_rid : accountRid,
           project_fiscal_rid: {
@@ -1502,13 +1504,13 @@ class InteractionSchemaService {
         finalData = applyFilters(finalData, projectCodeConditions, projectCodeFilter, "project_code")
       if(projectNameConditions != null && projectNameConditions != undefined)
         finalData = applyFilters(finalData, projectNameConditions, projectNameFilter, "project_name")
-      if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+      if (mainTableFilters[sortBy] != undefined && sortOrder.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;
           if (!b?.[sortBy]) return -1;
           return a[sortBy].localeCompare(b[sortBy]);
         });
-      } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+      } else if (mainTableFilters[sortBy] != undefined && sortOrder.toLowerCase() == 'desc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!b?.[sortBy]) return 1;
           if (!a?.[sortBy]) return -1;
@@ -1696,7 +1698,7 @@ class InteractionSchemaService {
       } else if (value.after !== undefined) {
         const afterDate = dayjs(value.after, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         whereClause[field] = { [Op.gt]: afterDate };
-      } else if (value.between[0] && value.between[1]) {
+      } else if (value.between) {
         const fromDate = dayjs(value.between[0], 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         const toDate = dayjs(value.between[1], 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
 
@@ -2023,6 +2025,24 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       techSummary.technical_summary_refinement_prompt = summaryContext;
       techSummary.modified_by = userId;
       techSummary.modified_datetime = new Date();
+      
+      const payload = {
+            company_id:techSummary.account_rid,
+            project_id: techSummary.project_fiscal_rid,
+            refinment_prompt: summaryContext,
+            existing_summary: techSummary.technical_summary,
+            request_id: techSummaryId,
+          };
+      let headers = {
+                  contentType: "application/json",
+                };
+      await axios.post(
+            process.env.TRIGGER_AI_REFINE_SUMMARY!,
+            payload,
+            {
+              headers: headers,
+            }
+          );
       await AiTechnicalSummary.update(
         {
           technical_summary_refinement_prompt: summaryContext,  
@@ -2432,6 +2452,26 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }>;
     return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
   }
+  async getInteractionAssessmentSourceByType(type: string) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const interactionSource = await this.mainDbSequelize.query(
+     rawQueries.getInteractionAssessmentSourceByNameQuery(),
+      {
+        replacements: { type },
+        type: "SELECT",
+      }
+    );
+
+    const sourceArr = interactionSource as Array<{
+      rid: string;
+      interaction_assessment_source_name: string;
+    }>;
+    return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
+  }
    async getInteractionLevelByRid(type: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
@@ -2754,7 +2794,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           isAutoTriggerEnabled = await this.isAutoTriggerEnabled(
             accountNumber,
             responseData.project_fiscal_rid,
-            AiAssessmentEventTracker
+            AiAssessmentEventTracker,
+            responseData.account_rid,
           );
             
             logMessage(`account_rid: ${responseData.account_rid}, project_fiscal_account_id: ${responseData.project_fiscal_rid} isAutoTriggerEnabled: ${isAutoTriggerEnabled}`);
@@ -3773,7 +3814,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async isAutoTriggerEnabled(
     accountNumber: string,
     project_fiscal_rid: string,
-    AiAssessmentEventTracker: any
+    AiAssessmentEventTracker: any,
+    accountRid: string
   ) {
     try {
       if (!this.mainDbSequelize) {
@@ -3781,7 +3823,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           await this.interactionModelService.getMainSequelize();
       }
       const [globalAccess]: any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchGlobalAutoSendAccess(),
+        rawQueries.fetchGlobalAutoTriggerAccess(),
         { type: "SELECT" }
       );
       const responseReceivedEvent = await AiAssessmentEventTracker.findOne({
@@ -3805,7 +3847,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           /\D/g,
           ""
         )}`;
-
+        const [accountInfo]: any[] = await this.orgDbSequelize.query(
+                    rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
+                    { type: "SELECT" }
+                  );
+        if(accountInfo?.auto_access_rd && (responseReceivedEvent && responseReceivedEvent?.event_name))
+        {
+            return true;
+        }
         // Fetch project info
         const [projectInfo]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchisAutoTriggerEnabled(project_fiscal_rid, schemaName),
@@ -3949,9 +3998,71 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       throw new Error("Error fetching account info: " + (err as Error).message);
     }
   }
-   
 
-  
+  async fetchAccountFpaInfo(transactionId: string, accountNumber: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const [accountFpaInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchFpaRid(schemaName, transactionId),
+        { type: "SELECT" }
+      );
+
+      return accountFpaInfo;
+    } catch (err) {
+      logMessage(`Error fetching account info: ${err}`);
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+  async fetchInteractionBatch(accountNumber: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const interactionBatchInfo : any = await this.orgDbSequelize.query(
+        rawQueries.fetchBatchInInteraction(schemaName),
+        { type: "SELECT" }
+      );
+      return interactionBatchInfo[0][0]?.interaction_batch_id ?? null
+    } catch (err) {
+      logMessage(`Error fetching account info: ${err}`);
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId : string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const interactionBatchInfo : any = await this.orgDbSequelize.query(
+        rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
+        { type: "SELECT" }
+      );
+      return interactionBatchInfo[0]?.interaction_batch_id ?? null
+    } catch (err) {
+      logMessage(`Error fetching account info: ${err}`);
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+
   async updateAIProcessed(
     accountNumber: string,
     projectFiscalRid: string,
@@ -4799,8 +4910,93 @@ const existingTemplate = await InteractionTemplate.findOne({
       );
   
   
-      return templateDetails;  }
+      return templateDetails;
+    }
 
+  async createFourPartAssessment (fourPartAssessment : FourPartAssessmentResponse, accountNumber : string, project_id : string, company_id : string, transaction_id : string) {
+    const {FourPartAssessment} = await this.interactionModelService.getModels(accountNumber);
+    await FourPartAssessment.create({
+      account_rid : company_id,
+      project_fiscal_rid : project_id,
+      created_by : process.env.SYSTEM_USER_ID!,
+      created_datetime : new Date(),
+      permitted_purpose : fourPartAssessment.assessment.four_part_assessment.permitted_purpose,
+      process_of_experimentation : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation,
+      project_metadata : JSON.stringify(fourPartAssessment.assessment.project_metadata),
+      rationale : fourPartAssessment.assessment.four_part_assessment.rationale,
+      rd_potential_category : fourPartAssessment.assessment.four_part_assessment.rd_potential_category,
+      status : fourPartAssessment.assessment.four_part_assessment.status,
+      summary_judgment : fourPartAssessment.assessment.four_part_assessment.summary_judgment,
+      technological_in_nature : fourPartAssessment.assessment.four_part_assessment.technological_in_nature,
+      technological_uncertainty : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty,
+      tracker_one_liner : fourPartAssessment.assessment.tracker_one_liner,
+      transaction_id : transaction_id
+    })
+}
+
+  /**
+   * Bulk fetch projects that do NOT have key contacts
+   * Returns a Set of project fiscal RIDs that have no key contacts
+   * 
+   * @param {string[]} projectFiscalRids - Array of project fiscal RIDs to check
+   * @param {string} schemaName - Schema name
+   * @returns {Promise<Set<string>>} Set of project fiscal RIDs without key contacts
+   */
+  private async getProjectsWithoutKeyContacts(
+    projectFiscalRids: string[],
+    schemaName: string
+  ): Promise<Set<string>> {
+    try {
+      // Short-circuit if there are no projects to check
+      if (!projectFiscalRids || projectFiscalRids.length === 0) {
+        return new Set<string>();
+      }
+
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+
+      // Limit the number of project RIDs per query to avoid very large IN clauses
+      const BATCH_SIZE = 1000;
+      const projectsWithKeyContacts = new Set<string>();
+
+      // Fetch key contacts for projects in batches
+      for (let i = 0; i < projectFiscalRids.length; i += BATCH_SIZE) {
+        const batch = projectFiscalRids.slice(i, i + BATCH_SIZE);
+
+        const batchKeyContacts: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectsWithoutKeyContacts(schemaName, batch),
+          {
+            type: "SELECT",
+          }
+        );
+
+        for (const row of batchKeyContacts) {
+          if (row && row.entity_rid) {
+            projectsWithKeyContacts.add(row.entity_rid);
+          }
+        }
+      }
+      // Return projects that DON'T have key contacts
+      const projectsWithoutKeyContacts = new Set(
+        projectFiscalRids.filter(rid => !projectsWithKeyContacts.has(rid))
+      );
+
+      if (projectsWithoutKeyContacts.size > 0) {
+        logMessage(
+          `[getProjectsWithoutKeyContacts] ${projectsWithoutKeyContacts.size} projects have no key contacts`
+        );
+      }
+
+      return projectsWithoutKeyContacts;
+    } catch (error) {
+      logMessage(
+        `Error fetching projects without key contacts: ${error}`
+      );
+      // Return empty set on error to avoid filtering out projects
+      return new Set();
+    }
+  }
 }
 
 

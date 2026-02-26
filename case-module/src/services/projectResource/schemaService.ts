@@ -762,7 +762,8 @@ export class ProjectResourceSchemaService {
     limit: number,
     order: Order,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    type? : string
   ) {
     const { CaseProjectResource, Resources } = await this.getModels(accountNumber);
 
@@ -795,6 +796,9 @@ export class ProjectResourceSchemaService {
       order: dbOrder,
       where: {
         ...whereFilters,
+        ...(type === 'qualifiedProjects' && {
+          '$project_resource_fiscal_project_fiscal.is_qualified$' : true
+        })
       },
       attributes: {
         include: [
@@ -806,8 +810,13 @@ export class ProjectResourceSchemaService {
         {
           model: ProjectFiscal,
           attributes: [],
-          required: false,
+          required: true,
           as: "project_resource_fiscal_project_fiscal",
+          // ...(type === 'qualifiedProjects' && {
+          //   where : {
+          //     is_qualified : true
+          //   }
+          // })
         },
         {
           model: Resources,
@@ -878,7 +887,8 @@ export class ProjectResourceSchemaService {
     order: Order,
     sortBy: string,
     sortOrder: string,
-    userId: string
+    userId: string,
+    type? : string
   ) {
     const { CaseProjectResource } = await this.getModels(accountNumber);
 
@@ -911,6 +921,9 @@ export class ProjectResourceSchemaService {
       order: dbOrder,
       where: {
         ...whereFilters,
+        ...(type === 'qualifiedProjects' && {
+          '$project_resource_fiscal_project_fiscal.is_qualified$' : true
+        })
       },
       attributes: {
         include: [
@@ -923,7 +936,7 @@ export class ProjectResourceSchemaService {
           model: ProjectFiscal,
           attributes: [],
           required: false,
-          as: "project_resource_fiscal_project_fiscal",
+          as: "project_resource_fiscal_project_fiscal"
         },]
     });
 

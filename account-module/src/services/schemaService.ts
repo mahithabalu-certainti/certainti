@@ -112,6 +112,7 @@ class SchemaService {
       await this.createInteractionHistoryTable(schemaName, sequelize);
       await this.createInteractionResponseTable(schemaName, sequelize);
       await this.createInteractionAttachments(schemaName, sequelize);
+      await this.createFourPartAssessmentTable(schemaName, sequelize);
       await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
       await this.createAIAssesmentAudit(schemaName, sequelize);
@@ -189,6 +190,15 @@ class SchemaService {
         rawQueries.getAiAssessmentQreIndexQuery(schemaName, field)
       );
     }
+  }
+
+  private async createFourPartAssessmentTable (schemaName : string, sequelize : Sequelize) {
+    await sequelize.query(
+      rawQueries.getFourPartAssessmentSequenceQuery(schemaName)
+    )
+    await sequelize.query(
+      rawQueries.getCreateFourPartAssessmentTableQuery(schemaName)
+    )
   }
 
   private async createAIAssesmentAudit(
@@ -1474,11 +1484,7 @@ class SchemaService {
 
     const fieldsToIndex = [
       "created_by",
-      "modified_by",
-      "attachment_level",
-      "event_type",
-      "event_status",
-      "event_datetime"
+      "account_rid",
     ];
   
     for (const field of fieldsToIndex) {
@@ -2943,6 +2949,63 @@ class SchemaService {
     } catch (err) {
       errorLog("Error in getAccessibleAccountInfo:", (err as Error).message);
       return [];
+    }
+  }
+
+   /**
+   * Fetches user full name, event type, and event name in a single query.
+   * @param params Object with userId, eventType, eventName
+   * @returns Object with fullName, eventType, eventName
+   */
+  async fetchUserAndEventInfo(params: { userId: string; eventType: string;}) {
+    const sequelize = await initSequelize();
+    const query = rawQueries.fetchUserAndEventInfo();
+    const [result] = await sequelize.query(query, {
+      replacements: {
+        userId: params.userId,
+        eventType: params.eventType
+      },
+      type: "SELECT",
+    });
+    return result;
+  }
+    /**
+   * Create an entry in the account_timeline table for the given schema.
+   * @param sequelize Sequelize instance connected to the main DB
+   * @param schemaName The schema name where the account_timeline table exists
+   * @param entryData Object containing the timeline entry fields
+   */
+  async createAccountTimelineEntry(accountNumber: string,
+    entryData: {
+      created_by: string;
+      account_rid: string;
+      entity_rid: string;
+      entity_name: string;
+      created_by_name: string;
+      event_type_rid: string;
+      event_name?: string;
+      descriptions?: string;
+    },
+    entityTypes: string[]
+  ) {
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+    const sequelize = await initOrgSequelize();
+    for (const entityType of entityTypes) {
+      if(entityType === "account")
+        {
+            const [result] = await sequelize.query(rawQueries.insertTimeLine(schemaName,"account_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+        else if(entityType === "project")
+        {
+            const [result] = await sequelize.query(rawQueries.insertTimeLine(schemaName,"project_timeline"), {
+            replacements: entryData,
+            type: QueryTypes.INSERT,
+        });
+        }
+
     }
   }
 

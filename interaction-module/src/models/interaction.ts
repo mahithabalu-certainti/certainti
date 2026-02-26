@@ -38,6 +38,10 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   attachment_count?: number;
   interaction_version?: number;
   interaction_level_rid: string;
+  interaction_assessment_source_rid?: string
+  interaction_batch_id? : string
+  transaction_id? : string
+  four_part_assessment_rid? : string
 }
 
 export interface InteractionCreationAttributes
@@ -83,6 +87,10 @@ export class Interaction
   public attachment_count?: number;
   public interaction_version?: number;
   public interaction_level_rid!: string;
+  public interaction_assessment_source_rid?: string
+  public interaction_batch_id? : string
+  public transaction_id? : string
+  public four_part_assessment_rid? : string
 
   static initialize(
     sequelize: Sequelize,
@@ -136,7 +144,11 @@ export class Interaction
         recipient_email: { type: DataTypes.STRING(255), allowNull: true },
         recipient_name: { type: DataTypes.STRING(255), allowNull: true },
         attachment_count: { type: DataTypes.INTEGER, allowNull: true },
-        interaction_version: { type: DataTypes.INTEGER, allowNull: true }
+        interaction_version: { type: DataTypes.INTEGER, allowNull: true },
+        interaction_assessment_source_rid: { type: DataTypes.STRING, allowNull: true },
+        interaction_batch_id: { type: DataTypes.STRING, allowNull: true },
+        transaction_id: { type: DataTypes.STRING, allowNull: true },
+        four_part_assessment_rid : { type : DataTypes.STRING, allowNull : true}
       },
       {
         sequelize,

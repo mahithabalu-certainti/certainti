@@ -163,9 +163,8 @@ export class TaskService {
 
       // Apply global filters (account-level access control)
       if (globalFilters && Object.keys(globalFilters).length > 0) {
-        const parentAccountRid = Object.keys(globalFilters)[0];
-        const childAccountRids = globalFilters[parentAccountRid];
-        const filterAccounts = [...childAccountRids, parentAccountRid];
+
+        const filterAccounts = await this.schemaService.computeGlobalAccountFilter(globalFilters);
 
         // Intersect frontend filters with backend-accessible accounts
         if (!isCustomGlobal) {
@@ -716,9 +715,7 @@ export class TaskService {
       whereClause[Op.and] = whereClause[Op.and] || [];
 
       if (globalFilters && Object.keys(globalFilters).length > 0) {
-        const parentAccountRid = Object.keys(globalFilters)[0];
-        const childAccountRids = globalFilters[parentAccountRid];
-        const filterAccounts = [...childAccountRids, parentAccountRid];
+        const filterAccounts = await this.schemaService.computeGlobalAccountFilter(globalFilters);
 
         // Intersect frontend filters with backend-accessible accounts
         if (!isCustomGlobal) {
