@@ -206,6 +206,19 @@ class InteractionSchemaService {
     }
   }
 
+  async fetchEmailSubjectPrefix() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
+    }
+    const [emailPrefix]:any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionEmailSubject(),
+      {
+        type: "SELECT",
+      }
+    );
+
+    return emailPrefix;
+  }
 
   async createBulkInteractions(
     accountNumber: string,
@@ -407,6 +420,71 @@ class InteractionSchemaService {
     } catch (error) {
       logMessage(`Error creating bulk interactions: ${error}`);
       throw new Error("Error creating interaction: " + error);
+    }
+  }
+  
+
+  /**
+   * Bulk fetch projects that do NOT have key contacts
+   * Returns a Set of project fiscal RIDs that have no key contacts
+   * 
+   * @param {string[]} projectFiscalRids - Array of project fiscal RIDs to check
+   * @param {string} schemaName - Schema name
+   * @returns {Promise<Set<string>>} Set of project fiscal RIDs without key contacts
+   */
+  private async getProjectsWithoutKeyContacts(
+    projectFiscalRids: string[],
+    schemaName: string
+  ): Promise<Set<string>> {
+    try {
+      // Short-circuit if there are no projects to check
+      if (!projectFiscalRids || projectFiscalRids.length === 0) {
+        return new Set<string>();
+      }
+
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+
+      // Limit the number of project RIDs per query to avoid very large IN clauses
+      const BATCH_SIZE = 1000;
+      const projectsWithKeyContacts = new Set<string>();
+
+      // Fetch key contacts for projects in batches
+      for (let i = 0; i < projectFiscalRids.length; i += BATCH_SIZE) {
+        const batch = projectFiscalRids.slice(i, i + BATCH_SIZE);
+
+        const batchKeyContacts: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectsWithoutKeyContacts(schemaName, batch),
+          {
+            type: "SELECT",
+          }
+        );
+
+        for (const row of batchKeyContacts) {
+          if (row && row.entity_rid) {
+            projectsWithKeyContacts.add(row.entity_rid);
+          }
+        }
+      }
+      // Return projects that DON'T have key contacts
+      const projectsWithoutKeyContacts = new Set(
+        projectFiscalRids.filter(rid => !projectsWithKeyContacts.has(rid))
+      );
+
+      if (projectsWithoutKeyContacts.size > 0) {
+        logMessage(
+          `[getProjectsWithoutKeyContacts] ${projectsWithoutKeyContacts.size} projects have no key contacts`
+        );
+      }
+
+      return projectsWithoutKeyContacts;
+    } catch (error) {
+      logMessage(
+        `Error fetching projects without key contacts: ${error}`
+      );
+      // Return empty set on error to avoid filtering out projects
+      return new Set();
     }
   }
   

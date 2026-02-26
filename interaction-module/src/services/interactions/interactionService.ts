@@ -1834,8 +1834,11 @@ export class InteractionService {
        } else {
         templateName = interactionTemplateName.interactionAccount
        }
-       let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
+      let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
+      const emailSubject = await this.interactionSchemaService.fetchEmailSubjectPrefix();
+      let emailPrefix  = emailSubject?.interaction_email_subject || '';;
       if (is_interaction_followup) {
+          emailPrefix = emailSubject?.interaction_remainder_email_subject || '';
          if(interactionLevel.toLowerCase() === 'project') {
         templateName = interactionTemplateName.interactionProjectReminder
        } else {
@@ -1854,10 +1857,10 @@ export class InteractionService {
       }
       let  emailContent = {
           message: {
-          subject :  this.replacePlaceholders(emailPreview.subject, emailInfo,projectInfo, accountInfo, interactionLink,interactionRid, interactionLevel),
+          subject :  this.replacePlaceholders(emailPreview.subject, emailInfo,projectInfo, accountInfo, interactionLink,emailPrefix,interactionRid, interactionLevel),
           body: {
               contentType: "HTML",
-              content:this.replacePlaceholders(emailPreview.body_html, emailInfo, projectInfo, accountInfo,interactionLink, interactionRid, interactionLevel),
+              content:this.replacePlaceholders(emailPreview.body_html, emailInfo, projectInfo, accountInfo,interactionLink,emailPrefix, interactionRid, interactionLevel),
             },
         toRecipients: [
               {
@@ -1897,8 +1900,10 @@ export class InteractionService {
         projectInfo: Record<string, any>,
         accountInfo: Record<string, any>,
         interactionLink: string,
+        emailPrefix: string,
         interactionRid?: string,
-        interactionLevel?: string
+        interactionLevel?: string,
+        
       ): string {
         return template.replace(/{{(.*?)}}/g, (_: string, key: string) => {
           const raw = key.trim();
@@ -1939,16 +1944,26 @@ export class InteractionService {
             checkObj(accountInfo);
           if (val !== undefined) return val;
           
-          // Special handling for name field - return empty string if null/undefined
-          if ((raw === "name" || normalized === "name" || raw === 'recipient name' || raw === 'Recipient Name') && emailInfo && "name" in emailInfo) {
+          // Use automated key matching for special placeholders
+          const matchesKey = (keyList: string[]) =>
+            keyList.some(
+              (k) =>
+                raw === k ||
+                normalized === k.toLowerCase().replace(/\s+/g, "_") ||
+                noUnderscore === k.toLowerCase().replace(/\s+/g, "_").replace(/_/g, "")
+            );
+
+          if (matchesKey(["name", "recipient name", "Recipient Name"]) && emailInfo && "name" in emailInfo) {
             return emailInfo.name ?? "";
           }
-          // Check for direct placeholders
-          if (raw === "Interaction Id" || normalized === "interactionrid" || noUnderscore === "interactionrid") {
+          if (matchesKey(["Interaction Id"])) {
             return interactionRid ?? "";
           }
-          if (raw === "interactionLevel" || normalized === "interactionlevel" || noUnderscore === "interactionlevel") {
+          if (matchesKey(["interactionLevel"])) {
             return interactionLevel ?? "";
+          }
+          if (matchesKey(["emailPrefix"])) {
+            return emailPrefix ?? "";
           }
           return "";
         });
@@ -3584,7 +3599,7 @@ export class InteractionService {
     }
   }
 
-  async sendEmailInBatch() {
+   async sendEmailInBatch() {
     const mainDb = await this.getMainDb();
     let fetchEmailInfo : any = await mainDb.query(rawQueries.fetchEmailInfo);
     logMessage(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);

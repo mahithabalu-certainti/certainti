@@ -1148,7 +1148,10 @@ export const rawQueries = {
   fetchEmailTemplateByCategory (categoryName : string) {
     return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
   },
-  fetchFpaRid (schemaName : string, transactionId : string) {
+  fetchInteractionEmailSubject(){
+    return `SELECT interaction_email_subject,interaction_remainder_email_subject FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`
+   },
+     fetchFpaRid (schemaName : string, transactionId : string) {
     return `SELECT rid FROM ${schemaName}.four_part_assessment WHERE transaction_id = '${transactionId}'`
   },
   fetchBatchInInteraction(schemaName : string) {
