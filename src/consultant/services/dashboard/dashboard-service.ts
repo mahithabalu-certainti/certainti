@@ -1,5 +1,6 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
+  AccountFiscalCostDetail,
   DashboardCountDetail,
   DashboardMeetingDetail,
   DashboardTaskDetail,
@@ -22,6 +23,7 @@ import {
   DashboardMeetingListResponse,
   PendingFollowUpListResponse,
   ExportReportType,
+  AccountFiscalCostResponse,
 } from '../../types/dashboard';
 import { reportServiceApi } from '../../../api/api';
 import {
@@ -371,6 +373,34 @@ export const useGetPendingFollowUps = (
     queryFn: () => fetchPendingFollowUps(payload),
     retry: 0,
     enabled: isEnable,
+  });
+};
+
+// Account Fiscal Cost (mock service)
+export const fetchAccountFiscalCost = async (
+  accountRid: string
+): Promise<AccountFiscalCostDetail[]> => {
+  try {
+    const response = await reportServiceApi.post<AccountFiscalCostResponse>(
+      '/api/report/accountFiscalCost',
+      { account_rid: accountRid }
+    );
+    return response.data.data || [];
+  } catch (error) {
+    console.error('Error fetching account fiscal cost:', error);
+    throw error;
+  }
+};
+
+export const useGetAccountFiscalCost = (
+  accountRid: string,
+  isEnable: boolean = true
+): UseQueryResult<AccountFiscalCostDetail[], Error> => {
+  return useQuery<AccountFiscalCostDetail[], Error>({
+    queryKey: ['account-fiscal-cost', accountRid],
+    queryFn: () => fetchAccountFiscalCost(accountRid),
+    retry: 0,
+    enabled: isEnable && !!accountRid,
   });
 };
 

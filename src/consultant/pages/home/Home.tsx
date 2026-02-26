@@ -67,7 +67,8 @@ export const HomePage: React.FC = () => {
   const [followUpsList, setFollowUpsList] = useState<PendingFollowUpDetail[]>(
     []
   );
-  const [selectedFilingType, setSelectedFilingType] = useState<string>('');
+  const [selectedFilingType, setSelectedFilingType] =
+    useState<string>('Regular');
 
   // GraphQL mutation
   const [updateTaskSummaryInline] = useMutation(UPDATE_TASK_SUMMARY_INLINE, {

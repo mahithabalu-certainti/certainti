@@ -111,22 +111,16 @@ const AccountChart: React.FC<Props> = ({
           </div>
         </div>
         <Select
-          displayEmpty
           size='small'
           value={filingType || ''}
           onChange={(e: SelectChangeEvent) =>
             onFilingTypeChange?.(e.target.value)
           }
-          className={`custom-select-no-arrow w-[160px] max-w-[160px] sm:text-sm ${
-            !filingType ? 'text-[#7D98B6]' : 'text-black'
-          }`}
+          className={`custom-select-no-arrow w-[160px] max-w-[160px] sm:text-sm ${'text-black'}`}
           MenuProps={COMMON_MENU_PROPS}
-          sx={getSelectStyles(false, !filingType)}
+          sx={getSelectStyles(false, false)}
           disabled={isLoading}
         >
-          <MenuItem value='' sx={{ color: '#7D98B6', fontSize: '13px' }}>
-            Choose Filing Type
-          </MenuItem>
           {filingTypeOptions.map((option) => (
             <MenuItem
               key={option.value}
