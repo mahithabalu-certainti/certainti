@@ -3385,7 +3385,7 @@ export class InteractionService {
               statusAction.DRAFT
             );
           const questionsWithActionType = Array.isArray(dynamicQuestions)
-            ? interaction_questions.map((q: any) => ({
+            ? dynamicQuestions.map((q: any) => ({
                 ...q,
                 action_type: "add",
               }))
