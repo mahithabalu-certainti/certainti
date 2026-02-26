@@ -60,10 +60,15 @@ const casesByHealthStatusSchema = Joi.object({
     globalFilters: Joi.object().default({}),
 });
 
+const accountFiscalCostSchema = Joi.object({
+    account_rid: Joi.string().required()
+});
+
 export {
     reportFlagSchema,
     getOverallProjectValueSchema,
     globalLevelChartSchema,
     casesByHealthStatusSchema,
-    meetingListSchema
+    meetingListSchema,
+    accountFiscalCostSchema
 };

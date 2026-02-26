@@ -34,6 +34,6 @@ router.post("/globalLevelChart", checkUserStatusMiddleware("NA"), controller.rep
 
 router.post("/casesByHealthStatus", checkUserStatusMiddleware("NA"), controller.reportController.getCasesByHealthStatus);
 
-
+router.post("/accountFiscalCost", checkUserStatusMiddleware("NA"), controller.reportController.getAccountFiscalCost);
 
 export default router;
