@@ -16,6 +16,7 @@ export const AttachmentListURL = ({
   accountRid,
   isGlobal,
   search,
+  type,
 }: AttachmentsListURLParams) => {
   const baseUrl = `/api/attachment/list${isGlobal ? `/summary` : ''}`;
   const searchParams = new URLSearchParams();
@@ -34,7 +35,9 @@ export const AttachmentListURL = ({
   if (accountRid !== undefined) {
     searchParams.set('accountRid', accountRid);
   }
-
+  if (type !== undefined) {
+    searchParams.set('type', type);
+  }
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -62,6 +65,7 @@ export const AttachmentExportListURL = ({
   accountRid,
   attachmentLevel,
   search,
+  type,
 }: AttachmentsListExportParams): string => {
   const baseUrl = attachmentLevel
     ? `/api/attachment/list/export`
@@ -89,6 +93,9 @@ export const AttachmentExportListURL = ({
   if (timezone !== undefined) searchParams.set('timezone', timezone);
   if (search) {
     searchParams.set('search', search);
+  }
+  if (type !== undefined) {
+    searchParams.set('type', type);
   }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

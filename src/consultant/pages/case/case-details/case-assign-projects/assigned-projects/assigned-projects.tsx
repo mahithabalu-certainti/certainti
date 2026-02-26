@@ -76,7 +76,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
       filter: {},
       case_rid: caseId,
       account_rid: accountID, // Replace with the actual account_rid
-      fiscal_year: 2024,
+      fiscal_year: fiscalYear,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

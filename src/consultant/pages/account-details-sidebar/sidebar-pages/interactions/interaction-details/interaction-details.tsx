@@ -81,7 +81,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
-  const disableRemainderBtn = [
+  const disableReminderBtn = [
     StatusTypeEnum.sent,
     StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
@@ -179,7 +179,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       variant: 'outlined' as const,
       disabled:
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
@@ -189,7 +189,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       variant: 'outlined' as const,
       disabled:
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },

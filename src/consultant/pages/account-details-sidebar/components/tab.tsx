@@ -54,6 +54,7 @@ import { useGetUserOptions } from '../../../services/case-team';
 import { caseProjectTaskFilterFields } from '../../case/case-details/case-project-task/utils';
 import { caseProjectResourceFilterFields } from '../../case/case-details/case-project-resource/utils';
 import { ActivityDropdown } from '../../../../components';
+import { checkPermission } from '../../../../common-utils';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   onTabChange?: (tabId: string) => void;
@@ -135,7 +136,7 @@ const TabPanel: React.FC<TabProps> = ({
   activityMenuItems = [],
 }) => {
   const { accountid } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -150,7 +151,6 @@ const TabPanel: React.FC<TabProps> = ({
       setTabValue(tab);
     }
   }, [location.pathname]);
-
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]
@@ -160,16 +160,58 @@ const TabPanel: React.FC<TabProps> = ({
   >([]);
   const [, setSelectedSort] = useState('Accounts');
   const [searchText, setSearchText] = useState('');
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const isProjectsTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TIMELINE_VIEW
+  );
+  const isAccountsTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNTS_TIMELINE_VIEW
+  );
+  const isCasesTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TIMELINE_VIEW
+  );
+
+  const isAccount = location.pathname.includes('account');
+  const isProject = location.pathname.includes('project');
+  const isCase = location.pathname.includes('case');
+
+  const isTimelineVisible = isAccount
+    ? isAccountsTimelineViewEnable
+    : isProject
+      ? isProjectsTimelineViewEnable
+      : isCase
+        ? isCasesTimelineViewEnable
+        : true;
+
+  const updatedTabs = resourceTab?.map((tab) =>
+    tab.key === 'timeline'
+      ? { ...tab, hide: tab.hide || !isTimelineVisible }
+      : tab
+  );
 
   useEffect(() => {
-    // assign default tab value
-    const activeTab = resourceTab?.find((tab) => !tab.hide)?.id;
-    setTabValue(activeTab as string);
-    // inform parent about initial tab
-    if (activeTab && onTabChange) {
-      onTabChange(activeTab);
+    // prioritize timeline view from URL
+    const isTimeline = searchParams.get('timelineview') === 'true';
+    const activeTab =
+      updatedTabs?.find(
+        (tab) =>
+          !tab.hide &&
+          (isTimeline ? tab.key === 'timeline' : tab.key === 'overview')
+      ) || updatedTabs?.find((tab) => !tab.hide);
+
+    if (activeTab) {
+      setTabValue(activeTab.key);
+      // inform parent about initial tab
+      if (onTabChange) {
+        onTabChange(activeTab.id);
+      }
     }
-  }, [resourceTab, onTabChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resourceTab, onTabChange, searchParams, isTimelineVisible]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue);
@@ -177,7 +219,18 @@ const TabPanel: React.FC<TabProps> = ({
     setAppliedFilters({});
     clearFilters(value || 'resource');
     setSortFilterCount(0);
-    onTabChange?.(newValue);
+
+    const selectedTab = updatedTabs?.find((tab) => tab.key === newValue);
+    if (selectedTab?.key === 'timeline') {
+      searchParams.set('timelineview', 'true');
+    } else {
+      searchParams.delete('timelineview');
+    }
+    setSearchParams(searchParams);
+
+    if (selectedTab) {
+      onTabChange?.(selectedTab.id);
+    }
   };
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
@@ -254,7 +307,6 @@ const TabPanel: React.FC<TabProps> = ({
       })) || [],
     [allCountries.data?.data.country]
   );
-  const { permission } = useSelector((state: RootState) => state.permission);
   const projectResourcesViewEditFields = useMemo(
     () =>
       permission.find(
@@ -645,14 +697,14 @@ const TabPanel: React.FC<TabProps> = ({
               },
             }}
           >
-            {resourceTab?.map((it, i) => {
+            {updatedTabs?.map((it, i) => {
               if (it.hide) return null;
-              const isActive = tabValue === it.id;
+              const isActive = tabValue === it.key;
               return (
                 <Tab
                   key={i}
                   label={it.name}
-                  value={it.id}
+                  value={it.key}
                   disabled={it.disable}
                   sx={{
                     textTransform: 'none',
@@ -669,6 +721,7 @@ const TabPanel: React.FC<TabProps> = ({
                     borderRadius: '4px',
                     minHeight: '24px',
                     padding: '8px 16px',
+                    marginRight: '4px',
                     '&:hover': {
                       color: isActive ? '#0BBFB7' : undefined,
                     },

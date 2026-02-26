@@ -6,9 +6,12 @@ import { RootState } from '../../../../../store/store';
 import { WorkBreakdownIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import TaskDetailModal from '../../../../../components/kanban-board/task-detail-modal';
@@ -44,12 +47,20 @@ import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
 import { checkPermission } from '../../../../../common-utils';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const ConfigTabs: ResourceTabs[] = [
+const ConfigTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
 ];
 interface WorkBreakDownProps {
@@ -61,6 +72,7 @@ interface WorkBreakDownProps {
   isActionItemsExpanded?: boolean;
   setIsActionItemsExpanded?: (expanded: boolean) => void;
   isCaseTeamCreated?: boolean;
+  refetchCaseDetails: () => void;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -72,6 +84,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   isActionItemsExpanded,
   setIsActionItemsExpanded,
   isCaseTeamCreated,
+  refetchCaseDetails,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -79,6 +92,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     caseId: string;
   }>();
   const accountId = searchParams.get('accountID');
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const { successToast, errorToast } = useToast();
   const tabParam = searchParams.get('tab') || 'milestone';
   const queryClient = useQueryClient();
@@ -829,117 +843,127 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             showAddActivity={true}
             activityMenuItems={activityMenuItems}
           />
-          <SectionHeader
-            title={'Action Items'}
-            titleIcon={getTitleIcon()}
-            buttons={headerButtons}
-            count={count}
-            showItemCount={tabParam === 'case_task'}
-            hideSection={false}
-            iconBg={ColorCode.caseBgColor}
-            bgType='circle'
-          />
+          {isTimeLineView ? (
+            <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+              <Timeline entitytype='case' />
+            </div>
+          ) : (
+            <>
+              <SectionHeader
+                title={'Action Items'}
+                titleIcon={getTitleIcon()}
+                buttons={headerButtons}
+                count={count}
+                showItemCount={tabParam === 'case_task'}
+                hideSection={false}
+                iconBg={ColorCode.caseBgColor}
+                bgType='circle'
+              />
+
+              <SectionHeaderTab
+                tabs={tabs}
+                onTabChange={handleTabChange}
+                defaultValue={tabParam}
+                isExpanded={isActionItemsExpanded}
+                onToggleExpand={
+                  tabParam === 'milestone' && setIsActionItemsExpanded
+                    ? () => setIsActionItemsExpanded(!isActionItemsExpanded)
+                    : undefined
+                }
+              />
+
+              <div
+                className={`border border-t-0 border-[#CBD6E2] ${
+                  isActionItemsExpanded
+                    ? 'max-h-[calc(100vh-200px)]'
+                    : 'max-h-[calc(100vh-418px)]'
+                } overflow-auto`}
+              >
+                {tabParam === 'milestone' && (
+                  <>
+                    {isError ? (
+                      <div className='flex items-center justify-center h-full p-40 text-red-500'>
+                        Error loading data.
+                      </div>
+                    ) : kanbanData?.data && kanbanData.data.length === 0 ? (
+                      <div className='flex items-center justify-center h-full p-40 text-gray-500'>
+                        {kanbanData.statusMessage || 'No data available'}
+                      </div>
+                    ) : (
+                      <KanbanBoard
+                        data={kanbanData?.data || []}
+                        isLoading={isLoading || isManualRefresh}
+                        statusData={statusData}
+                        priorityData={priorityData}
+                        tagData={tagData}
+                        checklistData={checklistData}
+                        isExpanded={isActionItemsExpanded}
+                        userData={userData}
+                        roleOptions={roleOptionsQuery.data || []}
+                        onTaskClick={setOpenTaskId}
+                        isCreateTaskHide={!isCreateTaskEnabled}
+                        onCreateTask={handleCreateTask}
+                        onAddComment={handleAddComment}
+                        onUpdateComment={handleUpdateComment}
+                        onDeleteComment={handleDeleteComment}
+                        onAddCollaborator={handleAddCollaborator}
+                        accountId={accountId || ''}
+                        caseId={caseId || ''}
+                        fieldVisibility={{ fiscalYear: true }}
+                        caseStartDate={caseStartDate}
+                        caseEndDate={caseEndDate}
+                      />
+                    )}
+                    {openTaskId && (
+                      <TaskDetailModal
+                        taskId={openTaskId}
+                        isOpen={true}
+                        onClose={() => setOpenTaskId(null)}
+                        accountId={accountId!}
+                        caseId={caseId!}
+                        onTaskUpdate={handleTaskSaved}
+                        statusData={statusData}
+                        priorityData={priorityData}
+                        tagData={tagData}
+                        availableUsers={userData}
+                        roleOptions={roleOptionsQuery.data || []}
+                        checklistData={checklistData}
+                        fieldVisibility={fieldHiddenMap}
+                        fieldDisabled={fieldDisabledMap}
+                        onAddComment={handleAddComment}
+                        onUpdateComment={handleUpdateComment}
+                        onDeleteComment={handleDeleteComment}
+                        onAddCollaborator={handleAddCollaborator}
+                        caseStartDate={caseStartDate}
+                        caseEndDate={caseEndDate}
+                        isCaseTeamCreated={isCaseTeamCreated}
+                        refetchCaseDetails={refetchCaseDetails}
+                      />
+                    )}
+                  </>
+                )}
+                {tabParam === 'case_task' && (
+                  <CaseTask
+                    caseId={caseId}
+                    setCount={setCount}
+                    filterParams={{
+                      page: currentPage,
+                      filters: appliedFilters,
+                      limit: 100,
+                      entity_type: '',
+                    }}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    columnAnchorEl={columnAnchorEl}
+                    searchValue={seachText}
+                    setExportType={setExportType}
+                    setCaseTaskParams={setCaseTaskParams}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </>
       )}
-      <SectionHeaderTab
-        tabs={tabs}
-        onTabChange={handleTabChange}
-        defaultValue={tabParam}
-        isExpanded={isActionItemsExpanded}
-        onToggleExpand={
-          tabParam === 'milestone' && setIsActionItemsExpanded
-            ? () => setIsActionItemsExpanded(!isActionItemsExpanded)
-            : undefined
-        }
-      />
-
-      <div
-        className={`border border-t-0 border-[#CBD6E2] ${
-          isActionItemsExpanded
-            ? 'max-h-[calc(100vh-200px)]'
-            : 'max-h-[calc(100vh-418px)]'
-        } overflow-auto`}
-      >
-        {tabParam === 'milestone' && (
-          <>
-            {isError ? (
-              <div className='flex items-center justify-center h-full p-40 text-red-500'>
-                Error loading data.
-              </div>
-            ) : kanbanData?.data && kanbanData.data.length === 0 ? (
-              <div className='flex items-center justify-center h-full p-40 text-gray-500'>
-                {kanbanData.statusMessage || 'No data available'}
-              </div>
-            ) : (
-              <KanbanBoard
-                data={kanbanData?.data || []}
-                isLoading={isLoading || isManualRefresh}
-                statusData={statusData}
-                priorityData={priorityData}
-                tagData={tagData}
-                checklistData={checklistData}
-                isExpanded={isActionItemsExpanded}
-                userData={userData}
-                roleOptions={roleOptionsQuery.data || []}
-                onTaskClick={setOpenTaskId}
-                isCreateTaskHide={!isCreateTaskEnabled}
-                onCreateTask={handleCreateTask}
-                onAddComment={handleAddComment}
-                onUpdateComment={handleUpdateComment}
-                onDeleteComment={handleDeleteComment}
-                onAddCollaborator={handleAddCollaborator}
-                accountId={accountId || ''}
-                caseId={caseId || ''}
-                fieldVisibility={{ fiscalYear: true }}
-                caseStartDate={caseStartDate}
-                caseEndDate={caseEndDate}
-              />
-            )}
-            {openTaskId && (
-              <TaskDetailModal
-                taskId={openTaskId}
-                isOpen={true}
-                onClose={() => setOpenTaskId(null)}
-                accountId={accountId!}
-                caseId={caseId!}
-                onTaskUpdate={handleTaskSaved}
-                statusData={statusData}
-                priorityData={priorityData}
-                tagData={tagData}
-                availableUsers={userData}
-                roleOptions={roleOptionsQuery.data || []}
-                checklistData={checklistData}
-                fieldVisibility={fieldHiddenMap}
-                fieldDisabled={fieldDisabledMap}
-                onAddComment={handleAddComment}
-                onUpdateComment={handleUpdateComment}
-                onDeleteComment={handleDeleteComment}
-                onAddCollaborator={handleAddCollaborator}
-                caseStartDate={caseStartDate}
-                caseEndDate={caseEndDate}
-                isCaseTeamCreated={isCaseTeamCreated}
-              />
-            )}
-          </>
-        )}
-        {tabParam === 'case_task' && (
-          <CaseTask
-            caseId={caseId}
-            setCount={setCount}
-            filterParams={{
-              page: currentPage,
-              filters: appliedFilters,
-              limit: 100,
-              entity_type: '',
-            }}
-            setColumnAnchorEl={setColumnAnchorEl}
-            columnAnchorEl={columnAnchorEl}
-            searchValue={seachText}
-            setExportType={setExportType}
-            setCaseTaskParams={setCaseTaskParams}
-          />
-        )}
-      </div>
     </>
   );
 };

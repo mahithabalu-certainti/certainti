@@ -80,6 +80,7 @@ export interface AssignProjectListURLParams {
   case_rid?: string;
   fiscal_year?: number;
   search?: string;
+  type?: string;
 }
 
 export interface assignProjectsListResponse {
@@ -114,6 +115,7 @@ export interface ReviewProjectListURLParams {
   searchTerm?: string;
   search?: string;
   timezone?: string;
+  type?: string;
 }
 export type ReviewListProject = {
   rid: string;

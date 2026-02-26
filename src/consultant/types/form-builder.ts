@@ -101,6 +101,7 @@ export interface SelectOption {
   desc?: string;
   isCreate?: boolean;
   code?: string;
+  disabled?: boolean;
 }
 export interface SelectNumberOption {
   label: string;

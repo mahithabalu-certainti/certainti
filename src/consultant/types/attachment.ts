@@ -44,6 +44,7 @@ export interface AttachmentsListURLParams {
   accountRid?: string;
   isGlobal?: boolean;
   search?: string;
+  type?: string;
 }
 
 export type AttachmentListResponse = {
@@ -70,6 +71,7 @@ export interface AttachmentsListExportParams {
   page?: number;
   limit?: number;
   search?: string;
+  type?: string;
 }
 
 export interface AttachmentUploadPayload {

@@ -382,8 +382,21 @@ export enum AllPermissions {
   DOSSIER_OVERVIEW = 'dossier_overview',
   DOSSIER_TIMELINE = 'dossier_timeline',
   DOSSIER_FINANCIAL_VIEW_EDIT = 'financial_working_view',
+  DOSSIER_QUALIFIED_PROJECTS_VIEW = 'dossier_qualified_projects_view',
+  DOSSIER_PROJECT_DOCUMENTS_VIEW = 'dossier_project_documents_view',
+  DOSSIER_TECHNICAL_SUMMARY_VIEW = 'dossier_technical_summary_view',
+  DOSSIER_SUMMARY_VIEW = 'dossier_summary_view',
+  DOSSIER_RESOURCE_SUMMARY_VIEW = 'dossier_resource_summary_view',
+  DOSSIER_RD_FORMS_VIEW = 'dossier_rd_forms_view',
+  DOSSIER_AUDIT_TIMELINE_VIEW = 'dossier_audit_timeline_view',
+  DOSSIER_CLOSE_CASE = 'close_case',
+  DOSSIER_PACKAGES = 'dossier_package',
   DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
+  DOSSIER_RD_FORMS_SIGNOFF = 'rd_forms_sign_off',
   DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',
+  ACCOUNTS_TIMELINE_VIEW = 'accounts_timeline_view',
+  PROJECTS_TIMELINE_VIEW = 'projects_timeline_view',
+  CASES_TIMELINE_VIEW = 'cases_timeline_view',
 }
 
 export interface Country {
@@ -440,6 +453,7 @@ export enum MenuOption {
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
   WORKFLOW_BUILDER = 'workflow_builder',
+  DATA_MAPPER = 'data_mapper',
 }
 
 export interface OverviewTabs {
@@ -447,6 +461,7 @@ export interface OverviewTabs {
   name: string;
   hide: boolean;
   disable?: boolean;
+  key: 'overview' | 'timeline';
 }
 
 export type FailedQueueItem = {

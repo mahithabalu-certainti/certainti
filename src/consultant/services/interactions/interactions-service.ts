@@ -21,7 +21,7 @@ import {
   getInteractionListUrl,
   getGlobalInteractionListUrl,
   getGlobalInteractionExportUrl,
-  getInteractionListRemainderUrl,
+  getInteractionListReminderUrl,
 } from '../urls/interactions-url';
 import {
   InteractionKeyContactResponse,
@@ -175,11 +175,11 @@ export const fetchInteractionList = async (
     keyContact: data.data.keyContact,
   };
 };
-export const fetchInteractionListRemainder = async (
+export const fetchInteractionListReminder = async (
   params: InteractionListURLParams
 ): Promise<{ interactions: InteractionList[]; count: number }> => {
   const { data } = await interactionServiceApi.post<InteractionListResponse>(
-    getInteractionListRemainderUrl(),
+    getInteractionListReminderUrl(),
     params
   );
   return {
@@ -229,7 +229,7 @@ export const useInteractionListModel = (
 > => {
   return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
     queryKey: ['interaction-list', params, refreshInteractions],
-    queryFn: () => fetchInteractionListRemainder(params),
+    queryFn: () => fetchInteractionListReminder(params),
     retry: 0,
     gcTime: 0,
     enabled:

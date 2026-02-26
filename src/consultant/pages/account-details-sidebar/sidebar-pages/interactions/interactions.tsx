@@ -71,19 +71,21 @@ import TableModal from '../../../../../components/table/model-table';
 import { getInteractionListModelColumns } from './modelColumns';
 import { useToast } from '../../../../../hooks';
 import { Box } from '@mui/material';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
     id: AllPermissions.INTERACTIONS_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.INTERACTIONS_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.INTERACTIONS_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 
 export interface ModelTableParams {
@@ -149,7 +151,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     filter: {},
   });
   const [reInitiateModalOpen, setReInitiateModalOpen] = useState(false);
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -233,7 +235,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
+  const interactionStatusReminder = useGetInteractionStatusByReminder(true);
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
 
@@ -272,6 +274,20 @@ const Interactions: React.FC<InteractionsProps> = ({
     });
     return map;
   }, [interactionsViewEditFields]);
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
   const memoizedInteractionStatus = useMemo(
     () =>
       interactionStatus.data?.data.interactionStatus.map((status) => ({
@@ -282,11 +298,11 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const memoizedInteractionStatusReminder = useMemo(
     () =>
-      interactionStatusRemainder.data?.data.interactionStatus.map((status) => ({
+      interactionStatusReminder.data?.data.interactionStatus.map((status) => ({
         option: status.status_name,
         value: status.rid,
       })) || [],
-    [interactionStatusRemainder.data?.data.interactionStatus]
+    [interactionStatusReminder.data?.data.interactionStatus]
   );
   const memoizedInteractionLevel = useMemo(
     () =>
@@ -619,7 +635,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
-    permissionMap
+    permissionMap,
+    projectPermissionMap
   );
   const interactionModelColumn = getInteractionListModelColumns(
     // handleViewInteraction,
@@ -631,7 +648,8 @@ const Interactions: React.FC<InteractionsProps> = ({
         memoizedInteractionResSources,
         memoizedInteractionStatus,
         memoizedInteractionLevel,
-        permissionMap
+        permissionMap,
+        projectPermissionMap
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getInteractionModelFilterFields(
@@ -781,150 +799,158 @@ const Interactions: React.FC<InteractionsProps> = ({
           }
           activityMenuItems={activityMenuItems}
         />
-        {viewDetails && !viewResponseHistory ? (
-          <InteractionDetails
-            accountInActive={accountInActive}
-            handleBackClick={handleBackClick}
-            accountDetails={accountDetails}
-          />
-        ) : viewInteractionHistory ? (
-          <InteractionHistory
-            handleBackClick={handleBackClick}
-            appliedFilters={appliedFilters}
-            refresh={refreshInteractions}
-            setInteractionsParams={setInteractionsParams}
-          />
-        ) : viewInteractionAttachment ? (
-          <InteractionAttachment
-            handleBackClick={handleBackClick}
-            refresh={refreshInteractions}
-            searchValue={searchText}
-          />
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline entitytype='account' />
+          </div>
         ) : (
           <>
-            <SectionHeader
-              title={
-                viewResponseHistory
-                  ? `Interaction Response History ${interactionNumber}`
-                  : 'Interaction'
-              }
-              titleIcon={
-                <InteractionsIcon
-                  alt='interaction-icon'
-                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+            {viewDetails && !viewResponseHistory ? (
+              <InteractionDetails
+                accountInActive={accountInActive}
+                handleBackClick={handleBackClick}
+                accountDetails={accountDetails}
+              />
+            ) : viewInteractionHistory ? (
+              <InteractionHistory
+                handleBackClick={handleBackClick}
+                appliedFilters={appliedFilters}
+                refresh={refreshInteractions}
+                setInteractionsParams={setInteractionsParams}
+              />
+            ) : viewInteractionAttachment ? (
+              <InteractionAttachment
+                handleBackClick={handleBackClick}
+                refresh={refreshInteractions}
+                searchValue={searchText}
+              />
+            ) : (
+              <>
+                <SectionHeader
+                  title={
+                    viewResponseHistory
+                      ? `Interaction Response History ${interactionNumber}`
+                      : 'Interaction'
+                  }
+                  titleIcon={
+                    <InteractionsIcon
+                      alt='interaction-icon'
+                      className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                    />
+                  }
+                  count={viewResponseHistory ? count : totalItems}
+                  showItemCount={interactionResponseId ? false : true}
+                  showBackArrow={viewResponseHistory}
+                  onBackClick={handleBackFromResponse}
+                  buttons={headerButtons}
+                  iconBg={ColorCode.accountBgColor}
+                  bgType='circle'
                 />
-              }
-              count={viewResponseHistory ? count : totalItems}
-              showItemCount={interactionResponseId ? false : true}
-              showBackArrow={viewResponseHistory}
-              onBackClick={handleBackFromResponse}
-              buttons={headerButtons}
-              iconBg={ColorCode.accountBgColor}
-              bgType='circle'
-            />
-            <div className='border border-[#CBD6E2]'>
-              {viewResponseHistory ? (
-                <HistoryTable
-                  setCount={setCount}
-                  setColumnAnchorEl={setColumnAnchorEl}
-                  columnAnchorEl={columnAnchorEl}
-                  searchValue={searchText}
-                />
-              ) : (
-                <>
-                  <ManageColumnsPopover
-                    anchorEl={columnAnchorEl}
-                    open={isModalOpen}
-                    popoverId={modalId}
-                    onClose={handlePopoverClose}
-                    columns={interactionColumns}
-                    onColumnsChange={handleColumnsChange}
-                    columnRestrictions={RestrictedColumns}
+                <div className='border border-[#CBD6E2]'>
+                  {viewResponseHistory ? (
+                    <HistoryTable
+                      setCount={setCount}
+                      setColumnAnchorEl={setColumnAnchorEl}
+                      columnAnchorEl={columnAnchorEl}
+                      searchValue={searchText}
+                    />
+                  ) : (
+                    <>
+                      <ManageColumnsPopover
+                        anchorEl={columnAnchorEl}
+                        open={isModalOpen}
+                        popoverId={modalId}
+                        onClose={handlePopoverClose}
+                        columns={interactionColumns}
+                        onColumnsChange={handleColumnsChange}
+                        columnRestrictions={RestrictedColumns}
+                      />
+                      <ListTable
+                        data={interactionList}
+                        columns={visibleColumns}
+                        getRowId={getRowId}
+                        hoverHighlight={false}
+                        tableStyle={{
+                          borderBottom: '1px solid #CBD6E2',
+                          height: '100%',
+                          maxHeight: 'calc(100vh - 330px)',
+                          overflow: 'auto',
+                        }}
+                        stickyHeader={true}
+                        stickyColumnsCount={1}
+                        selectable={true}
+                        onSelectionChange={handleSelectionChange}
+                        actionWidth={80}
+                        actionDisplayMode='dropdown'
+                        actionMenuItems={actionButtons}
+                        loading={isLoading}
+                        error={isError ? 'Failed to load data' : undefined}
+                        rowsPerPageOptions={[25, 50, 100]}
+                        rowsPerPage={rowsPerPage}
+                        currentPage={currentPage}
+                        totalItems={totalItems}
+                        onPageChange={handlePageChange}
+                        onRowsPerPageChange={handleRowsPerPageChange}
+                        sortBy={sortField}
+                        sortOrder={sortBy}
+                        onSort={handleSortRequest}
+                        clearSelectedRows={clearSelectedRows}
+                      />
+                    </>
+                  )}
+                  <SendInteractionModal
+                    isOpen={sendModalOpen}
+                    onClose={() => setSendModalOpen(false)}
+                    selectedRows={selectedRows}
+                    onSuccessRefetch={handleRefresh}
                   />
-                  <ListTable
-                    data={interactionList}
-                    columns={visibleColumns}
-                    getRowId={getRowId}
-                    hoverHighlight={false}
-                    tableStyle={{
-                      borderBottom: '1px solid #CBD6E2',
-                      height: '100%',
-                      maxHeight: 'calc(100vh - 330px)',
-                      overflow: 'auto',
-                    }}
-                    stickyHeader={true}
-                    stickyColumnsCount={1}
-                    selectable={true}
-                    onSelectionChange={handleSelectionChange}
-                    actionWidth={80}
-                    actionDisplayMode='dropdown'
-                    actionMenuItems={actionButtons}
-                    loading={isLoading}
-                    error={isError ? 'Failed to load data' : undefined}
-                    rowsPerPageOptions={[25, 50, 100]}
-                    rowsPerPage={rowsPerPage}
-                    currentPage={currentPage}
-                    totalItems={totalItems}
-                    onPageChange={handlePageChange}
-                    onRowsPerPageChange={handleRowsPerPageChange}
-                    sortBy={sortField}
-                    sortOrder={sortBy}
-                    onSort={handleSortRequest}
-                    clearSelectedRows={clearSelectedRows}
+                  <TableModal
+                    title='Reminder Interaction'
+                    contextKey='Account-interactions'
+                    isOpen={reminderModalOpen}
+                    onClose={handleClose}
+                    data={modelTableData?.interactions}
+                    loading={isModelDataLoading}
+                    isError={isModelDataError}
+                    visibleColumns={interactionModelColumn}
+                    totalCount={modelTableData?.count || 0}
+                    tableParms={modelTableParms}
+                    setTableParms={setModdelTableParms}
+                    handleSend={handleReminderBtn}
+                    handleFilter={handleModelFilter}
+                    onRefreshClick={handleRefreshModel}
+                    saveBtnLoading={sendInteraction.isPending}
+                    showRefresh={true}
+                    filterVisibility={modelShowFilter}
+                    showFilter={true}
+                    filterMenu={modelFIlterFields}
+                    emptyMessage='No interaction available to send reminder'
                   />
-                </>
-              )}
-              <SendInteractionModal
-                isOpen={sendModalOpen}
-                onClose={() => setSendModalOpen(false)}
-                selectedRows={selectedRows}
-                onSuccessRefetch={handleRefresh}
-              />
-              <TableModal
-                title='Reminder Interaction'
-                contextKey='Account-interactions'
-                isOpen={reminderModalOpen}
-                onClose={handleClose}
-                data={modelTableData?.interactions}
-                loading={isModelDataLoading}
-                isError={isModelDataError}
-                visibleColumns={interactionModelColumn}
-                totalCount={modelTableData?.count || 0}
-                tableParms={modelTableParms}
-                setTableParms={setModdelTableParms}
-                handleSend={handleReminderBtn}
-                handleFilter={handleModelFilter}
-                onRefreshClick={handleRefreshModel}
-                saveBtnLoading={sendInteraction.isPending}
-                showRefresh={true}
-                filterVisibility={modelShowFilter}
-                showFilter={true}
-                filterMenu={modelFIlterFields}
-                emptyMessage='No interaction available to send reminder'
-              />
-              <ReInitiateModal
-                title='Re-Initiate Interaction'
-                contextKey='Account-reinitiate-interactions'
-                isOpen={reInitiateModalOpen}
-                onClose={handleCloseReInitiate}
-                data={modelTableData?.interactions}
-                loading={isModelDataLoading}
-                isError={isModelDataError}
-                visibleColumns={interactionModelColumn}
-                totalCount={modelTableData?.count || 0}
-                tableParms={modelTableParms}
-                setTableParms={setModdelTableParms}
-                handleSend={handleReInitiateBtn}
-                handleFilter={handleModelFilter}
-                onRefreshClick={handleRefreshModel}
-                saveBtnLoading={sendInteraction.isPending}
-                showRefresh={true}
-                filterVisibility={modelShowFilter}
-                showFilter={true}
-                filterMenu={modelFIlterFields}
-                emptyMessage='No interaction available to re-initiate'
-              />
-            </div>
+                  <ReInitiateModal
+                    title='Re-Initiate Interaction'
+                    contextKey='Account-reinitiate-interactions'
+                    isOpen={reInitiateModalOpen}
+                    onClose={handleCloseReInitiate}
+                    data={modelTableData?.interactions}
+                    loading={isModelDataLoading}
+                    isError={isModelDataError}
+                    visibleColumns={interactionModelColumn}
+                    totalCount={modelTableData?.count || 0}
+                    tableParms={modelTableParms}
+                    setTableParms={setModdelTableParms}
+                    handleSend={handleReInitiateBtn}
+                    handleFilter={handleModelFilter}
+                    onRefreshClick={handleRefreshModel}
+                    saveBtnLoading={sendInteraction.isPending}
+                    showRefresh={true}
+                    filterVisibility={modelShowFilter}
+                    showFilter={true}
+                    filterMenu={modelFIlterFields}
+                    emptyMessage='No interaction available to re-initiate'
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

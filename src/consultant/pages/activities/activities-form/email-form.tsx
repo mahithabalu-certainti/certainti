@@ -53,6 +53,54 @@ enum FlagTypeEnum {
   send = 'Sent',
 }
 
+// Configure Quill to use inline styles instead of class names
+const Parchment = Quill.import('parchment');
+const FontStyle = Quill.import('attributors/style/font');
+
+// Define size mappings - bidirectional
+const sizeMap: { [key: string]: string } = {
+  small: '0.75em',
+  large: '1.5em',
+  huge: '2.5em',
+};
+
+// Reverse mapping for toolbar state
+const sizeValueToName: { [key: string]: string } = {
+  '0.75em': 'small',
+  '1.5em': 'large',
+  '2.5em': 'huge',
+};
+
+// Create custom size class that handles both setting and getting values
+class SizeAttributor extends Parchment.Attributor.Style {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(attrName: string, styleName: string, options: any) {
+    super(attrName, styleName, options);
+  }
+
+  add(node: HTMLElement, value: string): boolean {
+    // Convert name to em value when setting
+    const emValue = sizeMap[value] || value;
+    return super.add(node, emValue);
+  }
+
+  value(node: HTMLElement): string | null {
+    const emValue = super.value(node);
+    // Convert em value back to name for toolbar state
+    if (!emValue) return null;
+    return sizeValueToName[emValue] || emValue;
+  }
+}
+
+const SizeStyle = new SizeAttributor('size', 'font-size', {
+  scope: Parchment.Scope.INLINE,
+  whitelist: [...Object.values(sizeMap), ...Object.keys(sizeMap)],
+});
+
+// Register custom attributors
+Quill.register(SizeStyle, true);
+Quill.register(FontStyle, true);
+
 const icons = Quill.import('ui/icons');
 
 icons['attachment'] = `
@@ -572,7 +620,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
       container: [
         [{ header: [1, 2, 3, 4, 5, 6, false] }],
         [{ font: [] }],
-        [{ size: [] }],
+        [{ size: ['small', false, 'large', 'huge'] }],
         ['bold', 'italic', 'underline', 'strike'],
         [{ color: [] }, { background: [] }],
         [{ script: 'sub' }, { script: 'super' }],
@@ -835,7 +883,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
       </div>
 
       <div
-        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
+        className={`${isFrom === 'modal' ? 'min-h-[70vh] max-h-[75vh] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
       >
         {formLoading ? (
           <SkeletonForm />

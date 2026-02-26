@@ -152,6 +152,11 @@ const icons = {
   manageGroupAccount: () => import('./managegroupaccount.svg?react'),
   notesAdminSideIcon: () => import('./notes-admin-icon.svg?react'),
   attachmentsAdminIcon: () => import('./attachments-admin.svg?react'),
+  zoomInIcon: () => import('./zoom-in-icon.svg?react'),
+  zoomOutIcon: () => import('./zoom-out-icon.svg?react'),
+  dataMapperIcon: () => import('./data-mapper.svg?react'),
+  exportIcon: () => import('./export-icon.svg?react'),
+  inProgressIcon: () => import('./in-progress.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -311,3 +316,8 @@ export const AccountUserIcon = createLazySvgIcon('userIcon');
 export const ManageGroupAccount = createLazySvgIcon('manageGroupAccount');
 export const NotesAdminSideIcon = createLazySvgIcon('notesAdminSideIcon');
 export const AttachmentsAdminIcon = createLazySvgIcon('attachmentsAdminIcon');
+export const ZoomInIcon = createLazySvgIcon('zoomInIcon');
+export const ZoomOutIcon = createLazySvgIcon('zoomOutIcon');
+export const DataMapperIcon = createLazySvgIcon('dataMapperIcon');
+export const ExportIcon = createLazySvgIcon('exportIcon');
+export const InProgressIcon = createLazySvgIcon('inProgressIcon');

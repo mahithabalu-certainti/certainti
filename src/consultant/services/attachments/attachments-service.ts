@@ -109,7 +109,8 @@ export const attachmentFileUpload = async (
 type ExportType = 'attachments' | 'all_attachments';
 export const exportAttachmentsData = async (
   type: ExportType,
-  params: AttachmentsListExportParams
+  params: AttachmentsListExportParams,
+  fileName?: string
 ) => {
   let url = '';
   let filename = '';
@@ -119,7 +120,8 @@ export const exportAttachmentsData = async (
   switch (type) {
     case 'attachments':
       url = AttachmentExportListURL({ ...params, timezone: systemTimezone });
-      filename = `${params.attachmentLevel}_attachments_records.xlsx`;
+      filename =
+        fileName || `${params.attachmentLevel}_attachments_records.xlsx`;
       break;
     case 'all_attachments':
       url = `/api/attachment/list/summaryExport`;

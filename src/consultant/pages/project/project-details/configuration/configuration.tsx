@@ -7,8 +7,11 @@ import {
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
-import { AllModules, AllPermissions } from '../../../../../common-service';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import { Users } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import {
@@ -20,19 +23,22 @@ import { checkPermission } from '../../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const ConfigTabs: ResourceTabs[] = [
+const ConfigTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 interface ConfigurationProps {
@@ -95,7 +101,7 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
   const handleSearchReset = () => {
     setResetSearch(false);
   };
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const renderContent = () => {
     switch (list) {
       case 'users':
@@ -215,17 +221,25 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <SectionHeader
-        title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
-        titleIcon={getTitleIcon()}
-        buttons={headerButtons}
-        count={count}
-        showItemCount={list !== 'settings'}
-        hideSection={hideSection}
-        iconBg={ColorCode.projectBgColor}
-        bgType='circle'
-      />
-      {renderContent()}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='project' />
+        </div>
+      ) : (
+        <>
+          <SectionHeader
+            title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={count}
+            showItemCount={list !== 'settings'}
+            hideSection={hideSection}
+            iconBg={ColorCode.projectBgColor}
+            bgType='circle'
+          />
+          {renderContent()}
+        </>
+      )}
     </div>
   );
 };

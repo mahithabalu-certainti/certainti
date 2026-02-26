@@ -12,6 +12,8 @@ interface SignOffModalProps {
   caseId: string;
   accountId: string;
   refetchCaseDetails: () => void;
+  title?: string;
+  isRdform?: boolean;
 }
 
 // File validation constants
@@ -43,6 +45,8 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
   caseId,
   accountId,
   refetchCaseDetails,
+  title = 'Financial Workings',
+  isRdform = false,
 }) => {
   const [signOffFile, setSignOffFile] = useState<File | null>(null);
   const [signOffComments, setSignOffComments] = useState<string>('');
@@ -178,10 +182,11 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
           sign_off: true,
           file: signOffFile,
           comments: signOffComments,
+          isRdform,
         },
         {
           onSuccess: (response: { statusMessage?: string }) => {
-            successToast(response?.statusMessage || 'Signed off successfully');
+            successToast(response?.statusMessage || 'Approved successfully');
             setSignOffFile(null);
             setSignOffComments('');
             setMessage(null);
@@ -223,7 +228,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
         {/* Header Section */}
         <div className='flex justify-between items-center border-b border-[#CBD6E2] px-[12px] py-[2px]'>
           <h2 className='text-[#2D3E4F] text-[16px] p-1 font-semibold'>
-            Financial Workings
+            {title}
           </h2>
         </div>
 
@@ -314,7 +319,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
               <div className='w-full mt-1'>
                 {message && (
                   <div
-                    className={`text-sm ${
+                    className={`text-sm break-words max-h-[60px] overflow-y-auto ${
                       message.type === 'error'
                         ? 'text-red-600'
                         : 'text-green-600'

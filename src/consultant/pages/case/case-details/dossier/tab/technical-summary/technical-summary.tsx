@@ -1,34 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExportType,
-  ProjectSummaryItem,
-  ProjectSummaryListExportParams,
-  ProjectSummaryListURLParams,
+  TechnicalSummaryExportListParams,
+  TechnicalSummaryList,
+  TechnicalSummaryListURLParams,
 } from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useProjectSummaryList } from '../../../../../../services/case-dossier/case-dossier-service';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
-import { getProjectSummaryColumns } from './columns';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
+import { getTechnicalSummaryListColumns } from '../../../technical-summary/columns';
+import { useCasesTechnicalSummaryList } from '../../../../../../services/case-technical-summary/technical-summary-service';
 
-interface ProjectSummaryProps {
+interface TechnicalSummaryProps {
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ProjectSummaryListExportParams) => void;
+  setExportParams?: (params: TechnicalSummaryExportListParams) => void;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  fiscalYear: number;
 }
 
-const ProjectSummary: React.FC<ProjectSummaryProps> = ({
+const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   refreshTrigger,
   currentPage,
   appliedFilters,
@@ -37,37 +41,42 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   setExportType,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [projectSummary, setProjectSummary] = useState<ProjectSummaryItem[]>(
-    []
-  );
-  const [tableParams, setTableParams] = useState<ProjectSummaryListURLParams>({
-    page: currentPage + 1,
-    limit: 100,
-    sortBy: 'r_number',
-    sortOrder: 'ASC',
-  });
-
-  const { data, isLoading, isError } = useProjectSummaryList(
+  const [technicalSummary, setTechnicalSummary] = useState<
+    TechnicalSummaryList[]
+  >([]);
+  const [tableParams, setTableParams] = useState<TechnicalSummaryListURLParams>(
     {
-      ...tableParams,
-      search: searchValue,
+      page: currentPage + 1,
+      limit: 100,
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+    }
+  );
+
+  const { data, isLoading, isError } = useCasesTechnicalSummaryList(
+    {
+      page: currentPage + 1,
+      limit: tableParams.limit,
+      sortOrder: tableParams.sortOrder,
+      sortBy: tableParams.sortBy,
       filters: appliedFilters,
-      accountRid: accountId || '',
-      caseRid: caseId || '',
+      account_rid: accountId || '',
+      case_rid: caseId || '',
+      type: 'qualifiedProjects',
     },
-    refreshTrigger
+    refreshTrigger,
+    true
   );
 
   const totalItems = data?.count || 0;
 
   useEffect(() => {
     if (data) {
-      setProjectSummary(data.projectSummary || []);
+      setTechnicalSummary(data.techSummaryInfo || []);
       setCount(data.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,22 +87,28 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
       ...prev,
       page: currentPage + 1,
       filters: appliedFilters,
-      search: searchValue,
     }));
-  }, [currentPage, appliedFilters, searchValue]);
+  }, [currentPage, appliedFilters]);
 
   useEffect(() => {
     if (setExportType) {
-      setExportType('dossier-project-summary');
+      setExportType('dossier-technical-summary');
     }
     setExportParams?.({
-      sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
+      sortBy: tableParams.sortBy,
       filters: appliedFilters,
-      search: searchValue,
+      case_rid: caseId || '',
+      account_rid: accountId || '',
+      summaryType: 'qualifiedProjects',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
+  }, [
+    appliedFilters,
+    tableParams.sortBy,
+    tableParams.sortOrder,
+    tableParams.limit,
+  ]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -108,30 +123,54 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
     setTableParams((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
-  const getRowId = (row: ProjectSummaryItem) => row.rid;
+  const getRowId = (row: TechnicalSummaryList) => row.rid;
 
   // Column visibility states
   const isModalOpen = Boolean(columnAnchorEl);
   const handlePopoverClose = () => setColumnAnchorEl(null);
 
   const modalId = isModalOpen
-    ? `project-summary-list-column-visibility-popover`
+    ? `technical-summary-list-column-visibility-popover`
     : undefined;
 
   const RestrictedColumns = [
     { id: 'r_number', canHide: false, canDrag: false },
   ];
 
-  const projectSummaryColumns = getProjectSummaryColumns();
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const technicalSummaryViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) =>
+          item.name === AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    technicalSummaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [technicalSummaryViewEditFields]);
+
+  const technicalSummaryColumns = getTechnicalSummaryListColumns(
+    undefined,
+    permissionMap
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(
-    Object.fromEntries(projectSummaryColumns.map((col) => [col.id, !col.hide]))
+    Object.fromEntries(
+      technicalSummaryColumns.map((col) => [col.id, !col.hide])
+    )
   );
 
   const [columnOrder, setColumnOrder] = useState(
-    projectSummaryColumns.map((col) => col.id)
+    technicalSummaryColumns.map((col) => col.id)
   );
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
@@ -143,7 +182,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   };
 
   const visibleColumns = columnOrder
-    .map((id) => projectSummaryColumns.find((col) => col.id === id)!)
+    .map((id) => technicalSummaryColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
   return (
@@ -153,13 +192,13 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
         open={isModalOpen}
         popoverId={modalId}
         onClose={handlePopoverClose}
-        columns={projectSummaryColumns}
+        columns={technicalSummaryColumns}
         onColumnsChange={handleColumnsChange}
         columnRestrictions={RestrictedColumns}
       />
 
       <ListTable
-        data={projectSummary}
+        data={technicalSummary}
         columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}
@@ -175,7 +214,7 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
         actionDisplayMode='dropdown'
         actionMenuItems={[]}
         loading={isLoading}
-        error={isError ? 'Failed to load project summary data' : undefined}
+        error={isError ? 'Failed to load technical summary data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
@@ -190,4 +229,4 @@ const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   );
 };
 
-export default ProjectSummary;
+export default TechnicalSummary;
