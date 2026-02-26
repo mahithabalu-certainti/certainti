@@ -239,6 +239,21 @@ export interface PendingFollowUpListResponse {
   data: PendingFollowUpDetail[];
 }
 
+// Account Fiscal Cost
+export interface AccountFiscalCostDetail {
+  account_rid: string;
+  fiscal_year: number;
+  total_project_cost: string;
+  qre_cost: string | null;
+}
+
+export interface AccountFiscalCostResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: AccountFiscalCostDetail[];
+}
+
 // Export type
 export type ExportReportType =
   | 'dueTodayOverdueTasks'

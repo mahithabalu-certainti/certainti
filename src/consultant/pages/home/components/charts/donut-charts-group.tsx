@@ -57,7 +57,7 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
   const chartOptions = {
     pieHole: 0.55,
     legend: 'none',
-    chartArea: { width: '90%', height: '90%' },
+    chartArea: { width: '90%', height: '90%', left: '5%', top: '5%' },
     pieSliceText: 'none',
     tooltip: {
       text: 'percentage',
@@ -173,15 +173,17 @@ const DonutChartsGroup: React.FC<DonutChartsGroupProps> = ({
                   return (
                     <div
                       key={idx}
-                      className='flex flex-col items-center text-center'
+                      className='flex flex-col items-center text-center w-full'
                     >
-                      <Chart
-                        chartType='PieChart'
-                        width={'100%'}
-                        height={'180px'}
-                        data={chartData}
-                        options={{ ...chartOptions, colors: colorList }}
-                      />
+                      <div className='flex items-center justify-center w-full h-[180px]'>
+                        <Chart
+                          chartType='PieChart'
+                          width={'180px'}
+                          height={'180px'}
+                          data={chartData}
+                          options={{ ...chartOptions, colors: colorList }}
+                        />
+                      </div>
                       <p className='font-semibold text-sm text-[#2A2A2A] mt-2'>
                         {country.country}
                       </p>
