@@ -109,7 +109,7 @@ export class HistoricalSubmissionSchemaService {
                                           event_name: eventNames.DELETE,
                                           descriptions:submission.fiscal_year || '',
                                          
-                                        },["case"]);
+                                        },["account"]);
 
         results.push({
           action: "deleted",
@@ -207,7 +207,7 @@ export class HistoricalSubmissionSchemaService {
                                           event_name: eventNames.UPDATE,
                                           descriptions:submission.fiscal_year || '',
                                          
-                                        },["case"]);
+                                        },["account"]);
 
         results.push({
           action: "updated",
@@ -299,7 +299,7 @@ export class HistoricalSubmissionSchemaService {
                                           event_name: eventNames.ADDED,
                                           descriptions:submission.fiscal_year || '',
                                          
-                                        },["case"]);
+                                        },["account"]);
 
         results.push({
           action: "inserted",
