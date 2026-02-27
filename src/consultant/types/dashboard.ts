@@ -1,8 +1,9 @@
 export interface DashboardCountDetail {
   name: string;
   key: string;
-  count: string;
+  count: string | number;
   order: number;
+  activityCount: number;
 }
 
 export interface DashboardCountDetailsResponse {

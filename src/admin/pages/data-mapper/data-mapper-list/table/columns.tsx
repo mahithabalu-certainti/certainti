@@ -19,8 +19,9 @@ export const getDataMapperColumns = (
   onCountryClick: (country: string) => void,
   dateRange: { endMin?: string; endMax?: string },
   handleDateRange: (date: string) => void,
-  regionLoading?: boolean
-  // permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  regionLoading?: boolean,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  isExportEnable?: boolean
 ): ListTableColumn<DataMapperListItem>[] => [
   {
     id: 'r_number',
@@ -37,8 +38,8 @@ export const getDataMapperColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    // hide:
-    //   !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
   {
     id: 'form_name',
@@ -47,10 +48,11 @@ export const getDataMapperColumns = (
     label: 'Form Name',
     width: 200,
     sortable: true,
-    editable: true,
-    // hide:
-    //   !permissionMap?.['form_name']?.read &&
-    //   !permissionMap?.['form_name']?.edit,
+    editable:
+      permissionMap?.['form_name']?.edit && permissionMap?.['form_name']?.read,
+    hide:
+      !permissionMap?.['form_name']?.read &&
+      !permissionMap?.['form_name']?.edit,
     field: {
       type: 'text',
       required: true,
@@ -79,10 +81,12 @@ export const getDataMapperColumns = (
     label: 'Country',
     width: 140,
     sortable: true,
-    editable: true,
-    // hide:
-    //   !permissionMap?.['country_name']?.read &&
-    //   !permissionMap?.['country_name']?.edit,
+    editable:
+      permissionMap?.['country_rid']?.read &&
+      permissionMap?.['country_rid']?.edit,
+    hide:
+      !permissionMap?.['country_rid']?.read &&
+      !permissionMap?.['country_rid']?.edit,
     field: {
       type: 'select',
       required: true,
@@ -111,10 +115,11 @@ export const getDataMapperColumns = (
     label: 'Region',
     width: 140,
     sortable: true,
-    editable: true,
-    // hide:
-    //   !permissionMap?.['state_name']?.read &&
-    //   !permissionMap?.['state_name']?.edit,
+    editable:
+      permissionMap?.['state_rid']?.read && permissionMap?.['state_rid']?.edit,
+    hide:
+      !permissionMap?.['state_rid']?.read &&
+      !permissionMap?.['state_rid']?.edit,
     field: {
       type: 'select',
       required: false,
@@ -140,11 +145,13 @@ export const getDataMapperColumns = (
     sortId: 'effective_from_date',
     label: 'Effective From Date',
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['effective_from_date']?.read &&
+      permissionMap?.['effective_from_date']?.edit,
     width: 165,
-    // hide:
-    //   !permissionMap?.['effective_from_date']?.read &&
-    //   !permissionMap?.['effective_from_date']?.edit,
+    hide:
+      !permissionMap?.['effective_from_date']?.read &&
+      !permissionMap?.['effective_from_date']?.edit,
     render: (row) =>
       row.effective_from_date ? getDateFormat(row.effective_from_date) : '-',
     field: {
@@ -181,11 +188,13 @@ export const getDataMapperColumns = (
     sortId: 'effective_to_date',
     label: 'Effective To Date',
     sortable: true,
-    editable: true,
     width: 160,
-    // hide:
-    //   !permissionMap?.['effective_to_date']?.read &&
-    //   !permissionMap?.['effective_to_date']?.edit,
+    editable:
+      permissionMap?.['effective_to_date']?.read &&
+      permissionMap?.['effective_to_date']?.edit,
+    hide:
+      !permissionMap?.['effective_to_date']?.read &&
+      !permissionMap?.['effective_to_date']?.edit,
     render: (row) =>
       row.effective_to_date ? getDateFormat(row.effective_to_date) : '-',
     field: {
@@ -254,9 +263,9 @@ export const getDataMapperColumns = (
         </div>
       );
     },
-    // hide:
-    //   !permissionMap?.['status_name']?.read &&
-    //   !permissionMap?.['status_name']?.edit,
+    hide:
+      !permissionMap?.['status_rid']?.read &&
+      !permissionMap?.['status_rid']?.edit,
   },
   {
     id: 'document_name',
@@ -264,9 +273,9 @@ export const getDataMapperColumns = (
     label: 'Document Name',
     width: 180,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['document_name']?.read &&
-    //   !permissionMap?.['document_name']?.edit,
+    hide:
+      !permissionMap?.['document_name']?.read &&
+      !permissionMap?.['document_name']?.edit,
   },
   {
     id: 'created_by_name',
@@ -274,9 +283,9 @@ export const getDataMapperColumns = (
     label: 'Created By',
     width: 180,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['created_by_name']?.read &&
-    //   !permissionMap?.['created_by_name']?.edit,
+    hide:
+      !permissionMap?.['created_by']?.read &&
+      !permissionMap?.['created_by']?.edit,
   },
   {
     id: 'created_datetime',
@@ -285,9 +294,9 @@ export const getDataMapperColumns = (
     width: 200,
     sortable: true,
     render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
-    // hide:
-    //   !permissionMap?.['created_datetime']?.read &&
-    //   !permissionMap?.['created_datetime']?.edit,
+    hide:
+      !permissionMap?.['created_datetime']?.read &&
+      !permissionMap?.['created_datetime']?.edit,
   },
   {
     id: 'modified_by_name',
@@ -295,9 +304,9 @@ export const getDataMapperColumns = (
     label: 'Updated By',
     width: 180,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['modified_by_name']?.read &&
-    //   !permissionMap?.['modified_by_name']?.edit,
+    hide:
+      !permissionMap?.['modified_by']?.read &&
+      !permissionMap?.['modified_by']?.edit,
   },
   {
     id: 'modified_datetime',
@@ -309,16 +318,16 @@ export const getDataMapperColumns = (
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
         : '-',
-    // hide:
-    //   !permissionMap?.['modified_datetime']?.read &&
-    //   !permissionMap?.['modified_datetime']?.edit,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
   },
   {
     id: 'attachment',
     sortId: 'attachment',
     label: 'Attachment',
     width: 90,
-    hide: false,
+    hide: !isExportEnable,
     render: (row) =>
       row?.browse_file ? (
         <button

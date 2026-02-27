@@ -185,10 +185,10 @@ const Dossier: React.FC<DossierProps> = ({
     permission,
     AllPermissions.DOSSIER_SUMMARY_VIEW
   );
-  // const iscaseClose = checkPermission(
-  //   permission,
-  //   AllPermissions.DOSSIER_CLOSE_CASE
-  // );  // need to add close case btn
+  const isCaseCloseEnable = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_CLOSE_CASE
+  );
   const isPackagesDownload = checkPermission(
     permission,
     AllPermissions.DOSSIER_PACKAGES
@@ -565,7 +565,7 @@ const Dossier: React.FC<DossierProps> = ({
         (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),
       onClick: () => setIsModalOpen(true),
       sx: { width: '90px', minWidth: '90px' },
-      hide: false,
+      hide: !isCaseCloseEnable,
     },
   ];
 

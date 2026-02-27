@@ -68,13 +68,13 @@ export const fetchDashboardCountDetails = async (
 
 export const useGetDashboardCountDetails = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<DashboardCountDetail[], Error> => {
   return useQuery<DashboardCountDetail[], Error>({
     queryKey: ['dashboard-count-details', payload],
     queryFn: () => fetchDashboardCountDetails(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 
@@ -122,13 +122,13 @@ export const fetchOverallProjectValue = async (
 
 export const useGetOverallProjectValue = (
   payload: DashboardPayload,
-  isEnable: boolean = true
+  isEnable: boolean | undefined
 ): UseQueryResult<OverallProjectValueDetail[], Error> => {
   return useQuery<OverallProjectValueDetail[], Error>({
     queryKey: ['overall-project-value', payload],
     queryFn: () => fetchOverallProjectValue(payload),
     retry: 0,
-    enabled: isEnable,
+    enabled: !!isEnable,
   });
 };
 

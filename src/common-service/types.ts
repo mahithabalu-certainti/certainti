@@ -224,6 +224,7 @@ export enum AllModules {
   ACTIVITIES_CALL = 'activity_call',
   WORKFLOW_BUILDER = 'workflow_builder',
   MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule',
+  RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
 }
 
 export enum AllPermissions {
@@ -407,6 +408,13 @@ export enum AllPermissions {
   COMPLETED_TASKS_WEEK_VIEW = 'completed_tasks_week_view',
   CASES_BY_HEALTH_STATUS_VIEW = 'cases_by_health_status_view',
   UPCOMING_TASKS_VIEW = 'upcoming_tasks_view',
+  DASHBOARD_COUNT_VIEW = 'dashboard_count_view',
+  GLOBAL_LEVEL_VIEW = 'global_level_view',
+  OVERALL_PROJECT_VALUE_BY_JURISDICTION_VIEW = 'overall_project_value_by_jurisdiction_view',
+  RD_FORM_DATA_MAPPER_EXPORT = 'rd_form_data_mapper_export',
+  RD_FORM_DATA_MAPPER_CREATE = 'rd_form_data_mapper_create',
+  RD_FORM_DATA_MAPPER_DELETE = 'rd_form_data_mapper_delete',
+  RD_FORM_DATA_MAPPER_VIEW_EDIT = 'rd_form_data_mapper_view_edit',
 }
 
 export interface Country {
@@ -463,7 +471,7 @@ export enum MenuOption {
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
   WORKFLOW_BUILDER = 'workflow_builder',
-  DATA_MAPPER = 'data_mapper',
+  RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
 }
 
 export interface OverviewTabs {
