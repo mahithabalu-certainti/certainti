@@ -41,16 +41,20 @@ import SchemaService from "../schemaService";
 
 
 
+import { HelperMethods } from "./helperMethods";
+
 class CaseSchemaService {
     private orgDbSequelize: Sequelize | null = null;
     private mainDbSequelize: Sequelize | null = null;
     private caseModelService: CaseModelService;
     private schemaService: SchemaService;
+    private helperMethod: HelperMethods;
 
 
     constructor() {
         this.caseModelService = new CaseModelService();
         this.schemaService = new SchemaService();
+        this.helperMethod = new HelperMethods(this.caseModelService);
     }
 
     async findTaskById(rid: string, accountRid: string, caseRid: string, accountNumber: string, taskType?: string) {
@@ -110,7 +114,7 @@ class CaseSchemaService {
         if (!this.mainDbSequelize) {
             this.mainDbSequelize = await initMainDbSequelize()
         }
-        const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators } = await this.caseModelService.getModels(accountNumber);
+        const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, CheckList, CheckListItem, Case, TaskSummary } = await this.caseModelService.getModels(accountNumber);
         const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
         if (!checkCaseExists) {
             return {
@@ -147,24 +151,72 @@ class CaseSchemaService {
                         case_rid: data.case_rid
                     }, transaction
                 });
-                /* await TaskSummary.update(
-                 {
-                   task_name: data.task_name || "",
-                   description: data.task_description || "",
-                   assigned_to: data.assigned_to || "",
-                   status_rid: data.task_status_rid || "",
-                   priority_rid: data.priority_rid || "",
-                   effective_start_datetime: data.effective_start_datetime,
-                   effective_end_datetime: data.effective_end_datetime,
-                   modified_by: data.modified_by || "",
-                   modified_datetime: new Date(),
-                 },
-                 {
-                 where : {
-                     task_rid : data.rid
-                   }
-               }
-               ); */
+                if (data?.checklist_template_rid) {
+                    if (data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
+                        if (isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
+                            const checklistResult = await CheckList.findOne({
+                                where: {
+                                    attach_to: data.rid,
+                                    case_rid: data.case_rid,
+                                    attachment_level: 'task',
+                                    checklist_template_rid: isTaskExists.checklist_template_rid
+                                }, raw: true
+                            })
+                            if (checklistResult) {
+                                await CheckListItem.destroy({
+                                    where: {
+                                        checklist_rid: checklistResult.rid
+                                    }
+                                })
+                                await CheckList.destroy({
+                                    where: {
+                                        attach_to: data.rid,
+                                        case_rid: data.case_rid,
+                                        attachment_level: 'task',
+                                        checklist_template_rid: isTaskExists.checklist_template_rid
+                                    }
+                                })
+                            }
+                        }
+                        const response = await this.helperMethod.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+                        response.checklist_items.map((item: any) => item.action_type = 'add');
+                        let caseRequest: any = {
+                            account_rid: data.account_rid!,
+                            checklist_name: response.checklist_name,
+                            checklist_description: response.description,
+                            checklist_items: response.checklist_items,
+                            attach_to: data.rid,
+                            attachment_level: 'task',
+                            created_by: data.modified_by,
+                            created_datetime: new Date(),
+                            fiscal_year: checkCaseExists.fiscal_year,
+                            checklist_rid: data.checklist_template_rid,
+                            case_rid: data.case_rid
+                        };
+                        const checklistResponse = await this.helperMethod.createCheckListForTask(accountNumber, caseRequest, transaction);
+                        if (checklistResponse)
+                            await this.helperMethod.manageCheckListItems(accountNumber, caseRequest, checklistResponse.rid, transaction);
+                    }
+                }
+                await TaskSummary.update(
+                    {
+                        task_name: data.task_name || "",
+                        description: data.task_description || "",
+                        assigned_to: data.assigned_to || "",
+                        status_rid: data.task_status_rid || "",
+                        priority_rid: data.priority_rid || "",
+                        effective_start_datetime: data.effective_start_datetime,
+                        effective_end_datetime: data.effective_end_datetime,
+                        modified_by: data.modified_by || "",
+                        modified_datetime: new Date(),
+                    },
+                    {
+                        where: {
+                            task_rid: data.rid,
+                            attach_to: data.case_rid
+                        }
+                    }
+                );
                 const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task");
                 if (!checkIsDifferentCollaborator) {
                     const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber, "case_task");
@@ -278,10 +330,10 @@ class CaseSchemaService {
                         if (updatedColumnsStorage.length > 0) {
                             combinedColumns = updatedColumnsStorage.join(', ')
                         }
-                        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                                                                                        userId: data.modified_by!,
-                                                                                        eventType: eventTypes.UI_HANDLER
-                                                                                      });    
+                        const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+                            userId: data.modified_by!,
+                            eventType: eventTypes.UI_HANDLER
+                        });
 
                         await CaseTimeline.create({
                             created_by: data.modified_by,
@@ -589,31 +641,31 @@ class CaseSchemaService {
                     const finalResult = await TaskTag.create(tagPayload);
                     if (finalResult) {
                         if (taskType !== "activity") {
-                            const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                                                        userId: userId,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-                            const existingTaskInfo:any = await CaseTask.findOne({
-                            where: {
-                            rid: taskRid,
-                            account_rid: accountRid,
-                            case_rid:caseRid,
-                            },
-                            raw: true,
-                        });
-                                                
+                            const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+                                userId: userId,
+                                eventType: eventTypes.UI_HANDLER
+                            });
+                            const existingTaskInfo: any = await CaseTask.findOne({
+                                where: {
+                                    rid: taskRid,
+                                    account_rid: accountRid,
+                                    case_rid: caseRid,
+                                },
+                                raw: true,
+                            });
+
                             await CaseTimeline.create({
                                 created_by: userId,
                                 created_datetime: new Date(),
                                 account_rid: accountRid,
                                 entity_rid: caseRid,
-                                entity_name:entityTypes.TAG,
+                                entity_name: entityTypes.TAG,
                                 event_name: eventNames.CREATE,
-                                created_by_name: userEventInfo.full_name,        
+                                created_by_name: userEventInfo.full_name,
                                 event_type_rid: userEventInfo.event_type_rid,
                                 descriptions: `Task ${existingTaskInfo.task_name}`
 
-                             })
+                            })
                             await CaseHistory.create({
                                 case_rid: caseRid,
                                 created_by: userId,
@@ -670,15 +722,15 @@ class CaseSchemaService {
                     created_datetime: new Date()
                 })
                 if (taskType !== "activity") {
-                     const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                                                        userId: userId,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-                      const existingTaskInfo:any = await CaseTask.findOne({
+                    const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+                        userId: userId,
+                        eventType: eventTypes.UI_HANDLER
+                    });
+                    const existingTaskInfo: any = await CaseTask.findOne({
                         where: {
-                        rid: taskRid,
-                        account_rid: accountRid,
-                        case_rid: caseRid
+                            rid: taskRid,
+                            account_rid: accountRid,
+                            case_rid: caseRid
                         },
                         raw: true,
                     });

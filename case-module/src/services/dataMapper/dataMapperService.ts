@@ -13,6 +13,7 @@ import { DataMapperUploadStatus } from "../../models/dataMapperUploadStatus";
 import { applyFilters } from "../../utils/helpers";
 import { IDataMapperService } from "../interfaces/interface";
 import { ColumnExtractor } from "./columnExtractorService";
+import { FormExtractionFieldTypes } from "../../utils/constants"
 
 
 
@@ -659,7 +660,7 @@ export class DataMapperService implements IDataMapperService {
             if (data.country_rid) updatePayload.country_rid = data.country_rid;
             if (data.state_rid !== undefined) updatePayload.state_rid = data.state_rid;
             if (data.is_active !== undefined) updatePayload.is_active = data.is_active;
-            if(data.is_federal !== undefined) updatePayload.is_federal = data.is_federal;
+            if (data.is_federal !== undefined) updatePayload.is_federal = data.is_federal;
 
             let shouldTriggerKafka = false;
             let fileSasUrl = "";
@@ -778,7 +779,7 @@ export class DataMapperService implements IDataMapperService {
 
                     let columnRid = null;
 
-                    if (mapping.field_type === "table") {
+                    if (mapping.field_type === FormExtractionFieldTypes.TABLE_ITEM) {
                         if (mapping.field_id) {
                             const columnFieldIds = ColumnExtractor.getColumnFieldIds(fieldList, mapping.field_id);
 
@@ -1001,7 +1002,7 @@ export class DataMapperService implements IDataMapperService {
                 }
 
                 if (reachedAnomaly && cursor < textFields.length) {
-                    if (updatedMappings[i].field_type !== "table") {
+                    if (updatedMappings[i].field_type !== FormExtractionFieldTypes.TABLE_ITEM) {
                         updatedMappings[i].field_id = textFields[cursor].field_id;
                         updatedMappings[i].status = mappingStatus.anomaly;
                         cursor++;
@@ -1113,41 +1114,41 @@ export class DataMapperService implements IDataMapperService {
     }
 
     async updateDataMapperFormStatus(payload: { form_rid: string; form_status: "accept" | "reject"; }, userId: string): Promise<{ statusCode: number; message: string; data?: any }> {
-            try {
-                const sequelize = await this.getMainSequelize();
-                // Map form_status to DB status name
-                const statusName = payload.form_status === "accept" ? "Accepted" : "Rejected";
-                // Fetch status_rid from DB
-                const [statusResult]: any = await sequelize.query(
-                    rawQueries.getDataMapperStatusByName,
-                    { replacements: { statusName }, type: QueryTypes.SELECT }
-                );
-                const statusRid = statusResult?.rid;
-                if (!statusRid) {
-                    return { statusCode: HttpStatus.BAD_REQUEST, message: `Status '${statusName}' not found.` };
-                }
-                // Update form status
-                const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
-                const [updated] = await DataMapperModel.update(
-                    {
-                        status_rid: statusRid,
-                        modified_by: userId,
-                        modified_datetime: new Date()
-                    },
-                    { where: { rid: payload.form_rid } }
-                );
-                if (updated === 0) {
-                    return { statusCode: HttpStatus.NOT_FOUND, message: "Form not found or not updated." };
-                }
-                return {
-                    statusCode: HttpStatus.SUCCESS,
-                    message: `Status updated to '${statusName}'.`,
-                    data: { rid: payload.form_rid, status_rid: statusRid, status_name: statusName }
-                };
-            } catch (error) {
-                errorLog("updateDataMapperFormStatus", (error as Error).message);
-                return { statusCode: HttpStatus.BAD_REQUEST, message: (error as Error).message };
+        try {
+            const sequelize = await this.getMainSequelize();
+            // Map form_status to DB status name
+            const statusName = payload.form_status === "accept" ? "Accepted" : "Rejected";
+            // Fetch status_rid from DB
+            const [statusResult]: any = await sequelize.query(
+                rawQueries.getDataMapperStatusByName,
+                { replacements: { statusName }, type: QueryTypes.SELECT }
+            );
+            const statusRid = statusResult?.rid;
+            if (!statusRid) {
+                return { statusCode: HttpStatus.BAD_REQUEST, message: `Status '${statusName}' not found.` };
             }
+            // Update form status
+            const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
+            const [updated] = await DataMapperModel.update(
+                {
+                    status_rid: statusRid,
+                    modified_by: userId,
+                    modified_datetime: new Date()
+                },
+                { where: { rid: payload.form_rid } }
+            );
+            if (updated === 0) {
+                return { statusCode: HttpStatus.NOT_FOUND, message: "Form not found or not updated." };
+            }
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: `Status updated to '${statusName}'.`,
+                data: { rid: payload.form_rid, status_rid: statusRid, status_name: statusName }
+            };
+        } catch (error) {
+            errorLog("updateDataMapperFormStatus", (error as Error).message);
+            return { statusCode: HttpStatus.BAD_REQUEST, message: (error as Error).message };
+        }
     }
 }
 

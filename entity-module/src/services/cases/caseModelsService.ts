@@ -45,17 +45,17 @@ export class CaseModelService {
       CaseTimeline: ReturnType<typeof CaseTimeline.initialize>;
       // TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
       // CaseMilestone: ReturnType<typeof CaseMilestone.initialise>
-      CaseTask : ReturnType<typeof CaseTask.initialise>
-      TaskCollaborators : ReturnType<typeof TaskCollaborators.initialise>
-      TaskTag : ReturnType<typeof TaskTag.initialise>
-      Tags : ReturnType<typeof Tags.initialise>
+      CaseTask: ReturnType<typeof CaseTask.initialise>
+      TaskCollaborators: ReturnType<typeof TaskCollaborators.initialise>
+      TaskTag: ReturnType<typeof TaskTag.initialise>
+      Tags: ReturnType<typeof Tags.initialise>
       // EmailTemplate?: ReturnType<typeof EmailTemplate.initialize>
       // TaskComments : ReturnType<typeof TaskComments.initialise>
       // CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
       // TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
       // CaseHistorySubmission: ReturnType<typeof CaseHistorySubmission.initialize>;
       CaseTaskWorkflowConnector: ReturnType<typeof CaseTaskWorkflowConnector.initialize>
-      WorkflowConnector : ReturnType<typeof WorkflowConnector.initialize>
+      WorkflowConnector: ReturnType<typeof WorkflowConnector.initialize>
       // WorkflowConnectorMapping: ReturnType<typeof WorkflowConnectorMapping.initialize>
       // TaskHistory : ReturnType<typeof TaskHistory.initialize>;
       // ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
@@ -64,7 +64,7 @@ export class CaseModelService {
     }
   > = new Map();
 
-  constructor() {}
+  constructor() { }
 
   async getSequelize(): Promise<Sequelize> {
     if (!this.orgDbSequelize) {
@@ -117,7 +117,7 @@ export class CaseModelService {
     // const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     // const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
-    const TaskSummaryModel = TaskSummary.initialize(sequelize, "");
+    const TaskSummaryModel = TaskSummary.initialize(mainDbSequelize, "");
 
     const models = {
       Case: CaseModel,
@@ -133,10 +133,10 @@ export class CaseModelService {
       CheckListItem: CheckListItemModel,
       // Jurisdiction: JurisdictionModel,
       // CaseMilestone: CaseMilestoneModel,
-      CaseTask : CaseTaskModel,
-      TaskCollaborators : TaskCollaboratorsModel,
-      TaskTag : TaskTagModel,
-      Tags : TagsModel,
+      CaseTask: CaseTaskModel,
+      TaskCollaborators: TaskCollaboratorsModel,
+      TaskTag: TaskTagModel,
+      Tags: TagsModel,
       // EmailTemplate: EmailTemplateModel,
       // TaskComments : TaskCommentsModel,
       // CommentsAttachments : CommentsAttachmentsModel,
@@ -144,11 +144,11 @@ export class CaseModelService {
       // CaseHistorySubmission: CaseHistorySubmissionModel,
       Activities: ActivitiesModel,
       // TaskHistory: TaskHistoryModel,
-      CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
-      WorkflowConnector : WorkflowConnectorModel,
+      CaseTaskWorkflowConnector: CaseTaskWorkflowConnectorModel,
+      WorkflowConnector: WorkflowConnectorModel,
       // WorkflowConnectorMapping : WorkflowConnectorMappingModel,
       // ActivityAttachments : ActivityAttachmentsModel,
-      ActivityHistory : ActivityHistoryModel,
+      ActivityHistory: ActivityHistoryModel,
       TaskSummary: TaskSummaryModel
     };
 
