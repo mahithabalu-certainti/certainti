@@ -12,10 +12,18 @@ import {
   ExportDataMapperList,
   useGetDataMapperStatus,
 } from '../../../service/data-mapper/data-mapper-service';
-import { useGetAllCountries } from '../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../../common-service';
 import { useFetchState } from '../../../../consultant/services/account';
 import { FilterValue } from '../../../../consultant/types/account-filter';
 import SearchBar from '../../../../components/search/search-bar';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const DataMapper: React.FC = () => {
   const navigate = useNavigate();
@@ -40,6 +48,47 @@ const DataMapper: React.FC = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
+  //Permission Management
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const isDataMapperEnable = checkPermission(
+    modules,
+    AllModules.RD_FORM_DATA_MAPPER
+  );
+
+  const isDataMapperViewEnable = checkPermission(
+    permission,
+    AllPermissions.RD_FORM_DATA_MAPPER_VIEW_EDIT
+  );
+
+  const isDataMapperExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_FORM_DATA_MAPPER_EXPORT
+  );
+
+  const isDataMapperCreateEnable = checkPermission(
+    permission,
+    AllPermissions.RD_FORM_DATA_MAPPER_CREATE
+  );
+
+  const dataMapperEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.RD_FORM_DATA_MAPPER_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    dataMapperEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [dataMapperEditFields]);
 
   const dataMapperStatus = useGetDataMapperStatus();
   const allCountries = useGetAllCountries('Active');
@@ -124,13 +173,15 @@ const DataMapper: React.FC = () => {
     {
       label: 'Export',
       onClick: () => handleExport(),
+      hide: !isDataMapperExportEnable,
     },
   ];
 
   const dataMapperFilterFields = getDataMapperFilterFields(
     statusOptions,
     countryOptions,
-    regionOptions
+    regionOptions,
+    permissionMap
   );
 
   const handleColumnVisibility = (
@@ -144,6 +195,9 @@ const DataMapper: React.FC = () => {
       setCurrentCountry(String(value));
     }
   };
+
+  if (!isDataMapperEnable || !isDataMapperViewEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -174,15 +228,17 @@ const DataMapper: React.FC = () => {
           >
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
-          <TextButton
-            label='Create RD Form'
-            onClick={() => navigate(DATA_MAPPER_CREATE)}
-            sx={{
-              width: '120px',
-              minWidth: '120px',
-              maxWidth: '120px',
-            }}
-          />
+          {isDataMapperCreateEnable && (
+            <TextButton
+              label='Create RD Form'
+              onClick={() => navigate(DATA_MAPPER_CREATE)}
+              sx={{
+                width: '120px',
+                minWidth: '120px',
+                maxWidth: '120px',
+              }}
+            />
+          )}
         </div>
       </div>
 

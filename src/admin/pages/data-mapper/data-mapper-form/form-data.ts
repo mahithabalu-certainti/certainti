@@ -10,11 +10,13 @@ import {
 import dayjs from 'dayjs';
 
 export const DataMapperFormData = (
+  isEditView: boolean,
   countryOptions: SelectOption[],
   stateOptions: SelectOption[],
   statesLoading: boolean,
   isFederal: boolean,
-  effectiveFromDate?: Date
+  effectiveFromDate?: Date,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return [
     {
@@ -24,6 +26,14 @@ export const DataMapperFormData = (
         createTextField('form_name', 'Form Name', {
           required: true,
           placeholder: 'Enter Form Name',
+          hide:
+            isEditView &&
+            !permissionMap?.['form_name']?.read &&
+            !permissionMap?.['form_name']?.edit,
+          disabled:
+            isEditView &&
+            permissionMap?.['form_name']?.read &&
+            !permissionMap?.['form_name']?.edit,
           errorHandling: [
             {
               regex: REGEX_PATTERNS.MIN_3,
@@ -44,6 +54,14 @@ export const DataMapperFormData = (
           required: true,
           allowFutureDates: true,
           onChange: true,
+          hide:
+            isEditView &&
+            !permissionMap?.['effective_from_date']?.read &&
+            !permissionMap?.['effective_from_date']?.edit,
+          disabled:
+            isEditView &&
+            permissionMap?.['effective_from_date']?.read &&
+            !permissionMap?.['effective_from_date']?.edit,
         }),
         createDateField('effective_to_date', 'Effective To Date', {
           required: false,
@@ -51,6 +69,14 @@ export const DataMapperFormData = (
           minDate: effectiveFromDate
             ? dayjs(effectiveFromDate).add(1, 'day').toDate()
             : undefined,
+          hide:
+            isEditView &&
+            !permissionMap?.['effective_to_date']?.read &&
+            !permissionMap?.['effective_to_date']?.edit,
+          disabled:
+            isEditView &&
+            permissionMap?.['effective_to_date']?.read &&
+            !permissionMap?.['effective_to_date']?.edit,
         }),
         createSelectField('is_federal', 'Federal', {
           options: YES_NO_OPTIONS,
@@ -58,6 +84,14 @@ export const DataMapperFormData = (
           required: true,
           onChange: true,
           resetDependsFields: ['state_rid'],
+          hide:
+            isEditView &&
+            !permissionMap?.['is_federal']?.read &&
+            !permissionMap?.['is_federal']?.edit,
+          disabled:
+            isEditView &&
+            permissionMap?.['is_federal']?.read &&
+            !permissionMap?.['is_federal']?.edit,
         }),
         createSelectField('country_rid', 'Country', {
           options: countryOptions,
@@ -65,13 +99,30 @@ export const DataMapperFormData = (
           required: true,
           onChange: true,
           resetDependsFields: ['state_rid'],
+          hide:
+            isEditView &&
+            !permissionMap?.['country_rid']?.read &&
+            !permissionMap?.['country_rid']?.edit,
+          disabled:
+            isEditView &&
+            permissionMap?.['country_rid']?.read &&
+            !permissionMap?.['country_rid']?.edit,
         }),
         createSelectField('state_rid', 'Region', {
           options: stateOptions,
           placeholder: 'Choose Region',
           required: isFederal ? false : true,
           isLoading: statesLoading,
-          disabled: statesLoading || isFederal,
+          hide:
+            isEditView &&
+            !permissionMap?.['state_rid']?.read &&
+            !permissionMap?.['state_rid']?.edit,
+          disabled:
+            statesLoading ||
+            isFederal ||
+            (isEditView &&
+              permissionMap?.['state_rid']?.read &&
+              !permissionMap?.['state_rid']?.edit),
         }),
       ],
     },
@@ -84,6 +135,14 @@ export const DataMapperFormData = (
           placeholder: 'Enter Description',
           regexErrorMessage: 'Description must be within 2000 characters',
           regex: REGEX_PATTERNS.DESCRIPTION,
+          hide:
+            isEditView &&
+            !permissionMap?.['descriptions']?.read &&
+            !permissionMap?.['descriptions']?.edit,
+          disabled:
+            isEditView &&
+            permissionMap?.['descriptions']?.read &&
+            !permissionMap?.['descriptions']?.edit,
         }),
       ],
     },
