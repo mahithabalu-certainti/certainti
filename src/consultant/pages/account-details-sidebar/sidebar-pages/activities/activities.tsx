@@ -111,8 +111,11 @@ const Activities: React.FC<ActivitiesProps> = ({
   const completeMeeting = useCompletedActivityMeeting();
   const cancelMeeting = useCancelledActivityMeeting();
   const { successToast } = useToast();
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const handleCompleteMeeting = async (activityId: string) => {
+    setCompletingId(activityId);
     completeMeeting.mutate(
       {
         account_rid: accountid || '',
@@ -123,11 +126,15 @@ const Activities: React.FC<ActivitiesProps> = ({
           successToast('Meeting Status Updated Successfully');
           handleRefresh();
         },
+        onSettled: () => {
+          setCompletingId(null);
+        },
       }
     );
   };
 
   const handleCancelMeeting = async (activityId: string) => {
+    setCancellingId(activityId);
     cancelMeeting.mutate(
       {
         account_rid: accountid || '',
@@ -137,6 +144,9 @@ const Activities: React.FC<ActivitiesProps> = ({
         onSuccess: async () => {
           successToast('Meeting Status Updated Successfully');
           handleRefresh();
+        },
+        onSettled: () => {
+          setCancellingId(null);
         },
       }
     );
@@ -466,7 +476,9 @@ const Activities: React.FC<ActivitiesProps> = ({
           handleViewActivity,
           meetingPermissionMap,
           handleCancelMeeting,
-          handleCompleteMeeting
+          handleCompleteMeeting,
+          cancellingId,
+          completingId
         );
       case 'call':
         return getActivityCallLogListColumns(
@@ -487,6 +499,8 @@ const Activities: React.FC<ActivitiesProps> = ({
     tabParam,
     taskPermissionMap,
     allActivityPermissionMaps,
+    cancellingId,
+    completingId,
   ]);
 
   const activityEditPermissionByType: Record<ActivityModuleType, boolean> = {

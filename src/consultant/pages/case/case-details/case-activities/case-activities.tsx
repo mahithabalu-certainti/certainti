@@ -229,6 +229,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   const completeMeeting = useCompletedActivityMeeting();
   const cancelMeeting = useCancelledActivityMeeting();
   const { successToast } = useToast();
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const initialTab = useMemo(() => {
     if (allActivitiesEnabled) return 'all';
@@ -415,6 +417,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   ];
 
   const handleCompleteMeeting = async (activityId: string) => {
+    setCompletingId(activityId);
     completeMeeting.mutate(
       {
         account_rid: accountId || '',
@@ -425,11 +428,15 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
           successToast('Meeting Status Updated Successfully');
           handleRefresh();
         },
+        onSettled: () => {
+          setCompletingId(null);
+        },
       }
     );
   };
 
   const handleCancelMeeting = async (activityId: string) => {
+    setCancellingId(activityId);
     cancelMeeting.mutate(
       {
         account_rid: accountId || '',
@@ -439,6 +446,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
         onSuccess: async () => {
           successToast('Meeting Status Updated Successfully');
           handleRefresh();
+        },
+        onSettled: () => {
+          setCancellingId(null);
         },
       }
     );
@@ -471,7 +481,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
           handleViewActivity,
           meetingPermissionMap,
           handleCancelMeeting,
-          handleCompleteMeeting
+          handleCompleteMeeting,
+          cancellingId,
+          completingId
         );
       case 'call':
         return getActivityCallLogListColumns(
@@ -492,6 +504,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     tabParam,
     taskPermissionMap,
     allActivityPermissionMaps,
+    cancellingId,
+    completingId,
   ]);
 
   const activityEditPermissionByType: Record<ActivityModuleType, boolean> = {
