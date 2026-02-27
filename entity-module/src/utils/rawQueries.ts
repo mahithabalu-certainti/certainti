@@ -2956,3 +2956,5 @@ export const taskCardDetails = (schemaName: string, taskRid: string, accountRid:
     `
   return query;
 }
+
+export const getCaseSummaryByRids = () => `SELECT rid as case_rid, case_name FROM trd365.case_summary WHERE rid IN (:caseRids)`
