@@ -239,24 +239,24 @@ class ActivitySchemaService {
         transaction,
       });
 
-      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: taskRequest.created_by!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+      const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+        userId: taskRequest.created_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
       const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
-      
+
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: taskRequest.created_by!,
-                      account_rid: activityData.account_rid,
-                      entity_rid: casecreationResponse.rid!,
-                      entity_name: entityTypes.ACTIVITY_TASK,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.CREATE,
-                      descriptions:taskRequest.task_name,
-                      project_rid:activityData.attachment_level === 'project' ? activityData.attach_to : '',
-                      case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
-                    },timelineTypes);
+        created_by: taskRequest.created_by!,
+        account_rid: activityData.account_rid,
+        entity_rid: casecreationResponse.rid!,
+        entity_name: entityTypes.ACTIVITY_TASK,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.CREATE,
+        descriptions: taskRequest.task_name,
+        project_rid: activityData.attachment_level === 'project' ? activityData.attach_to : '',
+        case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+      }, timelineTypes);
 
       return casecreationResponse;
     } catch (error) {
@@ -456,24 +456,24 @@ class ActivitySchemaService {
       //   "success",
       //   existingTask
       // );
-       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: taskRequest.created_by!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+      const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+        userId: taskRequest.created_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
       const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(taskRequest.attachment_level);
-      
+
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: taskRequest.created_by!,
-                      account_rid: taskRequest.account_rid!,
-                      entity_rid: taskRequest.task_rid!,
-                      entity_name: entityTypes.ACTIVITY_TASK,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.UPDATE,
-                      descriptions:taskRequest.task_name,
-                      project_rid:taskRequest.attachment_level === 'project' ? taskRequest.attach_to : '',
-                      case_rid: taskRequest.attachment_level === 'case' ? taskRequest.attach_to : '',
-                    },timelineTypes);
+        created_by: taskRequest.created_by!,
+        account_rid: taskRequest.account_rid!,
+        entity_rid: taskRequest.task_rid!,
+        entity_name: entityTypes.ACTIVITY_TASK,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.UPDATE,
+        descriptions: taskRequest.task_name,
+        project_rid: taskRequest.attachment_level === 'project' ? taskRequest.attach_to : '',
+        case_rid: taskRequest.attachment_level === 'case' ? taskRequest.attach_to : '',
+      }, timelineTypes);
 
       return updatedResult;
     } catch (error) {
@@ -1741,22 +1741,24 @@ class ActivitySchemaService {
         files
       );
     }
-    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: userId!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+    const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+      userId: userId!,
+      eventType: eventTypes.UI_HANDLER
+    });
     const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
-      
+
     await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: userId!,
-                      account_rid: activityData.account_rid,
-                      entity_rid: response.rid!,
-                      entity_name: entityTypes.ACTIVITY_EMAIL,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.CREATE,
-                      descriptions:activityRequest.subject
-                    },timelineTypes);
+      created_by: userId!,
+      account_rid: activityData.account_rid,
+      entity_rid: response.rid!,
+      entity_name: entityTypes.ACTIVITY_EMAIL,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.CREATE,
+      descriptions: activityRequest.subject,
+      project_rid: activityData.attachment_level === 'project' ? activityData.attach_to : '',
+      case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+    }, timelineTypes);
     // this.addTaskTimeline(
     //   accountNumber,
     //   activityData.activity_rid,
@@ -1873,22 +1875,24 @@ class ActivitySchemaService {
       existingActivity,
       activityTypes.email
     );
-    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: userId!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+    const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+      userId: userId!,
+      eventType: eventTypes.UI_HANDLER
+    });
     const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
-      
+
     await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: userId!,
-                      account_rid: activityData.account_rid,
-                      entity_rid: activityData.activity_rid!,
-                      entity_name: entityTypes.ACTIVITY_EMAIL,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.UPDATE,
-                      descriptions:activityRequest.subject
-                    },timelineTypes);
+      created_by: userId!,
+      account_rid: activityData.account_rid,
+      entity_rid: activityData.activity_rid!,
+      entity_name: entityTypes.ACTIVITY_EMAIL,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.UPDATE,
+      descriptions: activityRequest.subject,
+      project_rid: activityData.attachment_level === 'project' ? activityData.attach_to : '',
+      case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+    }, timelineTypes);
     // await this.addTaskTimeline(
     //   accountNumber,
     //   activityRequest.activity_rid,
@@ -2126,22 +2130,24 @@ class ActivitySchemaService {
         //   "success",
         //   activityData.activity_rid
         // );
-        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: userId!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+          userId: userId!,
+          eventType: eventTypes.UI_HANDLER
+        });
         const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
-      
+
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: userId!,
-                      account_rid: activityData.account_rid,
-                      entity_rid: activityRequest.activity_rid!,
-                      entity_name: entityTypes.ACTIVITY_MEETING,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.CREATE,
-                      descriptions:activityRequest.subject
-                    },timelineTypes);
+          created_by: userId!,
+          account_rid: activityData.account_rid,
+          entity_rid: activityRequest.activity_rid!,
+          entity_name: entityTypes.ACTIVITY_MEETING,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.CREATE,
+          descriptions: activityRequest.subject,
+          project_rid: activityData.attachment_level === 'project' ? activityData.attach_to : '',
+          case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+        }, timelineTypes);
         return response;
       }
       else {
@@ -2149,6 +2155,7 @@ class ActivitySchemaService {
       }
     } catch (err) {
       logMessage(`Error scheduling Teams meeting: ${err}`);
+      console.log("yoki 1", err);
     }
   }
 
@@ -2188,22 +2195,24 @@ class ActivitySchemaService {
     const response = await Activities.create(activityData);
     activityRequest.activity_rid = response.rid;
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
-    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: userId!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+    const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+      userId: userId!,
+      eventType: eventTypes.UI_HANDLER
+    });
     const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
-      
+
     await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: userId!,
-                      account_rid: activityData.account_rid,
-                      entity_rid: activityRequest.activity_rid!,
-                      entity_name: entityTypes.ACTIVITY_CALL,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.CREATE,
-                      descriptions:activityRequest.subject
-                    },timelineTypes);
+      created_by: userId!,
+      account_rid: activityData.account_rid,
+      entity_rid: activityRequest.activity_rid!,
+      entity_name: entityTypes.ACTIVITY_CALL,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.CREATE,
+      descriptions: activityRequest.subject,
+      project_rid: activityData.attachment_level === 'project' ? activityData.attach_to : '',
+      case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+    }, timelineTypes);
     // this.addTaskTimeline(
     //   accountNumber,
     //   activityData.activity_rid,
@@ -2291,22 +2300,24 @@ class ActivitySchemaService {
       existingActivity,
       activityTypes.call
     );
-    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: userId!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+    const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+      userId: userId!,
+      eventType: eventTypes.UI_HANDLER
+    });
     const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
-      
+
     await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: userId!,
-                      account_rid: activityData.account_rid,
-                      entity_rid: activityData.activity_rid!,
-                      entity_name: entityTypes.ACTIVITY_CALL,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.UPDATE,
-                      descriptions:activityRequest.subject
-                    },timelineTypes);
+      created_by: userId!,
+      account_rid: activityData.account_rid,
+      entity_rid: activityData.activity_rid!,
+      entity_name: entityTypes.ACTIVITY_CALL,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.UPDATE,
+      descriptions: activityRequest.subject,
+      project_rid: activityData.attachment_level === 'project' ? activityData.attach_to : '',
+      case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+    }, timelineTypes);
     // await this.addTaskTimeline(
     //   accountNumber,
     //   activityRequest.activity_rid,
@@ -2466,22 +2477,24 @@ class ActivitySchemaService {
         activityTypes.meeting
       );
     }
-    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                            userId: userId!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+    const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+      userId: userId!,
+      eventType: eventTypes.UI_HANDLER
+    });
     const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(activityData.attachment_level);
-      
+
     await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                      created_by: userId!,
-                      account_rid: activityData.account_rid,
-                      entity_rid: activityData.activity_rid!,
-                      entity_name: entityTypes.ACTIVITY_MEETING,
-                      created_by_name: userEventInfo.full_name,
-                      event_type_rid: userEventInfo.event_type_rid,
-                      event_name: eventNames.UPDATE,
-                      descriptions:activityRequest.subject
-                    },timelineTypes);
+      created_by: userId!,
+      account_rid: activityData.account_rid,
+      entity_rid: activityData.activity_rid!,
+      entity_name: entityTypes.ACTIVITY_MEETING,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.UPDATE,
+      descriptions: activityRequest.subject,
+      project_rid: activityData.attachment_level === 'project' ? activityData.attach_to : '',
+      case_rid: activityData.attachment_level === 'case' ? activityData.attach_to : '',
+    }, timelineTypes);
     // await this.addTaskTimeline(
     //   accountNumber,
     //   activityRequest.activity_rid,
