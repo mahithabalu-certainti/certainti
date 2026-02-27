@@ -812,11 +812,21 @@ export class RdFormMapperService {
       "IF($1, $2, $3)",
     );
 
+    // Add # if missing before id pattern
     result = result.replace(
-      /\b[A-Za-z]\d{3}-[0-9a-fA-F-]{36}\b/g,
+      /\b([A-Za-z]\d{3}-[0-9a-fA-F-]{36})\b/g,
       (match: string, offset: number, full: string) =>
         offset > 0 && full[offset - 1] === "#" ? match : `#${match}`,
     );
+
+    // If #id is not resolved, do text comparison (replace with string comparison)
+    // Replace #id == value or value == #id with String(value) == String(#id)
+    result = result.replace(/#([A-Za-z]\d{3}-[0-9a-fA-F-]{36})\s*([!=]=)\s*([\w'\"-]+)/g, (m, id, op, val) => {
+      return `String(#${id}) ${op} String(${val})`;
+    });
+    result = result.replace(/([\w'\"-]+)\s*([!=]=)\s*#([A-Za-z]\d{3}-[0-9a-fA-F-]{36})/g, (m, val, op, id) => {
+      return `String(${val}) ${op} String(#${id})`;
+    });
 
     return result;
   }
@@ -914,74 +924,87 @@ export class RdFormMapperService {
     }
 
     if (calcConfig && typeof calcConfig === "object" && !Array.isArray(calcConfig)) {
-      const orderedTokens = Object.keys(calcConfig)
-        .map((key) => String(calcConfig[key]).trim());
-
-      const hasOperator = orderedTokens.some((token) =>
-        [
-          "add",
-          "sub",
-          "subtract",
-          "mul",
-          "div",
-          "multiply",
-          "divide",
-          "min",
-          "max",
-        ].includes(token.toLowerCase()),
-      );
-
-      if (hasOperator) {
-        const minMaxToken = orderedTokens.find((token) =>
-          ["min", "max"].includes(token.toLowerCase()),
-        );
-
-        const operatorMap: Record<string, string> = {
-          add: "+",
-          sub: "-",
-          subtract: "-",
-          mul: "*",
-          multiply: "*",
-          div: "/",
-          divide: "/",
-        };
-
-        const buildLeftToRight = (tokens: string[]) => {
-          if (tokens.length < 3 || tokens.length % 2 === 0) {
-            return null;
-          }
-          let expr = tokens[0];
-          for (let i = 1; i < tokens.length; i += 2) {
-            const opToken = tokens[i];
-            const rhs = tokens[i + 1];
-            if (!opToken || !rhs) {
-              return null;
-            }
-            const op = operatorMap[opToken.toLowerCase()];
-            if (!op) {
-              return null;
-            }
-            expr = `(${expr} ${op} ${rhs})`;
-          }
-          return expr;
-        };
-
-        const expression = minMaxToken
-          ? `${minMaxToken.toLowerCase()}(${orderedTokens
-              .filter(
-                (token) => !["min", "max"].includes(token.toLowerCase()),
-              )
-              .join(", ")})`
-          : buildLeftToRight(orderedTokens) ||
-            orderedTokens
-              .map((token) => operatorMap[token.toLowerCase()] || token)
-              .join(" ");
-
-        value = expression;
+      // Enhanced: Support parentheses and operator precedence in config expressions
+      // If config contains a special 'expression' key, use it directly
+      if (calcConfig.expression && typeof calcConfig.expression === "string") {
+        // Use the expression as-is (with references, parentheses, etc.)
+        value = calcConfig.expression;
         logMessage(
-          `Built expression for field ${configItem.field_label}: ${expression}`,
+          `Built complex expression for field ${configItem.field_label}: ${value}`,
         );
+        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+        logMessage(`[DEBUG] [handleLineItemConfig] RETURN after expression for ${configItem.field_label}`);
+        return;
+      }
 
+      // Otherwise, try to reconstruct an expression from the config keys/values
+      const operatorMap: Record<string, string> = {
+        add: "+",
+        sub: "-",
+        subtract: "-",
+        mul: "*",
+        multiply: "*",
+        div: "/",
+        divide: "/",
+      };
+
+      // If config contains a single key and it's a string with parentheses, treat as expression
+      const keys = Object.keys(calcConfig);
+      if (keys.length === 1) {
+        const key0 = keys[0];
+        if (typeof key0 === "string" && typeof calcConfig[key0] === "string") {
+          const strVal = String(calcConfig[key0]).trim();
+          if (/^[\s\S]*[()]+[\s\S]*$/.test(strVal)) {
+            value = strVal;
+            logMessage(
+              `Detected parentheses expression for field ${configItem.field_label}: ${value}`,
+            );
+            this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+            logMessage(`[DEBUG] [handleLineItemConfig] RETURN after parentheses expr for ${configItem.field_label}`);
+            return;
+          }
+        }
+      }
+
+      // Otherwise, build an infix expression, recursively flattening config objects and supporting parenthesized expressions
+      const flattenConfigValue = (v: any): string => {
+        if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+          // Recursively flatten nested config objects
+          const subKeys = Object.keys(v);
+          const subTokens: string[] = [];
+          for (const subKey of subKeys) {
+            subTokens.push(flattenConfigValue(v[subKey]));
+          }
+          return subTokens.join(" ");
+        }
+        // If value is a string that looks like a parenthesized expression, return as-is
+        if (typeof v === "string" && v.trim().match(/^\(.*\)$/)) {
+          return v.trim();
+        }
+        // Otherwise, treat as string
+        return String(v).trim();
+      };
+
+      const tokens: string[] = [];
+      for (const key of keys) {
+        const val = calcConfig[key];
+        // If value looks like an operator, map it
+        if (typeof val === "string" && operatorMap[val.toLowerCase()]) {
+          const op = operatorMap[val.toLowerCase()];
+          if (op) tokens.push(op);
+        } else {
+          tokens.push(flattenConfigValue(val));
+        }
+      }
+      // Join tokens with spaces (infix), e.g. "A + B * (C + D)"
+      const infixExpr = tokens.join(" ");
+      // Always treat as expression if all tokens are numbers/operators/expressions
+      const allTokensAreExpr = tokens.every(t => /^(\d+(\.\d+)?|[()+\-*/]|\(.*\))$/.test(t));
+      if (/[()+\-*/]/.test(infixExpr) || allTokensAreExpr) {
+        value = infixExpr;
+        logMessage(
+          `Built infix expression for field ${configItem.field_label}: ${value}`,
+        );
         this.pushEnhancedConfig(enhancedConfigs, configItem, value);
         return;
       }
@@ -1088,6 +1111,11 @@ export class RdFormMapperService {
       fiscalYear?: string;
     },
   ) {
+    console.log(`[TableConfig] Processing config item: ${JSON.stringify(configItem)}`);
+    // Only log warnings and resolved values for table config
+    if (!configItem.column_id) {
+      logMessage(`[TableConfig][WARN] Missing column_id for table item: ${configItem.field_label || configItem.field_id}`);
+    }
     if (configItem.column_id && configItem.calculation_config) {
       try {
         let mapperObject: any = null;
@@ -1116,7 +1144,7 @@ export class RdFormMapperService {
               fieldMappings = columnIdList;
             }
           } catch (parseError) {
-            logMessage(`Error parsing column ID list as JSON: ${parseError}`);
+            logMessage(`[TableConfig] Error parsing column ID list as JSON: ${parseError}`);
             fieldMappings = {};
           }
 
@@ -1137,17 +1165,18 @@ export class RdFormMapperService {
               if (typeof fieldPath === "string") {
                 const rowIndex = parseInt(rowNumber, 10) - 1;
                 const rowValue = tableValues[rowIndex]?.value || "";
+                logMessage(`[TableConfig] Mapping row ${rowNumber} to fieldPath ${fieldPath}, resolved rowValue: ${JSON.stringify(rowValue)}`);
                 this.pushEnhancedConfig(enhancedConfigs, configItem, rowValue, {
                   label: `${configItem.field_label}[row_${rowNumber}]`,
                   field_name: configItem.field_name,
                   value_field_id: fieldPath,
                 });
+              } else {
+                logMessage(`[TableConfig] Skipped mapping for row ${rowNumber} (fieldPath not string): ${JSON.stringify(fieldPath)}`);
               }
             });
 
-            logMessage(
-              `Created ${Object.keys(fieldMappings).length} table row mappings for field ${configItem.field_label}`,
-            );
+            //
             return;
           }
         }
@@ -1155,7 +1184,7 @@ export class RdFormMapperService {
         this.pushEnhancedConfig(enhancedConfigs, configItem, "");
       } catch (error) {
         this.logger.error(
-          `Error fetching table values for ${configItem.field_label}:`,
+          `[TableConfig] Error fetching table values for ${configItem.field_label}:`,
           error,
         );
         this.pushEnhancedConfig(enhancedConfigs, configItem, "");
@@ -1235,7 +1264,7 @@ export class RdFormMapperService {
       }
       if (
         configItem.calculation_config &&
-        configItem.field_type == "line-item"
+        configItem.field_type == "Line-Item"
       ) {
         await this.handleLineItemConfig(configItem, enhancedConfigs, {
           accountRid,
@@ -1245,7 +1274,7 @@ export class RdFormMapperService {
           stateRid,
           countryRid,
         });
-      } else if (configItem.field_type == "table") {
+      } else if (configItem.field_type == "Table-Item") {
         await this.handleTableConfig(configItem, enhancedConfigs, {
           accountRid,
           caseRid,
@@ -1312,27 +1341,26 @@ export class RdFormMapperService {
 
           if (!/^[A-Za-z]\d{3}-[0-9a-fA-F-]{36}$/.test(rawKey)) continue;
 
-          const mapperObject =
-            await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rawKey);
-          logMessage(
-            `Expression mapper lookup for field ${item.field_label || item.field_id} (rid=${rawKey}): ${JSON.stringify(mapperObject)}`,
+          // Concise debug log for id resolution
+          logMessage(`Resolving data mapper object for RID: ${rawKey}`);
+          const mapperObject = await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rawKey);
+
+          if (!mapperObject?.ref_table || !mapperObject?.field_name) {
+            logMessage(`RID not resolved: ${rawKey}. Using text comparison without #.`);
+            addToValueMap(rawKey, rawKey.replace(/^#/, ""));
+            continue;
+          }
+
+          const dynamicValue = await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
+            mapperObject.ref_table,
+            mapperObject.field_name,
+            mapperObject.is_json,
+            caseRid,
+            schemaName,
+            stateRid || "",
           );
 
-          if (!mapperObject?.ref_table || !mapperObject?.field_name) continue;
-
-          const dynamicValue =
-            await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
-              mapperObject.ref_table,
-              mapperObject.field_name,
-              mapperObject.is_json,
-              caseRid,
-              schemaName,
-              stateRid || "",
-            );
-
-          logMessage(
-            `Expression DB value for field ${item.field_label || item.field_id} (ref_table=${mapperObject.ref_table}, field_name=${mapperObject.field_name}): ${JSON.stringify(dynamicValue)}`,
-          );
+          logMessage(`Resolved DB value for field ${item.field_label || item.field_id}: ${dynamicValue}`);
 
           if (dynamicValue !== null && dynamicValue !== undefined) {
             addToValueMap(rawKey, dynamicValue);
@@ -1344,45 +1372,60 @@ export class RdFormMapperService {
     await resolveExpressionReferences();
 
     const maxExpressionPasses = 3;
+    // --- Optimized Expression Evaluation Loop ---
     for (let pass = 1; pass <= maxExpressionPasses; pass++) {
       let passUpdated = false;
+      // Per-pass cache for resolved #labels and data_mapper_objects (Optimization 1)
+      const evalCache = new Map();
 
       enhancedConfigs.forEach((item) => {
         if (typeof item.value !== "string") return;
         const expression = item.value.trim();
+        if (!expression) return;
 
+        // Normalize syntax (handles custom IF, label, etc.)
         const normalizedExpression = this.normalizeExpressionSyntax(expression);
-
-        if (!normalizedExpression.includes("#")) return;
 
         logMessage(
           `Evaluating expression for field value ${item.field_label || item.field_id}: ${expression}`,
         );
 
+        // Defensive: Track resolved values for debugging and type safety
         const resolvedValues: Record<string, { rawValue: any; numeric: number }> = {};
 
+        // --- Token Resolver with Caching and Defensive Guards ---
+        // Optimization 3: Precompute lookupKeys and avoid repeated regex
+        const lookupKeysCache: Record<string, string[]> = {};
         let replaced = normalizedExpression.replace(
           /#([^\s+*/(),]+)/g,
           (match: string) => {
             const rawKey = match.slice(1);
             if (!rawKey) return "NaN";
 
+            // Use cache if available (prevents redundant DB/label lookups)
+            if (evalCache.has(rawKey)) {
+              const cached = evalCache.get(rawKey);
+              resolvedValues[rawKey] = { rawValue: cached, numeric: this.tryParseNumber(cached) ?? 0 };
+              return String(this.tryParseNumber(cached) ?? "NaN");
+            }
+
             const rawKeyUpper = rawKey.toUpperCase();
             if (rawKeyUpper === "YES") {
               resolvedValues[rawKey] = { rawValue: "YES", numeric: 1 };
+              evalCache.set(rawKey, 1);
               return "1";
             }
             if (rawKeyUpper === "NO") {
               resolvedValues[rawKey] = { rawValue: "NO", numeric: 0 };
+              evalCache.set(rawKey, 0);
               return "0";
             }
 
-            const lookupKeys = [
-              rawKey,
-              this.stripIndexes(rawKey),
-              this.normalizeFieldRef(rawKey),
-            ];
-
+            // Optimization 3: Cache lookup keys
+            if (!lookupKeysCache[rawKey]) {
+              lookupKeysCache[rawKey] = [rawKey, this.stripIndexes(rawKey), this.normalizeFieldRef(rawKey)];
+            }
+            const lookupKeys = lookupKeysCache[rawKey];
             let hadKey = false;
             let hadValue: any = undefined;
             for (const key of lookupKeys) {
@@ -1390,6 +1433,7 @@ export class RdFormMapperService {
                 hadKey = true;
                 hadValue = valueMap.get(key);
               }
+              // Optimization 4: Always use safe number conversion
               const num = this.tryParseNumber(valueMap.get(key));
               if (num !== null) {
                 const rawValue = valueMap.has(key) ? valueMap.get(key) : null;
@@ -1397,6 +1441,7 @@ export class RdFormMapperService {
                   rawValue: rawValue === undefined ? null : rawValue,
                   numeric: num,
                 };
+                evalCache.set(rawKey, rawValue);
                 logMessage(
                   `Expression reference for field ${item.field_label || item.field_id}: ${rawKey} -> ${JSON.stringify(valueMap.get(key))} (numeric=${num})`,
                 );
@@ -1408,44 +1453,61 @@ export class RdFormMapperService {
               logMessage(
                 `Non-numeric expression reference for field ${item.field_label || item.field_id}: ${rawKey} (value=${JSON.stringify(hadValue)})`,
               );
+              evalCache.set(rawKey, hadValue);
             } else {
               logMessage(
                 `Missing expression reference for field ${item.field_label || item.field_id}: ${rawKey}`,
               );
+              evalCache.set(rawKey, null);
             }
             return "NaN";
           },
         );
 
+        // Defensive: Replace min/max, transform if(), and guard against malformed expressions
         replaced = replaced
           .replace(/\bmin\s*\(/gi, "Math.min(")
           .replace(/\bmax\s*\(/gi, "Math.max(");
-
         replaced = this.transformIfExpressions(replaced);
 
-        // logMessage(
-        //   `Resolved expression for field ${item.field_label || item.field_id}: ${normalizedExpression} (resolved=${replaced})`,
-        // );
-        // logMessage(
-        //   `Resolved values for field ${item.field_label || item.field_id}: ${JSON.stringify(resolvedValues)}`,
-        // );
-
+        // Defensive: Validate only allowed characters/operators
         const validationTarget = replaced.replace(/Math\.(min|max)\(/g, "(");
         if (!/^[0-9+\-*/().,\sNaN?:<>=!&|]+$/.test(validationTarget)) {
           logMessage(
             `Blocked invalid expression for field ${item.field_label || item.field_id}: ${expression}`,
           );
+          item.value = "";
           return;
         }
 
+        // --- Safe Evaluation ---
         try {
-          const computed = Function(`"use strict"; return (${replaced});`)();
-          if (typeof computed === "number" && Number.isFinite(computed)) {
+          // Defensive: Prevent division by zero and handle null/undefined
+          // Optimization 7: Division by zero check
+          const safeEval = (expr: string): number | null => {
+            try {
+              // Replace any division by zero with NaN
+              const divZeroSafe = expr.replace(/(\d+)\s*\/\s*0(?!\d)/g, "NaN");
+              // eslint-disable-next-line no-new-func
+              const result = Function('return (' + divZeroSafe + ')')();
+              // Defensive: Handle null, undefined, NaN, boolean, and non-finite numbers
+              if (result === null || result === undefined || Number.isNaN(result)) return null;
+              if (typeof result === "boolean") return result ? 1 : 0;
+              if (typeof result === "number" && !Number.isFinite(result)) return null;
+              return result;
+            } catch (err) {
+              return null;
+            }
+          };
+
+          const computed = safeEval(replaced);
+          if (computed !== null) {
             const lowerExpression = expression.toLowerCase();
             const hasSubtraction =
               lowerExpression.includes("-") ||
               lowerExpression.includes(" sub ") ||
               lowerExpression.includes("subtract");
+            // Defensive: Clamp negative values for subtraction if required
             const finalValueRaw = hasSubtraction && computed < 0 ? 0 : computed;
             const finalValue = this.roundToTwoDecimals(finalValueRaw);
 
@@ -1473,11 +1535,13 @@ export class RdFormMapperService {
             logMessage(
               `Could not compute expression for field ${item.field_label || item.field_id}: ${expression} (resolved=${replaced})`,
             );
+            item.value = "";
           }
         } catch (error) {
           logMessage(
-            `Error computing expression for field ${item.field_label || item.field_id}: ${expression} (resolved=${replaced})`,
+            `Error computing expression for field ${item.field_label || item.field_id}: ${expression} (resolved=${replaced}) - ${error}`,
           );
+          item.value = "";
         }
       });
 

@@ -357,14 +357,21 @@ export const rawQuery = {
   },
   checkOpenTasksForUser()
   {
-    return  `SELECT * FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE attachment_level = 'case' AND
-            status_rid IN (SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name IN ('To Do','In Progress','Blocked'))
-            AND attach_to IN (
-              SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid IN (
-                SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name IN ('Submitted','In Progress','Audit Review','On Hold')
-              )
-            )
-            AND assigned_to = :userId`
+   
+    return `
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE attachment_level = 'case' AND
+        status_rid IN (SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name IN ('To Do','In Progress','Blocked'))
+        AND attach_to IN (
+          SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid IN (
+            SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name IN ('Submitted','In Progress','Audit Review','On Hold')
+          )
+        )
+        AND assigned_to = :userId
+      UNION
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE
+        status_rid IN (SELECT rid FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE status_name IN ('To Do','In Progress','Blocked'))
+        AND assigned_to = :userId
+    `
   },
   getUserExtendedPermissionsQuery() {
     return  `
