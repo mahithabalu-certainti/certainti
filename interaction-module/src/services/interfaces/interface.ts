@@ -283,6 +283,7 @@ export interface IInteractionService {
         data: FourPartAssessmentListResponse[];
     };
 }>
+getFpaDetailsById(data : any) : Promise<any>
 }
 
 export interface IWebHookService {

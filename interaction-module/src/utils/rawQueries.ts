@@ -1549,3 +1549,43 @@ const filterUtilityFunction = (filters : filterType, validColumns : any) => {
 export const fetchProjectFiscalIds = (caseRid : string, schemaName : string) => {
   return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'`
 }
+
+export const fetchFpaDetails = (rid : string, schemaName : string) => {
+  let query = 
+  `
+  SELECT 
+  jsonb_build_object(
+  'rid', f.rid,
+  'r_number', f.r_number
+  ) AS title,
+  jsonb_build_object(
+  'rid', p.rid,
+  'project_code', p.project_code,
+  'project_description', p.project_description,
+  'rd_potential_category', f.rd_potential_category,
+  'status', f.status
+  ) AS basic_information,
+  jsonb_build_object(
+  'permitted_purpose', f.permitted_purpose,
+  'technological_uncertainty', f.technological_uncertainty,
+  'process_of_experimentation', f.process_of_experimentation,
+  'technological_in_nature', f.technological_in_nature
+  ) AS four_part_assessment,
+  jsonb_build_object(
+  'record_id', ai.transaction_id,
+  'created_on', ai.created_datetime,
+  'updated_on', ai.modified_datetime,
+  'created_by', ai.created_by,
+  'modified_by', ai.modified_by,
+  'four_part_assessment_id', f.r_number
+  ) AS audit_information
+  FROM
+  ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
+  LEFT JOIN ${schemaName}.ai_assessment_audit ai ON ai.transaction_id = f.transaction_id
+  WHERE
+  f.rid = '${rid}'
+  `
+  return query;
+}

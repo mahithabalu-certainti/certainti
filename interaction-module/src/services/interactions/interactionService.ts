@@ -57,6 +57,7 @@ import {
   fetchKeyContactDetailsForInteractions,
   fetchFourPartAssessment,
   fetchProjectFiscalIds,
+  fetchFpaDetails,
 } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import {
@@ -4179,6 +4180,47 @@ async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
     total_results : 0,
     data : []
    }
+  }
+}
+async getFpaDetailsById (data : any) : Promise<any> {
+  const mainDb = await this.getMainDb();
+  const orgDb = await this.getOrgDb();
+
+  const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+  if(fetchParentAccount) {
+    const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+    const result = await orgDb.query(fetchFpaDetails(data.rid, schemaName));
+    if(result[0][0]) {
+      const userIds = [];
+      let detailsResult = result[0][0] as any
+      userIds.push(detailsResult?.audit_information.created_by,detailsResult?.audit_information.modfied_by ?? '');
+      const findUserDetails : any = await mainDb.query(rawQueries.fetchUser(userIds));
+      const mapUser = new Map(findUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]));
+      detailsResult.audit_information.created_by_name = mapUser.get(detailsResult.audit_information.created_by);
+      detailsResult.audit_information.modified_by_name = mapUser.get(detailsResult.audit_information.modified_by) ?? null
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.fourPartListSuccess,
+        data : {
+          title : detailsResult.title,
+          basic_information : detailsResult.basic_information,
+          four_part_assessment : detailsResult.four_part_assessment,
+          audit_information : detailsResult.audit_information
+        }
+      }
+    } else {
+      return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.dataNotFound,
+      data : {}
+      }
+    }
+  } else {
+    return {
+    statusCode : HttpStatus.NOT_FOUND,
+    statusMessage : STATUS_MESSAGE.accountNoFound,
+    data : {}
+    }
   }
 }
 }

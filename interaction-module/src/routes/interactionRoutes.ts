@@ -115,4 +115,5 @@ routes.post("/sendInteraction",
 );
 //routes.post("/new", checkUserStatusMiddleware("NA"), controller.interactionsController.createResource);
 routes.post('/fourPartAssessment/list', checkUserStatusMiddleware("NA"), controller.interactionsController.fetchFourPartAssessmentList)
+routes.post('/fourPartAssessment/details', checkUserStatusMiddleware('NA'), controller.interactionsController.getFpaDetails)
 export default routes;
