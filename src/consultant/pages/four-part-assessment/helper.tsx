@@ -75,16 +75,16 @@ export const getFourPartAssessmentTableColumns = (
     //   !projectPermissionMap?.['project_code']?.read,
   },
   {
-    id: 'range',
-    sortId: 'range',
+    id: 'rd_potential_category',
+    sortId: 'rd_potential_category',
     label: 'Range',
     width: 140,
     sortable: true,
-    //   hide: !permissionMap?.['range']?.edit && !permissionMap?.['range']?.read,
+    //   hide: !permissionMap?.['rd_potential_category']?.edit && !permissionMap?.['rd_potential_category']?.read,
   },
   {
-    id: 'status_name',
-    sortId: 'status_name',
+    id: 'status',
+    sortId: 'status',
     label: 'Status',
     width: 140,
     sortable: true,
@@ -135,7 +135,6 @@ export const getFourPartAssessmentTableColumns = (
 ];
 
 export const getFourPartAssessmentFilterFields = (
-  statusOptions: { option: string; value: string }[],
   moduleLevel: 'account' | 'project' | 'case'
   //   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
@@ -161,18 +160,18 @@ export const getFourPartAssessmentFilterFields = (
     },
     {
       name: 'Range',
-      value: 'range',
+      value: 'rd_potential_category',
       type: 'text',
       operatorOption: textOptions,
       //   hide:
-      //     !permissionMap?.['range']?.edit &&
-      //     !permissionMap?.['range']?.read,
+      //     !permissionMap?.['rd_potential_category']?.edit &&
+      //     !permissionMap?.['rd_potential_category']?.read,
     },
     {
       name: 'Status',
       value: 'status_rid',
       type: 'enum',
-      options: statusOptions,
+      options: [],
       operatorOption: enumOptions,
       //   hide:
       //     !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,

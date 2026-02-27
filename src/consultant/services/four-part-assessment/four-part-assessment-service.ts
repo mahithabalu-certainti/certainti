@@ -22,12 +22,15 @@ const USE_MOCK = true; // Toggle this to switch between mock and real API
 
 export const fetchFourPartAssessmentList = async (
   params: FourPartAssessmentListURLParams
-): Promise<{ fourPartAssessment: FourPartAssessmentList[]; count: number }> => {
+): Promise<{
+  fourPartAssessment: FourPartAssessmentList[];
+  count: number;
+}> => {
   if (USE_MOCK) {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     return {
-      fourPartAssessment: mockFourPartAssessmentList.data.fourPartAssessment,
-      count: mockFourPartAssessmentList.data.count,
+      fourPartAssessment: mockFourPartAssessmentList.data.four_part_assessment,
+      count: mockFourPartAssessmentList.data.total_results,
     };
   }
 
@@ -35,8 +38,8 @@ export const fetchFourPartAssessmentList = async (
     FourPartAssessmentListURL(params)
   );
   return {
-    fourPartAssessment: response.data.data.fourPartAssessment,
-    count: response.data.data.count,
+    fourPartAssessment: response.data.data.four_part_assessment,
+    count: response.data.data.total_results,
   };
 };
 

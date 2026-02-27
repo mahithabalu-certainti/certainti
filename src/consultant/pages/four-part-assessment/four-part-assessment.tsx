@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -10,7 +10,6 @@ import {
   AllPermissions,
   FilterTypes,
   OverviewTabs,
-  useGetInteractionStatus,
 } from '../../../common-service';
 import {
   ActivityDropdownItem,
@@ -119,8 +118,6 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
   );
   const totalItems = data?.count || 0;
 
-  const interactionStatus = useGetInteractionStatus();
-
   useEffect(() => {
     if (data) {
       setFourPartAssessmentList(data.fourPartAssessment || []);
@@ -146,15 +143,6 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
     convertedFiscalYear,
     searchText,
   ]);
-
-  const statusOptions = useMemo(
-    () =>
-      interactionStatus.data?.data.interactionStatus.map((status) => ({
-        option: status.status_name,
-        value: status.rid,
-      })) || [],
-    [interactionStatus.data?.data.interactionStatus]
-  );
 
   // Permissions
   // const fourPartAssessmentEnable = checkPermission(modules, AllModules.FOUR_PART_ASSESSMENT);
@@ -237,10 +225,8 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
     moduleLevel
   );
 
-  const fourPartAssessmentFilterFields = getFourPartAssessmentFilterFields(
-    statusOptions,
-    moduleLevel
-  );
+  const fourPartAssessmentFilterFields =
+    getFourPartAssessmentFilterFields(moduleLevel);
 
   const getRowId = (row: FourPartAssessmentList) => row.rid;
 
@@ -329,7 +315,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
             showItemCount={true}
             titleIcon={
               <FourPartIcon
-                className={`[&_path]:fill-[${currentModuleColors.text}!important] [&_path]:stroke-[${currentModuleColors.text}!important] w-[13px] h-[14px]`}
+                className={`text-[${currentModuleColors.text}] w-[13px] h-[13px]`}
                 alt='header-icon'
               />
             }

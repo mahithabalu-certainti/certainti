@@ -203,7 +203,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
           subValue={data?.r_number || ''}
           titleIcon={
             <FourPartIcon
-              className={`[&_path]:fill-[${currentModuleColors.text}!important] [&_path]:stroke-[${currentModuleColors.text}!important] w-[13px] h-[14px]`}
+              className={`text-[${currentModuleColors.text}] w-[13px] h-[13px]`}
               alt='header-icon'
             />
           }

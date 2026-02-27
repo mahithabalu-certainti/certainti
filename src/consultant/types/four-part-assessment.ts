@@ -26,21 +26,15 @@ export interface FourPartAssessmentListExportURLParams {
 export type FourPartAssessmentList = {
   rid: string;
   r_number: string | null;
-  account_rid: string;
   project_code: string | null;
-  attach_to: string;
-  attached_to: string;
-  attachment_level: string;
-  range: 'Low' | 'Medium' | 'High';
-  status_rid: string | null;
-  status_name: 'Met' | 'Not Met';
+  rd_potential_category: 'Low' | 'Medium' | 'High' | string;
+  status: string;
   created_by: string;
   created_by_name: string;
   created_datetime: string;
   modified_by?: string | null;
   modified_by_name?: string | null;
   modified_datetime?: string | null;
-  tracker_one_liner?: string;
 };
 
 export interface FourPartAssessmentListApiResponse {
@@ -48,8 +42,10 @@ export interface FourPartAssessmentListApiResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    fourPartAssessment: FourPartAssessmentList[];
-    count: number;
+    page: number;
+    limit: number;
+    total_results: number;
+    four_part_assessment: FourPartAssessmentList[];
   };
 }
 
