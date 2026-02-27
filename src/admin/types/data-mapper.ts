@@ -5,6 +5,8 @@ export interface DataMapperFormPayload {
   effective_to_date: string;
   country_rid: string;
   state_rid: string;
+  description: string;
+  is_federal: boolean;
   file?: File;
 }
 
@@ -32,6 +34,8 @@ export interface DataMapperDetails {
   status_name: string;
   created_by_name: string;
   modified_by_name: string;
+  descriptions: string;
+  is_federal: boolean;
 }
 
 export interface DataMapperDetailsResponse {
@@ -264,4 +268,16 @@ export interface RecomputeResponse {
 export interface RecomputeRequest {
   rid: string;
   mappings: DataMapperFieldMapping[];
+}
+
+// ----------- Update Form Status Types --------
+export interface UpdateFormStatusPayload {
+  form_rid: string;
+  form_status: 'accept' | 'reject';
+}
+
+export interface UpdateFormStatusResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
 }

@@ -22,6 +22,7 @@ interface DefaultItemData {
   account?: string;
   fiscalYear?: number;
   avatar?: string;
+  attachedTo?: string;
 }
 
 interface TaskCardProps<T> {
@@ -136,9 +137,12 @@ const TaskCard = <T,>({
         <div className='flex justify-between'>
           <div className='flex flex-col text-sm font-semibold text-[#2A2A2A]'>
             {data.title}
-            {data.description && (
+            {data.attachedTo && (
               <p className='pr-2 truncate flex-1 text-[11px] text-[#425a76cf]'>
-                {data.description}
+                <span className='font-semibold text-[#239ee6]'>
+                  Attached To:{' '}
+                </span>{' '}
+                {data.attachedTo}
               </p>
             )}
           </div>

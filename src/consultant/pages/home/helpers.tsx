@@ -480,11 +480,9 @@ export const blendWithWhite = (hex: string, alpha = 0.9) => {
 
 export const DONUT_COLORS = {
   projectCost: '#4CAF50', // Green
-  qualifiedCost: '#FFC107', // Yellow
-  qreCost: '#03A9F4', // Light Blue
-  computed: '#FF9800', // Orange (for computed credits)
-  submitted: '#9C27B0', // Purple
-  approved: '#8BC34A', // Light Green
+  fteCost: '#03A9F4', // Light Blue
+  subconCost: '#FF9800', // Orange
+  nonlaborCost: '#9C27B0', // Purple
 };
 
 // Format date function

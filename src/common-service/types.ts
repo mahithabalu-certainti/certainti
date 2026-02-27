@@ -188,6 +188,7 @@ export enum AllMenus {
 }
 
 export enum AllModules {
+  DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
   PROJECTS = 'projects',
   PROJECT_RESOURCES = 'project_resources',
@@ -223,6 +224,7 @@ export enum AllModules {
   ACTIVITIES_CALL = 'activity_call',
   WORKFLOW_BUILDER = 'workflow_builder',
   MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule',
+  RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
   FOUR_PART_ASSESSMENT = 'four_part_assessment',
 }
 
@@ -398,6 +400,22 @@ export enum AllPermissions {
   ACCOUNTS_TIMELINE_VIEW = 'accounts_timeline_view',
   PROJECTS_TIMELINE_VIEW = 'projects_timeline_view',
   CASES_TIMELINE_VIEW = 'cases_timeline_view',
+  PENDING_FOLLOWUPS_VIEW = 'pending_followups_view',
+  WEEKLY_PRODUCTIVITY_VIEW = 'weekly_productivity_view',
+  OVERDUE_APPROVALS_VIEW = 'overdue_approvals_view',
+  OPEN_TASKS_VIEW = 'open_tasks_view',
+  MY_MEETINGS_VIEW = 'my_meetings_view',
+  DUE_TODAY_OVERDUE_TASKS_VIEW = 'due_today_overdue_tasks_view',
+  COMPLETED_TASKS_WEEK_VIEW = 'completed_tasks_week_view',
+  CASES_BY_HEALTH_STATUS_VIEW = 'cases_by_health_status_view',
+  UPCOMING_TASKS_VIEW = 'upcoming_tasks_view',
+  DASHBOARD_COUNT_VIEW = 'dashboard_count_view',
+  GLOBAL_LEVEL_VIEW = 'global_level_view',
+  OVERALL_PROJECT_VALUE_BY_JURISDICTION_VIEW = 'overall_project_value_by_jurisdiction_view',
+  RD_FORM_DATA_MAPPER_EXPORT = 'rd_form_data_mapper_export',
+  RD_FORM_DATA_MAPPER_CREATE = 'rd_form_data_mapper_create',
+  RD_FORM_DATA_MAPPER_DELETE = 'rd_form_data_mapper_delete',
+  RD_FORM_DATA_MAPPER_VIEW_EDIT = 'rd_form_data_mapper_view_edit',
   FOUR_PART_ASSESSMENT_OVERVIEW = 'four_part_assessment_overview',
   FOUR_PART_ASSESSMENT_TIMELINE = 'four_part_assessment_timeline',
   FOUR_PART_ASSESSMENT_VIEW_EDIT = 'four_part_assessment_view_edit',
@@ -458,7 +476,7 @@ export enum MenuOption {
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
   WORKFLOW_BUILDER = 'workflow_builder',
-  DATA_MAPPER = 'data_mapper',
+  RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
 }
 
 export interface OverviewTabs {

@@ -24,11 +24,15 @@ import Markdown from 'react-markdown';
 interface TechnicalSummaryDetailsProps {
   accountInActive: boolean;
   handleBackClick: () => void;
+  isActionItemsExpanded?: boolean;
+  setIsActionItemsExpanded?: (expanded: boolean) => void;
 }
 
 const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   accountInActive,
   handleBackClick,
+  isActionItemsExpanded,
+  setIsActionItemsExpanded,
 }) => {
   const [searchParams] = useSearchParams();
   // const { projectid } = useParams();
@@ -156,7 +160,10 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
           label: 'Back To Technical Summary',
           variant: 'outlined' as const,
           disabled: false,
-          onClick: handleBackClick,
+          onClick: () => {
+            if (setIsActionItemsExpanded) setIsActionItemsExpanded(false);
+            handleBackClick();
+          },
           sx: { width: '178px', minWidth: '178px' },
           hide: hideAdditionalSummaryText,
         },
@@ -201,7 +208,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     value:
       item.summary && item.summary.trim() !== ''
         ? item.summary
-        : 'No information available',
+        : 'No data available',
     hide: hideTechnicalSummary,
   }));
 
@@ -220,6 +227,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
         buttons={headerButtons}
         onBackClick={handleBackClick}
         showBackArrow={true}
+        isExpanded={isActionItemsExpanded}
+        onToggleExpand={setIsActionItemsExpanded}
       />
       {isLoading ? (
         <DetailsSectionSkeleton className='p-0 m-0' />
@@ -232,35 +241,32 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       ) : (
         <>
           <div>
-            <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Project Summary - Technical Summary
-            </div>
-
-            {/* Label + Paragraph */}
-            <div className='py-2 px-6 flex flex-col gap-4'>
-              {transformedData?.map((item, index) => {
-                const formattedText = (item.value || '')
-                  .replace(/\\n/g, '\n')
-                  .replace(/•/g, '-');
-                return (
-                  <div key={index} className='flex flex-col gap-1'>
-                    {/* Label */}
-                    <div className='text-left font-extrabold text-[16px] text-[#425A76]'>
-                      {item.label}
-                    </div>
-                    {/* Value as paragraph */}
-                    <div className='markdown'>
-                      <Markdown>{formattedText || ''}</Markdown>
-                    </div>
+            {transformedData?.map((item, index) => {
+              const formattedText = (item.value || '')
+                .replace(/\\n/g, '\n')
+                .replace(/\.\n/g, '.\n\n')
+                .replace(/^[ \t]*[-*•][ \t]*/gm, '')
+                .replace(/^[ \t]+/gm, '')
+                .replace(/([^ \n])\s*\*\*(.*?)\*\*/g, '$1\n\n**$2**')
+                .replace(/\*\*(.*?)\*\*:\s*/g, '**$1**:\n\n');
+              return (
+                <div key={index} className='flex flex-col'>
+                  {/* Label as Header Banner */}
+                  <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+                    {item.label}
                   </div>
-                );
-              })}
-            </div>
+                  {/* Value as content */}
+                  <div className='py-2 px-6 markdown font-medium text-[13px] text-[#425A76] [&>p]:mb-2'>
+                    <Markdown>{formattedText || ''}</Markdown>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div
             className={`${updateTechSummaryText.isPending ? 'pointer-events-none cursor-default' : ''} ${hideAdditionalSummaryText ? 'hidden' : ''}`}
           >
-            <div className='flex justify-between items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+            <div className='flex justify-between items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
               <div>Refinement Prompt</div>
               {/* <div>
                 <TextButton label='Refine Prompt' onClick={() => console.log('Trigger AI Prompt')}

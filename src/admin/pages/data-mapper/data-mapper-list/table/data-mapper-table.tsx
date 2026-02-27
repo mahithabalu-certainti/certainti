@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
@@ -16,17 +16,26 @@ import { getDataMapperColumns } from './columns';
 import { DataMapperListItem, DataMapperListParams } from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { DATA_MAPPER_CONFIG, DATA_MAPPER_EDIT } from '../../../../../routes';
-import { useDataMapperList } from '../../../../service/data-mapper/data-mapper-service';
+import {
+  useDataMapperList,
+  useUpdateFormStatus,
+} from '../../../../service/data-mapper/data-mapper-service';
 import { caseClient } from '../../../../../api/graphql/clients/client';
 import { UPDATE_DATA_MAPPER } from '../../../../../api/graphql/queries/data-mapper-query';
 import { useToast } from '../../../../../hooks';
 import dayjs from 'dayjs';
+import { AcceptIcon, RejectIcon } from '../../../../../assets';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AllPermissions } from '../../../../../common-service';
+import { checkPermission } from '../../../../../common-utils';
 
 interface IDataMapperTableProps {
   appliedFilters: Record<string, FilterCondition>;
   tableParams: DataMapperListParams;
   setTableParams: React.Dispatch<React.SetStateAction<DataMapperListParams>>;
   refreshTrigger?: number;
+  onRefresh?: () => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
@@ -51,8 +60,13 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
   regionLoading,
   setCurrentCountry,
 }) => {
-  const { errorToast } = useToast();
+  const { errorToast, successToast } = useToast();
   const navigate = useNavigate();
+  const updateFormStatus = useUpdateFormStatus();
+  const [rowActionLoading, setRowActionLoading] = useState<{
+    rid: string;
+    action: 'accept' | 'reject';
+  } | null>(null);
   const [dataMapperList, setDataMapperList] = useState<DataMapperListItem[]>(
     []
   );
@@ -64,7 +78,9 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     client: caseClient,
   });
 
-  const { data, isLoading, isError } = useDataMapperList(
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const { data, isLoading, isError, refetch } = useDataMapperList(
     { ...tableParams, filters: appliedFilters, search: searchValue },
     refreshTrigger
   );
@@ -75,6 +91,38 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
       setDataMapperList(data?.items || []);
     }
   }, [data?.items]);
+
+  // Permissions
+  const isDataMapperExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_FORM_DATA_MAPPER_EXPORT
+  );
+
+  const dataMapperEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.RD_FORM_DATA_MAPPER_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const dataMapperFieldsEditable = useMemo(
+    () =>
+      permission
+        .find(
+          (item) => item.name === AllPermissions.RD_FORM_DATA_MAPPER_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    dataMapperEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [dataMapperEditFields]);
 
   const getRowId = (row: DataMapperListItem) => row.rid;
 
@@ -155,7 +203,9 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     handleCountry,
     dateRange,
     handleDateRange,
-    regionLoading
+    regionLoading,
+    permissionMap,
+    isDataMapperExportEnable
   );
 
   const actionButtons: ActionItem<DataMapperListItem>[] = [
@@ -163,11 +213,13 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
       label: 'Edit',
       disabled: (row) => row?.status_name?.toLowerCase() === 'initiated',
       onClick: (row) => handleEdit(row),
+      hide: !dataMapperFieldsEditable,
     },
     {
       label: 'Configuration',
-      disabled: (row) => row?.status_name?.toLowerCase() !== 'completed',
+      disabled: (row) => row?.status_name?.toLowerCase() !== 'accepted',
       onClick: (row) => handleConfig(row),
+      hide: !dataMapperFieldsEditable,
     },
   ];
 
@@ -247,6 +299,61 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     }
   };
 
+  const handleUpdateFormStatus = useCallback(
+    async (row: DataMapperListItem, status: 'accept' | 'reject') => {
+      setRowActionLoading({ rid: row.rid, action: status });
+      try {
+        const res = await updateFormStatus.mutateAsync({
+          form_rid: row.rid,
+          form_status: status,
+        });
+        if (res?.statusCode === 200) {
+          successToast('Status updated successfully');
+          refetch();
+        } else {
+          errorToast(res?.statusMessage || 'Failed to update status');
+        }
+      } catch (error) {
+        errorToast((error as Error)?.message || 'Failed to update status');
+      } finally {
+        setRowActionLoading(null);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [updateFormStatus, successToast, errorToast]
+  );
+
+  const getConditionMenuItems = (row: DataMapperListItem) => {
+    if (row.status_name?.toLowerCase() !== 'waiting for approval') {
+      return [];
+    }
+    const isRowLoading = rowActionLoading?.rid === row.rid;
+    return [
+      {
+        label: 'Accept',
+        onClick: () => handleUpdateFormStatus(row, 'accept'),
+        icon: AcceptIcon,
+        loading: isRowLoading && rowActionLoading?.action === 'accept',
+        disabled: isRowLoading || updateFormStatus.isPending,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] min-w-[75px] cursor-pointer h-[24px] bg-[#3EA72F1A] enabled:hover:bg-[#3da72ff4] enabled:hover:text-[#fff] disabled:opacity-60 disabled:cursor-default',
+      },
+      {
+        label: 'Reject',
+        onClick: () => handleUpdateFormStatus(row, 'reject'),
+        icon: RejectIcon,
+        loading: isRowLoading && rowActionLoading?.action === 'reject',
+        disabled: isRowLoading || updateFormStatus.isPending,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer min-w-[70px] h-[24px] bg-[#FF3C031A] enabled:hover:bg-[#FF3C03] enabled:hover:text-[#fff] disabled:opacity-60 disabled:cursor-default',
+      },
+    ];
+  };
+
+  const hideStatusAction =
+    !permissionMap?.['status_action']?.edit &&
+    !permissionMap?.['status_action']?.read;
+
   return (
     <>
       <ManageColumnsPopover
@@ -277,9 +384,14 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
         actionAlignHorizontal='left'
+        conditionMenuItems={
+          !hideStatusAction
+            ? (row: DataMapperListItem) => getConditionMenuItems(row)
+            : undefined
+        }
         // State
         loading={isLoading}
-        error={isError ? 'Failed to load RD Form Configurations' : undefined}
+        error={isError ? 'Failed to load RD Forms' : undefined}
         // Pagination
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}

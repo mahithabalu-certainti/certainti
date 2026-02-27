@@ -45,10 +45,15 @@ import ActivityDetails from '../../../activities/activities-details/activity-det
 import { ActivityListTable } from '../../../activities';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
-import { useGetActivityStatus } from '../../../../services/activities/activities-service';
+import {
+  useCancelledActivityMeeting,
+  useCompletedActivityMeeting,
+  useGetActivityStatus,
+} from '../../../../services/activities/activities-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
+import { useToast } from '../../../../../hooks';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { capitalize } from '@mui/material';
 import Timeline from '../../../../../pages/timeline/timeline';
@@ -63,7 +68,7 @@ const ActivityTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACTIVITIES_TIMELINE,
     name: 'Timeline',
-    hide: true,
+    hide: false,
     key: 'timeline',
   },
 ];
@@ -102,6 +107,50 @@ const Activities: React.FC<ActivitiesProps> = ({
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
+
+  const completeMeeting = useCompletedActivityMeeting();
+  const cancelMeeting = useCancelledActivityMeeting();
+  const { successToast } = useToast();
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const handleCompleteMeeting = async (activityId: string) => {
+    setCompletingId(activityId);
+    completeMeeting.mutate(
+      {
+        account_rid: accountid || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+        onSettled: () => {
+          setCompletingId(null);
+        },
+      }
+    );
+  };
+
+  const handleCancelMeeting = async (activityId: string) => {
+    setCancellingId(activityId);
+    cancelMeeting.mutate(
+      {
+        account_rid: accountid || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+        onSettled: () => {
+          setCancellingId(null);
+        },
+      }
+    );
+  };
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -425,7 +474,11 @@ const Activities: React.FC<ActivitiesProps> = ({
       case 'meeting':
         return getActivityMeetingListColumns(
           handleViewActivity,
-          meetingPermissionMap
+          meetingPermissionMap,
+          handleCancelMeeting,
+          handleCompleteMeeting,
+          cancellingId,
+          completingId
         );
       case 'call':
         return getActivityCallLogListColumns(
@@ -446,6 +499,8 @@ const Activities: React.FC<ActivitiesProps> = ({
     tabParam,
     taskPermissionMap,
     allActivityPermissionMaps,
+    cancellingId,
+    completingId,
   ]);
 
   const activityEditPermissionByType: Record<ActivityModuleType, boolean> = {
@@ -507,27 +562,26 @@ const Activities: React.FC<ActivitiesProps> = ({
           showAddActivity={tabParam === 'all'}
           activityMenuItems={activityMenuItems}
         />
-
-        <SectionHeader
-          title='Activities'
-          titleIcon={
-            <ActivitiesIcon
-              alt='activity-header-icon'
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-            />
-          }
-          count={count}
-          showItemCount={!viewDetails}
-          iconBg={ColorCode.accountBgColor}
-          bgType='circle'
-          buttons={headerButtons}
-        />
         {isTimeLineView ? (
-          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <div className='border border-[#CBD6E2] rounded-[2px]'>
             <Timeline entitytype='account' />
           </div>
         ) : (
-          <div>
+          <>
+            <SectionHeader
+              title='Activities'
+              titleIcon={
+                <ActivitiesIcon
+                  alt='activity-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              }
+              count={count}
+              showItemCount={!viewDetails}
+              iconBg={ColorCode.accountBgColor}
+              bgType='circle'
+              buttons={headerButtons}
+            />
             <SectionHeaderTab
               tabs={tabs}
               onTabChange={handleTabChange}
@@ -652,7 +706,7 @@ const Activities: React.FC<ActivitiesProps> = ({
                 )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

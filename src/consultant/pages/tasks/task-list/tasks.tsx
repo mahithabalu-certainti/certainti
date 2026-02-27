@@ -82,6 +82,10 @@ export const Tasks: React.FC = () => {
     (location.state as { openTaskId?: string } | null)?.openTaskId
   );
 
+  // Stores the original nav filters from the dashboard so they can be
+  // re-applied (with the correct tab's status options) on every tab switch.
+  const navFiltersRef = useRef<NavFilter[]>([]);
+
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
@@ -106,43 +110,6 @@ export const Tasks: React.FC = () => {
     modules,
     AllModules.ACTIVITIES_TASK
   );
-
-  // Set initial tab based on taskType from navigation state
-  useEffect(() => {
-    const navState = location.state as NavFilterState & {
-      taskType?: string;
-    };
-    const incomingTaskType = navState?.taskType;
-
-    if (incomingTaskType) {
-      const newParams = new URLSearchParams(searchParams);
-      // Normalize taskType to match tab values
-      const normalizedType = incomingTaskType.toLowerCase();
-
-      if (
-        normalizedType === 'milestone' &&
-        isWorkBreakdownEnable &&
-        tabParam !== 'milestone'
-      ) {
-        newParams.set('tab', 'milestone');
-        setSearchParams(newParams, { replace: true });
-      } else if (
-        normalizedType === 'activity' &&
-        isActivityTaskEnable &&
-        tabParam !== 'activity'
-      ) {
-        newParams.set('tab', 'activity');
-        setSearchParams(newParams, { replace: true });
-      }
-    }
-  }, [
-    location.state,
-    searchParams,
-    setSearchParams,
-    isWorkBreakdownEnable,
-    isActivityTaskEnable,
-    tabParam,
-  ]);
 
   const tabs = useMemo(() => {
     const list = [];
@@ -337,13 +304,33 @@ export const Tasks: React.FC = () => {
     const navState = location.state as NavFilterState | null;
     const incomingFilters: NavFilter[] = navState?.filters ?? [];
 
-    if (incomingFilters.length === 0 || urlFilterApplied) return;
+    // On first load: use filters from location.state and cache them in the ref.
+    // On tab switch re-application: location.state is already cleared, so fall
+    // back to the cached ref so the same filters apply for the new tab.
+    const filtersToApply =
+      incomingFilters.length > 0 ? incomingFilters : navFiltersRef.current;
 
-    // Wait for statusOptions to load before resolving enum labels
+    if (filtersToApply.length === 0 || urlFilterApplied) return;
+
+    // Wait for the current tab's statusOptions to load before resolving enum labels
     if (statusOptions.length === 0) return;
 
-    // Resolve enum filter values: label string → RID
-    const resolvedFilters: NavFilter[] = incomingFilters.map((f) => {
+    // Cache filters from location.state on first load (before clearing state).
+    // Only do this for Report Card navigations (reapplyFiltersOnTabSwitch flag),
+    // NOT for task item clicks — those should just clear on tab switch.
+    const shouldReapply = !!(
+      navState as { reapplyFiltersOnTabSwitch?: boolean } | null
+    )?.reapplyFiltersOnTabSwitch;
+    if (
+      shouldReapply &&
+      incomingFilters.length > 0 &&
+      navFiltersRef.current.length === 0
+    ) {
+      navFiltersRef.current = incomingFilters;
+    }
+
+    // Resolve enum filter values: label string → current tab's RID
+    const resolvedFilters: NavFilter[] = filtersToApply.map((f) => {
       if (f.type !== 'enum') return f;
 
       const resolveValue = (val: string): string => {
@@ -376,10 +363,14 @@ export const Tasks: React.FC = () => {
     setAppliedFilters(apiFilters);
     setUrlFilterApplied(true);
 
-    // Clear navigation state so refreshing doesn't re-apply
-    navigate(location.pathname, { replace: true });
+    // Clear navigation state so refreshing doesn't re-apply.
+    // Preserve ?tab= and other query params in the URL.
+    if (incomingFilters.length > 0) {
+      navigate(location.pathname + location.search, { replace: true });
+    }
   }, [
     location.state,
+    location.search,
     tabParam,
     statusOptions,
     urlFilterApplied,
@@ -449,9 +440,14 @@ export const Tasks: React.FC = () => {
       search: undefined,
     }));
     setAppliedFilters({});
+    clearFilters('global-tasks');
+    // If the user originally navigated from a Report Card, re-apply those
+    // filters for the new tab (with its own statusOptions for enum resolution)
+    if (navFiltersRef.current.length > 0) {
+      setUrlFilterApplied(false);
+    }
     searchParams.set('tab', value);
     setSearchParams(searchParams, { replace: true });
-    clearFilters('global-tasks');
   };
 
   return (

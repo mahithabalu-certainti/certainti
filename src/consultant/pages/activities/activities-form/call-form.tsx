@@ -666,11 +666,6 @@ const CallForm: React.FC<CallFormProps> = ({
       newErrors.minutes_of_meeting = 'Field is required';
     }
 
-    if (!REGEX_PATTERNS.MAX_2000.test(formData.minutes_of_meeting)) {
-      newErrors.minutes_of_meeting =
-        'Minutes of Meeting must be within 2000 characters';
-    }
-
     if (!formData.subject.trim()) {
       newErrors.subject = 'Field is required';
     }

@@ -843,24 +843,24 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             showAddActivity={true}
             activityMenuItems={activityMenuItems}
           />
-          {isTimeLineView ? (
-            <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
-              <Timeline entitytype='case' />
-            </div>
-          ) : (
-            <>
-              <SectionHeader
-                title={'Action Items'}
-                titleIcon={getTitleIcon()}
-                buttons={headerButtons}
-                count={count}
-                showItemCount={tabParam === 'case_task'}
-                hideSection={false}
-                iconBg={ColorCode.caseBgColor}
-                bgType='circle'
-              />
-            </>
-          )}
+          <SectionHeader
+            title={'Action Items'}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={count}
+            showItemCount={tabParam === 'case_task'}
+            hideSection={false}
+            iconBg={ColorCode.caseBgColor}
+            bgType='circle'
+          />
+        </>
+      )}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='cases' />
+        </div>
+      ) : (
+        <>
           <SectionHeaderTab
             tabs={tabs}
             onTabChange={handleTabChange}
@@ -872,7 +872,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 : undefined
             }
           />
-
           <div
             className={`border border-t-0 border-[#CBD6E2] ${
               isActionItemsExpanded

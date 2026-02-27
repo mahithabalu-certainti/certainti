@@ -97,7 +97,7 @@ export const sideNavAdminItems: AdminNavItem[] = [
         matchLink: WORKFLOW_BUILDER,
       },
       {
-        id: MenuOption.DATA_MAPPER,
+        id: MenuOption.RD_FORM_DATA_MAPPER,
         name: 'RD Forms',
         icon: DataMapperIcon,
         link: DATA_MAPPER,

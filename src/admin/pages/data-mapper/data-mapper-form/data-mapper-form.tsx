@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { DataMapperIcon, UploadIcon } from '../../../../assets';
 import {
+  AllPermissions,
   Layout,
   OnChange,
   useGetAllCountries,
@@ -20,8 +21,11 @@ import {
 } from '../../../service/data-mapper/data-mapper-service';
 import { DataMapperFormData } from './form-data';
 import { DataMapperFormPayload } from '../../../types/data-mapper';
-import { SelectOption } from '../../../../consultant/types';
+import { SelectOption, YesNo } from '../../../../consultant/types';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
+import { shouldHideField } from '../../checklist-templates/checklist-template-form/helper';
 
 const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
@@ -59,6 +63,9 @@ const DataMapperForm: React.FC = () => {
     updated_on: '',
     updated_by: '',
   });
+  const [isFederal, setIsFederal] = useState<boolean>(false);
+
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   // API Hooks
   const allCountries = useGetAllCountries('Active');
@@ -69,6 +76,23 @@ const DataMapperForm: React.FC = () => {
     mapperId,
     isEditView
   );
+
+  // Permissions
+  const dataMapperEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.RD_FORM_DATA_MAPPER_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    dataMapperEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [dataMapperEditFields]);
 
   // Memoized Options
   const memoizedCountries: SelectOption[] = useMemo(
@@ -98,6 +122,8 @@ const DataMapperForm: React.FC = () => {
         effective_to_date: mapperData.effective_to_date || '',
         country_rid: mapperData.country_rid || '',
         state_rid: mapperData.state_rid || '',
+        description: mapperData.descriptions || '',
+        is_federal: mapperData.is_federal ? YesNo.Yes : YesNo.No,
       }),
     }),
     [mapperData]
@@ -149,6 +175,7 @@ const DataMapperForm: React.FC = () => {
           ? formatDateToYYYYMMDDWithTime(mapperData.modified_datetime || '-')
           : '-',
       });
+      setIsFederal(mapperData.is_federal ?? false);
     }
   }, [isEditView, mapperData]);
 
@@ -263,6 +290,8 @@ const DataMapperForm: React.FC = () => {
     );
     formDataPayload.append('effective_to_date', data.effective_to_date || '');
     formDataPayload.append('country_rid', data.country_rid || '');
+    formDataPayload.append('descriptions', data.description || '');
+    formDataPayload.append('is_federal', data.is_federal ? 'true' : 'false');
     if (data.state_rid) {
       formDataPayload.append('state_rid', data.state_rid || '');
     }
@@ -291,6 +320,13 @@ const DataMapperForm: React.FC = () => {
         setEffectiveFromDate(undefined);
       }
     }
+    if (data.fieldName === 'is_federal') {
+      if (data.fieldValue === YesNo.Yes) {
+        setIsFederal(true);
+      } else {
+        setIsFederal(false);
+      }
+    }
   };
 
   const goBack = () => {
@@ -298,13 +334,25 @@ const DataMapperForm: React.FC = () => {
   };
 
   const formConfig = DataMapperFormData(
+    isEditView,
     memoizedCountries,
     memoizedStates,
     states.isLoading,
-    effectiveFromDate
+    isFederal,
+    effectiveFromDate,
+    permissionMap
   );
 
   const formLoading = isLoading || allCountries.isLoading;
+
+  const hideAttachments =
+    isEditView &&
+    !permissionMap?.['browse_file']?.read &&
+    !permissionMap?.['browse_file']?.edit;
+  const disableAttachments =
+    isEditView &&
+    permissionMap?.['browse_file']?.read &&
+    !permissionMap?.['browse_file']?.edit;
 
   return (
     <div>
@@ -380,7 +428,12 @@ const DataMapperForm: React.FC = () => {
               isFrom='data-mapper'
             />
 
-            <div className='mt-4'>
+            <div
+              className={`mt-4 ${hideAttachments ? 'hidden' : 'block'}`}
+              style={{
+                pointerEvents: disableAttachments ? 'none' : 'all',
+              }}
+            >
               <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
                 Attachment
               </div>
@@ -450,6 +503,7 @@ const DataMapperForm: React.FC = () => {
                   setSelectedFiles={setSelectedFiles}
                   existingFiles={existingFile ? [existingFile] : []}
                   onRemoveExistingFile={() => setExistingFile(null)}
+                  disabled={disableAttachments}
                 />
               </div>
             </div>
@@ -463,26 +517,52 @@ const DataMapperForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: auditInfo.rid,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
                   },
                   {
                     label: 'Created On',
                     value: auditInfo.created_on,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Created By',
                     value: auditInfo.created_by,
+                    hide: shouldHideField(
+                      'created_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Form ID',
                     value: auditInfo.r_number,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated On',
                     value: auditInfo.updated_on,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated By',
                     value: auditInfo.updated_by,
+                    hide: shouldHideField(
+                      'modified_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                 ].map((field, idx) => (
                   <div key={idx}>

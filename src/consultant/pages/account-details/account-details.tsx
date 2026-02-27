@@ -28,6 +28,7 @@ import {
   AccountsIcon,
   ManageGroupAccount,
   HistorySubmissionIcon,
+  DashboardIcon,
   FourPartIcon,
 } from '../../../assets';
 import {
@@ -115,6 +116,7 @@ import { ExportCaseList } from '../../services/cases/case-service';
 import { ExportChecklistList } from '../../services/checklist/checklist-service';
 import { ExportActivityList } from '../../services/activities/activities-service';
 import HistorySubmission from '../case/case-details/history-submission/history-submission';
+import Dashboard from '../account-details-sidebar/sidebar-pages/dashboard/dashboard';
 import { ExportFourPartAssessmentList } from '../../services/four-part-assessment/four-part-assessment-service';
 import { FourPartAssessment } from '../four-part-assessment';
 
@@ -970,6 +972,12 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'dashboard':
+        return (
+          <Dashboard
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+          />
+        );
       case 'timesheet':
         return (
           <Timesheet
@@ -1022,6 +1030,14 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: FinancialIcon,
+      },
+      {
+        name: 'Dashboard',
+        key: 'dashboard',
+        id: AllModules.DASHBOARD,
+        disabled: disable,
+        hide: disable,
+        icon: DashboardIcon,
       },
       {
         name: 'Details',

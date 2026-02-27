@@ -120,7 +120,7 @@ export const ProjectDetails = () => {
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const detailPageView = activeKey === 'projectDetails';
-
+  const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
       sortBy: '',
@@ -282,6 +282,20 @@ export const ProjectDetails = () => {
       dispatch(setTemporaryFiscalYear(projectData.fiscal_year.toString()));
     }
   }, [projectData, dispatch]);
+
+  const handleToggleActionItems = (
+    value: boolean | ((prevState: boolean) => boolean)
+  ) => {
+    setIsActionItemsExpanded((prev) => {
+      const newState = typeof value === 'function' ? value(prev) : value;
+      if (newState) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+      return newState;
+    });
+  };
 
   const handleQreAdjustmentUpdated = (result: ProjectQreAdjustmentResponse) => {
     const updatedProject = mergeAdjustmentResponse(
@@ -835,6 +849,8 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
             activityMenuItems={activityMenuItems}
+            isActionItemsExpanded={isActionItemsExpanded}
+            setIsActionItemsExpanded={handleToggleActionItems}
           />
         );
       case 'activities':
@@ -1081,11 +1097,21 @@ export const ProjectDetails = () => {
           isLoading={isLoading}
         />
       </div>
-      <ProjectInfoSection
-        columns={projectDetails}
-        loading={isLoading}
-        onAdjustmentFactorChange={handleAdjustmentFactor}
-      />
+      <div
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
+      >
+        <ProjectInfoSection
+          columns={projectDetails}
+          loading={isLoading}
+          onAdjustmentFactorChange={handleAdjustmentFactor}
+        />
+      </div>
       <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all duration-300 ease-in-out ${
@@ -1103,12 +1129,17 @@ export const ProjectDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
             isLoading={isLoading}
-            maxHeight={292}
+            maxHeight={isActionItemsExpanded ? 150 : 292}
           />
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 283px)', overflow: 'auto' }}
+          style={{
+            maxHeight: isActionItemsExpanded
+              ? 'calc(100vh - 140px)'
+              : 'calc(100vh - 283px)',
+            overflow: 'auto',
+          }}
         >
           {isProjectSignedOff && !isLoading && (
             <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>

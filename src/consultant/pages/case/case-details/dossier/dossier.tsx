@@ -159,19 +159,19 @@ const Dossier: React.FC<DossierProps> = ({
   );
   const isQualifiedProjectsView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_QUALIFIED_PROJECTS_VIEW
+    AllPermissions.PROJECTS_VIEW_EDIT
   );
   const isTechnicalSummaryView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_TECHNICAL_SUMMARY_VIEW
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
   );
   const isProjectDocumentsView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_PROJECT_DOCUMENTS_VIEW
+    AllPermissions.ATTACHMENT_VIEW_EDIT
   );
   const isResourceSummaryView = checkPermission(
     permission,
-    AllPermissions.DOSSIER_RESOURCE_SUMMARY_VIEW
+    AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
   );
   const isRdFormsView = checkPermission(
     permission,
@@ -185,10 +185,10 @@ const Dossier: React.FC<DossierProps> = ({
     permission,
     AllPermissions.DOSSIER_SUMMARY_VIEW
   );
-  // const iscaseClose = checkPermission(
-  //   permission,
-  //   AllPermissions.DOSSIER_CLOSE_CASE
-  // );  // need to add close case btn
+  const isCaseCloseEnable = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_CLOSE_CASE
+  );
   const isPackagesDownload = checkPermission(
     permission,
     AllPermissions.DOSSIER_PACKAGES
@@ -366,7 +366,7 @@ const Dossier: React.FC<DossierProps> = ({
       refetchDossierInitiate(payload, {
         onSuccess: () => {
           setDossierCreditStatus(
-            'Dossier Package is Inprogress. Refresh the page to check the status'
+            'Dossier Packages is In-Progress. Refresh the page to check the status'
           );
           // handleStatusUpdate(data);
         },
@@ -399,7 +399,7 @@ const Dossier: React.FC<DossierProps> = ({
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
         option: data.classification_name,
-        value: data.classification_name,
+        value: data.rid,
       })) || [],
     [Classification.data?.data.projectClassifications]
   );
@@ -522,20 +522,20 @@ const Dossier: React.FC<DossierProps> = ({
       hide: !isFinancialView,
     },
     {
-      label: 'RD Form',
-      value: 'rd_form',
+      label: 'RD Forms',
+      value: 'rd_forms',
       hide: !isRdFormsView,
     },
     {
-      label: 'Audit Timeline',
-      value: 'audit_timeline',
+      label: 'Approval Status',
+      value: 'approval_status',
       hide: !isAuditTimelineView,
     },
   ];
 
   const showTableControls =
     tabParam !== 'summary' &&
-    tabParam !== 'rd_form' &&
+    tabParam !== 'rd_forms' &&
     tabParam !== 'financial_workings';
   const headerButtons = [
     {
@@ -565,7 +565,7 @@ const Dossier: React.FC<DossierProps> = ({
         (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),
       onClick: () => setIsModalOpen(true),
       sx: { width: '90px', minWidth: '90px' },
-      hide: false,
+      hide: !isCaseCloseEnable,
     },
   ];
 
@@ -578,7 +578,7 @@ const Dossier: React.FC<DossierProps> = ({
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={showTableControls && tabParam !== 'audit_timeline'}
+        filterVisibility={showTableControls && tabParam !== 'approval_status'}
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -588,14 +588,14 @@ const Dossier: React.FC<DossierProps> = ({
         sortFilterCount={0}
         setSortFilterCount={() => {}}
         showRefresh={
-          (tabParam !== 'rd_form' && tabParam !== 'financial_workings') ||
+          (tabParam !== 'rd_forms' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
         }
         onRefreshClick={handleRefresh}
         showSearch={
           showTableControls &&
           tabParam !== 'technical_summary' &&
-          tabParam !== 'audit_timeline'
+          tabParam !== 'approval_status'
         }
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
@@ -680,7 +680,7 @@ const Dossier: React.FC<DossierProps> = ({
                   fiscalYear={caseDetails?.fiscal_year ?? 0}
                 />
               )}
-              {tabParam === 'rd_form' && (
+              {tabParam === 'rd_forms' && (
                 <RDForm
                   caseDetails={caseDetails}
                   isFinancialWorkingSignoff={isFinancialWorkingSignoff}
@@ -732,7 +732,7 @@ const Dossier: React.FC<DossierProps> = ({
                 />
               )}
 
-              {tabParam === 'audit_timeline' && (
+              {tabParam === 'approval_status' && (
                 <ClosingRemarks
                   refreshTrigger={refreshTrigger}
                   currentPage={currentPage}

@@ -45,13 +45,18 @@ import { ActivityListTable } from '../../../activities';
 import { ACTIVITY_CREATE } from '../../../../../routes';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
-import { useGetActivityStatus } from '../../../../services/activities/activities-service';
+import {
+  useCancelledActivityMeeting,
+  useCompletedActivityMeeting,
+  useGetActivityStatus,
+} from '../../../../services/activities/activities-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { capitalize } from '@mui/material';
 import Timeline from '../../../../../pages/timeline/timeline';
+import { useToast } from '../../../../../hooks';
 
 const ActivityTabs: OverviewTabs[] = [
   {
@@ -63,7 +68,7 @@ const ActivityTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACTIVITIES_TIMELINE,
     name: 'Timeline',
-    hide: true,
+    hide: false,
     key: 'timeline',
   },
 ];
@@ -220,6 +225,12 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
         ?.fields?.some((field) => field.edit),
     [permission]
   );
+
+  const completeMeeting = useCompletedActivityMeeting();
+  const cancelMeeting = useCancelledActivityMeeting();
+  const { successToast } = useToast();
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const initialTab = useMemo(() => {
     if (allActivitiesEnabled) return 'all';
@@ -405,6 +416,44 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     },
   ];
 
+  const handleCompleteMeeting = async (activityId: string) => {
+    setCompletingId(activityId);
+    completeMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+        onSettled: () => {
+          setCompletingId(null);
+        },
+      }
+    );
+  };
+
+  const handleCancelMeeting = async (activityId: string) => {
+    setCancellingId(activityId);
+    cancelMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+        onSettled: () => {
+          setCancellingId(null);
+        },
+      }
+    );
+  };
+
   const handleViewActivity = (rowId: string, activityType: ActivityType) => {
     const type = activityType?.toLowerCase();
     if (rowId) {
@@ -430,7 +479,11 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
       case 'meeting':
         return getActivityMeetingListColumns(
           handleViewActivity,
-          meetingPermissionMap
+          meetingPermissionMap,
+          handleCancelMeeting,
+          handleCompleteMeeting,
+          cancellingId,
+          completingId
         );
       case 'call':
         return getActivityCallLogListColumns(
@@ -451,6 +504,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     tabParam,
     taskPermissionMap,
     allActivityPermissionMaps,
+    cancellingId,
+    completingId,
   ]);
 
   const activityEditPermissionByType: Record<ActivityModuleType, boolean> = {
@@ -490,35 +545,35 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
             </div>
           </div>
         )}
-      {isTimeLineView ? (
-        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
-          <Timeline entitytype='case' />
-        </div>
-      ) : (
-        <>
-          <div className='w-full pt-2 pl-2 pr-4 mb-1'>
-            <SectionTabPanel
-              tabs={ActivityTabs}
-              filterMenu={filterFields}
-              filterVisibility={!viewDetails}
-              showFilter={showFilter}
-              contextKey='case-activities'
-              appliedFilters={appliedFilters}
-              setAppliedFilters={setAppliedFilters}
-              setCurrentPage={setCurrentPage}
-              handleFilter={handleFilter}
-              sortFilterCount={0}
-              setSortFilterCount={() => {}}
-              showRefresh={!viewDetails}
-              onRefreshClick={handleRefresh}
-              showSearch={!viewDetails}
-              onSearch={(text) => setSearchText(text)}
-              searchReset={resetSearch}
-              onSearchReset={handleSearchReset}
-              showAddActivity={tabParam === 'all'}
-              activityMenuItems={activityMenuItems}
-            />
+      <div className='w-full pt-2 pl-2 pr-4 mb-1'>
+        <SectionTabPanel
+          tabs={ActivityTabs}
+          filterMenu={filterFields}
+          filterVisibility={!viewDetails}
+          showFilter={showFilter}
+          contextKey='case-activities'
+          appliedFilters={appliedFilters}
+          setAppliedFilters={setAppliedFilters}
+          setCurrentPage={setCurrentPage}
+          handleFilter={handleFilter}
+          sortFilterCount={0}
+          setSortFilterCount={() => {}}
+          showRefresh={!viewDetails}
+          onRefreshClick={handleRefresh}
+          showSearch={!viewDetails}
+          onSearch={(text) => setSearchText(text)}
+          searchReset={resetSearch}
+          onSearchReset={handleSearchReset}
+          showAddActivity={tabParam === 'all'}
+          activityMenuItems={activityMenuItems}
+        />
 
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline entitytype='case' />
+          </div>
+        ) : (
+          <>
             <SectionHeader
               title='Activities'
               titleIcon={
@@ -659,9 +714,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
                 )}
               </div>
             )}
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

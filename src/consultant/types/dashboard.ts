@@ -1,8 +1,9 @@
 export interface DashboardCountDetail {
   name: string;
   key: string;
-  count: string;
+  count: string | number;
   order: number;
+  activityCount: number;
 }
 
 export interface DashboardCountDetailsResponse {
@@ -12,17 +13,20 @@ export interface DashboardCountDetailsResponse {
   data: DashboardCountDetail[];
 }
 
-// Account Chart type
 export interface AccountYearData {
   account: string;
-  years: { year: number; progress: number }[];
+  years: { year: number; progress: number; color?: string }[];
 }
 
 export interface HealthStatusDetail {
   account_rid: string;
   account_name: string;
+  case_completion_percentage: string;
+  case_startdate: string;
   fiscal_year: number;
-  progress: string;
+  planned_submission_date: string;
+  effective_progress: string;
+  colour: string;
 }
 
 export interface HealthStatusResponse {
@@ -37,11 +41,9 @@ export interface OverallProjectValueDetail {
   country_code: string;
   country_name: string | null;
   total_project_cost: string;
-  qualified_project_cost: string;
-  qre_cost: string;
-  final_credit_computed: number;
-  final_credit_submitted: number;
-  final_credit_approved: number;
+  total_fte_cost: string;
+  total_subcon_cost: string;
+  total_nonlabor_cost: string;
 }
 
 export interface OverallProjectValueResponse {
@@ -115,7 +117,9 @@ export interface OverdueApprovalsDetail {
   category_name: string;
   profile_url: string | null;
   task_type_name: string;
-  attach_to_name: string;
+  attach_to: string;
+  attachment_level: string;
+  attached_to: string;
 }
 
 export interface OverdueApprovalsResponse {
@@ -141,7 +145,9 @@ export interface DashboardTaskDetail {
   assigned_to_name: string;
   profile_url: string | null;
   task_type_name: string;
-  attach_to_name: string;
+  attach_to: string;
+  attachment_level: string;
+  attached_to: string;
 }
 
 export interface DashboardTaskResponse {
@@ -210,7 +216,7 @@ export interface PendingFollowUpDetail {
   status_name: string;
   account_rid: string;
   attach_to: string;
-  attachment_level: 'case' | 'account' | 'project';
+  attachment_level: string;
   task_rid: string;
   task_type_name: string;
   effective_start_datetime: string;
@@ -224,7 +230,7 @@ export interface PendingFollowUpDetail {
   assigned_to_name: string;
   category_name: string;
   profile_url: string | null;
-  attach_to_name: string;
+  attached_to: string;
 }
 
 export interface PendingFollowUpListResponse {
@@ -232,6 +238,21 @@ export interface PendingFollowUpListResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: PendingFollowUpDetail[];
+}
+
+// Account Fiscal Cost
+export interface AccountFiscalCostDetail {
+  account_rid: string;
+  fiscal_year: number;
+  total_project_cost: string;
+  qre_cost: string | null;
+}
+
+export interface AccountFiscalCostResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: AccountFiscalCostDetail[];
 }
 
 // Export type

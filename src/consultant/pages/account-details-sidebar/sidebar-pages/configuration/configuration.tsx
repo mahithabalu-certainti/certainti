@@ -230,11 +230,7 @@ const Configuration: React.FC<ConfigurationProps> = ({
             showAddActivity={true}
             activityMenuItems={activityMenuItems}
           />
-          {isTimeLineView ? (
-            <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
-              <Timeline entitytype='account' />
-            </div>
-          ) : (
+          {!isTimeLineView && (
             <div>
               <SectionHeader
                 title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
@@ -250,7 +246,13 @@ const Configuration: React.FC<ConfigurationProps> = ({
           )}
         </div>
       )}
-      {renderContent()}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='account' />
+        </div>
+      ) : (
+        <>{renderContent()}</>
+      )}
     </div>
   );
 };
