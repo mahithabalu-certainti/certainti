@@ -1418,14 +1418,19 @@ export const fetchKeyContactDetailsForInteractions = (schemaName : string, entit
   `
 }
 
-export const fetchFourPartAssessment = (page : number, limit : number, sort : string, sortBy : string, filters : filterType, search : string, schemaName : string, isPagination : boolean, isSorting : boolean, isFiltering : boolean, accountRid : string) => {
+export const fetchFourPartAssessment = (page : number, limit : number, sort : string, sortBy : string, filters : filterType, search : string, schemaName : string, isPagination : boolean, isSorting : boolean, isFiltering : boolean, accountRid : string, projectFiscalRid : string, caseProjectFiscalRids : string[], type : string) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
   let doPagination : string;
   let sortValue : string;
   let filterQueries : string;
   let andConditions : string;
-  let searchValue : string;
+  let searchValue : string
+  let filterConditionsForLevel : string = ''
+
+  if(type === 'account') filterConditionsForLevel = `i.account_rid = '${accountRid}'`
+  else if(type === 'project') filterConditionsForLevel = `i.project_fiscal_rid = '${projectFiscalRid}'`
+  else if(type === 'case') filterConditionsForLevel = `i.project_fiscal_rid IN (${caseProjectFiscalRids.map((d) => `'${d}'`).join(',')})`
 
   if(search) searchValue = `'%${search}%'`
   else searchValue = `'%%'`
@@ -1465,7 +1470,7 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   WHERE
   (f.r_number ILIKE ${searchValue} OR f.status ILIKE ${searchValue} OR f.rd_potential_category ILIKE ${searchValue} OR p.project_code ILIKE ${searchValue})
   AND
-  i.account_rid = '${accountRid}'
+  ${filterConditionsForLevel}
   ${andConditions}
   ${filterQueries}
   ${sortValue}
@@ -1540,3 +1545,7 @@ const filterUtilityFunction = (filters : filterType, validColumns : any) => {
   }
   return finalFilteredQueries;
 } 
+
+export const fetchProjectFiscalIds = (caseRid : string, schemaName : string) => {
+  return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'`
+}

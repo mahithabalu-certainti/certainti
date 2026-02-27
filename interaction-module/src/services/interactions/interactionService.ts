@@ -56,6 +56,7 @@ import {
   fetchInteractionTemplates,
   fetchKeyContactDetailsForInteractions,
   fetchFourPartAssessment,
+  fetchProjectFiscalIds,
 } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import {
@@ -4089,7 +4090,12 @@ async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
       isPagination = true
     }
     let schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number)
-    let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid ), {type : QueryTypes.SELECT});
+    let projectFiscalRids : string[] = []
+    if(data.type === 'case') {
+      const findProjectIdsBasedOnCase : any = await orgDb.query(fetchProjectFiscalIds(data.case_rid, schemaName));
+      projectFiscalRids.push(findProjectIdsBasedOnCase[0][0].project_fiscal_rid)
+    }
+    let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid, data.project_fiscal_rid, projectFiscalRids, data.type ), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       const fetchCreatedByIds = [...new Set(result.filter((f) => f.created_by !== null).map((d) => d.created_by))];
       const fetchModifiedByIds = [...new Set(result.filter((f) => f.modified_by !== null).map((d) => d.modified_by))];

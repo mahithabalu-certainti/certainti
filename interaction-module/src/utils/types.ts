@@ -212,12 +212,15 @@ export interface FourPartAssessmentResponse {
 
 export interface FourPartAssessmentRequestPayload {
   account_rid : string
+  project_fiscal_rid : string
+  case_rid : string
   page : number
   limit : number
   search : string
   filter : filterType,
   sort : string
   sort_by : string
+  type : string
 }
 
 export interface ListResponseType<T> {
