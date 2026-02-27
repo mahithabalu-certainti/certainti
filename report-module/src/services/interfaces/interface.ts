@@ -2,6 +2,7 @@ export interface ICountDetails {
     name: string;
     key: string;
     count: number;
+    activityCount: number;
     order: number;
 }
 

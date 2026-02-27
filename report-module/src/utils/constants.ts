@@ -184,7 +184,9 @@ export const rawQueries = {
   },
   fetchOpenTaskCount(accountIds?: string[], userId?: string, fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
@@ -320,7 +322,9 @@ export const rawQueries = {
   },
   fetchOverDueTaskCount(accountIds?: string[], userId?: string, fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
@@ -414,7 +418,9 @@ export const rawQueries = {
   },
   fetchUpcomingTaskCount(accountIds?: string[], userId?: string, fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
@@ -460,7 +466,9 @@ export const rawQueries = {
   },
   fetchWeeklyCompletedTaskCount(userId?: string, accountIds?: string[], fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
