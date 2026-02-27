@@ -11,7 +11,9 @@ export interface ConfigJson {
     elect_280c_yes: number;
     sub_con_percent: number;
     fixed_base_percentage: number;
-    qre_cap_rate: number;
+    rrc_qre_credit_percentage: number;
+    asc_credit_rate_c1: number;
+    asc_credit_rate_c2: number;
 }
 
 export interface Splitconfig {
@@ -116,15 +118,17 @@ export class RdCreditCalculatorForUSA {
         // ---- Line (14% or 6%) if any prior year QRE = zero ----
         const hadZeroYear = prior3YearsQREs.some(y => y.qre === 0);
 
-        // IRS rule: If any year has zero → use 6%, else → 14%
-        const percentage = hadZeroYear ? configAsc.fixed_base_percentage : configAsc.credit_rate;
+
+         // IRS rule: If any year has zero → use 6%, else → 14%
+        const percentage = hadZeroYear ? configAsc.asc_credit_rate_c1 : configAsc.asc_credit_rate_c2;
+
 
         // ---- Line 24: Multiply line 23 by percentage ----
         const line24 = line23.mul(percentage/100);
 
         // ---- Line 25: (ASC Base Credit) ----
         const line25 = line24; // because you don’t have line19 in ASC
-        let dynamicPercentageKey = `Enter ${configAsc.credit_rate}%. If QREs in any of the 3 years is zero, enter ${configAsc.fixed_base_percentage}%`
+        let dynamicPercentageKey = `Enter ${configAsc.asc_credit_rate_c1}%. If QREs in any of the 3 years is zero, enter ${configAsc.asc_credit_rate_c2}%`
 
         return {
             "[20] Total Qualified Research Expenses": Number(await this.round2(totalQRE)),
@@ -164,11 +168,11 @@ export class RdCreditCalculatorForUSA {
         const maxLine9 = Decimal.max(line9, 0)
 
         //---- Line 10: Multiply line 5 by 50%
-        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate/100 || 0.5);
+        const line10 = currentYearQRE.mul(configRRC.rrc_qre_credit_percentage/100 || 0.5);
 
         //---- Line 11: Enter smaller of line 9 or line 10
         const line11 = Decimal.min(line10, maxLine9);
-        let dynamicLine5 = `[10] Multiply line 5 by ${configRRC.qre_cap_rate}`
+        let dynamicLine5 = `[10] Multiply line 5 by ${configRRC.rrc_qre_credit_percentage}`
 
         return {
             "[5] Total Qualified Research Expenses": await this.round2(currentYearQRE),
