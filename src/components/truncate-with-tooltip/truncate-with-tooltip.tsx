@@ -61,7 +61,7 @@ const TruncateWithTooltip = ({
       if (element) {
         setIsOverflowing(
           element.scrollWidth > element.clientWidth ||
-          element.scrollHeight > element.clientHeight
+            element.scrollHeight > element.clientHeight
         );
       }
     };

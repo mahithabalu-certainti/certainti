@@ -364,7 +364,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
 
   // ── Pagination state ──────────────────────────────────────────────
   // nextOffset from the API is a number (e.g. 11), so store as number | null
-  const [currentOffset, setCurrentOffset] = useState<number>(1);
+  const [currentOffset, setCurrentOffset] = useState<number>(0);
   const [nextOffset, setNextOffset] = useState<number | null>(null);
   const [localItems, setLocalItems] = useState<TimelineGroup[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -465,7 +465,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
         overflowY: 'auto',
         // Concrete height is required so the div actually creates a scroll region.
         // '100%' doesn't work when the parent has no fixed height.
-        // maxHeight: 'calc(100vh - 260px)',
+        maxHeight: 'calc(100vh - 260px)',
       }}
     >
       {/* Single continuous vertical line spanning all groups */}

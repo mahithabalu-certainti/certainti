@@ -344,7 +344,9 @@ export const getActivityMeetingListColumns = (
   handleViewActivity: (rowId: string, activityType: ActivityType) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   handleCancelMeeting?: (activityId: string) => void,
-  handleCompleteMeeting?: (activityId: string) => void
+  handleCompleteMeeting?: (activityId: string) => void,
+  cancellingId?: string | null,
+  completingId?: string | null
 ): ListTableColumn<ActivityList>[] => [
   {
     id: 'r_number',
@@ -460,6 +462,9 @@ export const getActivityMeetingListColumns = (
       if (row.status_name !== 'Scheduled') {
         return <div className='text-center w-full'>-</div>;
       }
+      const isCancelling = cancellingId === row.rid;
+      const isCompleting = completingId === row.rid;
+      const isAnyLoading = isCancelling || isCompleting;
       return (
         <div className='flex gap-2'>
           <TextButton
@@ -468,9 +473,15 @@ export const getActivityMeetingListColumns = (
               width: '55px',
               minWidth: '55px',
               maxWidth: '55px',
-              cursor: 'pointer',
+              cursor: isCancelling ? 'not-allowed' : 'pointer',
             }}
-            onClick={() => handleCancelMeeting && handleCancelMeeting(row.rid)}
+            loading={isCancelling}
+            disabled={isAnyLoading && !isCancelling}
+            onClick={() =>
+              !isAnyLoading &&
+              handleCancelMeeting &&
+              handleCancelMeeting(row.rid)
+            }
             hide={row.status_name !== 'Scheduled'}
           />
           <TextButton
@@ -479,10 +490,14 @@ export const getActivityMeetingListColumns = (
               width: '70px',
               minWidth: '70px',
               maxWidth: '70px',
-              cursor: 'pointer',
+              cursor: isCompleting ? 'not-allowed' : 'pointer',
             }}
+            loading={isCompleting}
+            disabled={isAnyLoading && !isCompleting}
             onClick={() =>
-              handleCompleteMeeting && handleCompleteMeeting(row.rid)
+              !isAnyLoading &&
+              handleCompleteMeeting &&
+              handleCompleteMeeting(row.rid)
             }
             hide={row.status_name !== 'Scheduled'}
           />

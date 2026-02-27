@@ -35,6 +35,7 @@ import { useGetCaseFilingTypes } from '../../services/cases/case-service';
 import { PROJECT_COLORS } from '../../../admin/pages/workflow-builder/form/helper';
 import {
   AccountYearData,
+  DashboardCountDetail,
   DashboardTaskDetail,
   OverdueApprovalsDetail,
   WeeklyProductivityDetail,
@@ -172,6 +173,21 @@ export const HomePage: React.FC = () => {
     AllPermissions.UPCOMING_TASKS_VIEW
   );
 
+  const isGlobalLevelEnable = checkPermission(
+    permission,
+    AllPermissions.GLOBAL_LEVEL_VIEW
+  );
+
+  const isDashboardCountEnable = checkPermission(
+    permission,
+    AllPermissions.DASHBOARD_COUNT_VIEW
+  );
+
+  const isOverAllProjectValueEnable = checkPermission(
+    permission,
+    AllPermissions.OVERALL_PROJECT_VALUE_BY_JURISDICTION_VIEW
+  );
+
   const caseFillingTypes = useGetCaseFilingTypes();
   const caseFilingTypesOptions = useMemo(() => {
     return (
@@ -183,7 +199,7 @@ export const HomePage: React.FC = () => {
   }, [caseFillingTypes]);
 
   const { data: countDetails, isLoading: isCountsLoading } =
-    useGetDashboardCountDetails(dashboardPayload);
+    useGetDashboardCountDetails(dashboardPayload, isDashboardCountEnable);
 
   const { data: healthStatusData, isLoading: isHealthLoading } =
     useGetCasesByHealthStatus(
@@ -195,7 +211,10 @@ export const HomePage: React.FC = () => {
     );
 
   const { data: overallProjectValue, isLoading: isProjectValueLoading } =
-    useGetOverallProjectValue({ ...dashboardPayload, countryType: 'active' });
+    useGetOverallProjectValue(
+      { ...dashboardPayload, countryType: 'active' },
+      isOverAllProjectValueEnable
+    );
   const { data: weeklyProductivity, isLoading: isWeeklyProductivityLoading } =
     useGetWeeklyProductivity(userDashboardPayload, isWeeklyProductivityEnable);
   const { data: overdueApprovals, isLoading: isOverdueLoading } =
@@ -432,9 +451,26 @@ export const HomePage: React.FC = () => {
     [navigate]
   );
 
+  // Task-related card keys that have both milestone count and activity count
+  const TASK_CARD_KEYS = [
+    'open_tasks',
+    'due_today_overdue_tasks',
+    'upcoming_tasks_7_days',
+    'tasks_completed_this_week',
+  ] as const;
+
+  // Derive target tab based on count (milestone) vs activityCount (activity)
+  const getTaskTab = (card: DashboardCountDetail): string => {
+    const milestoneCount = Number(card.count);
+    const activityCount = Number(card.activityCount);
+    if (milestoneCount === 0 && activityCount > 0) return 'activity';
+    return 'milestone';
+  };
+
   // Handler to navigate to cases page with pre-applied filters
   const handleCardClick = useCallback(
-    (cardKey: string) => {
+    (card: DashboardCountDetail) => {
+      const cardKey = card.key;
       const tomorrowDate = dayjs().add(1, 'day').format('YYYY-MM-DD');
       const seventhDayDate = dayjs().add(7, 'day').format('YYYY-MM-DD');
 
@@ -468,9 +504,10 @@ export const HomePage: React.FC = () => {
           },
         ]);
       } else if (cardKey === 'open_tasks') {
+        const tab = getTaskTab(card);
         navigateWithFilters(
           navigate,
-          TASKS,
+          `${TASKS}?tab=${tab}`,
           [
             {
               filterKey: 'status_rid',
@@ -479,12 +516,13 @@ export const HomePage: React.FC = () => {
               value: ['To Do', 'In Progress'],
             },
           ],
-          { taskType: 'milestone' }
+          { reapplyFiltersOnTabSwitch: true }
         );
       } else if (cardKey === 'due_today_overdue_tasks') {
+        const tab = getTaskTab(card);
         navigateWithFilters(
           navigate,
-          TASKS,
+          `${TASKS}?tab=${tab}`,
           [
             {
               filterKey: 'effective_end_datetime',
@@ -499,12 +537,13 @@ export const HomePage: React.FC = () => {
               value: ['To Do', 'In Progress'],
             },
           ],
-          { taskType: 'milestone' }
+          { reapplyFiltersOnTabSwitch: true }
         );
       } else if (cardKey === 'upcoming_tasks_7_days') {
+        const tab = getTaskTab(card);
         navigateWithFilters(
           navigate,
-          TASKS,
+          `${TASKS}?tab=${tab}`,
           [
             {
               filterKey: 'effective_start_datetime',
@@ -519,15 +558,16 @@ export const HomePage: React.FC = () => {
               value: ['To Do', 'In Progress'],
             },
           ],
-          { taskType: 'milestone' }
+          { reapplyFiltersOnTabSwitch: true }
         );
       } else if (cardKey === 'tasks_completed_this_week') {
+        const tab = getTaskTab(card);
         const startDate = dayjs().startOf('week').format('YYYY-MM-DD');
         const endDate = dayjs().endOf('week').format('YYYY-MM-DD');
 
         navigateWithFilters(
           navigate,
-          TASKS,
+          `${TASKS}?tab=${tab}`,
           [
             {
               filterKey: 'status_rid',
@@ -542,7 +582,7 @@ export const HomePage: React.FC = () => {
               value: [startDate, endDate],
             },
           ],
-          { taskType: 'milestone' }
+          { reapplyFiltersOnTabSwitch: true }
         );
       }
     },
@@ -562,31 +602,42 @@ export const HomePage: React.FC = () => {
 
       {/* Dashboard Report Cards */}
       <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4'>
-        {isCountsLoading ? (
-          Array.from({ length: 8 }).map((_, index) => (
-            <ReportCard key={index} isLoading={true} />
-          ))
-        ) : countDetails && countDetails.length > 0 ? (
-          countDetails.map((card, index) => {
-            const isAccessible = isCardAccessible(card.key);
-            return (
-              <ReportCard
-                key={card.key ?? index}
-                title={card.name}
-                value={card.count}
-                color={PROJECT_COLORS[index % PROJECT_COLORS.length]}
-                onClick={() => handleCardClick(card.key)}
-                disabled={!isAccessible}
-                tooltipMessage={
-                  !isAccessible ? getAccessRestrictedMessage(card.key) : ''
-                }
-              />
-            );
-          })
-        ) : (
-          <div className='col-span-full flex justify-center items-center h-[80px] text-sm text-[#425A76] bg-white rounded-lg border border-[#CBD6E2]'>
-            No data available
-          </div>
+        {isDashboardCountEnable && (
+          <>
+            {isCountsLoading ? (
+              Array.from({ length: 8 }).map((_, index) => (
+                <ReportCard key={index} isLoading={true} />
+              ))
+            ) : countDetails && countDetails.length > 0 ? (
+              countDetails.map((card, index) => {
+                const isAccessible = isCardAccessible(card.key);
+                // For task cards, show combined milestone + activity count
+                const isTaskCard = TASK_CARD_KEYS.includes(
+                  card.key as (typeof TASK_CARD_KEYS)[number]
+                );
+                const displayValue = isTaskCard
+                  ? Number(card.count) + Number(card.activityCount)
+                  : card.count;
+                return (
+                  <ReportCard
+                    key={card.key ?? index}
+                    title={card.name}
+                    value={displayValue}
+                    color={PROJECT_COLORS[index % PROJECT_COLORS.length]}
+                    onClick={() => handleCardClick(card)}
+                    disabled={!isAccessible}
+                    tooltipMessage={
+                      !isAccessible ? getAccessRestrictedMessage(card.key) : ''
+                    }
+                  />
+                );
+              })
+            ) : (
+              <div className='col-span-full flex justify-center items-center h-[80px] text-sm text-[#425A76] bg-white rounded-lg border border-[#CBD6E2]'>
+                No data available
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -994,18 +1045,22 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
-      <DonutChartsGroup
-        title='Overall Project Value by Jurisdiction'
-        subtitle='Aggregate Total R&D project value across all jurisdictions.'
-        data={overallProjectValue || []}
-        colors={DONUT_COLORS}
-        isLoading={isProjectValueLoading}
-      />
+      {isOverAllProjectValueEnable && (
+        <DonutChartsGroup
+          title='Overall Project Value by Jurisdiction'
+          subtitle='Aggregate Total R&D project value across all jurisdictions.'
+          data={overallProjectValue || []}
+          colors={DONUT_COLORS}
+          isLoading={isProjectValueLoading}
+        />
+      )}
 
-      <WorldMapChart
-        title='Global Level'
-        subtitle='Click on any country to view detailed account information'
-      />
+      {isGlobalLevelEnable && (
+        <WorldMapChart
+          title='Global Level'
+          subtitle='Click on any country to view detailed account information'
+        />
+      )}
     </div>
   );
 };

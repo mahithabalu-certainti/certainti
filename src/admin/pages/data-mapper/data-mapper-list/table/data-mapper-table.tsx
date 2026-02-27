@@ -25,6 +25,10 @@ import { UPDATE_DATA_MAPPER } from '../../../../../api/graphql/queries/data-mapp
 import { useToast } from '../../../../../hooks';
 import dayjs from 'dayjs';
 import { AcceptIcon, RejectIcon } from '../../../../../assets';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AllPermissions } from '../../../../../common-service';
+import { checkPermission } from '../../../../../common-utils';
 
 interface IDataMapperTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -74,6 +78,8 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     client: caseClient,
   });
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const { data, isLoading, isError, refetch } = useDataMapperList(
     { ...tableParams, filters: appliedFilters, search: searchValue },
     refreshTrigger
@@ -85,6 +91,38 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
       setDataMapperList(data?.items || []);
     }
   }, [data?.items]);
+
+  // Permissions
+  const isDataMapperExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_FORM_DATA_MAPPER_EXPORT
+  );
+
+  const dataMapperEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.RD_FORM_DATA_MAPPER_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const dataMapperFieldsEditable = useMemo(
+    () =>
+      permission
+        .find(
+          (item) => item.name === AllPermissions.RD_FORM_DATA_MAPPER_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    dataMapperEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [dataMapperEditFields]);
 
   const getRowId = (row: DataMapperListItem) => row.rid;
 
@@ -165,7 +203,9 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     handleCountry,
     dateRange,
     handleDateRange,
-    regionLoading
+    regionLoading,
+    permissionMap,
+    isDataMapperExportEnable
   );
 
   const actionButtons: ActionItem<DataMapperListItem>[] = [
@@ -173,11 +213,13 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
       label: 'Edit',
       disabled: (row) => row?.status_name?.toLowerCase() === 'initiated',
       onClick: (row) => handleEdit(row),
+      hide: !dataMapperFieldsEditable,
     },
     {
       label: 'Configuration',
       disabled: (row) => row?.status_name?.toLowerCase() !== 'accepted',
       onClick: (row) => handleConfig(row),
+      hide: !dataMapperFieldsEditable,
     },
   ];
 
@@ -308,6 +350,10 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     ];
   };
 
+  const hideStatusAction =
+    !permissionMap?.['status_action']?.edit &&
+    !permissionMap?.['status_action']?.read;
+
   return (
     <>
       <ManageColumnsPopover
@@ -338,12 +384,14 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
         actionAlignHorizontal='left'
-        conditionMenuItems={(row: DataMapperListItem) =>
-          getConditionMenuItems(row)
+        conditionMenuItems={
+          !hideStatusAction
+            ? (row: DataMapperListItem) => getConditionMenuItems(row)
+            : undefined
         }
         // State
         loading={isLoading}
-        error={isError ? 'Failed to load RD Form Configurations' : undefined}
+        error={isError ? 'Failed to load RD Forms' : undefined}
         // Pagination
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
