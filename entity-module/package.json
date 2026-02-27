@@ -29,6 +29,7 @@
     "@types/compression": "^1.8.1",
     "@types/jest": "^29.5.14",
     "apollo-server-express": "^3.13.0",
+    "axios": "^1.13.5",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "currency.js": "^2.0.4",

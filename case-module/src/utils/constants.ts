@@ -313,18 +313,18 @@ export const entityTypes = {
   NOTES: "Notes",
   ATTACHMENT: "Attachment",
   PROJECT_RESOURCE: "Project Resource",
-  ACTIVITY_CALL:"Call log",
-  ACTIVITY_MEETING:"Meeting",
-  ACTIVITY_EMAIL:"Email",
-  ACTIVITY_TASK:"Task",
-  CHECKLIST:"Checklist",
-  CASE:"Case",
-  CASE_TEAM:"Case Team",
-  TASK:"Task",
-  TAG:"Tag",
-  COMMENTS:"Comments",
-  FINANCIAL_WORKING:"Financial Working",
-  HISTORICAL_SUBMISSION:"Historical Submission",
+  ACTIVITY_CALL: "Call log",
+  ACTIVITY_MEETING: "Meeting",
+  ACTIVITY_EMAIL: "Email",
+  ACTIVITY_TASK: "Task",
+  CHECKLIST: "Checklist",
+  CASE: "Case",
+  CASE_TEAM: "Case Team",
+  TASK: "Task",
+  TAG: "Tag",
+  COMMENTS: "Comments",
+  FINANCIAL_WORKING: "Financial Working",
+  HISTORICAL_SUBMISSION: "Historical Submission",
 
 };
 
@@ -332,13 +332,13 @@ export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
   CANCEL: "cancelled",
-  ADDED:  "added",
+  ADDED: "added",
   DELETE: "deleted",
   REMOVED: "removed",
 }
 
 export const eventTypes = {
-   UI_HANDLER: "web",
+  UI_HANDLER: "web",
 }
 
 export const rawQueries = {
@@ -852,38 +852,35 @@ export const rawQueries = {
         (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
     `;
   },
-  insertTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
-        ` 
+        `
   },
-   insertProjectTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertProjectTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
           )
           RETURNING *;
-        ` 
+        `
   },
-  insertCaseTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertCaseTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
           )
           RETURNING *;
-        ` 
+        `
   },
   fetchChecklistTemplates: `
     SELECT 
@@ -2560,3 +2557,9 @@ export const mappingStatus = {
   rejected: "rejected",
   anomaly: "anomaly"
 }
+
+export const FormExtractionFieldTypes = {
+  LINE_ITEM: "Line-Item",
+  TABLE_ITEM: "Table-Item"
+}
+

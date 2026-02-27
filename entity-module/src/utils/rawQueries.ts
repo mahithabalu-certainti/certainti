@@ -354,6 +354,7 @@ export const listAllWarning = (
     FROM ${schemaName}.history_staging_${entity_type} p
     JOIN import_data i ON p.document_rid = i.document_rid
     WHERE p.warning_descriptions IS NOT NULL
+    AND (p.error_descriptions IS NULL OR p.error_descriptions NOT LIKE 'staging:%');
   `;
 
   return query;
@@ -380,11 +381,7 @@ export const fetchImportListByRid = (rid: string, schemaName: string) => {
         THEN ((COALESCE(ii.total_staging_processed, 0) - COALESCE(ii.target_load_error_records_count, 0)))
         ELSE 0
         END AS records_loaded_successfully FROM ${schemaName}.import ii WHERE ii.rid = i.rid),
-    'records_failed_to_load', (SELECT CASE WHEN 
-        iii.target_load_end_timestamp IS NOT NULL 
-        THEN (COALESCE(iii.target_load_error_records_count,0) + (COALESCE(iii.total_records, 0) - COALESCE(iii.total_staging_processed,0)))
-        ELSE 0
-        END AS records_failed_to_load FROM ${schemaName}.import iii WHERE iii.rid = i.rid),
+    'records_failed_to_load', (SELECT COALESCE(iii.target_load_error_records_count,0) AS records_failed_to_load FROM ${schemaName}.import iii WHERE iii.rid = i.rid),
     'records_failed_to_stage', (SELECT CASE WHEN im.target_load_end_timestamp IS NOT NULL THEN COALESCE(im.total_records,0) - COALESCE(im.total_staging_processed, 0) ELSE 0 END AS failed_to_stage 
     FROM ${schemaName}.import im WHERE im.rid = i.rid
     ),
@@ -2956,3 +2953,5 @@ export const taskCardDetails = (schemaName: string, taskRid: string, accountRid:
     `
   return query;
 }
+
+export const getCaseSummaryByRids = () => `SELECT rid as case_rid, case_name FROM trd365.case_summary WHERE rid IN (:caseRids)`
