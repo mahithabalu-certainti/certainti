@@ -1,3 +1,5 @@
+import { filterType } from "./rawQueries";
+
 export interface ICreateInteraction {
   project_fiscal_rid: string;
   account_rid: string;
@@ -206,4 +208,55 @@ export interface FourPartAssessmentResponse {
   summary_judgment : string
   rd_potential_category : string
   follow_up_questions : string[]
+}
+
+export interface FourPartAssessmentRequestPayload {
+  account_rid : string
+  page : number
+  limit : number
+  search : string
+  filter : filterType,
+  sort : string
+  sort_by : string
+}
+
+export interface ListResponseType<T> {
+  statusCode : number
+  statusCodeValue : string
+  statusMessage : string
+  data : T
+}
+
+export interface ParentAccountType {
+  rid : string
+  account_name : string
+  r_number : string
+  storage_type : string
+  is_parent : boolean
+  currency_rid : string
+}
+
+interface FourPartRes {
+  
+}
+
+export interface FourPartAssessmentListResponse {
+  rid : string
+  r_number : string
+  project_code : string
+  status : string
+  rd_potential_category : string
+  created_datetime : string
+  modified_datetime : string
+  created_by : string
+  modified_by : string
+  created_by_name : string
+  modified_by_name : string | null
+  total_results : string
+}
+
+export interface UserReturnType {
+  rid : string
+  first_name : string
+  last_name : string
 }

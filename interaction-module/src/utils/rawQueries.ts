@@ -6,6 +6,7 @@ import {
   filterTypes,
   filterTypesForIntHistory,
   filterTypesForSummaryInteractions,
+  FourPartColumnsTypes,
   interactionFlag,
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -13,8 +14,9 @@ import {
   STATUS_MESSAGE,
   templatefiltersColumns,
 } from "./constants";
+import { FourPartColumns } from "./constants";
 
-type filterType = {
+export type filterType = {
   [key: string]: {
     [condition: string]: any;
   };
@@ -1415,3 +1417,126 @@ export const fetchKeyContactDetailsForInteractions = (schemaName : string, entit
     kc.include_in_communication = TRUE
   `
 }
+
+export const fetchFourPartAssessment = (page : number, limit : number, sort : string, sortBy : string, filters : filterType, search : string, schemaName : string, isPagination : boolean, isSorting : boolean, isFiltering : boolean, accountRid : string) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let doPagination : string;
+  let sortValue : string;
+  let filterQueries : string;
+  let andConditions : string;
+  let searchValue : string;
+
+  if(search) searchValue = `'%${search}%'`
+  else searchValue = `'%%'`
+
+  if(isPagination) {
+    doPagination = pagination
+  } else {
+    doPagination = ''
+  }
+  if(isSorting) {
+    let getSortOrder : string;
+    if(sort === FourPartColumns.r_number) getSortOrder = FourPartColumns.r_number
+    else if(sort.toLowerCase() === FourPartColumns.rd_potential_category) getSortOrder = FourPartColumns.rd_potential_category
+    else if(sort.toLowerCase() === FourPartColumns.status) getSortOrder = FourPartColumns.status
+    else if(sort.toLowerCase() === FourPartColumns.created_datetime) getSortOrder = FourPartColumns.created_datetime
+    else if(sort.toLowerCase() === FourPartColumns.modified_datetime) getSortOrder = FourPartColumns.modified_datetime
+    else if(sort.toLowerCase() === FourPartColumns.project_code) getSortOrder = FourPartColumns.project_code
+    else getSortOrder = FourPartColumns.r_number!
+    sortValue = `ORDER BY ${getSortOrder} ${sortBy}`
+  } else sortValue = ''
+
+  if(isFiltering) {
+    if(Object.keys(filters).length > 0) filterQueries = filterUtilityFunction(filters, FourPartColumns)
+    else filterQueries = ''
+  } else filterQueries = ''
+
+  andConditions = filterQueries === '' ? '' : ' AND '
+
+  let query = 
+  `WITH fetch_fpa_data AS (
+  SELECT 
+  f.rid, f.r_number, f.status, f.rd_potential_category, f.modified_datetime, f.created_datetime,
+  p.project_code, f.created_by, f.modified_by
+  FROM ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
+  WHERE
+  (f.r_number ILIKE ${searchValue} OR f.status ILIKE ${searchValue} OR f.rd_potential_category ILIKE ${searchValue} OR p.project_code ILIKE ${searchValue})
+  AND
+  i.account_rid = '${accountRid}'
+  ${andConditions}
+  ${filterQueries}
+  ${sortValue}
+  ),
+  counted_results AS (
+  SELECT *, COUNT(*) OVER() AS total_results FROM fetch_fpa_data
+  )
+  SELECT * FROM counted_results ${pagination}
+  `
+  return query;
+}
+
+const filterUtilityFunction = (filters : filterType, validColumns : any) => {
+  let filteredColumns : string[] = [];
+  for(let [key, conditions] of Object.entries(filters)) {
+    if(Object.keys(validColumns).includes(key)) {
+      let validFilterKey = validColumns[key];
+      for(let [condition, value] of Object.entries(conditions)) {
+        switch(FourPartColumnsTypes[key]) {
+          case "string" : {
+            if(condition === 'equals') {
+              filteredColumns.push(`LOWER(${validFilterKey}) = LOWER('${value}')`);
+              break;
+            }
+            if(condition === 'not_equals') {
+              filteredColumns.push(`LOWER(${validFilterKey}) != LOWER('${value}')`);
+              break;
+            }
+            if(condition === 'contains') {
+              filteredColumns.push(`${validFilterKey} ILIKE '%${value}%'`);
+              break;
+            }
+            if(condition === 'is_empty') {
+              filteredColumns.push(`${validFilterKey} IS NULL`);
+              break;
+            }
+          }
+          case "date" : {
+            if(condition === 'equals') {
+              filteredColumns.push(`DATE(${validFilterKey}) = '${value}'`)
+              break;
+            }
+            if(condition === 'not_equals') {
+              filteredColumns.push(`DATE(${validFilterKey}) != '${value}'`)
+              break;
+            }
+            if(condition === 'before') {
+              filteredColumns.push(`DATE(${validFilterKey}) < '${value}'`)
+              break;
+            }
+            if(condition === 'after') {
+              filteredColumns.push(`DATE(${validFilterKey}) > '${value}'`)
+              break;
+            }
+            if(condition === 'between') {
+              filteredColumns.push(`DATE(${validFilterKey}) BETWEEN ${value.map((d : any) => `'${d}'`).join(' AND ')}`)
+              break;
+            }
+          }
+          default : {
+            break
+          }
+        }
+      }
+    }
+  }
+  let finalFilteredQueries : string;
+  if(filteredColumns.length > 0) {
+    finalFilteredQueries = filteredColumns.map((d) => d).join(' AND ')
+  } else {
+    finalFilteredQueries = ''
+  }
+  return finalFilteredQueries;
+} 
