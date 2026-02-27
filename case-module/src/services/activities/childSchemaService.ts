@@ -144,22 +144,24 @@ export class ChildSchemaService {
                     activityTypes.meeting
                 );
             }
-            const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                        userId: userId!,
-                                        eventType: eventTypes.UI_HANDLER
-                                      });
+            const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                userId: userId!,
+                eventType: eventTypes.UI_HANDLER
+            });
             const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(existingActivity.attachment_level!);
-                  
+
             await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                  created_by: userId!,
-                                  account_rid: activityRequest.account_rid,
-                                  entity_rid: activityRequest.activity_rid!,
-                                  entity_name: entityTypes.ACTIVITY_MEETING,
-                                  created_by_name: userEventInfo.full_name,
-                                  event_type_rid: userEventInfo.event_type_rid,
-                                  event_name: eventNames.CANCEL,
-                                  descriptions:existingActivity.subject
-                                },timelineTypes);
+                created_by: userId!,
+                account_rid: activityRequest.account_rid,
+                entity_rid: activityRequest.activity_rid!,
+                entity_name: entityTypes.ACTIVITY_MEETING,
+                created_by_name: userEventInfo.full_name,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.CANCEL,
+                descriptions: existingActivity.subject,
+                project_rid: existingActivity.attachment_level === 'project' ? existingActivity.attach_to : '',
+                case_rid: existingActivity.attachment_level === 'case' ? existingActivity.attach_to : '',
+            }, timelineTypes);
 
             return {
                 success: true,
