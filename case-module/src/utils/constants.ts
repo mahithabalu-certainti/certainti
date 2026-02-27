@@ -1569,7 +1569,8 @@ export const rawQueries = {
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
-    WHERE g.rid = '${credit_config_group_rid}';
+    WHERE g.rid = '${credit_config_group_rid}'
+    order by k.sort_order asc;
     `;
   },
   getPlatformJurisdictionConfig(countryRid: string) {
@@ -1595,7 +1596,7 @@ export const rawQueries = {
     WHERE g.credit_program_name = 'Platform Configuration'
     AND g.is_federal = true
     AND g.country_rid = '${countryRid}'
-    order by k.credit_parameter_display_name asc
+    order by k.sort_order asc
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
@@ -1627,7 +1628,8 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE ${whereClause}
-    and g.credit_program_name != 'Platform Configuration';
+    and g.credit_program_name != 'Platform Configuration'
+    order by k.sort_order asc;
     `;
   },
   getJurisdictionConfigValuesById(config_rid: string) {

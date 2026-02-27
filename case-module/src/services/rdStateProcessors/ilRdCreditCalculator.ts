@@ -4,7 +4,7 @@ import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
-    credit_rate: number;
+    fixed_base_percentage: number;
     sub_con_percent: number;
 }
 
@@ -104,7 +104,7 @@ export class RdCreditCalculatorForIL {
         const excessQRE = new Decimal(total_qre.minus(final_total_qres_column_a));
         const final_excess_qre = new Decimal(excessQRE.gt(0) ? excessQRE : 0);
 
-        const final_credit = final_excess_qre.mul(config.credit_rate/100);
+        const final_credit = final_excess_qre.mul(config.fixed_base_percentage/100);
         const illinois_rd_credit_partnership_corp = caseData.illinois_rd_credit_partnership_corp || 0.00
         const il_research_development_credit = final_credit.plus(illinois_rd_credit_partnership_corp)
 
@@ -197,7 +197,7 @@ export class RdCreditCalculatorForIL {
                 "[Line 29] Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero":
                     "",
 
-                [`[Line 30] Multiply Line 29 by ${config.credit_rate}%`]:
+                [`[Line 30] Multiply Line 29 by ${config.fixed_base_percentage}%`]:
                     "",
 
                 "[Line 31] Enter any distributive share of R&D Credit from partnerships and S corporations":
@@ -231,7 +231,7 @@ export class RdCreditCalculatorForIL {
                 "[Line 29] Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero":
                     columnBCurrentYearExpenseInfo.final_excess_qre,
 
-                [`[Line 30] Multiply Line 29 by ${config.credit_rate}%`]:
+                [`[Line 30] Multiply Line 29 by ${config.fixed_base_percentage}%`]:
                     columnBCurrentYearExpenseInfo.final_credit,
 
                 "[Line 31] Enter any distributive share of R&D Credit from partnerships and S corporations":
