@@ -2584,6 +2584,111 @@ async function fetchInteractionListForReminder(req: Request, res: Response) {
   }
 }
 
+/**
+ * Handles the request to fetch the Four Part Assessment list.
+ *
+ * Validates the presence of the user ID in the request headers.
+ * Logs the incoming request payload along with the user ID for traceability.
+ * Calls the interaction service to retrieve the Four Part Assessment list
+ * based on the provided request body parameters.
+ *
+ * Returns the service response data along with status information.
+ * In case of an exception, logs the error and returns a failure response
+ * with the error message.
+ *
+ * @param {Request} req - Express request object containing headers and body data.
+ * @param {Response} res - Express response object used to send the HTTP response.
+ *
+ * @returns {Promise<void>} Resolves after the HTTP response is sent.
+ */
+async function fetchFourPartAssessmentList (req : Request, res : Response) {
+  const methodName = "fetchFourPartAssessmentList";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.body;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.getFourPartAssessmentList(data);
+    if (result.statusCode == HttpStatus.SUCCESS) {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode: HttpStatus.SUCCESS,
+          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+          statusMessage: result.statusMessage,
+          data: result.data,
+        });
+      } else {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode: HttpStatus.SUCCESS,
+          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+          statusMessage: result.statusMessage,
+          data: result.data,
+        });
+      }
+  } catch (err : any) {
+    return res.status(HttpStatus.SUCCESS).json({
+      statusCode: HttpStatus.SUCCESS,
+      statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      statusMessage: err.message,
+      data: null,
+    });
+  }
+}
+
+/**
+ * Handles the request to fetch Four Part Assessment (FPA) details by ID.
+ *
+ * Extracts the request payload from the request body and calls the
+ * interaction service to retrieve FPA details based on the provided identifier.
+ *
+ * Returns the assessment details along with status information if the
+ * operation is successful. In case of failure, returns the corresponding
+ * status message and data received from the service layer.
+ *
+ * Catches and handles unexpected errors by returning an error message
+ * with a null data response.
+ *
+ * @param {Request} req - Express request object containing the request body.
+ * @param {Response} res - Express response object used to send the HTTP response.
+ *
+ * @returns {Promise<void>} Resolves after sending the HTTP response.
+ */
+async function getFpaDetails (req : Request, res : Response) {
+  try {
+    const data = req.body;
+    const result = await interactionService.getFpaDetailsById(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+          statusCode: HttpStatus.SUCCESS,
+          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+          statusMessage: result.statusMessage,
+          data: result.data,
+        });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+          statusCode: HttpStatus.SUCCESS,
+          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+          statusMessage: result.statusMessage,
+          data: result.data,
+        });
+    }
+  }catch (err : any) {
+    return res.status(HttpStatus.SUCCESS).json({
+      statusCode: HttpStatus.SUCCESS,
+      statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      statusMessage: err.message,
+      data: null,
+    });
+  }
+}
 export default {
   listAllInteractionPrjAcc,
   exportAllInteractions,
@@ -2619,4 +2724,6 @@ export default {
   exportTechnicalSummary,
   updateAccountInteraction,
   fetchInteractionListForReminder,
+  fetchFourPartAssessmentList,
+  getFpaDetails
 };

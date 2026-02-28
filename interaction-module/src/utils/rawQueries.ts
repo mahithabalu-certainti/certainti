@@ -6,6 +6,7 @@ import {
   filterTypes,
   filterTypesForIntHistory,
   filterTypesForSummaryInteractions,
+  FourPartColumnsTypes,
   interactionFlag,
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -13,8 +14,9 @@ import {
   STATUS_MESSAGE,
   templatefiltersColumns,
 } from "./constants";
+import { FourPartColumns } from "./constants";
 
-type filterType = {
+export type filterType = {
   [key: string]: {
     [condition: string]: any;
   };
@@ -1414,4 +1416,176 @@ export const fetchKeyContactDetailsForInteractions = (schemaName : string, entit
     AND
     kc.include_in_communication = TRUE
   `
+}
+
+export const fetchFourPartAssessment = (page : number, limit : number, sort : string, sortBy : string, filters : filterType, search : string, schemaName : string, isPagination : boolean, isSorting : boolean, isFiltering : boolean, accountRid : string, projectFiscalRid : string, caseProjectFiscalRids : string[], type : string) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let doPagination : string;
+  let sortValue : string;
+  let filterQueries : string;
+  let andConditions : string;
+  let searchValue : string
+  let filterConditionsForLevel : string = ''
+
+  if(type === 'account') filterConditionsForLevel = `i.account_rid = '${accountRid}'`
+  else if(type === 'project') filterConditionsForLevel = `i.project_fiscal_rid = '${projectFiscalRid}'`
+  else if(type === 'case') filterConditionsForLevel = `i.project_fiscal_rid IN (${caseProjectFiscalRids.map((d) => `'${d}'`).join(',')})`
+
+  if(search) searchValue = `'%${search}%'`
+  else searchValue = `'%%'`
+
+  if(isPagination) {
+    doPagination = pagination
+  } else {
+    doPagination = ''
+  }
+  if(isSorting) {
+    let getSortOrder : string;
+    if(sort === FourPartColumns.r_number) getSortOrder = FourPartColumns.r_number
+    else if(sort.toLowerCase() === FourPartColumns.rd_potential_category) getSortOrder = FourPartColumns.rd_potential_category
+    else if(sort.toLowerCase() === FourPartColumns.status) getSortOrder = FourPartColumns.status
+    else if(sort.toLowerCase() === FourPartColumns.created_datetime) getSortOrder = FourPartColumns.created_datetime
+    else if(sort.toLowerCase() === FourPartColumns.modified_datetime) getSortOrder = FourPartColumns.modified_datetime
+    else if(sort.toLowerCase() === FourPartColumns.project_code) getSortOrder = FourPartColumns.project_code
+    else getSortOrder = FourPartColumns.r_number!
+    sortValue = `ORDER BY ${getSortOrder} ${sortBy}`
+  } else sortValue = ''
+
+  if(isFiltering) {
+    if(Object.keys(filters).length > 0) filterQueries = filterUtilityFunction(filters, FourPartColumns)
+    else filterQueries = ''
+  } else filterQueries = ''
+
+  andConditions = filterQueries === '' ? '' : ' AND '
+
+  let query = 
+  `WITH fetch_fpa_data AS (
+  SELECT 
+  f.rid, f.r_number, f.status, f.rd_potential_category, f.modified_datetime, f.created_datetime,
+  p.project_code, f.created_by, f.modified_by
+  FROM ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
+  WHERE
+  (f.r_number ILIKE ${searchValue} OR f.status ILIKE ${searchValue} OR f.rd_potential_category ILIKE ${searchValue} OR p.project_code ILIKE ${searchValue})
+  AND
+  ${filterConditionsForLevel}
+  ${andConditions}
+  ${filterQueries}
+  ${sortValue}
+  ),
+  counted_results AS (
+  SELECT *, COUNT(*) OVER() AS total_results FROM fetch_fpa_data
+  )
+  SELECT * FROM counted_results ${pagination}
+  `
+  return query;
+}
+
+const filterUtilityFunction = (filters : filterType, validColumns : any) => {
+  let filteredColumns : string[] = [];
+  for(let [key, conditions] of Object.entries(filters)) {
+    if(Object.keys(validColumns).includes(key)) {
+      let validFilterKey = validColumns[key];
+      for(let [condition, value] of Object.entries(conditions)) {
+        switch(FourPartColumnsTypes[key]) {
+          case "string" : {
+            if(condition === 'equals') {
+              filteredColumns.push(`LOWER(${validFilterKey}) = LOWER('${value}')`);
+              break;
+            }
+            if(condition === 'not_equals') {
+              filteredColumns.push(`LOWER(${validFilterKey}) != LOWER('${value}')`);
+              break;
+            }
+            if(condition === 'contains') {
+              filteredColumns.push(`${validFilterKey} ILIKE '%${value}%'`);
+              break;
+            }
+            if(condition === 'is_empty') {
+              filteredColumns.push(`${validFilterKey} IS NULL`);
+              break;
+            }
+          }
+          case "date" : {
+            if(condition === 'equals') {
+              filteredColumns.push(`DATE(${validFilterKey}) = '${value}'`)
+              break;
+            }
+            if(condition === 'not_equals') {
+              filteredColumns.push(`DATE(${validFilterKey}) != '${value}'`)
+              break;
+            }
+            if(condition === 'before') {
+              filteredColumns.push(`DATE(${validFilterKey}) < '${value}'`)
+              break;
+            }
+            if(condition === 'after') {
+              filteredColumns.push(`DATE(${validFilterKey}) > '${value}'`)
+              break;
+            }
+            if(condition === 'between') {
+              filteredColumns.push(`DATE(${validFilterKey}) BETWEEN ${value.map((d : any) => `'${d}'`).join(' AND ')}`)
+              break;
+            }
+          }
+          default : {
+            break
+          }
+        }
+      }
+    }
+  }
+  let finalFilteredQueries : string;
+  if(filteredColumns.length > 0) {
+    finalFilteredQueries = filteredColumns.map((d) => d).join(' AND ')
+  } else {
+    finalFilteredQueries = ''
+  }
+  return finalFilteredQueries;
+} 
+
+export const fetchProjectFiscalIds = (caseRid : string, schemaName : string) => {
+  return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'`
+}
+
+export const fetchFpaDetails = (rid : string, schemaName : string) => {
+  let query = 
+  `
+  SELECT 
+  jsonb_build_object(
+  'rid', f.rid,
+  'r_number', f.r_number
+  ) AS title,
+  jsonb_build_object(
+  'rid', p.rid,
+  'project_code', p.project_code,
+  'project_description', p.project_description,
+  'rd_potential_category', f.rd_potential_category,
+  'status', f.status
+  ) AS basic_information,
+  jsonb_build_object(
+  'permitted_purpose', f.permitted_purpose,
+  'technological_uncertainty', f.technological_uncertainty,
+  'process_of_experimentation', f.process_of_experimentation,
+  'technological_in_nature', f.technological_in_nature
+  ) AS four_part_assessment,
+  jsonb_build_object(
+  'record_id', ai.transaction_id,
+  'created_on', ai.created_datetime,
+  'updated_on', ai.modified_datetime,
+  'created_by', ai.created_by,
+  'modified_by', ai.modified_by,
+  'four_part_assessment_id', f.r_number
+  ) AS audit_information
+  FROM
+  ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
+  LEFT JOIN ${schemaName}.ai_assessment_audit ai ON ai.transaction_id = f.transaction_id
+  WHERE
+  f.rid = '${rid}'
+  `
+  return query;
 }
