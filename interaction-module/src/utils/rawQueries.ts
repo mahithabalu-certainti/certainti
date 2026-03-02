@@ -40,7 +40,9 @@ export const fetchInteractionForProjectLevelQuery = (
   search : string,
   activeStatusId : string,
   reminderFlag : boolean,
-  reminderFiltersIds : string[]
+  reminderFiltersIds : string[],
+  apiType : string,
+  rid : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -53,11 +55,15 @@ export const fetchInteractionForProjectLevelQuery = (
   let reminderFilter : string = ``
   let accountLevelkeyContactQuery : string = ``
   let aggregatedQuery : string = `` 
+  let graphqlConditions : string = '';
   if (disablePagination) pagination = ` `;
   else pagination;
 
   if(search) searchValue = `%${search}%`
   else searchValue = `%%`
+
+  if(apiType === 'graphql') graphqlConditions = ` AND i.rid = '${rid}' `
+  else graphqlConditions = ''
 
   if (flag == interactionFlag.account) {
     let fiscalQuery = ``;
@@ -162,7 +168,7 @@ export const fetchInteractionForProjectLevelQuery = (
     WITH fetch_interaction AS (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
-            i.status_rid, ${accountLevelkeyContactQuery}
+            i.interaction_status_rid, i.status_rid, ${accountLevelkeyContactQuery}
            CASE 
             WHEN i.recipient_name IS NULL OR i.recipient_name = '' 
             THEN kcd.key_contact_name 
@@ -231,6 +237,7 @@ export const fetchInteractionForProjectLevelQuery = (
 ) kcd ON true
             WHERE
             (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
+            ${graphqlConditions}
             AND
             ${whereConditions}
             ${reminderFilter}
@@ -278,7 +285,8 @@ export const fetchInteractionForProjectLevelQuery = (
         'interaction_batch_id', i.interaction_batch_id,
         'four_part_r_number', i.four_part_r_number,
         'interaction_assessment_source_rid', i.interaction_assessment_source_rid,
-        'four_part_assessment_rid', i.four_part_assessment_rid
+        'four_part_assessment_rid', i.four_part_assessment_rid,
+        'interaction_status_rid', i.interaction_status_rid
         ${aggregatedQuery}
         ) ) AS interactions
 
@@ -1418,7 +1426,7 @@ export const fetchKeyContactDetailsForInteractions = (schemaName : string, entit
   `
 }
 
-export const fetchFourPartAssessment = (page : number, limit : number, sort : string, sortBy : string, filters : filterType, search : string, schemaName : string, isPagination : boolean, isSorting : boolean, isFiltering : boolean, accountRid : string, projectFiscalRid : string, caseProjectFiscalRids : string[], type : string) => {
+export const fetchFourPartAssessment = (page : number, limit : number, sort : string, sortBy : string, filters : filterType, search : string, schemaName : string, isPagination : boolean, isSorting : boolean, isFiltering : boolean, accountRid : string, projectFiscalRid : string, caseProjectFiscalRids : string[], type : string, isExport : boolean) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
   let doPagination : string;
@@ -1435,7 +1443,7 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   if(search) searchValue = `'%${search}%'`
   else searchValue = `'%%'`
 
-  if(isPagination) {
+  if(isPagination && !isExport) {
     doPagination = pagination
   } else {
     doPagination = ''

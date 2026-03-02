@@ -367,6 +367,18 @@ export const rawQueries = {
     return `
     SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
+  fetchStatusNameForInteractions(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
 
   fetchInteractionAssessmentSource(data: any) {
     let ids: string[];
@@ -1273,6 +1285,15 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
+  ];
+  export const fpaFieldMappings = [
+    { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
+     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+    { permissionField: 'rd_potential_category', exportField: 'Range', dataField: 'rd_potential_category' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Modified By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Modified On', dataField: 'modified_datetime' }
   ];
     export const templateFieldMappings = [
     { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },

@@ -7,6 +7,7 @@ import {
   ICreateInteraction,
   ICreateTemplateInteraction,
   IEmailMessage,
+  InteractionGraphqlRequest,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -2149,7 +2150,7 @@ export class InteractionService {
     if (mainTableFilters[data.sort] !== undefined) {
       disablePagination = true;
     }
-    if (apiType === "export") disablePagination = true;
+    if (apiType === "export" || apiType === "graphql") disablePagination = true;
     const [activeStatus]: any[] = await mainDb.query(
       rawQueries.fetchActiveStatusByType("Active"),
       { type: "SELECT" }
@@ -2174,7 +2175,9 @@ export class InteractionService {
         data.search,
         activeStatus?.rid,
         reminderFlag,
-        reminderIds
+        reminderIds,
+        apiType,
+        data.rid
       )
     );
     let hasEmailRecipient = false;
@@ -2192,6 +2195,9 @@ export class InteractionService {
     if (result[0][0].interactions != null) {
       let statusIds: any[] = [
         ...new Set(result[0][0].interactions.map((d: any) => d.status)),
+      ];
+      let interactionStatusIds: any[] = [
+        ...new Set(result[0][0].interactions.map((d: any) => d.interaction_status_rid)),
       ];
       let interactionAssessmentRids: any[] = [
         ...new Set(result[0][0].interactions.map((d: any) => d.interaction_assessment_source_rid)),
@@ -2236,6 +2242,9 @@ export class InteractionService {
       let fetchStatus = await mainDb.query(
         rawQueries.fetchInteractionStatus(statusIds)
       );
+      let fetchIntStatus = await mainDb.query(
+        rawQueries.fetchStatusNameForInteractions(interactionStatusIds)
+      );
       let fetchInteractionAssessment = await mainDb.query(
         rawQueries.fetchInteractionAssessmentSource(interactionAssessmentRids)
       );
@@ -2262,6 +2271,9 @@ export class InteractionService {
 
       let statusMap: Map<string, string> = new Map(
         fetchStatus[0].map((status: any) => [status.rid, status.status_name])
+      );
+      let intStatusMap: Map<string, string> = new Map(
+        fetchIntStatus[0].map((status: any) => [status.rid, status.status_name])
       );
       let interactionAssessmentMap: Map<string, string> = new Map(
         fetchInteractionAssessment[0].map((intAccess: any) => [intAccess.rid, intAccess.interaction_assessment_source_name])
@@ -2349,7 +2361,9 @@ export class InteractionService {
                 four_part_assessment_rid : d.four_part_assessment_rid,
                 four_part_r_number : d.four_part_r_number,
                 interaction_assessment_source_rid : d.interaction_assessment_source_rid,
-                interaction_assessment_source_name : interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null
+                interaction_assessment_source_name : interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null,
+                interaction_status_rid : d.interaction_status_rid,
+                interaction_status_name : intStatusMap.get(d.interaction_status_rid) ?? null
               };
             });
       const applyFilters = (
@@ -2424,7 +2438,7 @@ export class InteractionService {
         ? finalData.length
         : finalData[0].total_records;
       let finalPaginatedData: any[] = [];
-      if (apiType === "export") {
+      if (apiType === "export" || apiType === "graphql") {
         finalPaginatedData = finalData;
       } else {
         finalPaginatedData = disablePagination
@@ -4096,7 +4110,7 @@ async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
       const findProjectIdsBasedOnCase : any = await orgDb.query(fetchProjectFiscalIds(data.case_rid, schemaName));
       projectFiscalRids.push(findProjectIdsBasedOnCase[0][0].project_fiscal_rid)
     }
-    let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid, data.project_fiscal_rid, projectFiscalRids, data.type ), {type : QueryTypes.SELECT});
+    let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid, data.project_fiscal_rid, projectFiscalRids, data.type, data.isExport ), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       const fetchCreatedByIds = [...new Set(result.filter((f) => f.created_by !== null).map((d) => d.created_by))];
       const fetchModifiedByIds = [...new Set(result.filter((f) => f.modified_by !== null).map((d) => d.modified_by))];
@@ -4146,7 +4160,7 @@ async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
       let totalResultCount;
       if(!isPagination) totalResultCount = result.length
       else totalResultCount = result[0]?.total_results || 0
-      result = isPagination ? result : result.slice(((data.page - 1) * data.limit), data.page * data.limit) 
+      result = isPagination && !data.isExport ? result : result.slice(((data.page - 1) * data.limit), data.page * data.limit) 
 
       const finalData = {
         page : data.page,
@@ -4222,5 +4236,37 @@ async getFpaDetailsById (data : any) : Promise<any> {
     data : {}
     }
   }
+}
+async exportFpaList (data : any) {
+  const result = await this.getFourPartAssessmentList(data);
+  return result;
+}
+async updateInteractionStatus (data : InteractionGraphqlRequest, userId : string) {
+  const mainDb = await this.getMainDb();
+  const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+  const { Interaction } = await this.interactionModelService.getModels(fetchParentNumber[0][0].r_number);
+
+  await Interaction.update({
+    interaction_status_rid : data.status_rid
+  }, {
+    where : {
+      rid : data.rid
+    }
+  });
+  const payload = {
+    sort : "r_number",
+    sort_by : "ASC",
+    search : "",
+    filters : {},
+    flag : data.flag,
+    fiscal_year : data.fiscal_year,
+    rid : data.rid,
+    account_rid : data.account_rid,
+    case_rid : data.case_rid,
+    project_fiscal_rid : data.project_fiscal_rid,
+    project_rid : data.project_rid
+  }
+  const result = await this.listInteractionPrjAccount(payload, userId, "graphql", false, []);
+  return result.data;
 }
 }
