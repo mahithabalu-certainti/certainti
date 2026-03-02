@@ -26,6 +26,7 @@ import FourPartAssessmentDetails from './four-part-assessment-details';
 import SectionHeader from '../../../components/details-section/section-header';
 import { FourPartIcon } from '../../../assets';
 import { ListTable, ManageColumnsPopover } from '../../../components/table';
+import Timeline from '../../../pages/timeline/timeline';
 
 const FourPartAssessmentTabs: OverviewTabs[] = [
   {
@@ -60,6 +61,7 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
   const { accountid, caseId, projectid } = useParams();
   const [searchParams] = useSearchParams();
   const accountID = searchParams.get('accountID') || '';
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -307,6 +309,10 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
       />
       {viewDetails ? (
         <FourPartAssessmentDetails moduleLevel={moduleLevel} />
+      ) : isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px]'>
+          <Timeline entitytype={moduleLevel} />
+        </div>
       ) : (
         <>
           <SectionHeader

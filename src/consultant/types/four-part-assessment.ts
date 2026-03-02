@@ -57,31 +57,41 @@ export interface FourPartAssessmentAttachment {
 }
 
 export interface FourPartAssessmentQuestions {
-  permitted_purpose: 'Met' | 'Not Met';
-  technological_uncertainty: 'Met' | 'Not Met';
-  process_of_experimentation: 'Met' | 'Not Met';
-  technological_in_nature: 'Met' | 'Not Met';
+  permitted_purpose: string;
+  technological_uncertainty: string;
+  process_of_experimentation: string;
+  technological_in_nature: string;
+}
+
+export interface FourPartAssessmentDetailsTitle {
+  rid: string;
+  r_number: string;
+}
+
+export interface FourPartAssessmentDetailsBasicInfo {
+  rid: string;
+  status: string;
+  project_code: string | null;
+  project_description: string | null;
+  rd_potential_category: string;
+}
+
+export interface FourPartAssessmentDetailsAuditInfo {
+  record_id: string;
+  created_by: string;
+  created_on: string | null;
+  updated_on: string | null;
+  modified_by: string | null;
+  four_part_assessment_id: string;
+  created_by_name: string;
+  modified_by_name: string | null;
 }
 
 export interface FourPartAssessmentDetails {
-  rid: string;
-  r_number: string;
-  account_rid: string;
-  project_code: string | null;
-  attach_to: string;
-  attached_to: string;
-  attachment_level: string;
-  range: 'Low' | 'Medium' | 'High';
-  status_rid: string | null;
-  status_name: 'Met' | 'Not Met';
-  created_by: string;
-  created_by_name: string;
-  created_datetime: string;
-  modified_by?: string | null;
-  modified_by_name?: string | null;
-  modified_datetime?: string | null;
-  tracker_one_liner: string;
-  assessment_questions: FourPartAssessmentQuestions;
+  title: FourPartAssessmentDetailsTitle;
+  basic_information: FourPartAssessmentDetailsBasicInfo;
+  four_part_assessment: FourPartAssessmentQuestions;
+  audit_information: FourPartAssessmentDetailsAuditInfo;
 }
 
 export interface FourPartAssessmentDetailsResponse {

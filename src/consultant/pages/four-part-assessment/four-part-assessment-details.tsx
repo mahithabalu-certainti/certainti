@@ -25,6 +25,12 @@ interface FourPartAssessmentDetailsProps {
   moduleLevel: 'account' | 'project' | 'case';
 }
 
+const formatSnakeCaseLabel = (key: string): string =>
+  key
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
 const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   moduleLevel,
 }) => {
@@ -129,32 +135,32 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   const auditInfo: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.rid || fourPartAssessmentId,
+      value: data?.audit_information?.record_id || fourPartAssessmentId,
       key: 'rid',
     },
     {
       label: 'Four Part Assessment ID',
-      value: data?.r_number,
+      value: data?.audit_information?.four_part_assessment_id,
       key: 'r_number',
     },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(data?.created_datetime),
+      value: formatDateToYYYYMMDDWithTime(data?.audit_information?.created_on),
       key: 'created_datetime',
     },
     {
       label: 'Created By',
-      value: data?.created_by_name,
+      value: data?.audit_information?.created_by_name,
       key: 'created_by_name',
     },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+      value: formatDateToYYYYMMDDWithTime(data?.audit_information?.updated_on),
       key: 'modified_datetime',
     },
     {
       label: 'Updated By',
-      value: data?.modified_by_name,
+      value: data?.audit_information?.modified_by_name,
       key: 'modified_by_name',
     },
   ];
@@ -162,27 +168,27 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   const basicInfo: DetailItem[] = [
     {
       label: 'Project Code',
-      value: data?.project_code,
+      value: data?.basic_information?.project_code,
       key: 'project_code',
       hide: moduleLevel === 'project',
     },
     {
       label: 'Range',
-      value: data?.range,
-      key: 'range',
+      value: data?.basic_information?.rd_potential_category,
+      key: 'rd_potential_category',
     },
     {
       label: 'Status',
-      value: data?.status_name,
-      key: 'status_name',
+      value: data?.basic_information?.status,
+      key: 'status',
     },
   ];
 
   const description: DetailItem[] = [
     {
       label: 'Project Description',
-      value: data?.tracker_one_liner || '',
-      key: 'descriptions',
+      value: data?.basic_information?.project_description || '',
+      key: 'description',
     },
   ];
 
@@ -200,7 +206,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Four Part Assessment'
-          subValue={data?.r_number || ''}
+          subValue={data?.title?.r_number || ''}
           titleIcon={
             <FourPartIcon
               className={`text-[${currentModuleColors.text}] w-[13px] h-[13px]`}
@@ -236,30 +242,23 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
           </>
         )}
       </div>
-      {!isLoading && !isError && data?.assessment_questions && (
+      {!isLoading && !isError && data?.four_part_assessment && (
         <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
           <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
             <div className='text-[14px] text-[#2D3E4F] font-semibold'>
               Four Part Assessment
             </div>
           </div>
-          {Object.entries(data.assessment_questions).map(
+          {Object.entries(data.four_part_assessment).map(
             ([question, response], index) => {
-              const questionLabels: Record<string, string> = {
-                permitted_purpose: 'Permitted Purpose',
-                technological_uncertainty: 'Technological Uncertainty',
-                process_of_experimentation: 'Process of Experimentation',
-                technological_in_nature: 'Technological in Nature',
-              };
-
               return (
                 <div
                   key={question}
                   className='p-3 border-b last:border-b-0 border-[#CBD6E2]'
                 >
                   <div className='font-medium text-[14px] text-[#2D3E4F] mb-2'>
-                    <span className='font-bold'>{`Q${index + 1}`}</span> -{' '}
-                    {questionLabels[question] || question}
+                    <span className='font-bold'>{`${index + 1}`}</span> -{' '}
+                    {formatSnakeCaseLabel(question)}
                   </div>
 
                   <div className='mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]'>
