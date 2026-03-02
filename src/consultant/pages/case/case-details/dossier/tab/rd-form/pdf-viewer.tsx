@@ -8,9 +8,11 @@ import {
   Typography,
   IconButton,
   SelectChangeEvent,
+  Chip,
 } from '@mui/material';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+import { PDFDocument } from 'pdf-lib';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
 import {
   ArrowBackIcon,
@@ -20,19 +22,29 @@ import {
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-interface PdfViewerProps {
-  base64?: string; // Can be base64 string
-  isLoadingPdf?: boolean;
-  isPdfError?: boolean;
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export interface PdfFormFieldValues {
+  [fieldName: string]: string | boolean;
 }
 
-// Helper function to convert base64 to Uint8Array
+interface PdfViewerProps {
+  base64?: string;
+  url?: string;
+  isLoadingPdf?: boolean;
+  isPdfError?: boolean;
+  /** Called whenever any form field value changes. Receives all current field values. */
+  onFieldChange?: (values: PdfFormFieldValues) => void;
+  /** Called with updated base64 PDF bytes whenever fields change (auto-save). */
+  onPdfUpdate?: (updatedBase64: string) => void;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 const base64ToUint8Array = (base64: string): Uint8Array => {
-  // Remove data:application/pdf;base64, prefix if present
   const base64String = base64.includes('base64,')
     ? base64.split('base64,')[1]
     : base64;
-
   const binaryString = window.atob(base64String);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -41,34 +53,97 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return bytes;
 };
 
+const uint8ArrayToBase64 = (bytes: Uint8Array): string => {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+};
+
+/** Fetch a URL and return its bytes */
+const fetchUrlAsUint8Array = async (url: string): Promise<Uint8Array> => {
+  const res = await fetch(url);
+  const buffer = await res.arrayBuffer();
+  return new Uint8Array(buffer);
+};
+
 const ZOOM_LEVELS = [50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300];
+
+// ─── Annotation field overlay item ──────────────────────────────────────────
+
+interface FieldOverlay {
+  id: string;
+  fieldType: string; // 'text' | 'checkbox' | 'radio' | 'choice' | 'signature' | 'unknown'
+  fieldName: string;
+  rect: { left: number; top: number; width: number; height: number };
+  options?: string[]; // for dropdowns
+  radioGroup?: string; // for radio buttons
+  readOnly: boolean;
+  multiLine: boolean;
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 const PdfViewer: React.FC<PdfViewerProps> = ({
   base64,
+  url,
   isLoadingPdf,
   isPdfError,
+  onFieldChange,
+  onPdfUpdate,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  /** Raw PDF bytes kept in sync so pdf-lib can re-serialize after each edit */
+  const pdfBytesRef = useRef<Uint8Array | null>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
-  const renderTaskRef = useRef<any>(null);
+  const [isFilledForm, setIsFilledForm] = useState(false);
+  const [fieldOverlays, setFieldOverlays] = useState<FieldOverlay[]>([]);
+  const [fieldValues, setFieldValues] = useState<PdfFormFieldValues>({});
 
+  const renderTaskRef = useRef<any>(null);
+  // debounce timer for pdf-lib re-serialization
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Load PDF ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const loadPDF = async () => {
-      if (!base64) return;
+      if (!base64 && !url) return;
 
       setIsLoading(true);
       setError('');
+      setFieldOverlays([]);
+      setFieldValues({});
+      setIsFilledForm(false);
 
       try {
-        const pdfData = base64ToUint8Array(base64);
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        let rawBytes: Uint8Array;
+
+        if (base64) {
+          rawBytes = base64ToUint8Array(base64);
+        } else {
+          rawBytes = await fetchUrlAsUint8Array(url!);
+        }
+
+        pdfBytesRef.current = rawBytes;
+
+        const loadingTask = pdfjsLib.getDocument({ data: rawBytes });
+        const pdf = await loadingTask.promise;
         setPdfDoc(pdf);
+
+        // ── Detect fillable form ──────────────────────────────────────────
+        const fieldObjects = await pdf.getFieldObjects().catch(() => null);
+        const hasFields = fieldObjects && Object.keys(fieldObjects).length > 0;
+        setIsFilledForm(!!hasFields);
+
         setIsLoading(false);
       } catch (err: any) {
         console.error('Error loading PDF:', err);
@@ -78,18 +153,18 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     };
 
     loadPDF();
-  }, [base64]);
+  }, [base64, url]);
 
+  // ── Render page canvas ────────────────────────────────────────────────────
   const renderPage = useCallback(
     async (pageNum: number) => {
       if (!pdfDoc || !canvasRef.current) return;
 
-      // Cancel any ongoing render task
       if (renderTaskRef.current) {
         try {
           renderTaskRef.current.cancel();
         } catch {
-          // Ignore cancellation errors
+          /* ignore */
         }
         renderTaskRef.current = null;
       }
@@ -105,29 +180,82 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
-        const renderContext = {
+        const renderTask = page.render({
           canvasContext: context,
-          viewport: viewport,
-          canvas: canvas,
-        };
-
-        const renderTask = page.render(renderContext);
+          viewport,
+          canvas,
+        });
         renderTaskRef.current = renderTask;
         await renderTask.promise;
         renderTaskRef.current = null;
+
+        // ── Build annotation field overlays ──────────────────────────────
+        if (isFilledForm) {
+          const annotations = await page.getAnnotations({ intent: 'display' });
+          const overlays: FieldOverlay[] = [];
+
+          for (const ann of annotations) {
+            // Only interactive widget annotations (form fields)
+            if (ann.subtype !== 'Widget') continue;
+
+            // ann.rect is [x1, y1, x2, y2] in PDF coordinate space
+            const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(
+              ann.rect
+            );
+
+            const left = Math.min(x1, x2);
+            const top = Math.min(y1, y2);
+            const width = Math.abs(x2 - x1);
+            const height = Math.abs(y2 - y1);
+
+            const fieldType = resolveFieldType(ann);
+            const fieldName: string = ann.fieldName ?? ann.id ?? '';
+
+            overlays.push({
+              id: ann.id,
+              fieldType,
+              fieldName,
+              rect: { left, top, width, height },
+              options: ann.options?.map((o: any) =>
+                typeof o === 'string' ? o : (o.displayValue ?? o.exportValue)
+              ),
+              radioGroup: ann.radioGroup ?? undefined,
+              readOnly: !!(ann.readOnly || ann.fieldFlags & 1),
+              multiLine: !!(ann.multiLine || ann.fieldFlags & (1 << 12)),
+            });
+
+            // Pre-populate current values
+            if (!(fieldName in fieldValues)) {
+              const currentVal =
+                ann.fieldValue !== undefined && ann.fieldValue !== null
+                  ? ann.fieldValue
+                  : fieldType === 'checkbox'
+                    ? false
+                    : '';
+              setFieldValues((prev) => ({
+                ...prev,
+                [fieldName]:
+                  typeof currentVal === 'boolean'
+                    ? currentVal
+                    : String(currentVal ?? ''),
+              }));
+            }
+          }
+
+          setFieldOverlays(overlays);
+        }
       } catch (err: any) {
-        // Ignore cancellation errors
         const isCancelled =
           err?.name === 'RenderingCancelledException' ||
           err?.name === 'TransportException';
-
         if (!isCancelled) {
           console.error('Error rendering page:', err);
           setError('Failed to load PDF. Please try again.');
         }
       }
     },
-    [pdfDoc, scale]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pdfDoc, scale, isFilledForm]
   );
 
   useEffect(() => {
@@ -136,36 +264,276 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   }, [pdfDoc, currentPage, scale, renderPage]);
 
-  const handleZoomIn = () => {
-    setScale((prev) => Math.min(prev + 0.25, 3));
-  };
+  // ── Resolve human-readable field type from annotation ─────────────────────
+  function resolveFieldType(ann: any): string {
+    const ft = ann.fieldType as string | undefined;
+    if (ft === 'Tx') return ann.multiLine ? 'textarea' : 'text';
+    if (ft === 'Btn') {
+      // bit 16 (0-indexed: 15) set => radio button
+      if (ann.radioButton || (ann.fieldFlags & (1 << 15)) !== 0) return 'radio';
+      return 'checkbox';
+    }
+    if (ft === 'Ch') return 'choice';
+    if (ft === 'Sig') return 'signature';
+    return 'text';
+  }
 
-  const handleZoomOut = () => {
-    setScale((prev) => Math.max(prev - 0.25, 0.5));
-  };
+  // ── Auto-save: re-embed values into PDF bytes via pdf-lib ─────────────────
+  const persistToPdf = useCallback(
+    async (values: PdfFormFieldValues) => {
+      if (!pdfBytesRef.current) return;
+      try {
+        const pdfLibDoc = await PDFDocument.load(pdfBytesRef.current, {
+          ignoreEncryption: true,
+        });
+        const form = pdfLibDoc.getForm();
 
-  const handlePageChange = (event: SelectChangeEvent<number>) => {
+        for (const [name, value] of Object.entries(values)) {
+          try {
+            const field = form.getField(name);
+            const fieldType = field.constructor.name;
+
+            if (fieldType === 'PDFTextField') {
+              (field as any).setText(String(value ?? ''));
+            } else if (fieldType === 'PDFCheckBox') {
+              if (value) {
+                (field as any).check();
+              } else {
+                (field as any).uncheck();
+              }
+            } else if (fieldType === 'PDFDropdown') {
+              (field as any).select(String(value ?? ''));
+            } else if (fieldType === 'PDFRadioGroup') {
+              (field as any).select(String(value ?? ''));
+            }
+          } catch {
+            // Field may not be found by pdf-lib – skip silently
+          }
+        }
+
+        const updatedBytes = await pdfLibDoc.save();
+        pdfBytesRef.current = updatedBytes;
+        const updatedBase64 = uint8ArrayToBase64(updatedBytes);
+        onPdfUpdate?.(`data:application/pdf;base64,${updatedBase64}`);
+      } catch (err) {
+        console.error('Error persisting PDF form values:', err);
+      }
+    },
+    [onPdfUpdate]
+  );
+
+  // ── Handle field value change ─────────────────────────────────────────────
+  const handleFieldChange = useCallback(
+    (fieldName: string, value: string | boolean) => {
+      setFieldValues((prev) => {
+        const updated = { ...prev, [fieldName]: value };
+        onFieldChange?.(updated);
+
+        // Debounced auto-save (300 ms – feels instant like Excel)
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(() => {
+          persistToPdf(updated);
+        }, 300);
+
+        return updated;
+      });
+    },
+    [onFieldChange, persistToPdf]
+  );
+
+  // ── Zoom & navigation helpers ─────────────────────────────────────────────
+  const handleZoomIn = () => setScale((p) => Math.min(p + 0.25, 3));
+  const handleZoomOut = () => setScale((p) => Math.max(p - 0.25, 0.5));
+  const handlePageChange = (event: SelectChangeEvent<number>) =>
     setCurrentPage(Number(event.target.value));
-  };
+  const handlePrevPage = () => setCurrentPage((p) => Math.max(p - 1, 1));
+  const handleNextPage = () =>
+    setCurrentPage((p) => (pdfDoc ? Math.min(p + 1, pdfDoc.numPages) : p));
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+  // ── Render form field overlay element ────────────────────────────────────
+  const renderFieldOverlay = (overlay: FieldOverlay) => {
+    const { id, fieldType, fieldName, rect, readOnly } = overlay;
+    const value = fieldValues[fieldName];
+
+    const baseStyle: React.CSSProperties = {
+      position: 'absolute',
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      boxSizing: 'border-box',
+    };
+
+    const inputStyle: React.CSSProperties = {
+      ...baseStyle,
+      border: readOnly ? '1px solid transparent' : '1.5px solid #3B82F6',
+      borderRadius: 2,
+      background: readOnly ? 'rgba(243,244,246,0.7)' : 'rgba(255,255,255,0.92)',
+      fontSize: Math.max(10, Math.round(12 * scale)),
+      fontFamily: 'inherit',
+      padding: '0 4px',
+      outline: 'none',
+      color: '#1E293B',
+      resize: 'none',
+      cursor: readOnly ? 'not-allowed' : 'text',
+      transition: 'border-color 0.15s, box-shadow 0.15s',
+    };
+
+    if (fieldType === 'checkbox') {
+      return (
+        <label
+          key={id}
+          style={{
+            ...baseStyle,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: readOnly ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <input
+            type='checkbox'
+            checked={!!value}
+            disabled={readOnly}
+            onChange={(e) => handleFieldChange(fieldName, e.target.checked)}
+            style={{
+              width: '100%',
+              height: '100%',
+              cursor: 'inherit',
+              accentColor: '#3B82F6',
+            }}
+          />
+        </label>
+      );
     }
-  };
 
-  const handleNextPage = () => {
-    if (pdfDoc && currentPage < pdfDoc.numPages) {
-      setCurrentPage(currentPage + 1);
+    if (fieldType === 'radio') {
+      return (
+        <label
+          key={id}
+          style={{
+            ...baseStyle,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: readOnly ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <input
+            type='radio'
+            name={overlay.radioGroup ?? fieldName}
+            checked={value === id}
+            disabled={readOnly}
+            onChange={() => handleFieldChange(fieldName, id)}
+            style={{
+              width: '100%',
+              height: '100%',
+              cursor: 'inherit',
+              accentColor: '#3B82F6',
+            }}
+          />
+        </label>
+      );
     }
+
+    if (fieldType === 'choice' && overlay.options?.length) {
+      return (
+        <select
+          key={id}
+          value={String(value ?? '')}
+          disabled={readOnly}
+          onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+          style={{
+            ...inputStyle,
+            appearance: 'auto',
+            paddingRight: 20,
+          }}
+        >
+          <option value='' />
+          {overlay.options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    if (fieldType === 'textarea') {
+      return (
+        <textarea
+          key={id}
+          value={String(value ?? '')}
+          readOnly={readOnly}
+          onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+          style={{ ...inputStyle, height: rect.height, paddingTop: 4 }}
+          onFocus={(e) => {
+            if (!readOnly) {
+              (e.target as HTMLTextAreaElement).style.borderColor = '#2563EB';
+              (e.target as HTMLTextAreaElement).style.boxShadow =
+                '0 0 0 2px rgba(37,99,235,0.2)';
+            }
+          }}
+          onBlur={(e) => {
+            (e.target as HTMLTextAreaElement).style.borderColor = '#3B82F6';
+            (e.target as HTMLTextAreaElement).style.boxShadow = 'none';
+          }}
+        />
+      );
+    }
+
+    if (fieldType === 'signature') {
+      return (
+        <div
+          key={id}
+          style={{
+            ...baseStyle,
+            border: '1.5px dashed #94A3B8',
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#94A3B8',
+            fontSize: Math.max(9, Math.round(10 * scale)),
+            background: 'rgba(248,250,252,0.85)',
+            cursor: 'default',
+            userSelect: 'none',
+          }}
+        >
+          Signature Field
+        </div>
+      );
+    }
+
+    // Default: text input
+    return (
+      <input
+        key={id}
+        type='text'
+        value={String(value ?? '')}
+        readOnly={readOnly}
+        onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+        style={inputStyle}
+        onFocus={(e) => {
+          if (!readOnly) {
+            (e.target as HTMLInputElement).style.borderColor = '#2563EB';
+            (e.target as HTMLInputElement).style.boxShadow =
+              '0 0 0 2px rgba(37,99,235,0.2)';
+          }
+        }}
+        onBlur={(e) => {
+          (e.target as HTMLInputElement).style.borderColor = '#3B82F6';
+          (e.target as HTMLInputElement).style.boxShadow = 'none';
+        }}
+      />
+    );
   };
 
+  // ── Loading / Error states ────────────────────────────────────────────────
   if (isLoading || isLoadingPdf) {
     return (
       <div className='flex flex-col h-full gap-3 animate-pulse'>
-        {/* Controls skeleton */}
         <div className='w-full h-[40px] rounded-[4px] bg-gray-200' />
-        {/* Content skeleton */}
         <div className='w-full h-[200px] rounded-[4px] bg-gray-200' />
       </div>
     );
@@ -179,11 +547,29 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     );
   }
 
+  // ── Main render ───────────────────────────────────────────────────────────
   return (
     <Box className='flex flex-col h-full'>
       {/* PDF Controls */}
       <div className='bg-white rounded-[4px] border border-[#CBD6E2] px-3 py-2 mb-4'>
         <Box className='flex items-center gap-4 flex-wrap'>
+          {/* Fillable form badge */}
+          {isFilledForm && (
+            <Chip
+              label='Fillable Form'
+              size='small'
+              sx={{
+                height: 22,
+                fontSize: '11px',
+                fontWeight: 600,
+                backgroundColor: '#EFF6FF',
+                color: '#2563EB',
+                border: '1px solid #BFDBFE',
+                borderRadius: '4px',
+              }}
+            />
+          )}
+
           {/* Zoom Controls */}
           <Box className='flex items-center gap-2'>
             <Typography
@@ -197,9 +583,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               onClick={handleZoomOut}
               disabled={scale <= 0.5}
               disableRipple
-              sx={{
-                '&.Mui-disabled': { color: '#CBD6E2' },
-              }}
+              sx={{ '&.Mui-disabled': { color: '#CBD6E2' } }}
             >
               <ZoomOutIcon
                 className={`w-4.5 h-4.5 ${scale <= 0.5 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
@@ -224,9 +608,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               onClick={handleZoomIn}
               disabled={scale >= 3}
               disableRipple
-              sx={{
-                '&.Mui-disabled': { color: '#CBD6E2' },
-              }}
+              sx={{ '&.Mui-disabled': { color: '#CBD6E2' } }}
             >
               <ZoomInIcon
                 className={`w-4.5 h-4.5 ${scale >= 3 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
@@ -246,9 +628,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               onClick={handlePrevPage}
               size='small'
               disabled={currentPage === 1}
-              sx={{
-                '&.Mui-disabled': { color: '#CBD6E2' },
-              }}
+              sx={{ '&.Mui-disabled': { color: '#CBD6E2' } }}
             >
               <ArrowBackIcon
                 className={`w-3 h-3 ${currentPage === 1 ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
@@ -278,9 +658,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               onClick={handleNextPage}
               size='small'
               disabled={!pdfDoc || currentPage === pdfDoc.numPages}
-              sx={{
-                '&.Mui-disabled': { color: '#CBD6E2' },
-              }}
+              sx={{ '&.Mui-disabled': { color: '#CBD6E2' } }}
             >
               <ArrowBackIcon
                 className={`w-3 h-3 ${currentPage === pdfDoc?.numPages ? '[&>path]:stroke-[#CBD6E2]' : ''} rotate-180`}
@@ -298,10 +676,15 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         </Box>
       </div>
 
-      {/* PDF Canvas Container */}
+      {/* PDF Canvas + Annotation Overlay */}
       <div className='flex-1 overflow-auto bg-[#F3F4F6] p-8 rounded-[4px] border border-[#CBD6E2]'>
         <Box ref={containerRef} className='relative inline-block'>
-          <canvas ref={canvasRef} className='shadow-lg bg-white' />
+          {/* PDF rendered canvas */}
+          <canvas ref={canvasRef} className='shadow-lg bg-white block' />
+
+          {/* Interactive form field overlays */}
+          {isFilledForm &&
+            fieldOverlays.map((overlay) => renderFieldOverlay(overlay))}
         </Box>
       </div>
     </Box>

@@ -390,7 +390,10 @@ const RDForm: React.FC<RDFormProps> = ({
           <div className='max-h-[600px] overflow-auto p-3'>
             {previewData.data.rdformUrl ? (
               <PdfViewer
-                base64={previewData.data.rdformUrl}
+                // base64={previewData.data.rdformUrl}
+                url={
+                  'https://raw.githubusercontent.com/mozilla/pdf.js/master/test/pdfs/160F-2019.pdf'
+                }
                 isLoadingPdf={isPreviewLoading}
                 isPdfError={isPreviewError}
               />
