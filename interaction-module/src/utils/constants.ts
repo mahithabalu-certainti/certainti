@@ -899,6 +899,11 @@ export const rawQueries = {
   fetchKeyContactForInteraction(schemaName : string, id : string) {
     return `SELECT key_contact_name, key_contact_email FROM ${schemaName}.key_contact_details where entity_rid = '${id}' AND include_in_communication = TRUE`
   },
+  fetchProjectsWithoutKeyContacts(schemaName: string, projectFiscalRids: string[]) {
+    return `SELECT DISTINCT entity_rid FROM ${schemaName}.key_contact_details 
+           WHERE entity_rid IN (${projectFiscalRids.map(rid => `'${rid}'`).join(',')}) 
+           AND include_in_communication = TRUE`;
+  },
   fetchProfServConsultantDetails (schemaName : string, accountRid : string, keyContactRoleId : string) {
     return `SELECT * FROM ${schemaName}.key_contact_details WHERE entity_rid = '${accountRid}' AND key_contact_role = '${keyContactRoleId}'`
   },
@@ -1049,6 +1054,9 @@ export const rawQueries = {
   fetchEmailTemplateByCategory (categoryName : string) {
     return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
   },
+  fetchInteractionEmailSubject(){
+    return `SELECT interaction_email_subject,interaction_remainder_email_subject FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`
+   }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
