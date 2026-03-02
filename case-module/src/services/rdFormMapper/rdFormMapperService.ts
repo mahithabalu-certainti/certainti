@@ -1411,12 +1411,7 @@ private async handleTableConfig(
           const fiscalYearInt = parseInt(fiscalYear || '0', 10);
           const years = [fiscalYearInt, fiscalYearInt - 1, fiscalYearInt - 2];
           // Assuming there is a 'year' column in case_history_submission
-          const query = `SELECT SUM(field_value) AS total_value FROM (
-            SELECT total_qre / annual_gross_receipts AS field_value, ROW_NUMBER() OVER (ORDER BY created_datetime ASC) as row_index, fiscal_year
-            FROM trd365_00912.case_history_submission
-            WHERE account_rid = '${accountRid}' AND state_rid = '${stateRid}' AND fiscal_year IN (${years.join(",")})
-            ORDER BY created_datetime ASC
-          ) sub`;
+          const query = rawQueries.getHistoricalSubmissionData(accountRid, stateRid || '', years, schemaName);
           const orgDb = await this.getOrgDb();
           const [result]: any[] = await orgDb.query(query);
           const totalValue = result?.[0]?.total_value ?? 0;
@@ -2100,10 +2095,12 @@ private async handleTableConfig(
           );
       if (results?.filled_form_url) {
         try {
-          const sasUrl = await generateSasUrl(results.filled_form_url, 300);
-          results.filled_form_url = sasUrl
-            ? await this.fetchUrlAsBase64(sasUrl)
-            : null;
+          const sasUrl = await generateSasUrl(results.filled_form_url, 3000);
+          // results.filled_form_url = sasUrl
+          //   ? await this.fetchUrlAsBase64(sasUrl)
+          //   : null;
+           results.filled_form_url = sasUrl
+  
         } catch (error) {
           logMessage(`Error generating SAS URL: ${error}`);
           results.filled_form_url = null;
