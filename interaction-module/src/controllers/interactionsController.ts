@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   accountinteractionFieldMappings,
+  fpaFieldMappings,
   HttpStatus,
   interactionFieldMappings,
   interactionSource,
@@ -2617,6 +2618,7 @@ async function fetchFourPartAssessmentList (req : Request, res : Response) {
       );
       return;
     }
+    data.isExport = false;
     const result = await interactionService.getFourPartAssessmentList(data);
     if (result.statusCode == HttpStatus.SUCCESS) {
         return res.status(HttpStatus.SUCCESS).json({
@@ -2689,6 +2691,85 @@ async function getFpaDetails (req : Request, res : Response) {
     });
   }
 }
+
+ async function exportFetchFourPartAssessmentList (req : Request, res : Response) {
+  const methodName = "exportFetchFourPartAssessmentList";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.body;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    data.isExport = true
+    const result = await interactionService.exportFpaList(data);
+    if (result.statusCode == HttpStatus.SUCCESS) {
+          const fields = await interactionService.getAllowedExportFields(
+      userId,
+      ""
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of fields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+    const formatDate = (date?: Date) =>
+      date
+        ? moment(date)
+            .tz(isValidTZ ? data.timezone : "UTC")
+            .format("YYYY-MM-DD, hh:mm:ss A")
+        : null;
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      let structuredData =
+        result.data.data.length < 1
+          ? []
+          : result.data.data.map((d: any) => {
+              let resultMap: { [key: string]: any } = {
+                r_number: d.r_number,
+                project_code: d.project_code,
+                status: d.status,
+                rd_potential_category: d.rd_potential_category,
+                modified_datetime: d.modified_datetime === null ? "" : formatDate(d.modified_datetime),
+                created_datetime: d.created_datetime === null ? "" : formatDate(d.created_datetime),
+                created_by: d.created_by_name,
+                modified_by: d.modified_by_name,
+              };
+
+              const exportRecord: Record<string, any> = {};
+              fpaFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              return exportRecord;
+            });
+      const base64Response = await generateExcelBase64(
+        structuredData,
+        "FourPart Assessment"
+      );
+      handleSuccessResponse(res, base64Response);
+      return;
+      }
+  } 
+}catch (err : any) {
+    return res.status(HttpStatus.SUCCESS).json({
+      statusCode: HttpStatus.SUCCESS,
+      statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      statusMessage: err.message,
+      data: null,
+    });
+  }
+}
 export default {
   listAllInteractionPrjAcc,
   exportAllInteractions,
@@ -2725,5 +2806,6 @@ export default {
   updateAccountInteraction,
   fetchInteractionListForReminder,
   fetchFourPartAssessmentList,
-  getFpaDetails
+  getFpaDetails,
+  exportFetchFourPartAssessmentList
 };

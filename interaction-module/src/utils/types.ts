@@ -221,6 +221,7 @@ export interface FourPartAssessmentRequestPayload {
   sort : string
   sort_by : string
   type : string
+  isExport : boolean
 }
 
 export interface ListResponseType<T> {
@@ -262,4 +263,21 @@ export interface UserReturnType {
   rid : string
   first_name : string
   last_name : string
+}
+
+export interface InteractionGraphqlRequest {
+  rid : string
+  account_rid : string
+  status_rid : string
+  page : number
+  limit : number
+  sort : string
+  sort_by : string
+  filters : filterType
+  fiscal_year : number
+  search : string
+  flag : string
+  case_rid : string
+  project_fiscal_rid : string
+  project_rid : string
 }
