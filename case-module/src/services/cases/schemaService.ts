@@ -1303,7 +1303,7 @@ class CaseSchemaService {
               case_total_qualified_project_cost: d.case_total_qualified_project_cost,
               case_total_project_cost: d.case_total_project_cost,
               case_total_rd_cost: d.case_total_rd_cost,
-              case_total_qre_cost: d.case_total_qre_cost,
+              case_total_qre_cost: parseFloat(d.case_total_qre_cost || 0.00).toFixed(2),
               filing_type_rid: d.filing_type_rid,
               filing_type_name: filingTypeMap.get(d.filing_type_rid) || null,
               status_rid: d.status_rid,
