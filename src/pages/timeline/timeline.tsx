@@ -183,7 +183,7 @@ const getTypeIconConfig = (
         ),
         bg: bgColor,
       };
-    case 'Interactions':
+    case 'Interaction':
       return {
         icon: (
           <InteractionsIcon
