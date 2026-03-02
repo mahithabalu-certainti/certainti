@@ -1,5 +1,7 @@
 import { Logger } from "winston";
 import {
+  FourPartAssessmentListResponse,
+  FourPartAssessmentRequestPayload,
   FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
@@ -8,6 +10,8 @@ import {
   InteractionResponse,
   IProject,
   IUpdateInteraction,
+  ParentAccountType,
+  UserReturnType,
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
@@ -30,8 +34,10 @@ import {
   eventNames,
   eventTypes,
   interactionAssessmentSourceType,
+  FourPartColumns,
+  MainTableFilter,
 } from "../../utils/constants";
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import {
@@ -49,6 +55,9 @@ import {
   listResponseHistory,
   fetchInteractionTemplates,
   fetchKeyContactDetailsForInteractions,
+  fetchFourPartAssessment,
+  fetchProjectFiscalIds,
+  fetchFpaDetails,
 } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import {
@@ -4036,5 +4045,182 @@ export class InteractionService {
       message: "Account found",
       data: { account_number: accountInfo.r_number },
     };
+}
+async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
+  const mainDb = await this.getMainDb();
+  const orgDb = await this.getOrgDb();
+  const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+  if(fetchParentAccount) {
+    let isPagination : boolean = false;
+    let isSorting : boolean = false;
+    let isFiltering : boolean = false;
+    let createdByFilters : string = '';
+    let modifiedByFilters : string = '';
+    let orgDbFilterArray = [];
+    let mainDbFilterArray = [];
+
+    for(let [key, cond] of Object.entries(data.filter)) {
+      if(Object.keys(FourPartColumns).includes(key)) {
+        orgDbFilterArray.push(key)
+      }
+      if(Object.keys(MainTableFilter).includes(key)) {
+        mainDbFilterArray.push(key)
+      }
+    }
+    if(FourPartColumns[data.sort] !== undefined) {
+      isSorting = true
+    }
+    if(MainTableFilter[data.sort] !== undefined) {
+      isSorting = false
+    }
+
+    if(orgDbFilterArray.length > 0 && mainDbFilterArray.length > 0) {
+      isFiltering = true
+      isPagination = false
+    }
+    else if(orgDbFilterArray.length > 0) {
+      isFiltering = true
+      isPagination = true
+    }
+    else if(mainDbFilterArray.length > 0) {
+      isFiltering = false
+      isPagination = false
+    }
+    else {
+      isFiltering = false
+      isPagination = true
+    }
+    let schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number)
+    let projectFiscalRids : string[] = []
+    if(data.type === 'case') {
+      const findProjectIdsBasedOnCase : any = await orgDb.query(fetchProjectFiscalIds(data.case_rid, schemaName));
+      projectFiscalRids.push(findProjectIdsBasedOnCase[0][0].project_fiscal_rid)
+    }
+    let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid, data.project_fiscal_rid, projectFiscalRids, data.type ), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      const fetchCreatedByIds = [...new Set(result.filter((f) => f.created_by !== null).map((d) => d.created_by))];
+      const fetchModifiedByIds = [...new Set(result.filter((f) => f.modified_by !== null).map((d) => d.modified_by))];
+      const mergeBothIds = [...fetchCreatedByIds, ...fetchModifiedByIds];
+      const findUserDetails = await mainDb.query<UserReturnType>(rawQueries.fetchUser(mergeBothIds), {type : QueryTypes.SELECT});
+      let mapUserDetails = new Map(findUserDetails?.map((u) => [u.rid, `${u.first_name} ${u.last_name}`]));
+
+      result = result.map((d) => {
+        return {
+          ...d,
+          created_by_name : mapUserDetails.get(d.created_by) as string,
+          modified_by_name : mapUserDetails.get(d.modified_by) ?? null
+        }
+      });
+
+      if(!isFiltering) {
+        let dynamicFilteringName : keyof FourPartAssessmentListResponse;
+        for(let [key, condition] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') dynamicFilteringName = 'created_by_name'
+          else dynamicFilteringName = 'modified_by_name'
+            for(let [cond, value] of Object.entries(condition)) {
+              if(cond === 'equals') {
+                result = result.filter((f) => f[dynamicFilteringName]!.toLowerCase() === value.toLowerCase())
+              }
+              else if(cond === 'not_equals') {
+                result = result.filter((f) => f[dynamicFilteringName]!.toLowerCase() !== value.toLowerCase())
+              }
+              else if(cond === 'contains') {
+                result = result.filter((f) => f[dynamicFilteringName]!.includes(value))
+              }
+            }
+        }
+      }
+      if(!isSorting) {
+        if(data.sort === "created_by_name") {
+          if(data.sort_by.toLowerCase() === "desc")
+            result = result.sort((a, b) => b.created_by_name?.localeCompare(a.created_by_name))
+          else 
+            result = result.sort((a, b) => a.created_by_name?.localeCompare(b.created_by_name))
+        } else {
+          if(data.sort_by.toLowerCase() === "desc")
+            result = result.sort((a, b) => b.modified_by_name?.localeCompare(a.modified_by_name ?? '') ?? 0)
+          else 
+            result = result.sort((a, b) => a.modified_by_name?.localeCompare(b.modified_by_name ?? '') ?? 0)
+        }
+      }
+      let totalResultCount;
+      if(!isPagination) totalResultCount = result.length
+      else totalResultCount = result[0]?.total_results || 0
+      result = isPagination ? result : result.slice(((data.page - 1) * data.limit), data.page * data.limit) 
+
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_results : totalResultCount,
+        data : result
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.fourPartListSuccess,
+        data : finalData
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : {
+          page : data.page,
+          limit : data.limit,
+          total_results : 0,
+          data : []
+        }
+      }
+    }
+  } return {
+   statusCode : HttpStatus.NOT_FOUND,
+   statusMessage : STATUS_MESSAGE.accountNoFound,
+   data : {
+    page : data.page,
+    limit : data.limit,
+    total_results : 0,
+    data : []
+   }
+  }
+}
+async getFpaDetailsById (data : any) : Promise<any> {
+  const mainDb = await this.getMainDb();
+  const orgDb = await this.getOrgDb();
+
+  const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+  if(fetchParentAccount) {
+    const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+    const result = await orgDb.query(fetchFpaDetails(data.rid, schemaName));
+    if(result[0][0]) {
+      const userIds = [];
+      let detailsResult = result[0][0] as any
+      userIds.push(detailsResult?.audit_information.created_by,detailsResult?.audit_information.modfied_by ?? '');
+      const findUserDetails : any = await mainDb.query(rawQueries.fetchUser(userIds));
+      const mapUser = new Map(findUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]));
+      detailsResult.audit_information.created_by_name = mapUser.get(detailsResult.audit_information.created_by);
+      detailsResult.audit_information.modified_by_name = mapUser.get(detailsResult.audit_information.modified_by) ?? null
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.fourPartListSuccess,
+        data : {
+          title : detailsResult.title,
+          basic_information : detailsResult.basic_information,
+          four_part_assessment : detailsResult.four_part_assessment,
+          audit_information : detailsResult.audit_information
+        }
+      }
+    } else {
+      return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.dataNotFound,
+      data : {}
+      }
+    }
+  } else {
+    return {
+    statusCode : HttpStatus.NOT_FOUND,
+    statusMessage : STATUS_MESSAGE.accountNoFound,
+    data : {}
+    }
+  }
 }
 }

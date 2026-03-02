@@ -297,6 +297,7 @@ export const STATUS_MESSAGE = {
   interactionUpdated:"Interaction updated successfully",
   techSummarycontextUpdated:"Technical summary context updated successfully",
   projectRequired:"Atleast one project is required to create interaction",
+  fourPartListSuccess : "FourPart Assessment fetched successfully"
 };
 
 export const rawQueries = {
@@ -1346,3 +1347,26 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   export const keyContactRoleName = {
     professionalServiceConsultant : "Professional Services Consultant"
   }
+
+  export const FourPartColumns : Record<string, string> = {
+  r_number : 'f.r_number',
+  project_code : 'p.project_code',
+  rd_potential_category : 'f.rd_potential_category',
+  status : 'f.status',
+  created_datetime : 'f.created_datetime',
+  modified_datetime : 'f.modified_datetime'
+}
+
+export const FourPartColumnsTypes : Record<string, string> = {
+  r_number : 'string',
+  project_code : 'string',
+  rd_potential_category : 'string',
+  status : 'string',
+  created_datetime : 'date',
+  modified_datetime : 'date'
+}
+
+export const MainTableFilter : Record<string, string> = {
+  created_by_name : 'created_by_name',
+  modified_by_name : 'modified_by_name'
+}
