@@ -537,7 +537,8 @@ export type ExportType =
   | 'dossier-resource-summary'
   | 'dossier-project-documents'
   | 'dossier-qualified-projects'
-  | 'dossier-audit-timeline';
+  | 'dossier-audit-timeline'
+  | 'four_part_assessment';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

@@ -13,13 +13,13 @@ export const fetchManageSettingDetail =
         );
       return data;
     } catch (error) {
-      console.error('Error fetching user details:', error);
+      console.error('Error fetching setting details:', error);
       throw error;
     }
   };
 export const useManageSettingDetails = () => {
   return useQuery<ConfigureManageSettingApiResponse, Error>({
-    queryKey: ['userDetail'],
+    queryKey: ['admin-manage-settings'],
     queryFn: () => fetchManageSettingDetail(),
     retry: 0,
     refetchOnWindowFocus: false,

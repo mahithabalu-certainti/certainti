@@ -33,6 +33,7 @@ import {
   ProjectTaskIcon,
   ManageGroupAccount,
   DetailsKeyContactErrorIcon,
+  FourPartIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -54,6 +55,7 @@ import {
   ExportType,
   FiscalDates,
   FormFiscalDateType,
+  FourPartAssessmentListExportURLParams,
   MenuItem,
   NotesListURLParams,
   ProjectFinancialResourceExportParams,
@@ -102,6 +104,8 @@ import { ExportChecklistList } from '../../../services/checklist/checklist-servi
 import { Checklist } from './checklist';
 import ProjectActivities from './project-activities/project-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
+import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
+import { FourPartAssessment } from '../../four-part-assessment';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -180,6 +184,16 @@ export const ProjectDetails = () => {
       activity_type: 'all',
     });
 
+  const [fourPartParams, setFourPartParams] =
+    useState<FourPartAssessmentListExportURLParams>({
+      account_rid: '',
+      search: '',
+      filter: {},
+      sort: 'ASC',
+      sort_by: 'r_number',
+      type: 'project',
+    });
+
   const [activityModalId, setActivityModalId] = useState<string | null>(null);
 
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
@@ -233,6 +247,7 @@ export const ProjectDetails = () => {
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+  const fourPartAssessmentView = !!searchParams.get('fpa_id');
 
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
@@ -423,6 +438,8 @@ export const ProjectDetails = () => {
 
     if (list === 'attachments') {
       return !isAttachmentExportEnable;
+    } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
+      return false;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
@@ -477,7 +494,8 @@ export const ProjectDetails = () => {
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
       list !== 'interactions' &&
-      list !== 'technicalSummary'
+      list !== 'technicalSummary' &&
+      list !== 'four_part_assessment'
     ) {
       return;
     }
@@ -492,6 +510,11 @@ export const ProjectDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+      return;
+    }
+
+    if (exportType === 'four_part_assessment') {
+      ExportFourPartAssessmentList(fourPartParams);
       return;
     }
 
@@ -813,6 +836,15 @@ export const ProjectDetails = () => {
             isProjectSignedOff={isProjectSignedOff}
           />
         );
+      case 'four_part_assessment':
+        return (
+          <FourPartAssessment
+            setExportType={setExportType}
+            setFourPartAssessmentParams={setFourPartParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='project'
+          />
+        );
       case 'technicalSummary':
         return (
           <TechnicalSummary
@@ -928,6 +960,13 @@ export const ProjectDetails = () => {
         id: AllModules.INTERACTIONS,
         disabled: false,
         icon: InteractionsIcon,
+      },
+      {
+        name: 'Four Part Assessment',
+        key: 'four_part_assessment',
+        id: AllModules.FOUR_PART_ASSESSMENT,
+        disabled: false,
+        icon: FourPartIcon,
       },
       {
         name: 'Technical Summary',
