@@ -4,7 +4,7 @@ import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
-    max_credit_cap_percent: number;
+    max_credit_allowed_percent: number;
     tax_base_cap_percent: number;
     tax_credit_rate_percent: number;
 }
@@ -169,7 +169,7 @@ export class RdCreditCalculatorForGA {
         const value_of_other_credit_claimed = new Decimal(caseDetails.other_credits_total || 0.00)
 
         const remaining_tax_liability = new Decimal(current_year_tax_liability).minus(value_of_other_credit_claimed);
-        const max_credits_allowed = remaining_tax_liability.mul(config.max_credit_cap_percent / 100);
+        const max_credits_allowed = remaining_tax_liability.mul(config.max_credit_allowed_percent / 100);
         const research_tax_credit = tax_credit.gt(0) ? tax_credit : 0;
         const tax_carryover_py = new Decimal(caseDetails.credit_carry_forward_py || 0.00)
         const total_tax_credit = new Decimal(research_tax_credit).plus(tax_carryover_py);
@@ -314,7 +314,7 @@ export class RdCreditCalculatorForGA {
                 "[1] Current Tax Liability w/o applied credits - E" : this.round2(creditAndCarryForwardInfo.current_year_tax_liability)  || 0,
                 "[2] Value of all Other Credits Claimed - C" : this.round2(creditAndCarryForwardInfo.value_of_other_credit_claimed) || 0,
                 "[3] Remaining Tax Liability (C-E)" : this.round2(creditAndCarryForwardInfo.remaining_tax_liability) || 0,
-                [`[4] Maximum Credit Allowed (Line 3 * ${config.max_credit_cap_percent}%)`] : this.round2(creditAndCarryForwardInfo.max_credits_allowed) || 0,
+                [`[4] Maximum Credit Allowed (Line 3 * ${config.max_credit_allowed_percent}%)`] : this.round2(creditAndCarryForwardInfo.max_credits_allowed) || 0,
                 "[5] Research Tax Credit - J" : this.round2(creditAndCarryForwardInfo.research_tax_credit) || 0,
                 "[5a] Tax Carryover from PY - D": this.round2(creditAndCarryForwardInfo.tax_carryover_py) || 0    ,
                 "[6] Total available Research Tax Credit (J+D)" : this.round2(creditAndCarryForwardInfo.total_tax_credit) || 0,

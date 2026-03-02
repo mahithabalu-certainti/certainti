@@ -4,7 +4,7 @@ import CaseSchemaService from "../cases/schemaService";
 import { logMessage, errorLog } from "../../utils/helpers";
 import { ICreateHistoricalSubmission, CaseHistorySubmission, CurrencyType } from "../../utils/types";
 import { fetchCaseDetails } from "../../utils/rawQueries";
-import { entityTypes, eventTypes, rawQueries, SCHEMANAME_PREFIX , eventNames} from "../../utils/constants";
+import { entityTypes, eventTypes, rawQueries, SCHEMANAME_PREFIX, eventNames } from "../../utils/constants";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { HelperMethods } from "../cases/helperMethods";
 
@@ -12,20 +12,20 @@ export class HistoricalSubmissionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
   private caseSchemaService: CaseSchemaService;
-  private mainDbSequelize : Sequelize | null = null
+  private mainDbSequelize: Sequelize | null = null
   private helperMethod: HelperMethods
- 
+
 
   constructor() {
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
-     this.helperMethod = new HelperMethods(
-          this.caseModelService
-        );
+    this.helperMethod = new HelperMethods(
+      this.caseModelService
+    );
   }
 
-  async getMainDb () {
-    if(!this.mainDbSequelize) {
+  async getMainDb() {
+    if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize();
     }
     return this.mainDbSequelize;
@@ -49,7 +49,7 @@ export class HistoricalSubmissionSchemaService {
       whereClause.rid = { [Op.ne]: excludeRid };
     }
 
-    if(state_rid != null) {
+    if (state_rid != null) {
       whereClause.state_rid = state_rid;
     }
 
@@ -94,22 +94,22 @@ export class HistoricalSubmissionSchemaService {
             rid: submission.history_submission_rid,
           },
         });
-        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                userId: userId!,
-                                                eventType: eventTypes.UI_HANDLER
-                                              });
-    
+        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+          userId: userId!,
+          eventType: eventTypes.UI_HANDLER
+        });
+
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                          created_by: userId!,
-                                          account_rid: historySubmissionRequest.account_rid,
-                                          entity_rid: historySubmissionRequest.account_rid,
-                                          entity_name: entityTypes.HISTORICAL_SUBMISSION,
-                                          created_by_name: userEventInfo.full_name,
-                                          event_type_rid: userEventInfo.event_type_rid,
-                                          event_name: eventNames.DELETE,
-                                          descriptions:submission.fiscal_year || '',
-                                         
-                                        },["account"]);
+          created_by: userId!,
+          account_rid: historySubmissionRequest.account_rid,
+          entity_rid: historySubmissionRequest.account_rid,
+          entity_name: entityTypes.HISTORICAL_SUBMISSION,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.DELETE,
+          descriptions: submission.fiscal_year || '',
+
+        }, ["account"]);
 
         results.push({
           action: "deleted",
@@ -154,7 +154,7 @@ export class HistoricalSubmissionSchemaService {
           submission.fiscal_year,
           submission.country_rid,
           submission.state_rid || "",
-          submission.history_submission_rid 
+          submission.history_submission_rid
         );
 
         if (!isUnique) {
@@ -192,22 +192,22 @@ export class HistoricalSubmissionSchemaService {
             },
           }
         );
-        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                userId: userId!,
-                                                eventType: eventTypes.UI_HANDLER
-                                              });
-    
+        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+          userId: userId!,
+          eventType: eventTypes.UI_HANDLER
+        });
+
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                          created_by: userId!,
-                                          account_rid: historySubmissionRequest.account_rid,
-                                          entity_rid: historySubmissionRequest.account_rid,
-                                          entity_name: entityTypes.HISTORICAL_SUBMISSION,
-                                          created_by_name: userEventInfo.full_name,
-                                          event_type_rid: userEventInfo.event_type_rid,
-                                          event_name: eventNames.UPDATE,
-                                          descriptions:submission.fiscal_year || '',
-                                         
-                                        },["account"]);
+          created_by: userId!,
+          account_rid: historySubmissionRequest.account_rid,
+          entity_rid: historySubmissionRequest.account_rid,
+          entity_name: entityTypes.HISTORICAL_SUBMISSION,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.UPDATE,
+          descriptions: submission.fiscal_year || '',
+
+        }, ["account"]);
 
         results.push({
           action: "updated",
@@ -284,22 +284,22 @@ export class HistoricalSubmissionSchemaService {
           created_datetime: new Date(),
         });
 
-         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                userId: userId!,
-                                                eventType: eventTypes.UI_HANDLER
-                                              });
-    
+        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+          userId: userId!,
+          eventType: eventTypes.UI_HANDLER
+        });
+
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                          created_by: userId!,
-                                          account_rid: historySubmissionRequest.account_rid,
-                                          entity_rid: historySubmissionRequest.account_rid,
-                                          entity_name: entityTypes.HISTORICAL_SUBMISSION,
-                                          created_by_name: userEventInfo.full_name,
-                                          event_type_rid: userEventInfo.event_type_rid,
-                                          event_name: eventNames.ADDED,
-                                          descriptions:submission.fiscal_year || '',
-                                         
-                                        },["account"]);
+          created_by: userId!,
+          account_rid: historySubmissionRequest.account_rid,
+          entity_rid: historySubmissionRequest.account_rid,
+          entity_name: entityTypes.HISTORICAL_SUBMISSION,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.ADDED,
+          descriptions: submission.fiscal_year || '',
+
+        }, ["account"]);
 
         results.push({
           action: "inserted",
@@ -366,10 +366,10 @@ export class HistoricalSubmissionSchemaService {
     data: any,
     userId: string,
     type: string = "list",
-    currencyRid : string
+    currencyRid: string
   ) {
     try {
-      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber); 
+      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
       const whereConditions: any = {
         account_rid: data.account_rid,
         country_rid: data.country_rid
@@ -382,14 +382,14 @@ export class HistoricalSubmissionSchemaService {
       const queryOptions: any = {
         where: whereConditions,
         order: [["fiscal_year", "ASC"]],
-        raw : true
+        raw: true
       };
-      let currencySymbol : string | null;
-      let currencyId : string | null;
-      if(currencyRid !== null) {
+      let currencySymbol: string | null;
+      let currencyId: string | null;
+      if (currencyRid !== null) {
         const mainDb = await this.getMainDb();
-        const getCurrencySymbol : any = await mainDb.query(rawQueries.getCurrencyDetails(currencyRid))
-        if(getCurrencySymbol[0].length > 0) {
+        const getCurrencySymbol: any = await mainDb.query(rawQueries.getCurrencyDetails(currencyRid))
+        if (getCurrencySymbol[0].length > 0) {
           currencySymbol = getCurrencySymbol[0][0].currency_symbol
           currencyId = getCurrencySymbol[0][0].rid
         } else {
@@ -398,11 +398,11 @@ export class HistoricalSubmissionSchemaService {
         }
       }
       let historicalSubmissions = await CaseHistorySubmission.findAll(queryOptions);
-      historicalSubmissions = historicalSubmissions.map((d : any) => {
+      historicalSubmissions = historicalSubmissions.map((d: any) => {
         return {
           ...d,
-          currency_rid : currencyId,
-          currency_symbol : currencySymbol
+          currency_rid: currencyId,
+          currency_symbol: currencySymbol
         }
       })
       return historicalSubmissions;

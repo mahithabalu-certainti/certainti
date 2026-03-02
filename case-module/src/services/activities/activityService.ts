@@ -705,7 +705,7 @@ export class ActivityService {
         data: result,
       };
     } catch (err) {
-      logMessage(`Error adding comments to task, ${err}`);
+      logMessage(`Error creating activity meeting, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,

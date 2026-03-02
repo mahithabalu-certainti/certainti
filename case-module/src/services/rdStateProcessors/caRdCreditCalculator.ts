@@ -7,8 +7,8 @@ import { Case } from "../../models/caseModel";
  * California RD Credit Calculator
  */
 export interface ConfigJson {
-    credit_rate: number;
-    qre_cap_rate: number;
+    qre_credit_percentage_c2: number;
+    qre_credit_percentage_c1: number;
     fixed_base_percentage: number;
     s_corp: number;
     corporation: number;
@@ -95,13 +95,13 @@ export class RdCreditCalculatorForCA {
         let line13 = Decimal.max(line12.minus(line9), 0);
 
         //---- Line 14: 50% of current year QRE
-        let line14 = line9.mul(config.qre_cap_rate/100);
+        let line14 = line9.mul(config.qre_credit_percentage_c1/100);
 
         //----Line 15: Smaller of Line 13 or Line 14
         let line15 = Decimal.min(line13, line14);
 
         //---- Line 16: Credit before carryforward
-        let line16 = line15.mul(config.credit_rate/100);
+        let line16 = line15.mul(config.qre_credit_percentage_c2/100);
 
         //---- Line 17a: 
         let line17a = line16;
@@ -186,9 +186,9 @@ export class RdCreditCalculatorForCA {
             "[11] Enter average annual gross receipts. See instructions": creditRRC.average_gross_receipts,
             "[12] Base amount. Multiply line 11 by the percentage on line 10": creditRRC.base_amount,
             "[13] Subtract line 12 from line 9. If zero or less, enter -0-": creditRRC.excess_qre_over_base,
-            [`[14] Multiply line 9 by ${creditRRC.config.qre_cap_rate}% (${creditRRC.config.qre_cap_rate / 100}). See instructions`]: creditRRC.half_total_qre,
+            [`[14] Multiply line 9 by ${creditRRC.config.qre_credit_percentage_c1}% (${creditRRC.config.qre_credit_percentage_c1 / 100}). See instructions`]: creditRRC.half_total_qre,
             "[15] Enter the smaller of line 13 or line 14": creditRRC.smaller_of_excess_or_half,
-            [`[16] Multiply line 15 by ${creditRRC.config.credit_rate}% (${creditRRC.config.credit_rate / 100})`]: creditRRC.credit_before_280c,
+            [`[16] Multiply line 15 by ${creditRRC.config.qre_credit_percentage_c2}% (${creditRRC.config.qre_credit_percentage_c2 / 100})`]: creditRRC.credit_before_280c,
             "[17 a] Regular credit. Add line 4 and line 16. If you do not elect the reduced credit under IRC Section 280C(c), enter the result here, and see instructions for the schedule to attach": creditRRC.regular_credit,
             "[17 b] Reduced regular credit under IRC Section 280C(c). Multiply line 17a by the applicable percentage below:": "",
             [`${creditRRC.config.individual}% (${(creditRRC.config.individual/100).toFixed(3)}) for individuals and estates or trusts`]:creditRRC.reduced_credit_amount.individual,

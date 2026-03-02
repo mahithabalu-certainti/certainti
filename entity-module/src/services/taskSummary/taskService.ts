@@ -406,6 +406,12 @@ export class TaskService {
         };
       }));
 
+      if (flag === 'milestone') {
+        tasks = tasks.filter(task => {
+          return caseMap.get(task.attach_to);
+        });
+      }
+
       // Apply frontend filters
       if (assignedToFilter) {
         tasks = tasks.filter(task => {

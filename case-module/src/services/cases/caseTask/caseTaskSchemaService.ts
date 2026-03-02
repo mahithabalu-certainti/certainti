@@ -172,10 +172,10 @@ export class CaseTaskSchemaService {
           }
         }
       }
-      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.created_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
+      const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+        userId: data.created_by,
+        eventType: eventTypes.UI_HANDLER
+      });
       await CaseTimeline.create(
         {
           created_by_name: userEventInfo.full_name,
@@ -184,7 +184,7 @@ export class CaseTaskSchemaService {
           created_datetime: new Date(),
           account_rid: data.account_rid,
           entity_rid: createdTaskResult.dataValues.rid,
-          case_rid:data.case_rid,
+          case_rid: data.case_rid,
           event_name: eventNames.CREATE,
           entity_name: entityTypes.TASK,
           descriptions: `${createdTaskResult.task_name}`,
@@ -378,10 +378,10 @@ export class CaseTaskSchemaService {
                 }
               }
               if (data.workflow_connector.is_new_changes) {
-                const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
+                const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                  userId: data.modified_by,
+                  eventType: eventTypes.UI_HANDLER
+                });
                 // await CaseTimeline.create({
                 //   created_by: data.modified_by,
                 //   created_datetime: new Date(),
@@ -523,11 +523,11 @@ export class CaseTaskSchemaService {
               if (updatedColumnsStorage.length > 0) {
                 combinedColumns = updatedColumnsStorage.join(', ')
               }
-              const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-              
+              const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                userId: data.modified_by,
+                eventType: eventTypes.UI_HANDLER
+              });
+
               await CaseTimeline.create({
                 created_by_name: userEventInfo.full_name,
                 event_type_rid: userEventInfo.event_type_rid,
@@ -535,7 +535,7 @@ export class CaseTaskSchemaService {
                 created_datetime: new Date(),
                 account_rid: data.account_rid,
                 entity_rid: data.rid,
-                case_rid:data.case_rid,
+                case_rid: data.case_rid,
                 event_name: eventNames.UPDATE,
                 entity_name: entityTypes.TASK,
                 descriptions: `${data.task_name}`
@@ -848,18 +848,18 @@ export class CaseTaskSchemaService {
           const finalResult = await TaskTag.create(tagPayload);
           if (finalResult) {
             if (taskType !== "activity") {
-              const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: userId,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
+              const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                userId: userId,
+                eventType: eventTypes.UI_HANDLER
+              });
               await CaseTimeline.create({
                 created_by: userId,
                 created_datetime: new Date(),
                 account_rid: accountRid,
                 entity_rid: taskRid,
-                case_rid:caseRid,
+                case_rid: caseRid,
                 event_name: eventNames.ADDED,
-                entity_name:entityTypes.TAG,
+                entity_name: entityTypes.TAG,
                 event_type_rid: userEventInfo.event_type_rid,
                 descriptions: `Task ${result.tag_name}`,
                 created_by_name: userEventInfo.full_name
@@ -874,7 +874,7 @@ export class CaseTaskSchemaService {
                 task_rid: taskRid,
               });
             } else {
-              
+
               await this.addTaskTimeline(
                 accountNumber,
                 taskRid,
@@ -939,28 +939,28 @@ export class CaseTaskSchemaService {
           created_datetime: new Date(),
         });
         if (taskType !== "activity") {
-        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: userId,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-         const existingTaskInfo:any = await CaseTask.findOne({
-        where: {
-          rid: taskRid,
-          account_rid: accountRid,
-          case_rid: caseRid,
-        },
-        raw: true,
-      });
+          const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+            userId: userId,
+            eventType: eventTypes.UI_HANDLER
+          });
+          const existingTaskInfo: any = await CaseTask.findOne({
+            where: {
+              rid: taskRid,
+              account_rid: accountRid,
+              case_rid: caseRid,
+            },
+            raw: true,
+          });
           await CaseTimeline.create({
             created_by: userId,
             created_datetime: new Date(),
             account_rid: accountRid,
             entity_rid: taskRid,
-            case_rid:caseRid,
-            entity_name:entityTypes.TAG,
+            case_rid: caseRid,
+            entity_name: entityTypes.TAG,
             event_name: eventNames.UPDATE,
-           // description: `Tag added for task : ${tagDetails!.tag_name}`,
-            descriptions:`Task ${existingTaskInfo!.task_name}`,
+            // description: `Tag added for task : ${tagDetails!.tag_name}`,
+            descriptions: `Task ${existingTaskInfo!.task_name}`,
             created_by_name: userEventInfo.full_name,
             event_type_rid: userEventInfo.event_type_rid,
           });
@@ -1182,18 +1182,18 @@ export class CaseTaskSchemaService {
         }
       }
       if (data.task_type !== "activity") {
-         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.created_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-      const existingTaskInfo:any = await CaseTask.findOne({
-        where: {
-          rid: data.task_rid,
-          account_rid: data.account_rid,
-          case_rid: data.case_rid,
-        },
-        raw: true,
-      });
+        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+          userId: data.created_by,
+          eventType: eventTypes.UI_HANDLER
+        });
+        const existingTaskInfo: any = await CaseTask.findOne({
+          where: {
+            rid: data.task_rid,
+            account_rid: data.account_rid,
+            case_rid: data.case_rid,
+          },
+          raw: true,
+        });
         await CaseTimeline.create({
           created_by: data.created_by,
           created_by_name: userEventInfo.full_name,
@@ -1201,9 +1201,9 @@ export class CaseTaskSchemaService {
           created_datetime: new Date(),
           account_rid: data.account_rid,
           entity_rid: data.case_rid,
-          case_rid:data.task_rid,
+          case_rid: data.task_rid,
           event_name: eventNames.UPDATE,
-          entity_name:entityTypes.COMMENTS,
+          entity_name: entityTypes.COMMENTS,
           descriptions: `Task ${existingTaskInfo.task_name}`,
         });
         await CaseHistory.create({
@@ -1416,19 +1416,19 @@ export class CaseTaskSchemaService {
                       case_rid: data.case_rid,
                     });
                   } else {
-                    const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-                    const existingTaskInfo:any = await CaseTask.findOne({
-                    where: {
-                      rid: data.task_rid,
-                      account_rid: data.account_rid,
-                      case_rid: data.case_rid,
-                    },
-                    raw: true,
-                  });
-                    
+                    const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                      userId: data.modified_by,
+                      eventType: eventTypes.UI_HANDLER
+                    });
+                    const existingTaskInfo: any = await CaseTask.findOne({
+                      where: {
+                        rid: data.task_rid,
+                        account_rid: data.account_rid,
+                        case_rid: data.case_rid,
+                      },
+                      raw: true,
+                    });
+
                     await CaseTimeline.create({
                       created_by: data.modified_by,
                       created_by_name: userEventInfo.full_name,
@@ -1436,9 +1436,9 @@ export class CaseTaskSchemaService {
                       created_datetime: new Date(),
                       account_rid: data.account_rid,
                       entity_rid: data.task_rid,
-                      case_rid:data.case_rid,
+                      case_rid: data.case_rid,
                       event_name: eventNames.DELETE,
-                      entity_name:entityTypes.ATTACHMENT,
+                      entity_name: entityTypes.ATTACHMENT,
                       descriptions: `${fetchCommentsAttachmentDetails.document_name} in comments for task ${existingTaskInfo.task_name}`,
                     });
                   }
@@ -1485,18 +1485,18 @@ export class CaseTaskSchemaService {
             combinedColumns = updatedColumnsStorage.join(", ");
           }
           if (data.task_type !== "activity") {
-            const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-            const existingTaskInfo:any = await CaseTask.findOne({
-            where: {
-              rid: data.task_rid,
-              account_rid: data.account_rid,
-              case_rid: data.case_rid,
-            },
-            raw: true,
-          });
+            const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+              userId: data.modified_by,
+              eventType: eventTypes.UI_HANDLER
+            });
+            const existingTaskInfo: any = await CaseTask.findOne({
+              where: {
+                rid: data.task_rid,
+                account_rid: data.account_rid,
+                case_rid: data.case_rid,
+              },
+              raw: true,
+            });
             await CaseTimeline.create({
               created_by: data.modified_by,
               created_by_name: userEventInfo.full_name,
@@ -1504,7 +1504,7 @@ export class CaseTaskSchemaService {
               created_datetime: new Date(),
               account_rid: data.account_rid,
               entity_rid: data.case_rid,
-              entity_name:entityTypes.COMMENTS,
+              entity_name: entityTypes.COMMENTS,
               event_name: eventNames.UPDATE,
               descriptions: `Task ${existingTaskInfo.task_name}`,
             });
@@ -1565,22 +1565,22 @@ export class CaseTaskSchemaService {
           ""
         )}`;
         let insertQuery = "";
-        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: userId,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });          
+        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+          userId: userId,
+          eventType: eventTypes.UI_HANDLER
+        });
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                    created_by: userId!,
-                                    account_rid: accountRid,
-                                    entity_rid: taskRid,
-                                    entity_name: entityTypes.ACTIVITY_TASK,
-                                    created_by_name: userEventInfo.full_name,
-                                    event_type_rid: userEventInfo.event_type_rid,
-                                    event_name: eventNames.CREATE,
-                                    descriptions:entityresponse.task_name,
-                                    project_rid: attachmentLevel === 'project' ? entityresponse.attach_to : undefined,
-                                    case_rid: attachmentLevel === 'case' ? entityresponse.attach_to : undefined,
-                                  },[attachmentLevel]);
+          created_by: userId!,
+          account_rid: accountRid,
+          entity_rid: taskRid,
+          entity_name: entityTypes.ACTIVITY_TASK,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.CREATE,
+          descriptions: entityresponse.task_name,
+          project_rid: attachmentLevel === 'project' ? entityresponse.attach_to : '',
+          case_rid: attachmentLevel === 'case' ? entityresponse.attach_to : '',
+        }, [attachmentLevel]);
         // if (attachmentLevel === "case") {
         //   /*const { CaseTimeline } = await this.caseModelService.getModels(
         //     accountNumber
@@ -1681,11 +1681,11 @@ export class CaseTaskSchemaService {
                 }
               );
               if (data.task_type !== "activity") {
-                const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-                const existingTaskInfo:any = await CaseTask.findOne({
+                const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                  userId: data.modified_by,
+                  eventType: eventTypes.UI_HANDLER
+                });
+                const existingTaskInfo: any = await CaseTask.findOne({
                   where: {
                     rid: data.task_rid,
                     account_rid: data.account_rid,
@@ -1693,7 +1693,7 @@ export class CaseTaskSchemaService {
                   },
                   raw: true,
                 });
-                                                      
+
                 await CaseTimeline.create({
                   created_by: data.modified_by,
                   created_datetime: new Date(),
@@ -1702,7 +1702,7 @@ export class CaseTaskSchemaService {
                   account_rid: data.account_rid,
                   entity_rid: data.case_rid,
                   event_name: eventNames.DELETE,
-                  entity_name:entityTypes.COMMENTS,
+                  entity_name: entityTypes.COMMENTS,
                   descriptions: `Task ${existingTaskInfo.task_name}`,
                 });
               } else {
@@ -1752,10 +1752,10 @@ export class CaseTaskSchemaService {
                 }
               );
               if (data.task_type !== "activity") {
-                const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
+                const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                  userId: data.modified_by,
+                  eventType: eventTypes.UI_HANDLER
+                });
                 // await CaseTimeline.create({
                 //   created_by: data.modified_by,
                 //   created_by_name: userEventInfo.full_name,
@@ -1785,10 +1785,10 @@ export class CaseTaskSchemaService {
           }
         }
         if (data.task_type !== "activity") {
-          const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
+          const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+            userId: data.modified_by,
+            eventType: eventTypes.UI_HANDLER
+          });
           // await CaseTimeline.create({
           //   created_by: data.modified_by,
           //   created_by_name: userEventInfo.full_name,
@@ -1912,11 +1912,11 @@ export class CaseTaskSchemaService {
             // Only add case_rid if not activity
             const result = await TaskAttachments.create(taskAttachmentPayload);
             if (data.task_type !== "activity") {
-              const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-              const existingTaskInfo:any = await CaseTask.findOne({
+              const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                userId: data.modified_by,
+                eventType: eventTypes.UI_HANDLER
+              });
+              const existingTaskInfo: any = await CaseTask.findOne({
                 where: {
                   rid: data.task_rid,
                   account_rid: data.account_rid,
@@ -1932,7 +1932,7 @@ export class CaseTaskSchemaService {
                 account_rid: data.account_rid,
                 entity_rid: data.case_rid,
                 event_name: eventNames.ADDED,
-                entity_name:entityTypes.ATTACHMENT,
+                entity_name: entityTypes.ATTACHMENT,
                 descriptions: `Task ${existingTaskInfo.task_name}`,
               });
               await CaseHistory.create({
@@ -2008,10 +2008,10 @@ export class CaseTaskSchemaService {
       );
       if (updateFile === 1) {
         if (data.task_type !== "activity") {
-          const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.modified_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
+          const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+            userId: data.modified_by,
+            eventType: eventTypes.UI_HANDLER
+          });
           await CaseTimeline.create({
             created_by: userId,
             created_datetime: new Date(),
@@ -2020,7 +2020,7 @@ export class CaseTaskSchemaService {
             account_rid: data.account_rid,
             entity_rid: data.case_rid,
             event_name: eventNames.DELETE,
-            entity_name:entityTypes.ATTACHMENT,
+            entity_name: entityTypes.ATTACHMENT,
             descriptions: `Task ${findTaskDetails?.task_name}`,
           });
           await CaseHistory.create({
@@ -2465,10 +2465,10 @@ export class CaseTaskSchemaService {
                   relationship_connector_rid: data.relationship_connector_rid,
                 },
               });
-               const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                        userId: data.created_by,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
+              const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+                userId: data.created_by,
+                eventType: eventTypes.UI_HANDLER
+              });
               // await CaseTimeline.create({
               //   created_by: data.created_by,
               //   created_datetime: new Date(),
