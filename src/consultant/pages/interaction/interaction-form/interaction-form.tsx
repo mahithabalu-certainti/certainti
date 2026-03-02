@@ -167,7 +167,6 @@ const InteractionForm = () => {
   const isAccountFields = source === 'account';
   const interactionLevel = searchParams.get('level');
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-  console.log(interactionLevel, 'interactionLevel');
 
   const { data: globalAccountList, isLoading: isGlobalLoading } =
     useGlobalAccountsList(
@@ -696,7 +695,7 @@ const InteractionForm = () => {
           interaction_level_rid:
             getInteractionLevel.data?.data.interactionLevel.find(
               (it) =>
-                it.interaction_level_name.toLocaleLowerCase() === 'Project'
+                it.interaction_level_name.toLocaleLowerCase() === 'project'
             )?.rid,
           trigger_send: !!trigger_send,
           ...(recipiants?.email && { email_info: recipiants }),
