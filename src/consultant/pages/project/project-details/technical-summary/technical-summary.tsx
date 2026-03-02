@@ -48,6 +48,8 @@ interface TechnicalSummaryProps {
   setExportType: (type: ExportType) => void;
   setTechnicalSummaryParams: (params: TechnicalSummaryExportListParams) => void;
   activityMenuItems: ActivityDropdownItem[];
+  isActionItemsExpanded: boolean;
+  setIsActionItemsExpanded: (value: boolean) => void;
 }
 
 const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
@@ -55,6 +57,8 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   setExportType,
   setTechnicalSummaryParams,
   activityMenuItems,
+  isActionItemsExpanded,
+  setIsActionItemsExpanded,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -250,27 +254,31 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
-      <SectionTabPanel
-        tabs={TechnicalSummaryTabs}
-        filterMenu={filterFields}
-        filterVisibility={!viewTechSummaryDetails}
-        showFilter={showFilter}
-        contextKey='technical-summary'
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
-        handleFilter={handleFilter}
-        showRefresh={!viewTechSummaryDetails}
-        onRefreshClick={onRefreshClick}
-        sortFilterCount={0}
-        setSortFilterCount={() => {}}
-        showAddActivity={!viewTechSummaryDetails}
-        activityMenuItems={activityMenuItems}
-      />
+      {!(viewTechSummaryDetails && isActionItemsExpanded) && (
+        <SectionTabPanel
+          tabs={TechnicalSummaryTabs}
+          filterMenu={filterFields}
+          filterVisibility={!viewTechSummaryDetails}
+          showFilter={showFilter}
+          contextKey='technical-summary'
+          appliedFilters={appliedFilters}
+          setAppliedFilters={setAppliedFilters}
+          setCurrentPage={setCurrentPage}
+          handleFilter={handleFilter}
+          showRefresh={!viewTechSummaryDetails}
+          onRefreshClick={onRefreshClick}
+          sortFilterCount={0}
+          setSortFilterCount={() => {}}
+          showAddActivity={!viewTechSummaryDetails}
+          activityMenuItems={activityMenuItems}
+        />
+      )}
       {viewTechSummaryDetails ? (
         <TechnicalSummaryDetails
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
+          isActionItemsExpanded={isActionItemsExpanded}
+          setIsActionItemsExpanded={setIsActionItemsExpanded}
         />
       ) : (
         <>

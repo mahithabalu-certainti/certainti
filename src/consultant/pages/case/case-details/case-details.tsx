@@ -902,6 +902,8 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
+            isActionItemsExpanded={isActionItemsExpanded}
+            setIsActionItemsExpanded={handleToggleActionItems}
           />
         );
       case 'dossier':
