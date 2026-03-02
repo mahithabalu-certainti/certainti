@@ -67,10 +67,14 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [tableParams, setTableParams] =
     useState<FourPartAssessmentListURLParams>({
+      account_rid: '',
       page: 1,
       limit: 100,
-      sortBy: 'r_number',
-      sortOrder: 'ASC',
+      search: '',
+      filter: {},
+      sort: 'ASC',
+      sort_by: 'r_number',
+      type: moduleLevel,
     });
   const [refreshFourPartAssessment, setRefreshFourPartAssessment] =
     useState<number>(Date.now());
@@ -104,16 +108,16 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
 
   const { data, isLoading, isError } = useFourPartAssessmentList(
     {
+      account_rid: accountid || accountID || '',
+      ...(moduleLevel === 'project' && { project_fiscal_rid: projectid || '' }),
+      ...(moduleLevel === 'case' && { case_rid: caseId || '' }),
       page: tableParams.page,
       limit: tableParams.limit,
-      sortBy: tableParams.sortBy,
-      sortOrder: tableParams.sortOrder,
-      filters: appliedFilters,
-      attachmentLevel: moduleLevel || 'account',
-      accountRid: accountid || accountID || '',
-      entityId: accountid || caseId || projectid || '',
       search: searchText,
-      fiscalYear: convertedFiscalYear,
+      filter: appliedFilters,
+      sort: tableParams.sort,
+      sort_by: tableParams.sort_by,
+      type: moduleLevel,
     },
     !viewDetails,
     refreshFourPartAssessment
@@ -131,17 +135,20 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
       setExportType('four_part_assessment');
     }
     setFourPartAssessmentParams({
-      sortBy: tableParams.sortBy,
-      sortOrder: tableParams.sortOrder,
-      filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
+      sort_by: tableParams.sort_by,
+      sort: tableParams.sort as 'ASC' | 'DESC',
+      filter: appliedFilters,
       search: searchText,
+      type: moduleLevel,
+      account_rid: accountid || accountID || '',
+      ...(moduleLevel === 'project' && { project_fiscal_rid: projectid || '' }),
+      ...(moduleLevel === 'case' && { case_rid: caseId || '' }),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appliedFilters,
-    tableParams.sortBy,
-    tableParams.sortOrder,
+    tableParams.sort_by,
+    tableParams.sort,
     convertedFiscalYear,
     searchText,
   ]);
@@ -210,8 +217,8 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setTableParams((prev) => ({
       ...prev,
-      sortOrder: apiOrder,
-      sortBy: property,
+      sort: apiOrder,
+      sort_by: property,
     }));
   };
 
@@ -307,12 +314,12 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
         showAddActivity={viewDetails ? false : true}
         activityMenuItems={activityMenuItems}
       />
-      {viewDetails ? (
-        <FourPartAssessmentDetails moduleLevel={moduleLevel} />
-      ) : isTimeLineView ? (
+      {isTimeLineView ? (
         <div className='border border-[#CBD6E2] rounded-[2px]'>
           <Timeline entitytype={moduleLevel} />
         </div>
+      ) : viewDetails ? (
+        <FourPartAssessmentDetails moduleLevel={moduleLevel} />
       ) : (
         <>
           <SectionHeader
@@ -363,8 +370,8 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
               totalItems={totalItems}
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={tableParams.sortBy}
-              sortOrder={tableParams.sortOrder}
+              sortBy={tableParams.sort_by}
+              sortOrder={tableParams.sort as 'ASC' | 'DESC'}
               onSort={handleSortRequest}
             />
           </div>

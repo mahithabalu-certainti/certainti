@@ -186,9 +186,12 @@ export const ProjectDetails = () => {
 
   const [fourPartParams, setFourPartParams] =
     useState<FourPartAssessmentListExportURLParams>({
-      sortBy: 'r_number',
-      sortOrder: 'ASC',
-      filters: {},
+      account_rid: '',
+      search: '',
+      filter: {},
+      sort: 'ASC',
+      sort_by: 'r_number',
+      type: 'project',
     });
 
   const [activityModalId, setActivityModalId] = useState<string | null>(null);

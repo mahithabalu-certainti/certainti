@@ -1,25 +1,25 @@
 export interface FourPartAssessmentListURLParams {
+  account_rid: string;
+  project_fiscal_rid?: string;
+  case_rid?: string;
   page: number;
   limit: number;
-  sortBy: string;
-  sortOrder: 'ASC' | 'DESC';
-  fiscalYear?: number;
-  filters?: object;
-  search?: string;
-  entityId?: string;
-  accountRid?: string;
-  attachmentLevel?: string;
+  search: string;
+  filter: object;
+  sort: string;
+  sort_by: string;
+  type: 'account' | 'project' | 'case';
 }
 
 export interface FourPartAssessmentListExportURLParams {
-  sortBy: string;
-  sortOrder: 'ASC' | 'DESC';
-  filters?: object;
-  search?: string;
-  fiscalYear?: number;
-  entityId?: string;
-  accountRid?: string;
-  attachmentLevel?: string;
+  account_rid: string;
+  project_fiscal_rid?: string;
+  case_rid?: string;
+  search: string;
+  filter: object;
+  sort: string;
+  sort_by: string;
+  type: 'account' | 'project' | 'case';
   timezone?: string;
 }
 
@@ -45,7 +45,7 @@ export interface FourPartAssessmentListApiResponse {
     page: number;
     limit: number;
     total_results: number;
-    four_part_assessment: FourPartAssessmentList[];
+    data: FourPartAssessmentList[];
   };
 }
 

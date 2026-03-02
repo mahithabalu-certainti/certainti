@@ -295,9 +295,12 @@ export const CaseDetails = () => {
 
   const [fourPartParams, setFourPartParams] =
     useState<FourPartAssessmentListExportURLParams>({
-      sortBy: 'r_number',
-      sortOrder: 'ASC',
-      filters: {},
+      account_rid: '',
+      search: '',
+      filter: {},
+      sort: 'ASC',
+      sort_by: 'r_number',
+      type: 'case',
     });
 
   const [financialResCostParams, setFinancialResCostParams] =

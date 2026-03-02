@@ -1,5 +1,5 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import { caseServiceApi } from '../../../api/api';
+import { interactionServiceApi } from '../../../api/api';
 import {
   FourPartAssessmentList,
   FourPartAssessmentListApiResponse,
@@ -9,16 +9,6 @@ import {
   FourPartAssessmentListExportURLParams,
   ExportFourPartAssessmentListResponse,
 } from '../../types';
-import {
-  FourPartAssessmentListURL,
-  getFourPartAssessmentExportListURL,
-} from '../urls';
-import {
-  mockFourPartAssessmentDetails,
-  mockFourPartAssessmentList,
-} from '../../mockdata/four-part-assessment';
-
-const USE_MOCK = true; // Toggle this to switch between mock and real API
 
 export const fetchFourPartAssessmentList = async (
   params: FourPartAssessmentListURLParams
@@ -26,19 +16,13 @@ export const fetchFourPartAssessmentList = async (
   fourPartAssessment: FourPartAssessmentList[];
   count: number;
 }> => {
-  if (USE_MOCK) {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return {
-      fourPartAssessment: mockFourPartAssessmentList.data.four_part_assessment,
-      count: mockFourPartAssessmentList.data.total_results,
-    };
-  }
-
-  const response = await caseServiceApi.get<FourPartAssessmentListApiResponse>(
-    FourPartAssessmentListURL(params)
-  );
+  const response =
+    await interactionServiceApi.post<FourPartAssessmentListApiResponse>(
+      `/api/interactions/fourPartAssessment/list`,
+      params
+    );
   return {
-    fourPartAssessment: response.data.data.four_part_assessment,
+    fourPartAssessment: response.data.data.data,
     count: response.data.data.total_results,
   };
 };
@@ -59,11 +43,7 @@ export const useFourPartAssessmentList = (
     queryFn: () => fetchFourPartAssessmentList(params),
     retry: 0,
     gcTime: 0,
-    enabled:
-      shouldFetch &&
-      !!params.attachmentLevel &&
-      !!params.accountRid &&
-      !!params.entityId,
+    enabled: shouldFetch && !!params.account_rid && !!params.type,
   });
 };
 
@@ -71,14 +51,11 @@ const fetchFourPartAssessmentDetails = async (
   entityId: string,
   fourPartAssessmentId: string
 ): Promise<FourPartAssessmentDetails> => {
-  if (USE_MOCK) {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return mockFourPartAssessmentDetails.data;
-  }
-
-  const response = await caseServiceApi.get<FourPartAssessmentDetailsResponse>(
-    `/api/four-part-assessment/details?account_rid=${entityId}&rid=${fourPartAssessmentId}`
-  );
+  const response =
+    await interactionServiceApi.post<FourPartAssessmentDetailsResponse>(
+      `/api/interactions/fourPartAssessment/details`,
+      { account_rid: entityId, rid: fourPartAssessmentId }
+    );
 
   return response.data.data;
 };
@@ -111,8 +88,9 @@ export const ExportFourPartAssessmentList = async (
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const response =
-      await caseServiceApi.get<ExportFourPartAssessmentListResponse>(
-        getFourPartAssessmentExportListURL({ ...params, timezone })
+      await interactionServiceApi.post<ExportFourPartAssessmentListResponse>(
+        '/api/interactions/fourPartAssessment/export',
+        { ...params, timezone }
       );
 
     const base64Data = response.data?.data;

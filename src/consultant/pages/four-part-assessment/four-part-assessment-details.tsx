@@ -135,7 +135,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   const auditInfo: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.audit_information?.record_id || fourPartAssessmentId,
+      value: data?.title?.rid || fourPartAssessmentId,
       key: 'rid',
     },
     {
