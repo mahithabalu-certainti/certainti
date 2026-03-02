@@ -90,11 +90,13 @@ export const entityTypes = {
   TASK: "Task",
   TAG: "Tag",
   SETTINGS: "Settings",
+  QRE_PERCENT: "QRE Percent",
 };
 
 export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
+  ADJUST: "adjusted",
 }
 
 export const eventTypes = {
@@ -1546,9 +1548,9 @@ export const rawQueries = {
   insertCaseTimeLine(schemaName: string, tableName: string) {
     return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name, COALESCE(:case_rid, NULL)
           )
           RETURNING *;
         `

@@ -144,6 +144,7 @@ export class NotesService {
           event_name: eventNames.CREATE,
           descriptions: notesData.title,
           project_rid: ['project', 'project_resource', 'project_task'].includes(notesData.attachment_level) ? projectFiscalId : '',
+          case_rid:notesData.attachment_level === 'case' ? notesData.attach_to : '',  
         }, timelineTypes);
 
 
@@ -2210,6 +2211,7 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
           event_name: eventNames.UPDATE,
           descriptions: notesData.title,
           project_rid: ['project', 'project_resource', 'project_task'].includes(notesData.attachment_level) ? projectFiscalId : '',
+          case_rid:notesData.attachment_level === 'case' ? notesData.attach_to : '',
         }, timelineTypes);
 
           await NotesSummaryModel.update({

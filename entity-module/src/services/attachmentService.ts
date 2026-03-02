@@ -171,6 +171,7 @@ export class AttachmentService {
                 descriptions: name,
               //  project_rid: attachmentData.attachment_level === "project" ? attachmentData.attach_to : '',
                 project_rid: ['project', 'project_resource', 'project_task'].includes(attachmentData.attachment_level) ? projectFiscalId : '',
+                 case_rid:attachmentData.attachment_level === 'case' ? attachmentData.attach_to : '', 
               }, timelineTypes);
 
       await AttachmentTimeline.create({

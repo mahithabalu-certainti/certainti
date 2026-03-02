@@ -326,6 +326,7 @@ export const entityTypes = {
   FINANCIAL_WORKING: "Financial Working",
   HISTORICAL_SUBMISSION: "Historical Submission",
   SETTINGS: "Settings",
+  REVIEW_PROJECT_EMAIL: "Case Review Project Email",
 
 };
 
@@ -336,6 +337,7 @@ export const eventNames = {
   ADDED: "added",
   DELETE: "deleted",
   REMOVED: "removed",
+  SENT: "sent",
 }
 
 export const eventTypes = {

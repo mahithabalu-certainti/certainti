@@ -3838,7 +3838,7 @@ class CaseSchemaService {
                                     entity_name: entityTypes.CASE_TEAM,
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
-                                    event_name: eventName,
+                                    event_name: eventNames.UPDATE,
                                     descriptions:caseInfo?.case_name || '',
                                     case_rid: caseTeamRequest.case_rid,
                                   },["case"]);
