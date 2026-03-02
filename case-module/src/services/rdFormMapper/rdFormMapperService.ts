@@ -336,7 +336,7 @@ export class RdFormMapperService {
           effectiveStart,
           caseRid,
           schemaName,
-          undefined,
+          fiscalYear,
           state,
           countryRid,
         );
@@ -590,8 +590,10 @@ export class RdFormMapperService {
         };
 
         const renderRow = (fieldName: string, value: any) => {
-          const displayValue = formatValue(value);
-          const fieldHeight = doc.heightOfString(String(fieldName), {
+          // Defensive: Ensure fieldName and value are never undefined/null
+          const safeFieldName = fieldName !== undefined && fieldName !== null ? fieldName : "N/A";
+          const displayValue = formatValue(value !== undefined && value !== null ? value : "N/A");
+          const fieldHeight = doc.heightOfString(String(safeFieldName), {
             width: colFieldWidth - rowPadding * 2,
           });
           const valueHeight = doc.heightOfString(String(displayValue), {
@@ -602,7 +604,7 @@ export class RdFormMapperService {
           ensureSpace(rowHeight);
 
           const y = doc.y;
-          doc.text(String(fieldName), left + rowPadding, y + rowPadding, {
+          doc.text(String(safeFieldName), left + rowPadding, y + rowPadding, {
             width: colFieldWidth - rowPadding * 2,
           });
           doc.text(String(displayValue), left + colFieldWidth + colGap + rowPadding, y + rowPadding, {
@@ -628,7 +630,7 @@ export class RdFormMapperService {
 
           const cellHeights = cells.map((cell, index) =>
             doc.heightOfString(
-              String(applyCurrency ? formatValue(cell) : cell ?? ""),
+              String(applyCurrency ? formatValue(cell !== undefined && cell !== null ? cell : "N/A") : cell !== undefined && cell !== null ? cell : "N/A"),
               {
               width: (colWidths[index] ?? baseWidth) - rowPadding * 2,
               align,
@@ -642,9 +644,10 @@ export class RdFormMapperService {
           let x = left;
           cells.forEach((cell, index) => {
             const width = colWidths[index] ?? baseWidth;
+            const safeCell = cell !== undefined && cell !== null ? cell : "N/A";
             doc.rect(x, y, width, rowHeight).stroke();
             doc.text(
-              String(applyCurrency ? formatValue(cell) : cell ?? ""),
+              String(applyCurrency ? formatValue(safeCell) : safeCell),
               x + rowPadding,
               y + rowPadding,
               {
@@ -658,8 +661,11 @@ export class RdFormMapperService {
           doc.y = y + rowHeight;
         };
 
+        // Defensive: Ensure all normalRows are valid
         normalRows.forEach((row) => {
-          renderRow(row.label, row.value);
+          const safeLabel = row.label !== undefined && row.label !== null ? row.label : "N/A";
+          const safeValue = row.value !== undefined && row.value !== null ? row.value : "N/A";
+          renderRow(safeLabel, safeValue);
         });
 
         tableGroups.forEach((group) => {
@@ -674,7 +680,7 @@ export class RdFormMapperService {
           if (rowIndexes.length === 0) return;
 
           const normalizeHeader = (header: string) =>
-            header.toLowerCase().replace(/\s+/g, " ").trim();
+            header !== undefined && header !== null ? header.toLowerCase().replace(/\s+/g, " ").trim() : "-";
           const normalizedHeaders = headers.map(normalizeHeader);
           const isAustraliaTierTable =
             isAustralia &&
@@ -684,12 +690,13 @@ export class RdFormMapperService {
 
           doc.moveDown(0.5);
           doc.fontSize(10);
-          renderGridRow(headers, "center", false);
+          renderGridRow(headers.map(h => h !== undefined && h !== null ? h : "-"), "center", false);
           rowIndexes.forEach((rowIndex) => {
             const rowValues = headers.map((header) => {
-              const column = group.columns.get(header);
+              const column = group.columns.get(header !== undefined && header !== null ? header : "-");
               if (!column) return "N/A";
-              return column.has(rowIndex) ? column.get(rowIndex) : "N/A";
+              const cellValue = column.has(rowIndex) ? column.get(rowIndex) : "N/A";
+              return cellValue !== undefined && cellValue !== null ? cellValue : "N/A";
             });
             renderGridRow(rowValues, "right", true);
           });
@@ -706,14 +713,30 @@ export class RdFormMapperService {
         // Finalize the PDF
         doc.end();
       } catch (pdfError) {
-        logMessage(`Error creating PDF content: ${pdfError}`);
-        throw new Error(`PDF content creation failed: ${pdfError}`);
+        let errorMsg: string;
+        if (pdfError instanceof Error) {
+          errorMsg = pdfError.stack || pdfError.message;
+        } else {
+          errorMsg = String(pdfError);
+        }
+        logMessage(`Error creating PDF content: ${errorMsg}`);
+        throw new Error(`PDF content creation failed: ${errorMsg}`);
       }
 
       // Wait for PDF generation to complete and get buffer
       const pdfBuffer = await pdfBufferPromise;
       let blobName = `cases/${caseRid}/rdForms/${fileName}`;
-    
+
+      // // Store PDF locally for testing
+      // const fs = require('fs');
+      // const path = require('path');
+      // const localDir = path.resolve(__dirname, '../../../output/pdfs');
+      // if (!fs.existsSync(localDir)) {
+      //   fs.mkdirSync(localDir, { recursive: true });
+      // }
+      // const localPath = path.join(localDir, fileName);
+      // fs.writeFileSync(localPath, pdfBuffer);
+      // logMessage(`PDF stored locally for testing: ${localPath}`);
 
       // Upload directly to blob storage from buffer
       const blobUrl = await uploadBufferToAzureBlob(
@@ -744,10 +767,12 @@ export class RdFormMapperService {
     value: any,
     overrides?: any,
   ) {
+    const cleanedFieldId = typeof configItem.field_id === 'string' ? configItem.field_id.trim().replace(/\s+/g, "") : configItem.field_id;
     enhancedConfigs.push({
       ...configItem,
       label: configItem.field_label,
       value_field_id: configItem.field_id,
+      value_field_id_cleaned: cleanedFieldId,
       value,
       ...overrides,
     });
@@ -989,9 +1014,13 @@ export class RdFormMapperService {
       for (const key of keys) {
         const val = calcConfig[key];
         // If value looks like an operator, map it
-        if (typeof val === "string" && operatorMap[val.toLowerCase()]) {
+        if (typeof val === "string") {
           const op = operatorMap[val.toLowerCase()];
-          if (op) tokens.push(op);
+          if (op) {
+            tokens.push(op);
+          } else {
+            tokens.push(flattenConfigValue(val));
+          }
         } else {
           tokens.push(flattenConfigValue(val));
         }
@@ -1101,54 +1130,90 @@ export class RdFormMapperService {
     this.pushEnhancedConfig(enhancedConfigs, configItem, value);
   }
 
-  private async handleTableConfig(
-    configItem: any,
-    enhancedConfigs: any[],
-    context: {
-      accountRid: string;
-      caseRid: string;
-      schemaName: string;
-      fiscalYear?: string;
-    },
-  ) {
-    console.log(`[TableConfig] Processing config item: ${JSON.stringify(configItem)}`);
-    // Only log warnings and resolved values for table config
-    if (!configItem.column_id) {
-      logMessage(`[TableConfig][WARN] Missing column_id for table item: ${configItem.field_label || configItem.field_id}`);
-    }
-    if (configItem.column_id && configItem.calculation_config) {
+private async handleTableConfig(
+  configItem: any,
+  enhancedConfigs: any[],
+  context: {
+    accountRid: string;
+    caseRid: string;
+    schemaName: string;
+    stateRid?: string | null;
+    fiscalYear?: string;
+  },
+) {
+  console.log(
+    `[TableConfig] Processing config item: ${JSON.stringify(configItem)}`
+  );
+
+  if (!configItem.column_id) {
+    logMessage(
+      `[TableConfig][WARN] Missing column_id for table item: ${
+        configItem.field_label || configItem.field_id
+      }`
+    );
+  }
+
+  if (configItem.column_id && configItem.calculation_config) {
+    try {
+      const operatorMap: Record<string, string> = {
+        add: "+",
+        sub: "-",
+        subtract: "-",
+        mul: "*",
+        multiply: "*",
+        div: "/",
+        divide: "/",
+      };
+
+      // 🔹 Get column row mappings
+      const columnIdList =
+        await this.rdFormMapperSchemaService.getColumnIdListFromTableMappings(
+          configItem.column_id
+        );
+
+      let fieldMappings: Record<string, any> = {};
+
       try {
-        let mapperObject: any = null;
-        for (const key in configItem.calculation_config) {
-          const rid = configItem.calculation_config[key];
-          mapperObject =
-            await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rid);
-          break;
+        if (typeof columnIdList === "string") {
+          fieldMappings = JSON.parse(columnIdList);
+        } else if (
+          typeof columnIdList === "object" &&
+          !Array.isArray(columnIdList)
+        ) {
+          fieldMappings = columnIdList;
         }
+      } catch (parseError) {
+        logMessage(
+          `[TableConfig] Error parsing column ID list: ${parseError}`
+        );
+        fieldMappings = {};
+      }
 
-        const columnIdList =
-          await this.rdFormMapperSchemaService.getColumnIdListFromTableMappings(
-            configItem.column_id,
-          );
+      if (Object.keys(fieldMappings).length === 0) {
+        this.pushEnhancedConfig(enhancedConfigs, configItem, "");
+        return;
+      }
 
-        if (columnIdList && mapperObject?.ref_table && mapperObject?.field_name) {
-          let fieldMappings: any = {};
+      // 🔹 Prepare calculation keys
+      const calculationKeys = Object.keys(configItem.calculation_config);
 
-          try {
-            if (typeof columnIdList === "string") {
-              fieldMappings = JSON.parse(columnIdList);
-            } else if (
-              typeof columnIdList === "object" &&
-              !Array.isArray(columnIdList)
-            ) {
-              fieldMappings = columnIdList;
-            }
-          } catch (parseError) {
-            logMessage(`[TableConfig] Error parsing column ID list as JSON: ${parseError}`);
-            fieldMappings = {};
-          }
+      const mapperObjects: Record<string, any> = {};
+      const tableValueCache: Record<string, any[]> = {};
 
-          if (Object.keys(fieldMappings).length > 0) {
+      // 🔹 Fetch all mapper objects + cache table values
+      for (const key of calculationKeys) {
+        const val = configItem.calculation_config[key];
+
+        if (
+          typeof val === "string" &&
+          /^D\d{3}-[0-9a-fA-F-]{36}$/.test(val)
+        ) {
+          const mapperObject =
+            await this.rdFormMapperSchemaService.getDataMapperObjectByRid(val);
+
+          if (mapperObject?.ref_table && mapperObject?.field_name) {
+            mapperObjects[val] = mapperObject;
+
             const tableValues =
               await this.rdFormMapperSchemaService.fetchTableValues(
                 mapperObject.ref_table,
@@ -1158,42 +1223,117 @@ export class RdFormMapperService {
                 context.accountRid,
                 context.caseRid,
                 context.schemaName,
-                context.fiscalYear,
+                context.stateRid || "",
+                context.fiscalYear
               );
 
-            Object.entries(fieldMappings).forEach(([rowNumber, fieldPath]) => {
-              if (typeof fieldPath === "string") {
-                const rowIndex = parseInt(rowNumber, 10) - 1;
-                const rowValue = tableValues[rowIndex]?.value || "";
-                logMessage(`[TableConfig] Mapping row ${rowNumber} to fieldPath ${fieldPath}, resolved rowValue: ${JSON.stringify(rowValue)}`);
-                this.pushEnhancedConfig(enhancedConfigs, configItem, rowValue, {
-                  label: `${configItem.field_label}[row_${rowNumber}]`,
-                  field_name: configItem.field_name,
-                  value_field_id: fieldPath,
-                });
-              } else {
-                logMessage(`[TableConfig] Skipped mapping for row ${rowNumber} (fieldPath not string): ${JSON.stringify(fieldPath)}`);
-              }
-            });
+            tableValueCache[val] = tableValues || [];
+          }
+        }
+      }
 
-            //
-            return;
+      // 🔹 Process each mapped row
+      for (const [rowNumber, fieldPath] of Object.entries(fieldMappings)) {
+        if (typeof fieldPath !== "string") continue;
+
+        const rowIndex = parseInt(rowNumber, 10) - 1;
+        const tokens: string[] = [];
+
+        for (const key of calculationKeys) {
+          const val = configItem.calculation_config[key];
+  
+          // Operator
+          if (
+            typeof val === "string" &&
+            operatorMap[val.toLowerCase()]
+          ) {
+            const operator = operatorMap[val.toLowerCase()];
+            if (operator) {
+              tokens.push(operator);
+            }
+          }
+
+          // RID reference
+          else if (
+            typeof val === "string" &&
+            mapperObjects[val]
+          ) {
+            const rowValue =
+              tableValueCache[val]?.[rowIndex]?.value ?? "0";
+
+            const numericValue = Number(rowValue);
+
+            tokens.push(
+              !isNaN(numericValue) ? String(numericValue) : "0"
+            );
+          }
+
+          // Numeric literal
+          else if (
+            typeof val === "number" ||
+            !isNaN(Number(val))
+          ) {
+            tokens.push(String(Number(val)));
+          }
+
+          // Fallback
+          else {
+            tokens.push("0");
           }
         }
 
-        this.pushEnhancedConfig(enhancedConfigs, configItem, "");
-      } catch (error) {
-        this.logger.error(
-          `[TableConfig] Error fetching table values for ${configItem.field_label}:`,
-          error,
+        const infixExpr = tokens.join(" ");
+        let computedValue: any = "";
+
+        try {
+          // eslint-disable-next-line no-eval
+          const rawValue = eval(infixExpr);
+
+          if (!isNaN(Number(rawValue))) {
+            computedValue = Number(
+              parseFloat(rawValue).toFixed(2)
+            );
+          } else {
+            computedValue = "";
+          }
+        } catch (err) {
+          computedValue = "";
+        }
+
+        logMessage(
+          `[TableConfig] Row ${rowNumber} computed expression: ${infixExpr} = ${computedValue}`
         );
-        this.pushEnhancedConfig(enhancedConfigs, configItem, "");
+
+        let finalValue = computedValue;
+        // Truncate value if maxLength is set
+        if (configItem.maxLength && typeof finalValue === 'string' && finalValue.length > configItem.maxLength) {
+          finalValue = finalValue.substring(0, configItem.maxLength);
+        }
+        this.pushEnhancedConfig(enhancedConfigs, configItem, finalValue, {
+          label: `${configItem.field_label}[row_${rowNumber}]`,
+          field_name: configItem.field_name,
+          value_field_id: fieldPath,
+        });
       }
+
+      return;
+    } catch (error) {
+      this.logger.error(
+        `[TableConfig] Error computing table config for ${configItem.field_label}:`,
+        error
+      );
+      this.pushEnhancedConfig(enhancedConfigs, configItem, "");
       return;
     }
-
-    this.pushEnhancedConfig(enhancedConfigs, configItem, configItem.value);
   }
+
+  // 🔹 Default fallback
+  this.pushEnhancedConfig(
+    enhancedConfigs,
+    configItem,
+    configItem.value
+  );
+}
 
   private async enhanceMapperConfigWithDynamicValues(
     mapperConfig: any[],
@@ -1223,7 +1363,10 @@ export class RdFormMapperService {
     for (const configItem of mapperConfig) {
       let value = configItem.value;
       const fieldLabel = configItem.field_label;
-
+      const fieldId = configItem.field_id;
+      console.log(
+        `[EnhanceConfig] Processing config item: ${fieldLabel} (field_id=${fieldId})`
+      );
       if (
         fieldLabel ===
           "Total from attachments -> 50 Direct research wages for qualified services" ||
@@ -1262,6 +1405,26 @@ export class RdFormMapperService {
         this.pushEnhancedConfig(enhancedConfigs, configItem, value);
         continue;
       }
+         if (fieldLabel === "Total -> Equals Ratio (D) [Col.B/Col.C]" || fieldId === "Equals Ratio D ColBColCE Total from Column D") {
+        try {
+          // Only sum for the past three years from the fiscal year
+          const fiscalYearInt = parseInt(fiscalYear || '0', 10);
+          const years = [fiscalYearInt, fiscalYearInt - 1, fiscalYearInt - 2];
+          // Assuming there is a 'year' column in case_history_submission
+          const query = rawQueries.getHistoricalSubmissionData(accountRid, stateRid || '', years, schemaName);
+          const orgDb = await this.getOrgDb();
+          const [result]: any[] = await orgDb.query(query);
+          const totalValue = result?.[0]?.total_value ?? 0;
+          value = this.roundToTwoDecimals(Number(totalValue));
+          logMessage(`Custom sum for field ${fieldLabel} (last 3 years): ${value}`);
+          this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+        } catch (err) {
+          console.log(err);
+          logMessage(`Error in custom sum for field ${fieldLabel}: ${err}`);
+          this.pushEnhancedConfig(enhancedConfigs, configItem, 0);
+        }
+        continue;
+      }
       if (
         configItem.calculation_config &&
         configItem.field_type == "Line-Item"
@@ -1279,6 +1442,7 @@ export class RdFormMapperService {
           accountRid,
           caseRid,
           schemaName,
+          stateRid: stateRid || "",
           fiscalYear,
         });
       } else {
@@ -1300,14 +1464,17 @@ export class RdFormMapperService {
     };
 
     enhancedConfigs.forEach((item) => {
-      if (item.value_field_id) {
-        addToValueMap(String(item.value_field_id), item.value);
+      // For value lookup, only use value_field_id_cleaned
+      if (item.value_field_id_cleaned) {
+        addToValueMap(item.value_field_id_cleaned, item.value);
       }
+      // For filling, use the original field_id (do not clean)
       if (item.field_id) {
-        addToValueMap(String(item.field_id), item.value);
+        addToValueMap(item.field_id, item.value);
       }
+      // Optionally, keep field_name for legacy lookups
       if (item.field_name) {
-        addToValueMap(String(item.field_name), item.value);
+        addToValueMap(item.field_name, item.value);
       }
     });
 
@@ -1396,73 +1563,60 @@ export class RdFormMapperService {
         // --- Token Resolver with Caching and Defensive Guards ---
         // Optimization 3: Precompute lookupKeys and avoid repeated regex
         const lookupKeysCache: Record<string, string[]> = {};
-        let replaced = normalizedExpression.replace(
-          /#([^\s+*/(),]+)/g,
-          (match: string) => {
-            const rawKey = match.slice(1);
-            if (!rawKey) return "NaN";
+      let replaced = normalizedExpression.replace(
+  /#([^+*/(),]+)/g,
+  (match: string, rawKey: string) => {
+    if (!rawKey) return "NaN";
 
-            // Use cache if available (prevents redundant DB/label lookups)
-            if (evalCache.has(rawKey)) {
-              const cached = evalCache.get(rawKey);
-              resolvedValues[rawKey] = { rawValue: cached, numeric: this.tryParseNumber(cached) ?? 0 };
-              return String(this.tryParseNumber(cached) ?? "NaN");
-            }
+    const cleanedKey = rawKey.trim();
 
-            const rawKeyUpper = rawKey.toUpperCase();
-            if (rawKeyUpper === "YES") {
-              resolvedValues[rawKey] = { rawValue: "YES", numeric: 1 };
-              evalCache.set(rawKey, 1);
-              return "1";
-            }
-            if (rawKeyUpper === "NO") {
-              resolvedValues[rawKey] = { rawValue: "NO", numeric: 0 };
-              evalCache.set(rawKey, 0);
-              return "0";
-            }
+    // Normalize: remove extra spaces
+    const normalizedKey = cleanedKey.replace(/\s+/g, " ").trim();
 
-            // Optimization 3: Cache lookup keys
-            if (!lookupKeysCache[rawKey]) {
-              lookupKeysCache[rawKey] = [rawKey, this.stripIndexes(rawKey), this.normalizeFieldRef(rawKey)];
-            }
-            const lookupKeys = lookupKeysCache[rawKey];
-            let hadKey = false;
-            let hadValue: any = undefined;
-            for (const key of lookupKeys) {
-              if (valueMap.has(key)) {
-                hadKey = true;
-                hadValue = valueMap.get(key);
-              }
-              // Optimization 4: Always use safe number conversion
-              const num = this.tryParseNumber(valueMap.get(key));
-              if (num !== null) {
-                const rawValue = valueMap.has(key) ? valueMap.get(key) : null;
-                resolvedValues[rawKey] = {
-                  rawValue: rawValue === undefined ? null : rawValue,
-                  numeric: num,
-                };
-                evalCache.set(rawKey, rawValue);
-                logMessage(
-                  `Expression reference for field ${item.field_label || item.field_id}: ${rawKey} -> ${JSON.stringify(valueMap.get(key))} (numeric=${num})`,
-                );
-                return String(num);
-              }
-            }
+    // Check cache first
+    if (evalCache.has(normalizedKey)) {
+      const cached = evalCache.get(normalizedKey);
+      const num = this.tryParseNumber(cached);
+      return num !== null ? String(num) : "NaN";
+    }
 
-            if (hadKey) {
-              logMessage(
-                `Non-numeric expression reference for field ${item.field_label || item.field_id}: ${rawKey} (value=${JSON.stringify(hadValue)})`,
-              );
-              evalCache.set(rawKey, hadValue);
-            } else {
-              logMessage(
-                `Missing expression reference for field ${item.field_label || item.field_id}: ${rawKey}`,
-              );
-              evalCache.set(rawKey, null);
-            }
-            return "NaN";
-          },
+    // Build lookup variations
+    const lookupKeys = [
+      normalizedKey,
+      normalizedKey.replace(/\s+/g, ""), // no spaces
+      this.stripIndexes(normalizedKey),
+      this.normalizeFieldRef(normalizedKey),
+    ];
+
+    for (const key of lookupKeys) {
+      if (valueMap.has(key)) {
+        const rawValue = valueMap.get(key);
+        const num = this.tryParseNumber(rawValue);
+
+        evalCache.set(normalizedKey, rawValue);
+
+        logMessage(
+          `Expression reference resolved for field ${
+            item.field_label || item.field_id
+          }: ${normalizedKey} -> ${JSON.stringify(rawValue)}`
         );
+
+        return num !== null ? String(num) : "NaN";
+      }
+    }
+
+    logMessage(
+      `Missing expression reference for field ${
+        item.field_label || item.field_id
+      }: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(
+        lookupKeys
+      )}`
+    );
+
+    evalCache.set(normalizedKey, null);
+    return "NaN";
+  }
+);
 
         // Defensive: Replace min/max, transform if(), and guard against malformed expressions
         replaced = replaced
@@ -1941,10 +2095,12 @@ export class RdFormMapperService {
           );
       if (results?.filled_form_url) {
         try {
-          const sasUrl = await generateSasUrl(results.filled_form_url, 300);
-          results.filled_form_url = sasUrl
-            ? await this.fetchUrlAsBase64(sasUrl)
-            : null;
+          const sasUrl = await generateSasUrl(results.filled_form_url, 3000);
+          // results.filled_form_url = sasUrl
+          //   ? await this.fetchUrlAsBase64(sasUrl)
+          //   : null;
+           results.filled_form_url = sasUrl
+  
         } catch (error) {
           logMessage(`Error generating SAS URL: ${error}`);
           results.filled_form_url = null;
