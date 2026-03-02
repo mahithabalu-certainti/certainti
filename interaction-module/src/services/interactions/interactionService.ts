@@ -813,7 +813,7 @@ export class InteractionService {
           ],
           type: "project",
         };
-        parallelTasks.push(this.triggerAI(req, entityTypes.AUTO_RD_ASSESSMENT));
+        parallelTasks.push(this.triggerAI(req,userId, entityTypes.AUTO_RD_ASSESSMENT));
       }
 
       parallelTasks.push(
@@ -3108,7 +3108,7 @@ export class InteractionService {
     * - Sends payload to a Kafka topic for AI processing.
     * - Logs and handles errors gracefully.
     */ 
-  async triggerAI(req: any,type: string = entityTypes.MANUAL_RD_ASSESSMENT) {
+  async triggerAI(req: any,userId:string,type: string = entityTypes.MANUAL_RD_ASSESSMENT) {
     try {
       let payload: {
         company_id?: any;
@@ -3258,16 +3258,17 @@ export class InteractionService {
         messages: [message],
       });
       // Check if the message was processed successfully
-      logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
+   //   logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
-                                                  userId: req.user_id!,
+                                                  userId: userId!,
                                                   eventType: eventTypes.UI_HANDLER
                                                 });
         let timelineTypes = [req.type];
-        let entityRid  = req.type === "project" ? req.data[0].project_rid : (req.type === "case" ? req.data[0].case_rid : req.data[0].account_rid);
+        
+        let entityRid  = req.type === "project" ? req.data[0].project_fiscal_rid : (req.type === "case" ? req.data[0].case_rid : req.data[0].account_rid);
                         
         await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
-                                            created_by: req.user_id!,
+                                            created_by: userId!,
                                             account_rid: req.data[0].account_rid,
                                             entity_rid: entityRid,
                                             entity_name: type,
@@ -3649,7 +3650,7 @@ export class InteractionService {
         type : "project"
       }
       logMessage(`AI Trigger Payload: ${JSON.stringify(payload)}`);
-      await this.triggerAI(payload,entityTypes.SCHEDULER_RD_ASSESSMENT);
+      await this.triggerAI(payload,process.env.SYSTEM_USER_ID!,entityTypes.SCHEDULER_RD_ASSESSMENT);
     }
   }
 
