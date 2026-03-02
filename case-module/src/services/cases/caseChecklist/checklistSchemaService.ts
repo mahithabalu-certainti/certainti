@@ -1025,6 +1025,17 @@ export class ChecklistSchemaService {
         },
         { transaction }
       );
+      let projectFiscalId = caseRequest.attach_to;
+        if(caseRequest.attachment_level === 'project_resource' || caseRequest.attachment_level === 'project_task') {
+          if(caseRequest.attachment_level === 'project_resource') {
+            const projectResource = await this.helperMethod.fetchProjectResourceById(accountNumber, caseRequest.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(caseRequest.attachment_level === 'project_task') {
+            const projectTask = await this.helperMethod.fetchProjectTaskById(accountNumber, caseRequest.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
       const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
         userId: caseRequest.created_by!,
         eventType: eventTypes.UI_HANDLER
@@ -1040,7 +1051,7 @@ export class ChecklistSchemaService {
         event_type_rid: userEventInfo.event_type_rid,
         event_name: eventNames.CREATE,
         descriptions: caseRequest.checklist_name,
-        project_rid: caseRequest.attachment_level === 'project' ? caseRequest.attach_to : '',
+        project_rid: ['project', 'project_resource', 'project_task'].includes(caseRequest.attachment_level) ? projectFiscalId : '',
         case_rid: caseRequest.attachment_level === 'case' ? caseRequest.attach_to : '',
       }, timelineTypes);
       return createdChecklist;

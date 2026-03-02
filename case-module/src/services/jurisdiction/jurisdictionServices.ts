@@ -2,10 +2,11 @@ import { Logger } from "winston";
 import { Sequelize, Op } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import { JurisdictionSchemaService } from "./schemaService";
-import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { entityTypes, eventNames, eventTypes, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
+import { HelperMethods } from "../cases/helperMethods";
 
 export class JurisdictionService {
   private jurisdictionSchemaService: JurisdictionSchemaService;
@@ -13,12 +14,17 @@ export class JurisdictionService {
   private caseSchemaService: CaseSchemaService;
   private logger: Logger;
   private mainDbSequelize: Sequelize | null = null;
+   private helperMethod : HelperMethods
+  
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.jurisdictionSchemaService = new JurisdictionSchemaService();
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
+    this.helperMethod = new HelperMethods(
+            this.caseModelService
+        );
   }
 
   private async getMainDb() {
@@ -69,6 +75,23 @@ export class JurisdictionService {
         );
 
       await transaction.commit();
+      const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+              userId: userId!,
+              eventType: eventTypes.UI_HANDLER
+            });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(jurisdictionData.level);
+      
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+              created_by: userId!,
+              account_rid: jurisdictionData.account_rid,
+              entity_rid: result.rid!,
+              entity_name: entityTypes.SETTINGS,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.UPDATE,
+              descriptions: '',
+              case_rid: jurisdictionData.level === 'case' ? jurisdictionData.case_rid : '',
+            }, timelineTypes);
 
       return {
         statusCode: HttpStatus.SUCCESS,

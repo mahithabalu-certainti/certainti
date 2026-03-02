@@ -1171,6 +1171,7 @@ export const rawQueries = {
         project_rid VARCHAR(50) NULL,
         entity_name VARCHAR(255) NULL,
         created_by_name VARCHAR(255) NULL,
+        descriptions VARCHAR(2000) NULL,
         CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
       );
     `;

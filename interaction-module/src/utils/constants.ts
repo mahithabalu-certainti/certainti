@@ -88,6 +88,7 @@ export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
   CANCEL: "cancelled",
+  SENT: "sent",
 }
 
 export const eventTypes = {

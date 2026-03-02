@@ -121,9 +121,19 @@ export class NotesService {
                                                 userId: userId!,
                                                 eventType: eventTypes.UI_HANDLER
                                               });
+        let projectFiscalId = notesData.attach_to;
+        if(attachment_level === 'project_resource' || attachment_level === 'project_task') {
+          if(attachment_level === 'project_resource') {
+            const projectResource = await this.projectIngestionService.fetchProjectResourceById(accountNumber, notesData.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(attachment_level === 'project_task') {
+            const projectTask = await this.projectIngestionService.fetchProjectTaskById(accountNumber, notesData.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
         // Use SchemaService to determine timeline entity type(s)
         const timelineTypes = this.schemaService.getTimelineTypesForAttachmentLevel(notesData.attachment_level);
-
         await this.schemaService.createAccountTimelineEntry(accountNumber!, {
           created_by: userId!,
           account_rid: account_rid,
@@ -133,7 +143,7 @@ export class NotesService {
           event_type_rid: userEventInfo.event_type_rid,
           event_name: eventNames.CREATE,
           descriptions: notesData.title,
-          project_rid: notesData.attachment_level === 'project' ? notesData.attach_to : '',
+          project_rid: ['project', 'project_resource', 'project_task'].includes(notesData.attachment_level) ? projectFiscalId : '',
         }, timelineTypes);
 
 
@@ -2176,6 +2186,17 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
                                                 userId: userId!,
                                                 eventType: eventTypes.UI_HANDLER
                                               });
+        let projectFiscalId = notesData.attach_to;
+        if(attachment_level === 'project_resource' || attachment_level === 'project_task') {
+          if(attachment_level === 'project_resource') {
+            const projectResource = await this.projectIngestionService.fetchProjectResourceById(accountNumber, notesData.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(attachment_level === 'project_task') {
+            const projectTask = await this.projectIngestionService.fetchProjectTaskById(accountNumber, notesData.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
         // Use SchemaService to determine timeline entity type(s)
         const timelineTypes = this.schemaService.getTimelineTypesForAttachmentLevel(notesData.attachment_level);
 
@@ -2187,7 +2208,8 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
           created_by_name: userEventInfo.full_name,
           event_type_rid: userEventInfo.event_type_rid,
           event_name: eventNames.UPDATE,
-          descriptions: notesData.title
+          descriptions: notesData.title,
+          project_rid: ['project', 'project_resource', 'project_task'].includes(notesData.attachment_level) ? projectFiscalId : '',
         }, timelineTypes);
 
           await NotesSummaryModel.update({
