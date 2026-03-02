@@ -700,6 +700,7 @@ class SchemaService {
       event_name?: string;
       descriptions?: string;
       project_rid?: string;
+      case_rid?: string;
     },
     entityTypes: string[]
   ) {
@@ -4139,6 +4140,21 @@ class SchemaService {
           type: QueryTypes.UPDATE,
         }
       );
+       const userEventInfo:any = await this.fetchUserAndEventInfo({
+        userId: userId!,
+        eventType: eventTypes.UI_HANDLER
+      });
+     
+      await this.createAccountTimelineEntry(accountNumber!, {
+        created_by: userId!,
+        account_rid: projectFiscalData.account_rid,
+        entity_rid: projectFiscalId!,
+        entity_name: entityTypes.QRE_PERCENT,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.ADJUST,
+        descriptions:'for '+projectFiscalData.project_code
+      },["account"]);
     }
   }  
   async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {

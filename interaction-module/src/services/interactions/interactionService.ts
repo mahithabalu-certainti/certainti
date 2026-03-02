@@ -813,7 +813,7 @@ export class InteractionService {
           ],
           type: "project",
         };
-        parallelTasks.push(this.triggerAI(req));
+        parallelTasks.push(this.triggerAI(req, entityTypes.AUTO_RD_ASSESSMENT));
       }
 
       parallelTasks.push(
@@ -3108,7 +3108,7 @@ export class InteractionService {
     * - Sends payload to a Kafka topic for AI processing.
     * - Logs and handles errors gracefully.
     */ 
-  async triggerAI(req: any) {
+  async triggerAI(req: any,type: string = entityTypes.MANUAL_RD_ASSESSMENT) {
     try {
       let payload: {
         company_id?: any;
@@ -3119,9 +3119,7 @@ export class InteractionService {
         input_text: "This is some text to be processed by the AI.",
         model_type: "NA",
       };
-      if (req.type === "account") {
-        payload.company_id = req.data[0].account_rid;
-        const { accountNumber } =
+      const { accountNumber } =
           await this.interactionSchemaService.fetchValidAccountNumberById(
             req.data[0].account_rid
           );
@@ -3130,16 +3128,21 @@ export class InteractionService {
           logMessage(`Invalid account ID in triggerAI: ${req.data[0].account_rid}`);
           throw new Error("Invalid account ID");
         }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
         if (!this.orgDbSequelize) {
           this.orgDbSequelize = await initOrgSequelize();
         }
         if (!this.mainDbSequelize) {
           this.mainDbSequelize = await initMainDbSequelize();
         }
-        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-          /\D/g,
-          ""
-        )}`;
+        let entityName = '';
+      if (req.type === "account") {
+        payload.company_id = req.data[0].account_rid;
+      
+        
         const status_rid =
           await this.interactionSchemaService.getActiveStatusRid();
         const [accountInfo]: any[] = await this.mainDbSequelize.query(
@@ -3147,6 +3150,7 @@ export class InteractionService {
             req.data[0].account_rid,
           )
         );
+        entityName = accountInfo[0].account_name;
     const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchAccountDetailsInfo(
         req.data[0].account_rid,schemaName
@@ -3211,15 +3215,6 @@ export class InteractionService {
       }
       else if (req.type === "case") {
         payload.company_id = req.data[0].account_rid;
-        const { accountNumber } =
-          await this.interactionSchemaService.fetchValidAccountNumberById(
-            req.data[0].account_rid
-          );
-
-        if (!accountNumber) {
-          logMessage(`Invalid account ID in triggerAI: ${req.data[0].account_rid}`);
-          throw new Error("Invalid account ID");
-        }
         if (!this.orgDbSequelize) {
           this.orgDbSequelize = await initOrgSequelize();
         }
@@ -3242,6 +3237,13 @@ export class InteractionService {
        else {
         payload.company_id = req.data[0].account_rid;
         payload.project_id = req.data[0].project_fiscal_rid;
+        const projectInfo: any = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectInfo(
+            req.data[0].project_fiscal_rid,
+            schemaName
+          ), { type: 'SELECT' }
+        );
+        entityName = projectInfo[0]?.project_code || '';
       }
       logMessage(`Triggering AI with payload: ${JSON.stringify(payload)}`);
 
@@ -3257,6 +3259,24 @@ export class InteractionService {
       });
       // Check if the message was processed successfully
       logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
+      const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
+                                                  userId: req.user_id!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        let timelineTypes = [req.type];
+        let entityRid  = req.type === "project" ? req.data[0].project_rid : (req.type === "case" ? req.data[0].case_rid : req.data[0].account_rid);
+                        
+        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: req.user_id!,
+                                            account_rid: req.data[0].account_rid,
+                                            entity_rid: entityRid,
+                                            entity_name: type,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.TRIGGERED,
+                                            descriptions: req.type === 'account' ? `for ${entityName}` : (req.type === 'project' ? `for ${entityName}` : ''),
+                                            project_rid: req.type === 'project' ? req.data[0].project_fiscal_rid : '',
+                                          }, timelineTypes);
       return {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",
@@ -3629,7 +3649,7 @@ export class InteractionService {
         type : "project"
       }
       logMessage(`AI Trigger Payload: ${JSON.stringify(payload)}`);
-      await this.triggerAI(payload)
+      await this.triggerAI(payload,entityTypes.SCHEDULER_RD_ASSESSMENT);
     }
   }
 
