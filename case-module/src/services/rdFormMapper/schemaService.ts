@@ -562,6 +562,7 @@ class RdFormMapperSchemaService {
     account_rid: string,
     case_rid: string,
     schemaName: string,
+    stateRid: string,
     fiscalYear?: string,
   ): Promise<any[]> {
     const orgDb = await this.getOrgDb();
@@ -638,15 +639,24 @@ class RdFormMapperSchemaService {
         }
 
         const quotedJsonPath = quoteJsonPath(jsonPath);
-
-        // Query to get all values from the JSON field as an array
-        let whereClause = "WHERE case_rid = :case_rid";
+          let whereClause = "WHERE case_rid = :case_rid";
         let replacements: any = { case_rid };
-
-        if (fiscalYear) {
+         if (fiscalYear) {
           whereClause += " AND fiscal_year = :fiscalYear";
           replacements.fiscalYear = fiscalYear;
         }
+        if(refTable === "case_history_submission")
+          {
+            replacements = {};
+            whereClause = `WHERE account_rid = :account_rid AND state_rid = :state_rid`;
+            replacements.account_rid = account_rid;
+            replacements.state_rid = stateRid;
+
+          }
+       
+       
+
+       
 
         const orderByField = data_order_by || 'created_datetime';
         
@@ -677,6 +687,14 @@ class RdFormMapperSchemaService {
           whereClause += " AND fiscal_year = :fiscalYear";
           replacements.fiscalYear = fiscalYear;
         }
+        if(refTable === "case_history_submission")
+          {
+            replacements = {};
+            whereClause = `WHERE account_rid = :account_rid AND state_rid = :state_rid`;
+            replacements.account_rid = account_rid;
+            replacements.state_rid = stateRid;
+
+          }
 
         const orderByField = data_order_by || 'created_datetime';
         
