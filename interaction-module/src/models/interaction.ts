@@ -42,6 +42,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   interaction_batch_id? : string
   transaction_id? : string
   four_part_assessment_rid? : string
+  interaction_status_rid? : string
 }
 
 export interface InteractionCreationAttributes
@@ -91,6 +92,7 @@ export class Interaction
   public interaction_batch_id? : string
   public transaction_id? : string
   public four_part_assessment_rid? : string
+  public interaction_status_rid? : string
 
   static initialize(
     sequelize: Sequelize,
@@ -148,7 +150,8 @@ export class Interaction
         interaction_assessment_source_rid: { type: DataTypes.STRING, allowNull: true },
         interaction_batch_id: { type: DataTypes.STRING, allowNull: true },
         transaction_id: { type: DataTypes.STRING, allowNull: true },
-        four_part_assessment_rid : { type : DataTypes.STRING, allowNull : true}
+        four_part_assessment_rid : { type : DataTypes.STRING, allowNull : true},
+        interaction_status_rid : { type : DataTypes.STRING, allowNull : true}
       },
       {
         sequelize,
