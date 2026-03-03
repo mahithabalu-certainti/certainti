@@ -550,7 +550,8 @@ export class RdFormMapperService {
         const colGap = 0;
         const colFieldWidth = Math.floor(usableWidth * 0.65);
         const colValueWidth = usableWidth - colFieldWidth - colGap;
-        const rowPadding = 2;
+        // Increased padding for each row
+        const rowPadding = 8;
         const headerHeight = doc.heightOfString("Field", {
           width: colFieldWidth - rowPadding * 2,
         }) + rowPadding * 2;
@@ -599,15 +600,17 @@ export class RdFormMapperService {
           const valueHeight = doc.heightOfString(String(displayValue), {
             width: colValueWidth - rowPadding * 2,
           });
-          const rowHeight = Math.max(fieldHeight, valueHeight) + rowPadding * 2;
+          // Add extra vertical padding for each row
+          const extraPadding = 6;
+          const rowHeight = Math.max(fieldHeight, valueHeight) + rowPadding * 2 + extraPadding;
 
           ensureSpace(rowHeight);
 
           const y = doc.y;
-          doc.text(String(safeFieldName), left + rowPadding, y + rowPadding, {
+          doc.text(String(safeFieldName), left + rowPadding, y + rowPadding + extraPadding / 2, {
             width: colFieldWidth - rowPadding * 2,
           });
-          doc.text(String(displayValue), left + colFieldWidth + colGap + rowPadding, y + rowPadding, {
+          doc.text(String(displayValue), left + colFieldWidth + colGap + rowPadding, y + rowPadding + extraPadding / 2, {
             width: colValueWidth - rowPadding * 2,
             align: "right",
           });
@@ -636,7 +639,9 @@ export class RdFormMapperService {
               align,
             }),
           );
-          const rowHeight = Math.max(...cellHeights, 0) + rowPadding * 2;
+          // Add extra vertical padding for each grid row
+          const extraPadding = 6;
+          const rowHeight = Math.max(...cellHeights, 0) + rowPadding * 2 + extraPadding;
 
           ensureSpace(rowHeight);
 
@@ -649,7 +654,7 @@ export class RdFormMapperService {
             doc.text(
               String(applyCurrency ? formatValue(safeCell) : safeCell),
               x + rowPadding,
-              y + rowPadding,
+              y + rowPadding + extraPadding / 2,
               {
               width: width - rowPadding * 2,
               align,
