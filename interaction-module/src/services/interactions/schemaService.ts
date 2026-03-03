@@ -15,7 +15,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
@@ -3951,6 +3951,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           }
         );
       }
+      const userEventInfo:any = await this.fetchUserAndEventInfo({
+                                                        userId: process.env.SYSTEM_USER_ID!,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                     
+      await this.createAccountTimelineEntry(accountNumber!, {
+                                          created_by: process.env.SYSTEM_USER_ID!,
+                                          account_rid: accountId,
+                                          entity_rid: aiResponse.rid!,
+                                          entity_name: entityTypes.TECHNICAL_SUMMARY,
+                                          created_by_name: userEventInfo.full_name,
+                                          event_type_rid: userEventInfo.event_type_rid,
+                                          event_name: eventNames.GENERATED,
+                                          descriptions:'for '+projectInfo.project_code,
+                                          project_rid: projectFiscalId,
+                                        }, ['project']);
     } catch (err) {
       logMessage(`Error updating Tech Summary: ${err}`);
       throw new Error("Error updating Tech Summary: " + (err as Error).message);
@@ -4248,6 +4264,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           where: { transaction_id: transaction_id },
         }),
       ]);
+      const userEventInfo:any = await this.fetchUserAndEventInfo({
+                                                        userId: process.env.SYSTEM_USER_ID!,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                     
+      await this.createAccountTimelineEntry(accountNumber!, {
+                                          created_by: process.env.SYSTEM_USER_ID!,
+                                          account_rid: accountId,
+                                          entity_rid: aiResponse.rid!,
+                                          entity_name: entityTypes.QRE_PERCENT,
+                                          created_by_name: userEventInfo.full_name,
+                                          event_type_rid: userEventInfo.event_type_rid,
+                                          event_name: eventNames.UPDATE,
+                                          descriptions:'for '+projectInfo.project_code,
+                                          project_rid: projectFiscalRid,
+                                        }, ['project']);
     } catch (err) {
       logMessage(`Error updating QRE percent: ${err}`);
       throw new Error("Error updating QRE percent: " + (err as Error).message);

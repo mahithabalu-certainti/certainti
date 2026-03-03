@@ -81,13 +81,22 @@ export const entityTypes = {
   ACTIVITY_TASK:"Task",
   CHECKLIST:"Checklist",
   CASE:"Case",
-  INTERACTION:"Interaction"
+  INTERACTION:"Interaction",
+  AUTO_RD_ASSESSMENT:"Auto RD Assessment",
+  MANUAL_RD_ASSESSMENT:"Manual RD Assessment",
+  SCHEDULER_RD_ASSESSMENT:"Scheduler RD Assessment",
+  TECHNICAL_SUMMARY:"Technical Summary",
+  QRE_PERCENT:"QRE Percent"
+
 };
 
 export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
   CANCEL: "cancelled",
+  SENT: "sent",
+  TRIGGERED: "triggered",
+  GENERATED: "generated",
 }
 
 export const eventTypes = {

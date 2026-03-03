@@ -111,7 +111,7 @@ export default class SettingService {
           findProjectFiscal[0][0],
           findProjectFiscal[0][0].project_code
         );
-        await orgDb.query(rawQueries.insertProjectTimeline(schemaName, data));
+        //await orgDb.query(rawQueries.insertProjectTimeline(schemaName, data));
         const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
                 userId: data.userId!,
                 eventType: eventTypes.UI_HANDLER
@@ -125,7 +125,7 @@ export default class SettingService {
                 event_type_rid: userEventInfo.event_type_rid,
                 event_name: eventNames.UPDATE,
                 descriptions:'',
-                project_rid: data.project_rid
+                project_rid: data.project_fiscal_rid
               },["project"]);
         let attributeName: string;
         let oldValue: string;

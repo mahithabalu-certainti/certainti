@@ -542,8 +542,6 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
-    const mainDbSequelize = await this.getMainDb();
-    const orgDbSequelize = await this.getOrgDb();
     const transaction = await dbInit.transaction();
     try {
       const { accountNumber, parentAccountId, accountName } =
@@ -562,6 +560,10 @@ export class InteractionService {
             interactionData.status_rid
           );
       }
+       const intLevel =
+          await this.interactionSchemaService.getInteractionLevelByRid(
+            interactionData?.interaction_level_rid!
+          );
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
           accountNumber,
@@ -582,9 +584,13 @@ export class InteractionService {
                                                   eventType: eventTypes.UI_HANDLER
                                                 });
         let timelineTypes = ["account"];
-        if(interactionData?.interaction_level?.toLowerCase() === 'project')
+        let projectFiscalRid = interactionData.project_fiscal_rid;
+        if(intLevel?.toLowerCase() === 'project')
         {
-          timelineTypes = ["project"]
+          timelineTypes = ["project"];
+          const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
+          projectFiscalRid = projectInfo?.project_fiscal_rid || interactionData.project_fiscal_rid;
+
         }
                         
         await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
@@ -596,7 +602,7 @@ export class InteractionService {
                                             event_type_rid: userEventInfo.event_type_rid,
                                             event_name: eventNames.UPDATE,
                                             descriptions:'',
-                                            project_rid: interactionData?.interaction_level?.toLowerCase() === 'project' ? interactionData.project_fiscal_rid : '',
+                                            project_rid: interactionData?.interaction_level?.toLowerCase() === 'project' ? projectFiscalRid : '',
                                           }, timelineTypes);
         await this.interactionSchemaService.addInteractionTimeline(
           accountNumber,
@@ -609,10 +615,7 @@ export class InteractionService {
       }
       await transaction.commit();
       if (interactionData.trigger_send === true) {
-        const intLevel =
-          await this.interactionSchemaService.getInteractionLevelByRid(
-            interactionData?.interaction_level_rid!
-          );
+        
         const isEmailRecipientAvailable =
           await this.interactionSchemaService.isEmailRecipientAvailable(
             accountNumber,
@@ -821,7 +824,7 @@ export class InteractionService {
           ],
           type: "project",
         };
-        parallelTasks.push(this.triggerAI(req));
+        parallelTasks.push(this.triggerAI(req,userId, entityTypes.AUTO_RD_ASSESSMENT));
       }
 
       parallelTasks.push(
@@ -939,7 +942,14 @@ export class InteractionService {
                 fetchInteractionDetails.r_number,
                 false,
                 interactionLevel[0][0].interaction_level_name,
-                true
+                true,
+                userId,
+                accountNumber,
+                interactionData.account_rid
+
+
+
+
               );
             }
             else{
@@ -1835,7 +1845,10 @@ export class InteractionService {
     interactionRid: string,
     is_interaction_followup: boolean,
     interactionLevel: string,
-    isResponseReceived: boolean
+    isResponseReceived: boolean,
+    createdBy: string,
+    accountNumber: string,
+    accountRid: string,
   ) {
     let emailResponse = false;
     try {
@@ -1898,6 +1911,27 @@ export class InteractionService {
         ],
         senderEmailInfo: senderEmailInfo,
       });
+      const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
+                                                  userId: createdBy!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        let timelineTypes = ["account"];
+        if(interactionLevel.toLowerCase() === 'project')
+        {
+          timelineTypes = ["project"]
+        }
+                        
+        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: createdBy!,
+                                            account_rid: accountRid!,
+                                            entity_rid: interactionRid!,
+                                            entity_name: entityTypes.INTERACTION,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.SENT,
+                                            descriptions:'',
+                                            project_rid: interactionLevel?.toLowerCase() === 'project' ? projectInfo.project_id : '',
+                                          }, timelineTypes);
       return emailResponse;
     } catch (error) {
       logMessage(`Error sending email: ${error}`);
@@ -3098,7 +3132,7 @@ export class InteractionService {
     * - Sends payload to a Kafka topic for AI processing.
     * - Logs and handles errors gracefully.
     */ 
-  async triggerAI(req: any) {
+  async triggerAI(req: any,userId:string,type: string = entityTypes.MANUAL_RD_ASSESSMENT) {
     try {
       let payload: {
         company_id?: any;
@@ -3109,9 +3143,7 @@ export class InteractionService {
         input_text: "This is some text to be processed by the AI.",
         model_type: "NA",
       };
-      if (req.type === "account") {
-        payload.company_id = req.data[0].account_rid;
-        const { accountNumber } =
+      const { accountNumber } =
           await this.interactionSchemaService.fetchValidAccountNumberById(
             req.data[0].account_rid
           );
@@ -3120,16 +3152,21 @@ export class InteractionService {
           logMessage(`Invalid account ID in triggerAI: ${req.data[0].account_rid}`);
           throw new Error("Invalid account ID");
         }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
         if (!this.orgDbSequelize) {
           this.orgDbSequelize = await initOrgSequelize();
         }
         if (!this.mainDbSequelize) {
           this.mainDbSequelize = await initMainDbSequelize();
         }
-        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-          /\D/g,
-          ""
-        )}`;
+        let entityName = '';
+      if (req.type === "account") {
+        payload.company_id = req.data[0].account_rid;
+      
+        
         const status_rid =
           await this.interactionSchemaService.getActiveStatusRid();
         const [accountInfo]: any[] = await this.mainDbSequelize.query(
@@ -3137,6 +3174,7 @@ export class InteractionService {
             req.data[0].account_rid,
           )
         );
+        entityName = accountInfo[0].account_name;
     const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchAccountDetailsInfo(
         req.data[0].account_rid,schemaName
@@ -3201,15 +3239,6 @@ export class InteractionService {
       }
       else if (req.type === "case") {
         payload.company_id = req.data[0].account_rid;
-        const { accountNumber } =
-          await this.interactionSchemaService.fetchValidAccountNumberById(
-            req.data[0].account_rid
-          );
-
-        if (!accountNumber) {
-          logMessage(`Invalid account ID in triggerAI: ${req.data[0].account_rid}`);
-          throw new Error("Invalid account ID");
-        }
         if (!this.orgDbSequelize) {
           this.orgDbSequelize = await initOrgSequelize();
         }
@@ -3232,6 +3261,13 @@ export class InteractionService {
        else {
         payload.company_id = req.data[0].account_rid;
         payload.project_id = req.data[0].project_fiscal_rid;
+        const projectInfo: any = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectInfo(
+            req.data[0].project_fiscal_rid,
+            schemaName
+          ), { type: 'SELECT' }
+        );
+        entityName = projectInfo[0]?.project_code || '';
       }
       logMessage(`Triggering AI with payload: ${JSON.stringify(payload)}`);
 
@@ -3246,7 +3282,26 @@ export class InteractionService {
         messages: [message],
       });
       // Check if the message was processed successfully
-      logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
+   //   logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
+      const userEventInfo:any = await this.interactionSchemaService.fetchUserAndEventInfo({
+                                                  userId: userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        let timelineTypes = [req.type];
+        
+        let entityRid  = req.type === "project" ? req.data[0].project_fiscal_rid : (req.type === "case" ? req.data[0].case_rid : req.data[0].account_rid);
+                        
+        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: userId!,
+                                            account_rid: req.data[0].account_rid,
+                                            entity_rid: entityRid,
+                                            entity_name: type,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.TRIGGERED,
+                                            descriptions: req.type === 'account' ? `for ${entityName}` : (req.type === 'project' ? `for ${entityName}` : ''),
+                                            project_rid: req.type === 'project' ? req.data[0].project_fiscal_rid : '',
+                                          }, timelineTypes);
       return {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",
@@ -3626,7 +3681,7 @@ export class InteractionService {
         type : "project"
       }
       logMessage(`AI Trigger Payload: ${JSON.stringify(payload)}`);
-      await this.triggerAI(payload)
+      await this.triggerAI(payload,process.env.SYSTEM_USER_ID!,entityTypes.SCHEDULER_RD_ASSESSMENT);
     }
   }
 
@@ -3652,6 +3707,7 @@ export class InteractionService {
       let project_fiscal_rid = data.project_fiscal_rid;
       let accountRid = data.account_rid;
       let interactionLevel = data.interaction_level;
+      let createdBy = data.created_by;
 
       // If emailInfo.email is empty, fetch POC email
       let sendEmailInfo = email_info;
@@ -3719,7 +3775,10 @@ export class InteractionService {
         interaction_rid,
         is_interaction_followup,
         interactionLevel,
-        false
+        false,
+        createdBy,
+        accountNumber,
+        data.account_rid
       );
       if (emailResponse) {
         logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);

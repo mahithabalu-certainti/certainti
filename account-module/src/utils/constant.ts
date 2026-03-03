@@ -1171,6 +1171,7 @@ export const rawQueries = {
         project_rid VARCHAR(50) NULL,
         entity_name VARCHAR(255) NULL,
         created_by_name VARCHAR(255) NULL,
+        descriptions VARCHAR(2000) NULL,
         CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
       );
     `;
@@ -3682,6 +3683,13 @@ export const rawQueries = {
       ON "${schemaName}"."notes_timeline"("${field}");
     `;
   }, 
+    getAccountTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_account_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."account_timeline"("${field}");
+    `;
+  },
   checkCaseExistsForAccount (schemaName : string, accountRid : string) {
     return `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`
   },

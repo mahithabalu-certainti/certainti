@@ -254,7 +254,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { techSummaryInfo: any , count: number};
   }>;
-  triggerAI(data : any) : Promise<{
+  triggerAI(data : any, userId: string) : Promise<{
     statusMessage : string,
     statusCode : number,
     status : any,
