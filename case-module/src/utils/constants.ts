@@ -2061,7 +2061,7 @@ WHERE dmf.country_rid = '${countryRid}'
     return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`;
   },
   getCaseProjectsIds(caseRid: string, accountRid: string, schemaName: string, summaryType: string) {
-    if (summaryType === 'qualifiedprojects') {
+    if (summaryType === 'qualifedProjects') {
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
