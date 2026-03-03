@@ -749,7 +749,6 @@ const Dossier: React.FC<DossierProps> = ({
           )}
         </>
       )}
-      :
       <CloseCaseModal
         open={isModalOpen}
         onClose={handleCloseModal}
