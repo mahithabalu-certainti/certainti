@@ -79,15 +79,14 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
 
   const handleBackClick = () => {
     if (isFromInteraction) {
+      searchParams.delete('fpa_id');
+      searchParams.delete('navigate_source');
+      searchParams.set('list', 'interactions');
+
       if (moduleLevel === 'account') {
         const path = generatePath(ACCOUNT_DETAILS, {
           accountid: accountid || '',
         });
-
-        const searchParams = new URLSearchParams({
-          list: 'interactions',
-        });
-
         navigate(`${path}?${searchParams.toString()}`, {
           state: { activeKey: 'interactions' },
           replace: true,
@@ -96,9 +95,6 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
         const path = generatePath(PROJECT_DETAILS, {
           projectid: projectid || '',
         });
-        const searchParams = new URLSearchParams({
-          list: 'interactions',
-        });
         navigate(`${path}?${searchParams.toString()}`, {
           state: { activeKey: 'interactions' },
           replace: true,
@@ -106,9 +102,6 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
       } else if (moduleLevel === 'case') {
         const path = generatePath(CASE_DETAILS, {
           caseId: caseId || '',
-        });
-        const searchParams = new URLSearchParams({
-          list: 'interactions',
         });
         navigate(`${path}?${searchParams.toString()}`, {
           state: { activeKey: 'interactions' },
@@ -140,7 +133,9 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     },
     {
       label: 'Four Part Assessment ID',
-      value: data?.audit_information?.four_part_assessment_id,
+      value:
+        data?.title?.r_number ||
+        data?.audit_information?.four_part_assessment_id,
       key: 'r_number',
     },
     {
@@ -152,16 +147,6 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
       label: 'Created By',
       value: data?.audit_information?.created_by_name,
       key: 'created_by_name',
-    },
-    {
-      label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.audit_information?.updated_on),
-      key: 'modified_datetime',
-    },
-    {
-      label: 'Updated By',
-      value: data?.audit_information?.modified_by_name,
-      key: 'modified_by_name',
     },
   ];
 
@@ -262,7 +247,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
                   </div>
 
                   <div className='mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]'>
-                    {response}
+                    {response || '-'}
                   </div>
                 </div>
               );

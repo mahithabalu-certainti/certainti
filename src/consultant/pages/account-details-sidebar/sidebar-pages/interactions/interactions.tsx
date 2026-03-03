@@ -27,6 +27,7 @@ import {
   useInteractionList,
   useInteractionListModel,
   useSendInteraction,
+  useUpdateInteractionStatus,
 } from '../../../../services/interactions/interactions-service';
 import {
   ACCOUNT_DETAILS,
@@ -180,7 +181,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
   const viewResponseHistory = !!responseHistory;
-  const { successToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const sendInteraction = useSendInteraction();
   const { data, isLoading, isError, refetch } = useInteractionList(
     {
@@ -239,6 +240,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionStatusReminder = useGetInteractionStatusByReminder(true);
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
+  const updateInteractionStatus = useUpdateInteractionStatus();
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -336,9 +338,13 @@ const Interactions: React.FC<InteractionsProps> = ({
       const updatedInteractions =
         data.interactions?.map((item) => {
           const status = (item.status_name || '').toLowerCase();
+          const recordStatus = (
+            item.interaction_status_name || ''
+          ).toLowerCase();
           const checkBoxMessage = getDisableReason(
             item.has_email_recipient,
             status,
+            recordStatus,
             sendInteractionsEnable
           );
           return {
@@ -634,8 +640,38 @@ const Interactions: React.FC<InteractionsProps> = ({
   ];
 
   const handleToggleRecordStatus = (row: InteractionList, checked: boolean) => {
-    const updatedStatus = checked ? 'active' : 'inactive';
-    console.log(`Toggling record status for ${row.rid} to ${updatedStatus}`);
+    const status_name = checked ? 'Active' : 'In-Active';
+
+    // Optimistic UI update — reflect the change instantly
+    const previousList = interactionList;
+    setInteractionList((prev) =>
+      prev.map((item) =>
+        item.rid === row.rid
+          ? { ...item, interaction_status_name: status_name }
+          : item
+      )
+    );
+
+    updateInteractionStatus.mutate(
+      {
+        rid: row.rid,
+        status_name,
+        account_rid: accountid || '',
+      },
+      {
+        onSuccess: (response) => {
+          successToast(
+            response?.statusMessage || 'Interaction Status updated successfully'
+          );
+          refetch();
+        },
+        onError: () => {
+          // Revert to previous state on failure
+          setInteractionList(previousList);
+          errorToast('Failed to update interaction status');
+        },
+      }
+    );
   };
 
   const handleFourPartNavigation = (row: InteractionList) => {
@@ -645,11 +681,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountid: accountid || '',
     });
 
-    const searchParams = new URLSearchParams({
-      list: 'four_part_assessment',
-      fpa_id: row.four_part_assessment_rid,
-      navigate_source: 'interactions',
-    });
+    searchParams.set('list', 'four_part_assessment');
+    searchParams.set('fpa_id', row.four_part_assessment_rid);
+    searchParams.set('navigate_source', 'interactions');
 
     navigate(`${path}?${searchParams.toString()}`, {
       state: { activeKey: 'four_part_assessment' },
@@ -688,6 +722,11 @@ const Interactions: React.FC<InteractionsProps> = ({
   const RestrictedColumns = [
     {
       id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+    {
+      id: 'status_action',
       canHide: false,
       canDrag: false,
     },

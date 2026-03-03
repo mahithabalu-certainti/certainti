@@ -7,7 +7,7 @@ export interface FourPartAssessmentListURLParams {
   search: string;
   filter: object;
   sort: string;
-  sort_by: string;
+  sort_by: 'ASC' | 'DESC';
   type: 'account' | 'project' | 'case';
 }
 
@@ -18,7 +18,7 @@ export interface FourPartAssessmentListExportURLParams {
   search: string;
   filter: object;
   sort: string;
-  sort_by: string;
+  sort_by: 'ASC' | 'DESC';
   type: 'account' | 'project' | 'case';
   timezone?: string;
 }
@@ -32,9 +32,10 @@ export type FourPartAssessmentList = {
   created_by: string;
   created_by_name: string;
   created_datetime: string;
-  modified_by?: string | null;
-  modified_by_name?: string | null;
-  modified_datetime?: string | null;
+  permitted_purpose_status: string;
+  technological_uncertainty_status: string;
+  technological_in_nature_status: string;
+  process_of_experimentation_status: string;
 };
 
 export interface FourPartAssessmentListApiResponse {
@@ -80,11 +81,8 @@ export interface FourPartAssessmentDetailsAuditInfo {
   record_id: string;
   created_by: string;
   created_on: string | null;
-  updated_on: string | null;
-  modified_by: string | null;
   four_part_assessment_id: string;
   created_by_name: string;
-  modified_by_name: string | null;
 }
 
 export interface FourPartAssessmentDetails {

@@ -1098,6 +1098,7 @@ export const removeFormatCostValue = (value: string): string => {
 export const getDisableReason = (
   hasEmailRecipient: boolean,
   status: string,
+  recordStatus: string,
   sendInteractionsEnable?: boolean
 ) => {
   if (!sendInteractionsEnable)
@@ -1112,6 +1113,8 @@ export const getDisableReason = (
     return 'A response has already been received for this interaction';
   if (status === StatusTypeEnum.inqueue)
     return 'This interaction is currently queued for sending';
+  if (recordStatus === 'in-active')
+    return 'The interaction status is currently set to inactive.';
   if (status === '') return 'Interaction status is invalid or undefined';
   return '';
 };
