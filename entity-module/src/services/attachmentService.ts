@@ -141,6 +141,17 @@ export class AttachmentService {
         comments: attachmentData.comments || null,
         created_by: userId,
       });
+      let projectFiscalId = attachmentData.attach_to;
+        if(attachment_level === 'project_resource' || attachment_level === 'project_task') {
+          if(attachment_level === 'project_resource') {
+            const projectResource = await this.projectIngestionService.fetchProjectResourceById(accountNumber, attachmentData.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(attachment_level === 'project_task') {
+            const projectTask = await this.projectIngestionService.fetchProjectTaskById(accountNumber, attachmentData.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
 
       const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
                                                       userId: userId!,
@@ -158,7 +169,9 @@ export class AttachmentService {
                 event_type_rid: userEventInfo.event_type_rid,
                 event_name: eventNames.CREATE,
                 descriptions: name,
-                project_rid: attachmentData.attachment_level === "project" ? attachmentData.attach_to : ''
+              //  project_rid: attachmentData.attachment_level === "project" ? attachmentData.attach_to : '',
+                project_rid: ['project', 'project_resource', 'project_task'].includes(attachmentData.attachment_level) ? projectFiscalId : '',
+                 case_rid:attachmentData.attachment_level === 'case' ? attachmentData.attach_to : '', 
               }, timelineTypes);
 
       await AttachmentTimeline.create({

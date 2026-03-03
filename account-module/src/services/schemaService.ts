@@ -1489,7 +1489,7 @@ class SchemaService {
   
     for (const field of fieldsToIndex) {
       await sequelize.query(
-        rawQueries.getNotesTimelineIndexQuery(schemaName, field)
+        rawQueries.getAccountTimelineIndexQuery(schemaName, field)
       );
     }
   }
