@@ -117,4 +117,5 @@ routes.post("/sendInteraction",
 routes.post('/fourPartAssessment/list', checkUserStatusMiddleware("NA"), controller.interactionsController.fetchFourPartAssessmentList)
 routes.post('/fourPartAssessment/details', checkUserStatusMiddleware('NA'), controller.interactionsController.getFpaDetails)
 routes.post('/fourPartAssessment/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportFetchFourPartAssessmentList)
+routes.post('/fourPartAssessment/update', checkUserStatusMiddleware("NA"), controller.interactionsController.updateInteractionStatus)
 export default routes;

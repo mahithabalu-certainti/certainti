@@ -187,10 +187,22 @@ export interface ProjectMetadata {
 }
 
 export interface FourPartAssessment {
-  permitted_purpose: string
-  technological_uncertainty: string
-  process_of_experimentation: string
-  technological_in_nature: string
+  permitted_purpose: {
+    status : string
+    rationale : string
+  }
+  technological_uncertainty: {
+    status : string
+    rationale : string
+  }
+  process_of_experimentation: {
+    status : string
+    rationale : string
+  }
+  technological_in_nature: {
+    status : string
+    rationale : string
+  }
   status: string
   rationale: string
   summary_judgment: string
@@ -265,19 +277,14 @@ export interface UserReturnType {
   last_name : string
 }
 
-export interface InteractionGraphqlRequest {
+export interface InteractionStatusUpdateRequest {
   rid : string
   account_rid : string
-  status_rid : string
-  page : number
-  limit : number
-  sort : string
-  sort_by : string
-  filters : filterType
-  fiscal_year : number
-  search : string
-  flag : string
-  case_rid : string
-  project_fiscal_rid : string
-  project_rid : string
+  status_name : string
+}
+
+export interface AllStatusType {
+  rid : string
+  status_name : string
+  status : string
 }
