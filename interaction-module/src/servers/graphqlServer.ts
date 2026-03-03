@@ -5,6 +5,7 @@ import configurations from "../config/config";
 import { expressMiddleware } from "@apollo/server/express4";
 import initRequestContext from "../graphql/context";
 import interactionDefs from "../graphql/interactionSchema";
+import { interactionResolver } from "../graphql/resolver";
 
 const GRAPHQL_PATH = "/graphql";
 
@@ -18,7 +19,7 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
     typeDefs: [
       interactionDefs
     ],
-    resolvers: [],
+    resolvers: [interactionResolver],
   });
 
   const server = new ApolloServer({

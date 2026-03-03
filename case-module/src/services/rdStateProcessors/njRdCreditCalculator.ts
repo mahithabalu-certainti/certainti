@@ -3,7 +3,7 @@ import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
-    credit_rate: number;
+    qre_credit_percentage: number;
     sub_con_percent: number;
     fixed_base_percent: number;
 }
@@ -118,13 +118,13 @@ export class RdCreditCalculatorForNJ {
      * @returns 
      */
     part5DevelopmentTaxCreditCalculation(part4_final_credit: Decimal, config: ConfigJson) {
-        const tot_credit = this.round2(part4_final_credit.mul(config.credit_rate/100));
+        const tot_credit = this.round2(part4_final_credit.mul(config.qre_credit_percentage/100));
 
         return {
             part4_final_credit: this.round2(part4_final_credit),
             tot_credit,
             tot_available_credit: tot_credit,
-            config_percent:config.credit_rate
+            config_percent:config.qre_credit_percentage
 
         }
     }

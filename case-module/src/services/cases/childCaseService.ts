@@ -1672,7 +1672,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           this.logger.info("CaseHistorySubmission For State Inserted successfully")
         }
       }
-      if(data.user_preference !== '') {
+      if(JSON.stringify(data.user_preference) !== '') {
         const getCaseCloseStatus = await mainDb.query<{rid : string, status_name : string, status_type : string}>(rawQueries.getCaseCloseStatus(), {type : QueryTypes.SELECT, plain : true})
         await Case.update({
           status_rid : getCaseCloseStatus?.rid
