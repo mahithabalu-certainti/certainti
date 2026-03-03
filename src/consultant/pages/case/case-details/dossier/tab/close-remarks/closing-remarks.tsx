@@ -48,7 +48,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
   const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'signoff_at',
+    sortBy: 'signoff_type_name',
     sortOrder: 'ASC',
   });
 
@@ -61,8 +61,6 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
     },
     refreshTrigger
   );
-
-  const totalItems = data?.count || 0;
 
   useEffect(() => {
     if (data) {
@@ -92,49 +90,9 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
 
-  // Permission Management
-  // const projectViewEditFields = useMemo(
-  //     () =>
-  //         permission.find(
-  //             (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
-  //         )?.fields ?? [],
-  //     [permission]
-  // );
-
-  // const permissionMap = useMemo(() => {
-  //     const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //     projectViewEditFields.forEach((item) => {
-  //         map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //     });
-  //     return map;
-  // }, [projectViewEditFields]);
-
-  // const projectListViewEditFields = useMemo(
-  //     () =>
-  //         permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
-  //             ?.fields ?? [],
-  //     [permission]
-  // );
-
-  // const projectPermissionMap = useMemo(() => {
-  //     const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //     projectListViewEditFields.forEach((item) => {
-  //         map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //     });
-  //     return map;
-  // }, [projectListViewEditFields]);
-
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({ ...prev, sortBy, sortOrder: apiOrder }));
-  };
-
-  const handlePageChange = (newPage: number) => {
-    setTableParams((prev) => ({ ...prev, page: newPage + 1 }));
-  };
-
-  const handleRowsPerPageChange = (newLimit: number) => {
-    setTableParams((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
   const getRowId = (row: ClosingRemarksItems) => row.rid;
@@ -205,12 +163,6 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
         actionMenuItems={[]}
         loading={isLoading}
         error={isError ? 'Failed to load closing remarks data' : undefined}
-        rowsPerPageOptions={[25, 50, 100]}
-        rowsPerPage={tableParams.limit}
-        currentPage={(tableParams.page ?? 1) - 1}
-        totalItems={totalItems}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}

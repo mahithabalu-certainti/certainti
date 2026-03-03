@@ -291,7 +291,7 @@ const DataMapperForm: React.FC = () => {
     formDataPayload.append('effective_to_date', data.effective_to_date || '');
     formDataPayload.append('country_rid', data.country_rid || '');
     formDataPayload.append('descriptions', data.description || '');
-    formDataPayload.append('is_federal', data.is_federal ? 'true' : 'false');
+    formDataPayload.append('is_federal', isFederal ? 'true' : 'false');
     if (data.state_rid) {
       formDataPayload.append('state_rid', data.state_rid || '');
     }
