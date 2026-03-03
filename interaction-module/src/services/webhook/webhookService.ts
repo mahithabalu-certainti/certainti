@@ -772,10 +772,17 @@ export class WebHookService {
       )
       .expand("attachments")
       .get();
+    const mainDbSequelize = await this.interactionModelService.getMainSequelize();
 
     const subject = message.subject;
-    if (!subject.toLowerCase().includes("interaction invitation") && !subject.toLowerCase().includes("reminder: r&d credits claims process interaction")) {
-      logMessage("Subject is not related to interaction. Skipping.");
+    const subjectResult:any = await mainDbSequelize.query(rawQueries.fetchInteractionEmailSubject(), {
+      type: "SELECT",
+    });
+    const interactionEmailSubject = subjectResult[0]?.interaction_email_subject || "Interaction Invitation";
+    const interactionEmailRemainderSubject = subjectResult[0]?.interaction_email_remainder_subject || "reminder: r&d credits claims process interaction";
+
+    if (!subject.toLowerCase().includes(interactionEmailSubject.toLowerCase()) && !subject.toLowerCase().includes(interactionEmailRemainderSubject.toLowerCase())) {
+      this.logger.error("Subject is not related to interaction. Skipping.");
       return {
         success: false,
       };

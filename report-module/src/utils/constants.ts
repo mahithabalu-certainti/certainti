@@ -184,7 +184,9 @@ export const rawQueries = {
   },
   fetchOpenTaskCount(accountIds?: string[], userId?: string, fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
@@ -197,8 +199,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -241,8 +244,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -287,8 +291,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -320,7 +325,9 @@ export const rawQueries = {
   },
   fetchOverDueTaskCount(accountIds?: string[], userId?: string, fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
@@ -333,8 +340,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -378,8 +386,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -414,7 +423,9 @@ export const rawQueries = {
   },
   fetchUpcomingTaskCount(accountIds?: string[], userId?: string, fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
@@ -427,8 +438,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -460,7 +472,9 @@ export const rawQueries = {
   },
   fetchWeeklyCompletedTaskCount(userId?: string, accountIds?: string[], fiscalYear?: number) {
     let query = `
-    SELECT COUNT(*)
+    SELECT COUNT(*) as count,
+    COUNT(CASE WHEN tt.task_type_name = :milestoneTaskType THEN 1 END) as milestone_count,
+    COUNT(CASE WHEN tt.task_type_name = :activityTaskType THEN 1 END) as activity_count
     FROM trd365.task_summary a
     JOIN trd365.task_type tt 
         ON tt.rid = a.task_type_rid
@@ -473,8 +487,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -550,8 +565,9 @@ export const rawQueries = {
         ON act.rid = a.status_rid
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -663,7 +679,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -731,7 +747,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -798,7 +814,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -867,7 +883,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -943,7 +959,7 @@ export const rawQueries = {
     on a.assigned_to = g.rid
     left join ${MAIN_SCHEMA_NAME}.task_category h
     on a.task_category_rid = h.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)
 	  AND h.category_name = :taskCategory`;
 
     const replacements: any = {
@@ -1016,7 +1032,7 @@ export const rawQueries = {
     on a.assigned_to = g.rid
     left join ${MAIN_SCHEMA_NAME}.task_category h
     on a.task_category_rid = h.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)
 	  AND h.category_name = :taskCategory`;
 
     const replacements: any = {
@@ -1426,5 +1442,24 @@ export const rawQueries = {
     WHERE case_rid IN (:caseRids)
     `;
   },
+  fetchAccountFiscalCost(account_id: string) {
+    return {
+      query: `
+        SELECT 
+            p.account_rid,
+            p.fiscal_year,
+            coalesce(SUM(p.total_cost_prj), 0) AS total_project_cost,
+            coalesce(SUM(p.qre_final), 0) AS qre_cost
+        FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
+        WHERE p.account_rid = :accountId
+          AND p.fiscal_year BETWEEN 
+                EXTRACT(YEAR FROM CURRENT_DATE) - 6
+                AND EXTRACT(YEAR FROM CURRENT_DATE)
+        GROUP BY p.account_rid, p.fiscal_year
+        ORDER BY p.fiscal_year DESC;
+      `,
+      replacements: { accountId: account_id }
+    };
+  }
 
 };

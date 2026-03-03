@@ -1171,6 +1171,7 @@ export const rawQueries = {
         project_rid VARCHAR(50) NULL,
         entity_name VARCHAR(255) NULL,
         created_by_name VARCHAR(255) NULL,
+        descriptions VARCHAR(2000) NULL,
         CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
       );
     `;
@@ -2507,9 +2508,9 @@ export const rawQueries = {
         account_rid varchar(50) NOT NULL,
         activity_rid varchar(50) NOT NULL,
         activity_type varchar(50),
-        attribute_name VARCHAR(100) NOT NULL,
-        old_value VARCHAR(2000),
-        new_value VARCHAR(2000),
+        attribute_name varchar(100) NOT NULL,
+        old_value text,
+        new_value text,
         CONSTRAINT activity_history_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE ON DELETE NO ACTION
       );
     `;
@@ -3682,6 +3683,13 @@ export const rawQueries = {
       ON "${schemaName}"."notes_timeline"("${field}");
     `;
   }, 
+    getAccountTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_account_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."account_timeline"("${field}");
+    `;
+  },
   checkCaseExistsForAccount (schemaName : string, accountRid : string) {
     return `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`
   },
@@ -3710,10 +3718,14 @@ export const rawQueries = {
     project_fiscal_rid VARCHAR(50),
     tracker_one_liner VARCHAR,
     project_metadata VARCHAR,
-    permitted_purpose VARCHAR,
-    technological_uncertainty VARCHAR,
-    technological_in_nature VARCHAR,
-    process_of_experimentation VARCHAR,
+    permitted_purpose_status VARCHAR,
+    permitted_purpose_rationale VARCHAR,
+    technological_uncertainty_status VARCHAR,
+    technological_uncertainty_rationale VARCHAR,
+    technological_in_nature_status VARCHAR,
+    technological_in_nature_rationale VARCHAR,
+    process_of_experimentation_status VARCHAR,
+    process_of_experimentation_rationale VARCHAR,
     rationale VARCHAR,
     status VARCHAR,
     summary_judgment VARCHAR,

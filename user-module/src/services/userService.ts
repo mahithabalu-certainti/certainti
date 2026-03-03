@@ -185,36 +185,6 @@ class UserService {
           errorMessage: "User not found",
         };
       }
-       if (status_rid) {
-      const statusRecord = await Status.findOne({
-        where: { rid: status_rid },
-      });
-      if (!statusRecord) {
-        return {
-          statusCode: constants.BAD_REQUEST,
-          message: constants.BAD_REQUEST_MESSAGE,
-          errorMessage: "Invalid status_rid provided",
-        };
-      }
-      else if (statusRecord.status_description === "inactive") {
-        // Check for existing tasks before allowing user to be set inactive
-        const mainDbSequelize = await initSequelize();
-        const [existingTasks]: any[] = await mainDbSequelize.query(
-         rawQuery.checkOpenTasksForUser(),
-          {
-            replacements: { userId },
-            type: "SELECT"
-          }
-        );
-        if (existingTasks && existingTasks.length > 0) {
-          return {
-            statusCode: constants.CONFLICT,
-            message: statusMessage.cannotSetUserInactive,
-            errorMessage: statusMessage.cannotSetUserInactive,
-          };
-        }
-      }
-    }
       if (remove_group_memberships) {
         this.revokeAllGroupAccessForUser(userId);
       }
@@ -276,6 +246,37 @@ class UserService {
       return this.throwServiceError(err as Error);
     }
   }
+
+   /**
+     * Checks if status_rid is inactive and if user has open tasks.
+     * Returns error message if not allowed, otherwise null.
+     */
+  async checkInactiveStatusAndTasks(status_rid: string, userId: string): Promise<{ error?: string } | null> {
+      if (!status_rid) return null;
+      // Get current user status_rid
+      const user = await User.findOne({ where: { rid: userId }, attributes: ["status_rid"] });
+      if (!user) return null;
+      // Only check if status_rid is changing
+      if (user.status_rid === status_rid) return null;
+      const statusRecord = await Status.findOne({ where: { rid: status_rid } });
+      if (!statusRecord) {
+        return { error: "Invalid status_rid provided" };
+      }
+      if (statusRecord.status_description === "inactive") {
+        const mainDbSequelize = await initSequelize();
+        const existingTasks = await mainDbSequelize.query(
+          rawQuery.checkOpenTasksForUser(),
+          {
+            replacements: { userId },
+            type: "SELECT"
+          }
+        );
+        if (existingTasks && existingTasks.length > 0) {
+          return { error: statusMessage.cannotSetUserInactive };
+        }
+      }
+      return null;
+    }
 
   async getUserAccessStatus(userId: string): Promise<{
     hasAccess: boolean;

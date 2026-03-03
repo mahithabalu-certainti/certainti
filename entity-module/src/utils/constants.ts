@@ -88,17 +88,19 @@ export const entityTypes = {
   ATTACHMENT: "Attachment",
   PROJECT_RESOURCE: "Project Resource",
   TASK: "Task",
-  TAG:"Tag",
-  SETTINGS:"Settings",
+  TAG: "Tag",
+  SETTINGS: "Settings",
+  QRE_PERCENT: "QRE Percent",
 };
 
 export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
+  ADJUST: "adjusted",
 }
 
 export const eventTypes = {
-   UI_HANDLER: "web",
+  UI_HANDLER: "web",
 }
 
 export const STATUS_MESSAGE = {
@@ -219,6 +221,22 @@ export const TYPES = {
 export const SCHEMANAME_PREFIX = "trd365_";
 
 export const rawQueries = {
+  getCaseSummaryByRids() {
+    return `SELECT rid as case_rid, case_name FROM trd365.case_summary WHERE rid IN (:caseRids)`;
+  },
+  getProjectsByRidsQuery() {
+    return `
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary
+      WHERE ${MAIN_SCHEMA_NAME}.project_fiscal_summary.project_fiscal_rid IN (:projectRids)
+    `;
+  },
+  fetchCasesByRids() {
+    return `
+    SELECT case_rid, case_name
+    FROM "${MAIN_SCHEMA_NAME}".case_summary
+    WHERE case_rid IN (:caseRids)
+    `;
+  },
   async fetchParentAccount(
     accountRid: any,
     mainSequelize: Sequelize
@@ -1527,16 +1545,15 @@ export const rawQueries = {
       RETURNING *;
     `;
   },
-  insertCaseTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertCaseTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name, COALESCE(:case_rid, NULL)
           )
           RETURNING *;
-        ` 
+        `
   },
   fetchUserAndEventInfo() {
     return `
@@ -2441,7 +2458,7 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
-   fetchAccountLevelInfoForTriggerAI(rid: string,schemaName: string) {
+  fetchAccountLevelInfoForTriggerAI(rid: string, schemaName: string) {
     return `
     SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,auto_access_rd FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
   },
@@ -2459,7 +2476,7 @@ export const rawQueries = {
     AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
   ORDER BY rv.effective_start_date DESC`;
   },
-  fetchAssignedProjectIds (caseRid : string, schemaName : string){
+  fetchAssignedProjectIds(caseRid: string, schemaName: string) {
     return `
     SELECT pf.rid AS project_fiscal_rid 
     FROM ${schemaName}.project_fiscal pf
@@ -2469,7 +2486,7 @@ export const rawQueries = {
     AND
     pf.is_qualified = true
     `
-}
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
@@ -2648,3 +2665,19 @@ export const activityTypes = {
   call: "Call",
   task: "Task",
 };
+export const ruleTemplateNames = {
+  caseCreated: "case_create",
+  statusUpdated: "task_status_update",
+  taskCreated: "task_create",
+  assigneeChanged: "task_assignee_change"
+}
+
+export const ruleNames = {
+  caseCreated: "Case Event",
+  taskCreated: "Task Event",
+}
+
+export const entityNames = {
+  case: "Case",
+  task: "Task",
+}

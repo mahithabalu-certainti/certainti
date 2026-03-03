@@ -86,11 +86,11 @@ export class ActivityHistory
           allowNull: false,
         },
         old_value: {
-          type: DataTypes.STRING(2000),
+          type: DataTypes.TEXT,
           allowNull: true,
         },
         new_value: {
-          type: DataTypes.STRING(2000),
+          type: DataTypes.TEXT,
           allowNull: true,
         },
         account_rid : {

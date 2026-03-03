@@ -253,12 +253,10 @@ class CaseSchemaService {
         raw: true
       });
       for (const milestone of originalCaseMilestones) {
-        const {  case_rid, created_datetime,r_number, eid, ...rest } = milestone;
+        const {  case_rid, r_number, eid, ...rest } = milestone;
         await CaseMilestone.create({
           ...rest,
           case_rid: casecreationResponse.rid,
-          created_datetime: new Date(),
-          created_by: caseRequest.created_by
         }, { transaction });
       }
       
@@ -267,13 +265,11 @@ class CaseSchemaService {
         raw: true
       });
       for (const task of originalCaseTasks) {
-        const { rid, case_rid, created_datetime, checklist_template_rid,r_number, eid, ...rest } = task;
+        const { rid, case_rid, checklist_template_rid,r_number, eid, ...rest } = task;
         const newTaskRid = `${ENV_PREFIX}${uuidv4()}`;
         await CaseTask.create({
           ...rest,
           case_rid: casecreationResponse.rid,
-          created_datetime: new Date(),
-          created_by: caseRequest.created_by,
           rid: newTaskRid,
         }, { transaction });
 
@@ -292,8 +288,6 @@ class CaseSchemaService {
               ...checklistRest,
               case_rid: casecreationResponse.rid,
               checklist_template_rid: templateRid,
-              created_datetime: new Date(),
-              created_by: caseRequest.created_by
             }, { transaction });
 
             // Clone checklist items
@@ -303,12 +297,10 @@ class CaseSchemaService {
             });
 
             for (const item of originalChecklistItems) {
-              const { rid: itemRid, checklist_rid: itemChecklistRid, created_datetime: itemCreatedDate, ...itemRest } = item;
+              const { rid: itemRid, checklist_rid: itemChecklistRid, ...itemRest } = item;
               await CheckListItem.create({
                 ...itemRest,
                 checklist_rid: newChecklistRid,
-                created_datetime: new Date(),
-                created_by: caseRequest.created_by
               }, { transaction });
             }
           }
@@ -323,12 +315,10 @@ class CaseSchemaService {
         raw: true
       });
       for (const team of originalCaseTeams) {
-        const { rid, case_rid, created_datetime, ...rest } = team;
+        const { rid, case_rid, ...rest } = team;
         await CaseTeam.create({
           ...rest,
           case_rid: casecreationResponse.rid,
-          created_datetime: new Date(),
-          created_by: caseRequest.created_by,
         }, { transaction });
       }
       // Clone case projects
@@ -340,12 +330,10 @@ class CaseSchemaService {
       });
       // Clone each project to the new case
       for (const project of originalProjects) {
-        const { rid, case_rid, created_datetime, ...rest } = project;
+        const { rid, case_rid, ...rest } = project;
         await CaseProject.create({
           ...rest,
           case_rid: casecreationResponse.rid,
-          created_datetime: new Date(),
-          created_by: caseRequest.created_by
         }, { transaction });
       }
       // Clone case project resources
@@ -355,12 +343,10 @@ class CaseSchemaService {
         raw: true
       });
       for (const resource of originalProjectResources) {
-        const { rid, case_rid, created_datetime, ...rest } = resource;
+        const { rid, case_rid, ...rest } = resource;
         await CaseProjectResource.create({
           ...rest,
           case_rid: casecreationResponse.rid,
-          created_datetime: new Date(),
-          created_by: caseRequest.created_by
         }, { transaction });
       }
       
@@ -371,12 +357,10 @@ class CaseSchemaService {
         raw: true
       });
       for (const task of originalProjectTasks) {
-        const { rid, case_rid, created_datetime, ...rest } = task;
+        const { rid, case_rid, ...rest } = task;
         await CaseProjectTask.create({
           ...rest,
           case_rid: casecreationResponse.rid,
-          created_datetime: new Date(),
-          created_by: caseRequest.created_by
         }, { transaction });
       }
       // Clone activities with attach_to as parent_case_rid and attachment_level 'case'
@@ -392,17 +376,11 @@ class CaseSchemaService {
             const {
               rid,
               r_number,
-              created_by,
-              created_datetime,
-              modified_datetime,
-              modified_by,
               ...activityRest
             } = activity;
             await Activities.create({
               ...activityRest,
               attach_to: casecreationResponse.rid,
-              created_by: caseRequest.created_by,
-              created_datetime: new Date(),
             }, { transaction });
           }
           // Clone attachments linked to the parent case
@@ -1325,7 +1303,7 @@ class CaseSchemaService {
               case_total_qualified_project_cost: d.case_total_qualified_project_cost,
               case_total_project_cost: d.case_total_project_cost,
               case_total_rd_cost: d.case_total_rd_cost,
-              case_total_qre_cost: d.case_total_qre_cost,
+              case_total_qre_cost: parseFloat(d.case_total_qre_cost || 0.00).toFixed(2),
               filing_type_rid: d.filing_type_rid,
               filing_type_name: filingTypeMap.get(d.filing_type_rid) || null,
               status_rid: d.status_rid,
@@ -3860,7 +3838,7 @@ class CaseSchemaService {
                                     entity_name: entityTypes.CASE_TEAM,
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
-                                    event_name: eventName,
+                                    event_name: eventNames.UPDATE,
                                     descriptions:caseInfo?.case_name || '',
                                     case_rid: caseTeamRequest.case_rid,
                                   },["case"]);

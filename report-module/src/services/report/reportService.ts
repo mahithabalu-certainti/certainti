@@ -91,7 +91,7 @@ export class ReportService implements IReportService {
                 );
 
                 const openTasksQuery = rawQueries.fetchOpenTaskCount(finalAccountIds, userId, validFiscalYear);
-                const openTasksCount: { count: number }[] = await sequelize.query(
+                const openTasksCount: any[] = await sequelize.query(
                     openTasksQuery.query,
                     {
                         replacements: openTasksQuery.replacements,
@@ -100,7 +100,7 @@ export class ReportService implements IReportService {
                 );
 
                 const overDueTasksQuery = rawQueries.fetchOverDueTaskCount(finalAccountIds, userId, validFiscalYear);
-                const overDueTasksCount: { count: number }[] = await sequelize.query(
+                const overDueTasksCount: any[] = await sequelize.query(
                     overDueTasksQuery.query,
                     {
                         replacements: overDueTasksQuery.replacements,
@@ -109,7 +109,7 @@ export class ReportService implements IReportService {
                 );
 
                 const upcomingTasksQuery = rawQueries.fetchUpcomingTaskCount(finalAccountIds, userId, validFiscalYear);
-                const upcomingTasksCount: { count: number }[] = await sequelize.query(
+                const upcomingTasksCount: any[] = await sequelize.query(
                     upcomingTasksQuery.query,
                     {
                         replacements: upcomingTasksQuery.replacements,
@@ -118,7 +118,7 @@ export class ReportService implements IReportService {
                 );
 
                 const weeklyCompletedTasksQuery = rawQueries.fetchWeeklyCompletedTaskCount(userId, finalAccountIds, validFiscalYear);
-                const weeklyCompletedTasksCount: { count: number }[] = await sequelize.query(
+                const weeklyCompletedTasksCount: any[] = await sequelize.query(
                     weeklyCompletedTasksQuery.query,
                     {
                         replacements: weeklyCompletedTasksQuery.replacements,
@@ -132,48 +132,56 @@ export class ReportService implements IReportService {
                     "name": "Active Accounts",
                     "key": "active_accounts",
                     "count": finalAccountIds.length,
+                    "activityCount": 0,
                     "order": 1
                 })
                 result.push({
                     "name": "Active Cases",
                     "key": "active_cases",
                     "count": totalCases,
+                    "activityCount": 0,
                     "order": 2
                 })
                 result.push({
                     "name": "Total Completed Cases",
                     "key": "total_completed_cases",
                     "count": completedCasesCount[0]?.count || 0,
+                    "activityCount": 0,
                     "order": 3
                 })
                 result.push({
                     "name": "Stalled Cases",
                     "key": "stalled_cases",
                     "count": onHoldCasesCount[0]?.count || 0,
+                    "activityCount": 0,
                     "order": 4
                 })
                 result.push({
                     "name": "Open Tasks",
                     "key": "open_tasks",
-                    "count": openTasksCount[0]?.count || 0,
+                    "count": Number(openTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(openTasksCount[0]?.activity_count || 0),
                     "order": 5
                 })
                 result.push({
                     "name": "Due Today / Over Due Tasks",
                     "key": "due_today_overdue_tasks",
-                    "count": overDueTasksCount[0]?.count || 0,
+                    "count": Number(overDueTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(overDueTasksCount[0]?.activity_count || 0),
                     "order": 6
                 })
                 result.push({
                     "name": "Upcoming Tasks (7 Days)",
                     "key": "upcoming_tasks_7_days",
-                    "count": upcomingTasksCount[0]?.count || 0,
+                    "count": Number(upcomingTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(upcomingTasksCount[0]?.activity_count || 0),
                     "order": 7
                 })
                 result.push({
                     "name": "Tasks Completed This Week",
                     "key": "tasks_completed_this_week",
-                    "count": weeklyCompletedTasksCount[0]?.count || 0,
+                    "count": Number(weeklyCompletedTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(weeklyCompletedTasksCount[0]?.activity_count || 0),
                     "order": 8
                 })
 
@@ -224,7 +232,7 @@ export class ReportService implements IReportService {
                 );
 
                 const openTasksQuery = rawQueries.fetchOpenTaskCount(accountIds, undefined, validFiscalYear);
-                const openTasksCount: { count: number }[] = await sequelize.query(
+                const openTasksCount: any[] = await sequelize.query(
                     openTasksQuery.query,
                     {
                         replacements: openTasksQuery.replacements,
@@ -233,7 +241,7 @@ export class ReportService implements IReportService {
                 );
 
                 const overDueTasksQuery = rawQueries.fetchOverDueTaskCount(accountIds, undefined, validFiscalYear);
-                const overDueTasksCount: { count: number }[] = await sequelize.query(
+                const overDueTasksCount: any[] = await sequelize.query(
                     overDueTasksQuery.query,
                     {
                         replacements: overDueTasksQuery.replacements,
@@ -242,7 +250,7 @@ export class ReportService implements IReportService {
                 );
 
                 const upcomingTasksQuery = rawQueries.fetchUpcomingTaskCount(accountIds, undefined, validFiscalYear);
-                const upcomingTasksCount: { count: number }[] = await sequelize.query(
+                const upcomingTasksCount: any[] = await sequelize.query(
                     upcomingTasksQuery.query,
                     {
                         replacements: upcomingTasksQuery.replacements,
@@ -251,7 +259,7 @@ export class ReportService implements IReportService {
                 );
 
                 const weeklyCompletedTasksQuery = rawQueries.fetchWeeklyCompletedTaskCount(undefined, accountIds, validFiscalYear);
-                const weeklyCompletedTasksCount: { count: number }[] = await sequelize.query(
+                const weeklyCompletedTasksCount: any[] = await sequelize.query(
                     weeklyCompletedTasksQuery.query,
                     {
                         replacements: weeklyCompletedTasksQuery.replacements,
@@ -265,48 +273,56 @@ export class ReportService implements IReportService {
                     "name": "Active Accounts",
                     "key": "active_accounts",
                     "count": Number(activeAccountsCount[0]?.count || 0),
+                    "activityCount": 0,
                     "order": 1
                 })
                 result.push({
                     "name": "Active Cases",
                     "key": "active_cases",
                     "count": totalCases[0]?.count || 0,
+                    "activityCount": 0,
                     "order": 2
                 })
                 result.push({
                     "name": "Total Completed Cases",
                     "key": "total_completed_cases",
                     "count": completedCasesCount[0]?.count || 0,
+                    "activityCount": 0,
                     "order": 3
                 })
                 result.push({
                     "name": "Stalled Cases",
                     "key": "stalled_cases",
                     "count": onHoldCasesCount[0]?.count || 0,
+                    "activityCount": 0,
                     "order": 4
                 })
                 result.push({
                     "name": "Open Tasks",
                     "key": "open_tasks",
-                    "count": openTasksCount[0]?.count || 0,
+                    "count": Number(openTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(openTasksCount[0]?.activity_count || 0),
                     "order": 5
                 })
                 result.push({
                     "name": "Due Today / Over Due Tasks",
                     "key": "due_today_overdue_tasks",
-                    "count": overDueTasksCount[0]?.count || 0,
+                    "count": Number(overDueTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(overDueTasksCount[0]?.activity_count || 0),
                     "order": 6
                 })
                 result.push({
                     "name": "Upcoming Tasks (7 Days)",
                     "key": "upcoming_tasks_7_days",
-                    "count": upcomingTasksCount[0]?.count || 0,
+                    "count": Number(upcomingTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(upcomingTasksCount[0]?.activity_count || 0),
                     "order": 7
                 })
                 result.push({
                     "name": "Tasks Completed This Week",
                     "key": "tasks_completed_this_week",
-                    "count": weeklyCompletedTasksCount[0]?.count || 0,
+                    "count": Number(weeklyCompletedTasksCount[0]?.milestone_count || 0),
+                    "activityCount": Number(weeklyCompletedTasksCount[0]?.activity_count || 0),
                     "order": 8
                 })
 
@@ -926,6 +942,36 @@ export class ReportService implements IReportService {
 
         } catch (error) {
             errorLog("getCasesByHealthStatus", (error as Error).message);
+            throw error;
+        }
+    }
+
+    async getAccountFiscalCost(userId: string, account_id: string): Promise<{ statusCode: number, message: string, data: any[] }> {
+        try {
+            const sequelize = await this.getMainSequelize();
+
+            if (!account_id) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: "Account ID is required",
+                    data: []
+                };
+            }
+
+            const { query, replacements } = rawQueries.fetchAccountFiscalCost(account_id);
+            const result: any[] = await sequelize.query(query, {
+                replacements,
+                type: QueryTypes.SELECT
+            });
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "Success",
+                data: result
+            };
+
+        } catch (error) {
+            errorLog("getAccountFiscalCost", (error as Error).message);
             throw error;
         }
     }

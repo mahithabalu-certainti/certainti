@@ -253,35 +253,22 @@ export class TaskService {
 
       const caseMap = new Map<string, string>();
       if (flag === 'milestone') {
-        // Fetch resources for each schema number
-        await Promise.all(
-          Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-            try {
-              const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
-                /\D/g,
-                ""
-              )}`;
-              // Get unique RIDs for this schema
-              const uniqueRids = [...new Set(attachments.map((t: any) => t.attach_to))];
+        const uniqueCaseRids = [...new Set(tasksRaw.map((t: any) => t.attach_to).filter(Boolean))];
 
-              if (uniqueRids.length > 0) {
-                // Fetch from org database using schema number
-                const orgDb = await this.fetchOrgDb();
-                const casesForSchema = await orgDb.query(
-                  `SELECT rid, case_name FROM ${schemaName}.cases WHERE rid IN (:caseRids)`,
-                  { replacements: { caseRids: uniqueRids }, type: 'SELECT' }
-                );
+        if (uniqueCaseRids.length > 0) {
+          try {
+            const caseSummary = await mainSequelize.query(
+              `SELECT case_rid, case_name FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE case_rid IN (:caseRids)`,
+              { replacements: { caseRids: uniqueCaseRids }, type: 'SELECT' }
+            ) as any[];
 
-                // Add to resource map
-                casesForSchema.forEach((r: any) => {
-                  caseMap.set(r.rid, r.case_name);
-                });
-              }
-            } catch (error) {
-              console.error(`Error fetching resources for schema ${schemaNumber}:`, error);
-            }
-          })
-        );
+            caseSummary.forEach((r: any) => {
+              caseMap.set(r.case_rid, r.case_name);
+            });
+          } catch (error) {
+            console.error(`Error fetching cases from case_summary:`, error);
+          }
+        }
       }
       else {
         await Promise.all(
@@ -405,6 +392,12 @@ export class TaskService {
           task_rid: taskData.task_rid
         };
       }));
+
+      if (flag === 'milestone') {
+        tasks = tasks.filter(task => {
+          return caseMap.get(task.attach_to);
+        });
+      }
 
       // Apply frontend filters
       if (assignedToFilter) {
@@ -820,35 +813,22 @@ export class TaskService {
 
       const caseMap = new Map<string, string>();
       if (flag === 'milestone') {
-        // Fetch resources for each schema number
-        await Promise.all(
-          Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-            try {
-              const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
-                /\D/g,
-                ""
-              )}`;
-              // Get unique RIDs for this schema
-              const uniqueRids = [...new Set(attachments.map((t: any) => t.attach_to))];
+        const uniqueCaseRids = [...new Set(tasksRaw.map((t: any) => t.attach_to).filter(Boolean))];
 
-              if (uniqueRids.length > 0) {
-                // Fetch from org database using schema number
-                const orgDb = await this.fetchOrgDb();
-                const casesForSchema = await orgDb.query(
-                  `SELECT rid, case_name FROM ${schemaName}.cases WHERE rid IN (:caseRids)`,
-                  { replacements: { caseRids: uniqueRids }, type: 'SELECT' }
-                );
+        if (uniqueCaseRids.length > 0) {
+          try {
+            const caseSummary = await mainSequelize.query(
+              `SELECT rid, case_name FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE rid IN (:caseRids)`,
+              { replacements: { caseRids: uniqueCaseRids }, type: 'SELECT' }
+            ) as any[];
 
-                // Add to resource map
-                casesForSchema.forEach((r: any) => {
-                  caseMap.set(r.rid, r.case_name);
-                });
-              }
-            } catch (error) {
-              console.error(`Error fetching resources for schema ${schemaNumber}:`, error);
-            }
-          })
-        );
+            caseSummary.forEach((r: any) => {
+              caseMap.set(r.rid, r.case_name);
+            });
+          } catch (error) {
+            console.error(`Error fetching cases from case_summary:`, error);
+          }
+        }
       }
       else {
         await Promise.all(

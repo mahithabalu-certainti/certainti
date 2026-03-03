@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, UUIDV4, where } from "sequelize";
 import {
+  AllStatusType,
   FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
@@ -14,7 +15,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
@@ -206,6 +207,19 @@ class InteractionSchemaService {
     }
   }
 
+  async fetchEmailSubjectPrefix() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
+    }
+    const [emailPrefix]:any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionEmailSubject(),
+      {
+        type: "SELECT",
+      }
+    );
+
+    return emailPrefix;
+  }
 
   async createBulkInteractions(
     accountNumber: string,
@@ -409,7 +423,6 @@ class InteractionSchemaService {
       throw new Error("Error creating interaction: " + error);
     }
   }
-  
 
   private async handleAddQuestion(
     InteractionItem: any,
@@ -3938,6 +3951,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           }
         );
       }
+      const userEventInfo:any = await this.fetchUserAndEventInfo({
+                                                        userId: process.env.SYSTEM_USER_ID!,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                     
+      await this.createAccountTimelineEntry(accountNumber!, {
+                                          created_by: process.env.SYSTEM_USER_ID!,
+                                          account_rid: accountId,
+                                          entity_rid: aiResponse.rid!,
+                                          entity_name: entityTypes.TECHNICAL_SUMMARY,
+                                          created_by_name: userEventInfo.full_name,
+                                          event_type_rid: userEventInfo.event_type_rid,
+                                          event_name: eventNames.GENERATED,
+                                          descriptions:'for '+projectInfo.project_code,
+                                          project_rid: projectFiscalId,
+                                        }, ['project']);
     } catch (err) {
       logMessage(`Error updating Tech Summary: ${err}`);
       throw new Error("Error updating Tech Summary: " + (err as Error).message);
@@ -4023,8 +4052,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchBatchInInteraction(schemaName),
         { type: "SELECT" }
       );
-
-      return interactionBatchInfo[0][0].interaction_batch_id
+      return interactionBatchInfo[0][0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
@@ -4040,13 +4068,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
-
       const interactionBatchInfo : any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
         { type: "SELECT" }
       );
-
-      return interactionBatchInfo[0][0].interaction_batch_id
+      return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
@@ -4238,6 +4264,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           where: { transaction_id: transaction_id },
         }),
       ]);
+      const userEventInfo:any = await this.fetchUserAndEventInfo({
+                                                        userId: process.env.SYSTEM_USER_ID!,
+                                                        eventType: eventTypes.UI_HANDLER
+                                                      });
+                     
+      await this.createAccountTimelineEntry(accountNumber!, {
+                                          created_by: process.env.SYSTEM_USER_ID!,
+                                          account_rid: accountId,
+                                          entity_rid: aiResponse.rid!,
+                                          entity_name: entityTypes.QRE_PERCENT,
+                                          created_by_name: userEventInfo.full_name,
+                                          event_type_rid: userEventInfo.event_type_rid,
+                                          event_name: eventNames.UPDATE,
+                                          descriptions:'for '+projectInfo.project_code,
+                                          project_rid: projectFiscalRid,
+                                        }, ['project']);
     } catch (err) {
       logMessage(`Error updating QRE percent: ${err}`);
       throw new Error("Error updating QRE percent: " + (err as Error).message);
@@ -4911,18 +4953,33 @@ const existingTemplate = await InteractionTemplate.findOne({
       project_fiscal_rid : project_id,
       created_by : process.env.SYSTEM_USER_ID!,
       created_datetime : new Date(),
-      permitted_purpose : fourPartAssessment.four_part_assessment.permitted_purpose,
-      process_of_experimentation : fourPartAssessment.four_part_assessment.process_of_experimentation,
+      permitted_purpose_status : fourPartAssessment.assessment.four_part_assessment.permitted_purpose.status,
+      permitted_purpose_rationale : fourPartAssessment.assessment.four_part_assessment.permitted_purpose.rationale,
+      process_of_experimentation_status : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.status,
+      process_of_experimentation_rationale : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.rationale,
       project_metadata : JSON.stringify(fourPartAssessment.assessment.project_metadata),
-      rationale : fourPartAssessment.four_part_assessment.rationale,
-      rd_potential_category : fourPartAssessment.four_part_assessment.rd_potential_category,
-      status : fourPartAssessment.four_part_assessment.status,
-      summary_judgment : fourPartAssessment.four_part_assessment.summary_judgment,
-      technological_in_nature : fourPartAssessment.four_part_assessment.technological_in_nature,
-      technological_uncertainty : fourPartAssessment.four_part_assessment.technological_uncertainty,
+      rationale : fourPartAssessment.assessment.four_part_assessment.rationale,
+      rd_potential_category : fourPartAssessment.assessment.four_part_assessment.rd_potential_category,
+      status : fourPartAssessment.assessment.four_part_assessment.status,
+      summary_judgment : fourPartAssessment.assessment.four_part_assessment.summary_judgment,
+      technological_in_nature_status : fourPartAssessment.assessment.four_part_assessment.technological_in_nature.status,
+      technological_in_nature_rationale : fourPartAssessment.assessment.four_part_assessment.technological_in_nature.rationale,
+      technological_uncertainty_status : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.status,
+      technological_uncertainty_rationale : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.rationale,
       tracker_one_liner : fourPartAssessment.assessment.tracker_one_liner,
       transaction_id : transaction_id
     })
+}
+
+async getStatus() {
+  if(!this.mainDbSequelize) {
+    this.mainDbSequelize = await initMainDbSequelize();
+  }
+  const fetchStatus = await this.mainDbSequelize.query<AllStatusType>(rawQueries.fetchAllStatus(), {type : QueryTypes.SELECT});
+  if(fetchStatus.length > 0) {
+    return fetchStatus;
+  } else return []
+
 }
 
   /**

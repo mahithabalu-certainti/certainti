@@ -2,6 +2,7 @@ export interface ICountDetails {
     name: string;
     key: string;
     count: number;
+    activityCount: number;
     order: number;
 }
 
@@ -81,4 +82,6 @@ export interface IReportService {
     getGlobalLevelChart(userId: string, flag: string, fiscalYear?: string, countryRid?: string, countryType?: string, globalFilters?: Record<string, any>): Promise<IResponse<IGlobalLevelChart>>;
 
     getCasesByHealthStatus(userId: string, flag: string, fiscalYear: number, filingType?: string, globalFilters?: Record<string, any>): Promise<IResponse<any[]>>;
+
+    getAccountFiscalCost(userId: string, account_id: string): Promise<{ statusCode: number, message: string, data: any[] }>;
 }

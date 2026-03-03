@@ -99,8 +99,8 @@ export const STATUS_MESSAGE = {
   statesMissing: "States array is required when level is 'state'.",
   invalidStatesArray: "All states must be valid non-empty strings.",
   userIdMissingInHeader: "User ID is missing in request header.",
-  jurisdictionAddedSuccess: "Jurisdiction configuration added successfully",
-  jurisdictionAddedFailed: "Jurisdiction configuration addition failed",
+  jurisdictionAddedSuccess: "Jurisdiction configuration updated successfully",
+  jurisdictionAddedFailed: "Jurisdiction configuration update failed",
   taskNameExistsAlready: "Task name already exists",
   taskCreatedSuccess: "Task Template created successfully",
   casePrioritySuccess: "Priority fetched successfully",
@@ -313,18 +313,20 @@ export const entityTypes = {
   NOTES: "Notes",
   ATTACHMENT: "Attachment",
   PROJECT_RESOURCE: "Project Resource",
-  ACTIVITY_CALL:"Call log",
-  ACTIVITY_MEETING:"Meeting",
-  ACTIVITY_EMAIL:"Email",
-  ACTIVITY_TASK:"Task",
-  CHECKLIST:"Checklist",
-  CASE:"Case",
-  CASE_TEAM:"Case Team",
-  TASK:"Task",
-  TAG:"Tag",
-  COMMENTS:"Comments",
-  FINANCIAL_WORKING:"Financial Working",
-  HISTORICAL_SUBMISSION:"Historical Submission",
+  ACTIVITY_CALL: "Call log",
+  ACTIVITY_MEETING: "Meeting",
+  ACTIVITY_EMAIL: "Email",
+  ACTIVITY_TASK: "Task",
+  CHECKLIST: "Checklist",
+  CASE: "Case",
+  CASE_TEAM: "Case Team",
+  TASK: "Task",
+  TAG: "Tag",
+  COMMENTS: "Comments",
+  FINANCIAL_WORKING: "Financial Working",
+  HISTORICAL_SUBMISSION: "Historical Submission",
+  SETTINGS: "Settings",
+  REVIEW_PROJECT_EMAIL: "Case Review Project Email",
 
 };
 
@@ -332,13 +334,14 @@ export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
   CANCEL: "cancelled",
-  ADDED:  "added",
+  ADDED: "added",
   DELETE: "deleted",
   REMOVED: "removed",
+  SENT: "sent",
 }
 
 export const eventTypes = {
-   UI_HANDLER: "web",
+  UI_HANDLER: "web",
 }
 
 export const rawQueries = {
@@ -610,6 +613,15 @@ export const rawQueries = {
       return `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN ('')`;
     }
   },
+  getHistoricalSubmissionData(accountRid: string, stateRid: string, years: number[],schemaName: string)
+  {
+    return `SELECT SUM(field_value) AS total_value FROM (
+            SELECT total_qre / annual_gross_receipts AS field_value, ROW_NUMBER() OVER (ORDER BY created_datetime ASC) as row_index, fiscal_year
+            FROM ${schemaName}.case_history_submission
+            WHERE account_rid = '${accountRid}' AND state_rid = '${stateRid}' AND fiscal_year IN (${years.join(",")})
+            ORDER BY created_datetime ASC
+          ) sub`;
+  },
   getTotalProjectsCountInCase(
     schemaName: string,
     fiscalYear: number,
@@ -852,38 +864,35 @@ export const rawQueries = {
         (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
     `;
   },
-  insertTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
-        ` 
+        `
   },
-   insertProjectTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertProjectTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
           )
           RETURNING *;
-        ` 
+        `
   },
-  insertCaseTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertCaseTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
           )
           RETURNING *;
-        ` 
+        `
   },
   fetchChecklistTemplates: `
     SELECT 
@@ -1572,7 +1581,8 @@ export const rawQueries = {
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
-    WHERE g.rid = '${credit_config_group_rid}';
+    WHERE g.rid = '${credit_config_group_rid}'
+    order by k.sort_order asc;
     `;
   },
   getPlatformJurisdictionConfig(countryRid: string) {
@@ -1598,7 +1608,7 @@ export const rawQueries = {
     WHERE g.credit_program_name = 'Platform Configuration'
     AND g.is_federal = true
     AND g.country_rid = '${countryRid}'
-    order by k.credit_parameter_display_name asc
+    order by k.sort_order asc
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
@@ -1630,7 +1640,8 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE ${whereClause}
-    and g.credit_program_name != 'Platform Configuration';
+    and g.credit_program_name != 'Platform Configuration'
+    order by k.sort_order asc;
     `;
   },
   getJurisdictionConfigValuesById(config_rid: string) {
@@ -2050,7 +2061,7 @@ WHERE dmf.country_rid = '${countryRid}'
     return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`;
   },
   getCaseProjectsIds(caseRid: string, accountRid: string, schemaName: string, summaryType: string) {
-    if (summaryType === 'qualifiedprojects') {
+    if (summaryType === 'qualifedProjects') {
       return `SELECT pf.rid AS project_fiscal_rid 
        FROM ${schemaName}.project_fiscal pf
        LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
@@ -2560,3 +2571,9 @@ export const mappingStatus = {
   rejected: "rejected",
   anomaly: "anomaly"
 }
+
+export const FormExtractionFieldTypes = {
+  LINE_ITEM: "Line-Item",
+  TABLE_ITEM: "Table-Item"
+}
+
