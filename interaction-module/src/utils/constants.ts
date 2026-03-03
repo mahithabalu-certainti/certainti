@@ -297,7 +297,8 @@ export const STATUS_MESSAGE = {
   interactionUpdated:"Interaction updated successfully",
   techSummarycontextUpdated:"Technical summary context updated successfully",
   projectRequired:"Atleast one project is required to create interaction",
-  fourPartListSuccess : "FourPart Assessment fetched successfully"
+  fourPartListSuccess : "FourPart Assessment fetched successfully",
+  assessmentFetchedSuccess : "Interaction Assessment Fetched successfully"
 };
 
 export const rawQueries = {
@@ -391,6 +392,9 @@ export const rawQueries = {
     }
     return `
     SELECT rid, interaction_assessment_source_name  FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source WHERE rid IN (${ids})`;
+  },
+   fetchInteractionAllAssessmentSource() {
+    return `SELECT rid, interaction_assessment_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source`;
   },
 
   fetchActiveStatus() {

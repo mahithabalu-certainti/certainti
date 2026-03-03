@@ -4282,6 +4282,9 @@ async updateInteractionStatus (data : InteractionStatusUpdateRequest, userId : s
 async getInteractionAssessmentSource () {
   const mainDb = await this.getMainDb();
   const result = await mainDb.query(rawQueries.fetchInteractionAllAssessmentSource());
-  return result[0]
+  return {
+    statusCode : HttpStatus.SUCCESS,
+    data : result[0]
+  }
 }
 }
