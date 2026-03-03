@@ -1,5 +1,7 @@
 import { SchedulerExecutions } from "../../models/schedulerExecution";
 import {
+  FourPartAssessmentListResponse,
+  FourPartAssessmentRequestPayload,
   ICreateAccountInteraction,
   ICreateInteraction,
   ICreateTemplateInteraction,
@@ -271,6 +273,20 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { account_number: string };
   }>;
+  getFourPartAssessmentList(data : FourPartAssessmentRequestPayload): Promise<{
+    statusCode: number;
+    statusMessage: string;
+    data: {
+        page: number;
+        limit: number;
+        total_results: string | number;
+        data: FourPartAssessmentListResponse[];
+    };
+}>
+getFpaDetailsById(data : any) : Promise<any>
+exportFpaList(data : any) : Promise<any>
+updateInteractionStatus(data : any, userId : string) : Promise<any>
+getInteractionAssessmentSource() : Promise<any>
 }
 
 export interface IWebHookService {

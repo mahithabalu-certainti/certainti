@@ -4,9 +4,9 @@ import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
     sub_con_percent: number;
-    credit_rate: number;
+    qre_credit_percentage_c1: number;
     fixed_base_percentage: number;
-    credit_earned: number;
+    qre_credit_percentage_c2: number;
 }
 
 /**
@@ -75,10 +75,10 @@ export class RdCreditCalculatorForID {
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
         const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage /100);
         const difference = Decimal.max(0, base_amount.minus(total_current_year_qre));
-        const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
+        const credit_rate_percent = total_current_year_qre.mul(config.qre_credit_percentage_c1).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
         const tot_base_amount = min_credit_rate.plus(line_3);
-        const credit_earned = tot_base_amount.mul(config.credit_earned /100);
+        const credit_earned = tot_base_amount.mul(config.qre_credit_percentage_c2 /100);
         const final_credit = credit_earned;
         const tot_credit_avail = final_credit;
 
@@ -188,10 +188,10 @@ export class RdCreditCalculatorForID {
         "[10] Enter average annual Idaho gross receipts from page 2, Part C": this.round2(qretInfo.average_annual_gross_receipts),
         "[11] Base amount. Multiply line 10 by the percentage on line 9": this.round2(qretInfo.base_amount),
         "[12] Subtract line 11 from line 8. If zero or less, enter zero": this.round2(qretInfo.difference),
-        [`[13] Multiply line 8 by ${config.credit_rate || 0}%`]: this.round2(qretInfo.credit_rate_percent),
+        [`[13] Multiply line 8 by ${config.qre_credit_percentage_c1 || 0}%`]: this.round2(qretInfo.credit_rate_percent),
         "[14] Enter the smaller amount from line 12 or line 13": this.round2(qretInfo.min_credit_rate),
         "[15] Add lines 3 and 14": this.round2(qretInfo.tot_base_amount),
-        [`[16] Credit earned. Multiply line 15 by ${config.credit_earned}%`]: this.round2(qretInfo.credit_earned),
+        [`[16] Credit earned. Multiply line 15 by ${config.qre_credit_percentage_c2 || 0}%`]: this.round2(qretInfo.credit_earned),
 
         "[17] Pass-through share of credit from an S corporation, partnership, trust, or estate": "",
         "[18] Credit received through unitary sharing. Include a schedule": "",

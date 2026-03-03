@@ -613,6 +613,15 @@ export const rawQueries = {
       return `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN ('')`;
     }
   },
+  getHistoricalSubmissionData(accountRid: string, stateRid: string, years: number[],schemaName: string)
+  {
+    return `SELECT SUM(field_value) AS total_value FROM (
+            SELECT total_qre / annual_gross_receipts AS field_value, ROW_NUMBER() OVER (ORDER BY created_datetime ASC) as row_index, fiscal_year
+            FROM ${schemaName}.case_history_submission
+            WHERE account_rid = '${accountRid}' AND state_rid = '${stateRid}' AND fiscal_year IN (${years.join(",")})
+            ORDER BY created_datetime ASC
+          ) sub`;
+  },
   getTotalProjectsCountInCase(
     schemaName: string,
     fiscalYear: number,
@@ -1572,7 +1581,8 @@ export const rawQueries = {
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
-    WHERE g.rid = '${credit_config_group_rid}';
+    WHERE g.rid = '${credit_config_group_rid}'
+    order by k.sort_order asc;
     `;
   },
   getPlatformJurisdictionConfig(countryRid: string) {
@@ -1598,7 +1608,7 @@ export const rawQueries = {
     WHERE g.credit_program_name = 'Platform Configuration'
     AND g.is_federal = true
     AND g.country_rid = '${countryRid}'
-    order by k.credit_parameter_display_name asc
+    order by k.sort_order asc
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
@@ -1630,7 +1640,8 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE ${whereClause}
-    and g.credit_program_name != 'Platform Configuration';
+    and g.credit_program_name != 'Platform Configuration'
+    order by k.sort_order asc;
     `;
   },
   getJurisdictionConfigValuesById(config_rid: string) {

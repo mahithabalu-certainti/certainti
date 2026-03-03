@@ -6,8 +6,8 @@ import { StateRDData } from "../rdComputation/rdCreditTypes";
  */
 
 export interface ConfigJson {
-    credit_rate: number;
-    qre_cap_rate: number;
+    qre_credit_percentage_c2: number;
+    qre_credit_percentage_c1: number;
 }
 
 export class RdCreditCalculatorForCO {
@@ -42,13 +42,13 @@ export class RdCreditCalculatorForCO {
         const sumPriorTwoYears = new Decimal(priorYear1QREs).plus(new Decimal(priorYear2QREs));
 
         //---- Line E: 50% of Sum of Prior Year 1 and 2 QREs
-        const fiftyPercentOfPriorTwoYears = sumPriorTwoYears.mul(config.qre_cap_rate/100 || 0);
+        const fiftyPercentOfPriorTwoYears = sumPriorTwoYears.mul(config.qre_credit_percentage_c1/100 || 0);
 
         //---- Line F: Excess QREs
         const excessQRE = Decimal.max(totalQREs.minus(fiftyPercentOfPriorTwoYears), 0);
 
         //---- Line G: Allowable Credit
-        const allowableCredit = excessQRE.mul(new Decimal(config.credit_rate/100 || 0));
+        const allowableCredit = excessQRE.mul(new Decimal(config.qre_credit_percentage_c2/100 || 0));
 
 
         const inputFields = await this.buildInputParams({
@@ -111,9 +111,9 @@ export class RdCreditCalculatorForCO {
                 "[B] Enter the first preceding year expenditures": data.priorYear1QREs.toNumber() || 0,
                 "[C] Enter the second preceding year expenditures": data.priorYear2QREs.toNumber() || 0,
                 "[D] Enter the sum of lines B and C": data.sumPriorTwoYears.toNumber(),
-                [`[E] Enter ${data.config.qre_cap_rate}% of line D`]: data.fiftyPercentOfPriorTwoYears.toNumber(),
+                [`[E] Enter ${data.config.qre_credit_percentage_c1}% of line D`]: data.fiftyPercentOfPriorTwoYears.toNumber(),
                 "[F] Enter line A minus line E": data.excessQRE.toNumber(),
-                [`[G] Allowable amount: ${data.config.credit_rate}% of line F`]: data.allowableCredit.toNumber(),
+                [`[G] Allowable amount: ${data.config.qre_credit_percentage_c2}% of line F`]: data.allowableCredit.toNumber(),
                 }
             }
         }

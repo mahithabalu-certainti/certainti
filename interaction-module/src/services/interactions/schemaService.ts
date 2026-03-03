@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, UUIDV4, where } from "sequelize";
 import {
+  AllStatusType,
   FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
@@ -4952,18 +4953,33 @@ const existingTemplate = await InteractionTemplate.findOne({
       project_fiscal_rid : project_id,
       created_by : process.env.SYSTEM_USER_ID!,
       created_datetime : new Date(),
-      permitted_purpose : fourPartAssessment.assessment.four_part_assessment.permitted_purpose,
-      process_of_experimentation : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation,
+      permitted_purpose_status : fourPartAssessment.assessment.four_part_assessment.permitted_purpose.status,
+      permitted_purpose_rationale : fourPartAssessment.assessment.four_part_assessment.permitted_purpose.rationale,
+      process_of_experimentation_status : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.status,
+      process_of_experimentation_rationale : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.rationale,
       project_metadata : JSON.stringify(fourPartAssessment.assessment.project_metadata),
       rationale : fourPartAssessment.assessment.four_part_assessment.rationale,
       rd_potential_category : fourPartAssessment.assessment.four_part_assessment.rd_potential_category,
       status : fourPartAssessment.assessment.four_part_assessment.status,
       summary_judgment : fourPartAssessment.assessment.four_part_assessment.summary_judgment,
-      technological_in_nature : fourPartAssessment.assessment.four_part_assessment.technological_in_nature,
-      technological_uncertainty : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty,
+      technological_in_nature_status : fourPartAssessment.assessment.four_part_assessment.technological_in_nature.status,
+      technological_in_nature_rationale : fourPartAssessment.assessment.four_part_assessment.technological_in_nature.rationale,
+      technological_uncertainty_status : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.status,
+      technological_uncertainty_rationale : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.rationale,
       tracker_one_liner : fourPartAssessment.assessment.tracker_one_liner,
       transaction_id : transaction_id
     })
+}
+
+async getStatus() {
+  if(!this.mainDbSequelize) {
+    this.mainDbSequelize = await initMainDbSequelize();
+  }
+  const fetchStatus = await this.mainDbSequelize.query<AllStatusType>(rawQueries.fetchAllStatus(), {type : QueryTypes.SELECT});
+  if(fetchStatus.length > 0) {
+    return fetchStatus;
+  } else return []
+
 }
 
   /**
