@@ -298,8 +298,8 @@ export const CaseDetails = () => {
       account_rid: '',
       search: '',
       filter: {},
-      sort: 'ASC',
-      sort_by: 'r_number',
+      sort: 'r_number',
+      sort_by: 'ASC',
       type: 'case',
     });
 

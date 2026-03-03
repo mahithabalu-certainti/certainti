@@ -363,27 +363,30 @@ export const getCaseInteractionListColumns = (
       formatDateToYYYYMMDDWithTime(row.modified_datetime),
   },
   {
-    id: 'record_status',
-    sortId: 'record_status',
-    label: 'Record Status',
-    width: 120,
+    id: 'status_action',
+    sortId: 'status_action',
+    label: 'Status Action',
+    width: 100,
     sortable: false,
     // hide:
-    //   !permissionMap?.['record_status']?.edit &&
-    //   !permissionMap?.['record_status']?.read,
+    //   !permissionMap?.['interaction_status']?.edit &&
+    //   !permissionMap?.['interaction_status']?.read,
     render: (row) => {
-      // const canEditStatus = !!permissionMap?.['record_status']?.edit;
-      const recordStatus = row.record_status?.toLowerCase() || 'inactive';
+      // const canEditStatus = !!permissionMap?.['interaction_status']?.edit;
+      const recordStatus =
+        row.interaction_status_name?.toLowerCase() || 'in-active';
       return (
         <div className='text-center'>
           <Tooltip
-            title={recordStatus === 'inactive' ? 'In Active' : 'Active'}
+            title={
+              recordStatus === 'in-active' ? 'Make Active' : 'Make In-Active'
+            }
             arrow
             placement='top'
           >
             <Switch
               size='small'
-              color={recordStatus === 'inactive' ? 'warning' : 'success'}
+              color={recordStatus === 'in-active' ? 'warning' : 'success'}
               onChange={(_e, checked) => handleToggleRecordStatus(row, checked)}
               checked={recordStatus === 'active'}
               // disabled={!canEditStatus}

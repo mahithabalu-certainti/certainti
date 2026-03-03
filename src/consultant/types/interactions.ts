@@ -219,7 +219,8 @@ export type InteractionList = {
   four_part_assessment_rid: string | null;
   interaction_assessment_source_rid: string | null;
   interaction_assessment_source_name: string | null;
-  record_status: string | null;
+  interaction_status_rid: string | null;
+  interaction_status_name: 'Active' | 'In-Active';
 };
 
 export type InteractionTemplateList = {

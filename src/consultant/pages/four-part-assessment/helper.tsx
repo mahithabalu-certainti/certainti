@@ -9,24 +9,11 @@ const textOptions: { option: string; value: string }[] = [
   { option: 'Contains', value: 'contains' },
 ];
 
-const nonReqTextfieldOptions: { option: string; value: string }[] = [
-  { option: 'Contains', value: 'contains' },
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'not_equals' },
-  { option: 'Is Empty', value: 'is_empty' },
-];
-
 const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },
   { option: 'After', value: 'after' },
   { option: 'Between', value: 'between' },
-];
-
-const enumOptions = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'not_equals' },
-  { option: 'In', value: 'in' },
 ];
 
 export const getFourPartAssessmentTableColumns = (
@@ -67,7 +54,7 @@ export const getFourPartAssessmentTableColumns = (
     id: 'project_code',
     sortId: 'project_code',
     label: 'Project Code',
-    width: 120,
+    width: 140,
     sortable: true,
     hide: moduleLevel === 'project',
     // hide:
@@ -83,12 +70,36 @@ export const getFourPartAssessmentTableColumns = (
     //   hide: !permissionMap?.['rd_potential_category']?.edit && !permissionMap?.['rd_potential_category']?.read,
   },
   {
-    id: 'status',
-    sortId: 'status',
-    label: 'Status',
-    width: 140,
+    id: 'permitted_purpose_status',
+    sortId: 'permitted_purpose_status',
+    label: 'Permitted Purpose Status',
+    width: 200,
     sortable: true,
-    //   hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+    //   hide: !permissionMap?.['permitted_purpose_status']?.edit && !permissionMap?.['permitted_purpose_status']?.read,
+  },
+  {
+    id: 'technological_uncertainty_status',
+    sortId: 'technological_uncertainty_status',
+    label: 'Technological Uncertainty Status',
+    width: 245,
+    sortable: true,
+    //   hide: !permissionMap?.['technological_uncertainty_status']?.edit && !permissionMap?.['technological_uncertainty_status']?.read,
+  },
+  {
+    id: 'technological_in_nature_status',
+    sortId: 'technological_in_nature_status',
+    label: 'Technological In Nature Status',
+    width: 235,
+    sortable: true,
+    //   hide: !permissionMap?.['technological_in_nature_status']?.edit && !permissionMap?.['technological_in_nature_status']?.read,
+  },
+  {
+    id: 'process_of_experimentation_status',
+    sortId: 'process_of_experimentation_status',
+    label: 'Process of Experimentation Status',
+    width: 255,
+    sortable: true,
+    //   hide: !permissionMap?.['process_of_experimentation_status']?.edit && !permissionMap?.['process_of_experimentation_status']?.read,
   },
   {
     id: 'created_by_name',
@@ -110,27 +121,6 @@ export const getFourPartAssessmentTableColumns = (
     // hide:
     //   !permissionMap?.['created_datetime']?.edit &&
     //   !permissionMap?.['created_datetime']?.read,
-  },
-  {
-    id: 'modified_by_name',
-    sortId: 'modified_by_name',
-    label: 'Modified By',
-    width: 180,
-    sortable: true,
-    // hide:
-    //   !permissionMap?.['modified_by_name']?.edit &&
-    //   !permissionMap?.['modified_by_name']?.read,
-  },
-  {
-    id: 'modified_datetime',
-    sortId: 'modified_datetime',
-    label: 'Modified On',
-    width: 200,
-    sortable: true,
-    render: (row) => formatDateToYYYYMMDDWithTime(row.modified_datetime),
-    // hide:
-    //   !permissionMap?.['modified_datetime']?.edit &&
-    //   !permissionMap?.['modified_datetime']?.read,
   },
 ];
 
@@ -168,13 +158,36 @@ export const getFourPartAssessmentFilterFields = (
       //     !permissionMap?.['rd_potential_category']?.read,
     },
     {
-      name: 'Status',
-      value: 'status_rid',
-      type: 'enum',
-      options: [],
-      operatorOption: enumOptions,
+      name: 'Permitted Purpose Status',
+      value: 'permitted_purpose_status',
+      type: 'text',
+      operatorOption: textOptions,
       //   hide:
-      //     !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+      //     !permissionMap?.['permitted_purpose_status']?.edit && !permissionMap?.['permitted_purpose_status']?.read,
+    },
+    {
+      name: 'Technological Uncertainty Status',
+      value: 'technological_uncertainty_status',
+      type: 'text',
+      operatorOption: textOptions,
+      //   hide:
+      //     !permissionMap?.['technological_uncertainty_status']?.edit && !permissionMap?.['technological_uncertainty_status']?.read,
+    },
+    {
+      name: 'Technological In Nature Status',
+      value: 'technological_in_nature_status',
+      type: 'text',
+      operatorOption: textOptions,
+      //   hide:
+      //     !permissionMap?.['technological_in_nature_status']?.edit && !permissionMap?.['technological_in_nature_status']?.read,
+    },
+    {
+      name: 'Process of Experimentation Status',
+      value: 'process_of_experimentation_status',
+      type: 'text',
+      operatorOption: textOptions,
+      //   hide:
+      //     !permissionMap?.['process_of_experimentation_status']?.edit && !permissionMap?.['process_of_experimentation_status']?.read,
     },
     {
       name: 'Created By',
@@ -193,24 +206,6 @@ export const getFourPartAssessmentFilterFields = (
       //   hide:
       //     !permissionMap?.['created_datetime']?.edit &&
       //     !permissionMap?.['created_datetime']?.read,
-    },
-    {
-      name: 'Modified By',
-      value: 'modified_by_name',
-      type: 'text',
-      operatorOption: nonReqTextfieldOptions,
-      //   hide:
-      //     !permissionMap?.['modified_by_name']?.edit &&
-      //     !permissionMap?.['modified_by_name']?.read,
-    },
-    {
-      name: 'Modified On',
-      value: 'modified_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-      //   hide:
-      //     !permissionMap?.['modified_datetime']?.edit &&
-      //     !permissionMap?.['modified_datetime']?.read,
     },
   ];
 };

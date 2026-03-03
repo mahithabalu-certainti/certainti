@@ -72,8 +72,8 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
       limit: 100,
       search: '',
       filter: {},
-      sort: 'ASC',
-      sort_by: 'r_number',
+      sort: 'r_number',
+      sort_by: 'ASC',
       type: moduleLevel,
     });
   const [refreshFourPartAssessment, setRefreshFourPartAssessment] =
@@ -135,8 +135,8 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
       setExportType('four_part_assessment');
     }
     setFourPartAssessmentParams({
+      sort: tableParams.sort,
       sort_by: tableParams.sort_by,
-      sort: tableParams.sort as 'ASC' | 'DESC',
       filter: appliedFilters,
       search: searchText,
       type: moduleLevel,
@@ -217,8 +217,8 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setTableParams((prev) => ({
       ...prev,
-      sort: apiOrder,
-      sort_by: property,
+      sort: property,
+      sort_by: apiOrder,
     }));
   };
 
@@ -370,8 +370,8 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
               totalItems={totalItems}
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={tableParams.sort_by}
-              sortOrder={tableParams.sort as 'ASC' | 'DESC'}
+              sortBy={tableParams.sort}
+              sortOrder={tableParams.sort_by as 'ASC' | 'DESC'}
               onSort={handleSortRequest}
             />
           </div>

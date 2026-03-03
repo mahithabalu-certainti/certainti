@@ -597,3 +597,31 @@ export const useGetInteractionTemplate = () => {
     mutationFn: (body) => getInteractionTemplate({ ...body }),
   });
 };
+
+// Interaction Status Update
+export interface InteractionStatusUpdatePayload {
+  rid: string;
+  status_name: string;
+  account_rid: string;
+}
+
+export const updateInteractionStatus = async (
+  body: InteractionStatusUpdatePayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      '/api/interactions/fourPartAssessment/update',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating interaction status:', error);
+    throw error;
+  }
+};
+
+export const useUpdateInteractionStatus = () => {
+  return useMutation<CommonApiResponse, Error, InteractionStatusUpdatePayload>({
+    mutationFn: (body) => updateInteractionStatus(body),
+  });
+};
