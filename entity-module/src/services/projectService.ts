@@ -2173,7 +2173,7 @@ export class ProjectService {
         rid,
         rd_percent_potential_ai,
         userId,
-        accountData.account_rid
+        account_rid
       );
 
       return {
