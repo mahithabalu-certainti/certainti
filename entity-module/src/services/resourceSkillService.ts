@@ -245,7 +245,7 @@ class ResourceSkillService {
                     userId: userId!,
                     eventType: eventTypes.UI_HANDLER
                   });
-            await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+            await this.schemaService.createAccountTimelineEntry(accountNumberFetched!, {
               created_by: userId!,
               account_rid: account_rid,
               entity_rid: createdResourceSkill?.rid!,
@@ -505,7 +505,7 @@ class ResourceSkillService {
                     userId: userId!,
                     eventType: eventTypes.UI_HANDLER
                   });
-            await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+            await this.schemaService.createAccountTimelineEntry(accountNumberFetched!, {
               created_by: userId!,
               account_rid: originalResourceSkill.account_rid,
               entity_rid: originalResourceSkill?.rid!,
