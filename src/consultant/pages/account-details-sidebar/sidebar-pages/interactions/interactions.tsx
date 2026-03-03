@@ -29,6 +29,7 @@ import {
   useSendInteraction,
 } from '../../../../services/interactions/interactions-service';
 import {
+  ACCOUNT_DETAILS,
   ACCOUNT_INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
 } from '../../../../../routes';
@@ -426,6 +427,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
+      level: row.interaction_level_name ?? '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -631,12 +633,39 @@ const Interactions: React.FC<InteractionsProps> = ({
       hide: Boolean(!responseHistory),
     },
   ];
+
+  const handleToggleRecordStatus = (row: InteractionList, checked: boolean) => {
+    const updatedStatus = checked ? 'active' : 'inactive';
+    console.log(`Toggling record status for ${row.rid} to ${updatedStatus}`);
+  };
+
+  const handleFourPartNavigation = (row: InteractionList) => {
+    if (!row.four_part_assessment_rid) return;
+
+    const path = generatePath(ACCOUNT_DETAILS, {
+      accountid: accountid || '',
+    });
+
+    const searchParams = new URLSearchParams({
+      list: 'four_part_assessment',
+      fpa_id: row.four_part_assessment_rid,
+      navigate_source: 'interactions',
+    });
+
+    navigate(`${path}?${searchParams.toString()}`, {
+      state: { activeKey: 'four_part_assessment' },
+      replace: true,
+    });
+  };
+
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
     handleViewInteractionAttachmentCount,
     permissionMap,
-    projectPermissionMap
+    projectPermissionMap,
+    handleToggleRecordStatus,
+    handleFourPartNavigation
   );
   const interactionModelColumn = getInteractionListModelColumns(
     // handleViewInteraction,

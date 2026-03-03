@@ -40,7 +40,7 @@ import {
   getFiltersFromStorage,
 } from '../../common-utils';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { CASE, PROFILE, PROJECT } from '../../routes';
+import { ACCOUNT, CASE, PROFILE, PROJECT } from '../../routes';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
 import { useMsal } from '@azure/msal-react';
@@ -61,6 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   switchSideBarMenus,
 }) => {
   const { instance } = useMsal();
+  const [searchparams] = useSearchParams();
   const passwordResetInstanceRef = useRef<PublicClientApplication | null>(null);
   const isFirstRender = useRef(true);
   const prevIsCaseRouteRef = useRef<boolean>(false);
@@ -111,7 +112,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isFilterApplied = useMemo(() => filters.length > 0, [filters]);
   const isCaseModule = location.pathname.startsWith(`${CASE}/`);
   const isProjectModule = location.pathname.startsWith(`${PROJECT}/`);
-  const isSpecificFYModule = isCaseModule || isProjectModule;
+  const isAccountDetailsFromDashboard =
+    location.pathname.startsWith(`${ACCOUNT}/details/`) &&
+    searchparams.get('list') === 'dashboard';
+  const isSpecificFYModule =
+    isCaseModule || isProjectModule || isAccountDetailsFromDashboard;
   const environment = import.meta.env.VITE_ENVIRONMENT;
 
   const [globalAnchorEl, setGlobalAnchorEl] =
@@ -278,7 +283,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passwordResetInstanceRef]);
-  const [searchparams] = useSearchParams();
   const handleLogout = useCallback(async () => {
     handleMenuClose();
     logout();

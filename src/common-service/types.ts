@@ -225,6 +225,7 @@ export enum AllModules {
   WORKFLOW_BUILDER = 'workflow_builder',
   MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule',
   RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
+  FOUR_PART_ASSESSMENT = 'four_part_assessment',
 }
 
 export enum AllPermissions {
@@ -415,6 +416,10 @@ export enum AllPermissions {
   RD_FORM_DATA_MAPPER_CREATE = 'rd_form_data_mapper_create',
   RD_FORM_DATA_MAPPER_DELETE = 'rd_form_data_mapper_delete',
   RD_FORM_DATA_MAPPER_VIEW_EDIT = 'rd_form_data_mapper_view_edit',
+  FOUR_PART_ASSESSMENT_OVERVIEW = 'four_part_assessment_overview',
+  FOUR_PART_ASSESSMENT_TIMELINE = 'four_part_assessment_timeline',
+  FOUR_PART_ASSESSMENT_VIEW_EDIT = 'four_part_assessment_view_edit',
+  FOUR_PART_ASSESSMENT_EXPORT = 'four_part_assessment_export',
 }
 
 export interface Country {
