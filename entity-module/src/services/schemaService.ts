@@ -4060,7 +4060,8 @@ class SchemaService {
     accountNumber: string,
     projectFiscalId: string,
     qreAdjustment: number,
-    userId: string
+    userId: string,
+    accountRid: string
   ) {
     const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
@@ -4147,7 +4148,7 @@ class SchemaService {
      
       await this.createAccountTimelineEntry(accountNumber!, {
         created_by: userId!,
-        account_rid: projectFiscalData.account_rid,
+        account_rid: accountRid,
         entity_rid: projectFiscalId!,
         entity_name: entityTypes.QRE_PERCENT,
         created_by_name: userEventInfo.full_name,
