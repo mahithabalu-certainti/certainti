@@ -160,6 +160,7 @@ const getTypeIconConfig = (
         ),
         bg: bgColor,
       };
+    case 'resource':
     case 'Resource':
     case 'Project Resources':
     case 'Resource Skill':
@@ -183,7 +184,7 @@ const getTypeIconConfig = (
         ),
         bg: bgColor,
       };
-    case 'Interactions':
+    case 'Interaction':
       return {
         icon: (
           <InteractionsIcon
@@ -204,6 +205,7 @@ const getTypeIconConfig = (
         bg: bgColor,
       };
     case 'Checklists':
+    case 'Checklist':
       return {
         icon: (
           <ChecklistIcon
@@ -213,7 +215,7 @@ const getTypeIconConfig = (
         ),
         bg: bgColor,
       };
-    case 'Timesheets':
+    case 'Timesheet':
       return {
         icon: (
           <TimeSheetIcon
@@ -223,7 +225,7 @@ const getTypeIconConfig = (
         ),
         bg: bgColor,
       };
-    case 'Imports':
+    case 'Import':
       return {
         icon: (
           <ImportsIcon
@@ -233,7 +235,7 @@ const getTypeIconConfig = (
         ),
         bg: bgColor,
       };
-    case 'Project Tasks':
+    case 'Project Task':
       return {
         icon: (
           <ProjectTaskIcon
@@ -253,7 +255,7 @@ const getTypeIconConfig = (
         ),
         bg: bgColor,
       };
-    case 'Setting':
+    case 'Settings':
       return {
         icon: (
           <SettingIcon
