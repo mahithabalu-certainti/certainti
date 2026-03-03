@@ -1375,7 +1375,11 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   rd_potential_category : 'f.rd_potential_category',
   status : 'f.status',
   created_datetime : 'f.created_datetime',
-  modified_datetime : 'f.modified_datetime'
+  modified_datetime : 'f.modified_datetime',
+  permitted_purpose_status : 'f.permitted_purpose_status',
+  technological_uncertainty_status : 'f.technological_uncertainty_status',
+  technological_in_nature_status : 'f.technological_in_nature_status',
+  process_of_experimentation_status : 'f.process_of_experimentation_status'
 }
 
 export const FourPartColumnsTypes : Record<string, string> = {
@@ -1384,7 +1388,11 @@ export const FourPartColumnsTypes : Record<string, string> = {
   rd_potential_category : 'string',
   status : 'string',
   created_datetime : 'date',
-  modified_datetime : 'date'
+  modified_datetime : 'date',
+  permitted_purpose_status : 'string',
+  technological_uncertainty_status : 'string',
+  technological_in_nature_status : 'string',
+  process_of_experimentation_status : 'string'
 }
 
 export const MainTableFilter : Record<string, string> = {

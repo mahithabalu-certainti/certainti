@@ -4211,11 +4211,10 @@ async getFpaDetailsById (data : any) : Promise<any> {
     if(result[0][0]) {
       const userIds = [];
       let detailsResult = result[0][0] as any
-      userIds.push(detailsResult?.audit_information.created_by,detailsResult?.audit_information.modfied_by ?? '');
+      userIds.push(detailsResult?.audit_information.created_by);
       const findUserDetails : any = await mainDb.query(rawQueries.fetchUser(userIds));
       const mapUser = new Map(findUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]));
       detailsResult.audit_information.created_by_name = mapUser.get(detailsResult.audit_information.created_by);
-      detailsResult.audit_information.modified_by_name = mapUser.get(detailsResult.audit_information.modified_by) ?? null
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.fourPartListSuccess,

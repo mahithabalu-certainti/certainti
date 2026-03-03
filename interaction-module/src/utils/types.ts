@@ -187,10 +187,22 @@ export interface ProjectMetadata {
 }
 
 export interface FourPartAssessment {
-  permitted_purpose: string
-  technological_uncertainty: string
-  process_of_experimentation: string
-  technological_in_nature: string
+  permitted_purpose: {
+    status : string
+    rationale : string
+  }
+  technological_uncertainty: {
+    status : string
+    rationale : string
+  }
+  process_of_experimentation: {
+    status : string
+    rationale : string
+  }
+  technological_in_nature: {
+    status : string
+    rationale : string
+  }
   status: string
   rationale: string
   summary_judgment: string
