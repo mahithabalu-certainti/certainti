@@ -12,8 +12,9 @@ export interface ConfigJson {
     sub_con_percent: number;
     fixed_base_percentage: number;
     rrc_qre_credit_percentage: number;
-    asc_credit_rate_c1: number;
-    asc_credit_rate_c2: number;
+    credit_rate_c1: number;
+    credit_rate_c2: number;
+    qre_credit_percentage: number;
 }
 
 export interface Splitconfig {
@@ -120,7 +121,7 @@ export class RdCreditCalculatorForUSA {
 
 
          // IRS rule: If any year has zero → use 6%, else → 14%
-        const percentage = hadZeroYear ? configAsc.asc_credit_rate_c2 : configAsc.asc_credit_rate_c1;
+        const percentage = hadZeroYear ? configAsc.credit_rate_c2 : configAsc.credit_rate_c1;
 
 
         // ---- Line 24: Multiply line 23 by percentage ----
@@ -128,7 +129,7 @@ export class RdCreditCalculatorForUSA {
 
         // ---- Line 25: (ASC Base Credit) ----
         const line25 = line24; // because you don’t have line19 in ASC
-        let dynamicPercentageKey = `Enter ${configAsc.asc_credit_rate_c1}%. If QREs in any of the 3 years is zero, enter ${configAsc.asc_credit_rate_c2}%`
+        let dynamicPercentageKey = `Enter ${configAsc.credit_rate_c1}%. If QREs in any of the 3 years is zero, enter ${configAsc.credit_rate_c2}%`;
 
         return {
             "[20] Total Qualified Research Expenses": Number(await this.round2(totalQRE)),
@@ -172,7 +173,7 @@ export class RdCreditCalculatorForUSA {
 
         //---- Line 11: Enter smaller of line 9 or line 10
         const line11 = Decimal.min(line10, maxLine9);
-        let dynamicLine5 = `[10] Multiply line 5 by ${configRRC.rrc_qre_credit_percentage}`
+        let dynamicLine5 = `[10] Multiply line 5 by ${configRRC.qre_credit_percentage}`
 
         return {
             "[5] Total Qualified Research Expenses": await this.round2(currentYearQRE),
