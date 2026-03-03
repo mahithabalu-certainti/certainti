@@ -903,7 +903,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       if (result?.statusCode === 200 && result.data) {
         const updatedTask = result.data;
         const newTaskList = taskList.map((task) => {
-          if (task.task_rid === updatedTask.task_rid) {
+          if (task.rid === updatedTask.rid) {
             return updatedTask;
           }
           return task;

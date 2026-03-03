@@ -79,6 +79,7 @@ const getTypeIconConfig = (
         bg: bgColor,
       };
     case 'Project':
+    case 'project':
       return {
         icon: (
           <ProjectsSideIcon
@@ -129,6 +130,7 @@ const getTypeIconConfig = (
         bg: bgColor,
       };
     case 'Email':
+    case 'Case Review Project Email':
       return {
         icon: (
           <DraftEmailIcon
@@ -165,6 +167,9 @@ const getTypeIconConfig = (
     case 'Project Resources':
     case 'Resource Skill':
     case 'Resource Cost':
+    case 'project_resource':
+    case 'resource_cost':
+    case 'resource_skill':
       return {
         icon: (
           <ResourcesIcon
@@ -236,6 +241,7 @@ const getTypeIconConfig = (
         bg: bgColor,
       };
     case 'Project Task':
+    case 'project_task':
       return {
         icon: (
           <ProjectTaskIcon
@@ -296,6 +302,28 @@ const getTypeIconConfig = (
         bg: bgColor,
       };
   }
+};
+
+// Maps raw API entity_name values to human-readable display labels
+const ENTITY_NAME_MAP: Record<string, string> = {
+  project: 'Project',
+  project_resource: 'Project Resources',
+  project_task: 'Project Task',
+  resource: 'Resource',
+  resource_cost: 'Resource Cost',
+  resource_skill: 'Resource Skill',
+  call_log: 'Call Log',
+  case_team: 'Case Team',
+  historical_submission: 'Historical Submission',
+  financial_working: 'Financial Working',
+  tech_summary: 'Technical Summary',
+  case_review_project_email: 'Case Review Project Email',
+};
+
+const formatEntityName = (entity_name: string): string => {
+  if (!entity_name) return entity_name;
+  const lower = entity_name.toLowerCase().replace(/ /g, '_');
+  return ENTITY_NAME_MAP[lower] ?? entity_name;
 };
 
 // Width of time column (px) — keep in sync with the absolute line position
@@ -375,7 +403,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
 
   const params: TimelineParams = {
     nextOffset: currentOffset,
-    limit: 10,
+    limit: 25,
     account_rid: accountid || accountId || '',
     project_rid: entitytype === 'project' ? projectid : undefined,
     case_rid: entitytype === 'case' ? caseId : undefined,
@@ -627,7 +655,8 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
                       lineHeight: '1.4',
                     }}
                   >
-                    {item.entity_name} {item.event_name} {item.descriptions}
+                    {formatEntityName(item.entity_name)} {item.event_name}{' '}
+                    {item.descriptions}
                   </div>
 
                   {item.created_by_name && (
