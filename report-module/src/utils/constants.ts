@@ -199,8 +199,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -243,8 +244,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -289,8 +291,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -337,8 +340,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -382,8 +386,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -433,8 +438,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -481,8 +487,9 @@ export const rawQueries = {
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
         AND act.status_name IN (:activityStatus)
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -558,8 +565,9 @@ export const rawQueries = {
         ON act.rid = a.status_rid
         AND tt.task_type_name = :activityTaskType
         AND act.activity_type = :activityType
+    LEFT JOIN trd365.case_summary c ON a.attach_to = c.case_rid
     WHERE 
-    (cts.rid IS NOT NULL 
+    ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) 
     OR act.rid IS NOT NULL)`;
 
     const replacements: any = {
@@ -671,7 +679,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -739,7 +747,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -806,7 +814,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -875,7 +883,7 @@ export const rawQueries = {
 	 on a.account_rid = f.rid
 	 left join ${MAIN_SCHEMA_NAME}.user g
 	 on a.assigned_to = g.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)`;;
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)`;;
 
     const replacements: any = {
       milestoneTaskType: TaskType.MILESTONE,
@@ -951,7 +959,7 @@ export const rawQueries = {
     on a.assigned_to = g.rid
     left join ${MAIN_SCHEMA_NAME}.task_category h
     on a.task_category_rid = h.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)
 	  AND h.category_name = :taskCategory`;
 
     const replacements: any = {
@@ -1024,7 +1032,7 @@ export const rawQueries = {
     on a.assigned_to = g.rid
     left join ${MAIN_SCHEMA_NAME}.task_category h
     on a.task_category_rid = h.rid
-    WHERE (cts.rid IS NOT NULL OR act.rid IS NOT NULL)
+    WHERE ((cts.rid IS NOT NULL AND c.case_rid IS NOT NULL) OR act.rid IS NOT NULL)
 	  AND h.category_name = :taskCategory`;
 
     const replacements: any = {
