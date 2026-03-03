@@ -120,7 +120,7 @@ export class RdCreditCalculatorForUSA {
 
 
          // IRS rule: If any year has zero → use 6%, else → 14%
-        const percentage = hadZeroYear ? configAsc.asc_credit_rate_c1 : configAsc.asc_credit_rate_c2;
+        const percentage = hadZeroYear ? configAsc.asc_credit_rate_c2 : configAsc.asc_credit_rate_c1;
 
 
         // ---- Line 24: Multiply line 23 by percentage ----

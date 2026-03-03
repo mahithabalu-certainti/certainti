@@ -1564,7 +1564,7 @@ private async handleTableConfig(
         // Optimization 3: Precompute lookupKeys and avoid repeated regex
         const lookupKeysCache: Record<string, string[]> = {};
       let replaced = normalizedExpression.replace(
-  /#([^+*/(),]+)/g,
+   /#([^\s+*/(),]+)/g,
   (match: string, rawKey: string) => {
     if (!rawKey) return "NaN";
 
@@ -1656,14 +1656,13 @@ private async handleTableConfig(
 
           const computed = safeEval(replaced);
           if (computed !== null) {
-            const lowerExpression = expression.toLowerCase();
-            const hasSubtraction =
-              lowerExpression.includes("-") ||
-              lowerExpression.includes(" sub ") ||
-              lowerExpression.includes("subtract");
-            // Defensive: Clamp negative values for subtraction if required
-            const finalValueRaw = hasSubtraction && computed < 0 ? 0 : computed;
-            const finalValue = this.roundToTwoDecimals(finalValueRaw);
+            // No clamping for negative subtraction results
+            const finalValue = this.roundToTwoDecimals(computed);
+
+            // Log the resolved values used in the expression
+            logMessage(
+              `Resolved values for field ${item.field_label || item.field_id}: ${expression} => ${replaced}`
+            );
 
             item.value = finalValue;
             passUpdated = true;
@@ -1899,16 +1898,16 @@ private async handleTableConfig(
         rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
         { type: "SELECT" },
       );
-      // if (
-      //   !isFinancialSignOffDone ||
-      //   !isFinancialSignOffDone.financial_working_signoff
-      // ) {
-      //   return {
-      //     statusCode: HttpStatus.FAILED,
-      //     message: HttpStatus.FAILED_MESSAGE,
-      //     errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-      //   };
-      // }
+      if (
+        !isFinancialSignOffDone ||
+        !isFinancialSignOffDone.financial_working_signoff
+      ) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+        };
+      }
 
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
