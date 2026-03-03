@@ -1,5 +1,6 @@
 import { Logger } from "winston";
 import {
+  AllStatusType,
   FourPartAssessmentListResponse,
   FourPartAssessmentRequestPayload,
   FourPartAssessmentResponse,
@@ -7,7 +8,7 @@ import {
   ICreateInteraction,
   ICreateTemplateInteraction,
   IEmailMessage,
-  InteractionGraphqlRequest,
+  InteractionStatusUpdateRequest,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -4241,32 +4242,32 @@ async exportFpaList (data : any) {
   const result = await this.getFourPartAssessmentList(data);
   return result;
 }
-async updateInteractionStatus (data : InteractionGraphqlRequest, userId : string) {
+async updateInteractionStatus (data : InteractionStatusUpdateRequest, userId : string) {
   const mainDb = await this.getMainDb();
   const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
   const { Interaction } = await this.interactionModelService.getModels(fetchParentNumber[0][0].r_number);
-
-  await Interaction.update({
-    interaction_status_rid : data.status_rid
+  const getAllStatus = await mainDb.query<AllStatusType>(rawQueries.fetchAllStatus(), {type : QueryTypes.SELECT})
+  const mapStatus = new Map(getAllStatus.map((d) => [d.status_name, d.rid]));
+  const getId = mapStatus.get(data.status_name) ?? ''
+  const [result] = await Interaction.update({
+    interaction_status_rid : getId,
+    modified_by : userId,
+    modified_datetime : new Date()
   }, {
     where : {
       rid : data.rid
     }
   });
-  const payload = {
-    sort : "r_number",
-    sort_by : "ASC",
-    search : "",
-    filters : {},
-    flag : data.flag,
-    fiscal_year : data.fiscal_year,
-    rid : data.rid,
-    account_rid : data.account_rid,
-    case_rid : data.case_rid,
-    project_fiscal_rid : data.project_fiscal_rid,
-    project_rid : data.project_rid
+  if(result > 0) {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.interactionUpdated
+    }
+  } else {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.noDataToUpdate
+    }
   }
-  const result = await this.listInteractionPrjAccount(payload, userId, "graphql", false, []);
-  return result.data;
 }
 }

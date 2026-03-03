@@ -2683,9 +2683,9 @@ async function getFpaDetails (req : Request, res : Response) {
         });
     }
   }catch (err : any) {
-    return res.status(HttpStatus.SUCCESS).json({
-      statusCode: HttpStatus.SUCCESS,
-      statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+    return res.status(HttpStatus.FAILED).json({
+      statusCode: HttpStatus.FAILED,
+      statusCodeValue: HttpStatus.FAILED_MESSAGE,
       statusMessage: err.message,
       data: null,
     });
@@ -2762,11 +2762,44 @@ async function getFpaDetails (req : Request, res : Response) {
       }
   } 
 }catch (err : any) {
-    return res.status(HttpStatus.SUCCESS).json({
-      statusCode: HttpStatus.SUCCESS,
-      statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+    return res.status(HttpStatus.FAILED).json({
+      statusCode: HttpStatus.FAILED,
+      statusCodeValue: HttpStatus.FAILED_MESSAGE,
       statusMessage: err.message,
       data: null,
+    });
+  }
+}
+
+ async function updateInteractionStatus (req : Request, res : Response) {
+  const methodName = "updateInteractionStatus";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.body;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.updateInteractionStatus(data, userId);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+          statusCode: HttpStatus.SUCCESS,
+          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+          statusMessage: result.statusMessage
+        });
+    }
+}catch (err : any) {
+    return res.status(HttpStatus.FAILED).json({
+      statusCode: HttpStatus.FAILED,
+      statusCodeValue: HttpStatus.FAILED_MESSAGE,
+      statusMessage: err.message
     });
   }
 }
@@ -2807,5 +2840,6 @@ export default {
   fetchInteractionListForReminder,
   fetchFourPartAssessmentList,
   getFpaDetails,
-  exportFetchFourPartAssessmentList
+  exportFetchFourPartAssessmentList,
+  updateInteractionStatus
 };
