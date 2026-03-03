@@ -1455,6 +1455,10 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
     else if(sort.toLowerCase() === FourPartColumns.status) getSortOrder = FourPartColumns.status
     else if(sort.toLowerCase() === FourPartColumns.created_datetime) getSortOrder = FourPartColumns.created_datetime
     else if(sort.toLowerCase() === FourPartColumns.project_code) getSortOrder = FourPartColumns.project_code
+    else if(sort.toLowerCase() === FourPartColumns.permitted_purpose_status) getSortOrder = FourPartColumns.permitted_purpose_status
+    else if(sort.toLowerCase() === FourPartColumns.technological_uncertainty_status) getSortOrder = FourPartColumns.technological_uncertainty_status
+    else if(sort.toLowerCase() === FourPartColumns.technological_in_nature_status) getSortOrder = FourPartColumns.technological_in_nature_status
+    else if(sort.toLowerCase() === FourPartColumns.process_of_experimentation_status) getSortOrder = FourPartColumns.process_of_experimentation_status
     else getSortOrder = FourPartColumns.r_number!
     sortValue = `ORDER BY ${getSortOrder} ${sortBy}`
   } else sortValue = ''
