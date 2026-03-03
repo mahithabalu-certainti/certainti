@@ -24,6 +24,7 @@ import {
   getInteractionListReminderUrl,
 } from '../urls/interactions-url';
 import {
+  AssessmentSourceResponse,
   InteractionKeyContactResponse,
   InteractionKeyContacts,
   InteractionProjectKeyContacts,
@@ -623,5 +624,31 @@ export const updateInteractionStatus = async (
 export const useUpdateInteractionStatus = () => {
   return useMutation<CommonApiResponse, Error, InteractionStatusUpdatePayload>({
     mutationFn: (body) => updateInteractionStatus(body),
+  });
+};
+
+export const fetchAssessmentSource =
+  async (): Promise<AssessmentSourceResponse> => {
+    try {
+      const { data } =
+        await interactionServiceApi.get<AssessmentSourceResponse>(
+          '/api/interactions/assessmentSource'
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching assessment source:', error);
+      throw error;
+    }
+  };
+
+export const useGetAssessmentSource = () => {
+  return useQuery<AssessmentSourceResponse, Error>({
+    queryKey: ['interaction-assessment-source'],
+    queryFn: () => fetchAssessmentSource(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };

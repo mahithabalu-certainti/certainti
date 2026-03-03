@@ -24,6 +24,7 @@ import {
   StatusTypeEnum,
 } from '../../../../types';
 import {
+  useGetAssessmentSource,
   useInteractionList,
   useInteractionListModel,
   useSendInteraction,
@@ -241,6 +242,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
   const updateInteractionStatus = useUpdateInteractionStatus();
+  const assessmentSource = useGetAssessmentSource();
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -331,6 +333,15 @@ const Interactions: React.FC<InteractionsProps> = ({
       })) || [],
     [interactionResSources.data?.data.responseSource]
   );
+
+  const assessmentSourceOptions = useMemo(() => {
+    return (
+      assessmentSource?.data?.data?.map((item) => ({
+        value: item.rid,
+        option: item.interaction_assessment_source_name,
+      })) || []
+    );
+  }, [assessmentSource]);
 
   useEffect(() => {
     if (data) {
@@ -712,7 +723,8 @@ const Interactions: React.FC<InteractionsProps> = ({
         memoizedInteractionStatus,
         memoizedInteractionLevel,
         permissionMap,
-        projectPermissionMap
+        projectPermissionMap,
+        assessmentSourceOptions
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getInteractionModelFilterFields(

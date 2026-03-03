@@ -1,7 +1,7 @@
 import { Switch, Tooltip } from '@mui/material';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
-import { InteractionList } from '../../../../types';
+import { InteractionList, StatusTypeEnum } from '../../../../types';
 
 export const getInteractionListColumns = (
   handleViewInteraction: (
@@ -378,6 +378,8 @@ export const getInteractionListColumns = (
     //   !permissionMap?.['interaction_status']?.edit &&
     //   !permissionMap?.['interaction_status']?.read,
     render: (row) => {
+      const isDraftStatus =
+        row.status_name?.toLowerCase() === StatusTypeEnum.draft;
       // const canEditStatus = !!permissionMap?.['interaction_status']?.edit;
       const recordStatus =
         row.interaction_status_name?.toLowerCase() || 'in-active';
@@ -395,7 +397,7 @@ export const getInteractionListColumns = (
               color={recordStatus === 'in-active' ? 'warning' : 'success'}
               onChange={(_e, checked) => handleToggleRecordStatus(row, checked)}
               checked={recordStatus === 'active'}
-              // disabled={!canEditStatus}
+              disabled={!isDraftStatus}
             />
           </Tooltip>
         </div>

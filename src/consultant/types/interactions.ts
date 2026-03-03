@@ -562,3 +562,13 @@ export interface InteractionKeyContacts {
   key_contact_email: string;
   key_contact_name: string;
 }
+
+export interface AssessmentSourceResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    rid: string;
+    interaction_assessment_source_name: string;
+  }[];
+}

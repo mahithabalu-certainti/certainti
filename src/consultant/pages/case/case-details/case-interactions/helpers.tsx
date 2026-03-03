@@ -24,7 +24,8 @@ export const getCaseInteractionFilterFields = (
   interactionResponseSources: { option: string; value: string }[],
   interactionStatus: { option: string; value: string }[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  assessmentSourceOptions: { option: string; value: string }[]
 ): FieldConfig[] => {
   return [
     {
@@ -44,6 +45,34 @@ export const getCaseInteractionFilterFields = (
     //     !permissionMap?.['interaction_iteration']?.edit &&
     //     !permissionMap?.['interaction_iteration']?.read,
     // },
+    {
+      name: 'Assessment Type',
+      value: 'interaction_assessment_source_rid',
+      type: 'enum',
+      options: assessmentSourceOptions,
+      operatorOption: enumOptions,
+      // hide:
+      //   !projectPermissionMap?.['interaction_assessment_source']?.edit &&
+      //   !projectPermissionMap?.['interaction_assessment_source']?.read,
+    },
+    {
+      name: 'Four Part Assessment ID',
+      value: 'four_part_r_number',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !projectPermissionMap?.['four_part_r_number']?.edit &&
+      //   !projectPermissionMap?.['four_part_r_number']?.read,
+    },
+    {
+      name: 'Batch ID',
+      value: 'interaction_batch_id',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !projectPermissionMap?.['interaction_batch_id']?.edit &&
+      //   !projectPermissionMap?.['interaction_batch_id']?.read,
+    },
     {
       name: 'Project Code',
       value: 'project_code',

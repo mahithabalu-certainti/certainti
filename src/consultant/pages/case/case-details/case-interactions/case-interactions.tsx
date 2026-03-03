@@ -25,6 +25,7 @@ import {
 } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import {
+  useGetAssessmentSource,
   useInteractionList,
   useInteractionListModel,
   useSendInteraction,
@@ -251,6 +252,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   const interactionStatus = useGetInteractionStatus();
   const interactionStatusReminder = useGetInteractionStatusByReminder(true);
   const updateInteractionStatus = useUpdateInteractionStatus();
+  const assessmentSource = useGetAssessmentSource();
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -339,6 +341,15 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       })) || [],
     [interactionResSources.data?.data.responseSource]
   );
+
+  const assessmentSourceOptions = useMemo(() => {
+    return (
+      assessmentSource?.data?.data?.map((item) => ({
+        value: item.rid,
+        option: item.interaction_assessment_source_name,
+      })) || []
+    );
+  }, [assessmentSource]);
 
   useEffect(() => {
     if (data) {
@@ -802,7 +813,8 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
         memoizedInteractionResSources,
         memoizedInteractionStatus,
         permissionMap,
-        projectPermissionMap
+        projectPermissionMap,
+        assessmentSourceOptions
       )
     : getCaseInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getProjectCaseInteractionFilterFields(
