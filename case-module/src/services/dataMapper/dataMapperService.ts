@@ -60,7 +60,8 @@ export class DataMapperService implements IDataMapperService {
             // Only check for forms with the same country/state and active status
             let whereOverlap: any = {
                 country_rid: data.country_rid,
-                is_active: true
+                is_active: true,
+                is_federal: data.is_federal || false
             };
             if (data.is_federal) {
                 whereOverlap.state_rid = null;
