@@ -523,7 +523,10 @@ export class CaseTaskSchemaService {
               if (updatedColumnsStorage.length > 0) {
                 combinedColumns = updatedColumnsStorage.join(', ')
               }
-              const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+           
+            }
+            await transaction.commit();
+               const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
                 userId: data.modified_by,
                 eventType: eventTypes.UI_HANDLER
               });
@@ -540,8 +543,6 @@ export class CaseTaskSchemaService {
                 entity_name: entityTypes.TASK,
                 descriptions: `${data.task_name}`
               })
-            }
-            await transaction.commit();
             const findAllTaskByCaseIds = await CaseTask.findAll({
               attributes: ['weightage_rid', 'task_status_rid'],
               where: {

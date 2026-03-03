@@ -99,8 +99,8 @@ export const STATUS_MESSAGE = {
   statesMissing: "States array is required when level is 'state'.",
   invalidStatesArray: "All states must be valid non-empty strings.",
   userIdMissingInHeader: "User ID is missing in request header.",
-  jurisdictionAddedSuccess: "Jurisdiction configuration added successfully",
-  jurisdictionAddedFailed: "Jurisdiction configuration addition failed",
+  jurisdictionAddedSuccess: "Jurisdiction configuration updated successfully",
+  jurisdictionAddedFailed: "Jurisdiction configuration update failed",
   taskNameExistsAlready: "Task name already exists",
   taskCreatedSuccess: "Task Template created successfully",
   casePrioritySuccess: "Priority fetched successfully",
@@ -325,6 +325,8 @@ export const entityTypes = {
   COMMENTS: "Comments",
   FINANCIAL_WORKING: "Financial Working",
   HISTORICAL_SUBMISSION: "Historical Submission",
+  SETTINGS: "Settings",
+  REVIEW_PROJECT_EMAIL: "Case Review Project Email",
 
 };
 
@@ -335,6 +337,7 @@ export const eventNames = {
   ADDED: "added",
   DELETE: "deleted",
   REMOVED: "removed",
+  SENT: "sent",
 }
 
 export const eventTypes = {

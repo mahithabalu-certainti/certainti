@@ -1054,7 +1054,7 @@ export class ProjectResourceService {
                           event_type_rid: userEventInfo.event_type_rid,
                           event_name: eventNames.UPDATE,
                           descriptions: (existingProjectResource as any).resource_code || '',
-                          project_rid: projectData.project_rid,
+                          project_rid: projectResourceData.project_fiscal_rid,
                         }, ["project"]);
 
       await this.recordTimelineAndHistory(

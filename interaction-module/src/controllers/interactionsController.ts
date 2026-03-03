@@ -2383,7 +2383,7 @@ async function triggerAIAndPassResponse(req: Request, res: Response) {
       );
       return;
     }
-    const result = await interactionService.triggerAI(data);
+    const result = await interactionService.triggerAI(data, userId);
     if(result.statusCode != HttpStatus.SUCCESS) {
        return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
