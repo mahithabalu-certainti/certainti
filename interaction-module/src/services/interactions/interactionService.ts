@@ -4109,21 +4109,24 @@ async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
     let projectFiscalRids : string[] = []
     if(data.type === 'case') {
       const findProjectIdsBasedOnCase : any = await orgDb.query(fetchProjectFiscalIds(data.case_rid, schemaName));
-      projectFiscalRids.push(findProjectIdsBasedOnCase[0][0].project_fiscal_rid)
+      if(findProjectIdsBasedOnCase[0].length > 0) {
+        for(let id of findProjectIdsBasedOnCase[0]) {
+          projectFiscalRids.push(id.project_fiscal_rid)
+        }
+      } else {
+        projectFiscalRids = ['']
+      }
     }
     let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid, data.project_fiscal_rid, projectFiscalRids, data.type, data.isExport ), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       const fetchCreatedByIds = [...new Set(result.filter((f) => f.created_by !== null).map((d) => d.created_by))];
-      const fetchModifiedByIds = [...new Set(result.filter((f) => f.modified_by !== null).map((d) => d.modified_by))];
-      const mergeBothIds = [...fetchCreatedByIds, ...fetchModifiedByIds];
-      const findUserDetails = await mainDb.query<UserReturnType>(rawQueries.fetchUser(mergeBothIds), {type : QueryTypes.SELECT});
+      const findUserDetails = await mainDb.query<UserReturnType>(rawQueries.fetchUser(fetchCreatedByIds), {type : QueryTypes.SELECT});
       let mapUserDetails = new Map(findUserDetails?.map((u) => [u.rid, `${u.first_name} ${u.last_name}`]));
 
       result = result.map((d) => {
         return {
           ...d,
           created_by_name : mapUserDetails.get(d.created_by) as string,
-          modified_by_name : mapUserDetails.get(d.modified_by) ?? null
         }
       });
 

@@ -1454,7 +1454,6 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
     else if(sort.toLowerCase() === FourPartColumns.rd_potential_category) getSortOrder = FourPartColumns.rd_potential_category
     else if(sort.toLowerCase() === FourPartColumns.status) getSortOrder = FourPartColumns.status
     else if(sort.toLowerCase() === FourPartColumns.created_datetime) getSortOrder = FourPartColumns.created_datetime
-    else if(sort.toLowerCase() === FourPartColumns.modified_datetime) getSortOrder = FourPartColumns.modified_datetime
     else if(sort.toLowerCase() === FourPartColumns.project_code) getSortOrder = FourPartColumns.project_code
     else getSortOrder = FourPartColumns.r_number!
     sortValue = `ORDER BY ${getSortOrder} ${sortBy}`
@@ -1470,8 +1469,8 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   let query = 
   `WITH fetch_fpa_data AS (
   SELECT 
-  f.rid, f.r_number, f.status, f.rd_potential_category, f.modified_datetime, f.created_datetime,
-  p.project_code, f.created_by, f.modified_by
+  f.rid, f.r_number, f.status, f.rd_potential_category, f.created_datetime,
+  p.project_code, f.created_by
   FROM ${schemaName}.four_part_assessment f
   LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
   LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
