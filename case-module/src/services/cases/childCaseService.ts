@@ -771,7 +771,10 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
         );
         if(type === DOSSIER_NAME) {
           let fetchProjectDetails : any[] = [...new Set(projectAttachments.map((project : any) => project.dataValues.attach_to))];
-          let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+          let validArray : any[] = [];
+          if(fetchProjectDetails.length > 0) validArray = fetchProjectDetails
+          else validArray = ['']
+          let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(validArray, schemaName));
           let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
           projectAttachments.forEach((d: any) => {
             d.dataValues.project_code = projectDetailsMap.get(d.dataValues.attach_to)?.project_code || null;
@@ -1368,7 +1371,7 @@ async listTechnicalSummary(
           count: 0
         };
       }
-      let fetchProjectDetails : any[] = [...new Set(technicalSummary.map((project : any) => project.project_fiscal_rid))];
+      let fetchProjectDetails : any[] = [...new Set(technicalSummary.map((project : any) => project.dataValues.project_fiscal_rid))];
       let createdByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.created_by))];
       let modifiedByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.modified_by))];
       let statusIds: any[] = [...new Set(technicalSummary.map((user: any) => user.status_rid))];
