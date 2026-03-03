@@ -1908,18 +1908,18 @@ export class CaseService {
         activityData.activity_rid = activityresponse.rid;
         await this.activitySchemaService.uploadActivityFiles(files, activityData, accountNumber);
         const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                                                  userId: data.created_by!,
+                                                  userId: userId!,
                                                   eventType: eventTypes.UI_HANDLER
                                                 });
         await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-                                            created_by: data.created_by!,
+                                            created_by: userId!,
                                             account_rid: data.account_rid,
                                             entity_rid: data.case_rid!,
                                             entity_name: entityTypes.REVIEW_PROJECT_EMAIL,
                                             created_by_name: userEventInfo.full_name,
                                             event_type_rid: userEventInfo.event_type_rid,
                                             event_name: eventNames.SENT,
-                                            descriptions:'for '+ caseInfo.case_number,
+                                            descriptions:'for '+ caseInfo.case_name,
                                             case_rid: data.case_rid,
                                           },["case"]);
         // await this.caseSchemaService.addCaseTimeline(

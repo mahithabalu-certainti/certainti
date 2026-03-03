@@ -4155,7 +4155,7 @@ class SchemaService {
         event_type_rid: userEventInfo.event_type_rid,
         event_name: eventNames.ADJUST,
         descriptions:'for '+projectFiscalData.project_code
-      },["account"]);
+      },["project"]);
     }
   }  
   async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {
