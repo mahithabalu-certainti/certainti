@@ -426,6 +426,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
+      level: row.interaction_level_name ?? '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
