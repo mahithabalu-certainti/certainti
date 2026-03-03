@@ -3683,6 +3683,13 @@ export const rawQueries = {
       ON "${schemaName}"."notes_timeline"("${field}");
     `;
   }, 
+    getAccountTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_account_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."account_timeline"("${field}");
+    `;
+  },
   checkCaseExistsForAccount (schemaName : string, accountRid : string) {
     return `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`
   },
