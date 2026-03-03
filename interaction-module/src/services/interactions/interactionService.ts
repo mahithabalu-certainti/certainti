@@ -3389,6 +3389,8 @@ export class InteractionService {
           let batchId : string;
           fourPartPayload = four_part_assessment
           let dynamicQuestions : any[];
+          let intStatusRid : string = ''
+          const findStatus = await this.interactionSchemaService.getStatus();
           if(type === 'four_part_assessment') {
             interactionAssessmentSource = interactionAssessmentSourceType.FPA
             const findFpaRid = await this.interactionSchemaService.fetchAccountFpaInfo(transaction_id, accountNumber);
@@ -3430,6 +3432,10 @@ export class InteractionService {
               }))
             : [];
 
+          if(findStatus.length > 0) {
+            const mapStatus = new Map(findStatus.map((d) => [d.status_name, d.rid]));
+            intStatusRid = interactionAssessmentSource == interactionAssessmentSourceType.RD ? mapStatus.get('In-Active')! : mapStatus.get('Active')!
+          }
           let interactionData = {
             account_rid: company_id,
             project_fiscal_rid: project_id,
@@ -3444,7 +3450,8 @@ export class InteractionService {
             interaction_assessment_source_rid : interactionAssessmentSource,
             transaction_id : transaction_id,
             four_part_assessment_rid : fourPartAssessmentRid,
-            interaction_batch_id : batchId
+            interaction_batch_id : batchId,
+            interaction_status_rid : intStatusRid
           };
           await this.createInteraction(
             interactionData,
@@ -4270,6 +4277,14 @@ async updateInteractionStatus (data : InteractionStatusUpdateRequest, userId : s
       statusCode : HttpStatus.SUCCESS,
       statusMessage : STATUS_MESSAGE.noDataToUpdate
     }
+  }
+}
+async getInteractionAssessmentSource () {
+  const mainDb = await this.getMainDb();
+  const result = await mainDb.query(rawQueries.fetchInteractionAllAssessmentSource());
+  return {
+    statusCode : HttpStatus.SUCCESS,
+    data : result[0]
   }
 }
 }
