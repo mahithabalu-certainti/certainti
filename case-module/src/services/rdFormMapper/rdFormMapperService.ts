@@ -1898,16 +1898,16 @@ private async handleTableConfig(
         rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
         { type: "SELECT" },
       );
-      // if (
-      //   !isFinancialSignOffDone ||
-      //   !isFinancialSignOffDone.financial_working_signoff
-      // ) {
-      //   return {
-      //     statusCode: HttpStatus.FAILED,
-      //     message: HttpStatus.FAILED_MESSAGE,
-      //     errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-      //   };
-      // }
+      if (
+        !isFinancialSignOffDone ||
+        !isFinancialSignOffDone.financial_working_signoff
+      ) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+        };
+      }
 
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
