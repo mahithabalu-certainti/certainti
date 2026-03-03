@@ -2100,10 +2100,10 @@ private async handleTableConfig(
       if (results?.filled_form_url) {
         try {
           const sasUrl = await generateSasUrl(results.filled_form_url, 3000);
-          // results.filled_form_url = sasUrl
-          //   ? await this.fetchUrlAsBase64(sasUrl)
-          //   : null;
            results.filled_form_url = sasUrl
+             ? await this.fetchUrlAsBase64(sasUrl)
+             : null;
+          // results.filled_form_url = sasUrl
   
         } catch (error) {
           logMessage(`Error generating SAS URL: ${error}`);
