@@ -341,7 +341,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         option: item.interaction_assessment_source_name,
       })) || []
     );
-  }, [assessmentSource]);
+  }, [assessmentSource?.data?.data]);
 
   useEffect(() => {
     if (data) {
