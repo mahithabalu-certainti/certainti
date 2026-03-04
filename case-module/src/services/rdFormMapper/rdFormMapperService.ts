@@ -79,6 +79,45 @@ export class RdFormMapperService {
     }
   }
 
+  private async fetchProjectCostDetailsBasedOnCases(caseRid: string, accountRid: string, schemaName: string, orgDb: Sequelize) {
+    const query = `
+    WITH fetch_project_ids AS (
+    SELECT project_fiscal_rid, rid, project_code, project_name ,qre_final
+    FROM ${schemaName}.case_projects 
+    WHERE
+    case_rid = '${caseRid}'
+    AND
+    account_rid = '${accountRid}'
+    ),
+    calculate_cost AS (
+    SELECT 
+    cp.project_code, cp.project_name, cp.rid, cp.qre_final
+    FROM
+    ${schemaName}.project_fiscal cp
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
+    WHERE
+    cp.rid = fpr.project_fiscal_rid
+    AND
+    cp.is_qualified = true
+    GROUP BY
+    cp.project_code, cp.project_name, cp.rid, cp.qre_final
+    ORDER BY cp.project_name ASC
+    )
+    SELECT 
+    array_agg(jsonb_build_object(
+    'project_code', project_code,
+    'project_name', project_name,
+    'qre_final', qre_final
+    )ORDER BY project_name ASC) AS projects
+    FROM
+    calculate_cost
+    `;
+    const [result]: any[] = await orgDb.query(query, { type: QueryTypes.SELECT });
+    return result?.projects || [];
+  }
+
+  
+
   /**
    * Process Federal form filling
    */
@@ -105,6 +144,95 @@ export class RdFormMapperService {
    if (countryNameNorm === 'ireland' || countryNameNorm === 'irl') {
       logMessage('Country is Ireland. Generating dynamic Ireland PDF.');
       const filledFormUrl = await this.generateIrelandCreditPdf(caseRid, schemaName, accountNumber);
+      logMessage(
+        `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
+      );
+      await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
+        caseRid,
+        countryRid,
+        filledFormUrl,
+        orgDb,
+        accountNumber,
+      );
+      logMessage(
+        `Successfully saved federal filled form URL for case: ${caseRid}`,
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: "Federal form processed successfully",
+        data: filledFormUrl
+      };
+    } else if (countryNameNorm === 'united kingdom' || countryNameNorm === 'uk' || countryNameNorm === 'gb') {
+      logMessage('Country is UK. Generating dynamic UK PDF.');
+      // Fetch extracted text from database or assume it's in computed_fields
+      const [calcRow]: any[] = await orgDb.query(
+        `SELECT input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = :caseRid LIMIT 1`,
+        { replacements: { caseRid }, type: QueryTypes.SELECT }
+      );
+      if (!calcRow) throw new Error('No calculation found for this case');
+      const computedFields = typeof calcRow.computed_fields === 'string' ? JSON.parse(calcRow.computed_fields) : calcRow.computed_fields;
+      const [accountInfo]:any[] = await mainDb.query(
+        rawQueries.fetchAccountAndCountryDetails(accountRid),
+        { replacements: { accountRid }, type: QueryTypes.SELECT }
+      );
+      const [caseInfo]:any[] = await orgDb.query(
+        rawQueries.fetchCaseById(schemaName),
+        { replacements: { caseId : caseRid }, type: QueryTypes.SELECT }
+      );
+      
+      const projectInfo = await this.fetchProjectCostDetailsBasedOnCases(caseRid, accountRid, schemaName, orgDb);
+      
+      const projectInfoWithExtras = projectInfo.map((p: any) => ({
+        ...p,
+          "Project QRE": p.qre_final || '-',
+        "Main field of science or technology": "Computer Science",
+        "Existing scientific or technological knowledge it planned to improve": "-",
+        "Advancement in knowledge it aimed to achieve": "-",
+        "Scientific or Technological Uncertainties Faced": "-",
+        "How the project sought to overcome uncertainties": "-",
+
+      }));
+      
+      const fiscalYear = parseInt(caseInfo.fiscal_year);
+      const { startDate, endDate } = calculateFiscalYearDateRange('01/01', '12/30', fiscalYear, '01', '31');
+      
+     let ukFormData = {
+          "business_details": {
+            "business_name": accountInfo.account_name || '',
+            "corporation_tax_unique_taxpayer_reference": "",
+            "correct_corporation_tax_reference": "-",
+            "has_paye_reference": "-",
+            "employer_paye_reference": "-",
+            "has_vat_number": "-",
+            "vat_number": "-",
+            "type_of_business": "-"
+          },
+          "contact_and_agent_details": {
+            "full_name": "-",
+            "senior_officer_responsible": "-",
+            "role_in_company": "-",
+            "confirmation_email": "-",
+            "telephone_number": "-",
+            "has_tax_agent_for_rd_claim": "-"
+          },
+          "accounting_period": {
+            "start_date": startDate,
+            "end_date": endDate,
+            "part_of_long_period_of_account": "-"
+          },
+          "rd_scheme": {
+            "scheme_type": "RDEC"
+          },
+          "rdec_qualifying_expenditure": {
+            "staffing_costs": computedFields.Total?.Employees,
+            "externally_provided_workers":computedFields.Total?.EPW || "-",
+            "number_of_epws": computedFields.Total?.Employees || "",
+            "software": caseInfo.cloud_software,
+            "consumable_items": caseInfo.heat_light_power
+          },
+          "projects": projectInfoWithExtras,
+        }
+      const filledFormUrl = await this.generateUKCreditPdf(ukFormData, caseRid, accountNumber);
       logMessage(
         `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
       );
@@ -616,6 +744,211 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
     doc.end();
   });
 }
+  /**
+   * Generate UK Credit PDF from structured form data
+   */
+  async generateUKCreditPdf(ukFormData: any, caseRid: string, accountNumber: string): Promise<string> {
+    
+    
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    
+
+    doc.fontSize(14).font('Helvetica-Bold').text('UK R&D Credit Summary', { align: 'center' });
+    doc.moveDown(1);
+
+    // Render sections
+    this.renderUKSections(doc, ukFormData);
+
+    // Set up event listeners before ending the document
+    const buffers: Buffer[] = [];
+    doc.on('data', (d: Buffer) => buffers.push(d));
+
+    return new Promise<string>((resolve, reject) => {
+      doc.on('end', async () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        
+        const fs = require('fs');
+        const path = require('path');
+        const localDir = path.resolve(__dirname, '../../../output/pdfs');
+        if (!fs.existsSync(localDir)) {
+          fs.mkdirSync(localDir, { recursive: true });
+        }
+        const localPath = path.join(localDir, `uk_credit_${caseRid}_${Date.now()}.pdf`);
+        fs.writeFileSync(localPath, pdfBuffer);
+        logMessage(`UK PDF stored locally for testing: ${localPath}`);
+        
+        const blobName = `cases/${caseRid}/rdForms/uk_credit_${caseRid}_${Date.now()}.pdf`;
+        try {
+          const blobUrl = await uploadBufferToAzureBlob(pdfBuffer, blobName, accountNumber);
+          logMessage(`UK PDF uploaded to blob: ${blobUrl}`);
+          resolve(blobUrl);
+        } catch (error) {
+          logMessage(`Error uploading UK PDF to blob: ${error}`);
+          reject(error);
+        }
+      });
+      doc.on('error', reject);
+      doc.end();
+    });
+  }
+
+  /**
+   * Render UK form sections in PDF
+   */
+  private renderUKSections(doc: any, ukFormData: any) {
+    const sections = [
+      { key: 'business_details', title: 'Business Details' },
+      { key: 'contact_and_agent_details', title: 'Contact and Agent Details' },
+      { key: 'accounting_period', title: 'Accounting Period' },
+      { key: 'rd_scheme', title: 'R&D Scheme' },
+      { key: 'rdec_qualifying_expenditure', title: 'RDEC Qualifying Expenditure' },
+      { key: 'projects', title: 'Projects' }
+    ];
+
+    sections.forEach(section => {
+      if (ukFormData[section.key]) {
+        if (section.key === 'projects') {
+         // doc.addPage();
+          const left = doc.page.margins.left;
+          doc.fontSize(12).font('Helvetica-Bold').text(section.title, left, doc.y, { underline: true });
+          doc.moveDown(0.5);
+          this.renderProjectsTable(doc, ukFormData[section.key]);
+        } else {
+          const left = doc.page.margins.left;
+          doc.fontSize(12).font('Helvetica-Bold').text(section.title, left, doc.y, { underline: true });
+          doc.moveDown(0.5);
+          this.renderSectionAsTable(doc, ukFormData[section.key]);
+        }
+
+        doc.moveDown(0.5);
+      }
+    });
+  }
+
+  /**
+   * Render section fields
+   */
+  private renderSectionFields(doc: any, sectionData: any) {
+    const specialFields = [
+      "Main Field Of Science Or Technology",
+      "Existing Scientific Or Technological Knowledge It Planned To Improve",
+      "Advancement In Knowledge It Aimed To Achieve",
+      "Scientific Or Technological Uncertainties Faced",
+      "How The Project Sought To Overcome Uncertainties"
+    ];
+    Object.keys(sectionData).forEach(key => {
+      const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      if (specialFields.includes(displayKey)) {
+        doc.fontSize(11).font('Helvetica-Bold').text(displayKey + ':');
+        doc.moveDown(0.5);
+        const value = sectionData[key] || '';
+        doc.fontSize(11).font('Helvetica').text(value !== '-' ? value : ' - ');
+        doc.moveDown(0.5);
+      } else {
+        doc.fontSize(11).font('Helvetica-Bold').text(displayKey + ':', { continued: true }).font('Helvetica').text(' ' + (sectionData[key] || ''));
+        doc.moveDown(0.5);
+      }
+    });
+  }
+
+  /**
+   * Render projects as key-value pairs
+   */
+  private renderProjectsTable(doc: any, projects: any[]) {
+    projects.forEach((project: any, index: number) => {
+      doc.fontSize(11).font('Helvetica-Bold').text(`Project ${index + 1}:`, { underline: true });
+      doc.moveDown(0.5);
+      this.renderSectionFields(doc, project);
+      doc.moveDown(0.5);
+    });
+  }
+
+  /**
+   * Render section as table with borders
+   */
+ private renderSectionAsTable(doc: any, sectionData: any) {
+  const pageWidth = doc.page.width;
+  const left = doc.page.margins.left;
+  const right = doc.page.margins.right;
+  const usableWidth = pageWidth - left - right;
+
+  const colFieldWidth = Math.floor(usableWidth * 0.65);
+  const colValueWidth = usableWidth - colFieldWidth;
+  const rowPadding = 5;
+
+  const startY = doc.y; // Track table start
+  let currentY = startY;
+
+  Object.keys(sectionData).forEach((key) => {
+    const displayKey = key
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+
+    const value = sectionData[key] ?? "";
+
+    const fieldHeight = doc.heightOfString(displayKey, {
+      width: colFieldWidth - rowPadding * 2,
+    });
+
+    const valueHeight = doc.heightOfString(String(value), {
+      width: colValueWidth - rowPadding * 2,
+    });
+
+    const rowHeight =
+      Math.max(fieldHeight, valueHeight) + rowPadding * 2;
+
+    // Page break check
+    if (currentY + rowHeight > doc.page.height - doc.page.margins.bottom) {
+      doc.addPage();
+      currentY = doc.y;
+    }
+
+    // Left cell border
+    doc.rect(left, currentY, colFieldWidth, rowHeight).stroke();
+
+    // Right cell border
+    doc
+      .rect(left + colFieldWidth, currentY, colValueWidth, rowHeight)
+      .stroke();
+
+    // Vertical divider
+    doc
+      .moveTo(left + colFieldWidth, currentY)
+      .lineTo(left + colFieldWidth, currentY + rowHeight)
+      .stroke();
+
+    // Field text
+    doc.font('Helvetica-Bold');
+    doc.text(displayKey, left + rowPadding, currentY + rowPadding, {
+      width: colFieldWidth - rowPadding * 2,
+    });
+
+    // Value text
+    doc.font('Helvetica');
+    doc.text(
+      String(value),
+      left + colFieldWidth + rowPadding,
+      currentY + rowPadding,
+      {
+        width: colValueWidth - rowPadding * 2,
+        align: "left",
+      }
+    );
+
+    currentY += rowHeight;
+  });
+
+  // Draw final bottom border across entire table width
+  doc
+    .moveTo(left, currentY)
+    .lineTo(pageWidth - right, currentY)
+    .stroke();
+
+  doc.y = currentY;
+  doc.moveDown(0.5);
+}
+
   /**
    * Generate PDF for non-fillable forms
    */
