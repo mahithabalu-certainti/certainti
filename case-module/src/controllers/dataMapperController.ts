@@ -245,7 +245,7 @@ async function exportDataMapperForms(req: Request, res: Response): Promise<void>
         }
 
         const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-        const formatDate = (date?: Date | string | null) => {
+        const formatDate = (date?: Date | string | null, format: string = "YYYY-MMM-DD, hh:mm:ss A") => {
             if (!date) return null;
 
             // Convert string to Date if needed
@@ -256,7 +256,7 @@ async function exportDataMapperForms(req: Request, res: Response): Promise<void>
 
             return moment(dateObj)
                 .tz(isValidTZ ? value.timezone : "UTC")
-                .format("YYYY-MMM-DD, hh:mm:ss A");
+                .format(format);
         };
 
         if (result.statusCode == HttpStatus.SUCCESS) {
@@ -274,8 +274,8 @@ async function exportDataMapperForms(req: Request, res: Response): Promise<void>
                             form_name: d.form_name,
                             browse_file: d.browse_file,
                             document_name: d.document_name,
-                            effective_from_date: formatDate(d.effective_from_date),
-                            effective_to_date: d.effective_to_date ? formatDate(d.effective_to_date) : "",
+                            effective_from_date: formatDate(d.effective_from_date, "YYYY-MMM-DD"),
+                            effective_to_date: d.effective_to_date ? formatDate(d.effective_to_date, "YYYY-MMM-DD") : "",
                             country_name: d.country_name,
                             state_name: d.state_name,
                             format: d.format,
