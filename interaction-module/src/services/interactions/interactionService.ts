@@ -1,5 +1,6 @@
 import { Logger } from "winston";
 import {
+  AllStatusType,
   FourPartAssessmentListResponse,
   FourPartAssessmentRequestPayload,
   FourPartAssessmentResponse,
@@ -7,7 +8,7 @@ import {
   ICreateInteraction,
   ICreateTemplateInteraction,
   IEmailMessage,
-  InteractionGraphqlRequest,
+  InteractionStatusUpdateRequest,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -4167,21 +4168,24 @@ async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
     let projectFiscalRids : string[] = []
     if(data.type === 'case') {
       const findProjectIdsBasedOnCase : any = await orgDb.query(fetchProjectFiscalIds(data.case_rid, schemaName));
-      projectFiscalRids.push(findProjectIdsBasedOnCase[0][0].project_fiscal_rid)
+      if(findProjectIdsBasedOnCase[0].length > 0) {
+        for(let id of findProjectIdsBasedOnCase[0]) {
+          projectFiscalRids.push(id.project_fiscal_rid)
+        }
+      } else {
+        projectFiscalRids = ['']
+      }
     }
     let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid, data.project_fiscal_rid, projectFiscalRids, data.type, data.isExport ), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       const fetchCreatedByIds = [...new Set(result.filter((f) => f.created_by !== null).map((d) => d.created_by))];
-      const fetchModifiedByIds = [...new Set(result.filter((f) => f.modified_by !== null).map((d) => d.modified_by))];
-      const mergeBothIds = [...fetchCreatedByIds, ...fetchModifiedByIds];
-      const findUserDetails = await mainDb.query<UserReturnType>(rawQueries.fetchUser(mergeBothIds), {type : QueryTypes.SELECT});
+      const findUserDetails = await mainDb.query<UserReturnType>(rawQueries.fetchUser(fetchCreatedByIds), {type : QueryTypes.SELECT});
       let mapUserDetails = new Map(findUserDetails?.map((u) => [u.rid, `${u.first_name} ${u.last_name}`]));
 
       result = result.map((d) => {
         return {
           ...d,
           created_by_name : mapUserDetails.get(d.created_by) as string,
-          modified_by_name : mapUserDetails.get(d.modified_by) ?? null
         }
       });
 
@@ -4266,11 +4270,10 @@ async getFpaDetailsById (data : any) : Promise<any> {
     if(result[0][0]) {
       const userIds = [];
       let detailsResult = result[0][0] as any
-      userIds.push(detailsResult?.audit_information.created_by,detailsResult?.audit_information.modfied_by ?? '');
+      userIds.push(detailsResult?.audit_information.created_by);
       const findUserDetails : any = await mainDb.query(rawQueries.fetchUser(userIds));
       const mapUser = new Map(findUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]));
       detailsResult.audit_information.created_by_name = mapUser.get(detailsResult.audit_information.created_by);
-      detailsResult.audit_information.modified_by_name = mapUser.get(detailsResult.audit_information.modified_by) ?? null
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.fourPartListSuccess,
@@ -4300,32 +4303,32 @@ async exportFpaList (data : any) {
   const result = await this.getFourPartAssessmentList(data);
   return result;
 }
-async updateInteractionStatus (data : InteractionGraphqlRequest, userId : string) {
+async updateInteractionStatus (data : InteractionStatusUpdateRequest, userId : string) {
   const mainDb = await this.getMainDb();
   const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
   const { Interaction } = await this.interactionModelService.getModels(fetchParentNumber[0][0].r_number);
-
-  await Interaction.update({
-    interaction_status_rid : data.status_rid
+  const getAllStatus = await mainDb.query<AllStatusType>(rawQueries.fetchAllStatus(), {type : QueryTypes.SELECT})
+  const mapStatus = new Map(getAllStatus.map((d) => [d.status_name, d.rid]));
+  const getId = mapStatus.get(data.status_name) ?? ''
+  const [result] = await Interaction.update({
+    interaction_status_rid : getId,
+    modified_by : userId,
+    modified_datetime : new Date()
   }, {
     where : {
       rid : data.rid
     }
   });
-  const payload = {
-    sort : "r_number",
-    sort_by : "ASC",
-    search : "",
-    filters : {},
-    flag : data.flag,
-    fiscal_year : data.fiscal_year,
-    rid : data.rid,
-    account_rid : data.account_rid,
-    case_rid : data.case_rid,
-    project_fiscal_rid : data.project_fiscal_rid,
-    project_rid : data.project_rid
+  if(result > 0) {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.interactionUpdated
+    }
+  } else {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.noDataToUpdate
+    }
   }
-  const result = await this.listInteractionPrjAccount(payload, userId, "graphql", false, []);
-  return result.data;
 }
 }

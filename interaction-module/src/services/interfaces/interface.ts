@@ -285,6 +285,7 @@ export interface IInteractionService {
 }>
 getFpaDetailsById(data : any) : Promise<any>
 exportFpaList(data : any) : Promise<any>
+updateInteractionStatus(data : any, userId : string) : Promise<any>
 }
 
 export interface IWebHookService {

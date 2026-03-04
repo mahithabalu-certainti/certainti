@@ -1454,7 +1454,6 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
     else if(sort.toLowerCase() === FourPartColumns.rd_potential_category) getSortOrder = FourPartColumns.rd_potential_category
     else if(sort.toLowerCase() === FourPartColumns.status) getSortOrder = FourPartColumns.status
     else if(sort.toLowerCase() === FourPartColumns.created_datetime) getSortOrder = FourPartColumns.created_datetime
-    else if(sort.toLowerCase() === FourPartColumns.modified_datetime) getSortOrder = FourPartColumns.modified_datetime
     else if(sort.toLowerCase() === FourPartColumns.project_code) getSortOrder = FourPartColumns.project_code
     else getSortOrder = FourPartColumns.r_number!
     sortValue = `ORDER BY ${getSortOrder} ${sortBy}`
@@ -1470,8 +1469,9 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   let query = 
   `WITH fetch_fpa_data AS (
   SELECT 
-  f.rid, f.r_number, f.status, f.rd_potential_category, f.modified_datetime, f.created_datetime,
-  p.project_code, f.created_by, f.modified_by
+  f.rid, f.r_number, f.status, f.rd_potential_category, f.created_datetime,
+  p.project_code, f.created_by, f.permitted_purpose_status, f.technological_uncertainty_status,
+  f.technological_in_nature_status, f.process_of_experimentation_status
   FROM ${schemaName}.four_part_assessment f
   LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
   LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
@@ -1574,17 +1574,15 @@ export const fetchFpaDetails = (rid : string, schemaName : string) => {
   'status', f.status
   ) AS basic_information,
   jsonb_build_object(
-  'permitted_purpose', f.permitted_purpose,
-  'technological_uncertainty', f.technological_uncertainty,
-  'process_of_experimentation', f.process_of_experimentation,
-  'technological_in_nature', f.technological_in_nature
+  'permitted_purpose', f.permitted_purpose_rationale,
+  'technological_uncertainty', f.technological_uncertainty_rationale,
+  'process_of_experimentation', f.process_of_experimentation_rationale,
+  'technological_in_nature', f.technological_in_nature_rationale
   ) AS four_part_assessment,
   jsonb_build_object(
   'record_id', ai.transaction_id,
   'created_on', ai.created_datetime,
-  'updated_on', ai.modified_datetime,
   'created_by', ai.created_by,
-  'modified_by', ai.modified_by,
   'four_part_assessment_id', f.r_number
   ) AS audit_information
   FROM

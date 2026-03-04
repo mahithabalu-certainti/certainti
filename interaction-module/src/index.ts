@@ -20,7 +20,7 @@ async function startServer() {
   try {
     const { app } = await initExpressServer();
 
-    const { graphqlPath } = await initGraphQLServer(app);
+    //const { graphqlPath } = await initGraphQLServer(app);
     scheduleSubscriptionRenewal();
     schedulerForTriggerAi()
     schdulerForSendEmailInfo()
