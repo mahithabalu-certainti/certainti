@@ -848,10 +848,16 @@ export const applyFilters = (filters: Record<string, any>, whereClause: any) => 
           break;
 
         case 'is_federal':
+          const parsedValue = (value === 'true' || value === true) ? true : (value === 'false' || value === false) ? false : value;
           switch (operator.toLowerCase()) {
-            case 'equals': condition[field] = { [Op.eq]: value }; break;
-            case 'not_equals': condition[field] = { [Op.ne]: value }; break;
-            case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+            case 'equals': condition[field] = { [Op.eq]: parsedValue }; break;
+            case 'not_equals': condition[field] = { [Op.ne]: parsedValue }; break;
+            case 'in':
+              const valueArray = Array.isArray(value) ? value : [value];
+              const parsedArray = valueArray.map(v => (v === 'true' || v === true) ? true : (v === 'false' || v === false) ? false : v);
+              condition[field] = { [Op.in]: parsedArray };
+              break;
+            case 'is_empty': condition[field] = { [Op.is]: null }; break;
           }
           break;
 
