@@ -123,6 +123,21 @@ export class ChildSchemaService {
                     where: { rid: activityRequest.activity_rid },
                 }
             );
+
+            const { MeetingSummary } = await this.caseModelService.getModels("");
+            if (MeetingSummary) {
+                await MeetingSummary.update(
+                    {
+                        status_rid: meetingStatus?.rid,
+                        modified_by: userId,
+                        modified_datetime: new Date(),
+                    },
+                    {
+                        where: { activity_rid: activityRequest.activity_rid },
+                    }
+                );
+            }
+
             if (existingActivity != null) {
                 const startDate =
                     existingActivity.effective_start_datetime !== null
@@ -222,6 +237,21 @@ export class ChildSchemaService {
                     where: { rid: activityRequest.activity_rid },
                 }
             );
+
+            const { MeetingSummary } = await this.caseModelService.getModels("");
+            if (MeetingSummary) {
+                await MeetingSummary.update(
+                    {
+                        status_rid: meetingStatus?.rid,
+                        modified_by: userId,
+                        modified_datetime: new Date(),
+                    },
+                    {
+                        where: { activity_rid: activityRequest.activity_rid },
+                    }
+                );
+            }
+
             if (existingActivity != null) {
                 const startDate =
                     existingActivity.effective_start_datetime !== null
