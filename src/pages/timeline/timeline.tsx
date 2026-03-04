@@ -59,7 +59,10 @@ type IconConfig = {
 // Normalises any entity_name variant (snake_case, mixed case, spaces) → lowercase snake_case
 // e.g. "Project Task" → "project_task", "resource_skill" → "resource_skill"
 const normaliseEntityKey = (value: string): string =>
-  value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
 
 // Icon lookup map: normalised snake_case key → icon component name
 const ICON_KEY_MAP: Record<string, string> = {
@@ -133,7 +136,12 @@ const getTypeIconConfig = (
   const iconKey = ICON_KEY_MAP[normaliseEntityKey(entity_name)];
 
   const iconMap: Record<string, React.ReactNode> = {
-    account: <AccountDeatilsIcon alt='account' className='[&>path]:stroke-white w-[14px] h-[14px]' />,
+    account: (
+      <AccountDeatilsIcon
+        alt='account'
+        className='[&>path]:stroke-white w-[14px] h-[14px]'
+      />
+    ),
     project: <ProjectsSideIcon alt='project' className={cls} />,
     case: <CasesIcon alt='case' className={cls} />,
     call_log: <CallLogIcon alt='call' className={cls} />,
@@ -145,7 +153,9 @@ const getTypeIconConfig = (
     resource: <ResourcesIcon alt='resource' className={cls} />,
     financial: <FinancialIcon alt='financial' className={cls} />,
     interaction: <InteractionsIcon alt='interactions' className={cls} />,
-    historical_submission: <HistorySubmissionIcon alt='history' className={cls} />,
+    historical_submission: (
+      <HistorySubmissionIcon alt='history' className={cls} />
+    ),
     checklist: <ChecklistIcon alt='checklist' className={cls} />,
     timesheet: <TimeSheetIcon alt='timesheet' className={cls} />,
     import: <ImportsIcon alt='imports' className={cls} />,
@@ -158,7 +168,9 @@ const getTypeIconConfig = (
   };
 
   return {
-    icon: iconMap[iconKey] ?? <AccountDeatilsIcon alt='default' className={cls} />,
+    icon: iconMap[iconKey] ?? (
+      <AccountDeatilsIcon alt='default' className={cls} />
+    ),
     bg: bgColor,
   };
 };
