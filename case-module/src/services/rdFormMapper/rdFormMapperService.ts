@@ -1264,16 +1264,16 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
       const pdfBuffer = await pdfBufferPromise;
       let blobName = `cases/${caseRid}/rdForms/${fileName}`;
 
-      // // Store PDF locally for testing
-      // const fs = require('fs');
-      // const path = require('path');
-      // const localDir = path.resolve(__dirname, '../../../output/pdfs');
-      // if (!fs.existsSync(localDir)) {
-      //   fs.mkdirSync(localDir, { recursive: true });
-      // }
-      // const localPath = path.join(localDir, fileName);
-      // fs.writeFileSync(localPath, pdfBuffer);
-      // logMessage(`PDF stored locally for testing: ${localPath}`);
+      // Store PDF locally for testing
+      const fs = require('fs');
+      const path = require('path');
+      const localDir = path.resolve(__dirname, '../../../output/pdfs');
+      if (!fs.existsSync(localDir)) {
+        fs.mkdirSync(localDir, { recursive: true });
+      }
+      const localPath = path.join(localDir, fileName);
+      fs.writeFileSync(localPath, pdfBuffer);
+      logMessage(`PDF stored locally for testing: ${localPath}`);
 
       // Upload directly to blob storage from buffer
       const blobUrl = await uploadBufferToAzureBlob(
@@ -2176,7 +2176,7 @@ private async handleTableConfig(
 
         // Defensive: Validate only allowed characters/operators
         const validationTarget = replaced.replace(/Math\.(min|max)\(/g, "(");
-        if (!/^[0-9+\-*/().,\sNaN?:<>=!&|]+$/.test(validationTarget)) {
+        if (!/^[0-9A-Za-z+\-*/().,\sNaN?:<>=!&|'"]+$/.test(validationTarget)) {
           logMessage(
             `Blocked invalid expression for field ${item.field_label || item.field_id}: ${expression}`,
           );
