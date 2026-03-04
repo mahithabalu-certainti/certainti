@@ -1077,7 +1077,7 @@ class ResourceCostService {
               entity_name: entityTypes.RESOURCE_COST,
               created_by_name: userEventInfo.full_name,
               event_type_rid: userEventInfo.event_type_rid,
-              event_name: eventNames.CREATE,
+              event_name: eventNames.UPDATE,
               descriptions:originalResourceCost.resource_code
             },
             ["account"]);
