@@ -29,6 +29,7 @@ import {
   ManageGroupAccount,
   HistorySubmissionIcon,
   DashboardIcon,
+  FourPartIcon,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -80,6 +81,7 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
   ColorCode,
+  FourPartAssessmentListExportURLParams,
 } from '../../types';
 import { exportProjectData, ProjectTriggerAI } from '../../services/project';
 import {
@@ -115,6 +117,8 @@ import { ExportChecklistList } from '../../services/checklist/checklist-service'
 import { ExportActivityList } from '../../services/activities/activities-service';
 import HistorySubmission from '../case/case-details/history-submission/history-submission';
 import Dashboard from '../account-details-sidebar/sidebar-pages/dashboard/dashboard';
+import { ExportFourPartAssessmentList } from '../../services/four-part-assessment/four-part-assessment-service';
+import { FourPartAssessment } from '../four-part-assessment';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -147,6 +151,7 @@ export const AccountDetails = () => {
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
+  const fourPartAssessmentView = !!searchParams.get('fpa_id');
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -211,6 +216,11 @@ export const AccountDetails = () => {
   const isInteractionsExportEnable = checkPermission(
     permission,
     AllPermissions.INTERACTIONS_EXPORT
+  );
+
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
   );
 
   const isFinancialResourceCostExportEnable = checkPermission(
@@ -408,6 +418,16 @@ export const AccountDetails = () => {
       activity_type: 'all',
     });
 
+  const [fourPartParams, setFourPartParams] =
+    useState<FourPartAssessmentListExportURLParams>({
+      account_rid: '',
+      search: '',
+      filter: {},
+      sort: 'r_number',
+      sort_by: 'ASC',
+      type: 'account',
+    });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -441,7 +461,8 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'interactions' &&
       searchParams.get('tab') !== 'timesheet_project' &&
       searchParams.get('tab') !== 'timesheet_project_resource' &&
-      searchParams.get('tab') !== 'timesheet_project_task'
+      searchParams.get('tab') !== 'timesheet_project_task' &&
+      searchParams.get('list') !== 'four_part_assessment'
     ) {
       return;
     }
@@ -582,6 +603,8 @@ export const AccountDetails = () => {
         ...financialProjectCostParams,
         ...financialProjectPayload,
       });
+    } else if (exportType === 'four_part_assessment') {
+      ExportFourPartAssessmentList(fourPartParams);
     } else if (exportType === 'interactions') {
       if (interactionHistoryId) {
         const projectInteractionHistoryExportPayload = {
@@ -731,6 +754,8 @@ export const AccountDetails = () => {
       return !isTimesheetExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
+      return !isFourPartExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
@@ -895,6 +920,15 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'four_part_assessment':
+        return (
+          <FourPartAssessment
+            setExportType={setExportType}
+            setFourPartAssessmentParams={setFourPartParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='account'
+          />
+        );
       case 'cases':
         return (
           <Cases
@@ -1043,6 +1077,14 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: InteractionsIcon,
+      },
+      {
+        name: 'Four Part Assessment',
+        key: 'four_part_assessment',
+        id: AllModules.FOUR_PART_ASSESSMENT,
+        disabled: disable,
+        hide: disable,
+        icon: FourPartIcon,
       },
       {
         name: 'Cases',

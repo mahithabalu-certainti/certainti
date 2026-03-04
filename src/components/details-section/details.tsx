@@ -8,6 +8,7 @@ interface DetailItem {
   hide?: boolean;
   colSpan?: number;
   hideTooltip?: boolean;
+  ignorePermission?: boolean;
 }
 
 const DetailsSection: React.FC<{

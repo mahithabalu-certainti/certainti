@@ -11,3 +11,4 @@ export * from './project';
 export * from './attachments';
 export * from './interaction';
 export * from './notes';
+export * from './four-part-assessment';

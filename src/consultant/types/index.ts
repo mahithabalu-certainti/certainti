@@ -21,3 +21,4 @@ export * from './checklist';
 export * from './activities';
 export * from './dossier';
 export * from './dashboard';
+export * from './four-part-assessment';

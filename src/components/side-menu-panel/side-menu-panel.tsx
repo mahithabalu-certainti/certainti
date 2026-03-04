@@ -164,6 +164,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('pro_task_id');
     searchParams.delete('origin');
     searchParams.delete('timelineview');
+    searchParams.delete('fpa_id');
+    searchParams.delete('navigate_source');
 
     if (parentKey) {
       // Submenu item - check if navigation is actually needed
