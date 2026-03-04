@@ -700,7 +700,7 @@ class ResourceCostService {
                                 userId: userId!,
                                 eventType: eventTypes.UI_HANDLER
                               });
-            await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+            await this.schemaService.createAccountTimelineEntry(accountNumberFetched!, {
               created_by: userId!,
               account_rid: account_rid,
               entity_rid: createdResourceCost?.rid!,
@@ -1070,7 +1070,7 @@ class ResourceCostService {
                                 userId: userId!,
                                 eventType: eventTypes.UI_HANDLER
                               });
-            await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+            await this.schemaService.createAccountTimelineEntry(accountNumberFetched!, {
               created_by: userId!,
               account_rid: originalResourceCost.account_rid,
               entity_rid: originalResourceCost?.rid!,
