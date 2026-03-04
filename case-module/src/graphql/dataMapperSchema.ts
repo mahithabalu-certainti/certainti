@@ -26,6 +26,8 @@ state_name: String
 status_name: String
 created_by_name: String
 modified_by_name: String
+form_type: String
+is_federal: Boolean
 }
 
 

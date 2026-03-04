@@ -295,7 +295,8 @@ export class DataMapperService implements IDataMapperService {
                     "status_rid",
                     "is_active",
                     "error_message",
-                    "form_type"
+                    "form_type",
+                    "is_federal"
                 ],
                 where: whereClause,
                 offset: 0,
