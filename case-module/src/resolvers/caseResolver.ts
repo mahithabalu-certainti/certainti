@@ -135,7 +135,7 @@ export const caseResolver: IResolvers = {
                 account_rid: data.account_rid,
                 page: 1,
                 limit: 1 ,
-                fiscal_year: 0,
+                fiscalYear: 0,
                 case_rid: data.case_rid
               },
               { rid: data.case_rid }, // Filter by rid (the primary key of the case)
