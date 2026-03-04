@@ -748,7 +748,7 @@ class CaseSchemaService {
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.UPDATE,
-                                    descriptions:caseRequest.case_name,
+                                    descriptions:caseRequest.case_name || existingCase?.case_name || '',
                                     case_rid: caseRequest.case_rid,
                                   },["account","case"]);
         // await this.addCaseManagementTimeline(
