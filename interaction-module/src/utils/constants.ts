@@ -1186,7 +1186,7 @@ export const rawQueries = {
     FROM 
     (
     SELECT interaction_batch_id, 
-    RANK() OVER(PARTITION BY interaction_batch_id ORDER BY created_datetime DESC) AS rank
+    RANK() OVER(ORDER BY created_datetime DESC) AS rank
     FROM
     ${schemaName}.interactions
     )
