@@ -597,10 +597,10 @@ jobs:
           SCHEDULER_EMAIL=scheduler-email    
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16 
-          SUBSCRIPTION_RENEW_TIMER = "subscription-renewal-timer"       
+          SUBSCRIPTION_RENEW_TIMER = "subscription-renewal-timer" 
+          TRIGGER_AI_REFINE_SUMMARY=https://rdc-model-v1.certainti.ai/refine_summary      
           EOF
           echo "$ENV_FILE file created successfully!"
-          
       - name: Copy .env file to VM
         run: |
           scp -o StrictHostKeyChecking=no .env.interactionmodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
