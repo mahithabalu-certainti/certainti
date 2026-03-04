@@ -56,11 +56,72 @@ type IconConfig = {
   bg: string;
 };
 
+// Normalises any entity_name variant (snake_case, mixed case, spaces) → lowercase snake_case
+// e.g. "Project Task" → "project_task", "resource_skill" → "resource_skill"
+const normaliseEntityKey = (value: string): string =>
+  value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+
+// Icon lookup map: normalised snake_case key → icon component name
+const ICON_KEY_MAP: Record<string, string> = {
+  // Account
+  account: 'account',
+  // Project variants
+  project: 'project',
+  // Case variants
+  case: 'case',
+  // Call log variants
+  call_log: 'call_log',
+  // Meeting
+  meeting: 'meeting',
+  // Attachment
+  attachment: 'attachment',
+  // Email variants
+  email: 'email',
+  case_review_project_email: 'email',
+  // Task / Tag / Comments
+  task: 'task',
+  tag: 'task',
+  comments: 'task',
+  // Notes
+  notes: 'notes',
+  // Resource variants (all map to same icon)
+  resource: 'resource',
+  project_resource: 'resource',
+  project_resources: 'resource',
+  resource_skill: 'resource',
+  resource_cost: 'resource',
+  // Financial
+  financial_working: 'financial',
+  // Interaction
+  interaction: 'interaction',
+  // Historical Submission
+  historical_submission: 'historical_submission',
+  // Checklist variants
+  checklist: 'checklist',
+  checklists: 'checklist',
+  // Timesheet
+  timesheet: 'timesheet',
+  // Import
+  import: 'import',
+  // Project Task variants
+  project_task: 'project_task',
+  // Technical Summary
+  technical_summary: 'technical_summary',
+  tech_summary: 'technical_summary',
+  // Settings
+  settings: 'settings',
+  // Case Team
+  case_team: 'case_team',
+  // Manual RD Assessment
+  manual_rd_assessment: 'manual_rd_assessment',
+  // Dossier
+  dossier: 'dossier',
+};
+
 const getTypeIconConfig = (
   entity_name: string,
   entitytype: string
 ): IconConfig => {
-  const type = entity_name;
   const bgColor =
     entitytype === 'account'
       ? ColorCode.accountBgColor
@@ -68,273 +129,54 @@ const getTypeIconConfig = (
         ? ColorCode.projectBgColor
         : ColorCode.caseBgColor;
 
-  switch (type) {
-    case 'Account':
-      return {
-        icon: (
-          <AccountDeatilsIcon
-            alt='account'
-            className={`[&>path]:stroke-white w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Project':
-    case 'project':
-      return {
-        icon: (
-          <ProjectsSideIcon
-            alt='project'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Case':
-      return {
-        icon: (
-          <CasesIcon
-            alt='case'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Call log':
-      return {
-        icon: (
-          <CallLogIcon
-            alt='call'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Meeting':
-      return {
-        icon: (
-          <MeetingIcon
-            alt='meeting'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Attachment':
-      return {
-        icon: (
-          <AttachmentsSideIcon
-            alt='attachment'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Email':
-    case 'Case Review Project Email':
-      return {
-        icon: (
-          <DraftEmailIcon
-            alt='email'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Task':
-    case 'Tag':
-    case 'Comments':
-      return {
-        icon: (
-          <TaskCreateIcon
-            alt='task'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Notes':
-      return {
-        icon: (
-          <NotesSideIcon
-            alt='note'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'resource':
-    case 'Resource':
-    case 'Project Resources':
-    case 'Resource Skill':
-    case 'Resource Cost':
-    case 'project_resource':
-    case 'resource_cost':
-    case 'resource_skill':
-      return {
-        icon: (
-          <ResourcesIcon
-            alt='resource'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Financial Working':
-      return {
-        icon: (
-          <FinancialIcon
-            alt='financial'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Interaction':
-      return {
-        icon: (
-          <InteractionsIcon
-            alt='interactions'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Historical Submission':
-      return {
-        icon: (
-          <HistorySubmissionIcon
-            alt='history'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Checklists':
-    case 'Checklist':
-      return {
-        icon: (
-          <ChecklistIcon
-            alt='checklist'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Timesheet':
-      return {
-        icon: (
-          <TimeSheetIcon
-            alt='timesheet'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Import':
-      return {
-        icon: (
-          <ImportsIcon
-            alt='imports'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Project Task':
-    case 'project_task':
-      return {
-        icon: (
-          <ProjectTaskIcon
-            alt='project-task'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Technical Summary':
-      return {
-        icon: (
-          <TechSummaryIcon
-            alt='tech-summary'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Settings':
-      return {
-        icon: (
-          <SettingIcon
-            alt='setting'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Case Team':
-      return {
-        icon: (
-          <CaseTeamIcon
-            alt='case-team'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Manual RD Assessment':
-      return {
-        icon: (
-          <ActionsIcon
-            alt='rd-assessment'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    case 'Dossier':
-      return {
-        icon: (
-          <DossierIcon
-            alt='dossier'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-    default:
-      return {
-        icon: (
-          <AccountDeatilsIcon
-            alt='default'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        ),
-        bg: bgColor,
-      };
-  }
+  const cls = `[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`;
+  const iconKey = ICON_KEY_MAP[normaliseEntityKey(entity_name)];
+
+  const iconMap: Record<string, React.ReactNode> = {
+    account: <AccountDeatilsIcon alt='account' className='[&>path]:stroke-white w-[14px] h-[14px]' />,
+    project: <ProjectsSideIcon alt='project' className={cls} />,
+    case: <CasesIcon alt='case' className={cls} />,
+    call_log: <CallLogIcon alt='call' className={cls} />,
+    meeting: <MeetingIcon alt='meeting' className={cls} />,
+    attachment: <AttachmentsSideIcon alt='attachment' className={cls} />,
+    email: <DraftEmailIcon alt='email' className={cls} />,
+    task: <TaskCreateIcon alt='task' className={cls} />,
+    notes: <NotesSideIcon alt='note' className={cls} />,
+    resource: <ResourcesIcon alt='resource' className={cls} />,
+    financial: <FinancialIcon alt='financial' className={cls} />,
+    interaction: <InteractionsIcon alt='interactions' className={cls} />,
+    historical_submission: <HistorySubmissionIcon alt='history' className={cls} />,
+    checklist: <ChecklistIcon alt='checklist' className={cls} />,
+    timesheet: <TimeSheetIcon alt='timesheet' className={cls} />,
+    import: <ImportsIcon alt='imports' className={cls} />,
+    project_task: <ProjectTaskIcon alt='project-task' className={cls} />,
+    technical_summary: <TechSummaryIcon alt='tech-summary' className={cls} />,
+    settings: <SettingIcon alt='setting' className={cls} />,
+    case_team: <CaseTeamIcon alt='case-team' className={cls} />,
+    manual_rd_assessment: <ActionsIcon alt='rd-assessment' className={cls} />,
+    dossier: <DossierIcon alt='dossier' className={cls} />,
+  };
+
+  return {
+    icon: iconMap[iconKey] ?? <AccountDeatilsIcon alt='default' className={cls} />,
+    bg: bgColor,
+  };
 };
 
-// Maps raw API entity_name values to human-readable display labels
-const ENTITY_NAME_MAP: Record<string, string> = {
-  project: 'Project',
-  project_resource: 'Project Resources',
-  project_task: 'Project Task',
-  resource: 'Resource',
-  resource_cost: 'Resource Cost',
-  resource_skill: 'Resource Skill',
-  call_log: 'Call Log',
-  case_team: 'Case Team',
-  historical_submission: 'Historical Submission',
-  financial_working: 'Financial Working',
-  tech_summary: 'Technical Summary',
-  case_review_project_email: 'Case Review Project Email',
-};
-
+/**
+ * Converts any entity_name from the API into a human-readable Title Case label.
+ * - snake_case  → "Snake Case"   (e.g. "call_log"   → "Call Log")
+ * - Mixed space → "Title Case"   (e.g. "Case team"  → "Case Team")
+ * - Already readable strings are returned as-is (e.g. "Meeting" → "Meeting")
+ */
 const formatEntityName = (entity_name: string): string => {
   if (!entity_name) return entity_name;
-  const lower = entity_name.toLowerCase().replace(/ /g, '_');
-  return ENTITY_NAME_MAP[lower] ?? entity_name;
+  // Normalise: replace spaces/hyphens with underscores, then split and capitalise
+  return entity_name
+    .replace(/[-\s]+/g, '_')
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 };
 
 // Width of time column (px) — keep in sync with the absolute line position
