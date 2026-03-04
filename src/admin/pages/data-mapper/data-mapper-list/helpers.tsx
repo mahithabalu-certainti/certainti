@@ -34,6 +34,11 @@ const nonReqTextfieldOptions: { label: string; value: string }[] = [
   { label: 'Is Empty', value: 'is_empty' },
 ];
 
+const booleanOptions: { label: string; value: string }[] = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' },
+];
+
 export const getDataMapperFilterFields = (
   statusOptions: { label: string; value: string }[],
   countryOptions: { label: string; value: string }[],
@@ -58,6 +63,16 @@ export const getDataMapperFilterFields = (
       hide:
         !permissionMap?.['form_name']?.read &&
         !permissionMap?.['form_name']?.edit,
+    },
+    {
+      label: 'Is Federal?',
+      name: 'is_federal',
+      type: 'enumSelect',
+      options: booleanOptions,
+      operatorOption: enumOperator,
+      hide:
+        !permissionMap?.['is_federal']?.read &&
+        !permissionMap?.['is_federal']?.edit,
     },
     {
       label: 'Country',

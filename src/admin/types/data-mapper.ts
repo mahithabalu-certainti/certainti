@@ -93,6 +93,7 @@ export type DataMapperListItem = {
   status_name: string;
   created_by_name: string;
   modified_by_name: string | null;
+  is_federal: boolean;
 };
 
 export interface DataMapperListResponse {

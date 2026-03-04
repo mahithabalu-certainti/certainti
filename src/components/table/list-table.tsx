@@ -716,7 +716,21 @@ const ListTable = <T extends RowData>({
 
     fieldsToEdit.forEach((fieldId) => {
       const targetColumn = visibleColumns.find((col) => col.id === fieldId);
+
+      // For dependent fields (not the clicked column), also check conditionallyEdit
       if (targetColumn?.editable) {
+        if (fieldId !== column.id && targetColumn.conditionallyEdit?.length) {
+          const canEditDependent = targetColumn.conditionallyEdit.every(
+            (cond) => {
+              const cellValue = row[cond.key];
+              if (Array.isArray(cond.matchValue)) {
+                return cond.matchValue.includes(cellValue as never);
+              }
+              return cellValue === cond.matchValue;
+            }
+          );
+          if (!canEditDependent) return;
+        }
         let editingValue: string | number;
 
         if (targetColumn.field?.getFieldData) {

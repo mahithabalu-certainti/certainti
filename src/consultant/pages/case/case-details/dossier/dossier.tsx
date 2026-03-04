@@ -269,11 +269,8 @@ const Dossier: React.FC<DossierProps> = ({
   const handleSearchReset = () => {
     setResetSearch(false);
   };
-  const { refetch: refetchRDCreditStatus } = useRDCreditStatus(
-    accountid,
-    caseId ?? '',
-    false
-  );
+  const { refetch: refetchRDCreditStatus, isLoading: isRDCreditStatusLoading } =
+    useRDCreditStatus(accountid, caseId ?? '', false);
   const { mutate: refetchDossierInitiate } = useDossierInitiate();
   const { mutate: refetchDossierSheetStatus } = useDossierSheetStatus();
   const handleRefresh = async () => {
@@ -352,7 +349,7 @@ const Dossier: React.FC<DossierProps> = ({
   );
 
   const handleGenerateDossierSheet = async () => {
-    if (dossierCreditStatus === 'COMPLETED') {
+    if (caseDetails?.is_initiated) {
       refetchDossierSheetStatus({
         accountRid: accountid,
         caseRid: caseId ?? '',
@@ -547,7 +544,7 @@ const Dossier: React.FC<DossierProps> = ({
       hide: !showTableControls,
     },
     {
-      label: 'Dossier Package',
+      label: caseDetails?.is_initiated ? 'Download Dossier' : 'Create Dossier',
       variant: 'outlined' as const,
       disabled:
         !caseDetails?.financial_working_signoff ||
@@ -604,151 +601,184 @@ const Dossier: React.FC<DossierProps> = ({
         activityMenuItems={activityMenuItems}
         onFilterChange={handleFilterChange}
       />
-      {isTimeLineView ? (
-        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
-          <Timeline entitytype='case' />
-        </div>
-      ) : (
-        <>
-          <SectionHeader
-            title='Dossier'
-            titleIcon={
-              <DossierIcon
-                alt='dossier-header-icon'
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-              />
-            }
-            iconBg={ColorCode.caseBgColor}
-            bgType='circle'
-            count={count}
-            showItemCount={showTableControls}
-            buttons={headerButtons}
-          />
+      {/* ── Content area with RD Credit Status loading overlay ── */}
+      <div style={{ position: 'relative' }}>
+        {isRDCreditStatusLoading && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(255, 255, 255, 0.65)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 50,
+              borderRadius: '2px',
+            }}
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                border: '3px solid #CBD6E2',
+                borderTopColor: '#425A76',
+                borderRadius: '50%',
+                animation: 'dossier-spin 0.75s linear infinite',
+              }}
+            />
+            <style>{`
+              @keyframes dossier-spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        )}
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline entitytype='case' />
+          </div>
+        ) : (
+          <>
+            <SectionHeader
+              title='Dossier'
+              titleIcon={
+                <DossierIcon
+                  alt='dossier-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              }
+              iconBg={ColorCode.caseBgColor}
+              bgType='circle'
+              count={count}
+              showItemCount={showTableControls}
+              buttons={headerButtons}
+            />
 
-          <SectionHeaderTab
-            tabs={tabs}
-            onTabChange={handleTabChange}
-            defaultValue={tabParam}
-          />
-          {caseDetails?.case_total_qualified_projects === 0 ||
-          caseDetails?.case_total_qualified_projects === '0' ? (
-            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
-              <div>
-                <React.Suspense fallback={null}>
-                  <DetailsKeyContactErrorIcon alt='key-contact' />
-                </React.Suspense>
+            <SectionHeaderTab
+              tabs={tabs}
+              onTabChange={handleTabChange}
+              defaultValue={tabParam}
+            />
+            {caseDetails?.case_total_qualified_projects === 0 ||
+            caseDetails?.case_total_qualified_projects === '0' ? (
+              <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+                <div>
+                  <React.Suspense fallback={null}>
+                    <DetailsKeyContactErrorIcon alt='key-contact' />
+                  </React.Suspense>
+                </div>
+                <div>
+                  <span className='font-bold mr-1 capitalize'>
+                    Qualified Projects
+                  </span>
+                  -
+                  <span className='ml-1 font-medium'>
+                    No Qualified Projects assigned to this case
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className='font-bold mr-1 capitalize'>
-                  Qualified Projects
-                </span>
-                -
-                <span className='ml-1 font-medium'>
-                  No Qualified Projects assigned to this case
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className='border border-t-0 border-[#CBD6E2]'>
-              {tabParam === 'financial_workings' &&
-                (!isFinancialView ? (
-                  <AccessRestricted />
-                ) : (
-                  <FinancialWorkingForm
-                    caseDetails={caseDetails}
-                    setDossierFinancialStatus={setDossierFinancialStatus}
-                    dossierFinancialStatus={dossierFinancialStatus}
-                    financialData={financialData}
-                    setFinancialData={setFinancialData}
-                    refetchCaseDetails={refetchCaseDetails}
-                    isDetailLoading={isDetailLoading}
+            ) : (
+              <div className='border border-t-0 border-[#CBD6E2]'>
+                {tabParam === 'financial_workings' &&
+                  (!isFinancialView ? (
+                    <AccessRestricted />
+                  ) : (
+                    <FinancialWorkingForm
+                      caseDetails={caseDetails}
+                      setDossierFinancialStatus={setDossierFinancialStatus}
+                      dossierFinancialStatus={dossierFinancialStatus}
+                      financialData={financialData}
+                      setFinancialData={setFinancialData}
+                      refetchCaseDetails={refetchCaseDetails}
+                      isDetailLoading={isDetailLoading}
+                    />
+                  ))}
+                {tabParam === 'summary' && <DossierSummary />}
+
+                {tabParam === 'qualified_projects' && (
+                  <QualifiedProjects
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setQualifiedProjectsParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    fiscalYear={caseDetails?.fiscal_year ?? 0}
                   />
-                ))}
-              {tabParam === 'summary' && <DossierSummary />}
+                )}
+                {tabParam === 'rd_forms' && (
+                  <RDForm
+                    caseDetails={caseDetails}
+                    isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+                    isDetailLoading={isDetailLoading}
+                    refetchCaseDetails={refetchCaseDetails}
+                  />
+                )}
 
-              {tabParam === 'qualified_projects' && (
-                <QualifiedProjects
-                  refreshTrigger={refreshTrigger}
-                  currentPage={currentPage}
-                  appliedFilters={appliedFilters}
-                  setCount={setCount}
-                  setExportParams={setQualifiedProjectsParams}
-                  setExportType={setExportType}
-                  columnAnchorEl={columnAnchorEl}
-                  setColumnAnchorEl={setColumnAnchorEl}
-                  searchValue={searchText}
-                  fiscalYear={caseDetails?.fiscal_year ?? 0}
-                />
-              )}
-              {tabParam === 'rd_forms' && (
-                <RDForm
-                  caseDetails={caseDetails}
-                  isFinancialWorkingSignoff={isFinancialWorkingSignoff}
-                  isDetailLoading={isDetailLoading}
-                  refetchCaseDetails={refetchCaseDetails}
-                />
-              )}
+                {tabParam === 'project_documents' && (
+                  <ProjectDocuments
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setProjectDocumentsParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                  />
+                )}
 
-              {tabParam === 'project_documents' && (
-                <ProjectDocuments
-                  refreshTrigger={refreshTrigger}
-                  currentPage={currentPage}
-                  appliedFilters={appliedFilters}
-                  setCount={setCount}
-                  setExportParams={setProjectDocumentsParams}
-                  setExportType={setExportType}
-                  columnAnchorEl={columnAnchorEl}
-                  setColumnAnchorEl={setColumnAnchorEl}
-                  searchValue={searchText}
-                />
-              )}
+                {tabParam === 'technical_summary' && (
+                  <TechnicalSummary
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setTechnicalSummaryParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    fiscalYear={caseDetails?.fiscal_year ?? 0}
+                  />
+                )}
 
-              {tabParam === 'technical_summary' && (
-                <TechnicalSummary
-                  refreshTrigger={refreshTrigger}
-                  currentPage={currentPage}
-                  appliedFilters={appliedFilters}
-                  setCount={setCount}
-                  setExportParams={setTechnicalSummaryParams}
-                  setExportType={setExportType}
-                  columnAnchorEl={columnAnchorEl}
-                  setColumnAnchorEl={setColumnAnchorEl}
-                  searchValue={searchText}
-                  fiscalYear={caseDetails?.fiscal_year ?? 0}
-                />
-              )}
+                {tabParam === 'resource_summary' && (
+                  <ResourceSummary
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setResourceSummaryParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                  />
+                )}
 
-              {tabParam === 'resource_summary' && (
-                <ResourceSummary
-                  refreshTrigger={refreshTrigger}
-                  currentPage={currentPage}
-                  appliedFilters={appliedFilters}
-                  setCount={setCount}
-                  setExportParams={setResourceSummaryParams}
-                  setExportType={setExportType}
-                  columnAnchorEl={columnAnchorEl}
-                  setColumnAnchorEl={setColumnAnchorEl}
-                  searchValue={searchText}
-                />
-              )}
-
-              {tabParam === 'approval_status' && (
-                <ClosingRemarks
-                  refreshTrigger={refreshTrigger}
-                  currentPage={currentPage}
-                  appliedFilters={appliedFilters}
-                  setCount={setCount}
-                  setExportParams={setAuditTimelineParams}
-                  setExportType={setExportType}
-                  columnAnchorEl={columnAnchorEl}
-                  setColumnAnchorEl={setColumnAnchorEl}
-                  searchValue={searchText}
-                />
-              )}
-            </div>
-          )}
-        </>
-      )}
+                {tabParam === 'approval_status' && (
+                  <ClosingRemarks
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setAuditTimelineParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
       <CloseCaseModal
         open={isModalOpen}
         onClose={handleCloseModal}

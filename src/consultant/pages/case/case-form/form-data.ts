@@ -201,8 +201,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Heating & Lighting Cost: your estimated Heating & Lighting Cost.',
+              tooltipMessage: 'Actual Heating & Lighting Cost.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -226,8 +225,7 @@ export const CaseFormData = (
             placeholder: 'Enter Total NonLabor Cost',
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Total NonLabor Cost: your estimated Total NonLabor Cost.',
+              tooltipMessage: 'Actual Total NonLabor Cost.',
             },
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
@@ -249,7 +247,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Tax Liability: your estimated tax due.',
+              tooltipMessage: 'Actual Tax Liability Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -274,8 +272,7 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Employers Pension Contribution: your estimated pension contribution due.',
+                tooltipMessage: 'Actual Employer Pension Contribution Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -301,8 +298,7 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Material & Software Cost: your estimated cost due.',
+                tooltipMessage: 'Actual Material & Software Cost Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -325,7 +321,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Subcontracts: your estimated subcontracts due.',
+              tooltipMessage: 'Actual Subcontracts Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -347,8 +343,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Cloud Software: your estimated cloud software due.',
+              tooltipMessage: 'Actual Cloud Software Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -370,8 +365,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Unpaid Amounts (+): your estimated unpaid amounts due.',
+              tooltipMessage: 'Actual Unpaid Amounts Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -395,8 +389,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Unpaid Amounts (-): your estimated unpaid amounts due.',
+              tooltipMessage: 'Actual Unpaid Amounts Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -420,8 +413,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Aggregated Turnover: your estimated aggregated turnover due.',
+              tooltipMessage: 'Actual Aggregated Turnover Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -443,8 +435,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Total Expenses: your estimated total expenses due.',
+              tooltipMessage: 'Actual Total Expenses Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -466,8 +457,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Taxable Income: your estimated taxable income due.',
+              tooltipMessage: 'Actual Taxable Income Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -489,8 +479,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Export Sales Revenue: your estimated export sales revenue due.',
+              tooltipMessage: 'Actual Export Sales Revenue Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -515,8 +504,7 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Lease Costs of Computers: your estimated lease costs of computers due.',
+                tooltipMessage: 'Actual Lease Costs of Computers Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -543,7 +531,7 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Illinois RD Credit Partnership (Corp): your estimated illinois rd credit partnership (corp) due.',
+                  'Actual Illinois RD Credit Partnership (Corp) Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -573,7 +561,7 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Illinois Research Payments (Corp Only): your estimated illinois research payments (corp only) due.',
+                  'Actual Illinois Research Payments (Corp Only) Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -603,8 +591,7 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Basic Research Payments: your estimated basic research payments due.',
+                tooltipMessage: 'Actual Basic Research Payments Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -631,7 +618,7 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Qualified Computer Rental Time Expenses: your estimated qualified computer rental time expenses.',
+                  'Actual Qualified Computer Rental Time Expenses Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -658,7 +645,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Gross Receipts: your estimated gross receipts.',
+              tooltipMessage: 'Actual Gross Receipts.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -683,8 +670,7 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Credit Carry Forward PY: your estimated credit carry forward PY.',
+                tooltipMessage: 'Actual Credit Carry Forward PY.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -707,8 +693,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Other Credits Total: your estimated other credits total.',
+              tooltipMessage: 'Actual Other Credits Total.',
             },
             regexErrorMessage:
               'Numbers allowed, up to 16 digits and 2 decimal places',
@@ -730,7 +715,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Other: your estimated other due.',
+              tooltipMessage: 'Actual Other Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
