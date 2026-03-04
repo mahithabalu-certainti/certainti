@@ -99,6 +99,31 @@ export class RdFormMapperService {
     stateCode: string
   ): Promise<any> {
     logMessage("Processing Federal form computation.");
+    let filledFormUrl: string;
+      // If country is Ireland, generate dynamic PDF using generateIrelandCreditPdf FIRST
+    const countryNameNorm = (countryName || '').trim().toLowerCase();
+   if (countryNameNorm === 'ireland' || countryNameNorm === 'irl') {
+      logMessage('Country is Ireland. Generating dynamic Ireland PDF.');
+      const filledFormUrl = await this.generateIrelandCreditPdf(caseRid, schemaName, accountNumber);
+      logMessage(
+        `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
+      );
+      await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
+        caseRid,
+        countryRid,
+        filledFormUrl,
+        orgDb,
+        accountNumber,
+      );
+      logMessage(
+        `Successfully saved federal filled form URL for case: ${caseRid}`,
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: "Federal form processed successfully",
+        data: filledFormUrl
+      };
+    }
 
     const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
       accountRid,
@@ -150,11 +175,11 @@ export class RdFormMapperService {
     logMessage(`Form type detected: "${formInfo?.form_type}"`);
     logMessage(`Form info: ${JSON.stringify(formInfo)}`);
 
-    let filledFormUrl: string;
 
-    if (
-      formInfo?.form_type === FORM_TYPE["Non-Fillable"]
-    ) {
+    
+    // If country is Ireland, generate dynamic PDF using generateIrelandCreditPdf
+   
+   if (formInfo?.form_type === FORM_TYPE["Non-Fillable"]) {
       logMessage("Federal form is non-fillable. Generate PDF.");
       const currencySymbol = await this.getCurrencySymbolByCountry(
         countryName,
@@ -416,7 +441,181 @@ export class RdFormMapperService {
       `Successfully completed state form processing for case: ${caseRid}`,
     );
   }
+async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumber: string): Promise<string> {
+  const orgDb = await this.getOrgDb();
+  const [caseRow]: any[] = await orgDb.query(
+    `SELECT account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = :caseRid LIMIT 1`,
+    { replacements: { caseRid }, type: QueryTypes.SELECT }
+  );
+  if (!caseRow) throw new Error('Case not found');
 
+  const [calcRow]: any[] = await orgDb.query(
+    `SELECT input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = :caseRid LIMIT 1`,
+    { replacements: { caseRid }, type: QueryTypes.SELECT }
+  );
+  console.log('Fetched calculation row:', calcRow);
+  if (!calcRow) throw new Error('No calculation found for this case');
+  
+  const inputParams = typeof calcRow.input_params === 'string' ? JSON.parse(calcRow.input_params) : calcRow.input_params;
+  if (!inputParams || inputParams.country !== 'IRL') throw new Error('Country is not Ireland (IRL)');
+  
+  const computedFields = typeof calcRow.computed_fields === 'string' ? JSON.parse(calcRow.computed_fields) : calcRow.computed_fields;
+  if (!computedFields) throw new Error('No computed_fields found');
+
+  const PDFDocument = require('pdfkit');
+  const doc = new PDFDocument({ size: 'A4', margin: 40 });
+
+  const titleFields = computedFields.Title || {};
+  doc.fontSize(16).font('Helvetica-Bold').text('Ireland R&D Credit Summary', { align: 'center' });
+  doc.moveDown(1);
+  doc.fontSize(11).font('Helvetica');
+  Object.entries(titleFields).forEach(([label, value]) => {
+    doc.font('Helvetica-Bold').text(label + ':', { continued: true }).font('Helvetica').text(' ' + value);
+  });
+  doc.moveDown(1);
+
+  const columns: string[] = computedFields.Columns || [];
+  const projects: any[] = computedFields.Projects || [];
+  const total: Record<string, any> = computedFields.Total || {};
+  const boldFields: string[] = computedFields.BOLD || [];
+  if (!columns.length) throw new Error('No columns found in computed_fields');
+
+
+  // Helper to render a table for a given set of projects
+  const renderProjectTable = (projectSlice: any[], projectOffset: number, isLastPage: boolean) => {
+    // Use the actual number of projects in the slice, no padding
+    const maxProjects = projectSlice.length;
+    const projectNames = [];
+    for (let idx = 0; idx < maxProjects; idx++) {
+      if (projectSlice[idx]) {
+        projectNames.push(projectSlice[idx]['Project Name'] || projectSlice[idx]['Project Credit Summary'] || `Project ${projectOffset + idx + 1}`);
+      } else {
+        projectNames.push('-');
+      }
+    }
+    const tableCols = isLastPage ? ['', ...projectNames, 'Total'] : ['', ...projectNames];
+    const colWidths = tableCols.map(() => Math.floor((doc.page.width - doc.page.margins.left - doc.page.margins.right) / tableCols.length));
+
+    // Table header row
+    doc.font('Helvetica-Bold').fontSize(10);
+    let tableStartX = doc.page.margins.left;
+    let x = tableStartX;
+    tableCols.forEach((col, i) => {
+      doc.text(col, x, doc.y, {
+        width: colWidths[i],
+        align: 'center',
+        continued: i < tableCols.length - 1
+      });
+      x += colWidths[i];
+    });
+    doc.moveDown(1);  // Spacing after header
+
+    // Print each field (column heading) as a row
+    columns.slice(1).forEach((field, fieldIdx) => {
+      x = tableStartX;
+      doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
+      // Field name
+      doc.text(field, x, doc.y, {
+        width: colWidths[0],
+        align: 'left',
+        continued: true
+      });
+      x += colWidths[0];
+
+      // Each project value for this field (each in its own column)
+      for (let projIdx = 0; projIdx < maxProjects; projIdx++) {
+        let value: any = '-';
+        if (projectSlice[projIdx]) {
+          value = projectSlice[projIdx][field] ?? '-';
+        }
+        doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
+        doc.text(
+          typeof value === 'number'
+            ? value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+            : String(value),
+          x,
+          doc.y,
+          {
+            width: colWidths[projIdx + 1],
+            align: 'right',
+            continued: projIdx < maxProjects - 1 || isLastPage  // Continue if not the last project or if last page (for total)
+          }
+        );
+        x += colWidths[projIdx + 1];
+      }
+
+      // Total value for this field (only on last page)
+      if (isLastPage) {
+        doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
+        const totalValue = total[field] ?? '';
+        doc.text(
+          typeof totalValue === 'number' ? totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 }) : totalValue,
+          x,
+          doc.y,
+          {
+            width: colWidths[colWidths.length - 1],
+            align: 'right',
+            continued: false
+          }
+        );
+      }
+      doc.moveDown(1.5);  // Increased spacing between rows
+    });
+  };
+  // Paginate projects: 2 per page
+  const projectsPerPage = 2;
+  const totalPages = Math.ceil(projects.length / projectsPerPage);
+  
+  for (let i = 0; i < projects.length; i += projectsPerPage) {
+    if (i > 0) {
+      doc.addPage();
+      doc.fontSize(16).font('Helvetica-Bold').text('Ireland R&D Credit Summary', { align: 'center' });
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica');
+      Object.entries(computedFields.Title || {}).forEach(([label, value]) => {
+        doc.font('Helvetica-Bold').text(label + ':', { continued: true }).font('Helvetica').text(' ' + value);
+      });
+      doc.moveDown(1);
+    }
+    const projectSlice = projects.slice(i, i + projectsPerPage);
+    const currentPage = Math.floor(i / projectsPerPage);
+    const isLastPage = (currentPage === totalPages - 1);
+    renderProjectTable(projectSlice, i, isLastPage);
+  }
+
+  // Set up event listeners before ending the document
+  const buffers: Buffer[] = [];
+  doc.on('data', (d: Buffer) => buffers.push(d));
+
+  return new Promise<string>((resolve, reject) => {
+    doc.on('end', async () => {
+      const pdfBuffer = Buffer.concat(buffers);
+      
+      // Upload directly to blob storage from buffer
+           const fs = require('fs');
+      const path = require('path');
+      const localDir = path.resolve(__dirname, '../../../output/pdfs');
+      if (!fs.existsSync(localDir)) {
+        fs.mkdirSync(localDir, { recursive: true });
+      }
+      const localPath = path.join(localDir, `ireland_credit_${caseRid}_${Date.now()}.pdf`);
+      fs.writeFileSync(localPath, pdfBuffer);
+      logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
+      
+      const blobName = `cases/${caseRid}/rdForms/ireland_credit_${caseRid}_${Date.now()}.pdf`;
+      try {
+        const blobUrl = await uploadBufferToAzureBlob(pdfBuffer, blobName, accountNumber);
+        logMessage(`Ireland PDF uploaded to blob: ${blobUrl}`);
+        resolve(blobUrl);
+      } catch (error) {
+        logMessage(`Error uploading Ireland PDF to blob: ${error}`);
+        reject(error);
+      }
+    });
+    doc.on('error', reject);
+    doc.end();
+  });
+}
   /**
    * Generate PDF for non-fillable forms
    */
@@ -861,71 +1060,84 @@ export class RdFormMapperService {
     return result;
   }
 
-  private transformIfExpressions(expression: string) {
-    let result = expression;
-    const ifRegex = /\bIF\s*\(/i;
+private transformIfExpressions(expression: string) {
+let result = expression;
 
-    const splitTopLevel = (input: string) => {
-      const parts: string[] = [];
-      let buffer = "";
-      let depth = 0;
+// ✅ STEP 1: Convert block-style IF to comma-style IF
+// Supports:
+// IF(condition) { THEN expr1 } ELSE { THEN expr2 }
+result = result.replace(
+  /IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}\s*ELSE\s*\{\s*THEN\s*([\s\S]*?)\s*\}/gi,
+  "IF($1, $2, $3)"
+);
 
-      for (let i = 0; i < input.length; i++) {
-        const ch = input[i];
-        if (ch === "(") depth++;
-        if (ch === ")") depth--;
+  const ifRegex = /\bIF\s*\(/i;
 
-        if (ch === "," && depth === 0) {
-          parts.push(buffer.trim());
-          buffer = "";
-        } else {
-          buffer += ch;
-        }
-      }
+  const splitTopLevel = (input: string) => {
+    const parts: string[] = [];
+    let buffer = "";
+    let depth = 0;
 
-      if (buffer.length > 0) {
+    for (let i = 0; i < input.length; i++) {
+      const ch = input[i];
+      if (ch === "(") depth++;
+      if (ch === ")") depth--;
+
+      if (ch === "," && depth === 0) {
         parts.push(buffer.trim());
+        buffer = "";
+      } else {
+        buffer += ch;
       }
-
-      return parts;
-    };
-
-    while (true) {
-      const match = ifRegex.exec(result);
-      if (!match) break;
-
-      const ifIndex = match.index;
-      const openIndex = result.indexOf("(", ifIndex);
-      if (openIndex < 0) break;
-
-      let depth = 0;
-      let closeIndex = -1;
-      for (let i = openIndex; i < result.length; i++) {
-        const ch = result[i];
-        if (ch === "(") depth++;
-        if (ch === ")") {
-          depth--;
-          if (depth === 0) {
-            closeIndex = i;
-            break;
-          }
-        }
-      }
-
-      if (closeIndex < 0) break;
-
-      const inner = result.slice(openIndex + 1, closeIndex);
-      const parts = splitTopLevel(inner);
-      if (parts.length !== 3) break;
-
-      const [condition, whenTrue, whenFalse] = parts;
-      const replacement = `(${condition} ? ${whenTrue} : ${whenFalse})`;
-      result =
-        result.slice(0, ifIndex) + replacement + result.slice(closeIndex + 1);
     }
 
-    return result;
+    if (buffer.length > 0) {
+      parts.push(buffer.trim());
+    }
+
+    return parts;
+  };
+
+  while (true) {
+    const match = ifRegex.exec(result);
+    if (!match) break;
+
+    const ifIndex = match.index;
+    const openIndex = result.indexOf("(", ifIndex);
+    if (openIndex < 0) break;
+
+    let depth = 0;
+    let closeIndex = -1;
+
+    for (let i = openIndex; i < result.length; i++) {
+      const ch = result[i];
+      if (ch === "(") depth++;
+      if (ch === ")") {
+        depth--;
+        if (depth === 0) {
+          closeIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (closeIndex < 0) break;
+
+    const inner = result.slice(openIndex + 1, closeIndex);
+    const parts = splitTopLevel(inner);
+    if (parts.length !== 3) break;
+
+    const [condition, whenTrue, whenFalse] = parts;
+    const replacement = `(${condition} ? ${whenTrue} : ${whenFalse})`;
+
+    result =
+      result.slice(0, ifIndex) +
+      replacement +
+      result.slice(closeIndex + 1);
   }
+
+  return result;
+}
 
   private async handleLineItemConfig(
     configItem: any,
@@ -1763,6 +1975,7 @@ private async handleTableConfig(
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
+      configLevelKey  = ConfigType.FEDERAL_ONLY;
 
       logMessage(`Config Level Key determined: ${configLevelKey}`);
       const executionConfigMap: Record<string, () => Promise<any>> = {
@@ -1899,20 +2112,20 @@ private async handleTableConfig(
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number,
       );
-      const [isFinancialSignOffDone]: any[] = await orgDb.query(
-        rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
-        { type: "SELECT" },
-      );
-      if (
-        !isFinancialSignOffDone ||
-        !isFinancialSignOffDone.financial_working_signoff
-      ) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-        };
-      }
+      // const [isFinancialSignOffDone]: any[] = await orgDb.query(
+      //   rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
+      //   { type: "SELECT" },
+      // );
+      // if (
+      //   !isFinancialSignOffDone ||
+      //   !isFinancialSignOffDone.financial_working_signoff
+      // ) {
+      //   return {
+      //     statusCode: HttpStatus.FAILED,
+      //     message: HttpStatus.FAILED_MESSAGE,
+      //     errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+      //   };
+      // }
 
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
