@@ -3451,9 +3451,9 @@ export class InteractionService {
             if(findBatchAndIncrement) {
               const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1])
               const incrementedBatchNumber = splitBatchNumber + 1
-              batchId = `BATCH_${String(incrementedBatchNumber).padStart(6, '0')}`
+              batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`
             } else {
-              batchId = `BATCH_000001`
+              batchId = `${process.env.BATCH_PREFIX}000001`
             }
           }
           else {
