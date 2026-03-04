@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -14,12 +14,18 @@ import {
 import DetailsSection, {
   DetailItem,
 } from '../../../components/details-section/details';
-import { formatDateToYYYYMMDDWithTime } from '../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../common-utils';
 import SectionHeader from '../../../components/details-section/section-header';
 import { FourPartIcon } from '../../../assets';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
 import { moduleColorMap } from './helper';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { AllPermissions } from '../../../common-service';
 
 interface FourPartAssessmentDetailsProps {
   moduleLevel: 'account' | 'project' | 'case';
@@ -48,34 +54,38 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     true
   );
 
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  // // Permissions
-  // const fourPartAssessmentEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  // Permissions
+  const fourPartAssessmentEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const fourPartAssessmentFieldsEditable = useMemo(
-  //   () =>
-  //     permission
-  //       .find(
-  //         (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
-  //       )
-  //       ?.fields?.some((field) => field.edit),
-  //   [permission]
-  // );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    fourPartAssessmentEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [fourPartAssessmentEditFields]);
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   fourPartAssessmentEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [fourPartAssessmentEditFields]);
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
 
   const handleBackClick = () => {
     if (isFromInteraction) {
@@ -146,7 +156,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     {
       label: 'Created By',
       value: data?.audit_information?.created_by_name,
-      key: 'created_by_name',
+      key: 'created_by',
     },
   ];
 
@@ -155,7 +165,11 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
       label: 'Project Code',
       value: data?.basic_information?.project_code,
       key: 'project_code',
-      hide: moduleLevel === 'project',
+      ignorePermission: true,
+      hide:
+        moduleLevel === 'project' ||
+        (!projectPermissionMap?.['project_code']?.edit &&
+          !projectPermissionMap?.['project_code']?.read),
     },
     {
       label: 'Range',
@@ -165,7 +179,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     {
       label: 'Status',
       value: data?.basic_information?.status,
-      key: 'status',
+      key: 'status_rid',
     },
   ];
 
@@ -173,16 +187,20 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     {
       label: 'Project Description',
       value: data?.basic_information?.project_description || '',
-      key: 'description',
+      key: 'project_description',
     },
   ];
 
-  // const basicDetails = applyHidePermission(basicInfo, permissionMap);
-  // const auditDetails = applyHidePermission(auditInfo, permissionMap);
-  // const descriptionDetails = applyHidePermission(
-  //   description,
-  //   permissionMap
-  // );
+  const basicDetails = applyHidePermission(basicInfo, permissionMap);
+  const auditDetails = applyHidePermission(auditInfo, permissionMap);
+  const descriptionDetails = applyHidePermission(
+    description,
+    projectPermissionMap
+  );
+
+  const hideFourPartAssessment =
+    !permissionMap?.['four_part_assessment']?.edit &&
+    !permissionMap?.['four_part_assessment']?.read;
 
   const currentModuleColors = moduleColorMap[moduleLevel];
 
@@ -215,51 +233,54 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
           <>
             <DetailsSection
               title='Basic Information'
-              data={basicInfo}
+              data={basicDetails}
               customStyle='pt-0 mt-0'
             />
             <DetailsSection
               title=''
-              data={description}
+              data={descriptionDetails}
               fullColumn={true}
               customStyle='pt-[1px]'
             />
           </>
         )}
       </div>
-      {!isLoading && !isError && data?.four_part_assessment && (
-        <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
-          <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
-            <div className='text-[14px] text-[#2D3E4F] font-semibold'>
-              Four Part Assessment
+      {!hideFourPartAssessment &&
+        !isLoading &&
+        !isError &&
+        data?.four_part_assessment && (
+          <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
+            <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
+              <div className='text-[14px] text-[#2D3E4F] font-semibold'>
+                Four Part Assessment
+              </div>
             </div>
-          </div>
-          {Object.entries(data.four_part_assessment).map(
-            ([question, response], index) => {
-              return (
-                <div
-                  key={question}
-                  className='p-3 border-b last:border-b-0 border-[#CBD6E2]'
-                >
-                  <div className='font-medium text-[14px] text-[#2D3E4F] mb-2'>
-                    <span className='font-bold'>{`${index + 1}`}</span> -{' '}
-                    {formatSnakeCaseLabel(question)}
-                  </div>
+            {Object.entries(data.four_part_assessment).map(
+              ([question, response], index) => {
+                return (
+                  <div
+                    key={question}
+                    className='p-3 border-b last:border-b-0 border-[#CBD6E2]'
+                  >
+                    <div className='font-medium text-[14px] text-[#2D3E4F] mb-2'>
+                      <span className='font-bold'>{`${index + 1}`}</span> -{' '}
+                      {formatSnakeCaseLabel(question)}
+                    </div>
 
-                  <div className='mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]'>
-                    {response || '-'}
+                    <div className='mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]'>
+                      {response || '-'}
+                    </div>
                   </div>
-                </div>
-              );
-            }
-          )}
-        </div>
-      )}
+                );
+              }
+            )}
+          </div>
+        )}
       {!isLoading && !isError && data && (
         <div className='border border-t-0 border-[#CBD6E2] mb-4'>
           <DetailsSection
             title='Audit Information'
-            data={auditInfo}
+            data={auditDetails}
             customStyle='pt-0 mt-0'
             isAudit={true}
           />

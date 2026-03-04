@@ -427,6 +427,11 @@ export const ProjectDetails = () => {
     call: !!isActivityCallExportEnable,
   };
 
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -439,7 +444,7 @@ export const ProjectDetails = () => {
     if (list === 'attachments') {
       return !isAttachmentExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
-      return false;
+      return !isFourPartExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {

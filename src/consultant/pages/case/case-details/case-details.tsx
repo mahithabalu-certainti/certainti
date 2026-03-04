@@ -491,6 +491,11 @@ export const CaseDetails = () => {
     call: !!isActivityCallExportEnable,
   };
 
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -679,7 +684,7 @@ export const CaseDetails = () => {
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
-      return false;
+      return !isFourPartExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
       const tab = searchParams.get('tab') || 'all';
       if (tab === 'all') {
