@@ -2038,7 +2038,7 @@ private async handleTableConfig(
 
         if (!normalizedExpression.includes("#")) continue;
 
-        const matches = normalizedExpression.matchAll(/#([^\s+*/(),]+)/g);
+        const matches = normalizedExpression.matchAll(/#([^+\*/(),]+)/g);
         for (const match of matches) {
           const rawKey = match[1];
           if (!rawKey) continue;
@@ -2114,7 +2114,7 @@ private async handleTableConfig(
         // Optimization 3: Precompute lookupKeys and avoid repeated regex
         const lookupKeysCache: Record<string, string[]> = {};
       let replaced = normalizedExpression.replace(
-   /#([^\s+*/(),]+)/g,
+   /#([^+\*/(),]+)/g,
   (match: string, rawKey: string) => {
     if (!rawKey) return "NaN";
 
