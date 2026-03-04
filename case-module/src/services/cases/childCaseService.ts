@@ -1493,11 +1493,13 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
   async closeCase (data : CaseCloseType, files : Express.Multer.File[]) {
     const mainDb = await super.getMainDb();
     const orgDb = await super.getOrgDb();
-
+    const mainDbTransaction = await mainDb.transaction()
+    const orgDbTransaction = await orgDb.transaction();
+    try {
     const findParentAccount = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT, plain : true});
     if(findParentAccount) {
       const schemaName = rawQueries.fetchSchemaName(findParentAccount.r_number)
-      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations, Case} = await this.caseModelService.getModels(findParentAccount.r_number);
+      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations, Case, CaseSummary} = await this.caseModelService.getModels(findParentAccount.r_number);
       const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.case));
       await SignoffDetails.create({
         account_rid : data.account_rid,
@@ -1505,7 +1507,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         signoff_type_rid : findFinancialWorkingId[0][0].rid,
         created_by : data.user_rid,
         created_datetime : new Date()
-      });
+      }, {transaction : orgDbTransaction});
       if(files.length > 0) {
         const fileUploadedResult = await uploadMultipleFilesToAzureBlob(data.account_rid, findParentAccount.r_number, files);
         this.logger.info("fileUploadedResult Completed and Retrieved");
@@ -1541,7 +1543,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
               created_datetime : new Date(),
             });
           });
-          await Attachment.bulkCreate(storeInArrayOfObjects)
+          await Attachment.bulkCreate(storeInArrayOfObjects, {transaction : orgDbTransaction})
           this.logger.info("Attachment Data created successfully");
         }
       }
@@ -1559,8 +1561,9 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
             state_rid : {
               [Op.eq] : null
             }
-          }
-        });
+          }, 
+          transaction : mainDbTransaction
+        },);
         await RdCreditCountryCalculations.update({
           final_credit_approved : data.country_credits.rd_credits_approved,
           final_credit_submitted : data.country_credits.rd_credits_submitted,
@@ -1569,7 +1572,8 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           where : {
             case_rid : data.case_rid,
             country_rid : data.country_credits.country_rid
-          }
+          },
+          transaction : orgDbTransaction
         })
         this.logger.info("Country Credits updated successfully")
         if(affectedCount > 0) {
@@ -1579,7 +1583,8 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
             where : {
               account_rid : data.account_rid,
               fiscal_year : data.fiscal_year,
-              country_rid : data.country_credits.country_rid
+              country_rid : data.country_credits.country_rid,
+              
             }, raw : true
           })
           if(!checkIsAlreadyHistoryCreated) {
@@ -1598,7 +1603,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
               total_project : 0,
               total_qualified_project : 0,
               total_qualified_project_cost : 0
-            });
+            }, {transaction : orgDbTransaction});
             this.logger.info("CaseHistorySubmission For Country Created successfully")
           }
         }
@@ -1615,7 +1620,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           where : {
             case_rid : data.case_rid,
             state_rid : stateData.state_rid
-          }
+          }, transaction : mainDbTransaction
         });
         await RdCreditStateCalculations.update({
           final_credit_approved : stateData.rd_credits_approved,
@@ -1626,7 +1631,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
             case_rid : data.case_rid,
             state_rid : stateData.state_rid,
 
-          }
+          },transaction : orgDbTransaction
         })
         }
         this.logger.info("RdCreditCalculationsSummary For Statewise Updated successfully")
@@ -1671,7 +1676,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
               }); 
             }
           });
-          await CaseHistorySubmission.bulkCreate(storeArrayStateData);
+          await CaseHistorySubmission.bulkCreate(storeArrayStateData, {transaction : orgDbTransaction});
           this.logger.info("CaseHistorySubmission For State Inserted successfully")
         }
       }
@@ -1682,20 +1687,40 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         }, {
           where : {
             rid : data.case_rid
-          }
+          }, transaction : orgDbTransaction
+        })
+        await CaseSummary.update({
+        status_rid : getCaseCloseStatus?.rid
+        }, {
+          where : {
+            case_rid : data.case_rid
+          }, transaction : mainDbTransaction
         })
       }
+      await orgDbTransaction.commit();
+      await mainDbTransaction.commit();
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.caseClosedSuccess
       }
     } else {
+      await orgDbTransaction.rollback()
+      await mainDbTransaction.rollback()
       return {
         statusCode : HttpStatus.NOT_FOUND,
         statusMessage : STATUS_MESSAGE.accountNoFound,
       }
     }
+  } catch (error) {
+    console.log(error)
+      await orgDbTransaction.rollback()
+      await mainDbTransaction.rollback()
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.failedToUpdate,
+      }
   }
+}
   async getComputedValue (data : ComputedValueRequest) {
     const mainDb = await super.getMainDb();
     const orgDb = await super.getOrgDb();
@@ -1707,10 +1732,13 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         const fetchStateComputedData = await orgDb.query<CaseStateComputedType>(calculateStateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.state_rid, "list"), {type : QueryTypes.SELECT});
         this.logger.info(`State Computed Data retrived successfully`)
         const safetyCheckForId = [...new Set(fetchStateComputedData.map((d : CaseStateComputedType) => d.state_rid))];
+        let validArray = [];
+        if(safetyCheckForId.length > 0) validArray = safetyCheckForId
+        else validArray = ['']
         const findAllState = await mainDb.query<StateType>(rawQueries.fetchStatesByIds(), {
           type : QueryTypes.SELECT,
           replacements : {
-            ids : safetyCheckForId
+            ids : validArray
           }
         })
         const mapStateName = new Map(findAllState.map((d) => [d.rid, d.state_name]));
