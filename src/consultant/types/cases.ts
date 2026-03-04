@@ -130,6 +130,7 @@ export interface CaseDetails {
   account_rnumber: string;
   filing_type_name: string;
   country_name: string;
+  is_initiated: boolean;
   country_rid: string;
   case_owner_name: string;
   created_by_name: string;

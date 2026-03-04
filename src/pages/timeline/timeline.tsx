@@ -21,6 +21,7 @@ import {
   MeetingIcon,
   CaseTeamIcon,
   DossierIcon,
+  ActionsIcon,
 } from '../../assets/icons';
 import { useParams, useSearchParams } from 'react-router';
 import { TimelineParams } from '../../consultant/types/timeline';
@@ -275,6 +276,16 @@ const getTypeIconConfig = (
       return {
         icon: (
           <CaseTeamIcon
+            alt='case-team'
+            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          />
+        ),
+        bg: bgColor,
+      };
+    case 'Manual RD Assessment':
+      return {
+        icon: (
+          <ActionsIcon
             alt='case-team'
             className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
