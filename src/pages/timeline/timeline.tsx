@@ -286,7 +286,7 @@ const getTypeIconConfig = (
       return {
         icon: (
           <ActionsIcon
-            alt='case-team'
+            alt='rd-assessment'
             className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         ),

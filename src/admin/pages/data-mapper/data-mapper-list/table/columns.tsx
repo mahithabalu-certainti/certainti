@@ -75,6 +75,17 @@ export const getDataMapperColumns = (
     },
   },
   {
+    id: 'is_federal',
+    sortId: 'is_federal',
+    label: 'Is Federal?',
+    sortable: true,
+    width: 105,
+    hide:
+      !permissionMap?.['is_federal']?.read &&
+      !permissionMap?.['is_federal']?.edit,
+    render: (row) => (row.is_federal ? 'Yes' : 'No'),
+  },
+  {
     id: 'country_name',
     editId: 'country_rid',
     sortId: 'country_name',
@@ -136,8 +147,20 @@ export const getDataMapperColumns = (
           action: 'enable',
           message: '',
         },
+        {
+          dependsOn: 'is_federal',
+          condition: (value) => value === false,
+          action: 'required',
+          message: '',
+        },
       ],
     },
+    conditionallyEdit: [
+      {
+        key: 'is_federal',
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'effective_from_date',
