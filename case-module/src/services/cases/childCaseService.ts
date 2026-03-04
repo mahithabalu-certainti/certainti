@@ -1707,10 +1707,13 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         const fetchStateComputedData = await orgDb.query<CaseStateComputedType>(calculateStateCostForCaseSubmissionCurrentYear(schemaName, data.case_rid, data.state_rid, "list"), {type : QueryTypes.SELECT});
         this.logger.info(`State Computed Data retrived successfully`)
         const safetyCheckForId = [...new Set(fetchStateComputedData.map((d : CaseStateComputedType) => d.state_rid))];
+        let validArray = [];
+        if(safetyCheckForId.length > 0) validArray = safetyCheckForId
+        else validArray = ['']
         const findAllState = await mainDb.query<StateType>(rawQueries.fetchStatesByIds(), {
           type : QueryTypes.SELECT,
           replacements : {
-            ids : safetyCheckForId
+            ids : validArray
           }
         })
         const mapStateName = new Map(findAllState.map((d) => [d.rid, d.state_name]));
