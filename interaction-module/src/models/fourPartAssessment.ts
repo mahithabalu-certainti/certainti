@@ -14,10 +14,14 @@ export interface FourPartAssessmentAttributes {
   project_fiscal_rid : string
   tracker_one_liner? : string
   project_metadata? : string
-  permitted_purpose? : string
-  technological_uncertainty? : string
-  process_of_experimentation? : string
-  technological_in_nature? : string
+  permitted_purpose_status? : string
+  permitted_purpose_rationale? : string
+  technological_uncertainty_status? : string
+  technological_uncertainty_rationale? : string
+  process_of_experimentation_status? : string
+  process_of_experimentation_rationale? : string
+  technological_in_nature_status? : string
+  technological_in_nature_rationale? : string
   status? : string
   rationale? : string
   summary_judgment? : string
@@ -39,10 +43,14 @@ export class FourPartAssessment extends Model<FourPartAssessmentAttributes, Four
   declare project_fiscal_rid : string
   declare tracker_one_liner? : string
   declare project_metadata? : string
-  declare permitted_purpose? : string
-  declare technological_uncertainty? : string
-  declare process_of_experimentation? : string
-  declare technological_in_nature? : string
+  declare permitted_purpose_status? : string
+  declare permitted_purpose_rationale? : string
+  declare technological_uncertainty_status? : string
+  declare technological_uncertainty_rationale? : string
+  declare process_of_experimentation_status? : string
+  declare process_of_experimentation_rationale? : string
+  declare technological_in_nature_status? : string
+  declare technological_in_nature_rationale? : string
   declare status? : string
   declare rationale? : string
   declare summary_judgment? : string
@@ -73,10 +81,14 @@ export class FourPartAssessment extends Model<FourPartAssessmentAttributes, Four
       account_rid: { type: DataTypes.STRING(50), allowNull: true},
       tracker_one_liner : { type : DataTypes.STRING(), allowNull : true },
       project_metadata : { type : DataTypes.STRING(), allowNull : true },
-      permitted_purpose : { type : DataTypes.STRING(), allowNull : true },
-      technological_uncertainty : { type : DataTypes.STRING(), allowNull : true },
-      technological_in_nature : { type : DataTypes.STRING(), allowNull : true },
-      process_of_experimentation : { type : DataTypes.STRING(), allowNull : true },
+      permitted_purpose_status : { type : DataTypes.STRING(), allowNull : true },
+      permitted_purpose_rationale : { type : DataTypes.STRING(), allowNull : true },
+      technological_uncertainty_status : { type : DataTypes.STRING(), allowNull : true },
+      technological_uncertainty_rationale : { type : DataTypes.STRING(), allowNull : true },
+      technological_in_nature_status : { type : DataTypes.STRING(), allowNull : true },
+      technological_in_nature_rationale : { type : DataTypes.STRING(), allowNull : true },
+      process_of_experimentation_status : { type : DataTypes.STRING(), allowNull : true },
+      process_of_experimentation_rationale : { type : DataTypes.STRING(), allowNull : true },
       rationale : { type : DataTypes.STRING(), allowNull : true },
       status : { type : DataTypes.STRING(), allowNull : true },
       summary_judgment : { type : DataTypes.STRING(), allowNull : true },

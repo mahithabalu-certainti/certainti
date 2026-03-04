@@ -1,13 +1,19 @@
 import { Logger } from "winston";
 import {
+  AllStatusType,
+  FourPartAssessmentListResponse,
+  FourPartAssessmentRequestPayload,
   FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
   ICreateTemplateInteraction,
   IEmailMessage,
+  InteractionStatusUpdateRequest,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
+  ParentAccountType,
+  UserReturnType,
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
@@ -30,8 +36,10 @@ import {
   eventNames,
   eventTypes,
   interactionAssessmentSourceType,
+  FourPartColumns,
+  MainTableFilter,
 } from "../../utils/constants";
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import {
@@ -49,6 +57,9 @@ import {
   listResponseHistory,
   fetchInteractionTemplates,
   fetchKeyContactDetailsForInteractions,
+  fetchFourPartAssessment,
+  fetchProjectFiscalIds,
+  fetchFpaDetails,
 } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import {
@@ -2174,7 +2185,7 @@ export class InteractionService {
     if (mainTableFilters[data.sort] !== undefined) {
       disablePagination = true;
     }
-    if (apiType === "export") disablePagination = true;
+    if (apiType === "export" || apiType === "graphql") disablePagination = true;
     const [activeStatus]: any[] = await mainDb.query(
       rawQueries.fetchActiveStatusByType("Active"),
       { type: "SELECT" }
@@ -2199,7 +2210,9 @@ export class InteractionService {
         data.search,
         activeStatus?.rid,
         reminderFlag,
-        reminderIds
+        reminderIds,
+        apiType,
+        data.rid
       )
     );
     let hasEmailRecipient = false;
@@ -2217,6 +2230,9 @@ export class InteractionService {
     if (result[0][0].interactions != null) {
       let statusIds: any[] = [
         ...new Set(result[0][0].interactions.map((d: any) => d.status)),
+      ];
+      let interactionStatusIds: any[] = [
+        ...new Set(result[0][0].interactions.map((d: any) => d.interaction_status_rid)),
       ];
       let interactionAssessmentRids: any[] = [
         ...new Set(result[0][0].interactions.map((d: any) => d.interaction_assessment_source_rid)),
@@ -2251,6 +2267,7 @@ export class InteractionService {
           result[0][0].interactions.map((user: any) => user.modified_by)
         ),
       ];
+      let mergeUserIds = [...createdByIds, ...modifiedByIds]
       let projectFiscalIds: any[] = [
         ...new Set(
           result[0][0].interactions.map(
@@ -2260,6 +2277,9 @@ export class InteractionService {
       ];
       let fetchStatus = await mainDb.query(
         rawQueries.fetchInteractionStatus(statusIds)
+      );
+      let fetchIntStatus = await mainDb.query(
+        rawQueries.fetchStatusNameForInteractions(interactionStatusIds)
       );
       let fetchInteractionAssessment = await mainDb.query(
         rawQueries.fetchInteractionAssessmentSource(interactionAssessmentRids)
@@ -2277,16 +2297,16 @@ export class InteractionService {
         rawQueries.fetchInteractionResponseSource(responseSourceIds)
       );
       let fetchCreatedByUsers = await mainDb.query(
-        rawQueries.fetchUser(createdByIds)
-      );
-      let fetchModifiedByUsers = await mainDb.query(
-        rawQueries.fetchUser(modifiedByIds)
+        rawQueries.fetchUser(mergeUserIds)
       );
       let isEmailRecipient: any;
       let recipientMap: Map<string, boolean>;
 
       let statusMap: Map<string, string> = new Map(
         fetchStatus[0].map((status: any) => [status.rid, status.status_name])
+      );
+      let intStatusMap: Map<string, string> = new Map(
+        fetchIntStatus[0].map((status: any) => [status.rid, status.status_name])
       );
       let interactionAssessmentMap: Map<string, string> = new Map(
         fetchInteractionAssessment[0].map((intAccess: any) => [intAccess.rid, intAccess.interaction_assessment_source_name])
@@ -2317,12 +2337,6 @@ export class InteractionService {
       );
       let createdMap: Map<string, string> = new Map(
         fetchCreatedByUsers[0].map((user: any) => [
-          user.rid,
-          `${user.first_name} ${user.last_name}`,
-        ])
-      );
-      let modifiedMap: Map<string, string> = new Map(
-        fetchModifiedByUsers[0].map((user: any) => [
           user.rid,
           `${user.first_name} ${user.last_name}`,
         ])
@@ -2366,15 +2380,17 @@ export class InteractionService {
                 created_user_name: createdMap.get(d.created_by) || null,
                 modified_by: d.modified_by,
                 updated_user_name:
-                  modifiedMap.get(d.modified_by) == undefined
+                  createdMap.get(d.modified_by) == undefined
                     ? d.modified_by
-                    : modifiedMap.get(d.modified_by),
+                    : createdMap.get(d.modified_by),
                 has_email_recipient: hasEmailRecipient,
                 interaction_batch_id : d.interaction_batch_id,
                 four_part_assessment_rid : d.four_part_assessment_rid,
                 four_part_r_number : d.four_part_r_number,
                 interaction_assessment_source_rid : d.interaction_assessment_source_rid,
-                interaction_assessment_source_name : interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null
+                interaction_assessment_source_name : interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null,
+                interaction_status_rid : d.interaction_status_rid,
+                interaction_status_name : intStatusMap.get(d.interaction_status_rid) ?? null
               };
             });
       const applyFilters = (
@@ -2449,7 +2465,7 @@ export class InteractionService {
         ? finalData.length
         : finalData[0].total_records;
       let finalPaginatedData: any[] = [];
-      if (apiType === "export") {
+      if (apiType === "export" || apiType === "graphql") {
         finalPaginatedData = finalData;
       } else {
         finalPaginatedData = disablePagination
@@ -3420,6 +3436,8 @@ export class InteractionService {
           let batchId : string;
           fourPartPayload = four_part_assessment
           let dynamicQuestions : any[];
+          let intStatusRid : string = ''
+          const findStatus = await this.interactionSchemaService.getStatus();
           if(type === 'four_part_assessment') {
             interactionAssessmentSource = interactionAssessmentSourceType.FPA
             const findFpaRid = await this.interactionSchemaService.fetchAccountFpaInfo(transaction_id, accountNumber);
@@ -3431,10 +3449,11 @@ export class InteractionService {
             })
             const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber);
             if(findBatchAndIncrement) {
-              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1]);
-              batchId = `BATCH_${splitBatchNumber + 1}`
+              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1])
+              const incrementedBatchNumber = splitBatchNumber + 1
+              batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`
             } else {
-              batchId = `BATCH_000001`
+              batchId = `${process.env.BATCH_PREFIX}000001`
             }
           }
           else {
@@ -3461,6 +3480,10 @@ export class InteractionService {
               }))
             : [];
 
+          if(findStatus.length > 0) {
+            const mapStatus = new Map(findStatus.map((d) => [d.status_name, d.rid]));
+            intStatusRid = interactionAssessmentSource == interactionAssessmentSourceType.RD ? mapStatus.get('In-Active')! : mapStatus.get('Active')!
+          }
           let interactionData = {
             account_rid: company_id,
             project_fiscal_rid: project_id,
@@ -3475,7 +3498,8 @@ export class InteractionService {
             interaction_assessment_source_rid : interactionAssessmentSource,
             transaction_id : transaction_id,
             four_part_assessment_rid : fourPartAssessmentRid,
-            interaction_batch_id : batchId
+            interaction_batch_id : batchId,
+            interaction_status_rid : intStatusRid
           };
           await this.createInteraction(
             interactionData,
@@ -4095,5 +4119,224 @@ export class InteractionService {
       message: "Account found",
       data: { account_number: accountInfo.r_number },
     };
+}
+async getFourPartAssessmentList (data : FourPartAssessmentRequestPayload) {
+  const mainDb = await this.getMainDb();
+  const orgDb = await this.getOrgDb();
+  const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+  if(fetchParentAccount) {
+    let isPagination : boolean = false;
+    let isSorting : boolean = false;
+    let isFiltering : boolean = false;
+    let createdByFilters : string = '';
+    let modifiedByFilters : string = '';
+    let orgDbFilterArray = [];
+    let mainDbFilterArray = [];
+
+    for(let [key, cond] of Object.entries(data.filter)) {
+      if(Object.keys(FourPartColumns).includes(key)) {
+        orgDbFilterArray.push(key)
+      }
+      if(Object.keys(MainTableFilter).includes(key)) {
+        mainDbFilterArray.push(key)
+      }
+    }
+    if(FourPartColumns[data.sort] !== undefined) {
+      isSorting = true
+    }
+    if(MainTableFilter[data.sort] !== undefined) {
+      isSorting = false
+    }
+
+    if(orgDbFilterArray.length > 0 && mainDbFilterArray.length > 0) {
+      isFiltering = true
+      isPagination = false
+    }
+    else if(orgDbFilterArray.length > 0) {
+      isFiltering = true
+      isPagination = true
+    }
+    else if(mainDbFilterArray.length > 0) {
+      isFiltering = false
+      isPagination = false
+    }
+    else {
+      isFiltering = false
+      isPagination = true
+    }
+    let schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number)
+    let projectFiscalRids : string[] = []
+    if(data.type === 'case') {
+      const findProjectIdsBasedOnCase : any = await orgDb.query(fetchProjectFiscalIds(data.case_rid, schemaName));
+      if(findProjectIdsBasedOnCase[0].length > 0) {
+        for(let id of findProjectIdsBasedOnCase[0]) {
+          projectFiscalRids.push(id.project_fiscal_rid)
+        }
+      } else {
+        projectFiscalRids = ['']
+      }
+    }
+    let result = await orgDb.query<FourPartAssessmentListResponse>(fetchFourPartAssessment(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName,isPagination, isSorting, isFiltering, data.account_rid, data.project_fiscal_rid, projectFiscalRids, data.type, data.isExport ), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      const fetchCreatedByIds = [...new Set(result.filter((f) => f.created_by !== null).map((d) => d.created_by))];
+      const findUserDetails = await mainDb.query<UserReturnType>(rawQueries.fetchUser(fetchCreatedByIds), {type : QueryTypes.SELECT});
+      let mapUserDetails = new Map(findUserDetails?.map((u) => [u.rid, `${u.first_name} ${u.last_name}`]));
+
+      result = result.map((d) => {
+        return {
+          ...d,
+          created_by_name : mapUserDetails.get(d.created_by) as string,
+        }
+      });
+
+      if(!isFiltering) {
+        let dynamicFilteringName : keyof FourPartAssessmentListResponse;
+        for(let [key, condition] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') dynamicFilteringName = 'created_by_name'
+          else dynamicFilteringName = 'modified_by_name'
+            for(let [cond, value] of Object.entries(condition)) {
+              if(cond === 'equals') {
+                result = result.filter((f) => f[dynamicFilteringName]!.toLowerCase() === value.toLowerCase())
+              }
+              else if(cond === 'not_equals') {
+                result = result.filter((f) => f[dynamicFilteringName]!.toLowerCase() !== value.toLowerCase())
+              }
+              else if(cond === 'contains') {
+                result = result.filter((f) => f[dynamicFilteringName]!.includes(value))
+              }
+            }
+        }
+      }
+      if(!isSorting) {
+        if(data.sort === "created_by_name") {
+          if(data.sort_by.toLowerCase() === "desc")
+            result = result.sort((a, b) => b.created_by_name?.localeCompare(a.created_by_name))
+          else 
+            result = result.sort((a, b) => a.created_by_name?.localeCompare(b.created_by_name))
+        } else {
+          if(data.sort_by.toLowerCase() === "desc")
+            result = result.sort((a, b) => b.modified_by_name?.localeCompare(a.modified_by_name ?? '') ?? 0)
+          else 
+            result = result.sort((a, b) => a.modified_by_name?.localeCompare(b.modified_by_name ?? '') ?? 0)
+        }
+      }
+      let totalResultCount;
+      if(!isPagination) totalResultCount = result.length
+      else totalResultCount = result[0]?.total_results || 0
+      result = isPagination && !data.isExport ? result : result.slice(((data.page - 1) * data.limit), data.page * data.limit) 
+
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_results : totalResultCount,
+        data : result
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.fourPartListSuccess,
+        data : finalData
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : {
+          page : data.page,
+          limit : data.limit,
+          total_results : 0,
+          data : []
+        }
+      }
+    }
+  } return {
+   statusCode : HttpStatus.NOT_FOUND,
+   statusMessage : STATUS_MESSAGE.accountNoFound,
+   data : {
+    page : data.page,
+    limit : data.limit,
+    total_results : 0,
+    data : []
+   }
+  }
+}
+async getFpaDetailsById (data : any) : Promise<any> {
+  const mainDb = await this.getMainDb();
+  const orgDb = await this.getOrgDb();
+
+  const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+  if(fetchParentAccount) {
+    const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+    const result = await orgDb.query(fetchFpaDetails(data.rid, schemaName));
+    if(result[0][0]) {
+      const userIds = [];
+      let detailsResult = result[0][0] as any
+      userIds.push(detailsResult?.audit_information.created_by);
+      const findUserDetails : any = await mainDb.query(rawQueries.fetchUser(userIds));
+      const mapUser = new Map(findUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]));
+      detailsResult.audit_information.created_by_name = mapUser.get(detailsResult.audit_information.created_by);
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.fourPartListSuccess,
+        data : {
+          title : detailsResult.title,
+          basic_information : detailsResult.basic_information,
+          four_part_assessment : detailsResult.four_part_assessment,
+          audit_information : detailsResult.audit_information
+        }
+      }
+    } else {
+      return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.dataNotFound,
+      data : {}
+      }
+    }
+  } else {
+    return {
+    statusCode : HttpStatus.NOT_FOUND,
+    statusMessage : STATUS_MESSAGE.accountNoFound,
+    data : {}
+    }
+  }
+}
+async exportFpaList (data : any) {
+  const result = await this.getFourPartAssessmentList(data);
+  return result;
+}
+async updateInteractionStatus (data : InteractionStatusUpdateRequest, userId : string) {
+  const mainDb = await this.getMainDb();
+  const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+  const { Interaction } = await this.interactionModelService.getModels(fetchParentNumber[0][0].r_number);
+  const getAllStatus = await mainDb.query<AllStatusType>(rawQueries.fetchAllStatus(), {type : QueryTypes.SELECT})
+  const mapStatus = new Map(getAllStatus.map((d) => [d.status_name, d.rid]));
+  const getId = mapStatus.get(data.status_name) ?? ''
+  const [result] = await Interaction.update({
+    interaction_status_rid : getId,
+    modified_by : userId,
+    modified_datetime : new Date()
+  }, {
+    where : {
+      rid : data.rid
+    }
+  });
+  if(result > 0) {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.interactionUpdated
+    }
+  } else {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.noDataToUpdate
+    }
+  }
+}
+async getInteractionAssessmentSource () {
+  const mainDb = await this.getMainDb();
+  const result = await mainDb.query(rawQueries.fetchInteractionAllAssessmentSource());
+  return {
+    statusCode : HttpStatus.SUCCESS,
+    data : result[0]
+  }
 }
 }

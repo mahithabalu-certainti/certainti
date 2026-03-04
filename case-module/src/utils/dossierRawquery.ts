@@ -28,7 +28,6 @@ export const fetchCaseClosingRemarks = (schemaName : string, caseRid : string, s
     GROUP BY
     f.case_rid
     `
-    console.log("Closing Remarks ====> ", query)
     return query;
 }
 

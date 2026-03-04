@@ -306,6 +306,8 @@ export const STATUS_MESSAGE = {
   interactionUpdated:"Interaction updated successfully",
   techSummarycontextUpdated:"Technical summary context updated successfully",
   projectRequired:"Atleast one project is required to create interaction",
+  fourPartListSuccess : "FourPart Assessment fetched successfully",
+  assessmentFetchedSuccess : "Interaction Assessment Fetched successfully"
 };
 
 export const rawQueries = {
@@ -375,6 +377,18 @@ export const rawQueries = {
     return `
     SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
+  fetchStatusNameForInteractions(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
 
   fetchInteractionAssessmentSource(data: any) {
     let ids: string[];
@@ -387,6 +401,9 @@ export const rawQueries = {
     }
     return `
     SELECT rid, interaction_assessment_source_name  FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source WHERE rid IN (${ids})`;
+  },
+   fetchInteractionAllAssessmentSource() {
+    return `SELECT rid, interaction_assessment_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source`;
   },
 
   fetchActiveStatus() {
@@ -1169,7 +1186,7 @@ export const rawQueries = {
     FROM 
     (
     SELECT interaction_batch_id, 
-    RANK() OVER(PARTITION BY interaction_batch_id ORDER BY created_datetime DESC) AS rank
+    RANK() OVER(ORDER BY created_datetime DESC) AS rank
     FROM
     ${schemaName}.interactions
     )
@@ -1282,6 +1299,17 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
+  export const fpaFieldMappings = [
+    { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
+    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+    { permissionField: 'rd_potential_category', exportField: 'Range', dataField: 'rd_potential_category' },
+    { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose Status', dataField: 'permitted_purpose_status' },
+    { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty Status', dataField: 'technological_uncertainty_status' },
+    { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature Status', dataField: 'technological_in_nature_status' },
+    { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation Status', dataField: 'process_of_experimentation_status' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' }
+  ];
     export const templateFieldMappings = [
     { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },
     { permissionField: 'template_name', exportField: 'Template Name', dataField: 'template_name' },
@@ -1355,3 +1383,34 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   export const keyContactRoleName = {
     professionalServiceConsultant : "Professional Services Consultant"
   }
+
+  export const FourPartColumns : Record<string, string> = {
+  r_number : 'f.r_number',
+  project_code : 'p.project_code',
+  rd_potential_category : 'f.rd_potential_category',
+  status : 'f.status',
+  created_datetime : 'f.created_datetime',
+  modified_datetime : 'f.modified_datetime',
+  permitted_purpose_status : 'f.permitted_purpose_status',
+  technological_uncertainty_status : 'f.technological_uncertainty_status',
+  technological_in_nature_status : 'f.technological_in_nature_status',
+  process_of_experimentation_status : 'f.process_of_experimentation_status'
+}
+
+export const FourPartColumnsTypes : Record<string, string> = {
+  r_number : 'string',
+  project_code : 'string',
+  rd_potential_category : 'string',
+  status : 'string',
+  created_datetime : 'date',
+  modified_datetime : 'date',
+  permitted_purpose_status : 'string',
+  technological_uncertainty_status : 'string',
+  technological_in_nature_status : 'string',
+  process_of_experimentation_status : 'string'
+}
+
+export const MainTableFilter : Record<string, string> = {
+  created_by_name : 'created_by_name',
+  modified_by_name : 'modified_by_name'
+}

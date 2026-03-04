@@ -12,6 +12,7 @@ import { Kafka } from "kafkajs";
 import interactionsController from "./controllers/interactionsController";
 import { logMessage } from "./utils/helpers";
 import { scheduleSubscriptionRenewal } from "./services/cronJob/renewSubscriptions";
+import initGraphQLServer from "./servers/graphqlServer";
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -19,7 +20,7 @@ async function startServer() {
   try {
     const { app } = await initExpressServer();
 
-    // const { graphqlPath } = await initGraphQLServer(app);
+    //const { graphqlPath } = await initGraphQLServer(app);
     scheduleSubscriptionRenewal();
     schedulerForTriggerAi()
     schdulerForSendEmailInfo()

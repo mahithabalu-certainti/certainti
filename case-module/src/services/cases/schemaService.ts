@@ -233,11 +233,13 @@ class CaseSchemaService {
         r_number,
         financial_working_signoff,
         rd_form_signoff,
+        status_rid,
         ...caseCloneRest
       } = originalCase;
       // Use the incoming caseRequest for fields that must be set (e.g., parent_case_rid, filing_type_rid, created_by)
       const casecreationResponse = await Case.create({
         ...caseCloneRest,
+        status_rid: caseRequest.status_rid,
         filing_type_rid: amendmentType?.rid,
         created_by: caseRequest.created_by,
         created_datetime: new Date(),
@@ -748,7 +750,7 @@ class CaseSchemaService {
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.UPDATE,
-                                    descriptions:caseRequest.case_name,
+                                    descriptions:caseRequest.case_name || existingCase?.case_name || '',
                                     case_rid: caseRequest.case_rid,
                                   },["account","case"]);
         // await this.addCaseManagementTimeline(
@@ -1303,7 +1305,7 @@ class CaseSchemaService {
               case_total_qualified_project_cost: d.case_total_qualified_project_cost,
               case_total_project_cost: d.case_total_project_cost,
               case_total_rd_cost: d.case_total_rd_cost,
-              case_total_qre_cost: d.case_total_qre_cost,
+              case_total_qre_cost: parseFloat(d.case_total_qre_cost || 0.00).toFixed(2),
               filing_type_rid: d.filing_type_rid,
               filing_type_name: filingTypeMap.get(d.filing_type_rid) || null,
               status_rid: d.status_rid,
