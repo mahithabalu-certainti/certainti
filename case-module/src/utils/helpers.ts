@@ -935,7 +935,8 @@ export const uploadMultipleFilesToAzureBlob = async (accountRid : string, accoun
         url : blockBlobClient.url,
         name : sanitizedBaseName,
         extension : extension,
-        size : sizeInMb
+        size : sizeInMb,
+        fieldName : file.fieldname
       }
     })
   )
