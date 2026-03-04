@@ -1186,12 +1186,14 @@ export const rawQueries = {
     FROM 
     (
     SELECT interaction_batch_id, 
-    RANK() OVER(ORDER BY created_datetime DESC) AS rank
+    ROW_NUMBER() OVER(ORDER BY interaction_batch_id DESC) AS rn
     FROM
     ${schemaName}.interactions
+    where
+	  four_part_assessment_rid IS NOT NULL
     )
     WHERE
-    rank = 1
+    rn = 1
     `
   },
   fetchBatchInInteractionByTransId(schemaName : string, transactionId : string) {
@@ -1201,6 +1203,7 @@ export const rawQueries = {
     ${schemaName}.interactions
     WHERE
     transaction_id = '${transactionId}'
+    ORDER BY created_datetime DESC
     `
   }
 };
