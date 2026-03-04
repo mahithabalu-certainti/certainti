@@ -17,6 +17,7 @@ export const getInteractionListColumns = (
   ) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  fourPartPermissionMap: Record<string, { read: boolean; edit: boolean }>,
   handleToggleRecordStatus: (row: InteractionList, checked: boolean) => void,
   handleFourPartNavigation?: (row: InteractionList) => void
 ): ListTableColumn<InteractionList>[] => [
@@ -54,9 +55,9 @@ export const getInteractionListColumns = (
     label: 'Assessment Type',
     width: 150,
     sortable: true,
-    // hide:
-    //   !projectPermissionMap?.['interaction_assessment_source_name']?.edit &&
-    //   !projectPermissionMap?.['interaction_assessment_source_name']?.read,
+    hide:
+      !permissionMap?.['interaction_assessment_source_name']?.edit &&
+      !permissionMap?.['interaction_assessment_source_name']?.read,
   },
   {
     id: 'four_part_r_number',
@@ -64,9 +65,9 @@ export const getInteractionListColumns = (
     label: 'Four Part Assessment ID',
     width: 200,
     sortable: true,
-    // hide:
-    //   !projectPermissionMap?.['four_part_assessment_rid']?.edit &&
-    //   !projectPermissionMap?.['four_part_assessment_rid']?.read,
+    hide:
+      !fourPartPermissionMap?.['r_number']?.edit &&
+      !fourPartPermissionMap?.['r_number']?.read,
     render: (row: InteractionList) =>
       row.four_part_assessment_rid &&
       row.four_part_r_number &&
@@ -87,9 +88,9 @@ export const getInteractionListColumns = (
     label: 'Batch ID',
     width: 140,
     sortable: true,
-    // hide:
-    //   !projectPermissionMap?.['interaction_batch_id']?.edit &&
-    //   !projectPermissionMap?.['interaction_batch_id']?.read,
+    hide:
+      !permissionMap?.['interaction_batch_id']?.edit &&
+      !permissionMap?.['interaction_batch_id']?.read,
   },
   {
     id: 'project_code',
@@ -374,13 +375,13 @@ export const getInteractionListColumns = (
     label: 'Status Action',
     width: 100,
     sortable: false,
-    // hide:
-    //   !permissionMap?.['interaction_status']?.edit &&
-    //   !permissionMap?.['interaction_status']?.read,
+    hide:
+      !permissionMap?.['status_action']?.edit &&
+      !permissionMap?.['status_action']?.read,
     render: (row) => {
       const isDraftStatus =
         row.status_name?.toLowerCase() === StatusTypeEnum.draft;
-      // const canEditStatus = !!permissionMap?.['interaction_status']?.edit;
+      const canEditStatus = !!permissionMap?.['status_action']?.edit;
       const recordStatus =
         row.interaction_status_name?.toLowerCase() || 'in-active';
       return (
@@ -397,7 +398,7 @@ export const getInteractionListColumns = (
               color={recordStatus === 'in-active' ? 'warning' : 'success'}
               onChange={(_e, checked) => handleToggleRecordStatus(row, checked)}
               checked={recordStatus === 'active'}
-              disabled={!isDraftStatus}
+              disabled={!isDraftStatus || !canEditStatus}
             />
           </Tooltip>
         </div>

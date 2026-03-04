@@ -293,6 +293,24 @@ const Interactions: React.FC<InteractionsProps> = ({
     });
     return map;
   }, [projectListViewEditFields]);
+
+  //Four part assessment permissions
+  const fourPartAssessmentEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const fourPartPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    fourPartAssessmentEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [fourPartAssessmentEditFields]);
+
   const memoizedInteractionStatus = useMemo(
     () =>
       interactionStatus.data?.data.interactionStatus.map((status) => ({
@@ -709,6 +727,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteractionAttachmentCount,
     permissionMap,
     projectPermissionMap,
+    fourPartPermissionMap,
     handleToggleRecordStatus,
     handleFourPartNavigation
   );
@@ -724,6 +743,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         memoizedInteractionLevel,
         permissionMap,
         projectPermissionMap,
+        fourPartPermissionMap,
         assessmentSourceOptions
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);

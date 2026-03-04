@@ -218,6 +218,11 @@ export const AccountDetails = () => {
     AllPermissions.INTERACTIONS_EXPORT
   );
 
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
   const isFinancialResourceCostExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
@@ -750,7 +755,7 @@ export const AccountDetails = () => {
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
-      return false;
+      return !isFourPartExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {

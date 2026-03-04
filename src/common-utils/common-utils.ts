@@ -849,6 +849,10 @@ export const applyHidePermission = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): DetailItem[] => {
   return items.map((item) => {
+    // If ignorePermission is true, preserve the item's own hide value as-is
+    if (item.ignorePermission) {
+      return item;
+    }
     const permission = item.key
       ? permissionMap[item.key]
       : { read: true, edit: true };

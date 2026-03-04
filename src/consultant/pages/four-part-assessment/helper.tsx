@@ -18,8 +18,9 @@ const dateOptions: { option: string; value: string }[] = [
 
 export const getFourPartAssessmentTableColumns = (
   handleFourPartAssessmentView: (rowId: string) => void,
-  moduleLevel: 'account' | 'project' | 'case'
-  //   permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  moduleLevel: 'account' | 'project' | 'case',
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<FourPartAssessmentList>[] => [
   {
     id: 'r_number',
@@ -36,8 +37,8 @@ export const getFourPartAssessmentTableColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    // hide:
-    //   !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
     render: (row) =>
       handleFourPartAssessmentView ? (
         <span
@@ -56,10 +57,10 @@ export const getFourPartAssessmentTableColumns = (
     label: 'Project Code',
     width: 140,
     sortable: true,
-    hide: moduleLevel === 'project',
-    // hide:
-    //   !projectPermissionMap?.['project_code']?.edit &&
-    //   !projectPermissionMap?.['project_code']?.read,
+    hide:
+      moduleLevel === 'project' ||
+      (!projectPermissionMap?.['project_code']?.edit &&
+        !projectPermissionMap?.['project_code']?.read),
   },
   {
     id: 'rd_potential_category',
@@ -67,7 +68,9 @@ export const getFourPartAssessmentTableColumns = (
     label: 'Range',
     width: 140,
     sortable: true,
-    //   hide: !permissionMap?.['rd_potential_category']?.edit && !permissionMap?.['rd_potential_category']?.read,
+    hide:
+      !permissionMap?.['rd_potential_category']?.edit &&
+      !permissionMap?.['rd_potential_category']?.read,
   },
   {
     id: 'permitted_purpose_status',
@@ -75,7 +78,9 @@ export const getFourPartAssessmentTableColumns = (
     label: 'Permitted Purpose Status',
     width: 200,
     sortable: true,
-    //   hide: !permissionMap?.['permitted_purpose_status']?.edit && !permissionMap?.['permitted_purpose_status']?.read,
+    hide:
+      !permissionMap?.['permitted_purpose_status']?.edit &&
+      !permissionMap?.['permitted_purpose_status']?.read,
   },
   {
     id: 'technological_uncertainty_status',
@@ -83,7 +88,9 @@ export const getFourPartAssessmentTableColumns = (
     label: 'Technological Uncertainty Status',
     width: 245,
     sortable: true,
-    //   hide: !permissionMap?.['technological_uncertainty_status']?.edit && !permissionMap?.['technological_uncertainty_status']?.read,
+    hide:
+      !permissionMap?.['technological_uncertainty_status']?.edit &&
+      !permissionMap?.['technological_uncertainty_status']?.read,
   },
   {
     id: 'technological_in_nature_status',
@@ -91,7 +98,9 @@ export const getFourPartAssessmentTableColumns = (
     label: 'Technological In Nature Status',
     width: 235,
     sortable: true,
-    //   hide: !permissionMap?.['technological_in_nature_status']?.edit && !permissionMap?.['technological_in_nature_status']?.read,
+    hide:
+      !permissionMap?.['technological_in_nature_status']?.edit &&
+      !permissionMap?.['technological_in_nature_status']?.read,
   },
   {
     id: 'process_of_experimentation_status',
@@ -99,7 +108,9 @@ export const getFourPartAssessmentTableColumns = (
     label: 'Process of Experimentation Status',
     width: 255,
     sortable: true,
-    //   hide: !permissionMap?.['process_of_experimentation_status']?.edit && !permissionMap?.['process_of_experimentation_status']?.read,
+    hide:
+      !permissionMap?.['process_of_experimentation_status']?.edit &&
+      !permissionMap?.['process_of_experimentation_status']?.read,
   },
   {
     id: 'created_by_name',
@@ -107,9 +118,9 @@ export const getFourPartAssessmentTableColumns = (
     label: 'Created By',
     width: 180,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['created_by_name']?.edit &&
-    //   !permissionMap?.['created_by_name']?.read,
+    hide:
+      !permissionMap?.['created_by']?.edit &&
+      !permissionMap?.['created_by']?.read,
   },
   {
     id: 'created_datetime',
@@ -118,15 +129,16 @@ export const getFourPartAssessmentTableColumns = (
     width: 200,
     sortable: true,
     render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
-    // hide:
-    //   !permissionMap?.['created_datetime']?.edit &&
-    //   !permissionMap?.['created_datetime']?.read,
+    hide:
+      !permissionMap?.['created_datetime']?.edit &&
+      !permissionMap?.['created_datetime']?.read,
   },
 ];
 
 export const getFourPartAssessmentFilterFields = (
-  moduleLevel: 'account' | 'project' | 'case'
-  //   permissionMap: Record<string, { read: boolean; edit: boolean }>
+  moduleLevel: 'account' | 'project' | 'case',
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -134,78 +146,82 @@ export const getFourPartAssessmentFilterFields = (
       value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['r_number']?.edit &&
-      //     !permissionMap?.['r_number']?.read,
+      hide:
+        !permissionMap?.['r_number']?.edit &&
+        !permissionMap?.['r_number']?.read,
     },
     {
       name: 'Project Code',
       value: 'project_code',
       type: 'text',
       operatorOption: textOptions,
-      hide: moduleLevel === 'project',
-      //   hide:
-      //     !permissionMap?.['project_code']?.edit &&
-      //     !permissionMap?.['project_code']?.read,
+      hide:
+        moduleLevel === 'project' ||
+        (!projectPermissionMap?.['project_code']?.edit &&
+          !projectPermissionMap?.['project_code']?.read),
     },
     {
       name: 'Range',
       value: 'rd_potential_category',
       type: 'text',
       operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['rd_potential_category']?.edit &&
-      //     !permissionMap?.['rd_potential_category']?.read,
+      hide:
+        !permissionMap?.['rd_potential_category']?.edit &&
+        !permissionMap?.['rd_potential_category']?.read,
     },
     {
       name: 'Permitted Purpose Status',
       value: 'permitted_purpose_status',
       type: 'text',
       operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['permitted_purpose_status']?.edit && !permissionMap?.['permitted_purpose_status']?.read,
+      hide:
+        !permissionMap?.['permitted_purpose_status']?.edit &&
+        !permissionMap?.['permitted_purpose_status']?.read,
     },
     {
       name: 'Technological Uncertainty Status',
       value: 'technological_uncertainty_status',
       type: 'text',
       operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['technological_uncertainty_status']?.edit && !permissionMap?.['technological_uncertainty_status']?.read,
+      hide:
+        !permissionMap?.['technological_uncertainty_status']?.edit &&
+        !permissionMap?.['technological_uncertainty_status']?.read,
     },
     {
       name: 'Technological In Nature Status',
       value: 'technological_in_nature_status',
       type: 'text',
       operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['technological_in_nature_status']?.edit && !permissionMap?.['technological_in_nature_status']?.read,
+      hide:
+        !permissionMap?.['technological_in_nature_status']?.edit &&
+        !permissionMap?.['technological_in_nature_status']?.read,
     },
     {
       name: 'Process of Experimentation Status',
       value: 'process_of_experimentation_status',
       type: 'text',
       operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['process_of_experimentation_status']?.edit && !permissionMap?.['process_of_experimentation_status']?.read,
+      hide:
+        !permissionMap?.['process_of_experimentation_status']?.edit &&
+        !permissionMap?.['process_of_experimentation_status']?.read,
     },
     {
       name: 'Created By',
       value: 'created_by_name',
       type: 'text',
       operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['created_by_name']?.edit &&
-      //     !permissionMap?.['created_by_name']?.read,
+      hide:
+        !permissionMap?.['created_by']?.edit &&
+        !permissionMap?.['created_by']?.read,
     },
     {
       name: 'Created On',
       value: 'created_datetime',
       type: 'date',
       operatorOption: dateOptions,
-      //   hide:
-      //     !permissionMap?.['created_datetime']?.edit &&
-      //     !permissionMap?.['created_datetime']?.read,
+      hide:
+        !permissionMap?.['created_datetime']?.edit &&
+        !permissionMap?.['created_datetime']?.read,
     },
   ];
 };

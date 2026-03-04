@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -7,6 +7,7 @@ import {
   moduleColorMap,
 } from './helper';
 import {
+  AllModules,
   AllPermissions,
   FilterTypes,
   OverviewTabs,
@@ -27,6 +28,8 @@ import SectionHeader from '../../../components/details-section/section-header';
 import { FourPartIcon } from '../../../assets';
 import { ListTable, ManageColumnsPopover } from '../../../components/table';
 import Timeline from '../../../pages/timeline/timeline';
+import { checkPermission } from '../../../common-utils';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 const FourPartAssessmentTabs: OverviewTabs[] = [
   {
@@ -94,15 +97,10 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
   );
 
-  // const { permission, modules } = useSelector(
-  //   (state: RootState) => state.permission
-  // );
-
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const fourPartAssessmentId = searchParams.get('fpa_id');
   const viewDetails = !!fourPartAssessmentId;
 
@@ -145,47 +143,48 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
       ...(moduleLevel === 'case' && { case_rid: caseId || '' }),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    appliedFilters,
-    tableParams.sort_by,
-    tableParams.sort,
-    convertedFiscalYear,
-    searchText,
-  ]);
+  }, [appliedFilters, tableParams.sort_by, tableParams.sort, searchText]);
 
   // Permissions
-  // const fourPartAssessmentEnable = checkPermission(modules, AllModules.FOUR_PART_ASSESSMENT);
+  const fourPartAssessmentEnable = checkPermission(
+    modules,
+    AllModules.FOUR_PART_ASSESSMENT
+  );
 
-  // const isFourPartAssessmentViewEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
-  // );
+  const isFourPartAssessmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
+  );
 
-  // const fourPartAssessmentEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const fourPartAssessmentEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const fourPartAssessmentFieldsEditable = useMemo(
-  //   () =>
-  //     permission
-  //       .find(
-  //         (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
-  //       )
-  //       ?.fields?.some((field) => field.edit),
-  //   [permission]
-  // );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    fourPartAssessmentEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [fourPartAssessmentEditFields]);
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   fourPartAssessmentEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [fourPartAssessmentEditFields]);
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -231,11 +230,16 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
 
   const fourPartAssessmentColumns = getFourPartAssessmentTableColumns(
     handleFourPartAssessmentView,
-    moduleLevel
+    moduleLevel,
+    permissionMap,
+    projectPermissionMap
   );
 
-  const fourPartAssessmentFilterFields =
-    getFourPartAssessmentFilterFields(moduleLevel);
+  const fourPartAssessmentFilterFields = getFourPartAssessmentFilterFields(
+    moduleLevel,
+    permissionMap,
+    projectPermissionMap
+  );
 
   const getRowId = (row: FourPartAssessmentList) => row.rid;
 
@@ -288,6 +292,10 @@ const FourPartAssessment: React.FC<FourPartAssessmentProps> = ({
   };
 
   const currentModuleColors = moduleColorMap[moduleLevel];
+
+  if (!fourPartAssessmentEnable || !isFourPartAssessmentViewEnable) {
+    return <AccessRestricted />;
+  }
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
