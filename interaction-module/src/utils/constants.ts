@@ -1203,7 +1203,7 @@ export const rawQueries = {
     ${schemaName}.interactions
     WHERE
     transaction_id = '${transactionId}'
-    ORDER BY created_datetime DESC
+    ORDER BY interaction_batch_id DESC
     `
   }
 };
