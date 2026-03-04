@@ -644,20 +644,20 @@ export async function uploadToAzureBlob(
  * @param connectionString - Azure Storage connection string
  * @returns URL of the uploaded blob
  */
-export async function uploadBufferToAzureBlob(buffer: Buffer, blobName: string,accountNumber: string): Promise<string> {
-     // Get connection string from secrets manager
-    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-    const containerName = accountNumber.toLowerCase();
+export async function uploadBufferToAzureBlob(buffer: Buffer, blobName: string, accountNumber: string): Promise<string> {
+  // Get connection string from secrets manager
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  const containerName = accountNumber.toLowerCase();
 
-    if (!connectionString) {
-      throw new Error("Azure storage connection string is required");
-    }
-    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-    const containerClient = blobServiceClient.getContainerClient(containerName);
-    await containerClient.createIfNotExists();
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-    await blockBlobClient.uploadData(buffer, { blobHTTPHeaders: { blobContentType: 'application/pdf' } });
-    return blockBlobClient.url;
+  if (!connectionString) {
+    throw new Error("Azure storage connection string is required");
+  }
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  await containerClient.createIfNotExists();
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  await blockBlobClient.uploadData(buffer, { blobHTTPHeaders: { blobContentType: 'application/pdf' } });
+  return blockBlobClient.url;
 }
 
 /**
@@ -668,19 +668,19 @@ export async function uploadBufferToAzureBlob(buffer: Buffer, blobName: string,a
  * @returns Buffer containing the blob's data
  */
 export async function downloadBufferFromAzureBlob(containerName: string, blobName: string): Promise<Buffer> {
-    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-    if (!connectionString) {
-      throw new Error("Azure storage connection string is required");
-    }
-    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-    const containerClient = blobServiceClient.getContainerClient(containerName);
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-    const downloadResponse = await blockBlobClient.download();
-    const chunks: Buffer[] = [];
-    for await (const chunk of downloadResponse.readableStreamBody!) {
-        chunks.push(Buffer.from(chunk));
-    }
-    return Buffer.concat(chunks);
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  if (!connectionString) {
+    throw new Error("Azure storage connection string is required");
+  }
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  const downloadResponse = await blockBlobClient.download();
+  const chunks: Buffer[] = [];
+  for await (const chunk of downloadResponse.readableStreamBody!) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
 }
 
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
@@ -847,6 +847,14 @@ export const applyFilters = (filters: Record<string, any>, whereClause: any) => 
           }
           break;
 
+        case 'is_federal':
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.eq]: value }; break;
+            case 'not_equals': condition[field] = { [Op.ne]: value }; break;
+            case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+          }
+          break;
+
         case 'size_in_mb':
           switch (operator.toLowerCase()) {
             case 'equals': condition[field] = { [Op.eq]: value }; break;
@@ -906,18 +914,18 @@ export const applyFilters = (filters: Record<string, any>, whereClause: any) => 
   return whereClause;
 };
 
-export const uploadMultipleFilesToAzureBlob = async (accountRid : string, accountNumber : string ,files : Express.Multer.File[]) => {
-  if(files.length < 1) throw new Error("File is required");
-  if(!accountRid) throw new Error("Account RID is required");
+export const uploadMultipleFilesToAzureBlob = async (accountRid: string, accountNumber: string, files: Express.Multer.File[]) => {
+  if (files.length < 1) throw new Error("File is required");
+  if (!accountRid) throw new Error("Account RID is required");
 
   const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  if(!connectionString) throw new Error("Connection string is invalid");
+  if (!connectionString) throw new Error("Connection string is invalid");
   const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
   const containerName = accountNumber.toLowerCase();
   const container = blobServiceClient.getContainerClient(containerName);
   await container.createIfNotExists();
   const uploadedResult = await Promise.all(
-    files.map(async (file : Express.Multer.File) => {
+    files.map(async (file: Express.Multer.File) => {
       const extension = file.originalname.includes(".") ? file.originalname.substring(file.originalname.lastIndexOf(".")) : "";
       const baseName = file.originalname.replace(/\.[^/.]+$/, "");
       const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, "");
@@ -925,24 +933,24 @@ export const uploadMultipleFilesToAzureBlob = async (accountRid : string, accoun
       const blobName = `${accountRid}/cases/dossier/${timestamp}-${sanitizedBaseName}${extension}`
       const blockBlobClient = container.getBlockBlobClient(blobName);
       const uploadOptions = {
-        blobHTTPHeaders : {
-          blobContentType : file.mimetype || "application/octet-stream"
+        blobHTTPHeaders: {
+          blobContentType: file.mimetype || "application/octet-stream"
         }
       }
       await blockBlobClient.uploadData(file.buffer, uploadOptions);
       const sizeInMb = parseFloat((file.size / (1024 * 1024)).toFixed(2))
       return {
-        url : blockBlobClient.url,
-        name : sanitizedBaseName,
-        extension : extension,
-        size : sizeInMb
+        url: blockBlobClient.url,
+        name: sanitizedBaseName,
+        extension: extension,
+        size: sizeInMb
       }
     })
   )
   return uploadedResult;
 }
 
-export const addLog = (methodName : string, timestamp : string, message : string) => {
+export const addLog = (methodName: string, timestamp: string, message: string) => {
   const logger = getLogger();
   return logger.info(`MethodName : ${methodName}, Timestamp : ${timestamp}, Error : ${message}`)
 }

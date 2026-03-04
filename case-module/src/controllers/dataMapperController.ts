@@ -272,6 +272,7 @@ async function exportDataMapperForms(req: Request, res: Response): Promise<void>
                             modified_datetime: d.modified_datetime ? formatDate(d.modified_datetime) : "",
                             modified_by: d.modified_by_name || "",
                             form_name: d.form_name,
+                            is_federal: d.is_federal ? "Yes" : "No",
                             browse_file: d.browse_file,
                             document_name: d.document_name,
                             effective_from_date: formatDate(d.effective_from_date, "YYYY-MMM-DD"),
