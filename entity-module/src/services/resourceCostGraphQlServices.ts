@@ -1,6 +1,6 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
+import { entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { logMessage, setResFiscalForResCost, setResourceCostDatas } from "../utils/helpers";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
 import { getCurrencyThreshold, getResourceStatuses } from "./resourceCostService";
@@ -9,11 +9,17 @@ import moment from "moment";
 import { ResourceCost } from "../models/resourceCost";
 import { Op, Sequelize } from "sequelize";
 import { Resources } from "../models/resource";
+import SchemaService from "./schemaService";
 
 
 export default class ResourceCostGraphQlService {
   private orgSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
+  private schemaService: SchemaService;
+
+  constructor() {
+    this.schemaService = new SchemaService();
+  }
 
   private async getOrgSequelize(): Promise<Sequelize> {
     if (!this.orgSequelize) {
@@ -215,6 +221,21 @@ export default class ResourceCostGraphQlService {
             } 
           }
           await orgDbSequelize.query(rawQueries.insertResCostTimelineQuery(schemaName, data))
+          const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                          userId: data.userId!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+          await this.schemaService.createAccountTimelineEntry(fetchParentAcc[0][0].r_number!, {
+            created_by: data.userId!,
+            account_rid: data.account_rid,
+            entity_rid: data?.resource_rid!,
+            entity_name: entityTypes.RESOURCE_COST,
+            created_by_name: userEventInfo.full_name,
+            event_type_rid: userEventInfo.event_type_rid,
+            event_name: eventNames.UPDATE,
+            descriptions:data.resource_code
+          },
+          ["account"]);
           for(let history of setResourceCost) {
             let splittedObj = history.split('=')[0]
             let finalData = splittedObj.trim()

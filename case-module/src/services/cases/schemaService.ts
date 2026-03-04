@@ -233,11 +233,13 @@ class CaseSchemaService {
         r_number,
         financial_working_signoff,
         rd_form_signoff,
+        status_rid,
         ...caseCloneRest
       } = originalCase;
       // Use the incoming caseRequest for fields that must be set (e.g., parent_case_rid, filing_type_rid, created_by)
       const casecreationResponse = await Case.create({
         ...caseCloneRest,
+        status_rid: caseRequest.status_rid,
         filing_type_rid: amendmentType?.rid,
         created_by: caseRequest.created_by,
         created_datetime: new Date(),
