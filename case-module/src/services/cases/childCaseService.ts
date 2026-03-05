@@ -104,10 +104,10 @@ export class ChildCaseService extends CaseService {
                 created_by: data.userId!,
                 account_rid: data.account_rid,
                 entity_rid: data.case_rid!,
-                entity_name: entityTypes.CASE,
+                entity_name: entityTypes.FINANCIAL_WORKING,
                 created_by_name: userEventInfo.full_name,
                 event_type_rid: userEventInfo.event_type_rid,
-                event_name: eventNames.CREATE,
+                event_name: eventNames.SIGNOFF,
                 descriptions:caseDetails.case_name,
                 case_rid: data.case_rid,
               },["case"]);
@@ -205,6 +205,10 @@ export class ChildCaseService extends CaseService {
                 errorMessage: "Closed case status not found",
             };
           } 
+          let [accountInfo]: any[] = await mainDb.query(
+                  rawQueries.fetchAccountAndCountryDetails(data.account_rid),
+                  { type: QueryTypes.SELECT }
+                );
            const [caseFilingType]: any = await mainDb.query(rawQueries.fetchFilingTypeByName(caseFilingTypes.regular));
            if (caseFilingType.length === 0) {
             return {
@@ -216,7 +220,7 @@ export class ChildCaseService extends CaseService {
         
           const { Case } = await this.caseModelService.getModels(accountNumber);
             const closedCases = await Case.findAll({
-                attributes: ['rid', 'case_name'],
+                attributes: ['rid', 'case_name', 'fiscal_year'],
                 where: {
                     account_rid: data.account_rid,
                     status_rid: caseStatus[0].rid,
@@ -226,7 +230,10 @@ export class ChildCaseService extends CaseService {
             return {
             statusCode: HttpStatus.SUCCESS,
             message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
-            data: { cases: closedCases },
+            data: { cases: closedCases.map(d => ({
+                rid: d.rid,
+                case_full_name: accountInfo.account_name + '-' + accountInfo.country_code + '-' + d.fiscal_year + '-' + d.case_name
+            })) },
           };
         } catch (error) {
           return {
@@ -1240,6 +1247,23 @@ async fetchDossierPackage (data : any) {
   })
   if(getZipPackage) {
     getZipPackage.browse_url = await generateSasUrl(getZipPackage.browse_url);
+     const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                userId: data.user_id!,
+                eventType: eventTypes.UI_HANDLER
+              });
+      const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+                                
+      await this.helperMethod.createAccountTimelineEntry(fetchParentNumber[0][0].r_number, {
+      created_by: data.user_id!,
+      account_rid: data.account_rid,
+      entity_rid: data.case_rid!,
+      entity_name: entityTypes.FINANCIAL_WORKING,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.CREATE,
+      descriptions:caseDetails.case_name,
+      case_rid: data.case_rid,
+    },["case"]);
     return {
       statusCode : HttpStatus.SUCCESS,
       data : getZipPackage

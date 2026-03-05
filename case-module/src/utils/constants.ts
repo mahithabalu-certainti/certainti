@@ -330,6 +330,7 @@ export const entityTypes = {
   HISTORICAL_SUBMISSION: "Historical Submission",
   SETTINGS: "Settings",
   REVIEW_PROJECT_EMAIL: "Case Review Project Email",
+  DOSSIER: "Dossier Package",
 
 };
 
@@ -341,6 +342,7 @@ export const eventNames = {
   DELETE: "deleted",
   REMOVED: "removed",
   SENT: "sent",
+  SIGNOFF: "approved",
 }
 
 export const eventTypes = {
