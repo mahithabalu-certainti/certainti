@@ -234,6 +234,9 @@ export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
 export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
   "Australia": "AUD",
   "United States": "USD",
+  "United Kingdom": "GBP",
+  "Canada": "CAD",
+  "Ireland": "EUR"
 };
 
 export const FORM_TYPE = {
