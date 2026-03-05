@@ -11,7 +11,6 @@ export interface ConfigJson {
     qre_credit_percentage_c2: number;
     qre_credit_percentage_c3: number;
     qre_credit_percentage_c1: number;
-    qre_cap_rate: number;
     rrc_qre_addition: number;
     qre_threshold_amount: number;
     fixed_base_percentage: number;
@@ -46,11 +45,12 @@ export class RdCreditCalculatorForAZ {
             fiscalYearEnded : fiscalYear
         });
         const computedFields = await this.buildComputedFields(ascResult, rrcResult, config);
-
+        const finalCredit = rrcResult.total_az_final_credit;
+        console.log("finalCredit for Az:", finalCredit);
         return {
             inputFields,
             computedFields,
-            finalCredit: ascResult.total_az_final_credit,
+            finalCredit: finalCredit,
             totalQRE: rrcResult.total_current_year_qre,
         }
 
@@ -99,7 +99,7 @@ export class RdCreditCalculatorForAZ {
         const finalLine19 = line19.lt(0) ? new Decimal(0) : line19
 
         //---- Line 20: Multiply line 15 by 50%
-        const line20 = line15.mul(config.qre_cap_rate/100);
+        const line20 = line15.mul(config.qre_credit_percentage_c1/100);
 
         //---- Line 21: Enter smaller of line 19 or line 20
         const line21 = Decimal.min(finalLine19, line20);
@@ -187,7 +187,7 @@ export class RdCreditCalculatorForAZ {
             const line85 = Decimal.max(new Decimal(line82).minus(line84), 0);
 
             //---- Line 86: 50% of current year QRE
-            const line86 = line82.mul(config.qre_cap_rate/100);
+            const line86 = line82.mul(config.qre_credit_percentage_c1/100);
 
             //---- Line 87: Enter the lesser of line 85 or line 86
             const line87 = Decimal.min(line85, line86);
@@ -297,6 +297,7 @@ export class RdCreditCalculatorForAZ {
      * @returns 
      */
     async buildComputedFields(creditASC: any, creditRRC: any, config : ConfigJson) {
+
         let rrc ={
             "[11] Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)": creditRRC.wages,
             "[12] Cost of supplies": creditRRC.supplies,
@@ -307,15 +308,15 @@ export class RdCreditCalculatorForAZ {
             [`[17] Fixed-base percentage [not more than ${creditRRC.fixed_base_percentage}%]: See instructions`]: `${creditRRC.fixed_base_percentage}%`,
             "[18] Base amount: Multiply line 16 by the percentage on line 17. Enter the result": creditRRC.base_amount,
             "[19] Subtract line 18 from line 15. If less than zero, enter 0": creditRRC.excess_qre_over_base,
-            [`[20] Multiply line 15 by ${creditRRC?.config?.qre_cap_rate}% (${creditRRC?.config?.qre_cap_rate / 100}). Enter the result`]: creditRRC.half_total_qre,
+            [`[20] Multiply line 15 by ${config?.qre_credit_percentage_c1}% (${config?.qre_credit_percentage_c1 / 100}). Enter the result`]: creditRRC.half_total_qre,
             "[21] Enter the lesser of line 19 or line 20": creditRRC.total_section_b_credit,
             "[22] Add lines 10 and 21. Enter the total": creditRRC.total_az_credit_before_limits,
-            [`* If line 22 is $ ${creditRRC?.config?.qre_threshold_amount} or less, complete line 23 and skip lines 24 through 26.`]: "",
-            [`* If line 22 is more than $ ${creditRRC?.config?.qre_threshold_amount}, skip line 23 and complete lines 24 through 26.`]: "",
-            [`[23] Multiply line 22 by ${creditRRC?.config?.qre_credit_percentage_c1}% (${creditRRC?.config?.qre_credit_percentage_c1 / 100}). Enter the result`]: creditRRC.credit_if_under_threshold,
-            [`[24] Subtract $ ${creditRRC?.config?.qre_threshold_amount} from line 22. Enter the difference`]: creditRRC.excess_amount || '',
-            [`[25] Multiply line 24 by ${creditRRC?.config?.qre_credit_percentage_c3}%. Enter the result`]: creditRRC.credit_on_excess || '',
-            [`[26] Add ${creditRRC?.config?.rrc_qre_addition} to line 25. Enter the total`]: creditRRC.credit_if_over_threshold || '',
+            [`* If line 22 is $ ${config?.qre_threshold_amount} or less, complete line 23 and skip lines 24 through 26.`]: "",
+            [`* If line 22 is more than $ ${config?.qre_threshold_amount}, skip line 23 and complete lines 24 through 26.`]: "",
+            [`[23] Multiply line 22 by ${config?.qre_credit_percentage_c2}% (${config?.qre_credit_percentage_c2 / 100}). Enter the result`]: creditRRC.credit_if_under_threshold,
+            [`[24] Subtract $ ${config?.qre_threshold_amount} from line 22. Enter the difference`]: creditRRC.excess_amount || '',
+            [`[25] Multiply line 24 by ${config?.qre_credit_percentage_c3}%. Enter the result`]: creditRRC.credit_on_excess || '',
+            [`[26] Add ${config?.rrc_qre_addition} to line 25. Enter the total`]: creditRRC.credit_if_over_threshold || '',
             "[27 a] If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26.": creditRRC.total_az_final_credit || '',
             "[27 b] If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page": ""
         }
@@ -332,15 +333,15 @@ export class RdCreditCalculatorForAZ {
             "[83] Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC": creditASC.total_prior_3years_qre || '',
             "[84] Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result": creditASC.adjusted_base_amount || '',
             "[85] Subtract line 84 from line 82. Enter the difference. If less than zero, enter 0.": creditASC.excess_qre || '',
-            [`[86] Multiply line 82 by ${creditASC?.config?.qre_cap_rate}% (${creditASC?.config?.qre_cap_rate / 100}). Enter the result.`]: creditASC.half_total_qre || '',
+            [`[86] Multiply line 82 by ${config?.qre_credit_percentage_c1}% (${config?.qre_credit_percentage_c1 / 100}). Enter the result.`]: creditASC.half_total_qre || '',
             "[87] Enter the lesser of line 85 or line 86.": creditASC.total_section_b_credit || '',
             "[88] Add line 77 and line 87. Enter the total": creditASC.prior_year_credit_carryforward || '',
-            [`* If line 88 is $ ${creditASC?.config?.qre_threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]: "",
-            [`* If line 88 is more than $ ${creditASC?.config?.qre_threshold_amount}, skip line 89. Complete lines 90 through 93.`]: "",
-            [`[89] If line 88 is $ ${creditASC?.config?.qre_threshold_amount} or less, multiply line 88 by ${creditASC?.config?.qre_credit_rate_c2}% (${creditASC?.config?.qre_credit_rate_c2 / 100}). Enter the result.`]: creditASC.credit_if_under_threshold || '',
-            [`[90] If line 88 is more than $ ${creditASC?.config?.qre_threshold_amount}, subtract ${creditASC?.config?.qre_threshold_amount} from line 88. Enter the difference.`]: creditASC.excess_amount || '',
-            [`[91] Multiply line 90 by ${creditASC?.config?.qre_credit_rate_c3}%. Enter the result.`]: creditASC.credit_on_excess || '',
-            [`[92] Add $ ${creditASC?.config?.rrc_qre_addition} to line 91. Enter the total.`]: creditASC.credit_if_over_threshold || '',
+            [`* If line 88 is $ ${config?.qre_threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]: "",
+            [`* If line 88 is more than $ ${config?.qre_threshold_amount}, skip line 89. Complete lines 90 through 93.`]: "",
+            [`[89] If line 88 is $ ${config?.qre_threshold_amount} or less, multiply line 88 by ${config?.qre_credit_percentage_c2}% (${config?.qre_credit_percentage_c2 / 100}). Enter the result.`]: creditASC.credit_if_under_threshold || '',
+            [`[90] If line 88 is more than $ ${config?.qre_threshold_amount}, subtract ${config?.qre_threshold_amount} from line 88. Enter the difference.`]: creditASC.excess_amount || '',
+            [`[91] Multiply line 90 by ${config?.qre_credit_percentage_c3}%. Enter the result.`]: creditASC.credit_on_excess || '',
+            [`[92] Add $ ${config?.rrc_qre_addition} to line 91. Enter the total.`]: creditASC.credit_if_over_threshold || '',
             "[93] Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.": creditASC.total_az_final_credit || ''
         }
 
