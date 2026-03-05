@@ -1455,12 +1455,21 @@ const MappingTable: React.FC<MappingTableProps> = ({
         return;
       }
 
-      // Number entry — goes to nested or main list
+      // Number entry — validate max 4 decimal places, then goes to nested or main list
       const numberRegex = /^-?\d+(\.\d+)?$/;
       if (numberRegex.test(currentInput.trim())) {
+        const numberInput = currentInput.trim();
+        const decimalMatch = numberInput.match(/\.(\d+)$/);
+        if (decimalMatch && decimalMatch[1].length > 4) {
+          setBracketPopover({
+            ...bracketPopover,
+            error: 'Maximum of 4 decimal places allowed for numbers',
+          });
+          return;
+        }
         const numItem: BracketItem = {
           type: 'number',
-          value: currentInput.trim(),
+          value: numberInput,
         };
         if (bracketPopover.nestedMode) {
           setBracketPopover({
@@ -1594,12 +1603,23 @@ const MappingTable: React.FC<MappingTableProps> = ({
       }
     }
 
-    // Validate numbers (max 3 decimal places)
+    // Validate numbers (max 4 decimal places) — including inside nested brackets (recursive)
     for (const it of items) {
       if (it.type === 'number') {
         const decMatch = it.value.match(/\.(\d+)$/);
-        if (decMatch && decMatch[1].length > 3) {
-          return `Number "${it.value}" exceeds 3 decimal places`;
+        if (decMatch && decMatch[1].length > 4) {
+          return 'Maximum of 4 decimal places allowed for numbers';
+        }
+      }
+      // Recurse into nested bracket items
+      if (
+        it.type === 'bracket' &&
+        it.nestedItems &&
+        it.nestedItems.length > 0
+      ) {
+        const nestedError = validateBracketExpression(it.nestedItems);
+        if (nestedError) {
+          return `Inside nested bracket: ${nestedError}`;
         }
       }
     }
@@ -1948,10 +1968,10 @@ const MappingTable: React.FC<MappingTableProps> = ({
       const numberInput = currentInput.trim();
       const numberRegex = /^-?\d+(\.\d+)?$/;
       if (numberRegex.test(numberInput)) {
-        // Validate max 3 decimal places
+        // Validate max 4 decimal places
         const decimalMatch = numberInput.match(/\.(\d+)$/);
-        if (decimalMatch && decimalMatch[1].length > 3) {
-          clause.error = 'Maximum of 3 decimal places allowed for numbers';
+        if (decimalMatch && decimalMatch[1].length > 4) {
+          clause.error = 'Maximum of 4 decimal places allowed for numbers';
           newClauses[index] = clause;
           setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
           return;
@@ -2258,10 +2278,19 @@ const MappingTable: React.FC<MappingTableProps> = ({
           clause.returnInputValue = '';
         }
       } else if (currentInput.trim() && !isNaN(Number(currentInput.trim()))) {
-        // It's a number
+        // It's a number — validate max 4 decimal places
+        const numberInput = currentInput.trim();
+        const decimalMatch = numberInput.match(/\.(\d+)$/);
+        if (decimalMatch && decimalMatch[1].length > 4) {
+          clause.returnError =
+            'Maximum of 4 decimal places allowed for numbers';
+          newClauses[index] = clause;
+          setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+          return;
+        }
         clause.returnExpressions = [
           ...(clause.returnExpressions || []),
-          { type: 'number', value: currentInput.trim() },
+          { type: 'number', value: numberInput },
         ];
         clause.returnInputValue = '';
       }
@@ -2408,10 +2437,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 clause.error = `Invalid number value: ${exp.value}`;
                 hasValidationErrors = true;
               } else {
-                // Validate max 3 decimal places
+                // Validate max 4 decimal places
                 const decimalMatch = exp.value.match(/\.(\d+)$/);
-                if (decimalMatch && decimalMatch[1].length > 3) {
-                  clause.error = `Number entries has too many decimal places. Maximum of 3 allowed.`;
+                if (decimalMatch && decimalMatch[1].length > 4) {
+                  clause.error =
+                    'Maximum of 4 decimal places allowed for numbers';
                   hasValidationErrors = true;
                 }
               }
@@ -2546,9 +2576,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
               clause.returnError = `Invalid number value: ${exp.value}`;
               hasValidationErrors = true;
             } else {
+              // Validate max 4 decimal places
               const decimalMatch = exp.value.match(/\.(\d+)$/);
-              if (decimalMatch && decimalMatch[1].length > 3) {
-                clause.returnError = `Number has too many decimal places. Maximum of 3 allowed.`;
+              if (decimalMatch && decimalMatch[1].length > 4) {
+                clause.returnError =
+                  'Maximum of 4 decimal places allowed for numbers';
                 hasValidationErrors = true;
               }
             }
@@ -2986,7 +3018,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               <span>
                 <Tooltip
                   title={
-                    'How to add fields to Source:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.555) - max 3 decimal places\n• Type ( then press Enter to add bracket expression (e.g., (#A - #B))\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
+                    'How to add fields to Source:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.5555) - max 4 decimal places\n• Type ( then press Enter to add bracket expression (e.g., (#A - #B))\n• Type MIN or MAX for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
                   }
                   arrow
                   placement='left'

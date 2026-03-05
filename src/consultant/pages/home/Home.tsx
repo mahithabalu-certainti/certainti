@@ -641,6 +641,23 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
+      {isGlobalLevelEnable && (
+        <WorldMapChart
+          title='Global Level'
+          subtitle='Click on any country to view detailed account information'
+        />
+      )}
+
+      {isOverAllProjectValueEnable && (
+        <DonutChartsGroup
+          title='Overall Project Value by Jurisdiction'
+          subtitle='Aggregate Total R&D project value across all jurisdictions.'
+          data={overallProjectValue || []}
+          colors={DONUT_COLORS}
+          isLoading={isProjectValueLoading}
+        />
+      )}
+
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {isCasesByHealthStatusEnable && (
           <AccountChart
@@ -1044,23 +1061,6 @@ export const HomePage: React.FC = () => {
           />
         )}
       </div>
-
-      {isOverAllProjectValueEnable && (
-        <DonutChartsGroup
-          title='Overall Project Value by Jurisdiction'
-          subtitle='Aggregate Total R&D project value across all jurisdictions.'
-          data={overallProjectValue || []}
-          colors={DONUT_COLORS}
-          isLoading={isProjectValueLoading}
-        />
-      )}
-
-      {isGlobalLevelEnable && (
-        <WorldMapChart
-          title='Global Level'
-          subtitle='Click on any country to view detailed account information'
-        />
-      )}
     </div>
   );
 };

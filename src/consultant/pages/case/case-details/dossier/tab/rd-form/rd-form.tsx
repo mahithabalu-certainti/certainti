@@ -66,7 +66,7 @@ const RDForm: React.FC<RDFormProps> = ({
   const configDetails = data?.data.states;
   const [previewData, setPreviewData] = useState<RDFormResponse | null>(null);
   const [isPreviewError, setIsPreviewError] = useState<boolean>(false);
-  const { successToast, errorToast } = useToast();
+  const { errorToast } = useToast();
 
   const setRdformGenerateStatus = (status: boolean) => {
     dispatch(setRdformGenerateStatusAction(status));
@@ -88,9 +88,6 @@ const RDForm: React.FC<RDFormProps> = ({
         onSuccess: (data) => {
           if (data.statusCode === 200) {
             setRdformGenerateStatus(true);
-            successToast(
-              data.statusMessage || 'RD Form generated successfully'
-            );
           }
         },
         onError: (error) => {
