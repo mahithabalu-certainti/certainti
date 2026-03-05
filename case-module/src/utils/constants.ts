@@ -704,6 +704,10 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,storage_type,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
+  fetchCountryCalculationForCase(schemaName:string)
+  {
+    return `SELECT input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = :caseRid LIMIT 1`;
+  },
   fetchCasesInfo(rid: string) {
     return `SELECT cs.rid,
       CONCAT(ac.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_name,ac.account_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email ,s.status_name FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
