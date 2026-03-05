@@ -1499,7 +1499,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
     const findParentAccount = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT, plain : true});
     if(findParentAccount) {
       const schemaName = rawQueries.fetchSchemaName(findParentAccount.r_number)
-      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations, Case, CaseSummary} = await this.caseModelService.getModels(findParentAccount.r_number);
+      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations, Case, CaseSummary, ProjectFiscal} = await this.caseModelService.getModels(findParentAccount.r_number);
       const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.case));
       await SignoffDetails.create({
         account_rid : data.account_rid,
@@ -1696,6 +1696,17 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
             case_rid : data.case_rid
           }, transaction : mainDbTransaction
         })
+        const projectIds = await orgDb.query<ProjectFiscalIds>(rawQueries.fetchAssignedProjectIds(data.case_rid, schemaName, "closeCase"), {type : QueryTypes.SELECT});
+        await ProjectFiscal.update({
+          is_rd_claim_qualified : false
+        }, {
+          where : {
+            rid : {
+              [Op.in] : projectIds.map((d) => d.project_fiscal_rid)
+            },
+            is_rd_claim_qualified : true
+          }, transaction : orgDbTransaction
+        })
       }
       await orgDbTransaction.commit();
       await mainDbTransaction.commit();
@@ -1712,7 +1723,6 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       }
     }
   } catch (error) {
-    console.log(error)
       await orgDbTransaction.rollback()
       await mainDbTransaction.rollback()
       return {
