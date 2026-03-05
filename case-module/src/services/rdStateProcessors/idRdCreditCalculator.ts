@@ -4,9 +4,9 @@ import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
     sub_con_percent: number;
-    qre_credit_percentage_c1: number;
+    credit_rate: number;
     fixed_base_percentage: number;
-    qre_credit_percentage_c2: number;
+    credit_earned: number;
 }
 
 /**
@@ -75,10 +75,10 @@ export class RdCreditCalculatorForID {
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
         const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage /100);
         const difference = Decimal.max(0, base_amount.minus(total_current_year_qre));
-        const credit_rate_percent = total_current_year_qre.mul(config.qre_credit_percentage_c1).div(100);
+        const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
         const tot_base_amount = min_credit_rate.plus(line_3);
-        const credit_earned = tot_base_amount.mul(config.qre_credit_percentage_c2 /100);
+        const credit_earned = tot_base_amount.mul(config.credit_earned /100);
         const final_credit = credit_earned;
         const tot_credit_avail = final_credit;
 
