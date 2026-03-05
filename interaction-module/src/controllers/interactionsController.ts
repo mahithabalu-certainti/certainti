@@ -2741,6 +2741,8 @@ async function getFpaDetails (req : Request, res : Response) {
                 technological_uncertainty_status : d.technological_uncertainty_status,
                 technological_in_nature_status: d.technological_in_nature_status,
                 process_of_experimentation_status : d.process_of_experimentation_status,
+                status : d.status,
+                summary_judgment: d.summary_judgment,
                 created_datetime: d.created_datetime === null ? "" : formatDate(d.created_datetime),
                 created_by: d.created_by_name
               };

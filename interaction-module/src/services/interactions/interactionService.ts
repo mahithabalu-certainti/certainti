@@ -4279,9 +4279,10 @@ async getFpaDetailsById (data : any) : Promise<any> {
         statusMessage : STATUS_MESSAGE.fourPartListSuccess,
         data : {
           title : detailsResult.title,
-          basic_information : detailsResult.basic_information,
-          four_part_assessment : detailsResult.four_part_assessment,
-          audit_information : detailsResult.audit_information
+          record_information : detailsResult.record_information,
+          four_part_assessment_evaluation : detailsResult.four_part_assessment_evaluation,
+          audit_information : detailsResult.audit_information,
+          interaction_questions : detailsResult.interaction_questions
         }
       }
     } else {
