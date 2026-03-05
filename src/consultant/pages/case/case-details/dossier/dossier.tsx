@@ -304,6 +304,9 @@ const Dossier: React.FC<DossierProps> = ({
     // Call API only for valid status values (e.g., 'PENDING', 'PROCESSING', etc.)
     const result = await refetchRDCreditStatus();
     if (result.data) {
+      if (result.data?.data === 'COMPLETED') {
+        refetchCaseDetails();
+      }
       setDossierCreditStatus(result.data?.data);
     }
   };
