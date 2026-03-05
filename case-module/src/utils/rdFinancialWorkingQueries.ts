@@ -276,3 +276,14 @@ export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: str
     `;
     return query;
   }
+
+export const fetchTotalResourcesForCase = (caseRid: string, accountRid: string, schemaName: string) => {
+    const query = `
+    SELECT COUNT(pr.rid) AS total_resources
+    FROM ${schemaName}.project_resource pr
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pr.project_fiscal_rid
+    LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true
+    `;
+    return query;
+  }

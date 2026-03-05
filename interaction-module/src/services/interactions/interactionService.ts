@@ -3289,19 +3289,57 @@ export class InteractionService {
                                                 });
         let timelineTypes = [req.type];
         
-        let entityRid  = req.type === "project" ? req.data[0].project_fiscal_rid : (req.type === "case" ? req.data[0].case_rid : req.data[0].account_rid);
-                        
-        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
-                                            created_by: userId!,
-                                            account_rid: req.data[0].account_rid,
-                                            entity_rid: entityRid,
-                                            entity_name: type,
-                                            created_by_name: userEventInfo.full_name,
-                                            event_type_rid: userEventInfo.event_type_rid,
-                                            event_name: eventNames.TRIGGERED,
-                                            descriptions: req.type === 'account' ? `for ${entityName}` : (req.type === 'project' ? `for ${entityName}` : ''),
-                                            project_rid: req.type === 'project' ? req.data[0].project_fiscal_rid : '',
-                                          }, timelineTypes);
+        if (req.type === "project") {
+          const projectIds = req.data[0].project_fiscal_rid;
+          if (Array.isArray(projectIds)) {
+            for (const projectId of projectIds) {
+              const projectInfo: any = await this.orgDbSequelize.query(
+                rawQueries.fetchProjectInfo(projectId, schemaName), { type: 'SELECT' }
+              );
+              const projectCode = projectInfo[0]?.project_code || '';
+              await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+                created_by: userId!,
+                account_rid: req.data[0].account_rid,
+                entity_rid: projectId,
+                entity_name: type,
+                created_by_name: userEventInfo.full_name,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.TRIGGERED,
+                descriptions: `for ${projectCode}`,
+                project_rid: projectId,
+              }, timelineTypes);
+            }
+          } else {
+            const projectInfo: any = await this.orgDbSequelize.query(
+              rawQueries.fetchProjectInfo(projectIds, schemaName), { type: 'SELECT' }
+            );
+            entityName = projectInfo[0]?.project_code || '';
+            await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+              created_by: userId!,
+              account_rid: req.data[0].account_rid,
+              entity_rid: projectIds,
+              entity_name: type,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.TRIGGERED,
+              descriptions: `for ${entityName}`,
+              project_rid: projectIds,
+            }, timelineTypes);
+          }
+        } else {
+          let entityRid  = req.type === "case" ? req.data[0].case_rid : req.data[0].account_rid;
+          await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+            created_by: userId!,
+            account_rid: req.data[0].account_rid,
+            entity_rid: entityRid,
+            entity_name: type,
+            created_by_name: userEventInfo.full_name,
+            event_type_rid: userEventInfo.event_type_rid,
+            event_name: eventNames.TRIGGERED,
+            descriptions: req.type === 'account' ? `for ${entityName}` : '',
+            project_rid: '',
+          }, timelineTypes);
+        }
       return {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",
