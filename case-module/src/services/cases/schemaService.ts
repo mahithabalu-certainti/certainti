@@ -239,6 +239,7 @@ class CaseSchemaService {
       // Use the incoming caseRequest for fields that must be set (e.g., parent_case_rid, filing_type_rid, created_by)
       const casecreationResponse = await Case.create({
         ...caseCloneRest,
+        parent_case_rid: caseRequest.parent_case_rid,
         status_rid: caseRequest.status_rid,
         filing_type_rid: amendmentType?.rid,
         created_by: caseRequest.created_by,
@@ -433,7 +434,33 @@ class CaseSchemaService {
         await this.createCaseTables(accountNumber);
       }
       if (caseRequest.parent_case_rid) {
-        return this.cloneCase(accountNumber, caseRequest, transaction);
+        const cloneResponse = await this.cloneCase(accountNumber, caseRequest, transaction);
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                          userId: caseRequest.created_by!,
+                                          eventType: eventTypes.UI_HANDLER
+                                        });
+                
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                    created_by: caseRequest.created_by!,
+                                    account_rid: caseRequest.account_rid,
+                                    entity_rid: cloneResponse.rid!,
+                                    entity_name: entityTypes.CASE,
+                                    created_by_name: userEventInfo.full_name,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.CREATE,
+                                    descriptions:caseRequest.case_name,
+                                    case_rid: cloneResponse.rid,
+                                  },["account","case"]);
+
+       
+        await this.addJurisdiction(
+          caseRequest.account_rid,
+          cloneResponse.rid,
+          accountNumber,
+          caseRequest,
+          transaction
+        );
+        return cloneResponse;
       }
       //  await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
