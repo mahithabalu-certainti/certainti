@@ -1186,12 +1186,14 @@ export const rawQueries = {
     FROM 
     (
     SELECT interaction_batch_id, 
-    RANK() OVER(PARTITION BY interaction_batch_id ORDER BY created_datetime DESC) AS rank
+    ROW_NUMBER() OVER(ORDER BY interaction_batch_id DESC) AS rn
     FROM
     ${schemaName}.interactions
+    where
+	  four_part_assessment_rid IS NOT NULL
     )
     WHERE
-    rank = 1
+    rn = 1
     `
   },
   fetchBatchInInteractionByTransId(schemaName : string, transactionId : string) {
@@ -1201,6 +1203,7 @@ export const rawQueries = {
     ${schemaName}.interactions
     WHERE
     transaction_id = '${transactionId}'
+    ORDER BY interaction_batch_id DESC
     `
   }
 };
@@ -1301,12 +1304,15 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   ];
   export const fpaFieldMappings = [
     { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
-     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
-    { permissionField: 'rd_potential_category', exportField: 'Range', dataField: 'rd_potential_category' },
+    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+    { permissionField: 'rd_potential_category', exportField: 'Rd Potential Category', dataField: 'rd_potential_category' },
+    { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose', dataField: 'permitted_purpose_status' },
+    { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty', dataField: 'technological_uncertainty_status' },
+    { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature', dataField: 'technological_in_nature_status' },
+    { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation', dataField: 'process_of_experimentation_status' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status' },
     { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
-    { permissionField: 'modified_by', exportField: 'Modified By', dataField: 'modified_by' },
-    { permissionField: 'modified_datetime', exportField: 'Modified On', dataField: 'modified_datetime' }
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' }
   ];
     export const templateFieldMappings = [
     { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },
@@ -1392,7 +1398,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   permitted_purpose_status : 'f.permitted_purpose_status',
   technological_uncertainty_status : 'f.technological_uncertainty_status',
   technological_in_nature_status : 'f.technological_in_nature_status',
-  process_of_experimentation_status : 'f.process_of_experimentation_status'
+  process_of_experimentation_status : 'f.process_of_experimentation_status',
+  summary_judgment : 'f.summary_judgment'
 }
 
 export const FourPartColumnsTypes : Record<string, string> = {
@@ -1405,7 +1412,8 @@ export const FourPartColumnsTypes : Record<string, string> = {
   permitted_purpose_status : 'string',
   technological_uncertainty_status : 'string',
   technological_in_nature_status : 'string',
-  process_of_experimentation_status : 'string'
+  process_of_experimentation_status : 'string',
+  summary_judgment : 'string'
 }
 
 export const MainTableFilter : Record<string, string> = {

@@ -2713,7 +2713,7 @@ async function getFpaDetails (req : Request, res : Response) {
     if (result.statusCode == HttpStatus.SUCCESS) {
           const fields = await interactionService.getAllowedExportFields(
       userId,
-      ""
+      "four_part_assessment_export"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
@@ -2736,12 +2736,15 @@ async function getFpaDetails (req : Request, res : Response) {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
                 project_code: d.project_code,
-                status: d.status,
                 rd_potential_category: d.rd_potential_category,
-                modified_datetime: d.modified_datetime === null ? "" : formatDate(d.modified_datetime),
+                permitted_purpose_status: d.permitted_purpose_status,
+                technological_uncertainty_status : d.technological_uncertainty_status,
+                technological_in_nature_status: d.technological_in_nature_status,
+                process_of_experimentation_status : d.process_of_experimentation_status,
+                status : d.status,
+                summary_judgment: d.summary_judgment,
                 created_datetime: d.created_datetime === null ? "" : formatDate(d.created_datetime),
-                created_by: d.created_by_name,
-                modified_by: d.modified_by_name,
+                created_by: d.created_by_name
               };
 
               const exportRecord: Record<string, any> = {};

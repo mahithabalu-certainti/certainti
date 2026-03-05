@@ -2267,6 +2267,7 @@ export class InteractionService {
           result[0][0].interactions.map((user: any) => user.modified_by)
         ),
       ];
+      let mergeUserIds = [...createdByIds, ...modifiedByIds]
       let projectFiscalIds: any[] = [
         ...new Set(
           result[0][0].interactions.map(
@@ -2296,10 +2297,7 @@ export class InteractionService {
         rawQueries.fetchInteractionResponseSource(responseSourceIds)
       );
       let fetchCreatedByUsers = await mainDb.query(
-        rawQueries.fetchUser(createdByIds)
-      );
-      let fetchModifiedByUsers = await mainDb.query(
-        rawQueries.fetchUser(modifiedByIds)
+        rawQueries.fetchUser(mergeUserIds)
       );
       let isEmailRecipient: any;
       let recipientMap: Map<string, boolean>;
@@ -2343,12 +2341,6 @@ export class InteractionService {
           `${user.first_name} ${user.last_name}`,
         ])
       );
-      let modifiedMap: Map<string, string> = new Map(
-        fetchModifiedByUsers[0].map((user: any) => [
-          user.rid,
-          `${user.first_name} ${user.last_name}`,
-        ])
-      );
       let finalData =
         result[0][0].interactions == null
           ? []
@@ -2388,9 +2380,9 @@ export class InteractionService {
                 created_user_name: createdMap.get(d.created_by) || null,
                 modified_by: d.modified_by,
                 updated_user_name:
-                  modifiedMap.get(d.modified_by) == undefined
+                  createdMap.get(d.modified_by) == undefined
                     ? d.modified_by
-                    : modifiedMap.get(d.modified_by),
+                    : createdMap.get(d.modified_by),
                 has_email_recipient: hasEmailRecipient,
                 interaction_batch_id : d.interaction_batch_id,
                 four_part_assessment_rid : d.four_part_assessment_rid,
@@ -3457,10 +3449,11 @@ export class InteractionService {
             })
             const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber);
             if(findBatchAndIncrement) {
-              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1]);
-              batchId = `BATCH_${splitBatchNumber + 1}`
+              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1])
+              const incrementedBatchNumber = splitBatchNumber + 1
+              batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`
             } else {
-              batchId = `BATCH_000001`
+              batchId = `${process.env.BATCH_PREFIX}000001`
             }
           }
           else {
@@ -4286,9 +4279,10 @@ async getFpaDetailsById (data : any) : Promise<any> {
         statusMessage : STATUS_MESSAGE.fourPartListSuccess,
         data : {
           title : detailsResult.title,
-          basic_information : detailsResult.basic_information,
-          four_part_assessment : detailsResult.four_part_assessment,
-          audit_information : detailsResult.audit_information
+          record_information : detailsResult.record_information,
+          four_part_assessment_evaluation : detailsResult.four_part_assessment_evaluation,
+          audit_information : detailsResult.audit_information,
+          interaction_questions : detailsResult.interaction_questions
         }
       }
     } else {

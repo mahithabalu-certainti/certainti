@@ -114,9 +114,9 @@ routes.post("/sendInteraction",
   controller.interactionsController.sendInteraction
 );
 //routes.post("/new", checkUserStatusMiddleware("NA"), controller.interactionsController.createResource);
-routes.post('/fourPartAssessment/list', checkUserStatusMiddleware("NA"), controller.interactionsController.fetchFourPartAssessmentList)
-routes.post('/fourPartAssessment/details', checkUserStatusMiddleware('NA'), controller.interactionsController.getFpaDetails)
-routes.post('/fourPartAssessment/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportFetchFourPartAssessmentList)
+routes.post('/fourPartAssessment/list', checkUserStatusMiddleware("four_part_assessment_view_edit"), controller.interactionsController.fetchFourPartAssessmentList)
+routes.post('/fourPartAssessment/details', checkUserStatusMiddleware('four_part_assessment_view_edit'), controller.interactionsController.getFpaDetails)
+routes.post('/fourPartAssessment/export', checkUserStatusMiddleware("four_part_assessment_export"), controller.interactionsController.exportFetchFourPartAssessmentList)
 routes.post('/fourPartAssessment/update', checkUserStatusMiddleware("NA"), controller.interactionsController.updateInteractionStatus)
 routes.get("/assessmentSource", checkUserStatusMiddleware("NA"), controller.interactionsController.getInteractionAssessmentSource)
 export default routes;

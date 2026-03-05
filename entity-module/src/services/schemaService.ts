@@ -4154,7 +4154,8 @@ class SchemaService {
         created_by_name: userEventInfo.full_name,
         event_type_rid: userEventInfo.event_type_rid,
         event_name: eventNames.ADJUST,
-        descriptions:'for '+projectFiscalData.project_code
+        descriptions:'for '+projectFiscalDetails.project_code,
+        project_rid: projectFiscalId
       },["project"]);
     }
   }  
