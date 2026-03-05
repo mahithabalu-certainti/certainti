@@ -1475,7 +1475,7 @@ jobs:
           ORGDB_USERNAME=org-db-admin-username
           ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
-          NODE_ENV=DEVELOPMENT
+          NODE_ENV=QA
           NODE_ENV_DB_PREFIX="U001-"
           SYSTEM_USER_ID = "U001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           EOF
