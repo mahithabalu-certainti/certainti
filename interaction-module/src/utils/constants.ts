@@ -95,6 +95,8 @@ export const eventNames = {
   UPDATE: "updated",
   CANCEL: "cancelled",
   SENT: "sent",
+  REMAINDER: "remainder sent",
+  REINITIATED: "reinitiated",
   TRIGGERED: "triggered",
   GENERATED: "generated",
 }

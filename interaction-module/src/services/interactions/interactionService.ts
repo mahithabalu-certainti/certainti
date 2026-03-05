@@ -1848,7 +1848,7 @@ export class InteractionService {
     isResponseReceived: boolean,
     createdBy: string,
     accountNumber: string,
-    accountRid: string,
+    data: any,
   ) {
     let emailResponse = false;
     try {
@@ -1920,17 +1920,25 @@ export class InteractionService {
         {
           timelineTypes = ["project"]
         }
-                        
+        let eventName = eventNames.SENT;
+        if(is_interaction_followup)
+        {            
+          eventName = eventNames.REMAINDER
+        }
+        if(data.interaction_reinitiated)
+        {
+          eventName = eventNames.REINITIATED
+        }             
         await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
                                             created_by: createdBy!,
-                                            account_rid: accountRid!,
+                                            account_rid: data.account_rid!,
                                             entity_rid: interactionRid!,
                                             entity_name: entityTypes.INTERACTION,
                                             created_by_name: userEventInfo.full_name,
                                             event_type_rid: userEventInfo.event_type_rid,
-                                            event_name: eventNames.SENT,
-                                            descriptions:'',
-                                            project_rid: interactionLevel?.toLowerCase() === 'project' ? projectInfo.project_id : '',
+                                            event_name: data.is_interaction_followup ? eventNames.REMAINDER : eventNames.SENT,
+                                            descriptions: data.r_number + ' to ' + emailInfo.email,
+                                            project_rid: interactionLevel?.toLowerCase() === 'project' ? data?.project_fiscal_rid : null,
                                           }, timelineTypes);
       return emailResponse;
     } catch (error) {
@@ -3700,7 +3708,7 @@ export class InteractionService {
       let project_fiscal_rid = data.project_fiscal_rid;
       let accountRid = data.account_rid;
       let interactionLevel = data.interaction_level;
-      let createdBy = data.created_by;
+      let createdBy = data.user_rid;
 
       // If emailInfo.email is empty, fetch POC email
       let sendEmailInfo = email_info;
@@ -3742,6 +3750,7 @@ export class InteractionService {
         project_fiscal_rid,
         interactionLevel
       );
+      console.log(interactionInfo)
       const senderEmailInfo = await this.getSenderEmailInfo(
         interactionInfo.accountInfo.parent_account_rid,
         interactionInfo.accountInfo.account_rid
@@ -3760,7 +3769,7 @@ export class InteractionService {
       // Send email
       const emailResponse = await this.sendEmailWithAttachment(
         sendEmailInfo,
-        interactionInfo.projectInfo,
+        interactionInfo.projectInfo || null,
         interactionInfo.accountInfo,
         excelAttachment,
         interactionLink,
@@ -3771,7 +3780,7 @@ export class InteractionService {
         false,
         createdBy,
         accountNumber,
-        data.account_rid
+        data
       );
       if (emailResponse) {
         logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
