@@ -2,6 +2,7 @@ import archiver from "archiver";
 import { PassThrough } from "stream";
 import axios from "axios";
 import { BlobServiceClient } from "@azure/storage-blob";
+import { getSecret } from "./azureSecrets";
 
 type ZipFile =
   | { name: string; buffer: Buffer; extension?: string }
@@ -80,15 +81,19 @@ export async function uploadZipBufferToAzureBlob(
   extension: string;
   size: number;
 }> {
-  const connectionString = "DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net"
-    // await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    if (!account_id) {
+      throw new Error("Account ID is required");
+    }
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     // const connectionString = "storage-account-connection-string";
     // const connectionString = await getSecret("storage-account-connection-string");
     // const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING as string
+   if (!connectionString) {
+      throw new Error("Azure storage connection string is required");
+    }
 
   const containerName = account_number.toLowerCase();
-  const blobServiceClient =
-    BlobServiceClient.fromConnectionString(connectionString);
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
 
   await containerClient.createIfNotExists();
