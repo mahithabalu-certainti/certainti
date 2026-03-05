@@ -24,6 +24,7 @@ export const UPDATE_DATA_MAPPER = gql`
         size_in_mb
         status_rid
         is_active
+        is_federal
         error_message
         country_name
         state_name

@@ -15,7 +15,7 @@ export const getGeoBasedRuleColumns = (
 ): ListTableColumn<GeoBasedRule>[] => [
   {
     id: 'r_number',
-    label: 'Geo Based ID',
+    label: 'Jurisdiction Rule ID',
     sortId: 'r_number',
     sortable: true,
     hide:

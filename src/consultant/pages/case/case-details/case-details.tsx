@@ -71,7 +71,6 @@ import {
   ProjectsSideIcon,
   ProjectTaskIcon,
   ResourcesIcon,
-  ReviewProjectIcon,
   SettingIcon,
   TaskCreateIcon,
   TechSummaryIcon,
@@ -1090,13 +1089,6 @@ export const CaseDetails = () => {
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
-      },
-      {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: ReviewProjectIcon,
       },
       {
         name: 'Case Team',
