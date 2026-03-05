@@ -350,7 +350,7 @@ export class ReportService implements IReportService {
 
             const statusMap = new Map(activityStatuses.map((s) => [s.rid, s.status_name]));
 
-            const scheduledStatus = activityStatuses.find((s) => s.status_name === 'Scheduled');
+            const scheduledStatus = activityStatuses.find((s) => ['Scheduled', 'Completed'].includes(s.status_name));
             const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
 
 
