@@ -213,14 +213,6 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
           height={paginatedData.length * 40 + 100}
           data={chartData}
           options={chartOptions}
-          loader={
-            <div className='flex items-center justify-center h-full'>
-              <div className='text-center'>
-                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
-                <p className='text-sm text-gray-600'>Loading chart...</p>
-              </div>
-            </div>
-          }
         />
       </div>
 

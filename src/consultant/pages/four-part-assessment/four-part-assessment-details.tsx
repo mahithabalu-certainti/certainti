@@ -215,6 +215,10 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     !permissionMap?.['four_part_assessment']?.edit &&
     !permissionMap?.['four_part_assessment']?.read;
 
+  const hideInteractionQuestions =
+    !permissionMap?.['interaction_questions']?.edit &&
+    !permissionMap?.['interaction_questions']?.read;
+
   const hideTrackerOneLiner =
     !permissionMap?.['tracker_one_liner']?.edit &&
     !permissionMap?.['tracker_one_liner']?.read;
@@ -301,7 +305,8 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
             )}
           </div>
         )}
-      {!isLoading &&
+      {!hideInteractionQuestions &&
+      !isLoading &&
       !isError &&
       data?.interaction_questions?.question_details?.length ? (
         <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
