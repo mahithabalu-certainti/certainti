@@ -247,7 +247,7 @@ export class DataMapperService implements IDataMapperService {
     async listDataMapperForms(
         userId: string,
         page: number = 1,
-        limit: number = 10,
+        limit: number = Number.MAX_SAFE_INTEGER,
         search: string = '',
         filters: Record<string, any> = {},
         sortBy: string = 'created_datetime',
@@ -400,7 +400,7 @@ export class DataMapperService implements IDataMapperService {
             const validSortFields = [
                 'r_number', 'created_datetime', 'created_by_name', 'modified_datetime', 'modified_by_name',
                 'form_name', 'browse_file', 'document_name', 'effective_from_date', 'effective_to_date',
-                'country_name', 'state_name', 'format', 'size_in_mb', 'status_name', 'is_active', 'error_message'
+                'country_name', 'state_name', 'format', 'size_in_mb', 'status_name', 'is_active', 'error_message', 'is_federal'
             ];
 
             const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
@@ -421,9 +421,9 @@ export class DataMapperService implements IDataMapperService {
                     return finalSortOrder === 'ASC' ? aVal - bVal : bVal - aVal;
                 }
 
-                if (finalSortBy === 'is_active') {
-                    const aVal = a.is_active ? 1 : 0;
-                    const bVal = b.is_active ? 1 : 0;
+                if (finalSortBy === 'is_active' || finalSortBy === 'is_federal') {
+                    const aVal = a[finalSortBy] ? 1 : 0;
+                    const bVal = b[finalSortBy] ? 1 : 0;
                     return finalSortOrder === 'ASC' ? aVal - bVal : bVal - aVal;
                 }
 

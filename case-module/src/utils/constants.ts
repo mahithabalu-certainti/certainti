@@ -613,8 +613,7 @@ export const rawQueries = {
       return `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN ('')`;
     }
   },
-  getHistoricalSubmissionData(accountRid: string, stateRid: string, years: number[],schemaName: string)
-  {
+  getHistoricalSubmissionData(accountRid: string, stateRid: string, years: number[], schemaName: string) {
     return `SELECT SUM(field_value) AS total_value FROM (
             SELECT total_qre / annual_gross_receipts AS field_value, ROW_NUMBER() OVER (ORDER BY created_datetime ASC) as row_index, fiscal_year
             FROM ${schemaName}.case_history_submission
@@ -1676,7 +1675,7 @@ export const rawQueries = {
   and credit_program_name = 'Platform Configuration'
     and rg.is_federal = true 
      AND rv.effective_start_date <= '${formattedEndDate}'
-    AND rv.effective_end_date   >= '${formattedStartDate}'
+    AND (rv.effective_end_date   >= '${formattedStartDate}' OR rv.effective_end_date IS NULL)
     AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
   ORDER BY rv.effective_start_date DESC
   LIMIT 1`;

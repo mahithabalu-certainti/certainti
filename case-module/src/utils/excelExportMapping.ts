@@ -819,6 +819,7 @@ export const jurisdictionRuleMapping = [
 export const dataMapperFieldMappings = [
   { permissionField: "r_number", exportField: "Form ID", dataField: "r_number" },
   { permissionField: "form_name", exportField: "Form Name", dataField: "form_name" },
+  { permissionField: "is_federal", exportField: "Is Federal?", dataField: "is_federal" },
   { permissionField: "country_rid", exportField: "Country", dataField: "country_name" },
   { permissionField: "state_rid", exportField: "Region", dataField: "state_name" },
   { permissionField: "effective_from_date", exportField: "Effective From Date", dataField: "effective_from_date" },

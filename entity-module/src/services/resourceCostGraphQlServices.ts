@@ -38,14 +38,14 @@ export default class ResourceCostGraphQlService {
     return this.mainDbSequelize;
   }
 
-  async inlineEditResourceCost (data : any) {
+  async inlineEditResourceCost(data: any) {
     let bonus;
     let deductions;
     let insurance;
     let resource_cost;
     let salary;
     let effort_in_hrs;
-    let status : string | undefined
+    let status: string | undefined
     let effective_from
     let end_date
     let fiscal_year;
@@ -55,13 +55,13 @@ export default class ResourceCostGraphQlService {
 
     const mainDbSequelize = await this.getMainDbSequelize();
     const orgDbSequelize = await this.getOrgSequelize();
-    let fetchParentAcc : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize))
-    
-    if(fetchParentAcc[0].length < 1) {
+    let fetchParentAcc: any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize))
+
+    if (fetchParentAcc[0].length < 1) {
       return {
-        statusCode : HttpStatus.NOT_FOUND,
-        statusMesage : STATUS_MESSAGE.accountNoFound,
-        data : null
+        statusCode: HttpStatus.NOT_FOUND,
+        statusMesage: STATUS_MESSAGE.accountNoFound,
+        data: null
       }
     }
     else {
@@ -69,59 +69,59 @@ export default class ResourceCostGraphQlService {
       let schemaName = `${MAIN_SCHEMA_NAME}_${fetchParentAcc[0][0].r_number.replace('ACC-', '')}`
       Resources.initialize(orgDbSequelize, schemaName)
       ResourceCost.initialize(orgDbSequelize, schemaName);
-      let checkResourceCostExists : any = await orgDbSequelize.query(rawQueries.isResourceCostExists(schemaName, data))
-      if(checkResourceCostExists[0].length < 1) {
+      let checkResourceCostExists: any = await orgDbSequelize.query(rawQueries.isResourceCostExists(schemaName, data))
+      if (checkResourceCostExists[0].length < 1) {
         return {
-          statusCode : HttpStatus.NOT_FOUND,
-          statusMesage : STATUS_MESSAGE.resourceCostNotFound,
-          data : null          
+          statusCode: HttpStatus.NOT_FOUND,
+          statusMesage: STATUS_MESSAGE.resourceCostNotFound,
+          data: null
         }
       }
       else {
-        if(data.currency_rid) {
+        if (data.currency_rid) {
           let checkCurrencyExist = await mainDbSequelize.query(rawQueries.isCurrencyExists(data))
-          if(checkCurrencyExist[0].length < 1) 
+          if (checkCurrencyExist[0].length < 1)
             return {
-              statusCode : HttpStatus.NOT_FOUND,
-              statusMesage : STATUS_MESSAGE.currencyInvalid,
-              data : null          
+              statusCode: HttpStatus.NOT_FOUND,
+              statusMesage: STATUS_MESSAGE.currencyInvalid,
+              data: null
             }
-          }
-        if(checkResourceCostExists[0][0].currency_rid) {
-          if(data.salary) salary = data.salary
+        }
+        if (checkResourceCostExists[0][0].currency_rid) {
+          if (data.salary) salary = data.salary
           else salary = checkResourceCostExists[0][0].salary
 
-          if(data.bonus) bonus = data.bonus
+          if (data.bonus) bonus = data.bonus
           else bonus = checkResourceCostExists[0][0].bonus
 
-          if(data.insurance) insurance = data.insurance
+          if (data.insurance) insurance = data.insurance
           else insurance = checkResourceCostExists[0][0].insurance
 
-          if(data.resource_cost) resource_cost = data.resource_cost
+          if (data.resource_cost) resource_cost = data.resource_cost
           else resource_cost = checkResourceCostExists[0][0].resource_cost
 
-          if(data.deductions) deductions = data.deductions
+          if (data.deductions) deductions = data.deductions
           else deductions = checkResourceCostExists[0][0].deductions
 
-          if(data.effort_in_hrs) effort_in_hrs = data.effort_in_hrs
+          if (data.effort_in_hrs) effort_in_hrs = data.effort_in_hrs
           else effort_in_hrs = checkResourceCostExists[0][0].effort_in_hrs
 
-          if(data.effective_from) effective_from = data.effective_from
+          if (data.effective_from) effective_from = data.effective_from
           else effective_from = checkResourceCostExists[0][0].effective_from
 
-          if(data.end_date) end_date = data.end_date
+          if (data.end_date) end_date = data.end_date
           else end_date = checkResourceCostExists[0][0].end_date
 
-          if(data.fiscal_year) fiscal_year = data.fiscal_year
+          if (data.fiscal_year) fiscal_year = data.fiscal_year
           else fiscal_year = checkResourceCostExists[0][0].fiscal_year
 
-          if(data.comments) comments = data.comments
+          if (data.comments) comments = data.comments
           else comments = checkResourceCostExists[0][0].comments
 
-          if(data.currency_rid) currency_rid = data.currency_rid
+          if (data.currency_rid) currency_rid = data.currency_rid
           else currency_rid = checkResourceCostExists[0][0].currency_rid
 
-          if(data.user_preference) userPreference = data.user_preference
+          if (data.user_preference) userPreference = data.user_preference
           else userPreference = null
 
           const costFields = {
@@ -166,39 +166,39 @@ export default class ResourceCostGraphQlService {
           });
           let resourceCostStatus = statusNameMap.get(status?.toString() || '') || 'Active';
           const existingCost = await ResourceCost.findOne({
-                where: {
-                  resource_rid : data.resource_rid,
-                  effective_from: effectiveFrom,
-                  end_date: endDate,
-                  ...costValues,
-                  fiscal_year,
-                  comments, 
-                  currency_rid : currency_rid,
-                  status_rid: { 
-                    [Op.in]: [
-                      statusMap?.get('Active'),
-                      statusMap?.get('Anomaly'),
-                      statusMap?.get('Duplicate') 
-                    ].filter(Boolean) as string[]
-                  },
-                  net_resource_cost: calculatedResourceCost,
-                  rid: {
-                    [Op.ne]: data.resource_cost_rid // Exclude the current record being updated
-                  }
-                }, raw : true
-              });
+            where: {
+              resource_rid: data.resource_rid,
+              effective_from: effectiveFrom,
+              end_date: endDate,
+              ...costValues,
+              fiscal_year,
+              comments,
+              currency_rid: currency_rid,
+              status_rid: {
+                [Op.in]: [
+                  statusMap?.get('Active'),
+                  statusMap?.get('Anomaly'),
+                  statusMap?.get('Duplicate')
+                ].filter(Boolean) as string[]
+              },
+              net_resource_cost: calculatedResourceCost,
+              rid: {
+                [Op.ne]: data.resource_cost_rid // Exclude the current record being updated
+              }
+            }, raw: true
+          });
           if (existingCost && (userPreference === null || userPreference === "")) {
-                const result = {
-                  statusCode: HttpStatus.PROMPT,
-                  statusCodeValue : HttpStatus.PROMPT_MESSAGE,
-                  statusMessage: "Compensation details already exists for the resource. Would to like proceed updating with same values ?",
-                  data: null,
-              };
-              return result
-            }
-          else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
+            const result = {
+              statusCode: HttpStatus.PROMPT,
+              statusCodeValue: HttpStatus.PROMPT_MESSAGE,
+              statusMessage: "Compensation details already exists for the resource. Would to like proceed updating with same values ?",
+              data: null,
+            };
+            return result
+          }
+          else if (effort_in_hrs !== undefined && Number(effort_in_hrs) > 3000) {
             resourceCostStatus = "Anomaly";
-          } 
+          }
           else if (
             (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
             (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
@@ -209,22 +209,22 @@ export default class ResourceCostGraphQlService {
           data.status_rid = status_rid
           data.net_resource_cost = calculatedResourceCost
         }
-        
+
         let setResourceCost = setResourceCostDatas(checkResourceCostExists[0][0], data)
         let updateResourceCost = await orgDbSequelize.query(rawQueries.updateResourceCostQuery(schemaName, setResourceCost, data))
-        if(updateResourceCost) {
-          let fetchResFiscal = await orgDbSequelize.query(rawQueries.getResourceFiscalQuery(schemaName, data)) 
-          if(fetchResFiscal[0].length > 0) {
-            if(data.fiscal_year) {
-                let setFiscal = setResFiscalForResCost(fetchResFiscal[0][0], data)
-                await orgDbSequelize.query(rawQueries.setFiscalYear(schemaName, setFiscal, data))
-            } 
+        if (updateResourceCost) {
+          let fetchResFiscal = await orgDbSequelize.query(rawQueries.getResourceFiscalQuery(schemaName, data))
+          if (fetchResFiscal[0].length > 0) {
+            if (data.fiscal_year) {
+              let setFiscal = setResFiscalForResCost(fetchResFiscal[0][0], data)
+              await orgDbSequelize.query(rawQueries.setFiscalYear(schemaName, setFiscal, data))
+            }
           }
           await orgDbSequelize.query(rawQueries.insertResCostTimelineQuery(schemaName, data))
-          const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                                          userId: data.userId!,
-                                          eventType: eventTypes.UI_HANDLER
-                                        });
+          const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+            userId: data.userId!,
+            eventType: eventTypes.UI_HANDLER
+          });
           await this.schemaService.createAccountTimelineEntry(fetchParentAcc[0][0].r_number!, {
             created_by: data.userId!,
             account_rid: data.account_rid,
@@ -233,13 +233,13 @@ export default class ResourceCostGraphQlService {
             created_by_name: userEventInfo.full_name,
             event_type_rid: userEventInfo.event_type_rid,
             event_name: eventNames.UPDATE,
-            descriptions:data.resource_code
+            descriptions: checkResourceCostExists[0][0].resource_code
           },
-          ["account"]);
-          for(let history of setResourceCost) {
+            ["account"]);
+          for (let history of setResourceCost) {
             let splittedObj = history.split('=')[0]
             let finalData = splittedObj.trim()
-            if(finalData != 'modified_by' && finalData !== 'modified_datetime') {
+            if (finalData != 'modified_by' && finalData !== 'modified_datetime') {
               let oldValue;
               let newValue;
               let attribute_name;
@@ -252,17 +252,17 @@ export default class ResourceCostGraphQlService {
                 newValue = newValue.replace(/'/g, "''");
               }
               attribute_name = finalData
-              if(newValue == undefined) newValue = ''
+              if (newValue == undefined) newValue = ''
               else newValue = newValue
-              if(oldValue != newValue) {
+              if (oldValue != newValue) {
                 await orgDbSequelize.query(rawQueries.insertResCostHisQuery(schemaName, data, attribute_name, oldValue, newValue))
               }
             }
           }
-          let graphQlData : any = {};
+          let graphQlData: any = {};
           graphQlData.is_graphQl = true
           graphQlData.rid = data.resource_cost_rid
-          let result : any = await resourceCostSchemaService.executeQueries(
+          let result: any = await resourceCostSchemaService.executeQueries(
             schemaName,
             '',
             '',
@@ -314,9 +314,9 @@ export default class ResourceCostGraphQlService {
             currency_symbol: d.currency_symbol
           }
           return {
-            statusCode : HttpStatus.SUCCESS,
-            statusMessage : STATUS_MESSAGE.resourceCostUpdSuccess,
-            data : finalData
+            statusCode: HttpStatus.SUCCESS,
+            statusMessage: STATUS_MESSAGE.resourceCostUpdSuccess,
+            data: finalData
           }
         }
       }
@@ -324,15 +324,15 @@ export default class ResourceCostGraphQlService {
   }
 }
 
-  function formatDateForDb(dateString?: string): Date | null {
-    if (!dateString) return null;
+function formatDateForDb(dateString?: string): Date | null {
+  if (!dateString) return null;
 
-    // Parse the date using moment to ensure consistent handling
-    const date = moment(dateString, "YYYY-MM-DD", true);
-    if (!date.isValid()) return null;
+  // Parse the date using moment to ensure consistent handling
+  const date = moment(dateString, "YYYY-MM-DD", true);
+  if (!date.isValid()) return null;
 
-    // Set the time to noon to avoid timezone issues
-    date.hour(12).minute(0).second(0).millisecond(0);
+  // Set the time to noon to avoid timezone issues
+  date.hour(12).minute(0).second(0).millisecond(0);
 
-    return date.toDate();
-  }
+  return date.toDate();
+}
