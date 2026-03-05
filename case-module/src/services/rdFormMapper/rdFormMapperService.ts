@@ -2276,8 +2276,6 @@ private async handleTableConfig(
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
-      configLevelKey  = ConfigType.FEDERAL_ONLY;
-
       logMessage(`Config Level Key determined: ${configLevelKey}`);
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
