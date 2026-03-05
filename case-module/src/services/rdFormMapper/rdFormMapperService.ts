@@ -13,6 +13,7 @@ import * as path from "path";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
+import { fetchProjectCostDetailsBasedOnCasesForRdforms } from "../../utils/rdFinancialWorkingQueries";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -80,38 +81,7 @@ export class RdFormMapperService {
   }
 
   private async fetchProjectCostDetailsBasedOnCases(caseRid: string, accountRid: string, schemaName: string, orgDb: Sequelize) {
-    const query = `
-    WITH fetch_project_ids AS (
-    SELECT project_fiscal_rid, rid, project_code, project_name ,qre_final
-    FROM ${schemaName}.case_projects 
-    WHERE
-    case_rid = '${caseRid}'
-    AND
-    account_rid = '${accountRid}'
-    ),
-    calculate_cost AS (
-    SELECT 
-    cp.project_code, cp.project_name, cp.rid, cp.qre_final
-    FROM
-    ${schemaName}.project_fiscal cp
-    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
-    WHERE
-    cp.rid = fpr.project_fiscal_rid
-    AND
-    cp.is_qualified = true
-    GROUP BY
-    cp.project_code, cp.project_name, cp.rid, cp.qre_final
-    ORDER BY cp.project_name ASC
-    )
-    SELECT 
-    array_agg(jsonb_build_object(
-    'project_code', project_code,
-    'project_name', project_name,
-    'qre_final', qre_final
-    )ORDER BY project_name ASC) AS projects
-    FROM
-    calculate_cost
-    `;
+    const query =await  fetchProjectCostDetailsBasedOnCasesForRdforms(caseRid, accountRid, schemaName);
     const [result]: any[] = await orgDb.query(query, { type: QueryTypes.SELECT });
     return result?.projects || [];
   }
@@ -166,7 +136,7 @@ export class RdFormMapperService {
       logMessage('Country is UK. Generating dynamic UK PDF.');
       // Fetch extracted text from database or assume it's in computed_fields
       const [calcRow]: any[] = await orgDb.query(
-        `SELECT input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = :caseRid LIMIT 1`,
+        rawQueries.fetchCountryCalculationForCase(schemaName),
         { replacements: { caseRid }, type: QueryTypes.SELECT }
       );
       if (!calcRow) throw new Error('No calculation found for this case');
@@ -185,7 +155,7 @@ export class RdFormMapperService {
       const projectInfoWithExtras = projectInfo.map((p: any) => ({
         ...p,
           "Project QRE": p.qre_final || '-',
-        "Main field of science or technology": "Computer Science",
+        "Main field of science or technology": "-",
         "Existing scientific or technological knowledge it planned to improve": "-",
         "Advancement in knowledge it aimed to achieve": "-",
         "Scientific or Technological Uncertainties Faced": "-",
@@ -572,16 +542,14 @@ export class RdFormMapperService {
 async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumber: string): Promise<string> {
   const orgDb = await this.getOrgDb();
   const [caseRow]: any[] = await orgDb.query(
-    `SELECT account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = :caseRid LIMIT 1`,
+   rawQueries.fetchCaseInfo(schemaName,caseRid),
     { replacements: { caseRid }, type: QueryTypes.SELECT }
   );
   if (!caseRow) throw new Error('Case not found');
-
   const [calcRow]: any[] = await orgDb.query(
-    `SELECT input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = :caseRid LIMIT 1`,
+    rawQueries.fetchCountryCalculationForCase(schemaName),
     { replacements: { caseRid }, type: QueryTypes.SELECT }
   );
-  console.log('Fetched calculation row:', calcRow);
   if (!calcRow) throw new Error('No calculation found for this case');
   
   const inputParams = typeof calcRow.input_params === 'string' ? JSON.parse(calcRow.input_params) : calcRow.input_params;
@@ -720,15 +688,15 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
       const pdfBuffer = Buffer.concat(buffers);
       
       // Upload directly to blob storage from buffer
-           const fs = require('fs');
-      const path = require('path');
-      const localDir = path.resolve(__dirname, '../../../output/pdfs');
-      if (!fs.existsSync(localDir)) {
-        fs.mkdirSync(localDir, { recursive: true });
-      }
-      const localPath = path.join(localDir, `ireland_credit_${caseRid}_${Date.now()}.pdf`);
-      fs.writeFileSync(localPath, pdfBuffer);
-      logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
+      //      const fs = require('fs');
+      // const path = require('path');
+      // const localDir = path.resolve(__dirname, '../../../output/pdfs');
+      // if (!fs.existsSync(localDir)) {
+      //   fs.mkdirSync(localDir, { recursive: true });
+      // }
+      // const localPath = path.join(localDir, `ireland_credit_${caseRid}_${Date.now()}.pdf`);
+      // fs.writeFileSync(localPath, pdfBuffer);
+      // logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
       
       const blobName = `cases/${caseRid}/rdForms/ireland_credit_${caseRid}_${Date.now()}.pdf`;
       try {
@@ -768,15 +736,15 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
       doc.on('end', async () => {
         const pdfBuffer = Buffer.concat(buffers);
         
-        const fs = require('fs');
-        const path = require('path');
-        const localDir = path.resolve(__dirname, '../../../output/pdfs');
-        if (!fs.existsSync(localDir)) {
-          fs.mkdirSync(localDir, { recursive: true });
-        }
-        const localPath = path.join(localDir, `uk_credit_${caseRid}_${Date.now()}.pdf`);
-        fs.writeFileSync(localPath, pdfBuffer);
-        logMessage(`UK PDF stored locally for testing: ${localPath}`);
+        // const fs = require('fs');
+        // const path = require('path');
+        // const localDir = path.resolve(__dirname, '../../../output/pdfs');
+        // if (!fs.existsSync(localDir)) {
+        //   fs.mkdirSync(localDir, { recursive: true });
+        // }
+        // const localPath = path.join(localDir, `uk_credit_${caseRid}_${Date.now()}.pdf`);
+        // fs.writeFileSync(localPath, pdfBuffer);
+        // logMessage(`UK PDF stored locally for testing: ${localPath}`);
         
         const blobName = `cases/${caseRid}/rdForms/uk_credit_${caseRid}_${Date.now()}.pdf`;
         try {
@@ -2445,20 +2413,20 @@ private async handleTableConfig(
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number,
       );
-      // const [isFinancialSignOffDone]: any[] = await orgDb.query(
-      //   rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
-      //   { type: "SELECT" },
-      // );
-      // if (
-      //   !isFinancialSignOffDone ||
-      //   !isFinancialSignOffDone.financial_working_signoff
-      // ) {
-      //   return {
-      //     statusCode: HttpStatus.FAILED,
-      //     message: HttpStatus.FAILED_MESSAGE,
-      //     errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-      //   };
-      // }
+      const [isFinancialSignOffDone]: any[] = await orgDb.query(
+        rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
+        { type: "SELECT" },
+      );
+      if (
+        !isFinancialSignOffDone ||
+        !isFinancialSignOffDone.financial_working_signoff
+      ) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+        };
+      }
 
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),

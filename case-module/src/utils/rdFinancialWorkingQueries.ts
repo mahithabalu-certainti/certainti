@@ -240,3 +240,39 @@ export const calculateStateCostForCaseSubmissionCurrentYear = (schemaName : stri
     ${condition}
     `
 }
+
+export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: string, accountRid: string, schemaName: string) => {
+    const query = `
+    WITH fetch_project_ids AS (
+    SELECT project_fiscal_rid, rid, project_code, project_name ,qre_final
+    FROM ${schemaName}.case_projects 
+    WHERE
+    case_rid = '${caseRid}'
+    AND
+    account_rid = '${accountRid}'
+    ),
+    calculate_cost AS (
+    SELECT 
+    cp.project_code, cp.project_name, cp.rid, cp.qre_final
+    FROM
+    ${schemaName}.project_fiscal cp
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
+    WHERE
+    cp.rid = fpr.project_fiscal_rid
+    AND
+    cp.is_qualified = true
+    GROUP BY
+    cp.project_code, cp.project_name, cp.rid, cp.qre_final
+    ORDER BY cp.project_name ASC
+    )
+    SELECT 
+    array_agg(jsonb_build_object(
+    'project_code', project_code,
+    'project_name', project_name,
+    'qre_final', qre_final
+    )ORDER BY project_name ASC) AS projects
+    FROM
+    calculate_cost
+    `;
+    return query;
+  }
