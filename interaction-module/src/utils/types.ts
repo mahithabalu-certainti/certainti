@@ -35,6 +35,7 @@ export interface ICreateInteraction {
   recipient_name? : any,
   recipient_email? : any
   interaction_assessment_source_rid? : string
+  interaction_status_rid? : string
 }
 
 export interface IProject {

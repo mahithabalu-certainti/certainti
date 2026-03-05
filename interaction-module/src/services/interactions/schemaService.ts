@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, UUIDV4, where } from "sequelize";
 import {
+  AllStatusType,
   FourPartAssessmentResponse,
   ICreateAccountInteraction,
   ICreateInteraction,
@@ -4051,7 +4052,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchBatchInInteraction(schemaName),
         { type: "SELECT" }
       );
-      return interactionBatchInfo[0][0]?.interaction_batch_id ?? null
+      return interactionBatchInfo[0].interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
@@ -4968,6 +4969,17 @@ const existingTemplate = await InteractionTemplate.findOne({
       tracker_one_liner : fourPartAssessment.assessment.tracker_one_liner,
       transaction_id : transaction_id
     })
+}
+
+async getStatus() {
+  if(!this.mainDbSequelize) {
+    this.mainDbSequelize = await initMainDbSequelize();
+  }
+  const fetchStatus = await this.mainDbSequelize.query<AllStatusType>(rawQueries.fetchAllStatus(), {type : QueryTypes.SELECT});
+  if(fetchStatus.length > 0) {
+    return fetchStatus;
+  } else return []
+
 }
 
   /**

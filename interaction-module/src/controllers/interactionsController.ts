@@ -2713,7 +2713,7 @@ async function getFpaDetails (req : Request, res : Response) {
     if (result.statusCode == HttpStatus.SUCCESS) {
           const fields = await interactionService.getAllowedExportFields(
       userId,
-      ""
+      "four_part_assessment_export"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
@@ -2736,12 +2736,13 @@ async function getFpaDetails (req : Request, res : Response) {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
                 project_code: d.project_code,
-                status: d.status,
                 rd_potential_category: d.rd_potential_category,
-                modified_datetime: d.modified_datetime === null ? "" : formatDate(d.modified_datetime),
+                permitted_purpose_status: d.permitted_purpose_status,
+                technological_uncertainty_status : d.technological_uncertainty_status,
+                technological_in_nature_status: d.technological_in_nature_status,
+                process_of_experimentation_status : d.process_of_experimentation_status,
                 created_datetime: d.created_datetime === null ? "" : formatDate(d.created_datetime),
-                created_by: d.created_by_name,
-                modified_by: d.modified_by_name,
+                created_by: d.created_by_name
               };
 
               const exportRecord: Record<string, any> = {};
@@ -2803,6 +2804,39 @@ async function getFpaDetails (req : Request, res : Response) {
     });
   }
 }
+async function getInteractionAssessmentSource (req : Request, res : Response) {
+  const methodName = "getInteractionAssessmentSource"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.body;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.getInteractionAssessmentSource();
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.assessmentFetchedSuccess,
+        data : result.data
+      });
+    }
+  } catch (err : any) {
+    return res.status(HttpStatus.FAILED).json({
+      statusCode: HttpStatus.FAILED,
+      statusCodeValue: HttpStatus.FAILED_MESSAGE,
+      statusMessage: err.message
+    });
+  }
+}
 export default {
   listAllInteractionPrjAcc,
   exportAllInteractions,
@@ -2841,5 +2875,6 @@ export default {
   fetchFourPartAssessmentList,
   getFpaDetails,
   exportFetchFourPartAssessmentList,
-  updateInteractionStatus
+  updateInteractionStatus,
+  getInteractionAssessmentSource
 };

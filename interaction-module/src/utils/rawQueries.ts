@@ -1451,12 +1451,16 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   if(isSorting) {
     let getSortOrder : string;
     if(sort === FourPartColumns.r_number) getSortOrder = FourPartColumns.r_number
-    else if(sort.toLowerCase() === FourPartColumns.rd_potential_category) getSortOrder = FourPartColumns.rd_potential_category
-    else if(sort.toLowerCase() === FourPartColumns.status) getSortOrder = FourPartColumns.status
-    else if(sort.toLowerCase() === FourPartColumns.created_datetime) getSortOrder = FourPartColumns.created_datetime
-    else if(sort.toLowerCase() === FourPartColumns.project_code) getSortOrder = FourPartColumns.project_code
+    else if(sort.toLowerCase() === FourPartColumns['rd_potential_category']?.split('.')[1]) getSortOrder = FourPartColumns.rd_potential_category!
+    else if(sort.toLowerCase() === FourPartColumns['status']?.split('.')[1]) getSortOrder = FourPartColumns.status
+    else if(sort.toLowerCase() === FourPartColumns['created_datetime']?.split('.')[1]) getSortOrder = FourPartColumns.created_datetime
+    else if(sort.toLowerCase() === FourPartColumns['project_code']?.split('.')[1]) getSortOrder = FourPartColumns.project_code
+    else if(sort.toLowerCase() === FourPartColumns['permitted_purpose_status']?.split('.')[1]) getSortOrder = FourPartColumns.permitted_purpose_status
+    else if(sort.toLowerCase() === FourPartColumns['technological_uncertainty_status']?.split('.')[1]) getSortOrder = FourPartColumns.technological_uncertainty_status
+    else if(sort.toLowerCase() === FourPartColumns['technological_in_nature_status']?.split('.')[1]) getSortOrder = FourPartColumns.technological_in_nature_status
+    else if(sort.toLowerCase() === FourPartColumns['process_of_experimentation_status']?.split('.')[1]) getSortOrder = FourPartColumns.process_of_experimentation_status
     else getSortOrder = FourPartColumns.r_number!
-    sortValue = `ORDER BY ${getSortOrder} ${sortBy}`
+    sortValue = `ORDER BY ${getSortOrder} ${sortBy} NULLS LAST`
   } else sortValue = ''
 
   if(isFiltering) {

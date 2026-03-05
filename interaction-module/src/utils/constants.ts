@@ -306,7 +306,8 @@ export const STATUS_MESSAGE = {
   interactionUpdated:"Interaction updated successfully",
   techSummarycontextUpdated:"Technical summary context updated successfully",
   projectRequired:"Atleast one project is required to create interaction",
-  fourPartListSuccess : "FourPart Assessment fetched successfully"
+  fourPartListSuccess : "FourPart Assessment fetched successfully",
+  assessmentFetchedSuccess : "Interaction Assessment Fetched successfully"
 };
 
 export const rawQueries = {
@@ -400,6 +401,9 @@ export const rawQueries = {
     }
     return `
     SELECT rid, interaction_assessment_source_name  FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source WHERE rid IN (${ids})`;
+  },
+   fetchInteractionAllAssessmentSource() {
+    return `SELECT rid, interaction_assessment_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source`;
   },
 
   fetchActiveStatus() {
@@ -1182,12 +1186,14 @@ export const rawQueries = {
     FROM 
     (
     SELECT interaction_batch_id, 
-    RANK() OVER(PARTITION BY interaction_batch_id ORDER BY created_datetime DESC) AS rank
+    ROW_NUMBER() OVER(ORDER BY interaction_batch_id DESC) AS rn
     FROM
     ${schemaName}.interactions
+    where
+	  four_part_assessment_rid IS NOT NULL
     )
     WHERE
-    rank = 1
+    rn = 1
     `
   },
   fetchBatchInInteractionByTransId(schemaName : string, transactionId : string) {
@@ -1197,6 +1203,7 @@ export const rawQueries = {
     ${schemaName}.interactions
     WHERE
     transaction_id = '${transactionId}'
+    ORDER BY interaction_batch_id DESC
     `
   }
 };
@@ -1297,12 +1304,14 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   ];
   export const fpaFieldMappings = [
     { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
-     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
     { permissionField: 'rd_potential_category', exportField: 'Range', dataField: 'rd_potential_category' },
+    { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose Status', dataField: 'permitted_purpose_status' },
+    { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty Status', dataField: 'technological_uncertainty_status' },
+    { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature Status', dataField: 'technological_in_nature_status' },
+    { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation Status', dataField: 'process_of_experimentation_status' },
     { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
-    { permissionField: 'modified_by', exportField: 'Modified By', dataField: 'modified_by' },
-    { permissionField: 'modified_datetime', exportField: 'Modified On', dataField: 'modified_datetime' }
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' }
   ];
     export const templateFieldMappings = [
     { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },
