@@ -175,15 +175,6 @@ export const caseProjectResourceFilterFields = (
       !permissionMap?.['net_total_cost_pro_res']?.edit,
   },
   {
-    name: 'QRE Final',
-    value: 'qre_final',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-  },
-  {
     name: 'Status',
     value: 'status_rid',
     type: 'enum',

@@ -16,6 +16,61 @@ const dateOptions: { option: string; value: string }[] = [
   { option: 'Between', value: 'between' },
 ];
 
+const assessmentChipStyles: Record<
+  string,
+  { label: string; bg: string; text: string; border: string }
+> = {
+  // R&D Potential Category
+  high: { label: 'High', bg: '#DCFCE7', text: '#15803D', border: '#86EFAC' },
+  low: { label: 'Low', bg: '#FEF9C3', text: '#A16207', border: '#FDE047' },
+  medium: {
+    label: 'Medium',
+    bg: '#FFEDD5',
+    text: '#C2410C',
+    border: '#FDBA74',
+  },
+  none: { label: 'None', bg: '#FEE2E2', text: '#B91C1C', border: '#FCA5A5' },
+  // Status / Met / Not Met
+  met: { label: 'Met', bg: '#DCFCE7', text: '#15803D', border: '#86EFAC' },
+  completed: {
+    label: 'Completed',
+    bg: '#DCFCE7',
+    text: '#15803D',
+    border: '#86EFAC',
+  },
+  'not met': {
+    label: 'Not Met',
+    bg: '#FEE2E2',
+    text: '#B91C1C',
+    border: '#FCA5A5',
+  },
+};
+
+export const renderAssessmentChip = (value?: string | null) => {
+  if (!value) return <span>-</span>;
+  const chip = assessmentChipStyles[value.toLowerCase()];
+  const style = chip ?? { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' };
+  const label = chip ? chip.label : value;
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '1px 8px',
+        borderRadius: '9999px',
+        fontSize: '11px',
+        fontWeight: 600,
+        lineHeight: '18px',
+        backgroundColor: style.bg,
+        color: style.text,
+        border: `1px solid ${style.border}`,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+    </span>
+  );
+};
+
 export const getFourPartAssessmentTableColumns = (
   handleFourPartAssessmentView: (rowId: string) => void,
   moduleLevel: 'account' | 'project' | 'case',
@@ -65,12 +120,23 @@ export const getFourPartAssessmentTableColumns = (
   {
     id: 'rd_potential_category',
     sortId: 'rd_potential_category',
-    label: 'Range',
-    width: 140,
+    label: 'R&D Potential Category',
+    width: 180,
     sortable: true,
     hide:
       !permissionMap?.['rd_potential_category']?.edit &&
       !permissionMap?.['rd_potential_category']?.read,
+    render: (row) => renderAssessmentChip(row.rd_potential_category),
+  },
+  {
+    id: 'summary_judgment',
+    sortId: 'summary_judgment',
+    label: 'Summary',
+    width: 250,
+    sortable: true,
+    hide:
+      !permissionMap?.['summary_judgment']?.edit &&
+      !permissionMap?.['summary_judgment']?.read,
   },
   {
     id: 'permitted_purpose_status',
@@ -81,6 +147,7 @@ export const getFourPartAssessmentTableColumns = (
     hide:
       !permissionMap?.['permitted_purpose_status']?.edit &&
       !permissionMap?.['permitted_purpose_status']?.read,
+    render: (row) => renderAssessmentChip(row.permitted_purpose_status),
   },
   {
     id: 'technological_uncertainty_status',
@@ -91,6 +158,7 @@ export const getFourPartAssessmentTableColumns = (
     hide:
       !permissionMap?.['technological_uncertainty_status']?.edit &&
       !permissionMap?.['technological_uncertainty_status']?.read,
+    render: (row) => renderAssessmentChip(row.technological_uncertainty_status),
   },
   {
     id: 'technological_in_nature_status',
@@ -101,6 +169,7 @@ export const getFourPartAssessmentTableColumns = (
     hide:
       !permissionMap?.['technological_in_nature_status']?.edit &&
       !permissionMap?.['technological_in_nature_status']?.read,
+    render: (row) => renderAssessmentChip(row.technological_in_nature_status),
   },
   {
     id: 'process_of_experimentation_status',
@@ -111,6 +180,19 @@ export const getFourPartAssessmentTableColumns = (
     hide:
       !permissionMap?.['process_of_experimentation_status']?.edit &&
       !permissionMap?.['process_of_experimentation_status']?.read,
+    render: (row) =>
+      renderAssessmentChip(row.process_of_experimentation_status),
+  },
+  {
+    id: 'status',
+    sortId: 'status',
+    label: 'Status',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['status_rid']?.edit &&
+      !permissionMap?.['status_rid']?.read,
+    render: (row) => renderAssessmentChip(row.status),
   },
   {
     id: 'created_by_name',
@@ -161,13 +243,22 @@ export const getFourPartAssessmentFilterFields = (
           !projectPermissionMap?.['project_code']?.read),
     },
     {
-      name: 'Range',
+      name: 'R&D Potential Category',
       value: 'rd_potential_category',
       type: 'text',
       operatorOption: textOptions,
       hide:
         !permissionMap?.['rd_potential_category']?.edit &&
         !permissionMap?.['rd_potential_category']?.read,
+    },
+    {
+      name: 'Summary',
+      value: 'summary_judgment',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['summary_judgment']?.edit &&
+        !permissionMap?.['summary_judgment']?.read,
     },
     {
       name: 'Permitted Purpose Status',
@@ -204,6 +295,15 @@ export const getFourPartAssessmentFilterFields = (
       hide:
         !permissionMap?.['process_of_experimentation_status']?.edit &&
         !permissionMap?.['process_of_experimentation_status']?.read,
+    },
+    {
+      name: 'Status',
+      value: 'status',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['status_rid']?.edit &&
+        !permissionMap?.['status_rid']?.read,
     },
     {
       name: 'Created By',
