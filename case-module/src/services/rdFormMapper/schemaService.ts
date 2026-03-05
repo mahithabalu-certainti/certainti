@@ -655,7 +655,7 @@ class RdFormMapperSchemaService {
         if(refTable === "account")
         {
             replacements = {};
-            whereClause = `WHERE account_rid = :account_rid`;
+            whereClause = `WHERE rid = :account_rid`;
             replacements.account_rid = account_rid;
         }
        
