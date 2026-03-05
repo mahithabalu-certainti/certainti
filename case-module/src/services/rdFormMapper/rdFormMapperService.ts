@@ -223,6 +223,7 @@ export class RdFormMapperService {
       };
     }
 
+    try {
     const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
       accountRid,
       countryRid,
@@ -352,6 +353,15 @@ export class RdFormMapperService {
       message: "Federal form processed successfully",
       data:filledFormUrl
     }
+    } catch (error) {
+      this.logger.error("Error processing federal form:", error);
+      await this.updateFederalFormError(caseRid, countryRid, error instanceof Error ? error.message : String(error), orgDb);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: "Federal form processing failed",
+        errorMessage: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   /**
@@ -443,15 +453,21 @@ export class RdFormMapperService {
         );
 
       if (!mapperConfig || mapperConfig.length === 0) {
-        throw new Error(
-          `No mapper configuration found for state ${state}, form RID: ${formInfo.rid}`,
+        await this.rdFormMapperSchemaService.updateStateFormError(
+          caseRid,
+          countryRid,
+          state,
+          orgDb,
+          accountNumber,
         );
+        continue;
       }
 
       logMessage(
         `Found ${mapperConfig.length} state mapper configuration(s) for ${state}`,
       );
 
+      try {
       const enhancedMapperConfig =
         await this.enhanceMapperConfigWithDynamicValues(
           mapperConfig,
@@ -533,6 +549,16 @@ export class RdFormMapperService {
         accountNumber,
       );
       logMessage(`Successfully saved state form URL for state: ${state}`);
+      } catch (error) {
+        this.logger.error(`Error processing state form for ${state}:`, error);
+       await this.rdFormMapperSchemaService.updateStateFormError(
+          caseRid,
+          countryRid,
+          state,
+          orgDb,
+          accountNumber,
+        );
+      }
     }
 
     logMessage(
@@ -1233,15 +1259,15 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
       let blobName = `cases/${caseRid}/rdForms/${fileName}`;
 
       // Store PDF locally for testing
-      const fs = require('fs');
-      const path = require('path');
-      const localDir = path.resolve(__dirname, '../../../output/pdfs');
-      if (!fs.existsSync(localDir)) {
-        fs.mkdirSync(localDir, { recursive: true });
-      }
-      const localPath = path.join(localDir, fileName);
-      fs.writeFileSync(localPath, pdfBuffer);
-      logMessage(`PDF stored locally for testing: ${localPath}`);
+      // const fs = require('fs');
+      // const path = require('path');
+      // const localDir = path.resolve(__dirname, '../../../output/pdfs');
+      // if (!fs.existsSync(localDir)) {
+      //   fs.mkdirSync(localDir, { recursive: true });
+      // }
+      // const localPath = path.join(localDir, fileName);
+      // fs.writeFileSync(localPath, pdfBuffer);
+      // logMessage(`PDF stored locally for testing: ${localPath}`);
 
       // Upload directly to blob storage from buffer
       const blobUrl = await uploadBufferToAzureBlob(
@@ -2276,8 +2302,6 @@ private async handleTableConfig(
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
-      configLevelKey  = ConfigType.FEDERAL_ONLY;
-
       logMessage(`Config Level Key determined: ${configLevelKey}`);
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
@@ -2298,7 +2322,7 @@ private async handleTableConfig(
             '',
             ''
           );
-          this.processStateForms(
+          await this.processStateForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -2314,12 +2338,7 @@ private async handleTableConfig(
             fetchAccountCountryId[0].country_name,
             '',
             ''
-          ).catch((error) => {
-            this.logger.error(
-              `Error processing state forms in background for case ${caseRid}:`,
-              error,
-            );
-          });
+          );
           return federalResult;
         },
         [ConfigType.FEDERAL_ONLY]: async () => {
@@ -2693,6 +2712,16 @@ private async handleTableConfig(
                   }
           }
       }
+
+  private async updateFederalFormError(caseRid: string, countryRid: string, errorMessage: string, orgDb: Sequelize) {
+    const query = `UPDATE rd_federal_forms SET form_error_message = ? WHERE case_rid = ? AND country_rid = ?`;
+    await orgDb.query(query, { replacements: [errorMessage, caseRid, countryRid] });
+  }
+
+  private async updateStateFormError(caseRid: string, stateRid: string, errorMessage: string, orgDb: Sequelize) {
+    const query = `UPDATE rd_state_forms SET form_error_message = ? WHERE case_rid = ? AND state_rid = ?`;
+    await orgDb.query(query, { replacements: [errorMessage, caseRid, stateRid] });
+  }
 }
 
 
