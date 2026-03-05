@@ -5,7 +5,7 @@ import { Logger } from "winston";
 import RdFormMapperSchemaService from "./schemaService";
 import { generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
-import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE, FORM_TYPE } from "../../utils/constants";
+import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE, FORM_TYPE, eventTypes, entityTypes, eventNames } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { Kafka, Producer } from "kafkajs";
 import * as fs from "fs";
@@ -14,6 +14,8 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { fetchProjectCostDetailsBasedOnCasesForRdforms, fetchTotalResourcesForCase } from "../../utils/rdFinancialWorkingQueries";
+import { HelperMethods } from "../cases/helperMethods";
+import { CaseModelService } from "../caseModelsService";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -29,11 +31,18 @@ export class RdFormMapperService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private producer!: Producer;
+  private helperMethod: HelperMethods
+  private caseModelService:CaseModelService = new CaseModelService();
+
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.rdFormMapperSchemaService = new RdFormMapperSchemaService();
     this.rdCreditSchemaService = new RDCreditSchemaService();
+    this.helperMethod = new HelperMethods(
+          this.caseModelService
+        );
+    
   }
 
   private roundToTwoDecimals(value: number): number {
@@ -2753,6 +2762,22 @@ private async handleTableConfig(
               if(caseResult[1].rowCount) {
                   const findRdFormSignOffId : any = await mainDb.query(rawQueries.getRdFormSignOffId());
                   await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findRdFormSignOffId[0][0].rid, data.case_rid, data.account_rid, schemaName, data.comments))
+                  const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                                    userId: data.userId!,
+                                                                    eventType: eventTypes.UI_HANDLER
+                                                                  });
+                   const [caseDetails] : any[] = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+                  await this.helperMethod.createAccountTimelineEntry(parentAccount[0][0].r_number!, {
+                                                              created_by: data.userId!,
+                                                              account_rid: data.account_rid,
+                                                              entity_rid: data.case_rid!,
+                                                              entity_name: entityTypes.REVIEW_PROJECT_EMAIL,
+                                                              created_by_name: userEventInfo.full_name,
+                                                              event_type_rid: userEventInfo.event_type_rid,
+                                                              event_name: eventNames.SIGNOFF,
+                                                              descriptions: caseDetails?.project_code,
+                                                              case_rid: data.case_rid,
+                                                            },["case"]);
                   return {
                       statusCode : HttpStatus.SUCCESS,
                       statusMessage : STATUS_MESSAGE.rdFormSignedOff
