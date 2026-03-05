@@ -595,6 +595,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     const payload = {
       account_rid: accountid || '',
       interactions,
+      is_interaction_reinitiated: true,
       email_info: {
         email: recipient?.email.trim() || '',
         name: recipient?.name.trim() || recipient?.email.split('@')[0] || '',

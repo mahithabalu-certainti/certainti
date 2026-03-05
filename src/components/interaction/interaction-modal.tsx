@@ -13,6 +13,7 @@ interface SendInteractionModalProps {
   onClose: () => void;
   selectedRows: InteractionList[];
   onSuccessRefetch: () => void;
+  isReinitiated?: boolean;
 }
 
 const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
@@ -21,6 +22,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   onClose,
   selectedRows,
   onSuccessRefetch,
+  isReinitiated = false,
 }) => {
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
@@ -91,6 +93,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
           email: '',
           name: '',
         },
+        is_interaction_reinitiated: isReinitiated,
       };
       sendInteraction.mutate(payload, {
         onSuccess: (response) => {
@@ -118,6 +121,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
           email: recipient.email.trim(),
           name: recipient.name.trim() || recipient.email.split('@')[0] || '',
         },
+        is_interaction_reinitiated: isReinitiated,
       };
       sendInteraction.mutate(payload, {
         onSuccess: (response) => {

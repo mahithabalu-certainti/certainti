@@ -542,6 +542,7 @@ export interface SendInteractionPayload {
   };
   customRecipient?: boolean;
   is_interaction_followup?: boolean;
+  is_interaction_reinitiated?: boolean;
 }
 
 export interface SendIntractionProject {
