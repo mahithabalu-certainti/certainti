@@ -21,9 +21,12 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { DetailsKeyContactErrorIcon, DossierIcon } from '../../../../../assets';
 import {
-  DossierSummary,
+  ComingSoon,
+  DetailsKeyContactErrorIcon,
+  DossierIcon,
+} from '../../../../../assets';
+import {
   FinancialWorkingForm,
   ProjectDocuments,
   TechnicalSummary,
@@ -240,12 +243,25 @@ const Dossier: React.FC<DossierProps> = ({
     return map;
   }, [projectListViewEditFields]);
 
-  // const initialTab = useMemo(() => {
-  //   if (isFinancialView) return 'financial_workings';
-  //   return 'summary';
-  // }, [isFinancialView]);
+  const initialTab = useMemo(() => {
+    if (isQualifiedProjectsView) return 'qualified_projects';
+    if (isTechnicalSummaryView) return 'technical_summary';
+    if (isProjectDocumentsView) return 'project_documents';
+    if (isResourceSummaryView) return 'resource_summary';
+    if (isRdFormsView) return 'rd_forms';
+    if (isAuditTimelineView) return 'approval_status';
+    if (isSummaryView) return 'summary';
+    return 'summary';
+  }, [
+    isQualifiedProjectsView,
+    isTechnicalSummaryView,
+    isProjectDocumentsView,
+    isResourceSummaryView,
+    isRdFormsView,
+    isAuditTimelineView,
+    isSummaryView,
+  ]);
 
-  const initialTab = 'summary';
   useEffect(() => {
     if (searchParams.get('list') === 'dossier' && !searchParams.get('tab')) {
       searchParams.set('tab', initialTab);
@@ -288,6 +304,9 @@ const Dossier: React.FC<DossierProps> = ({
     // Call API only for valid status values (e.g., 'PENDING', 'PROCESSING', etc.)
     const result = await refetchRDCreditStatus();
     if (result.data) {
+      if (result.data?.data === 'COMPLETED') {
+        refetchCaseDetails();
+      }
       setDossierCreditStatus(result.data?.data);
     }
   };
@@ -489,14 +508,14 @@ const Dossier: React.FC<DossierProps> = ({
 
   const tabs = [
     {
-      label: 'Summary',
-      value: 'summary',
-      hide: !isSummaryView,
-    },
-    {
       label: 'Qualified Projects',
       value: 'qualified_projects',
       hide: !isQualifiedProjectsView,
+    },
+    {
+      label: 'Summary',
+      value: 'summary',
+      hide: !isSummaryView,
     },
     {
       label: 'Technical Summary',
@@ -693,7 +712,11 @@ const Dossier: React.FC<DossierProps> = ({
                       isDetailLoading={isDetailLoading}
                     />
                   ))}
-                {tabParam === 'summary' && <DossierSummary />}
+                {tabParam === 'summary' && (
+                  <div className='flex items-center justify-center h-full'>
+                    <ComingSoon alt='comingSoon' />
+                  </div>
+                )}
 
                 {tabParam === 'qualified_projects' && (
                   <QualifiedProjects

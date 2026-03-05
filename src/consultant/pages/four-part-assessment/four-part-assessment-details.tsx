@@ -22,10 +22,11 @@ import SectionHeader from '../../../components/details-section/section-header';
 import { FourPartIcon } from '../../../assets';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
-import { moduleColorMap } from './helper';
+import { moduleColorMap, renderAssessmentChip } from './helper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { AllPermissions } from '../../../common-service';
+import { FourPartAssessmentInteractionQuestions } from '../../types';
 
 interface FourPartAssessmentDetailsProps {
   moduleLevel: 'account' | 'project' | 'case';
@@ -163,44 +164,64 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   const basicInfo: DetailItem[] = [
     {
       label: 'Project Code',
-      value: data?.basic_information?.project_code,
+      value: data?.record_information?.project_code,
       key: 'project_code',
       ignorePermission: true,
       hide:
-        moduleLevel === 'project' ||
-        (!projectPermissionMap?.['project_code']?.edit &&
-          !projectPermissionMap?.['project_code']?.read),
+        !projectPermissionMap?.['project_code']?.edit &&
+        !projectPermissionMap?.['project_code']?.read,
     },
     {
-      label: 'Range',
-      value: data?.basic_information?.rd_potential_category,
+      label: 'R&D Potential Category',
+      value: renderAssessmentChip(
+        data?.record_information?.rd_potential_category
+      ),
       key: 'rd_potential_category',
     },
     {
       label: 'Status',
-      value: data?.basic_information?.status,
+      value: renderAssessmentChip(data?.record_information?.status),
       key: 'status_rid',
     },
   ];
 
   const description: DetailItem[] = [
     {
-      label: 'Project Description',
-      value: data?.basic_information?.project_description || '',
-      key: 'project_description',
+      label: 'Tracker One Liner',
+      value: data?.record_information?.tracker_one_liner || '',
+      key: 'tracker_one_liner',
     },
   ];
 
+  const handleInteractionNavigate = (
+    interaction: FourPartAssessmentInteractionQuestions | null
+  ) => {
+    if (!interaction?.interaction_rid) return;
+    searchParams.set('list', 'interactions');
+    searchParams.set('interaction_id', interaction?.interaction_rid);
+    searchParams.set('interaction_number', interaction?.r_number);
+    searchParams.set('navigate_source', 'four_part');
+
+    navigate(
+      { search: searchParams.toString() },
+      { state: { activeKey: 'interactions' }, replace: true }
+    );
+  };
+
   const basicDetails = applyHidePermission(basicInfo, permissionMap);
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
-  const descriptionDetails = applyHidePermission(
-    description,
-    projectPermissionMap
-  );
 
   const hideFourPartAssessment =
     !permissionMap?.['four_part_assessment']?.edit &&
     !permissionMap?.['four_part_assessment']?.read;
+
+  const hideInteractionQuestions =
+    !permissionMap?.['interaction_questions']?.edit &&
+    !permissionMap?.['interaction_questions']?.read;
+
+  const hideTrackerOneLiner =
+    !permissionMap?.['tracker_one_liner']?.edit &&
+    !permissionMap?.['tracker_one_liner']?.read;
 
   const currentModuleColors = moduleColorMap[moduleLevel];
 
@@ -236,39 +257,47 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
               data={basicDetails}
               customStyle='pt-0 mt-0'
             />
-            <DetailsSection
-              title=''
-              data={descriptionDetails}
-              fullColumn={true}
-              customStyle='pt-[1px]'
-            />
+            {!hideTrackerOneLiner && (
+              <DetailsSection
+                title='Tracker One Liner'
+                data={description}
+                fullColumn={true}
+                customStyle='pt-[1px]'
+              />
+            )}
           </>
         )}
       </div>
       {!hideFourPartAssessment &&
         !isLoading &&
         !isError &&
-        data?.four_part_assessment && (
+        data?.four_part_assessment_evaluation && (
           <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
             <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
               <div className='text-[14px] text-[#2D3E4F] font-semibold'>
                 Four Part Assessment
               </div>
             </div>
-            {Object.entries(data.four_part_assessment).map(
-              ([question, response], index) => {
+            {Object.entries(data.four_part_assessment_evaluation).map(
+              ([question, item], index) => {
                 return (
                   <div
                     key={question}
                     className='p-3 border-b last:border-b-0 border-[#CBD6E2]'
                   >
-                    <div className='font-medium text-[14px] text-[#2D3E4F] mb-2'>
-                      <span className='font-bold'>{`${index + 1}`}</span> -{' '}
-                      {formatSnakeCaseLabel(question)}
+                    <div className='flex items-center justify-between gap-2 mb-2'>
+                      <div className='flex items-center gap-1'>
+                        <span className='font-bold text-[14px] text-[#2D3E4F]'>
+                          {index + 1}
+                        </span>
+                        <span className='font-medium text-[14px] text-[#2D3E4F]'>
+                          - {formatSnakeCaseLabel(question)}
+                        </span>
+                      </div>
+                      {item?.status && renderAssessmentChip(item.status)}
                     </div>
-
                     <div className='mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]'>
-                      {response || '-'}
+                      {item?.rationale || '-'}
                     </div>
                   </div>
                 );
@@ -276,6 +305,39 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
             )}
           </div>
         )}
+      {!hideInteractionQuestions &&
+      !isLoading &&
+      !isError &&
+      data?.interaction_questions?.question_details?.length ? (
+        <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
+          <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
+            <div className='text-[14px] text-[#2D3E4F] font-semibold'>
+              Interaction Questions
+            </div>
+            <span
+              onClick={() =>
+                handleInteractionNavigate(data?.interaction_questions)
+              }
+              className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+            >
+              View Interaction
+            </span>
+          </div>
+          {data.interaction_questions.question_details.map((item, index) => (
+            <div
+              key={item.question_seq_num}
+              className='flex items-start gap-2 px-3.5 py-2.5 border-b last:border-b-0 border-[#CBD6E2]'
+            >
+              <span className='font-bold text-[13px] text-[#2D3E4F] shrink-0'>
+                {index + 1}.
+              </span>
+              <span className='text-[13px] text-[#425A76] font-normal leading-snug'>
+                {item.question}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
       {!isLoading && !isError && data && (
         <div className='border border-t-0 border-[#CBD6E2] mb-4'>
           <DetailsSection

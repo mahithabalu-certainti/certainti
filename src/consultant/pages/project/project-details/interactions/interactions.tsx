@@ -728,6 +728,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         email: recipient?.email.trim() || '',
         name: recipient?.name.trim() || recipient?.email.split('@')[0] || '',
       },
+      is_interaction_reinitiated: true,
     };
 
     sendInteraction.mutate(payload, {

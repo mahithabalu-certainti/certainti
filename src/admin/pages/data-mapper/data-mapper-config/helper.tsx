@@ -515,10 +515,10 @@ export function validateMappingItem(
         }
       }
 
-      // Validate number expressions - max 3 decimal places
+      // Validate number expressions - max 4 decimal places
       if (exp.type === 'number') {
         const decimalMatch = exp.value.match(/\.(\d+)$/);
-        if (decimalMatch && decimalMatch[1].length > 3) {
+        if (decimalMatch && decimalMatch[1].length > 4) {
           invalidNumbers.push(exp.value);
         }
       }
@@ -526,8 +526,7 @@ export function validateMappingItem(
 
     // If there are invalid numbers, show error
     if (invalidNumbers.length > 0) {
-      errors.targetError =
-        'Number entries have too many decimal places. Maximum of 3 decimal places allowed.';
+      errors.targetError = 'Maximum of 4 decimal places allowed for numbers';
       return errors;
     }
 

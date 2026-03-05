@@ -93,6 +93,7 @@ import {
   setTemporaryFiscalYear,
   setDossierFinancialStatus as setDossierFinancialStatusAction,
   setFinancialData as setFinancialDataAction,
+  setRdformGenerateStatus as setRdformGenerateStatusAction,
 } from '../../../../store/slices/account-slice';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
@@ -369,6 +370,7 @@ export const CaseDetails = () => {
   useEffect(() => {
     // Reset dossier states when case changes to avoid showing stale data from previous case
     setDossierFinancialStatus(false);
+    setRdformGenerateStatus(false);
     setFinancialData(null);
   }, [caseId]);
 
@@ -796,6 +798,9 @@ export const CaseDetails = () => {
     },
     []
   );
+  const setRdformGenerateStatus = (status: boolean) => {
+    dispatch(setRdformGenerateStatusAction(status));
+  };
 
   const handleToggleActionItems = (
     value: boolean | ((prevState: boolean) => boolean)
