@@ -754,7 +754,7 @@ export const adminCheckListMappings = [
 export const jurisdictionRuleMapping = [
   {
     permissionField: "r_number",
-    exportField: "Geo Bases ID",
+    exportField: "Jurisdiction Rule ID",
     dataField: "r_number",
   },
   {
