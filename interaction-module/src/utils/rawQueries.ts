@@ -1567,22 +1567,23 @@ export const fetchFpaDetails = (rid : string, schemaName : string) => {
   let query = 
   `
   WITH fetch_interaction_question AS (
-  SELECT ii.interaction_rid,
+  SELECT ii.interaction_rid, i.r_number,
   jsonb_build_object(
   'interaction_rid', ii.interaction_rid,
+  'r_number', i.r_number,
   'question_details', array_agg(jsonb_build_object(
     'question_seq_num', ii.question_seq_num,
     'question', ii.question
-    ))
+    )ORDER BY ii.question_seq_num ASC NULLS LAST)
   ) AS interaction_questions
   FROM
-  trd365_00333.four_part_assessment f
-  LEFT JOIN trd365_00333.interactions i ON i.four_part_assessment_rid = f.rid
-  LEFT JOIN trd365_00333.interaction_items ii ON ii.interaction_rid = i.rid
+  ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.interaction_items ii ON ii.interaction_rid = i.rid
   WHERE
-  f.rid = 'U001-7e1748b5-a07e-4706-a9ac-5e4e747b7406'
+  f.rid = '${rid}'
   GROUP BY
-  ii.interaction_rid)
+  ii.interaction_rid, i.r_number)
 
   SELECT 
   jsonb_build_object(
