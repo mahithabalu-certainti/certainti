@@ -1813,7 +1813,7 @@ private async handleTableConfig(
 
         if (
           typeof val === "string" &&
-          /^D\d{3}-[0-9a-fA-F-]{36}$/.test(val)
+          /^[UDSP]\d{3}-[0-9a-fA-F-]{36}$/.test(val)
         ) {
           const mapperObject =
             await this.rdFormMapperSchemaService.getDataMapperObjectByRid(val);
@@ -2015,7 +2015,7 @@ private async handleTableConfig(
          if (fieldLabel === "Total -> Equals Ratio (D) [Col.B/Col.C]" || fieldId === "Equals Ratio D ColBColCE Total from Column D") {
         try {
           // Only sum for the past three years from the fiscal year
-          const fiscalYearInt = parseInt(fiscalYear || '0', 10);
+          const fiscalYearInt = parseInt(fiscalYear || '0', 10) - 1;
           const years = [fiscalYearInt, fiscalYearInt - 1, fiscalYearInt - 2];
           // Assuming there is a 'year' column in case_history_submission
           const query = rawQueries.getHistoricalSubmissionData(accountRid, stateRid || '', years, schemaName);
@@ -2203,22 +2203,14 @@ private async handleTableConfig(
         evalCache.set(normalizedKey, rawValue);
 
         logMessage(
-          `Expression reference resolved for field ${
-            item.field_label || item.field_id
-          }: ${normalizedKey} -> ${JSON.stringify(rawValue)}`
+          `Expression reference resolved for field ${item.field_label || item.field_id}: ${normalizedKey} -> ${JSON.stringify(rawValue)}`
         );
 
         return num !== null ? String(num) : "NaN";
       }
     }
 
-    logMessage(
-      `Missing expression reference for field ${
-        item.field_label || item.field_id
-      }: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(
-        lookupKeys
-      )}`
-    );
+    logMessage(`Missing expression reference for field ${item.field_label || item.field_id}: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(lookupKeys)}`);
 
     evalCache.set(normalizedKey, null);
     return "NaN";
@@ -2268,7 +2260,15 @@ private async handleTableConfig(
 
             // Log the resolved values used in the expression
             logMessage(
-              `Resolved values for field ${item.field_label || item.field_id}: ${expression} => ${replaced}`
+              `Resolved values for field ${item.field_label || item.field_id}: ${expression} => ${replaced.replace(/\(([^?]*)\?/, (m, cond) => {
+                try {
+                  const cleanCond = cond.replace(/"/g, '');
+                  const result = Function('return (' + cleanCond + ')')();
+                  return '(' + (result ? 'true' : 'false') + ' ?';
+                } catch {
+                  return '(NaN ?';
+                }
+              })}`
             );
 
             item.value = finalValue;
