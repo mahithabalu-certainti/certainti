@@ -2,13 +2,13 @@ import { Decimal } from "decimal.js";
 import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 
 export interface ConfigJson {
-    credit_rate: number;
-    tentative_credit_rate: number;
-    qualified_small_business_rate: number;
-    one_third_rate: number;
-    half_tax_liability_rate: number;
-    double_credit_multiplier: number;
-    tax_limit_rate: number;
+    tc_qre_credit_percentage_c1: number;
+    tc_qre_credit_percentage_c2: number;
+    tc_tentative_credit_rate: number;
+    cc_qre_credit_percentage_c1: number;
+    cc_qre_credit_percentage_c2: number;
+    cc_qre_credit_percentage_c3: number;
+    cc_qre_credit_percentage_c4: number; 
 }
 
 /**
@@ -72,7 +72,7 @@ export class RdCreditCalculatorForCT {
         const finalExcessQre = excessQRE.lessThan(0) ? new Decimal(0) : excessQRE
 
         //---- Line 4: Multiply line 3 by 20%
-        const taxCredit = excessQRE.mul(new Decimal(extractConfig.credit_rate/100 || 0));
+        const taxCredit = excessQRE.mul(new Decimal(extractConfig.tc_qre_credit_percentage_c1/100 || 0));
         const finalTaxCredit = taxCredit.gt(0) ? taxCredit : new Decimal(0);
 
         return {
@@ -107,7 +107,7 @@ export class RdCreditCalculatorForCT {
         const tentativeBalance = Decimal.max(tentativeTotalQREs.minus(tentativeExcessQRE), 0);
 
         //Line 4c: Tetative credit rate.
-        const tentativeCreditRate = tentativeBalance.mul(new Decimal(extractConfig.tentative_credit_rate || 0));
+        const tentativeCreditRate = tentativeBalance.mul(new Decimal(extractConfig.tc_tentative_credit_rate || 0));
 
         //Line 4: Tentative credit rate from line 4c
         const tentativeCredit = tentativeCreditRate;
@@ -140,19 +140,20 @@ export class RdCreditCalculatorForCT {
         const part2AllowableTentativeTaxCredit = allowableTentativeTaxCredit;
 
         //Line 2:Multiply Line 1 by .3333
-        const part2OneThirdRate = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.one_third_rate/100 || 0));
+        const part2OneThirdRate = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c1
+            /100 || 0));
 
         //Line 3: Current Year CT Business Tax Liability 
         const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability);
 
         //Line 4: Multiply Line 3 by 50%
-        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate/100 || 0));
+        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c2/100 || 0));
 
         //Line 5a: Double Credit for Certain Expenses: Multiply Line 1 by 2
-        const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.double_credit_multiplier || 0));
+        const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c3 || 0));
 
         //Line 5b: Enter 90% of Line 3
-        const taxLimit = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.tax_limit_rate/100 || 0));
+        const taxLimit = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c4/100 || 0));
 
         //Line 5: Enter the lesser of Line 5a or Line 5b
         const minFinal = Decimal.min(doubleCredit, taxLimit);
@@ -216,7 +217,7 @@ export class RdCreditCalculatorForCT {
         "[1] Enter the amount of Connecticut research and experimental expenditures for the current income year.": this.round2(part1Computation.total_qre),
         "[2] Enter the amount of Connecticut research and experimental expenditures for the first prior income year.": this.round2(part1Computation.prior_year_1_qre),
         "[3] Balance: Subtract Line 2 from Line 1. If zero or less, the corporation is not eligible for this credit.": this.round2(part1Computation.excess_qre),
-        [`[4] Tax credit: Multiply Line 3 by ${extractConfig.credit_rate}%. Enter here and on Form CT-1120K, Part I-C, Column B.`]: this.round2(part1Computation.tax_credit)
+        [`[4] Tax credit: Multiply Line 3 by ${extractConfig.tc_qre_credit_percentage_c1}%. Enter here and on Form CT-1120K, Part I-C, Column B.`]: this.round2(part1Computation.tax_credit)
         };
 
        let part2 = {
@@ -231,11 +232,11 @@ export class RdCreditCalculatorForCT {
 
         let part3 = {
             [`[1] Allowable Tentative Tax Credit for ${currentYear - 1} from Part 1, line 6`]: this.round2(part2Computation.part2_allowable_tentative_tax_credit),
-            [`[2] Multiply Line 1 by ${extractConfig.one_third_rate}%`]: this.round2(part2Computation.part2_one_third_rate),
+            [`[2] Multiply Line 1 by ${extractConfig.cc_qre_credit_percentage_c1}%`]: this.round2(part2Computation.part2_one_third_rate),
             "[3] Current Year CT Business Tax Liability": this.round2(part2Computation.current_year_ct_business_tax_liability),
-            [`[4] Multiply Line 3 by ${extractConfig.half_tax_liability_rate}%`]: this.round2(part2Computation.half_tax_liability),
-            [`[5 a] Multiply Line 1 by ${extractConfig.double_credit_multiplier}`]: this.round2(part2Computation.double_credit),
-            [`[5 b] Enter ${extractConfig.tax_limit_rate}% (${extractConfig.tax_limit_rate}) of Line 3`]: this.round2(part2Computation.tax_limit),
+            [`[4] Multiply Line 3 by ${extractConfig.cc_qre_credit_percentage_c2}%`]: this.round2(part2Computation.half_tax_liability),
+            [`[5 a] Multiply Line 1 by ${extractConfig.cc_qre_credit_percentage_c3}`]: this.round2(part2Computation.double_credit),
+            [`[5 b] Enter ${extractConfig.cc_qre_credit_percentage_c4}% (${extractConfig.cc_qre_credit_percentage_c4}) of Line 3`]: this.round2(part2Computation.tax_limit),
             "[5] Enter the lesser of Line 5a or Line 5b": this.round2(part2Computation.min_final),
             "[6] Enter the greater of Line 4 or Line 5": this.round2(part2Computation.allowable_credit),
             "[7] 2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.": this.round2(part2Computation.final_credit)
