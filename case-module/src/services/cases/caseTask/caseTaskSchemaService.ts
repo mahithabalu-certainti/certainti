@@ -234,7 +234,7 @@ export class CaseTaskSchemaService {
         } else {
           if (isTaskExists.task_status_rid !== data.task_status_rid) {
             if (Object.keys(data.workflow_connector).length > 0) {
-              const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
+              const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid, activeStatusRid);
               if (workflowResult?.success) {
                 return {
                   statusCode: HttpStatus.BAD_REQUEST,
@@ -2692,7 +2692,8 @@ export class CaseTaskSchemaService {
     taskRid: string,
     statusRid: string,
     caseRid: string,
-    targetRids: any
+    targetRids: any,
+    activeStatusRid : string
   ) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize();
@@ -2716,7 +2717,8 @@ export class CaseTaskSchemaService {
         findTaskDependency,
         taskRid,
         statusRid,
-        caseRid
+        caseRid,
+        activeStatusRid
       );
       if (result !== undefined) {
         if (result.success) {
@@ -2739,7 +2741,8 @@ export class CaseTaskSchemaService {
     findTaskDependency: CaseTaskWorkflowConnector[],
     sourceRid: string,
     statusRid: string,
-    caseRid: string
+    caseRid: string,
+    activeStatusRid : string
   ) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize();
@@ -2777,6 +2780,7 @@ export class CaseTaskSchemaService {
             [Op.in]: targetIds,
           },
           case_rid: caseRid,
+          status_rid : activeStatusRid
         },
         raw: true,
       });
