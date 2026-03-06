@@ -217,7 +217,7 @@ export class CaseTaskSchemaService {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await initMainDbSequelize()
       }
-      const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem, Case } = await this.caseModelService.getModels(accountNumber);
+      const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem, Case, CaseSummary } = await this.caseModelService.getModels(accountNumber);
       const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
       if (!checkCaseExists) {
         return {
@@ -523,26 +523,26 @@ export class CaseTaskSchemaService {
               if (updatedColumnsStorage.length > 0) {
                 combinedColumns = updatedColumnsStorage.join(', ')
               }
-           
+
             }
             await transaction.commit();
-               const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
-                userId: data.modified_by,
-                eventType: eventTypes.UI_HANDLER
-              });
+            const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+              userId: data.modified_by,
+              eventType: eventTypes.UI_HANDLER
+            });
 
-              await CaseTimeline.create({
-                created_by_name: userEventInfo.full_name,
-                event_type_rid: userEventInfo.event_type_rid,
-                created_by: data.modified_by,
-                created_datetime: new Date(),
-                account_rid: data.account_rid,
-                entity_rid: data.rid,
-                case_rid: data.case_rid,
-                event_name: eventNames.UPDATE,
-                entity_name: entityTypes.TASK,
-                descriptions: `${data.task_name}`
-              })
+            await CaseTimeline.create({
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              created_by: data.modified_by,
+              created_datetime: new Date(),
+              account_rid: data.account_rid,
+              entity_rid: data.rid,
+              case_rid: data.case_rid,
+              event_name: eventNames.UPDATE,
+              entity_name: entityTypes.TASK,
+              descriptions: `${data.task_name}`
+            })
             const findAllTaskByCaseIds = await CaseTask.findAll({
               attributes: ['weightage_rid', 'task_status_rid'],
               where: {
@@ -576,6 +576,13 @@ export class CaseTaskSchemaService {
                 }, {
                   where: {
                     rid: data.case_rid
+                  }
+                })
+                await CaseSummary.update({
+                  case_completion_percentage: parseFloat(caseCompletionPercentage.toFixed(2))
+                }, {
+                  where: {
+                    case_rid: data.case_rid
                   }
                 })
               }

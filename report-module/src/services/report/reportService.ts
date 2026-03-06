@@ -350,8 +350,8 @@ export class ReportService implements IReportService {
 
             const statusMap = new Map(activityStatuses.map((s) => [s.rid, s.status_name]));
 
-            const scheduledStatus = activityStatuses.find((s) => ['Scheduled', 'Completed'].includes(s.status_name));
-            const scheduledStatusId = scheduledStatus ? scheduledStatus.rid : '';
+            const scheduledStatus = activityStatuses.filter((s) => ['Scheduled', 'Completed'].includes(s.status_name));
+            const scheduledStatusIds = scheduledStatus.map((s) => s.rid);
 
 
             let parsedGlobalFilters = globalFilters;
@@ -378,7 +378,7 @@ export class ReportService implements IReportService {
             }
 
             // Fetch Meetings
-            const meetingListQuery = rawQueries.fetchMeetingSummaryList(scheduledStatusId, userEmail, accountIds);
+            const meetingListQuery = rawQueries.fetchMeetingSummaryList(scheduledStatusIds, userEmail, accountIds);
             const meetings: any[] = await sequelize.query(meetingListQuery.query, {
                 replacements: meetingListQuery.replacements,
                 type: QueryTypes.SELECT
