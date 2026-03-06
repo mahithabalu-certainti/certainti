@@ -119,8 +119,6 @@ export async function pdfFiller(
       try {
         const field: PDFField | undefined = form.getFieldMaybe(fieldName);
         if (field) {
-          logMessage(`Filling field: ${fieldName} with value: ${fieldValue}`);
-
           // Handle null values - fill with blank/empty
           if (fieldValue === null || fieldValue === undefined) {
             if (field instanceof PDFTextField) {
