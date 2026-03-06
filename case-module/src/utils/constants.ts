@@ -620,7 +620,7 @@ export const rawQueries = {
   },
   getHistoricalSubmissionData(accountRid: string, stateRid: string, years: number[], schemaName: string) {
     return `SELECT SUM(field_value) AS total_value FROM (
-            SELECT total_qre / annual_gross_receipts AS field_value, ROW_NUMBER() OVER (ORDER BY created_datetime ASC) as row_index, fiscal_year
+            SELECT (total_qre / annual_gross_receipts) * 100  AS field_value, ROW_NUMBER() OVER (ORDER BY created_datetime ASC) as row_index, fiscal_year
             FROM ${schemaName}.case_history_submission
             WHERE account_rid = '${accountRid}' AND state_rid = '${stateRid}' AND fiscal_year IN (${years.join(",")})
             ORDER BY created_datetime ASC
