@@ -263,6 +263,13 @@ async function getDossierPackage (req : Request, res : Response) {
     const data : any = {};
     data.account_rid = accountId;
     data.case_rid = caseId;
+    const user_id = req.headers["x-user-id"] as string;
+    if (!user_id) {
+        errorLog(methodName, "User ID is required in headers");
+        handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+        return;
+    }
+    data.user_id = user_id;
     const result = await childCaseService.fetchDossierPackage(data);
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({

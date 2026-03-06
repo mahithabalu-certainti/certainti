@@ -5,7 +5,7 @@ import { Logger } from "winston";
 import RdFormMapperSchemaService from "./schemaService";
 import { generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
-import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE, FORM_TYPE } from "../../utils/constants";
+import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE, FORM_TYPE, eventTypes, entityTypes, eventNames } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
 import { Kafka, Producer } from "kafkajs";
 import * as fs from "fs";
@@ -13,7 +13,9 @@ import * as path from "path";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
-import { fetchProjectCostDetailsBasedOnCasesForRdforms } from "../../utils/rdFinancialWorkingQueries";
+import { fetchProjectCostDetailsBasedOnCasesForRdforms, fetchTotalResourcesForCase } from "../../utils/rdFinancialWorkingQueries";
+import { HelperMethods } from "../cases/helperMethods";
+import { CaseModelService } from "../caseModelsService";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -29,15 +31,30 @@ export class RdFormMapperService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private producer!: Producer;
+  private helperMethod: HelperMethods
+  private caseModelService:CaseModelService = new CaseModelService();
+
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.rdFormMapperSchemaService = new RdFormMapperSchemaService();
     this.rdCreditSchemaService = new RDCreditSchemaService();
+    this.helperMethod = new HelperMethods(
+          this.caseModelService
+        );
+    
   }
 
   private roundToTwoDecimals(value: number): number {
     return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
+  private formatNumber(value: any): string {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (typeof num === 'number' && !isNaN(num)) {
+      return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+    return String(value || '-');
   }
 
   private async getMainDb() {
@@ -86,6 +103,11 @@ export class RdFormMapperService {
     return result?.projects || [];
   }
 
+  private async fetchTotalResourcesForCase(caseRid: string, accountRid: string, schemaName: string, orgDb: Sequelize) {
+    const query = await fetchTotalResourcesForCase(caseRid, accountRid, schemaName);
+    const [result]: any[] = await orgDb.query(query, { type: QueryTypes.SELECT });
+    return result?.total_resources || 0;
+  }
   
 
   /**
@@ -133,96 +155,10 @@ export class RdFormMapperService {
         data: filledFormUrl
       };
     } else if (countryNameNorm === 'united kingdom' || countryNameNorm === 'uk' || countryNameNorm === 'gb') {
-      logMessage('Country is UK. Generating dynamic UK PDF.');
-      // Fetch extracted text from database or assume it's in computed_fields
-      const [calcRow]: any[] = await orgDb.query(
-        rawQueries.fetchCountryCalculationForCase(schemaName),
-        { replacements: { caseRid }, type: QueryTypes.SELECT }
-      );
-      if (!calcRow) throw new Error('No calculation found for this case');
-      const computedFields = typeof calcRow.computed_fields === 'string' ? JSON.parse(calcRow.computed_fields) : calcRow.computed_fields;
-      const [accountInfo]:any[] = await mainDb.query(
-        rawQueries.fetchAccountAndCountryDetails(accountRid),
-        { replacements: { accountRid }, type: QueryTypes.SELECT }
-      );
-      const [caseInfo]:any[] = await orgDb.query(
-        rawQueries.fetchCaseById(schemaName),
-        { replacements: { caseId : caseRid }, type: QueryTypes.SELECT }
-      );
-      
-      const projectInfo = await this.fetchProjectCostDetailsBasedOnCases(caseRid, accountRid, schemaName, orgDb);
-      
-      const projectInfoWithExtras = projectInfo.map((p: any) => ({
-        ...p,
-          "Project QRE": p.qre_final || '-',
-        "Main field of science or technology": "-",
-        "Existing scientific or technological knowledge it planned to improve": "-",
-        "Advancement in knowledge it aimed to achieve": "-",
-        "Scientific or Technological Uncertainties Faced": "-",
-        "How the project sought to overcome uncertainties": "-",
-
-      }));
-      
-      const fiscalYear = parseInt(caseInfo.fiscal_year);
-      const { startDate, endDate } = calculateFiscalYearDateRange('01/01', '12/30', fiscalYear, '01', '31');
-      
-     let ukFormData = {
-          "business_details": {
-            "business_name": accountInfo.account_name || '',
-            "corporation_tax_unique_taxpayer_reference": "",
-            "correct_corporation_tax_reference": "-",
-            "has_paye_reference": "-",
-            "employer_paye_reference": "-",
-            "has_vat_number": "-",
-            "vat_number": "-",
-            "type_of_business": "-"
-          },
-          "contact_and_agent_details": {
-            "full_name": "-",
-            "senior_officer_responsible": "-",
-            "role_in_company": "-",
-            "confirmation_email": "-",
-            "telephone_number": "-",
-            "has_tax_agent_for_rd_claim": "-"
-          },
-          "accounting_period": {
-            "start_date": startDate,
-            "end_date": endDate,
-            "part_of_long_period_of_account": "-"
-          },
-          "rd_scheme": {
-            "scheme_type": "RDEC"
-          },
-          "rdec_qualifying_expenditure": {
-            "staffing_costs": computedFields.Total?.Employees,
-            "externally_provided_workers":computedFields.Total?.EPW || "-",
-            "number_of_epws": computedFields.Total?.Employees || "",
-            "software": caseInfo.cloud_software,
-            "consumable_items": caseInfo.heat_light_power
-          },
-          "projects": projectInfoWithExtras,
-        }
-      const filledFormUrl = await this.generateUKCreditPdf(ukFormData, caseRid, accountNumber);
-      logMessage(
-        `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
-      );
-      await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
-        caseRid,
-        countryRid,
-        filledFormUrl,
-        orgDb,
-        accountNumber,
-      );
-      logMessage(
-        `Successfully saved federal filled form URL for case: ${caseRid}`,
-      );
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: "Federal form processed successfully",
-        data: filledFormUrl
-      };
+      return await this.processUKForms(accountRid, caseRid, countryRid, accountNumber, mainDb, orgDb, schemaName, countryName);
     }
 
+    try {
     const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
       accountRid,
       countryRid,
@@ -352,6 +288,128 @@ export class RdFormMapperService {
       message: "Federal form processed successfully",
       data:filledFormUrl
     }
+    } catch (error) {
+      this.logger.error("Error processing federal form:", error);
+      await this.updateFederalFormError(caseRid, countryRid, error instanceof Error ? error.message : String(error), orgDb);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: "Federal form processing failed",
+        errorMessage: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
+   * Process UK form filling
+   */
+  private async processUKForms(
+    accountRid: string,
+    caseRid: string,
+    countryRid: string,
+    accountNumber: string,
+    mainDb: Sequelize,
+    orgDb: Sequelize,
+    schemaName: string,
+    countryName: string
+  ): Promise<any> {
+    logMessage('Country is UK. Generating dynamic UK PDF.');
+    // Fetch extracted text from database or assume it's in computed_fields
+    const [calcRow]: any[] = await orgDb.query(
+      rawQueries.fetchCountryCalculationForCase(schemaName),
+      { replacements: { caseRid }, type: QueryTypes.SELECT }
+    );
+    if (!calcRow) throw new Error('No calculation found for this case');
+    const computedFields = typeof calcRow.computed_fields === 'string' ? JSON.parse(calcRow.computed_fields) : calcRow.computed_fields;
+    const [accountInfo]:any[] = await mainDb.query(
+      rawQueries.fetchAccountAndCountryDetails(accountRid),
+      { replacements: { accountRid }, type: QueryTypes.SELECT }
+    );
+    const [caseInfo]:any[] = await orgDb.query(
+      rawQueries.fetchCaseById(schemaName),
+      { replacements: { caseId : caseRid }, type: QueryTypes.SELECT }
+    );
+     const [accountDetails]:any[] = await orgDb.query(
+      rawQueries.fetchAccountStartEndDate(accountRid,schemaName),
+      {  type: QueryTypes.SELECT }
+    );
+
+     const currencySymbol = await this.getCurrencySymbolByCountry(
+      countryName,
+      mainDb,
+    );
+    
+    const projectInfo = await this.fetchProjectCostDetailsBasedOnCases(caseRid, accountRid, schemaName, orgDb);
+    const resoucesCount = await this.fetchTotalResourcesForCase(caseRid, accountRid, schemaName, orgDb);
+    const projectInfoWithExtras = projectInfo.map(({ qre_final, ...p }: any) => ({
+      ...p,
+        "Project QRE": currencySymbol ? `${currencySymbol}${this.formatNumber(qre_final || "-")}` : this.formatNumber(qre_final || "-"),
+      "Main field of science or technology": "-",
+      "Existing scientific or technological knowledge it planned to improve": "-",
+      "Advancement in knowledge it aimed to achieve": "-",
+      "Scientific or Technological Uncertainties Faced": "-",
+      "How the project sought to overcome uncertainties": "-",
+
+    }));
+    
+    const fiscalYear = parseInt(caseInfo.fiscal_year);
+    const startDate = `${accountDetails.fiscal_start_date}/${fiscalYear - 1}`;
+    const endDate = `${accountDetails.fiscal_end_date}/${fiscalYear}`;
+    const accountingPeriodFormatted = `${this.formatDate(startDate)} to ${this.formatDate(endDate)}`;
+    
+   let ukFormData = {
+        "business_details": {
+          "business_name": accountInfo.account_name || '',
+          "corporation_tax_unique_taxpayer_reference": "",
+          "correct_corporation_tax_reference": "-",
+          "has_paye_reference": "-",
+          "employer_paye_reference": "-",
+          "has_vat_number": "-",
+          "vat_number": "-",
+          "type_of_business": "-"
+        },
+        "contact_and_agent_details": {
+          "full_name": "-",
+          "senior_officer_responsible": "-",
+          "role_in_company": "-",
+          "confirmation_email": "-",
+          "telephone_number": "-",
+          "has_tax_agent_for_rd_claim": "-"
+        },
+        "rd_scheme": {
+          "scheme_type": "RDEC"
+        },
+        "rdec_qualifying_expenditure": {
+          "staffing_costs": currencySymbol ? `${currencySymbol}${this.formatNumber(computedFields.Total?.Employees)}` : this.formatNumber(computedFields.Total?.Employees),
+          "externally_provided_workers": currencySymbol ? `${currencySymbol}${this.formatNumber(computedFields.Total?.["Net EPW"] || "-")}` : this.formatNumber(computedFields.Total?.["Net EPW"] || "-"),
+          "number_of_epws": resoucesCount || "-",
+          "software": currencySymbol ? `${currencySymbol}${this.formatNumber(caseInfo.material_software_cost)}` : this.formatNumber(caseInfo.material_software_cost),
+          "consumable_items": currencySymbol ? `${currencySymbol}${this.formatNumber(caseInfo.heat_light_power)}` : this.formatNumber(caseInfo.heat_light_power)
+        },
+        "summary_rdec_qualifying_expenditure" : {
+          [`Accounting period ${accountingPeriodFormatted}`]: currencySymbol ? `${currencySymbol}${this.formatNumber(computedFields["Percentage Calculation"]?.["Total QRE"] || "-")}` : this.formatNumber(computedFields["Percentage Calculation"]?.["Total QRE"] || "-"),
+          "qualifying_indirect_activities":"-"
+        },
+        "projects": projectInfoWithExtras,
+      }
+    const filledFormUrl = await this.generateUKCreditPdf(ukFormData, caseRid, accountNumber);
+    logMessage(
+      `Federal PDF form filling completed. Filled form URL: ${filledFormUrl}`,
+    );
+    await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
+      caseRid,
+      countryRid,
+      filledFormUrl,
+      orgDb,
+      accountNumber,
+    );
+    logMessage(
+      `Successfully saved federal filled form URL for case: ${caseRid}`,
+    );
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: "Federal form processed successfully",
+      data: filledFormUrl
+    };
   }
 
   /**
@@ -443,15 +501,21 @@ export class RdFormMapperService {
         );
 
       if (!mapperConfig || mapperConfig.length === 0) {
-        throw new Error(
-          `No mapper configuration found for state ${state}, form RID: ${formInfo.rid}`,
+        await this.rdFormMapperSchemaService.updateStateFormError(
+          caseRid,
+          countryRid,
+          state,
+          orgDb,
+          accountNumber,
         );
+        continue;
       }
 
       logMessage(
         `Found ${mapperConfig.length} state mapper configuration(s) for ${state}`,
       );
 
+      try {
       const enhancedMapperConfig =
         await this.enhanceMapperConfigWithDynamicValues(
           mapperConfig,
@@ -533,6 +597,16 @@ export class RdFormMapperService {
         accountNumber,
       );
       logMessage(`Successfully saved state form URL for state: ${state}`);
+      } catch (error) {
+        this.logger.error(`Error processing state form for ${state}:`, error);
+       await this.rdFormMapperSchemaService.updateStateFormError(
+          caseRid,
+          countryRid,
+          state,
+          orgDb,
+          accountNumber,
+        );
+      }
     }
 
     logMessage(
@@ -771,6 +845,10 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
       { key: 'accounting_period', title: 'Accounting Period' },
       { key: 'rd_scheme', title: 'R&D Scheme' },
       { key: 'rdec_qualifying_expenditure', title: 'RDEC Qualifying Expenditure' },
+      {
+        key: 'summary_rdec_qualifying_expenditure',
+        title: 'Summary of RDEC Qualifying Expenditure',
+      },
       { key: 'projects', title: 'Projects' }
     ];
 
@@ -784,9 +862,14 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
           this.renderProjectsTable(doc, ukFormData[section.key]);
         } else {
           const left = doc.page.margins.left;
-          doc.fontSize(12).font('Helvetica-Bold').text(section.title, left, doc.y, { underline: true });
+          if (typeof ukFormData[section.key] === 'string') {
+            doc.fontSize(12).font('Helvetica-Bold').text(section.title + ':', { continued: true }).font('Helvetica').text(' ' + ukFormData[section.key]);
+          } else {
+            doc.fontSize(12).font('Helvetica-Bold').text(section.title, left, doc.y, { underline: true });
+            doc.moveDown(0.5);
+            this.renderSectionAsTable(doc, ukFormData[section.key]);
+          }
           doc.moveDown(0.5);
-          this.renderSectionAsTable(doc, ukFormData[section.key]);
         }
 
         doc.moveDown(0.5);
@@ -1233,15 +1316,15 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
       let blobName = `cases/${caseRid}/rdForms/${fileName}`;
 
       // Store PDF locally for testing
-      const fs = require('fs');
-      const path = require('path');
-      const localDir = path.resolve(__dirname, '../../../output/pdfs');
-      if (!fs.existsSync(localDir)) {
-        fs.mkdirSync(localDir, { recursive: true });
-      }
-      const localPath = path.join(localDir, fileName);
-      fs.writeFileSync(localPath, pdfBuffer);
-      logMessage(`PDF stored locally for testing: ${localPath}`);
+      // const fs = require('fs');
+      // const path = require('path');
+      // const localDir = path.resolve(__dirname, '../../../output/pdfs');
+      // if (!fs.existsSync(localDir)) {
+      //   fs.mkdirSync(localDir, { recursive: true });
+      // }
+      // const localPath = path.join(localDir, fileName);
+      // fs.writeFileSync(localPath, pdfBuffer);
+      // logMessage(`PDF stored locally for testing: ${localPath}`);
 
       // Upload directly to blob storage from buffer
       const blobUrl = await uploadBufferToAzureBlob(
@@ -2276,8 +2359,6 @@ private async handleTableConfig(
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
-      configLevelKey  = ConfigType.FEDERAL_ONLY;
-
       logMessage(`Config Level Key determined: ${configLevelKey}`);
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
@@ -2298,7 +2379,7 @@ private async handleTableConfig(
             '',
             ''
           );
-          this.processStateForms(
+          await this.processStateForms(
             accountRid,
             caseRid,
             fetchAccountCountryId[0].country_rid,
@@ -2314,12 +2395,7 @@ private async handleTableConfig(
             fetchAccountCountryId[0].country_name,
             '',
             ''
-          ).catch((error) => {
-            this.logger.error(
-              `Error processing state forms in background for case ${caseRid}:`,
-              error,
-            );
-          });
+          );
           return federalResult;
         },
         [ConfigType.FEDERAL_ONLY]: async () => {
@@ -2479,7 +2555,6 @@ private async handleTableConfig(
     }
     return this.producer;
   }
-
   private async fetchUrlAsBase64(url: string): Promise<string> {
     // Set reasonable defaults to avoid unbounded memory usage and long-hanging requests.
     // Timeout in milliseconds (e.g., 30 seconds).
@@ -2494,6 +2569,17 @@ private async handleTableConfig(
       maxBodyLength: MAX_CONTENT_LENGTH_BYTES,
     });
     return Buffer.from(response.data).toString("base64");
+  }
+
+  private formatDate(dateStr: string): string {
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return dateStr;
+    const month = Number(parts[0]);
+    const day = Number(parts[1]);
+    const year = Number(parts[2]);
+    if (isNaN(month) || isNaN(day) || isNaN(year)) return dateStr;
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   /**
@@ -2676,6 +2762,22 @@ private async handleTableConfig(
               if(caseResult[1].rowCount) {
                   const findRdFormSignOffId : any = await mainDb.query(rawQueries.getRdFormSignOffId());
                   await orgDb.query(rawQueries.insertSignoffDetails(data.userId, findRdFormSignOffId[0][0].rid, data.case_rid, data.account_rid, schemaName, data.comments))
+                  const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                                    userId: data.userId!,
+                                                                    eventType: eventTypes.UI_HANDLER
+                                                                  });
+                   const [caseDetails] : any[] = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+                  await this.helperMethod.createAccountTimelineEntry(parentAccount[0][0].r_number!, {
+                                                              created_by: data.userId!,
+                                                              account_rid: data.account_rid,
+                                                              entity_rid: data.case_rid!,
+                                                              entity_name: entityTypes.RD_FORM,
+                                                              created_by_name: userEventInfo.full_name,
+                                                              event_type_rid: userEventInfo.event_type_rid,
+                                                              event_name: eventNames.SIGNOFF,
+                                                              descriptions: caseDetails?.case_name || '',
+                                                              case_rid: data.case_rid,
+                                                            },["case"]);
                   return {
                       statusCode : HttpStatus.SUCCESS,
                       statusMessage : STATUS_MESSAGE.rdFormSignedOff
@@ -2693,6 +2795,16 @@ private async handleTableConfig(
                   }
           }
       }
+
+  private async updateFederalFormError(caseRid: string, countryRid: string, errorMessage: string, orgDb: Sequelize) {
+    const query = `UPDATE rd_federal_forms SET form_error_message = ? WHERE case_rid = ? AND country_rid = ?`;
+    await orgDb.query(query, { replacements: [errorMessage, caseRid, countryRid] });
+  }
+
+  private async updateStateFormError(caseRid: string, stateRid: string, errorMessage: string, orgDb: Sequelize) {
+    const query = `UPDATE rd_state_forms SET form_error_message = ? WHERE case_rid = ? AND state_rid = ?`;
+    await orgDb.query(query, { replacements: [errorMessage, caseRid, stateRid] });
+  }
 }
 
 

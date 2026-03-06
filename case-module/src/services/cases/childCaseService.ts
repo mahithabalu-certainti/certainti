@@ -104,10 +104,10 @@ export class ChildCaseService extends CaseService {
                 created_by: data.userId!,
                 account_rid: data.account_rid,
                 entity_rid: data.case_rid!,
-                entity_name: entityTypes.CASE,
+                entity_name: entityTypes.FINANCIAL_WORKING,
                 created_by_name: userEventInfo.full_name,
                 event_type_rid: userEventInfo.event_type_rid,
-                event_name: eventNames.CREATE,
+                event_name: eventNames.SIGNOFF,
                 descriptions:caseDetails.case_name,
                 case_rid: data.case_rid,
               },["case"]);
@@ -205,6 +205,10 @@ export class ChildCaseService extends CaseService {
                 errorMessage: "Closed case status not found",
             };
           } 
+          let [accountInfo]: any[] = await mainDb.query(
+                  rawQueries.fetchAccountAndCountryDetails(data.account_rid),
+                  { type: QueryTypes.SELECT }
+                );
            const [caseFilingType]: any = await mainDb.query(rawQueries.fetchFilingTypeByName(caseFilingTypes.regular));
            if (caseFilingType.length === 0) {
             return {
@@ -216,7 +220,7 @@ export class ChildCaseService extends CaseService {
         
           const { Case } = await this.caseModelService.getModels(accountNumber);
             const closedCases = await Case.findAll({
-                attributes: ['rid', 'case_name'],
+                attributes: ['rid', 'case_name', 'fiscal_year'],
                 where: {
                     account_rid: data.account_rid,
                     status_rid: caseStatus[0].rid,
@@ -226,7 +230,10 @@ export class ChildCaseService extends CaseService {
             return {
             statusCode: HttpStatus.SUCCESS,
             message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
-            data: { cases: closedCases },
+            data: { cases: closedCases.map(d => ({
+                rid: d.rid,
+                case_full_name: accountInfo.account_name + '-' + accountInfo.country_code + '-' + d.fiscal_year + '-' + d.case_name
+            })) },
           };
         } catch (error) {
           return {
@@ -294,9 +301,9 @@ async exportCaseClosingRemarks (data : any) {
         const finalData = result?.closing_remarks.map((d : any) => {
             console.log("Signoff AT : ", d.signoff_at)
             return {
-                "Signoff Type" : d.signoff_type_name,
-                "Signoff At": d.signoff_at ? data.timezone && isValidTimezone(data.timezone) ? moment(d.signoff_at).tz(data.timezone).format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.signoff_at).utcOffset("+05:30").format("YYYY-MMM-DD, hh:mm:ss A") : "-",
-                "Signoff By" : d.created_by_name
+                "Approved Type" : d.signoff_type_name,
+                "Approved By" : d.created_by_name,
+                "Approved On": d.signoff_at ? data.timezone && isValidTimezone(data.timezone) ? moment(d.signoff_at).tz(data.timezone).format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.signoff_at).utcOffset("+05:30").format("YYYY-MMM-DD, hh:mm:ss A") : "-",
             }
         });
         const generateCsv = await generateExcelBase64(finalData, "Closing-Remarks");
@@ -1240,6 +1247,23 @@ async fetchDossierPackage (data : any) {
   })
   if(getZipPackage) {
     getZipPackage.browse_url = await generateSasUrl(getZipPackage.browse_url);
+     const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                userId: data.user_id!,
+                eventType: eventTypes.UI_HANDLER
+              });
+      const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+                                
+      await this.helperMethod.createAccountTimelineEntry(fetchParentNumber[0][0].r_number, {
+      created_by: data.user_id!,
+      account_rid: data.account_rid,
+      entity_rid: data.case_rid!,
+      entity_name: entityTypes.FINANCIAL_WORKING,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.CREATE,
+      descriptions:caseDetails.case_name,
+      case_rid: data.case_rid,
+    },["case"]);
     return {
       statusCode : HttpStatus.SUCCESS,
       data : getZipPackage
@@ -1499,7 +1523,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
     const findParentAccount = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT, plain : true});
     if(findParentAccount) {
       const schemaName = rawQueries.fetchSchemaName(findParentAccount.r_number)
-      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations, Case, CaseSummary} = await this.caseModelService.getModels(findParentAccount.r_number);
+      const {RdCreditCalculationsSummary, CaseHistorySubmission, SignoffDetails, Attachment, RdCreditCountryCalculations, RdCreditStateCalculations, Case, CaseSummary, ProjectFiscal} = await this.caseModelService.getModels(findParentAccount.r_number);
       const findFinancialWorkingId : any = await mainDb.query(rawQueries.getFinancialWorkingId(SignOffTypes.case));
       await SignoffDetails.create({
         account_rid : data.account_rid,
@@ -1696,6 +1720,17 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
             case_rid : data.case_rid
           }, transaction : mainDbTransaction
         })
+        const projectIds = await orgDb.query<ProjectFiscalIds>(rawQueries.fetchAssignedProjectIds(data.case_rid, schemaName, "closeCase"), {type : QueryTypes.SELECT});
+        await ProjectFiscal.update({
+          is_rd_claim_qualified : false
+        }, {
+          where : {
+            rid : {
+              [Op.in] : projectIds.map((d) => d.project_fiscal_rid)
+            },
+            is_rd_claim_qualified : true
+          }, transaction : orgDbTransaction
+        })
       }
       await orgDbTransaction.commit();
       await mainDbTransaction.commit();
@@ -1712,7 +1747,6 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       }
     }
   } catch (error) {
-    console.log(error)
       await orgDbTransaction.rollback()
       await mainDbTransaction.rollback()
       return {

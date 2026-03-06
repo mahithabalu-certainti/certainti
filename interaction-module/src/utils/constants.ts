@@ -95,6 +95,8 @@ export const eventNames = {
   UPDATE: "updated",
   CANCEL: "cancelled",
   SENT: "sent",
+  REMAINDER: "remainder sent",
+  REINITIATED: "reinitiated",
   TRIGGERED: "triggered",
   GENERATED: "generated",
 }
@@ -977,7 +979,7 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_sent = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },

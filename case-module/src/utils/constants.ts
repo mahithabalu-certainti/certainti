@@ -234,6 +234,9 @@ export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
 export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
   "Australia": "AUD",
   "United States": "USD",
+  "United Kingdom": "GBP",
+  "Canada": "CAD",
+  "Ireland": "EUR"
 };
 
 export const FORM_TYPE = {
@@ -327,7 +330,8 @@ export const entityTypes = {
   HISTORICAL_SUBMISSION: "Historical Submission",
   SETTINGS: "Settings",
   REVIEW_PROJECT_EMAIL: "Case Review Project Email",
-
+  DOSSIER: "Dossier Package",
+  RD_FORM: "RD Form",
 };
 
 export const eventNames = {
@@ -338,6 +342,7 @@ export const eventNames = {
   DELETE: "deleted",
   REMOVED: "removed",
   SENT: "sent",
+  SIGNOFF: "approved",
 }
 
 export const eventTypes = {
