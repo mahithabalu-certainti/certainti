@@ -287,7 +287,7 @@ const InteractionForm = () => {
         setRecipiants(JSON.parse(currentRecipients));
       }
     }
-  }, [isEditView, accountInteraction.data]);
+  }, [isEditView, interactionData]);
 
   const accountsData: ExpandCollapseSelectOptions[] = useMemo(() => {
     if (!globalAccountList?.accounts) return [];

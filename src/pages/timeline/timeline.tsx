@@ -117,6 +117,8 @@ const ICON_KEY_MAP: Record<string, string> = {
   case_team: 'case_team',
   // Manual RD Assessment
   manual_rd_assessment: 'manual_rd_assessment',
+  auto_rd_assessment: 'manual_rd_assessment',
+  scheduler_rd_assessment: 'manual_rd_assessment',
   // Dossier
   dossier: 'dossier',
 };
