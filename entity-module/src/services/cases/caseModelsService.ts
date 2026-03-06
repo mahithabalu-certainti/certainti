@@ -3,7 +3,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX } from "../../utils/constants";
 import { Case } from "../../models/caseModel";
-// import { CaseSummary } from "../models/caseSummaryModel";
+import { CaseSummary } from "../../models/caseSummaryModel";
 // import { CaseProject } from "../models/caseProjectsModel";
 import { CaseTimeline } from "../../models/caseTimeline";
 import { CaseHistory } from "../../models/caseHistory";
@@ -40,7 +40,7 @@ export class CaseModelService {
     string,
     {
       Case: ReturnType<typeof Case.initialize>;
-      // CaseSummary: ReturnType<typeof CaseSummary.initialize>;
+      CaseSummary: ReturnType<typeof CaseSummary.initialize>;
       // CaseProject: ReturnType<typeof CaseProject.initialize>;
       CaseTimeline: ReturnType<typeof CaseTimeline.initialize>;
       // TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
@@ -118,10 +118,11 @@ export class CaseModelService {
     // const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
     const TaskSummaryModel = TaskSummary.initialize(mainDbSequelize, "");
+    const CaseSummaryModel = CaseSummary.initialize(mainDbSequelize, "");
 
     const models = {
       Case: CaseModel,
-      // CaseSummary: CaseSummaryModel,
+      CaseSummary: CaseSummaryModel,
       // CaseProject: CaseProjectModel,
       CaseTimeline: CaseTimelineModel,
       CaseHistory: CaseHistoryModel,
