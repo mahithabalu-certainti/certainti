@@ -1321,7 +1321,7 @@ export const rawQueries = {
 
     return { query, replacements };
   },
-  fetchMeetingSummaryList(statusId?: string, userEmail?: string, accountIds?: string[]) {
+  fetchMeetingSummaryList(statusIds?: string[], userEmail?: string, accountIds?: string[]) {
     let query = `
     SELECT 
       *
@@ -1331,9 +1331,9 @@ export const rawQueries = {
 
     const replacements: any = {};
 
-    if (statusId) {
-      query += ` AND a.status_rid = :statusId`;
-      replacements.statusId = statusId;
+    if (statusIds && statusIds.length > 0) {
+      query += ` AND a.status_rid in (:statusIds)`;
+      replacements.statusIds = statusIds;
     }
 
     if (accountIds && accountIds.length > 0) {

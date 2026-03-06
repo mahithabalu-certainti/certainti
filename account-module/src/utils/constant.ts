@@ -2456,6 +2456,7 @@ export const rawQueries = {
         interaction_batch_id varchar(50),
         transaction_id varchar(50),
         four_part_assessment_rid varchar(50),
+        interaction_status_rid varchar(50),
         CONSTRAINT interactions_rid_unique UNIQUE (rid)
       );
     `;

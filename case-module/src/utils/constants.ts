@@ -331,7 +331,7 @@ export const entityTypes = {
   SETTINGS: "Settings",
   REVIEW_PROJECT_EMAIL: "Case Review Project Email",
   DOSSIER: "Dossier Package",
-
+  RD_FORM: "RD Form",
 };
 
 export const eventNames = {

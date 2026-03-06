@@ -301,9 +301,9 @@ async exportCaseClosingRemarks (data : any) {
         const finalData = result?.closing_remarks.map((d : any) => {
             console.log("Signoff AT : ", d.signoff_at)
             return {
-                "Signoff Type" : d.signoff_type_name,
-                "Signoff At": d.signoff_at ? data.timezone && isValidTimezone(data.timezone) ? moment(d.signoff_at).tz(data.timezone).format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.signoff_at).utcOffset("+05:30").format("YYYY-MMM-DD, hh:mm:ss A") : "-",
-                "Signoff By" : d.created_by_name
+                "Approved Type" : d.signoff_type_name,
+                "Approved By" : d.created_by_name,
+                "Approved On": d.signoff_at ? data.timezone && isValidTimezone(data.timezone) ? moment(d.signoff_at).tz(data.timezone).format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.signoff_at).utcOffset("+05:30").format("YYYY-MMM-DD, hh:mm:ss A") : "-",
             }
         });
         const generateCsv = await generateExcelBase64(finalData, "Closing-Remarks");

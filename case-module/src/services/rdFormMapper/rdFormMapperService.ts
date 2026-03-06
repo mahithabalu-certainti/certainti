@@ -2777,11 +2777,11 @@ private async handleTableConfig(
                                                               created_by: data.userId!,
                                                               account_rid: data.account_rid,
                                                               entity_rid: data.case_rid!,
-                                                              entity_name: entityTypes.REVIEW_PROJECT_EMAIL,
+                                                              entity_name: entityTypes.RD_FORM,
                                                               created_by_name: userEventInfo.full_name,
                                                               event_type_rid: userEventInfo.event_type_rid,
                                                               event_name: eventNames.SIGNOFF,
-                                                              descriptions: caseDetails?.project_code,
+                                                              descriptions: caseDetails?.case_name || '',
                                                               case_rid: data.case_rid,
                                                             },["case"]);
                   return {
