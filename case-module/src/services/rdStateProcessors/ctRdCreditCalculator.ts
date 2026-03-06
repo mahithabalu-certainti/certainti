@@ -9,7 +9,7 @@ export interface ConfigJson {
     cc_qre_credit_percentage_c2: number;
     cc_qre_credit_percentage_c3: number;
     cc_qre_credit_percentage_c4: number; 
-}
+    }
 
 /**
  * 
