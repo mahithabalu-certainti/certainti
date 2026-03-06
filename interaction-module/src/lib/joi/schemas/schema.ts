@@ -91,6 +91,7 @@ const listAccountInteractionSchema = Joi.object({
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   is_interaction_followup: Joi.boolean().optional().default(false),
+  is_interaction_reinitiated: Joi.boolean().optional().default(false),
   interactions: Joi.array()
   .items(
     Joi.object({

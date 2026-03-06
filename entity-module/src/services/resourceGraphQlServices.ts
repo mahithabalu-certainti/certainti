@@ -2,16 +2,24 @@ import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import {
+  entityTypes,
+  eventNames,
+  eventTypes,
   HttpStatus,
   rawQueries,
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../utils/constants";
 import { logMessage, setResourceFiscal, setResourcesData } from "../utils/helpers";
+import SchemaService from "./schemaService";
 const services = Configurations.getInstance().getServices()
 const resourceServices = services.resourceService
 
 export default class ResourceGraphQlServices {
+   private schemaService: SchemaService;
+   constructor() {
+    this.schemaService = new SchemaService();
+   }
   async inLineEditResources(data: any) {
     const mainSequelize = await initMainDbSequelize();
     const orgSequelize = await initOrgSequelize();
@@ -114,6 +122,20 @@ export default class ResourceGraphQlServices {
           );
         }
         let insertQuery = rawQueries.insertQueryResTimeline(schemaName, data);
+        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                userId: data.userId!,
+                eventType: eventTypes.UI_HANDLER
+              });
+        await this.schemaService.createAccountTimelineEntry(checkAccountExists[0][0].r_number!, {
+                created_by: data.userId!,
+                account_rid: data.account_rid,
+                created_by_name: userEventInfo.full_name,
+                entity_rid: data.resource_rid,
+                entity_name: entityTypes.RESOURCE,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.UPDATE,
+                descriptions: fetchResources[0][0].resource_code
+              },["account"]);
         await orgSequelize.query(insertQuery);
 
         for (let history of setResource) {

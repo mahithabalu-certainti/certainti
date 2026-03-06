@@ -1459,6 +1459,7 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
     else if(sort.toLowerCase() === FourPartColumns['technological_uncertainty_status']?.split('.')[1]) getSortOrder = FourPartColumns.technological_uncertainty_status
     else if(sort.toLowerCase() === FourPartColumns['technological_in_nature_status']?.split('.')[1]) getSortOrder = FourPartColumns.technological_in_nature_status
     else if(sort.toLowerCase() === FourPartColumns['process_of_experimentation_status']?.split('.')[1]) getSortOrder = FourPartColumns.process_of_experimentation_status
+    else if(sort.toLowerCase() === FourPartColumns['summary_judgment']?.split('.')[1]) getSortOrder = FourPartColumns.summary_judgment
     else getSortOrder = FourPartColumns.r_number!
     sortValue = `ORDER BY ${getSortOrder} ${sortBy} NULLS LAST`
   } else sortValue = ''
@@ -1475,7 +1476,7 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   SELECT 
   f.rid, f.r_number, f.status, f.rd_potential_category, f.created_datetime,
   p.project_code, f.created_by, f.permitted_purpose_status, f.technological_uncertainty_status,
-  f.technological_in_nature_status, f.process_of_experimentation_status
+  f.technological_in_nature_status, f.process_of_experimentation_status, f.summary_judgment
   FROM ${schemaName}.four_part_assessment f
   LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
   LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
@@ -1565,6 +1566,25 @@ export const fetchProjectFiscalIds = (caseRid : string, schemaName : string) => 
 export const fetchFpaDetails = (rid : string, schemaName : string) => {
   let query = 
   `
+  WITH fetch_interaction_question AS (
+  SELECT ii.interaction_rid, i.r_number,
+  jsonb_build_object(
+  'interaction_rid', ii.interaction_rid,
+  'r_number', i.r_number,
+  'question_details', array_agg(jsonb_build_object(
+    'question_seq_num', ii.question_seq_num,
+    'question', ii.question
+    )ORDER BY ii.question_seq_num ASC NULLS LAST)
+  ) AS interaction_questions
+  FROM
+  ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.interaction_items ii ON ii.interaction_rid = i.rid
+  WHERE
+  f.rid = '${rid}'
+  GROUP BY
+  ii.interaction_rid, i.r_number)
+
   SELECT 
   jsonb_build_object(
   'rid', f.rid,
@@ -1573,27 +1593,38 @@ export const fetchFpaDetails = (rid : string, schemaName : string) => {
   jsonb_build_object(
   'rid', p.rid,
   'project_code', p.project_code,
-  'project_description', p.project_description,
+  'tracker_one_liner', f.tracker_one_liner,
   'rd_potential_category', f.rd_potential_category,
-  'status', f.status
-  ) AS basic_information,
+  'status', f.status,
+  'created_on', ai.created_datetime
+  ) AS record_information,
   jsonb_build_object(
-  'permitted_purpose', f.permitted_purpose_rationale,
-  'technological_uncertainty', f.technological_uncertainty_rationale,
-  'process_of_experimentation', f.process_of_experimentation_rationale,
-  'technological_in_nature', f.technological_in_nature_rationale
-  ) AS four_part_assessment,
+  'permitted_purpose', jsonb_build_object(
+  'rationale', f.permitted_purpose_rationale,
+  'status', f.permitted_purpose_status),
+  'technological_uncertainty', jsonb_build_object(
+  'rationale', f.technological_uncertainty_rationale,
+  'status', f.technological_uncertainty_status),
+  'process_of_experimentation', jsonb_build_object(
+  'rationale', f.process_of_experimentation_rationale,
+  'status', f.process_of_experimentation_status),
+  'technological_in_nature', jsonb_build_object(
+  'rationale', f.technological_in_nature_rationale,
+  'status', f.technological_in_nature_status)
+  ) AS four_part_assessment_evaluation,
   jsonb_build_object(
   'record_id', ai.transaction_id,
   'created_on', ai.created_datetime,
   'created_by', ai.created_by,
   'four_part_assessment_id', f.r_number
-  ) AS audit_information
+  ) AS audit_information,
+  fiq.*
   FROM
   ${schemaName}.four_part_assessment f
   LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
   LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
   LEFT JOIN ${schemaName}.ai_assessment_audit ai ON ai.transaction_id = f.transaction_id
+  LEFT JOIN fetch_interaction_question fiq ON fiq.interaction_rid = i.rid
   WHERE
   f.rid = '${rid}'
   `

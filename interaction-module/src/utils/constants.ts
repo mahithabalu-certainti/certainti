@@ -95,6 +95,8 @@ export const eventNames = {
   UPDATE: "updated",
   CANCEL: "cancelled",
   SENT: "sent",
+  REMAINDER: "remainder sent",
+  REINITIATED: "reinitiated",
   TRIGGERED: "triggered",
   GENERATED: "generated",
 }
@@ -977,7 +979,7 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_sent = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
@@ -1305,11 +1307,12 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   export const fpaFieldMappings = [
     { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
-    { permissionField: 'rd_potential_category', exportField: 'Range', dataField: 'rd_potential_category' },
-    { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose Status', dataField: 'permitted_purpose_status' },
-    { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty Status', dataField: 'technological_uncertainty_status' },
-    { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature Status', dataField: 'technological_in_nature_status' },
-    { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation Status', dataField: 'process_of_experimentation_status' },
+    { permissionField: 'rd_potential_category', exportField: 'Rd Potential Category', dataField: 'rd_potential_category' },
+    { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose', dataField: 'permitted_purpose_status' },
+    { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty', dataField: 'technological_uncertainty_status' },
+    { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature', dataField: 'technological_in_nature_status' },
+    { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation', dataField: 'process_of_experimentation_status' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status' },
     { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
     { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' }
   ];
@@ -1397,7 +1400,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   permitted_purpose_status : 'f.permitted_purpose_status',
   technological_uncertainty_status : 'f.technological_uncertainty_status',
   technological_in_nature_status : 'f.technological_in_nature_status',
-  process_of_experimentation_status : 'f.process_of_experimentation_status'
+  process_of_experimentation_status : 'f.process_of_experimentation_status',
+  summary_judgment : 'f.summary_judgment'
 }
 
 export const FourPartColumnsTypes : Record<string, string> = {
@@ -1410,7 +1414,8 @@ export const FourPartColumnsTypes : Record<string, string> = {
   permitted_purpose_status : 'string',
   technological_uncertainty_status : 'string',
   technological_in_nature_status : 'string',
-  process_of_experimentation_status : 'string'
+  process_of_experimentation_status : 'string',
+  summary_judgment : 'string'
 }
 
 export const MainTableFilter : Record<string, string> = {

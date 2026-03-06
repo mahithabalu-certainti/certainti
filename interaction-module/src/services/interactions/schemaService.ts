@@ -298,7 +298,7 @@ class InteractionSchemaService {
             account_rnumber: accountNumber,
             project_fiscal_rid: interaction.project_fiscal_rid,
             user_rid: userId,
-            is_email_send: false,
+            is_email_sent: false,
             interaction_level: interactionLevel,
             name: interactionData.email_info?.name || "",
             email: interactionData.email_info?.email || "",
@@ -2324,6 +2324,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         project_code: projectInfo?.project_code ?? null,
         project_name: projectInfo?.project_name ?? null,
         fiscalYear: interactionDetails.fiscal_year ?? null,
+        project_rid: interactionDetails.project_fiscal_rid ?? null,
       },
       accountInfo: {
         account_name: accountInfo?.account_name ?? null,
@@ -4052,7 +4053,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchBatchInInteraction(schemaName),
         { type: "SELECT" }
       );
-      return interactionBatchInfo[0].interaction_batch_id ?? null
+      return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
@@ -4497,8 +4498,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       name : data.name,
       project_fiscal_rid : data?.project_fiscal_rid || null,
       user_rid : data.user_rid,
-      is_email_send : false,
+      is_email_sent : false,
       is_interaction_followup : data?.is_interaction_followup || false,
+      is_interaction_reinitiated: data?.is_interaction_reinitiated || false,
       interaction_level: data.interaction_level || 'Project',
       email_sent_at : null
     })
@@ -4518,7 +4520,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
   async updateEmailSendFlag (interaction_rid : string) {
     await SendEmailInfo.update({
-      is_email_send : true,
+      is_email_sent : true,
       email_sent_at : new Date().toISOString(),
       modified_datetime : new Date()
     }, 

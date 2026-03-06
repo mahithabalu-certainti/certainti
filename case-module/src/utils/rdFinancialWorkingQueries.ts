@@ -240,3 +240,50 @@ export const calculateStateCostForCaseSubmissionCurrentYear = (schemaName : stri
     ${condition}
     `
 }
+
+export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: string, accountRid: string, schemaName: string) => {
+    const query = `
+    WITH fetch_project_ids AS (
+    SELECT project_fiscal_rid, rid, project_code, project_name ,qre_final
+    FROM ${schemaName}.case_projects 
+    WHERE
+    case_rid = '${caseRid}'
+    AND
+    account_rid = '${accountRid}'
+    ),
+    calculate_cost AS (
+    SELECT 
+    cp.project_code, cp.project_name, cp.rid, cp.qre_final
+    FROM
+    ${schemaName}.project_fiscal cp
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
+    WHERE
+    cp.rid = fpr.project_fiscal_rid
+    AND
+    cp.is_qualified = true
+    GROUP BY
+    cp.project_code, cp.project_name, cp.rid, cp.qre_final
+    ORDER BY cp.project_name ASC
+    )
+    SELECT 
+    array_agg(jsonb_build_object(
+    'project_code', project_code,
+    'project_name', project_name,
+    'qre_final', qre_final
+    )ORDER BY project_name ASC) AS projects
+    FROM
+    calculate_cost
+    `;
+    return query;
+  }
+
+export const fetchTotalResourcesForCase = (caseRid: string, accountRid: string, schemaName: string) => {
+    const query = `
+    SELECT COUNT(pr.rid) AS total_resources
+    FROM ${schemaName}.project_resource pr
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pr.project_fiscal_rid
+    LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true
+    `;
+    return query;
+  }

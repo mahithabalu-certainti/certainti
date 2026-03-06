@@ -712,19 +712,16 @@ class RDCreditSchemaService {
 
         sortedStateRows.forEach(({ calc, stateInfo }) => {
             const projectInfo = projectMap.get(calc.state_rid) || { total_projects: 0, total_resources: 0, total_qre: 0 };
-
-            if (calc.final_credit != null) {
-                const totalQreValue = Number(calc.total_qre || 0);
-                const finalCredit = Number(calc.final_credit);
-                result[stateInfo.state_name] = {
-                    state_code: stateInfo.state_code,
-                    total_projects: projectInfo.total_projects.toString(),
-                    total_resources: projectInfo.total_resources.toString(),
-                    total_QRE: totalQreValue,
-                    RD_credits: Number(calc.final_credit)
-                };
-                totalCredit += finalCredit;
-            }
+            const totalQreValue = Number(calc.total_qre || 0);
+            const finalCredit = Number(calc.final_credit) || 0;
+            result[stateInfo.state_name] = {
+                state_code: stateInfo.state_code,
+                total_projects: projectInfo.total_projects.toString(),
+                total_resources: projectInfo.total_resources.toString(),
+                total_QRE: totalQreValue,
+                RD_credits: finalCredit
+            };
+            totalCredit += finalCredit;
         });
 
         // Add total as a state-like structure

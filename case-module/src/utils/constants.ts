@@ -234,6 +234,9 @@ export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
 export const COUNTRY_CURRENCY_CODE: Record<string, string> = {
   "Australia": "AUD",
   "United States": "USD",
+  "United Kingdom": "GBP",
+  "Canada": "CAD",
+  "Ireland": "EUR"
 };
 
 export const FORM_TYPE = {
@@ -327,7 +330,8 @@ export const entityTypes = {
   HISTORICAL_SUBMISSION: "Historical Submission",
   SETTINGS: "Settings",
   REVIEW_PROJECT_EMAIL: "Case Review Project Email",
-
+  DOSSIER: "Dossier Package",
+  RD_FORM: "RD Form",
 };
 
 export const eventNames = {
@@ -338,6 +342,7 @@ export const eventNames = {
   DELETE: "deleted",
   REMOVED: "removed",
   SENT: "sent",
+  SIGNOFF: "approved",
 }
 
 export const eventTypes = {
@@ -703,6 +708,10 @@ export const rawQueries = {
   fetchAccountInfo(rid: string) {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,storage_type,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+  fetchCountryCalculationForCase(schemaName:string)
+  {
+    return `SELECT input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = :caseRid LIMIT 1`;
   },
   fetchCasesInfo(rid: string) {
     return `SELECT cs.rid,
