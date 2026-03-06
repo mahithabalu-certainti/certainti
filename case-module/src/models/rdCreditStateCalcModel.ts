@@ -148,7 +148,7 @@ export class RdCreditStateCalculations
                 },
                  config_json: { 
                     type: DataTypes.JSONB, 
-                    allowNull: false 
+                    allowNull: true 
                 },
             },
             {

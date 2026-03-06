@@ -2150,6 +2150,21 @@ export class CaseService {
               created_by: data.userId,
               new_value: `signed off technical documentation for ${isProjectExists.project_code}`
             });
+            const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                  userId: data.userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+            await this.helperMethod.createAccountTimelineEntry(fetchParent[0][0].r_number!, {
+                                            created_by: data.userId!,
+                                            account_rid: data.account_rid,
+                                            entity_rid: data.project_fiscal_rid!,
+                                            entity_name: entityTypes.REVIEW_PROJECT_EMAIL,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.SIGNOFF,
+                                            descriptions: isProjectExists.project_code,
+                                            project_rid: data.project_fiscal_rid,
+                                          },["project"]);
           }
           return {
             statusCode: HttpStatus.SUCCESS,
