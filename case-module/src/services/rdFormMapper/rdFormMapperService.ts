@@ -615,6 +615,8 @@ export class RdFormMapperService {
   }
 async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumber: string): Promise<string> {
   const orgDb = await this.getOrgDb();
+  const mainDb = await this.getMainDb();
+  const currencySymbol = await this.getCurrencySymbolByCountry('Ireland', mainDb);
   const [caseRow]: any[] = await orgDb.query(
    rawQueries.fetchCaseInfo(schemaName,caseRid),
     { replacements: { caseRid }, type: QueryTypes.SELECT }
@@ -699,10 +701,11 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
           value = projectSlice[projIdx][field] ?? '-';
         }
         doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
+        const formattedValue = typeof value === 'number'
+          ? (currencySymbol ? `${currencySymbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : value.toLocaleString(undefined, { maximumFractionDigits: 2 }))
+          : String(value);
         doc.text(
-          typeof value === 'number'
-            ? value.toLocaleString(undefined, { maximumFractionDigits: 2 })
-            : String(value),
+          formattedValue,
           x,
           doc.y,
           {
@@ -718,8 +721,11 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
       if (isLastPage) {
         doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
         const totalValue = total[field] ?? '';
+        const formattedTotal = typeof totalValue === 'number'
+          ? (currencySymbol ? `${currencySymbol}${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 }))
+          : totalValue;
         doc.text(
-          typeof totalValue === 'number' ? totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 }) : totalValue,
+          formattedTotal,
           x,
           doc.y,
           {
