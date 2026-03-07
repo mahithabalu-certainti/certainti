@@ -1168,6 +1168,10 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
             return "N/A";
           }
 
+          if (rawValue === 0 || rawValue === "0") {
+            return "-";
+          }
+
           const rawText = String(rawValue);
           if (!currencySymbol) return rawText;
 
@@ -2061,13 +2065,13 @@ private async handleTableConfig(
     const valueMap = new Map<string, any>();
     const addToValueMap = (rawKey: string, value: any) => {
       if (!rawKey) return;
-      valueMap.set(rawKey, value);
+      valueMap.set(rawKey, value ?? 0);
 
       const noIndexKey = this.stripIndexes(rawKey);
-      valueMap.set(noIndexKey, value);
+      valueMap.set(noIndexKey, value ?? 0);
 
       const normalizedKey = this.normalizeFieldRef(rawKey);
-      valueMap.set(normalizedKey, value);
+      valueMap.set(normalizedKey, value ?? 0);
     };
 
     enhancedConfigs.forEach((item) => {
@@ -2083,6 +2087,10 @@ private async handleTableConfig(
       if (item.field_name) {
         addToValueMap(item.field_name, item.value);
       }
+      // Add field_label for label-based references
+      if (item.field_label) {
+        addToValueMap(item.field_label, item.value);
+      }
     });
 
     const resolveExpressionReferences = async () => {
@@ -2095,7 +2103,7 @@ private async handleTableConfig(
 
         if (!normalizedExpression.includes("#")) continue;
 
-        const matches = normalizedExpression.matchAll(/#([^+\*/(),]+)/g);
+        const matches = normalizedExpression.matchAll(/#([A-Za-z0-9-_]+)/g);
         for (const match of matches) {
           const rawKey = match[1];
           if (!rawKey) continue;
@@ -2171,7 +2179,7 @@ private async handleTableConfig(
         // Optimization 3: Precompute lookupKeys and avoid repeated regex
         const lookupKeysCache: Record<string, string[]> = {};
       let replaced = normalizedExpression.replace(
-   /#([^+\*/(),]+)/g,
+   /#([^+\*/(),\s]+)/g,
   (match: string, rawKey: string) => {
     if (!rawKey) return "NaN";
 
@@ -2184,7 +2192,7 @@ private async handleTableConfig(
     if (evalCache.has(normalizedKey)) {
       const cached = evalCache.get(normalizedKey);
       const num = this.tryParseNumber(cached);
-      return num !== null ? String(num) : "NaN";
+      return num !== null ? String(num) : "0";
     }
 
     // Build lookup variations
@@ -2206,14 +2214,14 @@ private async handleTableConfig(
           `Expression reference resolved for field ${item.field_label || item.field_id}: ${normalizedKey} -> ${JSON.stringify(rawValue)}`
         );
 
-        return num !== null ? String(num) : "NaN";
+        return num !== null ? String(num) : "0";
       }
     }
 
     logMessage(`Missing expression reference for field ${item.field_label || item.field_id}: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(lookupKeys)}`);
 
     evalCache.set(normalizedKey, null);
-    return "NaN";
+    return "0";
   }
 );
 
@@ -2244,7 +2252,8 @@ private async handleTableConfig(
               // eslint-disable-next-line no-new-func
               const result = Function('return (' + divZeroSafe + ')')();
               // Defensive: Handle null, undefined, NaN, boolean, and non-finite numbers
-              if (result === null || result === undefined || Number.isNaN(result)) return null;
+              if (result === null || result === undefined) return null;
+              if (Number.isNaN(result)) return 0;
               if (typeof result === "boolean") return result ? 1 : 0;
               if (typeof result === "number" && !Number.isFinite(result)) return null;
               return result;
@@ -2255,8 +2264,8 @@ private async handleTableConfig(
 
           const computed = safeEval(replaced);
           if (computed !== null) {
-            // No clamping for negative subtraction results
-            const finalValue = this.roundToTwoDecimals(computed);
+            // Clamp negative results to 0
+            const finalValue = this.roundToTwoDecimals(Math.max(0, computed));
 
             // Log the resolved values used in the expression
             logMessage(

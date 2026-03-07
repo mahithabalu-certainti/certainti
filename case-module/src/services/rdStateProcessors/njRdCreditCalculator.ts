@@ -50,9 +50,9 @@ export class RdCreditCalculatorForNJ {
             prev1yearQRE: this.round2(part4ASCCreditCalculationInfo.prev1yearQRE) || 0,
             prev2yearQRE: this.round2(part4ASCCreditCalculationInfo.prev2yearQRE) || 0,
             prev3yearQRE: this.round2(part4ASCCreditCalculationInfo.prev3yearQRE) || 0,
-            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
-            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
-            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+            totalWages: this.round2(part4ASCCreditCalculationInfo.current_year_wages) || 0,
+            totalContract: this.round2(part4ASCCreditCalculationInfo.current_year_contract) || 0,
+            totalSupplies: this.round2(part4ASCCreditCalculationInfo.costOfSupplies) || 0,
         }
 
     }
