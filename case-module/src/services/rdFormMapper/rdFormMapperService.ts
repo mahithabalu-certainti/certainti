@@ -2188,7 +2188,7 @@ private async handleTableConfig(
       // while preserving balanced internal parens like '(.15)' or '(.50)'.
       // Returns the cleaned key AND any unbalanced ) suffix to be re-appended after substitution.
       const cleanLabelKey = (rawKey: string): { key: string; suffix: string } => {
-        let s = rawKey.trim().replace(/[\s,:]+$/, "").trim();
+        let s = rawKey.trim().replace(/[\s,:{}<>]+$/, "").trim();
         let suffix = "";
         while (s.endsWith(")")) {
           const opens = (s.match(/\(/g) || []).length;
@@ -2284,7 +2284,7 @@ private async handleTableConfig(
       // Unbalanced trailing ) are stripped in resolveRef and re-appended after substitution.
       // : stops capture for ternary operator context; space-dash-space stops for binary minus.
       replaced = replaced.replace(
-        /#([^#+*/]+?)(?=\s*[+*/:]|\s+-\s+|,\s*#|\s*#|\s*$)/g,
+        /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+|,\s*#|\s*#|\s*$)/g,
         (_match: string, rawKey: string) => resolveRef(rawKey)
       );
 
