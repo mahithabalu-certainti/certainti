@@ -1168,6 +1168,10 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
             return "N/A";
           }
 
+          if (rawValue === 0 || rawValue === "0") {
+            return "-";
+          }
+
           const rawText = String(rawValue);
           if (!currencySymbol) return rawText;
 
@@ -1422,6 +1426,9 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
   private normalizeExpressionSyntax(expression: string) {
     let result = expression;
 
+    // Normalize custom subtraction token -sub- to real minus operator
+    result = result.replace(/\s*-sub-\s*/gi, " - ");
+
     result = result.replace(/===/g, "==").replace(/!==/g, "!=");
 
     result = result.replace(/#YES\b/gi, "1").replace(/#NO\b/gi, "0");
@@ -1572,8 +1579,8 @@ result = result.replace(
       // Otherwise, try to reconstruct an expression from the config keys/values
       const operatorMap: Record<string, string> = {
         add: "+",
-        sub: "-",
-        subtract: "-",
+        sub: "-sub-",
+        subtract: "-sub-",
         mul: "*",
         multiply: "*",
         div: "/",
@@ -1586,7 +1593,7 @@ result = result.replace(
         const key0 = keys[0];
         if (typeof key0 === "string" && typeof calcConfig[key0] === "string") {
           const strVal = String(calcConfig[key0]).trim();
-          if (/^[\s\S]*[()]+[\s\S]*$/.test(strVal)) {
+          if (/\b(min|max|if)\s*\(/i.test(strVal) || /^\(.*\)$/.test(strVal)) {
             value = strVal;
             logMessage(
               `Detected parentheses expression for field ${configItem.field_label}: ${value}`,
@@ -1646,8 +1653,7 @@ result = result.replace(
       }
     }
 
-    for (const key in calcConfig) {
-      const rid = calcConfig[key];
+    for (const [key, rid] of Object.entries(calcConfig)) {
 
       if (typeof rid === "number") {
         value = rid;
@@ -1684,9 +1690,17 @@ result = result.replace(
         }
       }
 
+      // Guard: rid must be a non-empty string to be a valid RID for DB lookup
+      if (typeof rid !== "string" || !rid.trim()) {
+        logMessage(
+          `Skipping invalid rid for field ${configItem.field_label}: ${JSON.stringify(rid)} (type=${typeof rid})`,
+        );
+        continue;
+      }
+
       try {
         const mapperObject =
-          await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rid);
+          await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rid.trim());
         logMessage(
           `Data mapper lookup for field ${configItem.field_label} (rid=${rid}): ${JSON.stringify(mapperObject)}`,
         );
@@ -1748,9 +1762,7 @@ private async handleTableConfig(
     fiscalYear?: string;
   },
 ) {
-  console.log(
-    `[TableConfig] Processing config item: ${JSON.stringify(configItem)}`
-  );
+  logMessage(`[TableConfig] Processing config item: ${JSON.stringify(configItem)}`);
 
   if (!configItem.column_id) {
     logMessage(
@@ -1971,9 +1983,7 @@ private async handleTableConfig(
       let value = configItem.value;
       const fieldLabel = configItem.field_label;
       const fieldId = configItem.field_id;
-      console.log(
-        `[EnhanceConfig] Processing config item: ${fieldLabel} (field_id=${fieldId})`
-      );
+      logMessage(`[EnhanceConfig] Processing config item: ${fieldLabel} (field_id=${fieldId})`);
       if (
         fieldLabel ===
           "Total from attachments -> 50 Direct research wages for qualified services" ||
@@ -2026,15 +2036,14 @@ private async handleTableConfig(
           logMessage(`Custom sum for field ${fieldLabel} (last 3 years): ${value}`);
           this.pushEnhancedConfig(enhancedConfigs, configItem, value);
         } catch (err) {
-          console.log(err);
-          logMessage(`Error in custom sum for field ${fieldLabel}: ${err}`);
+          logMessage(`Error in custom sum for field ${fieldLabel} (exception): ${err}`);
           this.pushEnhancedConfig(enhancedConfigs, configItem, 0);
         }
         continue;
       }
       if (
         configItem.calculation_config &&
-        configItem.field_type == "Line-Item"
+        configItem.field_type === "Line-Item"
       ) {
         await this.handleLineItemConfig(configItem, enhancedConfigs, {
           accountRid,
@@ -2044,7 +2053,7 @@ private async handleTableConfig(
           stateRid,
           countryRid,
         });
-      } else if (configItem.field_type == "Table-Item") {
+      } else if (configItem.field_type === "Table-Item") {
         await this.handleTableConfig(configItem, enhancedConfigs, {
           accountRid,
           caseRid,
@@ -2061,13 +2070,13 @@ private async handleTableConfig(
     const valueMap = new Map<string, any>();
     const addToValueMap = (rawKey: string, value: any) => {
       if (!rawKey) return;
-      valueMap.set(rawKey, value);
+      valueMap.set(rawKey, value ?? 0);
 
       const noIndexKey = this.stripIndexes(rawKey);
-      valueMap.set(noIndexKey, value);
+      valueMap.set(noIndexKey, value ?? 0);
 
       const normalizedKey = this.normalizeFieldRef(rawKey);
-      valueMap.set(normalizedKey, value);
+      valueMap.set(normalizedKey, value ?? 0);
     };
 
     enhancedConfigs.forEach((item) => {
@@ -2083,6 +2092,10 @@ private async handleTableConfig(
       if (item.field_name) {
         addToValueMap(item.field_name, item.value);
       }
+      // Add field_label for label-based references
+      if (item.field_label) {
+        addToValueMap(item.field_label, item.value);
+      }
     });
 
     const resolveExpressionReferences = async () => {
@@ -2095,7 +2108,7 @@ private async handleTableConfig(
 
         if (!normalizedExpression.includes("#")) continue;
 
-        const matches = normalizedExpression.matchAll(/#([^+\*/(),]+)/g);
+        const matches = normalizedExpression.matchAll(/#([A-Za-z0-9-_]+)/g);
         for (const match of matches) {
           const rawKey = match[1];
           if (!rawKey) continue;
@@ -2133,7 +2146,6 @@ private async handleTableConfig(
             schemaName,
             stateRid || "",
           );
-
           logMessage(`Resolved DB value for field ${item.field_label || item.field_id}: ${dynamicValue}`);
 
           if (dynamicValue !== null && dynamicValue !== undefined) {
@@ -2167,65 +2179,132 @@ private async handleTableConfig(
         // Defensive: Track resolved values for debugging and type safety
         const resolvedValues: Record<string, { rawValue: any; numeric: number }> = {};
 
-        // --- Token Resolver with Caching and Defensive Guards ---
-        // Optimization 3: Precompute lookupKeys and avoid repeated regex
-        const lookupKeysCache: Record<string, string[]> = {};
-      let replaced = normalizedExpression.replace(
-   /#([^+\*/(),]+)/g,
-  (match: string, rawKey: string) => {
-    if (!rawKey) return "NaN";
+      // TWO-PASS # reference resolution:
+      // Pass 1: resolve #RID (exact UUID format e.g. #U001-xxxx-...) — hyphens are part of the key
+      // Pass 2: resolve #label (free-text field labels) — stops at operators, not hyphens
 
-    const cleanedKey = rawKey.trim();
+      // Strip trailing whitespace/commas/colons from a label key.
+      // Also strips unbalanced trailing ) characters (e.g. outer IF/ternary closing paren)
+      // while preserving balanced internal parens like '(.15)' or '(.50)'.
+      // Returns the cleaned key AND any unbalanced ) suffix to be re-appended after substitution.
+      const cleanLabelKey = (rawKey: string): { key: string; suffix: string } => {
+        let s = rawKey.trim().replace(/[\s,:{}<>]+$/, "").trim();
+        let suffix = "";
+        while (s.endsWith(")")) {
+          const opens = (s.match(/\(/g) || []).length;
+          const closes = (s.match(/\)/g) || []).length;
+          if (closes > opens) { suffix = ")" + suffix; s = s.slice(0, -1).trim(); }
+          else break;
+        }
+        return { key: s, suffix };
+      };
 
-    // Normalize: remove extra spaces
-    const normalizedKey = cleanedKey.replace(/\s+/g, " ").trim();
+      const resolveRef = (rawKey: string): string => {
+        const { key: cleanedKey, suffix } = cleanLabelKey(rawKey);
+        const normalizedKey = cleanedKey.replace(/\s+/g, " ").trim();
 
-    // Check cache first
-    if (evalCache.has(normalizedKey)) {
-      const cached = evalCache.get(normalizedKey);
-      const num = this.tryParseNumber(cached);
-      return num !== null ? String(num) : "NaN";
-    }
+        if (evalCache.has(normalizedKey)) {
+          const cached = evalCache.get(normalizedKey);
+          const num = this.tryParseNumber(cached);
+          return (num !== null ? String(num) : "0") + suffix;
+        }
 
-    // Build lookup variations
-    const lookupKeys = [
-      normalizedKey,
-      normalizedKey.replace(/\s+/g, ""), // no spaces
-      this.stripIndexes(normalizedKey),
-      this.normalizeFieldRef(normalizedKey),
-    ];
+        const lookupKeys = [
+          normalizedKey,
+          normalizedKey.replace(/\s+/g, ""),
+          this.stripIndexes(normalizedKey),
+          this.normalizeFieldRef(normalizedKey),
+        ];
 
-    for (const key of lookupKeys) {
-      if (valueMap.has(key)) {
-        const rawValue = valueMap.get(key);
-        const num = this.tryParseNumber(rawValue);
+        for (const key of lookupKeys) {
+          if (valueMap.has(key)) {
+            const rawValue = valueMap.get(key);
+            const num = this.tryParseNumber(rawValue);
+            evalCache.set(normalizedKey, rawValue);
+            logMessage(
+              `Expression reference resolved for field ${item.field_label || item.field_id}: ${normalizedKey} -> ${JSON.stringify(rawValue)}`
+            );
+            return (num !== null ? String(num) : "0") + suffix;
+          }
+        }
 
-        evalCache.set(normalizedKey, rawValue);
+        logMessage(`Missing expression reference for field ${item.field_label || item.field_id}: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(lookupKeys)}`);
+        evalCache.set(normalizedKey, null);
+        return "0" + suffix;
+      };
 
-        logMessage(
-          `Expression reference resolved for field ${item.field_label || item.field_id}: ${normalizedKey} -> ${JSON.stringify(rawValue)}`
-        );
+      // Pre-pass: resolve MIN/MAX(#label, #label) with a depth-aware scanner.
+      // This handles labels that contain commas or parentheses (e.g. "50% (.50)"),
+      // which would confuse a regex-based arg splitter.
+      // Args are split on ", #" (comma+space+hash) so commas inside labels are safe.
+      const resolveMinMaxArgs = (expr: string): string => {
+        let result = "";
+        let i = 0;
+        while (i < expr.length) {
+          const fnMatch = expr.slice(i).match(/^(MIN|MAX)\s*\(/i);
+          if (fnMatch) {
+            const fnName = fnMatch[1] as string;
+            i += fnMatch[0].length;
+            let depth = 1;
+            const innerStart = i;
+            while (i < expr.length) {
+              if (expr[i] === "(") depth++;
+              else if (expr[i] === ")") { depth--; if (depth === 0) break; }
+              i++;
+            }
+            const inner = expr.slice(innerStart, i);
+            i++; // consume closing )
+            // Split only on ", #" so commas inside label text are preserved
+            const args = inner.split(/,\s*(?=#)/);
+            const resolvedArgs = args.map(arg => {
+              const trimmed = arg.trim();
+              return trimmed.startsWith("#")
+                ? resolveRef(trimmed.slice(1))
+                : trimmed;
+            });
+            result += "Math." + fnName.toLowerCase() + "(" + resolvedArgs.join(", ") + ")";
+          } else {
+            result += expr[i++];
+          }
+        }
+        return result;
+      };
 
-        return num !== null ? String(num) : "NaN";
-      }
-    }
+      // Pass 1: resolve MIN/MAX with label args (depth-aware, handles parens/commas in labels)
+      let replaced = resolveMinMaxArgs(normalizedExpression);
 
-    logMessage(`Missing expression reference for field ${item.field_label || item.field_id}: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(lookupKeys)}`);
+      // Pass 2: replace remaining #RID tokens (UUID format — hyphens are part of the key)
+      replaced = replaced.replace(
+        /#([A-Za-z]\d{3}-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/g,
+        (_match: string, rawKey: string) => resolveRef(rawKey)
+      );
 
-    evalCache.set(normalizedKey, null);
-    return "NaN";
-  }
-);
+      // Pass 3: replace remaining #label tokens (free-text — stop at operators or next #)
+      // Labels may contain parens like '(.15)' so ( and ) are NOT in the capture exclusion set.
+      // Unbalanced trailing ) are stripped in resolveRef and re-appended after substitution.
+      // : stops capture for ternary operator context; space-dash-space stops for binary minus.
+      replaced = replaced.replace(
+        /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+|,\s*#|\s*#|\s*$)/g,
+        (_match: string, rawKey: string) => resolveRef(rawKey)
+      );
+      
 
-        // Defensive: Replace min/max, transform if(), and guard against malformed expressions
+        // Defensive: Replace bare min/max( with Math.min/max( — skip if already prefixed with Math.
         replaced = replaced
-          .replace(/\bmin\s*\(/gi, "Math.min(")
-          .replace(/\bmax\s*\(/gi, "Math.max(");
+          .replace(/(?<!Math\.)\bmin\s*\(/gi, "Math.min(")
+          .replace(/(?<!Math\.)\bmax\s*\(/gi, "Math.max(");
         replaced = this.transformIfExpressions(replaced);
 
         // Defensive: Validate only allowed characters/operators
-        const validationTarget = replaced.replace(/Math\.(min|max)\(/g, "(");
-        if (!/^[0-9A-Za-z+\-*/().,\sNaN?:<>=!&|'"]+$/.test(validationTarget)) {
+        // After # substitution, expression should only contain digits, arithmetic operators,
+        // parentheses, decimals, spaces, Math.min/max calls, ternary operators, and NaN.
+        // A-Za-z is NOT broadly permitted to prevent identifier injection.
+        // Strip known safe function names before character validation
+        const validationTarget = replaced
+          .replace(/Math\.(min|max)\(/g, "(")
+          .replace(/\bString\(/g, "(")
+          .replace(/\b(true|false|null|NaN|Infinity)\b/g, "0");
+        if (!/^[\d\s+\-*/().,?:<>=!&|'"]+$/.test(validationTarget)) {
           logMessage(
             `Blocked invalid expression for field ${item.field_label || item.field_id}: ${expression}`,
           );
@@ -2233,20 +2312,18 @@ private async handleTableConfig(
           return;
         }
 
-        // --- Safe Evaluation ---
+        // --- Safe Evaluation (no dynamic code execution) ---
         try {
-          // Defensive: Prevent division by zero and handle null/undefined
-          // Optimization 7: Division by zero check
           const safeEval = (expr: string): number | null => {
             try {
-              // Replace any division by zero with NaN
-              const divZeroSafe = expr.replace(/(\d+)\s*\/\s*0(?!\d)/g, "NaN");
+              // Build a sandboxed evaluator: only Math is exposed, no globals
               // eslint-disable-next-line no-new-func
-              const result = Function('return (' + divZeroSafe + ')')();
-              // Defensive: Handle null, undefined, NaN, boolean, and non-finite numbers
-              if (result === null || result === undefined || Number.isNaN(result)) return null;
+              const fn = new Function("Math", `"use strict"; return (${expr});`);
+              const result = fn(Math);
+              if (result === null || result === undefined) return null;
               if (typeof result === "boolean") return result ? 1 : 0;
-              if (typeof result === "number" && !Number.isFinite(result)) return null;
+              if (typeof result === "number" && !Number.isFinite(result)) return 0;
+              if (Number.isNaN(result)) return 0;
               return result;
             } catch (err) {
               return null;
@@ -2255,20 +2332,16 @@ private async handleTableConfig(
 
           const computed = safeEval(replaced);
           if (computed !== null) {
-            // No clamping for negative subtraction results
-            const finalValue = this.roundToTwoDecimals(computed);
+            // Clamp negative results to 0, with a warning log
+            if (computed < 0) {
+              logMessage(
+                `Warning: Negative computed value (${computed}) clamped to 0 for field ${item.field_label || item.field_id}. Expression: ${expression}`,
+              );
+            }
+            const finalValue = this.roundToTwoDecimals(Math.max(0, computed));
 
-            // Log the resolved values used in the expression
             logMessage(
-              `Resolved values for field ${item.field_label || item.field_id}: ${expression} => ${replaced.replace(/\(([^?]*)\?/, (m, cond) => {
-                try {
-                  const cleanCond = cond.replace(/"/g, '');
-                  const result = Function('return (' + cleanCond + ')')();
-                  return '(' + (result ? 'true' : 'false') + ' ?';
-                } catch {
-                  return '(NaN ?';
-                }
-              })}`
+              `Resolved values for field ${item.field_label || item.field_id}: ${expression} => ${replaced}`,
             );
 
             item.value = finalValue;
@@ -2320,7 +2393,10 @@ private async handleTableConfig(
       logMessage(
         `Clearing unresolved expression for field ${item.field_label || item.field_id}: ${item.value}`,
       );
-      item.value = "";
+      this.logger.warn(
+        `Field "${item.field_label || item.field_id}" could not be resolved after ${maxExpressionPasses} passes. Setting value to null.`,
+      );
+      item.value = null;
     });
     return enhancedConfigs;
   }
@@ -2812,5 +2888,3 @@ private async handleTableConfig(
     await orgDb.query(query, { replacements: [errorMessage, caseRid, stateRid] });
   }
 }
-
-
