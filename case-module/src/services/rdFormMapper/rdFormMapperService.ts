@@ -2141,7 +2141,6 @@ private async handleTableConfig(
             schemaName,
             stateRid || "",
           );
-
           logMessage(`Resolved DB value for field ${item.field_label || item.field_id}: ${dynamicValue}`);
 
           if (dynamicValue !== null && dynamicValue !== undefined) {
