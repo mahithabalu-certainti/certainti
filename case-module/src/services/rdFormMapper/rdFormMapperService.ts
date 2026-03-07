@@ -2287,6 +2287,7 @@ private async handleTableConfig(
         /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+|,\s*#|\s*#|\s*$)/g,
         (_match: string, rawKey: string) => resolveRef(rawKey)
       );
+      
 
         // Defensive: Replace bare min/max( with Math.min/max( — skip if already prefixed with Math.
         replaced = replaced
