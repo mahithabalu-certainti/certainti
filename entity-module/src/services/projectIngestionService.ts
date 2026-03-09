@@ -49,6 +49,7 @@ import { CaseProject } from "../models/caseProjectsModel";
 import { Case } from "../models/caseModel";
 import { CaseProjectFiscalRegion } from "../models/caseProjectFiscalRegionModel";
 import { CaseKeyContactDetails } from "../models/caseKeyContactModel";
+import { calculateFiscalYearDateRange } from "../utils/dateFunction";
 
 
 class ProjectIngestionService {
@@ -3578,23 +3579,9 @@ class ProjectIngestionService {
       if (Array.isArray(project.ProjectFiscal)) {
         updatedProject.ProjectFiscal = project.ProjectFiscal.map((child: any) => {
           const childObj = typeof child.toJSON === "function" ? child.toJSON() : child;
-          // Construct fiscal year start and end using account fiscal start/end and child's fiscal year
-          // fiscalStart: e.g. 'Apr/01', fiscalEnd: e.g. 'Mar/31', child.fiscal_year: e.g. 2024
-          const [startMonth, startDay] = (fiscalStart || 'Apr/01').split('/');
-          const [endMonth, endDay] = (fiscalEnd || 'Mar/31').split('/');
-          const fiscalYear = Number(child.fiscal_year);
-          const fiscalYearStart = new Date(`${fiscalYear}-${startMonth}-${startDay}`);
-          // If fiscal year starts in April, fiscal end is next year March
-          let fiscalYearEndYear = fiscalYear;
-          if (startMonth !== endMonth || startDay !== endDay) {
-            // If fiscal year end is before start (e.g. Apr to Mar), increment year
-            const startMonthNum = new Date(`${fiscalYear}-${startMonth}-01`).getMonth();
-            const endMonthNum = new Date(`${fiscalYear}-${endMonth}-01`).getMonth();
-            if (endMonthNum < startMonthNum) {
-              fiscalYearEndYear = fiscalYear + 1;
-            }
-          }
-          const fiscalYearEnd = new Date(`${fiscalYearEndYear}-${endMonth}-${endDay}`);
+          const [splitMonthStart, splitDateStart] = fiscalStart.split("/");
+          const [splitMonthEnd, splitDateEnd] = fiscalEnd.split("/");
+          const fetchedStartEndDate = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, child.fiscal_year, splitDateStart, splitDateEnd)
 
           // Check if this fiscal period falls within any platform config's effective dates
           let is_rd_trigger_qualified = false;
@@ -3611,10 +3598,9 @@ class ProjectIngestionService {
             } else if (pjType != null) {
               configProjectTypes = [String(pjType)];
             }
-            if (
-              fiscalYearStart <= effEnd &&
-              fiscalYearEnd >= effStart &&
-              configProjectTypes.includes(String(childObj.project_type_rid))
+            if ( (config.effective_start_date <= fetchedStartEndDate.endDate || config.effective_start_date == null)
+            && (config.effective_end_date >= fetchedStartEndDate.startDate || config.effective_end_date == null)
+            && configProjectTypes.includes(String(childObj.project_type_rid))
             ) {
               is_rd_trigger_qualified = true;
               break;

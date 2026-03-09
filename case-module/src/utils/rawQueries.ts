@@ -305,13 +305,13 @@ export const fetchProjectsForCases = (
     ), 
 
     fetch_projects AS (
-    SELECT DISTINCT pf.rid, pf.project_code, pf.project_name, pf.project_type_rid, 
-    pf.fiscal_year, pf.project_classification_rid, pf.project_client_group,
-    pf.project_group, pf.total_effort_prj, pf.total_cost_prj, pf.total_cost_fte_prj,
-    pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
-    pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
-    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
+    SELECT DISTINCT pf.rid, pf.project_code, cp.project_name, cp.project_type_rid, 
+    cp.fiscal_year, cp.project_classification_rid, cp.project_client_group,
+    cp.project_group, cp.total_effort_prj, cp.total_cost_prj, cp.total_cost_fte_prj,
+    cp.total_cost_subcon_prj, cp.total_cost_nonlabor_prj, cp.assessment_status,
+    cp.rd_percent_final, cp.qre_final, cp.comments, cp.modified_datetime, pf.r_number,
+    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, cp.account_rid,
+    cp.project_rid, cp.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
