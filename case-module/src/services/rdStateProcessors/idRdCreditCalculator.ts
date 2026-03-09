@@ -74,7 +74,7 @@ export class RdCreditCalculatorForID {
         const fixed_base_percentage = config.fixed_base_percentage;
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
         const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage /100);
-        const difference = Decimal.max(0, base_amount.minus(total_current_year_qre));
+        const difference = Decimal.max(0, total_current_year_qre.minus(base_amount));
         const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
         const tot_base_amount = min_credit_rate.plus(line_3);
