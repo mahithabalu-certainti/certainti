@@ -62,6 +62,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     const loadPDF = async () => {
       if (!base64) return;
 
+      // Reset zoom and page to initial defaults whenever a new PDF is loaded
+      setScale(1);
+      setCurrentPage(1);
       setIsLoading(true);
       setError('');
 
@@ -182,7 +185,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   return (
     <Box className='flex flex-col h-full'>
       {/* PDF Controls */}
-      <div className='bg-white rounded-[4px] border border-[#CBD6E2] px-3 py-2 mb-4'>
+      <div className='sticky top-[30px] z-10 bg-white rounded-[4px] border border-[#CBD6E2] px-3 py-2 mb-4'>
         <Box className='flex items-center gap-4 flex-wrap'>
           {/* Zoom Controls */}
           <Box className='flex items-center gap-2'>
@@ -299,7 +302,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       </div>
 
       {/* PDF Canvas Container */}
-      <div className='flex-1 overflow-auto bg-[#F3F4F6] p-8 rounded-[4px] border border-[#CBD6E2]'>
+      <div className='flex-1 bg-[#F3F4F6] p-8 rounded-[4px] border border-[#CBD6E2]'>
         <Box ref={containerRef} className='relative inline-block'>
           <canvas ref={canvasRef} className='shadow-lg bg-white' />
         </Box>
