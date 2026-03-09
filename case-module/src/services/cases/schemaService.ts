@@ -3906,14 +3906,21 @@ class CaseSchemaService {
     accessToken: string
   ) {
     try {
+      const mainDbSequelize = await this.caseModelService.getMainSequelize();
       const { CaseTask, CaseTeam, Case, TaskSummary } =
         await this.caseModelService.getModels(accountNumber);
+      const [activeStatusRid]: any[] = await mainDbSequelize.query(
+        rawQueries.getActiveStatusId(),
+        { type: "SELECT" }
+      );
+
       const teamMembers = await CaseTeam.findAll({
         attributes: ['user_rid', 'role_rid'],
         where: {
           case_rid: caseReq.case_rid,
           account_rid: caseReq.account_rid,
           is_primary: true,
+          status_rid: activeStatusRid.rid
         },
         raw: true,
       });
