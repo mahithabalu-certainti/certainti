@@ -253,7 +253,7 @@ class ResourceSkillService {
               created_by_name: userEventInfo.full_name,
               event_type_rid: userEventInfo.event_type_rid,
               event_name: eventNames.CREATE,
-              descriptions:skill_details || ''
+              descriptions: createdResourceSkill?.resource_number || ''
             },["account"]);
 
         // Update the resource_fiscal table
@@ -513,7 +513,7 @@ class ResourceSkillService {
               created_by_name: userEventInfo.full_name,
               event_type_rid: userEventInfo.event_type_rid,
               event_name: eventNames.UPDATE,
-              descriptions:skill_details || ''
+              descriptions:originalResourceSkill.resource_number || ''
             },["account"]);
             await this.createResourceSkillHistory(
               originalResourceSkill.toJSON(),
