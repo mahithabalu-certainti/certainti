@@ -212,7 +212,7 @@ export class StateComputationService {
                     }                  
                     
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
-                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
+                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,config.state_code,
                         result.inputFields, result.computedFields, result.finalCredit,result?.totalQRE ?? null,stateRDData,result
                     );
                 }
