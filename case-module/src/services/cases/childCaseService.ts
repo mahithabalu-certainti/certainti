@@ -461,27 +461,27 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const exportProjectDocuments = await this.exportAttachments(userId, 'project', caseDetails?.rid, accountRid, '', {}, 'project_code', 'DESC', 0, {}, '', DOSSIER_NAME);
     const convertToZip = await createZipFile([
       {
-      name : "QualifiedProjects",
+      name : "Qualified Projects",
       buffer : Buffer.from(generateQualifiedProjectsCSV, 'base64'),
       extension : ".xlsx"
     },
     {
-      name : "ProjectSummary",
+      name : "Technical Summary",
       buffer : Buffer.from(generateProjectSummaryCSV, 'base64'),
       extension : ".xlsx"
     },
     {
-      name : "ResourceSummary",
+      name : "Resource Summary",
       buffer : Buffer.from(generateResourceSummaryCSV, 'base64'),
       extension : ".xlsx"
     },
     {
-      name : "ProjectDocument",
+      name : "Project Documents",
       buffer : Buffer.from(exportProjectDocuments.data, "base64"),
       extension : ".xlsx"
     },
     {
-      name : "Closing-Remarks",
+      name : "Approval Status",
       buffer : Buffer.from(closingRemarksData! || '','base64'),
       extension : ".xlsx"
     },

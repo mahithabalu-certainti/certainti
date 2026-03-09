@@ -31,7 +31,9 @@ export class RdCreditCalculatorForNJ {
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : string, caseDetails : Case) {
         const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config, caseDetails);
         const part5DevelopmentTaxCreditCalculationInfo = this.part5DevelopmentTaxCreditCalculation(new Decimal(part4ASCCreditCalculationInfo.final_credit), config);
-
+        const priorYearsCount = 4;
+        const totalGrossReceipts = new Decimal((stateRdData.annualGrossReceipts || []).reduce(
+            (sum, r) => sum + (r.grossReceipts || 0), 0));
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
             creditType: this.creditType,
@@ -50,9 +52,10 @@ export class RdCreditCalculatorForNJ {
             prev1yearQRE: this.round2(part4ASCCreditCalculationInfo.prev1yearQRE) || 0,
             prev2yearQRE: this.round2(part4ASCCreditCalculationInfo.prev2yearQRE) || 0,
             prev3yearQRE: this.round2(part4ASCCreditCalculationInfo.prev3yearQRE) || 0,
-            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
-            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
-            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+            totalWages: this.round2(part4ASCCreditCalculationInfo.current_year_wages) || 0,
+            totalContract: this.round2(part4ASCCreditCalculationInfo.current_year_contract) || 0,
+            totalSupplies: this.round2(part4ASCCreditCalculationInfo.costOfSupplies) || 0,
+            averageAnnualGrossReceipts: this.round2(totalGrossReceipts.div(priorYearsCount)) || 0
         }
 
     }
@@ -72,17 +75,30 @@ export class RdCreditCalculatorForNJ {
         const leaseComputerCost = new Decimal(caseDetails.lease_costs_of_computers || 0.00)
 
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(costOfSupplies).plus(leaseComputerCost);
-        const prev1_qre = new Decimal(prior3YearsQREs[0]?.qre || 0);
+       
+       const qreSum = prior3YearsQREs.map(item => ({
+    fiscalYear: item.fiscalYear,
+    wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+}));
 
-        //----Line3a: Enter 2 years prior QRE for TX State
-        const prev2_qre = new Decimal(prior3YearsQREs[1]?.qre || 0);
+        const currentFiscalYearInt = caseDetails.fiscal_year;
 
-        //----Line4a: Enter 3 years prior QRE for TX State
-        const prev3_qre = new Decimal(prior3YearsQREs[2]?.qre || 0);
-        const qreSum = prior3YearsQREs.map(item => ({
-            fiscalYear: item.fiscalYear,
-            wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-        }));
+        // Helper: find wagesContractSum for a specific year, defaulting to 0 if missing
+        const getQREForYear = (year: number): Decimal => {
+            const entry = qreSum.find(q => parseInt(String(q.fiscalYear), 10) === year);
+            return new Decimal(entry?.wagesContractSum || 0);
+        };
+
+        // Line 2a: currentYear - 1
+        const prev1_qre = getQREForYear(currentFiscalYearInt - 1);
+        console.log(`Prev Year 1 QRE (Year ${currentFiscalYearInt - 1}):`, prev1_qre.toString());
+
+        // Line 3a: currentYear - 2
+        const prev2_qre = getQREForYear(currentFiscalYearInt - 2);
+        console.log(`Prev Year 2 QRE (Year ${currentFiscalYearInt - 2}):`, prev2_qre.toString());
+
+        // Line 4a: currentYear - 3
+        const prev3_qre = getQREForYear(currentFiscalYearInt - 3);
         const isPriorYearQreZero = prior3YearsQREs.some(q => q.qre === 0)
 
         const total_prev_qre = new Decimal(qreSum.reduce((sum, item) => sum + Number(item.wagesContractSum), 0));

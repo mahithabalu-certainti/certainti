@@ -848,6 +848,7 @@ export const fetchAdminTemplates = (page: number, limit: number, sort: string, s
     uu.first_name ILIKE '${searchValue}' OR uu.last_name ILIKE '${searchValue}' OR CONCAT(uu.first_name,' ', uu.last_name) ILIKE '${searchValue}' OR
     r.role_name ILIKE '${searchValue}' OR c.checklist_name ILIKE '${searchValue}' OR p.priority_name ILIKE '${searchValue}' OR
     s.status_name ILIKE '${searchValue}' OR m.milestone_name ILIKE '${searchValue}')
+    AND ttt.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
     ${graphqlConditions}
     ${andConditions}
     ${finalContainer}

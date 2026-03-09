@@ -48,6 +48,9 @@ export class RdCreditCalculatorForTX {
             prev1yearQRE: qretInfo.prev1_qre || 0,
             prev2yearQRE: qretInfo.prev2_qre || 0,
             prev3yearQRE: qretInfo.prev3_qre || 0,
+              totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
         }
     }
 
