@@ -306,7 +306,7 @@ async exportCaseClosingRemarks (data : any) {
                 "Approved On": d.signoff_at ? data.timezone && isValidTimezone(data.timezone) ? moment(d.signoff_at).tz(data.timezone).format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.signoff_at).utcOffset("+05:30").format("YYYY-MMM-DD, hh:mm:ss A") : "-",
             }
         });
-        const generateCsv = await generateExcelBase64(finalData, "Closing-Remarks");
+        const generateCsv = await generateExcelBase64(finalData, "Approval Status");
         return generateCsv;
     }
 }
