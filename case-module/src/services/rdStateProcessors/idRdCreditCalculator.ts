@@ -51,7 +51,7 @@ export class RdCreditCalculatorForID {
             totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
             totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
             totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
-            avgAnnualGrossReceipts: this.round2(qreCalInfo.average_annual_gross_receipts),
+            averageAnnualGrossReceipts: this.round2(qreCalInfo.average_annual_gross_receipts),
           
             
         }
