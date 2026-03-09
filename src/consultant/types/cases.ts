@@ -371,7 +371,7 @@ export interface CaseSubmissionDateResponse {
 // Closed case list
 export interface ClosedCaseList {
   rid: string;
-  case_name: string;
+  case_full_name: string;
 }
 
 export interface ClosedCaseListResponse {
