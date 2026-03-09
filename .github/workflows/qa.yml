@@ -1058,6 +1058,7 @@ jobs:
           DOSSIER_KAFKA_TOPIC=create-dossier-form
           DOSSIER_CLIENT_ID=dossier-form
           DOSSIER_GROUP_ID=dossier-form-consumers
+          LOGO_URL=https://media.licdn.com/dms/image/v2/D5616AQGLoYhF4VOG0Q/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1704478352319?e=2147483647&v=beta&t=1VJpbQyy8E_loNTOEaI_s51Gv01AtPYecgcwaT2UyH4
           EOF
           echo "$ENV_FILE file created successfully!"
 
