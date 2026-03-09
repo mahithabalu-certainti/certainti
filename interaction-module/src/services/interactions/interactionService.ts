@@ -945,7 +945,8 @@ export class InteractionService {
                 true,
                 userId,
                 accountNumber,
-                interactionData.account_rid
+                interactionData.account_rid,
+                interactionInfo
 
 
 
@@ -1849,6 +1850,7 @@ export class InteractionService {
     createdBy: string,
     accountNumber: string,
     data: any,
+    interactionInfo: any
   ) {
     let emailResponse = false;
     try {
@@ -1937,7 +1939,7 @@ export class InteractionService {
                                             created_by_name: userEventInfo.full_name,
                                             event_type_rid: userEventInfo.event_type_rid,
                                             event_name: data.is_interaction_followup ? eventNames.REMAINDER : eventNames.SENT,
-                                            descriptions: data.r_number + ' to ' + emailInfo.email,
+                                            descriptions: interactionInfo.interaction_id + ' to ' + emailInfo.email,
                                             project_rid: interactionLevel?.toLowerCase() === 'project' ? data?.project_fiscal_rid : null,
                                           }, timelineTypes);
       return emailResponse;
@@ -3818,7 +3820,8 @@ export class InteractionService {
         false,
         createdBy,
         accountNumber,
-        data
+        data,
+        interactionInfo
       );
       if (emailResponse) {
         logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
