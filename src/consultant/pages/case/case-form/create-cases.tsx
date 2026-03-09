@@ -254,10 +254,12 @@ export const CreateCases: React.FC = () => {
     return (
       closedCaseList?.data?.data?.cases?.map((item) => ({
         value: item.rid,
-        label: item.case_name || '',
+        label: item.case_full_name || '',
       })) || []
     );
   }, [closedCaseList]);
+
+
 
   const caseStatusOptions = useMemo(() => {
     return (
@@ -592,16 +594,16 @@ export const CreateCases: React.FC = () => {
             values={
               isEditView && caseFormData
                 ? {
-                    ...caseFormData,
-                  }
+                  ...caseFormData,
+                }
                 : {
-                    account_name: accountName || '',
-                    account_id: accountNumber || '',
-                    case_owner: userId || '',
-                    fiscal_year: currentYear.toString(),
-                    country: countryRid || '',
-                    statutory_submission_date: calculatedStatutoryDate,
-                  }
+                  account_name: accountName || '',
+                  account_id: accountNumber || '',
+                  case_owner: userId || '',
+                  fiscal_year: currentYear.toString(),
+                  country: countryRid || '',
+                  statutory_submission_date: calculatedStatutoryDate,
+                }
             }
             outData={submitData}
             formRef={formRef}
