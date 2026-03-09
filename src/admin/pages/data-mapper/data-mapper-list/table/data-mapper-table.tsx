@@ -217,7 +217,7 @@ export const DataMapperTable: React.FC<IDataMapperTableProps> = ({
     },
     {
       label: 'Configuration',
-      disabled: (row) => row?.status_name?.toLowerCase() !== 'accepted',
+      disabled: (row) => row?.status_name?.toLowerCase() === 'initiated',
       onClick: (row) => handleConfig(row),
       hide: !dataMapperFieldsEditable,
     },

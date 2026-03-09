@@ -278,6 +278,7 @@ export interface InteractionListURLParams {
   search?: string;
   reminder_specific_list?: boolean;
   case_rid?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface InteractionTemplatePayload {

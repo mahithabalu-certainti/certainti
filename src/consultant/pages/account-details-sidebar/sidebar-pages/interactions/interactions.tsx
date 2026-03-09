@@ -154,6 +154,9 @@ const Interactions: React.FC<InteractionsProps> = ({
     filter: {},
   });
   const [reInitiateModalOpen, setReInitiateModalOpen] = useState(false);
+  const [showAssessmentToggle, setShowAssessmentToggle] =
+    useState<boolean>(true);
+
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -195,6 +198,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       fiscal_year: newFiscalYear,
       search: searchText,
       flag: 'account',
+      assessment_type: showAssessmentToggle ? 'all' : 'fpa',
     },
     !viewDetails &&
       !viewInteractionHistory &&
@@ -899,6 +903,10 @@ const Interactions: React.FC<InteractionsProps> = ({
             !viewInteractionHistory
           }
           activityMenuItems={activityMenuItems}
+          showToggle={!viewDetails && !viewInteractionAttachment}
+          toggleLabel={'To include RD Assessment'}
+          toggleEnabled={showAssessmentToggle}
+          setToggleEnabled={setShowAssessmentToggle}
         />
         {isTimeLineView ? (
           <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
