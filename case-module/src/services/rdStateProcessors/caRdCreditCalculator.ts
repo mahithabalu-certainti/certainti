@@ -97,7 +97,7 @@ export class RdCreditCalculatorForCA {
         const line12 = line11.mul(line10);
 
         //---- Line 13: Excess QREs
-        let line13 = Decimal.max(line12.minus(line9), 0);
+        let line13 = Decimal.max(line9.minus(line12), 0);
 
         //---- Line 14: 50% of current year QRE
         let line14 = line9.mul(config.qre_credit_percentage_c1/100);
@@ -123,7 +123,7 @@ export class RdCreditCalculatorForCA {
             cost_to_rent: line7,
             contract: this.round2(line8),
             total_qre: this.round2(line9),
-            fixed_base_percentage: this.round2(line10),
+            fixed_base_percentage: config.fixed_base_percentage,
             average_gross_receipts: this.round2(line11),
             base_amount: this.round2(line12),
             excess_qre_over_base: this.round2(line13),
