@@ -2117,6 +2117,7 @@ WHERE dmf.country_rid = '${countryRid}'
         JOIN ${schemaName}.project_fiscal pf
           ON pf.rid = cp.project_fiscal_rid
         WHERE cp.case_rid = '${caseRid}'
+        and pf.is_qualified = true
         ORDER BY pf.${columnName} DESC NULLS LAST
         LIMIT 15
       ) t;

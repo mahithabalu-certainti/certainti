@@ -55,6 +55,8 @@ export class RdCreditCalculatorForCA {
             totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
             totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
             totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+            averageAnnualGrossReceipts: this.round2(rrcResult.average_gross_receipts) || 0
+            
         }
     }
 
@@ -86,7 +88,7 @@ export class RdCreditCalculatorForCA {
         const line9 = new Decimal(line5).plus(new Decimal(line6)).plus(new Decimal(line7)).plus(new Decimal(line8));
 
         //---- Line10: Fixed base percentage
-        let line10 = new Decimal(config.fixed_base_percentage || 0);
+        let line10 = new Decimal(config.fixed_base_percentage || 0).div(100);
 
         //---- Line 11: Average annual gross receipts
         const line11 = totalGrossReceipts.div(priorYearsCount);

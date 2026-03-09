@@ -461,7 +461,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any, final_credit: number, total_qre: number, stateRdData: any, result?: any,) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string,state_code:string, input_params: any, computed_fields: any, final_credit: number, total_qre: number, stateRdData: any,config:any, result?: any,) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         const [calculationEntry] = await RdCreditStateCalculations.upsert(
             {
@@ -473,12 +473,13 @@ class RDCreditSchemaService {
                 final_credit,
                 total_qre: result?.totalQRE,
                 average_annual_gross_receipts: result?.averageAnnualGrossReceipts,
-                prev_year1_qre: stateRdData.prior3YearsQREs[0]?.qre || 0,
-                prev_year2_qre: stateRdData.prior3YearsQREs[1]?.qre || 0,
-                prev_year3_qre: stateRdData.prior3YearsQREs[2]?.qre || 0,
+                prev_year1_qre: state_code === 'NJ' ? (result?.prev1yearQRE || 0) : (stateRdData.prior3YearsQREs[0]?.qre || 0),
+                prev_year2_qre: state_code === 'NJ' ? (result?.prev2yearQRE || 0) : (stateRdData.prior3YearsQREs[1]?.qre || 0),
+                prev_year3_qre: state_code === 'NJ' ? (result?.prev3yearQRE || 0) : (stateRdData.prior3YearsQREs[2]?.qre || 0),
                 total_wages: result?.totalWages,
                 total_supplies: result?.totalSupplies,
                 total_subcontract: result?.totalSubCon,
+                config_json: config
                 
             },
             {
