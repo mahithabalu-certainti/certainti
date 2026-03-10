@@ -768,7 +768,11 @@ export class DataMapperService implements IDataMapperService {
                 { type: QueryTypes.SELECT }
             );
             if(data.status_action) {
-            const statusAction = data.status_action;
+            let statusName = data.status_action;
+            if(data.status_action.toLowerCase() === 'submit') {
+                statusName = 'Waiting for approval';
+            }
+            const statusAction = statusName;
             const [statusInfo]:any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
                 replacements: { statusName: statusAction },
                 type: QueryTypes.SELECT

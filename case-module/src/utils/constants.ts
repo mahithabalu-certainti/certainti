@@ -1836,7 +1836,7 @@ export const rawQueries = {
   getFieldArrayByFormRid(form_rid: string) {
     return `SELECT field_array FROM ${MAIN_SCHEMA_NAME}.data_mapper_forms WHERE rid = '${form_rid}'`
   },
-  getDataMapperStatusByName: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = :statusName LIMIT 1`,
+  getDataMapperStatusByName: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE lower(status_name) = lower(:statusName) LIMIT 1`,
   getDataMapperUploadStatuses: `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE rid IN (:rids)`,
   fetchAccountStartEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`

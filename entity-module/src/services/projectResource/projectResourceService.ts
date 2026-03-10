@@ -2221,7 +2221,7 @@ export class ProjectResourceService {
                           entity_name: entityTypes.PROJECT_RESOURCE,
                           created_by_name: userEventInfo.full_name,
                           event_type_rid: userEventInfo.event_type_rid,
-                          event_name: eventNames.CREATE,
+                          event_name: eventNames.UPDATE,
                           descriptions: resourceData.resource_code || '',
                           project_rid: existingProjectResource.project_fiscal_rid,
                         }, ["project"]);

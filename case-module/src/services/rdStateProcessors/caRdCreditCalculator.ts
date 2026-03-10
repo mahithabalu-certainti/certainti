@@ -115,7 +115,7 @@ export class RdCreditCalculatorForCA {
         const s_corp_rate = line17a.mul(config.s_corp/100);
         const corporation_rate = line17a.mul(config.corporation/100);
         const individual_rate = line17a.mul(config.individual/100);
-        const reducedCreditAmountPercentage = line17a.mul(config.reduced_credit_amount_percentage/100)
+        const reducedCreditAmountPercentage = line17a.mul(config.corporation/100)
 
         return {
             wages: line5,
