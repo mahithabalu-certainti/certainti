@@ -322,27 +322,31 @@ export class InteractionService {
         parentAccountId,
         accountRid
       );
+      const mainDb = await this.getMainDb();
       logMessage(
         `Auto-send: ${interactionData?.trigger_send ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`
       );
+       const [findStatus] = await mainDb.query<AllStatusType>(rawQueries.fetchActiveStatus(), {type : QueryTypes.SELECT});
       if (interactionData?.trigger_send && isParensettingsConfigured) {
-        await this.sendInteraction(
-          [
+        if(findStatus?.rid === (interactionData.interaction_status_rid ?? findStatus?.rid)) {
+          await this.sendInteraction(
+            [
+              {
+                interaction_rid: interactionId,
+                project_fiscal_rid: interactionData.project_fiscal_rid,
+                interaction_level: interactionLevel,
+              },
+            ],
             {
-              interaction_rid: interactionId,
-              project_fiscal_rid: interactionData.project_fiscal_rid,
-              interaction_level: interactionLevel,
+              email: interactionData.email_info?.email || null,
+              name: interactionData.email_info?.name || null,
             },
-          ],
-          {
-            email: interactionData.email_info?.email || null,
-            name: interactionData.email_info?.name || null,
-          },
-          interactionData.account_rid,
-          userId,
-          false,
-          "Manual-Send"
-        );
+            interactionData.account_rid,
+            userId,
+            false,
+            "Manual-Send"
+          );
+        }
       } else {
         const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(
           accountNumber,
@@ -380,23 +384,25 @@ export class InteractionService {
               interactionData.account_rid
             );
           if (!ismaxInteractionsSent) return;
-          await this.sendInteraction(
-            [
+          if(findStatus?.rid === (interactionData.interaction_status_rid ?? findStatus!.rid)) {
+            await this.sendInteraction(
+              [
+                {
+                  interaction_rid: interactionId,
+                  project_fiscal_rid: interactionData.project_fiscal_rid,
+                  interaction_level: interactionLevel,
+                },
+              ],
               {
-                interaction_rid: interactionId,
-                project_fiscal_rid: interactionData.project_fiscal_rid,
-                interaction_level: interactionLevel,
+                email: interactionData.email_info?.email || null,
+                name: interactionData.email_info?.name || null,
               },
-            ],
-            {
-              email: interactionData.email_info?.email || null,
-              name: interactionData.email_info?.name || null,
-            },
-            interactionData.account_rid,
-            userId,
-            false,
-            "Auto-Send"
-          );
+              interactionData.account_rid,
+              userId,
+              false,
+              "Auto-Send"
+            ); 
+          }
         }
       }
     } catch (err) {
@@ -2222,7 +2228,8 @@ export class InteractionService {
         reminderFlag,
         reminderIds,
         apiType,
-        data.rid
+        data.rid,
+        data.assessment_type
       )
     );
     let hasEmailRecipient = false;
