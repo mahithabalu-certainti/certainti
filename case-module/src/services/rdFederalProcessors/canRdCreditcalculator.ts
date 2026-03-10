@@ -30,10 +30,10 @@ export class RdCreditCalculatorForCAN {
         return this.orgDbSequelize;
     }
 
-    async computeForCanada(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any) {
+    async computeForCanada(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any, caseClosed : boolean) {
         const orgDb = await this.getOrgDb();
         const fetchIds = await orgDb.query<ProjectFiscalIds>(fetchAssignedProjectIds(caseRid, schemaName), {type : QueryTypes.SELECT})
-        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, fetchIds, accountRid), {type : QueryTypes.SELECT})
+        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanada(schemaName, fetchIds, accountRid, caseClosed), {type : QueryTypes.SELECT})
         let fteQreAdjustment = extractConfig.fte_qre_adjustment;
         let subconQreAdjustment = extractConfig.subcon_qre_adjustment;
         let fteProxyPercent = `FTE Proxy (${extractConfig.fte_proxy}%)`

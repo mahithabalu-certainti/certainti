@@ -76,7 +76,8 @@ export const fetchProjectsForCases = (
   accessibleIds: string[],
   isExport: boolean,
   projectTypeRids: string[],
-  type? : string
+  caseClosed : boolean,
+  type? : string,
 ) => {
   let pagination: string = ``
   if (!isExport) {
@@ -106,14 +107,17 @@ export const fetchProjectsForCases = (
   let subQueryJoinConditions: string = ``;
   let accessibleProjects: string = ``;
   let projectTypeCondition: string = ``;
+  let closedAlias : string;
 
   if (accessibleIds.length > 0)
     accessibleProjects = `AND pf.rid IN (${accessibleIds
       .map((d: any) => `'${d}'`)
       .join(",")})`;
   else accessibleProjects = ``;
+  if(caseClosed) closedAlias = 'cp'
+  else closedAlias = 'pf'
   if( projectTypeRids.length > 0 ) {
-    projectTypeCondition = ` AND pf.project_type_rid IN (${projectTypeRids .map((d: any) => `'${d}'`).join(",")}) `;
+    projectTypeCondition = ` AND ${closedAlias}.project_type_rid IN (${projectTypeRids .map((d: any) => `'${d}'`).join(",")}) `;
   }
 
   if (assignedApi) {
@@ -129,7 +133,7 @@ export const fetchProjectsForCases = (
         `;
     subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`;
     subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`;
-    whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects} ${projectTypeCondition}`;
+    whereConditions = `${closedAlias}.account_rid = '${accountRid}' AND ${closedAlias}.fiscal_year = ${fiscalYear} ${accessibleProjects} ${projectTypeCondition}`;
   }
 
   if (!isSorting) {
@@ -147,9 +151,12 @@ export const fetchProjectsForCases = (
       dynamicAlias = `tpoc`;
       sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (sort.includes(validColumnsForSorting[sort])) {
-      dynamicAlias = `pf`;
+      dynamicAlias = caseClosed ? 'cp' : 'pf';
       sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
-    } else sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
+    } else {
+      dynamicAlias = caseClosed ? 'cp' : 'pf';
+      sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
+    }
   } else {
     sortValue = ``;
   }
@@ -167,7 +174,7 @@ export const fetchProjectsForCases = (
         if (validKey === "project_point_of_contact") dynamicAlias = `poc`;
         else if (validKey === "project_technical_point_of_contact")
           dynamicAlias = `tpoc`;
-        else dynamicAlias = `pf`;
+        else dynamicAlias = caseClosed ? 'cp' : 'pf' 
         for (let [cond, value] of Object.entries(condition)) {
           switch (columnType[validKey]) {
             case "string": {
@@ -316,13 +323,13 @@ export const fetchProjectsForCases = (
     ), 
 
     fetch_projects AS (
-    SELECT DISTINCT pf.rid, pf.project_code, cp.project_name, cp.project_type_rid, 
-    cp.fiscal_year, cp.project_classification_rid, cp.project_client_group,
-    cp.project_group, cp.total_effort_prj, cp.total_cost_prj, cp.total_cost_fte_prj,
-    cp.total_cost_subcon_prj, cp.total_cost_nonlabor_prj, cp.assessment_status,
-    cp.rd_percent_final, cp.qre_final, cp.comments, cp.modified_datetime, pf.r_number,
-    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, cp.account_rid,
-    cp.project_rid, cp.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
+    SELECT DISTINCT pf.rid, ${closedAlias}.project_code, ${closedAlias}.project_name, ${closedAlias}.project_type_rid, 
+    ${closedAlias}.fiscal_year, ${closedAlias}.project_classification_rid, ${closedAlias}.project_client_group,
+    ${closedAlias}.project_group, ${closedAlias}.total_effort_prj, ${closedAlias}.total_cost_prj, ${closedAlias}.total_cost_fte_prj,
+    ${closedAlias}.total_cost_subcon_prj, ${closedAlias}.total_cost_nonlabor_prj, ${closedAlias}.assessment_status,
+    ${closedAlias}.rd_percent_final, ${closedAlias}.qre_final, ${closedAlias}.comments, ${closedAlias}.modified_datetime, pf.r_number,
+    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, ${closedAlias}.account_rid,
+    ${closedAlias}.project_rid, ${closedAlias}.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -350,6 +357,7 @@ export const fetchProjectsForCases = (
     )
     SELECT * FROM paginated_projects
     `;
+  console.log(query)
   return query;
 };
 

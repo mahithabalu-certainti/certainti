@@ -119,18 +119,19 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getCurrentYearQREsForFederal(caseRid: string, countryRid: string, schemaName: string, orgDbSequelize: Sequelize): Promise<QRE> {
+    async getCurrentYearQREsForFederal(caseRid: string, countryRid: string, schemaName: string, orgDbSequelize: Sequelize, caseClosed : boolean): Promise<QRE> {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
             }
-
+            let alias : string;
+            alias = caseClosed ? 'cp' : 'pf'
             const [data]: any[] = await this.orgDbSequelize.query(
                 `
                     SELECT 
-                        CAST(SUM((pf.total_cost_fte_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
-                        CAST(SUM((pf.total_cost_nonlabor_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_supplies,
-                        CAST(SUM((pf.total_cost_subcon_prj * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
+                        CAST(SUM((${alias}.total_cost_fte_prj * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
+                        CAST(SUM((${alias}.total_cost_nonlabor_prj * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_supplies,
+                        CAST(SUM((${alias}.total_cost_subcon_prj * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
                         cs.tax_liability as business_tax_liability
                     FROM ${schemaName}.case_projects cp
                     JOIN ${schemaName}.project_fiscal pf

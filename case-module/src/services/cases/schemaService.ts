@@ -1930,6 +1930,7 @@ class CaseSchemaService {
     assignedApi: boolean,
     accessibleIds: string[],
     isExport: boolean,
+    mainDb : Sequelize
   ) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -1972,6 +1973,10 @@ class CaseSchemaService {
       // Support array or single value
       projectTypes = platFormConfig.config_json.project_type;
     }
+    const getCaseStatus : any = await mainDb.query(rawQueries.fetchCaseStatusByType('Closed'));
+    let caseClosed : boolean;
+    if(caseInfo.status_rid === getCaseStatus[0][0].rid) caseClosed = true
+    else caseClosed = false
     const result = await orgDb.query(
       fetchProjectsForCases(
         schemaName,
@@ -1991,7 +1996,8 @@ class CaseSchemaService {
         accessibleIds,
         isExport,
         projectTypes,
-        data.type
+        caseClosed,
+        data.type,
       )
     );
     return result[0];
