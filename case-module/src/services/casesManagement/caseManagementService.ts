@@ -646,6 +646,7 @@ export class CaseManagementService {
         let statusType;
         let taskStatusType;
         let tagNames;
+        let filingTypeIds = [...new Set(result.array_agg.map((d : any) => d.case_filing_type_rid))]
 
         let priorityQuery = rawQueries.getAllPriorityTypes(uniquePriorityIds)
         if(priorityQuery) {
@@ -675,6 +676,11 @@ export class CaseManagementService {
         if(tagQuery) {
           tagNames = await mainDb.query(tagQuery) 
         }
+        let caseFilingTypeQuery = rawQueries.getCaseFilingTypeByIds(filingTypeIds);
+        let caseFilingType;
+        if(caseFilingTypeQuery) {
+          caseFilingType = await mainDb.query(caseFilingTypeQuery)
+        }
         const [fetchCaseStatus] = await mainDb.query<caseStatusType>(rawQueries.getCaseStatusById(caseDetails?.status_rid!), {type : QueryTypes.SELECT});
         
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
@@ -684,7 +690,7 @@ export class CaseManagementService {
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
         let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
         let tagMap : Map<string, string> = new Map(tagNames?.[0]?.map((d : any) => [d.rid, d.tag_name]))
-        
+        let caseFilingTypeMap : Map<string, string> = new Map(caseFilingType?.[0]?.map((d : any) => [d.rid, d.filing_type_name]))
         let dynamicResult;
         if(fetchCaseStatus?.status_name.toLowerCase() === "audit review") {
           dynamicResult = result.array_agg
@@ -696,6 +702,7 @@ export class CaseManagementService {
           return {
             rid : d.rid,
             milestone_name : d.milestone_name,
+            filing_type_name : caseFilingTypeMap.get(d.case_filing_type_rid) || null,
             task_count : d.task_count,
             tasks : d.tasks !== null ? await Promise.all(d.tasks.map(async (d : any) => {
               if(assignedToMap.get(d.assigned_to) !== undefined) {
