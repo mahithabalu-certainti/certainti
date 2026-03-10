@@ -53,8 +53,8 @@ export const getCaseInteractionFilterFields = (
       options: assessmentSourceOptions,
       operatorOption: enumOptions,
       hide:
-        !permissionMap?.['interaction_assessment_source']?.edit &&
-        !permissionMap?.['interaction_assessment_source']?.read,
+        !permissionMap?.['interaction_assessment_source_name']?.edit &&
+        !permissionMap?.['interaction_assessment_source_name']?.read,
     },
     {
       name: 'Four Part Assessment ID',

@@ -39,6 +39,8 @@ interface TabPanelProps {
   showRefresh?: boolean;
   onRefreshClick?: () => void;
   showToggle?: boolean;
+  toggleLabel?: string;
+  disableToggle?: boolean;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
@@ -80,6 +82,8 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   showRefresh,
   onRefreshClick,
   showToggle,
+  toggleLabel,
+  disableToggle,
   toggleEnabled,
   setToggleEnabled,
   onFilterChange,
@@ -268,20 +272,20 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
         )}
 
         <Box className='flex items-center gap-2'>
-          {tabValue === 'account_projects_view_overview' ||
-            (showToggle && (
-              <div className='flex items-center gap-2'>
-                <span className='font-semibold text-[13px] text-[#425A76]'>
-                  Include Parent
-                </span>
-                <Switch
-                  checked={toggleEnabled}
-                  onChange={handleToggleChange}
-                  size='small'
-                  color='success'
-                />
-              </div>
-            ))}
+          {!isTimelineView && showToggle && toggleLabel && (
+            <div className='flex items-center gap-2'>
+              <span className='font-semibold text-[13px] text-[#425A76]'>
+                {toggleLabel}
+              </span>
+              <Switch
+                checked={toggleEnabled}
+                onChange={handleToggleChange}
+                size='small'
+                color='success'
+                disabled={disableToggle}
+              />
+            </div>
+          )}
           {showSearch && !isTimelineView && (
             <Box>
               <SearchBar

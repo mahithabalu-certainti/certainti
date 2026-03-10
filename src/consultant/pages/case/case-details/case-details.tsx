@@ -601,11 +601,14 @@ export const CaseDetails = () => {
         exportType === 'dossier-resource-summary' ? 'resource-summary' : ''
       );
     } else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
-      ExportAuditTimelineList({
-        ...auditTimelineParams,
-        account_rid: accountId,
-        case_rid: caseId,
-      });
+      ExportAuditTimelineList(
+        {
+          ...auditTimelineParams,
+          account_rid: accountId,
+          case_rid: caseId,
+        },
+        'approval-status'
+      );
     } else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
         exportFinancialProjectCost({
@@ -660,7 +663,8 @@ export const CaseDetails = () => {
           flag: 'case',
           reminder_specific_list: true,
           case_rid: caseId || '',
-          // search: interactionsParams?.search || '',
+          search: interactionsParams?.search || '',
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportInteractions(projectInteractionExportPayload);
         return;

@@ -187,9 +187,9 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
 
   const description: DetailItem[] = [
     {
-      label: 'Tracker One Liner',
+      label: 'Summary',
       value: data?.record_information?.tracker_one_liner || '',
-      key: 'tracker_one_liner',
+      key: 'summary_judgment',
     },
   ];
 
@@ -219,9 +219,9 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     !permissionMap?.['interaction_questions']?.edit &&
     !permissionMap?.['interaction_questions']?.read;
 
-  const hideTrackerOneLiner =
-    !permissionMap?.['tracker_one_liner']?.edit &&
-    !permissionMap?.['tracker_one_liner']?.read;
+  const hideSummary =
+    !permissionMap?.['summary_judgment']?.edit &&
+    !permissionMap?.['summary_judgment']?.read;
 
   const currentModuleColors = moduleColorMap[moduleLevel];
 
@@ -257,9 +257,9 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
               data={basicDetails}
               customStyle='pt-0 mt-0'
             />
-            {!hideTrackerOneLiner && (
+            {!hideSummary && (
               <DetailsSection
-                title='Tracker One Liner'
+                title='Summary'
                 data={description}
                 fullColumn={true}
                 customStyle='pt-[1px]'
