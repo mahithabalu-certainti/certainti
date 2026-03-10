@@ -2262,6 +2262,23 @@ private async handleTableConfig(
 
       const normalizedKey = this.normalizeFieldRef(rawKey);
       valueMap.set(normalizedKey, value ?? 0);
+
+      // Index by leading line-number prefix (e.g. "17a" from "17a. Regular credit. Add line 4...")
+      // Allows #17a to resolve even when the full label contains commas that truncate the regex capture.
+      const linePrefixMatch = rawKey.match(/^(\d+[a-z]?\b)/i);
+      if (linePrefixMatch && linePrefixMatch[1]) {
+        valueMap.set(linePrefixMatch[1], value ?? 0);
+        valueMap.set(linePrefixMatch[1].toLowerCase(), value ?? 0);
+      }
+
+      // Also index up to the first comma — the #label regex stops at commas, so a reference like
+      // #17a. Regular credit. Add line 4 and line 16. If you do not elect...
+      // gets captured only up to the comma. Storing that prefix ensures the lookup still hits.
+      const upToComma = rawKey.split(",")[0]?.trim();
+      if (upToComma && upToComma !== rawKey) {
+        valueMap.set(upToComma, value ?? 0);
+        valueMap.set(upToComma.replace(/\s+/g, ""), value ?? 0);
+      }
     };
 
     enhancedConfigs.forEach((item) => {
@@ -2409,15 +2426,26 @@ private async handleTableConfig(
           return (num !== null ? String(num) : "0") + suffix;
         }
 
+        // Build a progressively broader set of lookup keys:
+        // 1. exact normalised label
+        // 2. whitespace-collapsed version
+        // 3. indexes stripped (e.g. label[0] → label)
+        // 4. last path segment
+        // 5. up to first comma (handles labels truncated by the comma stop rule in the # regex)
+        // 6. leading line-number prefix (e.g. "17a" from "17a. Regular credit...")
+        const upToCommaKey = normalizedKey?.split(",")?.[0]?.trim() || "";
+        const linePrefixMatch = normalizedKey?.match(/^(\d+[a-z]?\b)/i);
         const lookupKeys = [
           normalizedKey,
           normalizedKey.replace(/\s+/g, ""),
           this.stripIndexes(normalizedKey),
           this.normalizeFieldRef(normalizedKey),
+          ...(upToCommaKey && upToCommaKey !== normalizedKey ? [upToCommaKey, upToCommaKey.replace(/\s+/g, "")] : []),
+          ...(linePrefixMatch ? [linePrefixMatch[1], linePrefixMatch[1]?.toLowerCase()] : []),
         ];
 
         for (const key of lookupKeys) {
-          if (valueMap.has(key)) {
+          if (key && valueMap.has(key)) {
             const rawValue = valueMap.get(key);
             const num = this.tryParseNumber(rawValue);
             evalCache.set(normalizedKey, rawValue);
@@ -2494,6 +2522,13 @@ private async handleTableConfig(
           .replace(/(?<!Math\.)\bmin\s*\(/gi, "Math.min(")
           .replace(/(?<!Math\.)\bmax\s*\(/gi, "Math.max(");
         replaced = this.transformIfExpressions(replaced);
+
+        // Post-substitution cleanup: strip residual plain-text fragments left when a long
+        // #label was partially captured (the comma stop-rule left a prose tail).
+        // e.g. ", enter the result here, and see instructions for the schedule to attach * 0.9116"
+        //   becomes "* 0.9116"
+        // Only strips text between a comma and an arithmetic operator so no numeric data is lost.
+        replaced = replaced.replace(/,\s*[^+\-*/()#\d,][^+\-*/()*]*(?=[+\-*/])/g, " ");
 
         // Defensive: Validate only allowed characters/operators
         // After # substitution, expression should only contain digits, arithmetic operators,
