@@ -64,6 +64,11 @@ interface MappingItem {
   status?: string;
 }
 
+enum FlagTypeEnum {
+  draft = 'draft',
+  submit = 'submit',
+}
+
 const SIDEBAR_WIDTH = '38.1vw';
 
 const DataMapperConfig: React.FC = () => {
@@ -76,6 +81,7 @@ const DataMapperConfig: React.FC = () => {
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
   const [mappings, setMappings] = useState<MappingItem[]>([]);
   const [isPdfSidebarOpen, setIsPdfSidebarOpen] = useState(true);
+  const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
 
   const updateDataMapperConfig = useUpdateDataMapperConfig();
   const { mutate: recompute, isPending: isRecomputing } =
@@ -157,7 +163,7 @@ const DataMapperConfig: React.FC = () => {
     setSelectedField(null);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (flag: FlagTypeEnum) => {
     // Validate all mappings and set errors
     let hasErrors = false;
     const isNonFillable =
@@ -178,8 +184,11 @@ const DataMapperConfig: React.FC = () => {
     setMappings(validatedMappings);
     if (hasErrors) return;
 
+    setActiveFlag(flag);
+
     const payload = {
       rid: mapperId || '',
+      flag,
       mappings: mappings.map((mapping) => ({
         rid: mapping.rid,
         created_datetime: mapping.created_datetime || '',
@@ -198,8 +207,16 @@ const DataMapperConfig: React.FC = () => {
 
     updateDataMapperConfig.mutate(payload, {
       onSuccess: () => {
-        successToast('RD Form Configuration saved successfully');
+        setActiveFlag(null);
+        const message =
+          flag === FlagTypeEnum.draft
+            ? 'RD Form Configuration saved as draft successfully.'
+            : 'RD Form Configuration submitted successfully.';
+        successToast(message);
         goBack();
+      },
+      onError: () => {
+        setActiveFlag(null);
       },
     });
   };
@@ -273,12 +290,31 @@ const DataMapperConfig: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Save'
-            onClick={handleSubmit}
-            loading={updateDataMapperConfig.isPending}
+            label='Save as Draft'
+            loading={
+              activeFlag === FlagTypeEnum.draft &&
+              updateDataMapperConfig.isPending
+            }
+            disabled={activeFlag !== null && activeFlag !== FlagTypeEnum.draft}
+            onClick={() => handleSubmit(FlagTypeEnum.draft)}
             sx={{
-              width: '64px',
-              minWidth: '64px',
+              width: '110px',
+              minWidth: '110px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Submit'
+            loading={
+              activeFlag === FlagTypeEnum.submit &&
+              updateDataMapperConfig.isPending
+            }
+            disabled={activeFlag !== null && activeFlag !== FlagTypeEnum.submit}
+            onClick={() => handleSubmit(FlagTypeEnum.submit)}
+            sx={{
+              width: '70px',
+              minWidth: '70px',
               fontSize: '13px',
               fontWeight: 400,
             }}

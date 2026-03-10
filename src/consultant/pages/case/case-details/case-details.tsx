@@ -663,7 +663,8 @@ export const CaseDetails = () => {
           flag: 'case',
           reminder_specific_list: true,
           case_rid: caseId || '',
-          // search: interactionsParams?.search || '',
+          search: interactionsParams?.search || '',
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportInteractions(projectInteractionExportPayload);
         return;

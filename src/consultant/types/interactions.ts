@@ -81,6 +81,7 @@ export interface InteractionListExportParams {
   page?: number;
   limit?: number;
   search?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface InteractionFormTableColumn {

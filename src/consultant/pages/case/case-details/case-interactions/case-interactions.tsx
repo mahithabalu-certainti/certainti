@@ -419,10 +419,14 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
       search: searchText,
     };
-    setInteractionsParams(updatedParams);
+    setInteractionsParams({
+      ...updatedParams,
+      assessment_type: showAssessmentToggle ? 'all' : 'fpa',
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     sortField,
+    showAssessmentToggle,
     appliedFilters,
     currentPage,
     rowsPerPage,
@@ -936,7 +940,12 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
             !viewInteractionHistory
           }
           activityMenuItems={activityMenuItems}
-          showToggle={!viewDetails && !viewInteractionAttachment}
+          showToggle={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory &&
+            !viewResponseHistory
+          }
           toggleLabel={'To include RD Assessment'}
           toggleEnabled={showAssessmentToggle}
           setToggleEnabled={setShowAssessmentToggle}

@@ -630,6 +630,7 @@ export const ProjectDetails = () => {
           timezone: systemTimezone,
           flag: 'project',
           search: interactionsParams?.search || '',
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportInteractions(projectInteractionExportPayload);
         return;

@@ -414,9 +414,20 @@ const Interactions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
       search: searchText,
     };
-    setInteractionsParams(updatedParams);
+    setInteractionsParams({
+      ...updatedParams,
+      assessment_type: showAssessmentToggle ? 'all' : 'fpa',
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy, searchText]);
+  }, [
+    sortField,
+    appliedFilters,
+    currentPage,
+    rowsPerPage,
+    sortBy,
+    searchText,
+    showAssessmentToggle,
+  ]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -903,7 +914,12 @@ const Interactions: React.FC<InteractionsProps> = ({
             !viewInteractionHistory
           }
           activityMenuItems={activityMenuItems}
-          showToggle={!viewDetails && !viewInteractionAttachment}
+          showToggle={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory &&
+            !viewResponseHistory
+          }
           toggleLabel={'To include RD Assessment'}
           toggleEnabled={showAssessmentToggle}
           setToggleEnabled={setShowAssessmentToggle}
