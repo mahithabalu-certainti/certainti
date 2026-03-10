@@ -338,7 +338,7 @@ export default class ProjectTaskGraphqlServies {
                             entity_name: entityTypes.PROJECT_TASK,
                             event_type_rid: userEventInfo.event_type_rid,
                             event_name: eventNames.UPDATE,
-                             descriptions:checkForExistingData.resource_code,
+                             descriptions:checkForExistingData.project_resource_code || '',
                              project_rid : checkForExistingData.project_fiscal_rid
                           },["project"]);
 
