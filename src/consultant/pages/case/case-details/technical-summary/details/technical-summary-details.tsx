@@ -256,7 +256,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                     {item.label}
                   </div>
                   {/* Value as content */}
-                  <div className='py-2 px-6 markdown font-medium text-[13px] text-[#425A76] [&>p]:mb-2'>
+                  <div className='py-0.5 px-6 markdown font-medium text-[13px] text-[#425A76] '>
                     <Markdown>{formattedText || ''}</Markdown>
                   </div>
                 </div>

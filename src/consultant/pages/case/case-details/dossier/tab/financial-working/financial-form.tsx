@@ -221,9 +221,13 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       caseDetails?.case_total_projects &&
       caseDetails?.case_total_projects !== 0 &&
       caseDetails?.case_total_projects !== '0'
-      // !caseDetails?.financial_working_signoff
     ) {
-      handleInitiateFinancialHighlights();
+      if (isFinancialWorkingSignoff) {
+        // Already signed off — skip initiate and go straight to view
+        handleViewFinancialHighlights();
+      } else {
+        handleInitiateFinancialHighlights();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseDetails, dossierFinancialStatus]);
@@ -242,7 +246,10 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   // Call region API when region changes in Federal No mode (activeTab === 1)
   useEffect(() => {
-    if (activeTab === 1 && dossierFinancialStatus) {
+    if (
+      activeTab === 1 &&
+      (dossierFinancialStatus || isFinancialWorkingSignoff)
+    ) {
       handleViewFinancialHighlightsForRegion();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
