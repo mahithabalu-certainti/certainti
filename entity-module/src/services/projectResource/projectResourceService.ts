@@ -2210,13 +2210,21 @@ export class ProjectResourceService {
         }
       }
 
-      await this.recordTimelineAndHistory(
-        validAccountNumber,
-        projectResourceData,
-        projectResourceData,
-        userId,
-        transaction
-      );
+        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                                                userId: userId!,
+                                                                eventType: eventTypes.UI_HANDLER
+                                                              });    
+        await this.schemaService.createAccountTimelineEntry(validAccountNumber!, {
+                          created_by: userId!,
+                          account_rid: account_rid,
+                          entity_rid: existingProjectResource.rid,
+                          entity_name: entityTypes.PROJECT_RESOURCE,
+                          created_by_name: userEventInfo.full_name,
+                          event_type_rid: userEventInfo.event_type_rid,
+                          event_name: eventNames.CREATE,
+                          descriptions: resourceData.resource_code || '',
+                          project_rid: existingProjectResource.project_fiscal_rid,
+                        }, ["project"]);
 
       await transaction.commit();
 

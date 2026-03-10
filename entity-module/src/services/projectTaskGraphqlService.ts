@@ -2,6 +2,9 @@ import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import {
+  entityTypes,
+  eventNames,
+  eventTypes,
   HttpStatus,
   rawQueries,
   STATUS_MESSAGE,
@@ -17,6 +20,7 @@ import { ProjectResourceSchemaService } from "./projectResource/schemaService";
 import ProjectIngestionService from "./projectIngestionService";
 import { Case } from "../models/caseModel";
 import { CaseStatusResult } from "../utils/types";
+import SchemaService from "./schemaService";
 
 
 
@@ -30,6 +34,7 @@ export default class ProjectTaskGraphqlServies {
   private projectResourceSchema: ProjectResourceSchemaService;
   private logger: Logger;
   private projectIngestion: ProjectIngestionService;
+  private schemaService: SchemaService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -37,6 +42,7 @@ export default class ProjectTaskGraphqlServies {
     this.projectResourceSchema = new ProjectResourceSchemaService();
     this.projectTaskSchema = new ProjectTaskSchemaService();
     this.projectIngestion = new ProjectIngestionService(this.logger);
+    this.schemaService = new SchemaService();
   }
 
   async updateInlineGraphqlDetails(data: any) {
@@ -313,13 +319,28 @@ export default class ProjectTaskGraphqlServies {
                 data.rid
               );
 
-            await projectTaskSchemaService.addProjectTaskTimelineForInlineEdit(
-              accountNumber,
-              "update",
-              data.account_rid,
-              data.rid,
-              data.userId
-            );
+            // await projectTaskSchemaService.addProjectTaskTimelineForInlineEdit(
+            //   accountNumber,
+            //   "update",
+            //   data.account_rid,
+            //   data.rid,
+            //   data.userId
+            // );
+            const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                            userId: data.userId!,
+                            eventType: eventTypes.UI_HANDLER
+                          });
+            await this.schemaService.createAccountTimelineEntry(checkAccountExists[0][0].r_number!, {
+                            created_by: data.userId!,
+                            account_rid: data.account_rid,
+                            created_by_name: userEventInfo.full_name,
+                            entity_rid: checkForExistingData.rid,
+                            entity_name: entityTypes.PROJECT_TASK,
+                            event_type_rid: userEventInfo.event_type_rid,
+                            event_name: eventNames.UPDATE,
+                             descriptions:checkForExistingData.resource_code,
+                             project_rid : checkForExistingData.project_fiscal_rid
+                          },["project"]);
 
             await this.projectTaskInjestionService.runAggregationAfterInlineUpdate(
               accountNumber,

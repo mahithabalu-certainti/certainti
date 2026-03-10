@@ -167,12 +167,23 @@ export class RdFormMapperService {
       effectiveEnd,
     );
 
+    if(!formInfo) {
+       await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        countryRid,
+        orgDb,
+        accountNumber,
+        "No valid data uploaded to process RD forms"
+      );
+    }
+
     if (!formInfo?.browse_file && formInfo?.form_type === FORM_TYPE.Fillable) {
       await this.rdFormMapperSchemaService.updateFederalFormError(
         caseRid,
         countryRid,
         orgDb,
         accountNumber,
+        "No valid data uploaded to process RD forms"
       );
     }
 
@@ -186,8 +197,15 @@ export class RdFormMapperService {
       );
 
     if (!mapperConfig || mapperConfig.length === 0) {
+      await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        countryRid,
+        orgDb,
+        accountNumber,
+        `No valid data uploaded to process RD forms`
+      );
       throw new Error(
-        `No mapper configuration found for form RID: ${formInfo.rid}`,
+        `No valid data uploaded to process RD forms`
       );
     }
 
@@ -484,6 +502,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          "No valid data uploaded to process RD forms"
         );
         logMessage(
           `No state form found for ${state}. Browse file URL: ${formInfo?.browse_file}`,
@@ -507,6 +526,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          `No valid data uploaded to process RD forms`
         );
         continue;
       }
@@ -605,6 +625,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          "No valid data uploaded to process RD forms"
         );
       }
     }
