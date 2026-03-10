@@ -310,7 +310,7 @@ export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
 
 export const entityTypes = {
   ACCOUNT: "Account",
-  PROJECT: "Project",
+  PROJECT: "Projects",
   RESOURCE: "Resource",
   PROJECT_TASK: "Project Task",
   NOTES: "Notes",
@@ -1937,13 +1937,13 @@ WHERE dmf.country_rid = '${countryRid}'
   },
   updateFederalFormError(schemaName: string) {
     return `UPDATE ${schemaName}.rd_credit_country_calculations
-      SET form_error_message = 'Federal form file not found'
+      SET form_error_message = :errorMessage
       WHERE case_rid = :caseRid
       and country_rid  =:countryRid`
   },
   updateStateFormError(schemaName: string) {
     return `UPDATE ${schemaName}.rd_credit_state_calculations
-            SET form_error_message = 'State form file not found'
+            SET form_error_message = :errorMessage
             WHERE case_rid = :caseRid
             and country_rid  =:countryRid
             and state_rid = :stateRid`

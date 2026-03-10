@@ -2,7 +2,7 @@ import { Logger } from "winston";
 import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
+import { entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { logMessage, setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
 import { IUpdateProject,CaseStatusResult } from "../utils/types";
@@ -131,8 +131,22 @@ class ProjectGraphQlServices {
                 );
             
             await this.projectIngestion.updateProjectResources(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0], findProjectFiscal[0][0].rid, findProjectFiscal[0][0].fiscal_year);
-        
-            await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName,data));
+            const userEventInfo:any = await this.projectService.schemaService.fetchUserAndEventInfo({
+                                    userId: data.userId!,
+                                    eventType: eventTypes.UI_HANDLER
+                                  });
+            await this.projectService.schemaService.createAccountTimelineEntry(checkAccountExists[0][0].r_number!, {
+                                    created_by: data.userId!,
+                                    account_rid: data.account_rid,
+                                    created_by_name: userEventInfo.full_name,
+                                    entity_rid: data.project_fiscal_id,
+                                    entity_name: entityTypes.PROJECT_TASK,
+                                    event_type_rid: userEventInfo.event_type_rid,
+                                    event_name: eventNames.UPDATE,
+                                     descriptions:data.project_code,
+                                     project_rid : data.project_fiscal_id
+                                  },["project"]);
+          //  await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName,data));
             let attributeName;
             let newValue;
             let oldValue;
