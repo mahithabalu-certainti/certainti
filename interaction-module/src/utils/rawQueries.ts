@@ -42,7 +42,8 @@ export const fetchInteractionForProjectLevelQuery = (
   reminderFlag : boolean,
   reminderFiltersIds : string[],
   apiType : string,
-  rid : string
+  rid : string,
+  assessment_type : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -56,11 +57,15 @@ export const fetchInteractionForProjectLevelQuery = (
   let accountLevelkeyContactQuery : string = ``
   let aggregatedQuery : string = `` 
   let graphqlConditions : string = '';
+  let assessmentTypeQuery : string;
   if (disablePagination) pagination = ` `;
   else pagination;
 
   if(search) searchValue = `%${search}%`
   else searchValue = `%%`
+  
+  if(assessment_type === 'fpa') assessmentTypeQuery = `AND i.interaction_status_rid = '${activeStatusId}'`
+  else assessmentTypeQuery = ` `
 
   if(apiType === 'graphql') graphqlConditions = ` AND i.rid = '${rid}' `
   else graphqlConditions = ''
@@ -238,6 +243,7 @@ export const fetchInteractionForProjectLevelQuery = (
             WHERE
             (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
             ${graphqlConditions}
+            ${assessmentTypeQuery}
             AND
             ${whereConditions}
             ${reminderFilter}
