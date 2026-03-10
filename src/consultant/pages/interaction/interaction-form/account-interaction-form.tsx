@@ -30,7 +30,6 @@ import {
 import { useToast } from '../../../../hooks';
 import {
   useAccountCreateInteraction,
-  useGetAssessmentSource,
   useGetInteractionTemplate,
   useGetInteractionTemplateDetails,
 } from '../../../services/interactions/interactions-service';
@@ -153,7 +152,6 @@ const AccountInteractionForm = () => {
   const accountStatusOptions = useGetStatus();
   const interactionStatus = useGetInteractionStatus();
   const getInteractionLevel = useGetInteractionLevel();
-  const assessmentSource = useGetAssessmentSource();
   const projectData = useAccountProjects(
     {
       page: currentPage + 1,
@@ -562,10 +560,7 @@ const AccountInteractionForm = () => {
         status_rid: interactionStatus.data?.data.interactionStatus.find(
           (option) => option.status_name.toLowerCase() === 'draft'
         )?.rid,
-        interaction_assessment_source_rid: assessmentSource.data?.data.find(
-          (option) =>
-            option.interaction_assessment_source_name.toLowerCase() === 'manual'
-        )?.rid,
+        interaction_assessment_source_rid: 'Manual',
         interaction_status_rid: accountStatusOptions?.data?.data?.status.find(
           (option) => option.status_name.toLowerCase() === 'active'
         )?.rid,
