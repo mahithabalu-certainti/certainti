@@ -7,7 +7,7 @@ import {
   validColumnsForSorting,
 } from "./types";
 
-export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid: string, activeStatusRid: string) => {
+export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid: string, activeStatusRid: string, getCompletedTaskStatus : string) => {
   let query = `
     WITH fetch_fiscal_year AS (
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
@@ -20,11 +20,19 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     CROSS JOIN fetch_fiscal_year f
     WHERE
     rid = f.project_fiscal_rid
+    ),
+    fetch_completed_count AS (
+    SELECT case_rid, COALESCE(COUNT(rid) OVER(), 0) AS count 
+    FROM ${schemaName}.case_task
+    WHERE 
+    task_status_rid != '${getCompletedTaskStatus}'
+    AND
+    case_rid = '${caseRid}'
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,c.parent_case_rid,
     c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,f.case_total_qualified_projects,
-    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
+    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, CAST(NULLIF(c.case_total_qre_cost, 0) AS DECIMAL(18,2)) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
@@ -33,6 +41,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,rd_form_signoff,
     c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
     rcc.final_credit,
+    CASE WHEN fcc.count > 0 THEN false ELSE true END AS all_task_completed,
     CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}') THEN true ELSE false END AS is_initiated,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
     ELSE FALSE END AS is_case_team_created
@@ -40,6 +49,8 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
     LEFT JOIN ${schemaName}.rd_credit_country_calculations rcc ON rcc.case_rid = c.rid
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
+    LEFT JOIN fetch_completed_count fcc ON fcc.case_rid = c.rid
     CROSS JOIN fetch_project_count_cost f
     WHERE
     c.rid = '${caseRid}'

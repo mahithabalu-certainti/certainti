@@ -2137,6 +2137,9 @@ WHERE dmf.country_rid = '${countryRid}'
       ${stateRid ? "AND state_rid = :state_rid" : "AND (state_rid IS NULL OR state_rid = '')"}
       LIMIT 1
     `;
+  },
+  getCaseTaskCompletedStatus () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%Completed%'`
   }
 
 };
