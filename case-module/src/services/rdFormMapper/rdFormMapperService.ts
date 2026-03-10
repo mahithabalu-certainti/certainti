@@ -167,12 +167,23 @@ export class RdFormMapperService {
       effectiveEnd,
     );
 
+    if(!formInfo) {
+       await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        countryRid,
+        orgDb,
+        accountNumber,
+        "No valid data uploaded to process RD forms"
+      );
+    }
+
     if (!formInfo?.browse_file && formInfo?.form_type === FORM_TYPE.Fillable) {
       await this.rdFormMapperSchemaService.updateFederalFormError(
         caseRid,
         countryRid,
         orgDb,
         accountNumber,
+        "No valid data uploaded to process RD forms"
       );
     }
 
@@ -186,8 +197,15 @@ export class RdFormMapperService {
       );
 
     if (!mapperConfig || mapperConfig.length === 0) {
+      await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        countryRid,
+        orgDb,
+        accountNumber,
+        `No valid data uploaded to process RD forms`
+      );
       throw new Error(
-        `No mapper configuration found for form RID: ${formInfo.rid}`,
+        `No valid data uploaded to process RD forms`
       );
     }
 
@@ -484,6 +502,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          "No valid data uploaded to process RD forms"
         );
         logMessage(
           `No state form found for ${state}. Browse file URL: ${formInfo?.browse_file}`,
@@ -507,6 +526,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          `No valid data uploaded to process RD forms`
         );
         continue;
       }
@@ -605,6 +625,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          "No valid data uploaded to process RD forms"
         );
       }
     }
@@ -1914,7 +1935,7 @@ private async handleTableConfig(
             // Replace #field_id / #label refs — allow spaces in labels (e.g. #Software Development)
             // Uses lookahead to stop at operators, comparisons, block delimiters, or next #
             resolved = resolved.replace(
-              /#([^#+*/]+?)(?=\s*[+*\/:<>{}=!]|\s+-\s+|,\s*#|\s*#|\s*\)|\s*$)/g,
+              /#([^#+*/]+?)(?=\s*[+*\/:<>{}=!]|\s+-\s+(?=[#\d])|\s*,|\s*#|\s*\)|\s*$)/g,
               (_m: string, fieldRef: string) => {
                 const cleanRef = fieldRef.trim().replace(/[\s,:{}<>]+$/, "").trim();
 
@@ -2311,7 +2332,7 @@ private async handleTableConfig(
         const isExpression = ((): boolean => {
           if (/#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(/i.test(expression)) return true;
           if (/[+*/]/.test(expression)) return true;                   // +, *, / are always arithmetic
-          if (/\s-\s/.test(expression)) return true;                  // space-dash-space = binary minus
+          if (/\s-\s(?=[#\d])/.test(expression)) return true;         // space-dash-space before ref/digit = binary minus
           if (/^[\d.]+$/.test(expression)) return true;               // pure number
           if (/^[\d.\s+\-*/()]+$/.test(expression)) return true;    // pure arithmetic expression
           if (/^[A-Za-z]\d{3}-[0-9a-fA-F-]{36}$/.test(expression)) return true;  // bare RID
@@ -2435,7 +2456,7 @@ private async handleTableConfig(
       // Unbalanced trailing ) are stripped in resolveRef and re-appended after substitution.
       // : stops capture for ternary operator context; space-dash-space stops for binary minus.
       replaced = replaced.replace(
-        /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+|,\s*#|\s*#|\s*$)/g,
+        /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+(?=[#\d])|\s*,|\s*#|\s*$)/g,
         (_match: string, rawKey: string) => resolveRef(rawKey)
       );
       
@@ -2458,7 +2479,7 @@ private async handleTableConfig(
         if (!/^[\d\s+\-*/().,?:<>=!&|'"]+$/.test(validationTarget)) {
           // If the original expression contained no # refs or operators, it's a plain
           // text value (e.g. "P202-001", "Software Development") — preserve it as-is.
-          const hadExpressionMarkers = /#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(|[+*/]|\s-\s/i.test(expression);
+          const hadExpressionMarkers = /#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(|[+*/]|\s-\s(?=[#\d])/i.test(expression);
           if (!hadExpressionMarkers) {
             // Plain string value — not an expression, leave value unchanged
             logMessage(

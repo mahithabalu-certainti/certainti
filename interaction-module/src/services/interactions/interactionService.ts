@@ -952,7 +952,7 @@ export class InteractionService {
                 userId,
                 accountNumber,
                 interactionData.account_rid,
-                interactionInfo
+                interactionInfo.interactionInfo
 
 
 
@@ -1927,16 +1927,7 @@ export class InteractionService {
         if(interactionLevel.toLowerCase() === 'project')
         {
           timelineTypes = ["project"]
-        }
-        let eventName = eventNames.SENT;
-        if(is_interaction_followup)
-        {            
-          eventName = eventNames.REMAINDER
-        }
-        if(data.interaction_reinitiated)
-        {
-          eventName = eventNames.REINITIATED
-        }             
+        }           
         await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
                                             created_by: createdBy!,
                                             account_rid: data.account_rid!,
@@ -3828,7 +3819,7 @@ export class InteractionService {
         createdBy,
         accountNumber,
         data,
-        interactionInfo
+        interactionInfo.interactionInfo
       );
       if (emailResponse) {
         logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);

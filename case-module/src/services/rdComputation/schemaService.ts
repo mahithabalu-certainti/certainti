@@ -1,4 +1,4 @@
-import { QueryTypes, Sequelize } from "sequelize";
+import { QueryTypes, Sequelize, Op } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import { logMessage } from "../../utils/helpers";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -473,9 +473,9 @@ class RDCreditSchemaService {
                 final_credit,
                 total_qre: result?.totalQRE,
                 average_annual_gross_receipts: result?.averageAnnualGrossReceipts,
-                prev_year1_qre: state_code === 'NJ' ? (result?.prev1yearQRE || 0) : (stateRdData.prior3YearsQREs[0]?.qre || 0),
-                prev_year2_qre: state_code === 'NJ' ? (result?.prev2yearQRE || 0) : (stateRdData.prior3YearsQREs[1]?.qre || 0),
-                prev_year3_qre: state_code === 'NJ' ? (result?.prev3yearQRE || 0) : (stateRdData.prior3YearsQREs[2]?.qre || 0),
+                prev_year1_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev1yearQRE || 0) : (stateRdData.prior3YearsQREs[0]?.qre || 0),
+                prev_year2_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev2yearQRE || 0) : (stateRdData.prior3YearsQREs[1]?.qre || 0),
+                prev_year3_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev3yearQRE || 0) : (stateRdData.prior3YearsQREs[2]?.qre || 0),
                 total_wages: result?.totalWages,
                 total_supplies: result?.totalSupplies,
                 total_subcontract: result?.totalSubCon,
@@ -638,12 +638,21 @@ class RDCreditSchemaService {
 
     async getStateSummaryResults(accountNumber: string, case_rid: string, schemaName: string): Promise<{ [key: string]: any }> {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
-
+        if (!this.orgDbSequelize) {
+            this.orgDbSequelize = await initOrgSequelize();
+        }
+        const [stateConfig]: any = await this.orgDbSequelize.query(
+                  rawQueries.fetchConfiguration(schemaName, case_rid),
+                  { raw: true },
+                );
+        const stateInfo =
+                  Array.isArray(stateConfig) && stateConfig.length > 0 ? stateConfig[0] : {};
         // Get state calculations with state_rid and final_credit
         const stateCalculations = await RdCreditStateCalculations.findAll({
             attributes: ['state_rid', 'final_credit', 'total_qre'],
             where: {
-                case_rid
+                case_rid,
+                state_rid: { [Op.in]: stateInfo.states }
             },
             order: [['created_datetime', 'DESC']],
             raw: true
@@ -653,9 +662,7 @@ class RDCreditSchemaService {
         if (!this.mainDbSequelize) {
             this.mainDbSequelize = await initMainDbSequelize();
         }
-        if (!this.orgDbSequelize) {
-            this.orgDbSequelize = await initOrgSequelize();
-        }
+       
 
         // Get unique state_rids
         const stateRids = [...new Set(stateCalculations.map(calc => calc.state_rid))];

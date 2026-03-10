@@ -1,12 +1,16 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE, TYPES } from "../utils/constants";
+import { entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE, TYPES } from "../utils/constants";
 import { logMessage, setResourceSkillData } from "../utils/helpers";
 import resourceSkillSchemaService from "./resourceSkillSchemaService";
+import SchemaService from "./schemaService";
 
 export default class ResourceSkillGraphQlService {
-
-async updateInlineResourceSkill (data : any) {
+  private schemaService: SchemaService;
+  constructor() {
+    this.schemaService = new SchemaService();
+  }
+  async updateInlineResourceSkill (data : any) {
     const mainSequelize = await initMainDbSequelize();
     const orgSequelize = await initOrgSequelize();
     logMessage(`Updating inline resource skill with data: ${JSON.stringify(data)}`);
@@ -86,6 +90,20 @@ async updateInlineResourceSkill (data : any) {
                     if(newValue != oldValue) {
                         await orgSequelize.query(rawQueries.insertSkillHistory(schemaName, data, attributeName, oldValue, newValue))
                     }
+                    const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                        userId: data.userId!,
+                                        eventType: eventTypes.UI_HANDLER
+                                      });
+                    await this.schemaService.createAccountTimelineEntry(fetchParentAccount[0][0].r_number!, {
+                                  created_by: data.userId!,
+                                  account_rid: getResourceSkill[0][0].account_rid,
+                                  entity_rid: getResourceSkill[0][0]?.rid!,
+                                  entity_name: entityTypes.RESOURCE_SKILL,
+                                  created_by_name: userEventInfo.full_name,
+                                  event_type_rid: userEventInfo.event_type_rid,
+                                  event_name: eventNames.UPDATE,
+                                  descriptions:getResourceSkill[0][0].r_number || ''
+                                },["account"]);
                     let graphQlData : any = {};
                     graphQlData.is_graphQl = true
                     graphQlData.rid = data.resource_skill_rid

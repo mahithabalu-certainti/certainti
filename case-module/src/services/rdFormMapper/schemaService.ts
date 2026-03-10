@@ -53,10 +53,11 @@ class RdFormMapperSchemaService {
     countryRid: string,
     orgDb: Sequelize,
     accountNumber: string,
+    errorMessage: string,
   ): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
     await orgDb.query(rawQueries.updateFederalFormError(schemaName), {
-      replacements: { caseRid, countryRid },
+      replacements: { caseRid, countryRid, errorMessage },
       raw: true,
     });
     logMessage(`Federal form error updated for case RID: ${caseRid}`);
@@ -68,10 +69,11 @@ class RdFormMapperSchemaService {
     stateRid: string,
     orgDb: Sequelize,
     accountNumber: string,
+    errorMessage: string,
   ): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
     await orgDb.query(rawQueries.updateStateFormError(schemaName), {
-      replacements: { caseRid, countryRid, stateRid },
+      replacements: { caseRid, countryRid, stateRid, errorMessage },
       raw: true,
     });
     logMessage(`State form error updated for case RID: ${caseRid}`);
