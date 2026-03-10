@@ -1858,10 +1858,11 @@ class CaseSchemaService {
     schemaName: string,
     orgDb: Sequelize,
     accountRid: string,
-    activeStatusRid: string
+    activeStatusRid: string,
+    getCompletedTaskStatus : string
   ) {
     const [result] = await orgDb.query<CaseHeadersColumns>(
-      fetchCasesHeadersDatas(schemaName, caseRid, accountRid, activeStatusRid),
+      fetchCasesHeadersDatas(schemaName, caseRid, accountRid, activeStatusRid, getCompletedTaskStatus),
       { type: QueryTypes.SELECT }
     );
     if (result) {
