@@ -53,6 +53,9 @@ export class FederalComputationService {
                 fetchParentAccountRnumber[0][0].r_number
             );
             const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+            const [getCompletedTaskStatus] = await mainDb.query<{rid : string}>(rawQueries.getCaseTaskCompletedStatus(), {type : QueryTypes.SELECT});
+            let caseClosed : boolean;
+            caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid ? true : false
             const currentFiscalYear = caseDetails.fiscal_year;
             const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
             logMessage(`Country Info: ${JSON.stringify(countryInfo)}`);
@@ -60,7 +63,7 @@ export class FederalComputationService {
                 
                 let fetchEndDate : any = await orgDb.query(rawQueries.fetchFiscalEndDate(accountRid, schemaName));
                 let date = fetchEndDate[0][0].fiscal_end_date+`/${caseDetails.fiscal_year}`
-                const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb); //current yer QREs
+                const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb, caseClosed); //current yer QREs
                 logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
                 const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREsForFederal(accountRid, this.jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
                 logMessage(`Total Prior 3 Years QREs: ${JSON.stringify(prior3YearsQREs)}`);
@@ -85,7 +88,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
-                    const result = await federalComputation.computeForUk(caseRid, accountRid, schemaName, extractConfig);
+                    const result = await federalComputation.computeForUk(caseRid, accountRid, schemaName, extractConfig, caseClosed);
                     if(result.computedFields[0].projects !== null) {
                         let totalEmployees = 0.00
                         let totalEpw = 0.00
@@ -216,7 +219,7 @@ export class FederalComputationService {
                     let heatLightPower = Number(caseDetails?.heat_light_power) || 0.00
                     let otherCost = Number(caseDetails?.other) || 0.00
                     let calculatedPaidUnpaidAmount = paidAmount - unpaidAmountPaid
-                    const computedResult = await federalComputation.computeForIRL(caseRid, accountRid, schemaName, extractConfig);
+                    const computedResult = await federalComputation.computeForIRL(caseRid, accountRid, schemaName, extractConfig, caseClosed);
                     if(computedResult.computedFields[0].projects !== null) {
                         const uniqueCurrencyId = [...new Set(computedResult.computedFields[0].projects.map((d: any) => d.currency_rid))];
                         let getCurrency : any
@@ -294,7 +297,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
-                    const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
+                    const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo, caseClosed);
                     await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields, federalComputation.finalCredit,result,extractConfig); 
                     return {
                         statusCode : HttpStatus.SUCCESS,
@@ -309,7 +312,7 @@ export class FederalComputationService {
                 const extractConfig = this.extractConfigJson(config.config_json);
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
-                    const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo);
+                    const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo, caseClosed);
                     await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit,result,extractConfig); 
                     return {
                         statusCode : HttpStatus.SUCCESS,

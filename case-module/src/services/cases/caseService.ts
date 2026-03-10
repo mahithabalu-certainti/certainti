@@ -960,7 +960,8 @@ export class CaseService {
           isSorting,
           assignedProject,
           accessibleIds,
-          isExport
+          isExport,
+          mainDb
         );
 
       if (queryResult.length > 0) {

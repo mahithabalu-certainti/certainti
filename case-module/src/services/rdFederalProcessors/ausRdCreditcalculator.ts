@@ -26,9 +26,9 @@ export class RdCreditCalculatorForAus {
         return this.orgDbSequelize;
     }
 
-    async computeForAus(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any) {
+    async computeForAus(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, countryInfo : any, caseClosed : boolean) {
       const orgDb = await this.getOrgDb();
-      const calculateQreCost = await orgDb.query<CalculateQreCostType>(calculateRDExpenditureQuery(schemaName, caseRid, accountRid), {type : QueryTypes.SELECT});
+      const calculateQreCost = await orgDb.query<CalculateQreCostType>(calculateRDExpenditureQuery(schemaName, caseRid, accountRid, caseClosed), {type : QueryTypes.SELECT});
       if(calculateQreCost.length > 0) {
         let totalFteQreCost = 0.00;
         let totalSubconQreCost = 0.00;

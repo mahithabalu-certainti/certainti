@@ -22,9 +22,9 @@ export class RdCreditCalculatorForIRL {
         return this.orgDbSequelize;
     }
 
-    async computeForIRL(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig) {
+    async computeForIRL(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseClosed : boolean) {
         const orgDb = await this.getOrgDb();
-        const calculateComputedValues = await orgDb.query<ProjectComputeValue>(fetchProjectCostDetailsBasedOnCases(caseRid, accountRid, schemaName, extractConfig.reduction), {type : QueryTypes.SELECT})
+        const calculateComputedValues = await orgDb.query<ProjectComputeValue>(fetchProjectCostDetailsBasedOnCases(caseRid, accountRid, schemaName, extractConfig.reduction, caseClosed), {type : QueryTypes.SELECT})
         return {
             inputFields : {
                 country : this.country,
