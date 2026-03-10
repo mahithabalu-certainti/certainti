@@ -105,10 +105,11 @@ export class RdCreditCalculatorForNJ {
         let final_credit : Decimal;
         const average_tot_prev_qre = total_prev_qre.div(config.fixed_base_percent);
         const sub_credit = total_current_year_qre.minus(average_tot_prev_qre);
+        const sub_credit_final = sub_credit.lte(0) ? new Decimal(0) : sub_credit;
          if(isPriorYearQreZero) {
             final_credit =  total_current_year_qre
         } else {
-            final_credit = sub_credit
+            final_credit = sub_credit_final
         }
 
         return {
@@ -117,7 +118,7 @@ export class RdCreditCalculatorForNJ {
             total_current_year_qre : this.round2(total_current_year_qre),
             total_prev_qre : this.round2(total_prev_qre),
             average_tot_prev_qre: this.round2(average_tot_prev_qre),
-            sub_credit: this.round2(sub_credit),
+            sub_credit: this.round2(sub_credit_final),
             final_credit: this.round2(final_credit),
             costOfSupplies : this.round2(costOfSupplies),
             leaseComputerCost : this.round2(leaseComputerCost),

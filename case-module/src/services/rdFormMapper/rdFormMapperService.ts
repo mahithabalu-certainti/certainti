@@ -1454,10 +1454,12 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
 
     result = result.replace(/#YES\b/gi, "1").replace(/#NO\b/gi, "0");
 
-    result = result.replace(
-      /IF\s*\(([^)]*)\)\s*\{\s*THEN\s*([^}]*)\}\s*ELSE\s*\{\s*THEN\s*([^}]*)\}/gi,
-      "IF($1, $2, $3)",
-    );
+    // Delegate block-style IF / ELSE IF / ELSE normalisation to transformIfExpressions
+    // so both code paths use the same chain-aware logic. Only run it here if the
+    // expression hasn't been through transformIfExpressions yet (i.e. still has { THEN }).
+    if (/\{\s*THEN\b/i.test(result)) {
+      result = this.transformIfExpressions(result);
+    }
 
     // Add # if missing before id pattern
     result = result.replace(
@@ -1481,12 +1483,38 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
 private transformIfExpressions(expression: string) {
 let result = expression;
 
-// ✅ STEP 1: Convert block-style IF to comma-style IF
-// Supports:
-// IF(condition) { THEN expr1 } ELSE { THEN expr2 }
+// ✅ STEP 1: Convert block-style IF / ELSE IF / ELSE chains to nested IF(c,t,f) form.
+//
+// Handles both:
+//   IF(cond1) { THEN val1 } ELSE IF(cond2) { THEN val2 } ELSE { THEN val3 }
+//   IF(cond1) { THEN val1 } ELSE { THEN val2 }
+//
+// ELSE IF branches are nested right-to-left:
+//   IF(c1, t1, IF(c2, t2, elseVal))
 result = result.replace(
-  /IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}\s*ELSE\s*\{\s*THEN\s*([\s\S]*?)\s*\}/gi,
-  "IF($1, $2, $3)"
+  /IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}((?:\s*ELSE\s+IF\s*\([\s\S]*?\)\s*\{\s*THEN\s*[\s\S]*?\s*\})*)\s*(?:ELSE\s*\{\s*THEN\s*([\s\S]*?)\s*\})?/gi,
+  (_match: string, cond1: string, then1: string, elseIfBlock: string, finalElse: string | undefined) => {
+    // Parse all ELSE IF(...) { THEN ... } fragments
+    const elseIfBranches: { cond: string; then: string }[] = [];
+    const elseIfPattern = /ELSE\s+IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}/gi;
+    let m: RegExpExecArray | null;
+    while ((m = elseIfPattern.exec(elseIfBlock)) !== null) {
+      if (m[1] !== undefined && m[2] !== undefined) {
+        elseIfBranches.push({ cond: m[1].trim(), then: m[2].trim() });
+      }
+    }
+
+    // Build nested IF from right to left
+    let nested = finalElse !== undefined ? finalElse.trim() : '""';
+    for (let i = elseIfBranches.length - 1; i >= 0; i--) {
+      const branch = elseIfBranches[i];
+      if (branch) {
+        nested = `IF(${branch.cond}, ${branch.then}, ${nested})`;
+      }
+    }
+
+    return `IF(${cond1.trim()}, ${then1.trim()}, ${nested})`;
+  }
 );
 
   const ifRegex = /\bIF\s*\(/i;
