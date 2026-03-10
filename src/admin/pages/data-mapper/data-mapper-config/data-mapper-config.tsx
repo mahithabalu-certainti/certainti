@@ -188,7 +188,7 @@ const DataMapperConfig: React.FC = () => {
 
     const payload = {
       rid: mapperId || '',
-      status_action: flag as 'drop' | 'submit',
+      status_action: flag as 'draft' | 'submit',
       mappings: mappings.map((mapping) => ({
         rid: mapping.rid,
         created_datetime: mapping.created_datetime || '',
