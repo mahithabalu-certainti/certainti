@@ -155,7 +155,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   });
   const [reInitiateModalOpen, setReInitiateModalOpen] = useState(false);
   const [showAssessmentToggle, setShowAssessmentToggle] =
-    useState<boolean>(true);
+    useState<boolean>(false);
 
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);

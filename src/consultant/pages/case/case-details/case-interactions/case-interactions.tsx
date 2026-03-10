@@ -163,7 +163,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   const [searchText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
   const [showAssessmentToggle, setShowAssessmentToggle] =
-    useState<boolean>(true);
+    useState<boolean>(false);
 
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);

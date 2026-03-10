@@ -31,6 +31,7 @@ import { useToast } from '../../../../hooks';
 import {
   useAccountCreateInteraction,
   useCreateInteraction,
+  useGetAssessmentSource,
   useGetInteractionTemplate,
   useGetInteractionTemplateDetails,
   useInteractionDetails,
@@ -61,6 +62,7 @@ import {
   AllPermissions,
   useGetInteractionLevel,
   useGetInteractionStatus,
+  useGetStatus,
   // useGetInteractionStatusById,
 } from '../../../../common-service';
 import { RootState } from '../../../../store/store';
@@ -167,6 +169,8 @@ const CaseInteractionForm = () => {
   const interactionStatus = useGetInteractionStatus();
   const getInteractionLevel = useGetInteractionLevel();
   const interactionTemplates = useGetInteractionTemplate();
+  const accountStatusOptions = useGetStatus();
+  const assessmentSource = useGetAssessmentSource();
   const interactionTemplateDetails = useGetInteractionTemplateDetails(
     currentTemplate.value as string
   );
@@ -624,6 +628,13 @@ const CaseInteractionForm = () => {
         ...payload,
         trigger_send: !!trigger_send,
         ...(recipiants?.email && { email_info: recipiants }),
+        interaction_assessment_source_rid: assessmentSource.data?.data.find(
+          (option) =>
+            option.interaction_assessment_source_name.toLowerCase() === 'manual'
+        )?.rid,
+        interaction_status_rid: accountStatusOptions?.data?.data?.status.find(
+          (option) => option.status_name.toLowerCase() === 'active'
+        )?.rid,
       },
       {
         onError: () => {

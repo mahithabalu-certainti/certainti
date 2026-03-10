@@ -227,6 +227,7 @@ export interface DataMapperFieldMapping {
 
 export interface DataMapperConfigPayload {
   rid: string;
+  status_action: 'drop' | 'submit';
   mappings: DataMapperFieldMapping[];
 }
 

@@ -188,7 +188,7 @@ const DataMapperConfig: React.FC = () => {
 
     const payload = {
       rid: mapperId || '',
-      flag,
+      status_action: flag as 'drop' | 'submit',
       mappings: mappings.map((mapping) => ({
         rid: mapping.rid,
         created_datetime: mapping.created_datetime || '',
@@ -289,21 +289,28 @@ const DataMapperConfig: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3'>
-          <TextButton
-            label='Save as Draft'
-            loading={
-              activeFlag === FlagTypeEnum.draft &&
-              updateDataMapperConfig.isPending
-            }
-            disabled={activeFlag !== null && activeFlag !== FlagTypeEnum.draft}
-            onClick={() => handleSubmit(FlagTypeEnum.draft)}
-            sx={{
-              width: '110px',
-              minWidth: '110px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-          />
+          {mappingData &&
+            (mappingData?.formDetail?.status_name?.toLowerCase() === 'draft' ||
+              mappingData?.formDetail?.status_name?.toLowerCase() ===
+                'extraction completed') && (
+              <TextButton
+                label='Save as Draft'
+                loading={
+                  activeFlag === FlagTypeEnum.draft &&
+                  updateDataMapperConfig.isPending
+                }
+                disabled={
+                  activeFlag !== null && activeFlag !== FlagTypeEnum.draft
+                }
+                onClick={() => handleSubmit(FlagTypeEnum.draft)}
+                sx={{
+                  width: '110px',
+                  minWidth: '110px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
+              />
+            )}
           <TextButton
             label='Submit'
             loading={

@@ -151,6 +151,8 @@ export type InteractionFormPayload = {
   trigger_send?: boolean;
   interaction_level_rid?: string;
   projects?: SendIntractionProject[];
+  interaction_assessment_source_rid?: string;
+  interaction_status_rid?: string;
 };
 
 export interface InteractionQuestionErrors {
