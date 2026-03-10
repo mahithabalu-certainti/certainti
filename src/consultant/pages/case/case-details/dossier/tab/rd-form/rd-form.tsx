@@ -130,7 +130,7 @@ const RDForm: React.FC<RDFormProps> = ({
       }
     );
   };
-
+  const isRDFormSignOff = caseDetails?.rd_form_signoff;
   // Auto-initiate Generate if not already done
   useEffect(() => {
     if (
@@ -140,14 +140,18 @@ const RDForm: React.FC<RDFormProps> = ({
       caseDetails?.case_total_projects !== 0 &&
       caseDetails?.case_total_projects !== '0'
     ) {
-      handleRDFormMapperGenerate();
+      if (isRDFormSignOff) {
+        handleRDFormMapperPreview();
+      } else {
+        handleRDFormMapperGenerate();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFinancialWorkingSignoff, rdformGenerateStatus, caseDetails]);
 
   // Call Preview when status is true or tab/region changes
   useEffect(() => {
-    if (rdformGenerateStatus) {
+    if (rdformGenerateStatus || isRDFormSignOff) {
       handleRDFormMapperPreview();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
