@@ -902,6 +902,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   m.milestone_name, m.milestone_description, m.status_rid AS "milestone_status_rid", m.case_filing_type_rid
   FROM
   ${MAIN_SCHEMA_NAME}.milestone_template m
+  where m.case_filing_type_rid = '${filingTypeRid}'
   ORDER BY m.r_number ASC
   ),
   fetch_task_data AS (
@@ -918,6 +919,8 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   t.task_type_rid = '${taskTypeRid}'
   AND
   t.status_rid = '${statusId}'
+  AND
+  m.case_filing_type_rid = '${filingTypeRid}'
   ORDER BY t.milestone_sequence ASC
   ),
   fetch_workflow_connector_map AS (
@@ -1004,7 +1007,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   ct.case_rid, ct.account_rid, ct.rid
   ),
   fetch_task AS (
-  SELECT cm.rid, cm.account_rid, cm.case_rid,
+  SELECT cm.rid, cm.account_rid, cm.case_rid, cm.case_filing_type_rid,
   array_agg(jsonb_build_object(
   'rid', t.rid,
   'task_name', t.task_name,
@@ -1074,11 +1077,12 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   AND
   t.account_rid = '${accountRid}'
   GROUP BY
-  cm.rid, cm.account_rid, cm.case_rid
+  cm.rid, cm.account_rid, cm.case_rid,cm.case_filing_type_rid
   )
   SELECT array_agg(jsonb_build_object(
   'rid', m.rid,
   'milestone_name', m.milestone_name,
+  'case_filing_type_rid', m.case_filing_type_rid,
   'task_count', (SELECT COUNT(DISTINCT ct.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.case_milestone cm ON ct.milestone_template_rid = cm.rid where ct.milestone_template_rid = m.rid AND ct.account_rid = '${accountRid}' AND ct.case_rid = '${caseRid}'),
   'tasks', ft.tasks
   ))
