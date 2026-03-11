@@ -193,6 +193,9 @@ export const CaseDetails = () => {
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
   const isFinancialWorkingSignoff = caseData?.financial_working_signoff;
+  const isAmendmentView =
+    caseData?.filing_type_name === 'Amendment' &&
+    caseData?.parent_case_rid !== '';
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -873,6 +876,7 @@ export const CaseDetails = () => {
               setIsActionItemsExpanded={handleToggleActionItems}
               isCaseTeamCreated={isCaseTeamCreated}
               refetchCaseDetails={refetchCaseDetails}
+              isAmendmentView={isAmendmentView}
             />
           </div>
         );

@@ -73,6 +73,7 @@ interface WorkBreakDownProps {
   setIsActionItemsExpanded?: (expanded: boolean) => void;
   isCaseTeamCreated?: boolean;
   refetchCaseDetails: () => void;
+  isAmendmentView?: boolean;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -85,6 +86,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   setIsActionItemsExpanded,
   isCaseTeamCreated,
   refetchCaseDetails,
+  isAmendmentView,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -95,6 +97,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const { successToast, errorToast } = useToast();
   const tabParam = searchParams.get('tab') || 'milestone';
+  const amendmentTabParam = searchParams.get('amendmentTab') || 'primary';
   const queryClient = useQueryClient();
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [appliedFilters, setAppliedFilters] = useState<
@@ -108,7 +111,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   const [seachText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
   const [isManualRefresh, setIsManualRefresh] = useState(false);
-
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
@@ -706,9 +708,18 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     { label: 'Milestone', value: 'milestone' },
     { label: 'Case Task', value: 'case_task' },
   ];
+  const amendmentTabs = [
+    { label: 'Primary', value: 'primary' },
+    { label: 'Amendment', value: 'amendment' },
+  ];
 
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
+    navigate(`?${searchParams.toString()}`, { replace: true });
+  };
+
+  const handleAmendmentTabChange = (value: string) => {
+    searchParams.set('amendmentTab', value);
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
@@ -872,6 +883,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 : undefined
             }
           />
+          {isAmendmentView && (
+            <SectionHeaderTab
+              tabs={amendmentTabs}
+              onTabChange={handleAmendmentTabChange}
+              defaultValue={amendmentTabParam}
+            />
+          )}
           <div
             className={`border border-t-0 border-[#CBD6E2] ${
               isActionItemsExpanded
@@ -879,69 +897,150 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 : 'max-h-[calc(100vh-418px)]'
             } overflow-auto`}
           >
-            {tabParam === 'milestone' && (
-              <>
-                {isError ? (
-                  <div className='flex items-center justify-center h-full p-40 text-red-500'>
-                    Error loading data.
-                  </div>
-                ) : kanbanData?.data && kanbanData.data.length === 0 ? (
-                  <div className='flex items-center justify-center h-full p-40 text-gray-500'>
-                    {kanbanData.statusMessage || 'No data available'}
-                  </div>
-                ) : (
-                  <KanbanBoard
-                    data={kanbanData?.data || []}
-                    isLoading={isLoading || isManualRefresh}
-                    statusData={statusData}
-                    priorityData={priorityData}
-                    tagData={tagData}
-                    checklistData={checklistData}
-                    isExpanded={isActionItemsExpanded}
-                    userData={userData}
-                    roleOptions={roleOptionsQuery.data || []}
-                    onTaskClick={setOpenTaskId}
-                    isCreateTaskHide={!isCreateTaskEnabled}
-                    onCreateTask={handleCreateTask}
-                    onAddComment={handleAddComment}
-                    onUpdateComment={handleUpdateComment}
-                    onDeleteComment={handleDeleteComment}
-                    onAddCollaborator={handleAddCollaborator}
-                    accountId={accountId || ''}
-                    caseId={caseId || ''}
-                    fieldVisibility={{ fiscalYear: true }}
-                    caseStartDate={caseStartDate}
-                    caseEndDate={caseEndDate}
-                  />
-                )}
-                {openTaskId && (
-                  <TaskDetailModal
-                    taskId={openTaskId}
-                    isOpen={true}
-                    onClose={() => setOpenTaskId(null)}
-                    accountId={accountId!}
-                    caseId={caseId!}
-                    onTaskUpdate={handleTaskSaved}
-                    statusData={statusData}
-                    priorityData={priorityData}
-                    tagData={tagData}
-                    availableUsers={userData}
-                    roleOptions={roleOptionsQuery.data || []}
-                    checklistData={checklistData}
-                    fieldVisibility={fieldHiddenMap}
-                    fieldDisabled={fieldDisabledMap}
-                    onAddComment={handleAddComment}
-                    onUpdateComment={handleUpdateComment}
-                    onDeleteComment={handleDeleteComment}
-                    onAddCollaborator={handleAddCollaborator}
-                    caseStartDate={caseStartDate}
-                    caseEndDate={caseEndDate}
-                    isCaseTeamCreated={isCaseTeamCreated}
-                    refetchCaseDetails={refetchCaseDetails}
-                  />
-                )}
-              </>
-            )}
+            {tabParam === 'milestone' &&
+              (() => {
+                if (isAmendmentView) {
+                  const amendmentData = (kanbanData?.data || []).filter(
+                    (item: any) => item.filing_type_name === 'Amendment'
+                  );
+                  const primaryData = (kanbanData?.data || []).filter(
+                    (item: any) => item.filing_type_name !== 'Amendment'
+                  );
+                  const activeData =
+                    amendmentTabParam === 'amendment'
+                      ? amendmentData
+                      : primaryData;
+
+                  const sharedKanbanProps = {
+                    isLoading: isLoading || isManualRefresh,
+                    statusData,
+                    priorityData,
+                    tagData,
+                    checklistData,
+                    isExpanded: isActionItemsExpanded,
+                    userData,
+                    roleOptions: roleOptionsQuery.data || [],
+                    onTaskClick: setOpenTaskId,
+                    isCreateTaskHide: !isCreateTaskEnabled,
+                    onCreateTask: handleCreateTask,
+                    onAddComment: handleAddComment,
+                    onUpdateComment: handleUpdateComment,
+                    onDeleteComment: handleDeleteComment,
+                    onAddCollaborator: handleAddCollaborator,
+                    accountId: accountId || '',
+                    caseId: caseId || '',
+                    fieldVisibility: { fiscalYear: true },
+                    caseStartDate,
+                    caseEndDate,
+                  };
+
+                  return (
+                    <>
+                      {isError ? (
+                        <div className='flex items-center justify-center h-full p-40 text-red-500'>
+                          Error loading data.
+                        </div>
+                      ) : activeData.length === 0 ? (
+                        <div className='flex items-center justify-center h-full p-40 text-gray-500'>
+                          {kanbanData?.statusMessage || 'No data available'}
+                        </div>
+                      ) : (
+                        <KanbanBoard data={activeData} {...sharedKanbanProps} />
+                      )}
+                      {openTaskId && (
+                        <TaskDetailModal
+                          taskId={openTaskId}
+                          isOpen={true}
+                          onClose={() => setOpenTaskId(null)}
+                          accountId={accountId!}
+                          caseId={caseId!}
+                          onTaskUpdate={handleTaskSaved}
+                          statusData={statusData}
+                          priorityData={priorityData}
+                          tagData={tagData}
+                          availableUsers={userData}
+                          roleOptions={roleOptionsQuery.data || []}
+                          checklistData={checklistData}
+                          fieldVisibility={fieldHiddenMap}
+                          fieldDisabled={fieldDisabledMap}
+                          onAddComment={handleAddComment}
+                          onUpdateComment={handleUpdateComment}
+                          onDeleteComment={handleDeleteComment}
+                          onAddCollaborator={handleAddCollaborator}
+                          caseStartDate={caseStartDate}
+                          caseEndDate={caseEndDate}
+                          isCaseTeamCreated={isCaseTeamCreated}
+                          refetchCaseDetails={refetchCaseDetails}
+                        />
+                      )}
+                    </>
+                  );
+                }
+
+                return (
+                  <>
+                    {isError ? (
+                      <div className='flex items-center justify-center h-full p-40 text-red-500'>
+                        Error loading data.
+                      </div>
+                    ) : kanbanData?.data && kanbanData.data.length === 0 ? (
+                      <div className='flex items-center justify-center h-full p-40 text-gray-500'>
+                        {kanbanData.statusMessage || 'No data available'}
+                      </div>
+                    ) : (
+                      <KanbanBoard
+                        data={kanbanData?.data || []}
+                        isLoading={isLoading || isManualRefresh}
+                        statusData={statusData}
+                        priorityData={priorityData}
+                        tagData={tagData}
+                        checklistData={checklistData}
+                        isExpanded={isActionItemsExpanded}
+                        userData={userData}
+                        roleOptions={roleOptionsQuery.data || []}
+                        onTaskClick={setOpenTaskId}
+                        isCreateTaskHide={!isCreateTaskEnabled}
+                        onCreateTask={handleCreateTask}
+                        onAddComment={handleAddComment}
+                        onUpdateComment={handleUpdateComment}
+                        onDeleteComment={handleDeleteComment}
+                        onAddCollaborator={handleAddCollaborator}
+                        accountId={accountId || ''}
+                        caseId={caseId || ''}
+                        fieldVisibility={{ fiscalYear: true }}
+                        caseStartDate={caseStartDate}
+                        caseEndDate={caseEndDate}
+                      />
+                    )}
+                    {openTaskId && (
+                      <TaskDetailModal
+                        taskId={openTaskId}
+                        isOpen={true}
+                        onClose={() => setOpenTaskId(null)}
+                        accountId={accountId!}
+                        caseId={caseId!}
+                        onTaskUpdate={handleTaskSaved}
+                        statusData={statusData}
+                        priorityData={priorityData}
+                        tagData={tagData}
+                        availableUsers={userData}
+                        roleOptions={roleOptionsQuery.data || []}
+                        checklistData={checklistData}
+                        fieldVisibility={fieldHiddenMap}
+                        fieldDisabled={fieldDisabledMap}
+                        onAddComment={handleAddComment}
+                        onUpdateComment={handleUpdateComment}
+                        onDeleteComment={handleDeleteComment}
+                        onAddCollaborator={handleAddCollaborator}
+                        caseStartDate={caseStartDate}
+                        caseEndDate={caseEndDate}
+                        isCaseTeamCreated={isCaseTeamCreated}
+                        refetchCaseDetails={refetchCaseDetails}
+                      />
+                    )}
+                  </>
+                );
+              })()}
             {tabParam === 'case_task' && (
               <CaseTask
                 caseId={caseId}
