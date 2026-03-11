@@ -202,11 +202,16 @@ export const useDossierInitiate = () => {
 };
 export const ExportDossierPackage = async (
   accountRid: string,
-  caseRid: string
+  caseRid: string,
+  downloaded_list: string[]
 ): Promise<DossierPackageResponse | undefined> => {
   try {
-    const url = getDossierSheetStatusURL(accountRid, caseRid);
-    const response = await caseServiceApi.get<DossierPackageResponse>(url);
+    const url = getDossierSheetStatusURL();
+    const response = await caseServiceApi.post<DossierPackageResponse>(url, {
+      case_rid: caseRid,
+      account_rid: accountRid,
+      downloaded_list,
+    });
     const status = response.data;
     const downloadUrl = status?.data?.browse_url;
 
@@ -221,7 +226,6 @@ export const ExportDossierPackage = async (
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = filename;
-    // link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -233,22 +237,13 @@ export const ExportDossierPackage = async (
   }
 };
 
-export const fetchDossierSheetStatus = async (
-  accountRid: string,
-  caseRid: string
-): Promise<DossierPackageResponse> => {
-  const url = getDossierSheetStatusURL(accountRid, caseRid);
-  const response = await caseServiceApi.get<DossierPackageResponse>(url);
-  return response.data;
-};
-
 export const useDossierSheetStatus = () => {
   return useMutation<
     DossierPackageResponse | undefined,
     Error,
-    { accountRid: string; caseRid: string }
+    { accountRid: string; caseRid: string; downloaded_list: string[] }
   >({
-    mutationFn: ({ accountRid, caseRid }) =>
-      ExportDossierPackage(accountRid, caseRid),
+    mutationFn: ({ accountRid, caseRid, downloaded_list }) =>
+      ExportDossierPackage(accountRid, caseRid, downloaded_list),
   });
 };
