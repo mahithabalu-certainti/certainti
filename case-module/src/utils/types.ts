@@ -1119,3 +1119,9 @@ export interface CaseCountryComputedType {
   final_credit : string
   country_name : string
 }
+export interface RevokeSignoffRequest {
+  case_rid : string
+  account_rid : string
+  type : string
+  userId : string
+}
