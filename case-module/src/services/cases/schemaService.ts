@@ -310,6 +310,14 @@ class CaseSchemaService {
         }
       }
 
+        const fetchTaskTypeRid = await this.getTaskType();
+        const fetchTaskStatusRid = await this.getTaskStatus()
+        if (fetchTaskTypeRid) {
+          await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
+            caseRequest.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
+            fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
+        }
+
         
 
       //clone case team
@@ -462,6 +470,15 @@ class CaseSchemaService {
         );
         return cloneResponse;
       }
+
+        const [filingType]: any[] = await this.mainDbSequelize!.query(
+        rawQueries.fetchFilingTypeByName(caseFilingTypes.regular),
+        {
+          replacements: { rid: caseRequest.filing_type_rid },
+          type: "SELECT",
+        }
+      );
+      
       //  await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
@@ -473,7 +490,7 @@ class CaseSchemaService {
         const fetchTaskStatusRid = await this.getTaskStatus()
         if (fetchTaskTypeRid) {
           await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
-            casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
+            filingType.rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
             fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
         }
        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({

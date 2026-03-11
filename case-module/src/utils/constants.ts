@@ -1029,6 +1029,13 @@ export const rawQueries = {
       return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN (${ids})`
     }
   },
+  getCaseFilingTypeByIds(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, filing_type_name FROM ${MAIN_SCHEMA_NAME}.case_filing_type WHERE rid IN (${ids})`
+    }
+  },
   getAllProjectsByAccountId(schemaName: string, accountRid: string, accessibleIds: string[]) {
     let query = `SELECT rid, project_name FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`;
     if (Array.isArray(accessibleIds) && accessibleIds.length > 0) {
