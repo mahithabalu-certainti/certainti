@@ -216,7 +216,8 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     // For date fields, treat empty/falsy values as null (not an empty string)
     updates.forEach((update) => {
       const key = update.editId || update.columnId;
-      const isDateField = key === 'effective_end_date' || key === 'effective_start_date';
+      const isDateField =
+        key === 'effective_end_date' || key === 'effective_start_date';
       updateData[key] = isDateField && !update.value ? null : update.value;
     });
 
