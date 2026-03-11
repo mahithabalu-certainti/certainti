@@ -247,7 +247,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                 .replace(/^[ \t]*[-*•][ \t]*/gm, '')
                 .replace(/^[ \t]+/gm, '')
                 .replace(/([^ \n])\s*\*\*(.*?)\*\*/g, '$1\n\n**$2**')
-                .replace(/\*\*(.*?)\*\*:\s*/g, '**$1**:\n\n');
+                .replace(/\*\*(.*?)\*\*:\s*/g, '**$1**:\n\n')
+                .replace(/^\*([^*\n]+\*\*)/gm, '**$1');
               return (
                 <div key={index} className='flex flex-col'>
                   {/* Label as Header Banner */}

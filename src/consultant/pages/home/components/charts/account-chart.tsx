@@ -53,6 +53,7 @@ const AccountChart: React.FC<Props> = ({
         acc.account,
         y.progress,
         blendWithWhite(barColor, 0.4),
+        `${y.progress}%`,
         `FY-${y.year}:  ${y.progress}%`,
       ]);
     });
@@ -61,7 +62,13 @@ const AccountChart: React.FC<Props> = ({
   }, [data, colors]);
 
   const chartData: (string | number | object | null)[][] = [
-    ['Account', 'Progress', { role: 'style' }, { role: 'tooltip' }],
+    [
+      'Account',
+      'Progress',
+      { role: 'style' },
+      { role: 'annotation' },
+      { role: 'tooltip' },
+    ],
     ...chartRows,
   ];
 
