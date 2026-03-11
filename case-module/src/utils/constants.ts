@@ -2481,11 +2481,13 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+  dossierPackageCreated: "Dossier Package",
 }
 
 export const entityNames = {
   case: "Case",
   task: "Task",
+  dossier:"Dossier"
 }
 
 
