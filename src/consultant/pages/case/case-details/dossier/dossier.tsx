@@ -165,7 +165,7 @@ const Dossier: React.FC<DossierProps> = ({
     'Resource Summary',
     'Project Documents',
     'Approval Status',
-    'RD Form',
+    'RD Forms',
   ];
 
   const [selectedDownloadItems, setSelectedDownloadItems] =
