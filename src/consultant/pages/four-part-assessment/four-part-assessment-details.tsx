@@ -185,14 +185,6 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     },
   ];
 
-  const description: DetailItem[] = [
-    {
-      label: 'Summary',
-      value: data?.record_information?.tracker_one_liner || '',
-      key: 'summary_judgment',
-    },
-  ];
-
   const handleInteractionNavigate = (
     interaction: FourPartAssessmentInteractionQuestions | null
   ) => {
@@ -258,12 +250,14 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
               customStyle='pt-0 mt-0'
             />
             {!hideSummary && (
-              <DetailsSection
-                title='Summary'
-                data={description}
-                fullColumn={true}
-                customStyle='pt-[1px]'
-              />
+              <div className='pt-[1px]'>
+                <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+                  Summary
+                </div>
+                <div className='font-medium text-[13px] text-[#425A76] px-6 my-[6px]'>
+                  {data?.record_information?.tracker_one_liner || '-'}
+                </div>
+              </div>
             )}
           </>
         )}
