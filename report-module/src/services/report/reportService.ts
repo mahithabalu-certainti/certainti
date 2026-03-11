@@ -855,7 +855,7 @@ export class ReportService implements IReportService {
             const activeCountriesRidsSet = new Set<string>();
             activeCountriesRids.forEach((c: any) => activeCountriesRidsSet.add(c.country_rid));
 
-            const countryWiseApprovedAmount = new Map<string, { country_rid: string, country_name: string, country_code: string, approved: number }>();
+            const countryWiseApprovedAmount = new Map<string, { country_rid: string, country_name: string, country_code: string, currency_code?: string, currency_symbol?: string, approved: number }>();
 
             const finalAccountIds = accountIds && accountIds.length > 0 ? accountIds : undefined;
 
@@ -875,6 +875,8 @@ export class ReportService implements IReportService {
                         country_rid: countryDetails?.country_rid || '',
                         country_name: countryDetails?.country_name || '',
                         country_code: countryDetails?.country_code || '',
+                        currency_code: row.currency_code || 'USD',
+                        currency_symbol: row.currency_symbol || '$',
                         approved: 0
                     });
                 }

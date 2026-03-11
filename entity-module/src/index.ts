@@ -3,6 +3,7 @@ dotenv.config();
 import initExpressServer from "./servers/expressServer";
 import initGraphQLServer from "./servers/graphqlServer";
 import { errorLog, logMessage } from "./utils/helpers";
+import "./utils/cronScheduler";
 
 const PORT = process.env.SERVER_PORT || 3000;
 
