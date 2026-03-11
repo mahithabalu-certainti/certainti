@@ -233,6 +233,7 @@ export class ChildCaseService extends CaseService {
             message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
             data: { cases: closedCases.map(d => ({
                 rid: d.rid,
+                fiscal_year: d.fiscal_year,
                 case_full_name: accountInfo.account_name + '-' + accountInfo.country_code + '-' + d.fiscal_year + '-' + d.case_name
             })) },
           };
@@ -323,7 +324,7 @@ async initiateCreateDossierForm (data : any) {
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,token : data.accessToken})}],
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,accessToken : data.accessToken})}],
         
     })
     console.log(`Message : ${JSON.stringify(result)}`)
