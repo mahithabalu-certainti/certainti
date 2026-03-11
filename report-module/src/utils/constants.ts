@@ -18,6 +18,11 @@ export const HttpStatus = {
   SUCCESS_NOTIFICATION: "Operation completed successfully!",
 };
 
+export const US_FLAG = {
+  currency_code: "USD",
+  currency_symbol: "$",
+};
+
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const MAIN_SCHEMA_NAME = "trd365";
 export const SCHEMANAME_PREFIX = "trd365_";
@@ -1102,14 +1107,17 @@ export const rawQueries = {
 
     const replacements: any = {};
     let projectFilters = ` WHERE 1 = 1 `;
+    let rccFilters = ` WHERE 1 = 1 `;
 
     if (accountIds && accountIds.length > 0) {
       projectFilters += ` AND p.account_rid IN (:accountIds) `;
+      rccFilters += ` AND cs.account_rid IN (:accountIds) `;
       replacements.accountIds = accountIds;
     }
 
     if (fiscalYear) {
       projectFilters += ` AND p.fiscal_year = :fiscalYear `;
+      rccFilters += ` AND cs.fiscal_year = :fiscalYear `;
       replacements.fiscalYear = fiscalYear;
     }
 
@@ -1118,24 +1126,43 @@ export const rawQueries = {
       c.rid AS country_rid,
       c.country_name,
       c.country_code,
+      '${US_FLAG.currency_code}' as currency_code,
+      '${US_FLAG.currency_symbol}' as currency_symbol,
 
-      COALESCE(p.total_project_cost, 0) AS total_project_cost,
-      COALESCE(p.total_fte_cost, 0) AS total_fte_cost,
-      COALESCE(p.total_subcon_cost, 0) AS total_subcon_cost,
-      COALESCE(p.total_nonlabor_cost, 0) AS total_nonlabor_cost
+      ROUND(COALESCE(p.total_project_cost, 0), 2) AS total_project_cost,
+      ROUND(COALESCE(p.qre_cost, 0), 2) AS qre_cost,
+      ROUND(COALESCE(p.qualified_project_cost, 0), 2) AS qualified_project_cost,
+      ROUND(COALESCE(rcc.final_credit_computed, 0), 2) AS rd_credits,
+      ROUND(COALESCE(rcc.final_credit_submitted, 0), 2) AS rd_credits_submitted,
+      ROUND(COALESCE(rcc.final_credit_approved, 0), 2) AS rd_credits_approved
     FROM ${MAIN_SCHEMA_NAME}.country c
-
     LEFT JOIN (
       SELECT 
         p.country_rid,
-        SUM(p.total_cost_prj) AS total_project_cost,
-        SUM(p.total_cost_fte_prj) AS total_fte_cost,
-        SUM(p.total_cost_subcon_prj) AS total_subcon_cost,
-        SUM(p.total_cost_nonlabor_prj) AS total_nonlabor_cost
+        SUM(p.total_cost_prj * COALESCE(cc.conversion_rate, 1)) AS total_project_cost,
+        SUM(p.qre_final * COALESCE(cc.conversion_rate, 1)) AS qre_cost,
+        SUM((CASE WHEN p.is_qualified THEN p.total_cost_prj ELSE 0 END) * COALESCE(cc.conversion_rate, 1)) AS qualified_project_cost
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency p_curr 
+        ON p_curr.rid = p.currency_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency_conversion cc 
+        ON cc.from_currency_code = p_curr.currency_code 
+        AND cc.to_currency_code = '${US_FLAG.currency_code}'
       ${projectFilters}
       GROUP BY p.country_rid
     ) p ON c.rid = p.country_rid
+    LEFT JOIN (
+     SELECT 
+        rcc.country_rid,
+        SUM(CASE WHEN rcc.final_credit = 'NaN' THEN 0 ELSE rcc.final_credit END) AS final_credit_computed,
+        SUM(CASE WHEN rcc.final_credit_submitted = 'NaN' THEN 0 ELSE rcc.final_credit_submitted END) AS final_credit_submitted,
+        SUM(CASE WHEN rcc.final_credit_approved = 'NaN' THEN 0 ELSE rcc.final_credit_approved END) AS final_credit_approved
+      FROM ${MAIN_SCHEMA_NAME}.rd_credit_calculations_summary rcc
+      JOIN ${MAIN_SCHEMA_NAME}.case_summary cs 
+        ON rcc.case_rid = cs.case_rid
+      ${rccFilters}
+      GROUP BY rcc.country_rid
+    ) rcc ON c.rid = rcc.country_rid
 
     WHERE 1 = 1
   `;
@@ -1184,10 +1211,15 @@ export const rawQueries = {
       SELECT 
         p.country_rid,
         p.account_rid,
-        SUM(p.total_cost_prj) AS total_project_cost,
-        SUM(CASE WHEN p.is_qualified THEN p.total_cost_prj ELSE 0 END) AS qualified_project_cost,
-        SUM(p.qre_final) AS qre_cost
+        SUM(p.total_cost_prj * COALESCE(cc.conversion_rate, 1)) AS total_project_cost,
+        SUM((CASE WHEN p.is_qualified THEN p.total_cost_prj ELSE 0 END) * COALESCE(cc.conversion_rate, 1)) AS qualified_project_cost,
+        SUM(p.qre_final * COALESCE(cc.conversion_rate, 1)) AS qre_cost
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency p_curr 
+        ON p_curr.rid = p.currency_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency_conversion cc 
+        ON cc.from_currency_code = p_curr.currency_code 
+        AND cc.to_currency_code = '${US_FLAG.currency_code}'
       ${projectFilters}
       GROUP BY p.country_rid, p.account_rid
     ),
@@ -1218,14 +1250,16 @@ export const rawQueries = {
       c.rid AS country_rid,
       c.country_name,
       c.country_code,
+      '${US_FLAG.currency_code}' as currency_code,
+      '${US_FLAG.currency_symbol}' as currency_symbol,
 
-      COALESCE(p.total_project_cost, 0) AS total_project_cost,
-      COALESCE(p.qualified_project_cost, 0) AS qualified_project_cost,
-      COALESCE(p.qre_cost, 0) AS qre_cost,
+      ROUND(COALESCE(p.total_project_cost, 0), 2) AS total_project_cost,
+      ROUND(COALESCE(p.qualified_project_cost, 0), 2) AS qualified_project_cost,
+      ROUND(COALESCE(p.qre_cost, 0), 2) AS qre_cost,
 
-      COALESCE(r.final_credit_computed, 0) AS final_credit_computed,
-      COALESCE(r.final_credit_submitted, 0) AS final_credit_submitted,
-      COALESCE(r.final_credit_approved, 0) AS final_credit_approved
+      ROUND(COALESCE(r.final_credit_computed, 0), 2) AS final_credit_computed,
+      ROUND(COALESCE(r.final_credit_submitted, 0), 2) AS final_credit_submitted,
+      ROUND(COALESCE(r.final_credit_approved, 0), 2) AS final_credit_approved
 
     FROM combined_keys k
     LEFT JOIN project_agg p 
