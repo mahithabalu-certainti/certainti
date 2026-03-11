@@ -152,6 +152,7 @@ export interface CaseDetails {
   financial_working_signoff?: boolean;
   rd_form_signoff?: boolean;
   final_credit?: string | number | null;
+  all_task_completed?: boolean;
 }
 
 export interface CaseDetailsResponse {
