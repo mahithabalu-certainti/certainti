@@ -254,7 +254,7 @@ export const CreateCases: React.FC = () => {
     return (
       closedCaseList?.data?.data?.cases?.map((item) => ({
         value: item.rid,
-        label: item.case_name || '',
+        label: item.case_full_name || '',
       })) || []
     );
   }, [closedCaseList]);

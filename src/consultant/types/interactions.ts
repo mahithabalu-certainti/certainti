@@ -81,6 +81,7 @@ export interface InteractionListExportParams {
   page?: number;
   limit?: number;
   search?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface InteractionFormTableColumn {
@@ -150,6 +151,8 @@ export type InteractionFormPayload = {
   trigger_send?: boolean;
   interaction_level_rid?: string;
   projects?: SendIntractionProject[];
+  interaction_assessment_source_rid?: string;
+  interaction_status_rid?: string;
 };
 
 export interface InteractionQuestionErrors {
@@ -278,6 +281,7 @@ export interface InteractionListURLParams {
   search?: string;
   reminder_specific_list?: boolean;
   case_rid?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface InteractionTemplatePayload {

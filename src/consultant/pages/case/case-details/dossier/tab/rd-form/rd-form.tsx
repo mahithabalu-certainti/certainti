@@ -130,7 +130,7 @@ const RDForm: React.FC<RDFormProps> = ({
       }
     );
   };
-
+  const isRDFormSignOff = caseDetails?.rd_form_signoff;
   // Auto-initiate Generate if not already done
   useEffect(() => {
     if (
@@ -140,14 +140,18 @@ const RDForm: React.FC<RDFormProps> = ({
       caseDetails?.case_total_projects !== 0 &&
       caseDetails?.case_total_projects !== '0'
     ) {
-      handleRDFormMapperGenerate();
+      if (isRDFormSignOff) {
+        handleRDFormMapperPreview();
+      } else {
+        handleRDFormMapperGenerate();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFinancialWorkingSignoff, rdformGenerateStatus, caseDetails]);
 
   // Call Preview when status is true or tab/region changes
   useEffect(() => {
-    if (rdformGenerateStatus) {
+    if (rdformGenerateStatus || isRDFormSignOff) {
       handleRDFormMapperPreview();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -381,10 +385,10 @@ const RDForm: React.FC<RDFormProps> = ({
       </div>
       {previewData?.data && (
         <div>
-          <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+          <div className='sticky top-0 z-10 capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
             PDF Viewer
           </div>
-          <div className='max-h-[600px] overflow-auto p-3'>
+          <div className='p-3'>
             {previewData.data.rdformUrl ? (
               <PdfViewer
                 base64={previewData.data.rdformUrl}

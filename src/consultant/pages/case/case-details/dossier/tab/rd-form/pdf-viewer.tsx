@@ -16,6 +16,7 @@ import {
   ArrowBackIcon,
   ZoomInIcon,
   ZoomOutIcon,
+  DownloadIcon,
 } from '../../../../../../../assets';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -62,6 +63,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     const loadPDF = async () => {
       if (!base64) return;
 
+      // Reset zoom and page to initial defaults whenever a new PDF is loaded
+      setScale(1);
+      setCurrentPage(1);
       setIsLoading(true);
       setError('');
 
@@ -160,6 +164,27 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   };
 
+  const handleDownload = () => {
+    if (!base64) return;
+
+    try {
+      const pdfBytes = base64ToUint8Array(base64);
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'rd-form.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+    }
+  };
+
   if (isLoading || isLoadingPdf) {
     return (
       <div className='flex flex-col h-full gap-3 animate-pulse'>
@@ -182,7 +207,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   return (
     <Box className='flex flex-col h-full'>
       {/* PDF Controls */}
-      <div className='bg-white rounded-[4px] border border-[#CBD6E2] px-3 py-2 mb-4'>
+      <div className='sticky top-[30px] z-10 bg-white rounded-[4px] border border-[#CBD6E2] px-3 py-2 mb-4'>
         <Box className='flex items-center gap-4 flex-wrap'>
           {/* Zoom Controls */}
           <Box className='flex items-center gap-2'>
@@ -295,11 +320,27 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           >
             {pdfDoc && `Page ${currentPage} of ${pdfDoc.numPages}`}
           </Typography>
+          <Box
+            className='border border-[#CBD6E2] rounded-[4px]'
+            onClick={() => handleDownload()}
+          >
+            <IconButton
+              size='small'
+              disabled={!pdfDoc}
+              sx={{
+                '&.Mui-disabled': { color: '#CBD6E2' },
+              }}
+            >
+              <DownloadIcon
+                className={`w-5 h-5 ${!pdfDoc ? '[&>path]:stroke-[#CBD6E2]' : ''}`}
+              />
+            </IconButton>
+          </Box>
         </Box>
       </div>
 
       {/* PDF Canvas Container */}
-      <div className='flex-1 overflow-auto bg-[#F3F4F6] p-8 rounded-[4px] border border-[#CBD6E2]'>
+      <div className='flex-1 bg-[#F3F4F6] p-8 rounded-[4px] border border-[#CBD6E2]'>
         <Box ref={containerRef} className='relative inline-block'>
           <canvas ref={canvasRef} className='shadow-lg bg-white' />
         </Box>

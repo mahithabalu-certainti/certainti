@@ -195,6 +195,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
           />
         );
       case 'case':
+      case 'dossier':
         return (
           <Cases
             key={
@@ -235,7 +236,6 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   if (!scopeTypeName) return null;
 
   const modalBody = getModalContent();
-  if (!modalBody) return null;
 
   // handle backdrop click
   const handleModalClose = (
@@ -435,7 +435,13 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                 </FormControl>
               </div>
             ) : (
-              <div className='min-h-[calc(100vh-300px)]'>{modalBody}</div>
+              <div className='min-h-[calc(100vh-300px)]'>
+                {modalBody || (
+                  <div className='flex items-center justify-center h-full p-8 text-gray-500'>
+                    No entity list available for {scopeTypeName}
+                  </div>
+                )}
+              </div>
             )}
           </div>
           {/* Footer */}

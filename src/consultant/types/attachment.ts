@@ -72,6 +72,7 @@ export interface AttachmentsListExportParams {
   limit?: number;
   search?: string;
   type?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface AttachmentUploadPayload {

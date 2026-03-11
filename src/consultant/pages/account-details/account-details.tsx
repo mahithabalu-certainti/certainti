@@ -630,6 +630,7 @@ export const AccountDetails = () => {
           flag: 'account',
           sort: 'r_number',
           page: 1,
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportAccountInteractions(projectInteractionExportPayload);
         return;

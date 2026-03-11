@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Chart } from 'react-google-charts';
-import { formatAmount } from '../../helpers';
+import { formatAmountWithSign, generateChartTicks } from '../../helpers';
 
 export interface TrendPoint {
   year: number;
@@ -18,36 +18,6 @@ interface TrendChartProps {
   series: MultiTrendSeries[];
   height?: number;
 }
-
-const formatAmountWithSign = (amount: number): string => {
-  if (amount < 0) return `-${formatAmount(Math.abs(amount))}`;
-  return formatAmount(amount);
-};
-
-const generateTicks = (minAmount: number, maxAmount: number) => {
-  const range = Math.max(Math.abs(maxAmount), Math.abs(minAmount), 1);
-  const scale = [
-    1000, 5000, 10000, 50000, 100000, 500000, 1000000, 2000000, 5000000,
-    10000000, 20000000,
-  ];
-  let step = 1000;
-
-  for (const s of scale) {
-    if (range / s <= 8) {
-      step = s;
-      break;
-    }
-  }
-
-  const ticks = [];
-  const lower = Math.floor(minAmount / step) * step;
-  const upper = Math.ceil(maxAmount / step) * step;
-
-  for (let i = lower; i <= upper + step; i += step) {
-    ticks.push({ v: i, f: formatAmountWithSign(i) });
-  }
-  return ticks;
-};
 
 const GroupedTrendChart: React.FC<TrendChartProps> = ({
   title,
@@ -79,7 +49,7 @@ const GroupedTrendChart: React.FC<TrendChartProps> = ({
   const allAmounts = series.flatMap((s) => s.data.map((d) => d.amount));
   const maxAmount = Math.max(...allAmounts);
   const minAmount = Math.min(...allAmounts);
-  const ticks = generateTicks(minAmount, maxAmount);
+  const ticks = generateChartTicks(minAmount, maxAmount);
 
   const options = {
     legend: { position: 'bottom' },

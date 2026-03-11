@@ -99,7 +99,7 @@ export const CaseFormData = (
           createSelectField('parent_case_rid', 'Parent Case', {
             options: parentCaseOptions || [],
             placeholder: 'Choose Parent Case',
-            required: true,
+            required: false,
             hide: !isAmendmentType,
             disabled: isEditView || isCaseClosed,
             isLoading: isParentCaseLoading,
