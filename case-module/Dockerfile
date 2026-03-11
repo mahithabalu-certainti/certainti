@@ -1,24 +1,21 @@
 # Stage 1: Build Stage
 FROM node:20-slim AS build
- 
+
 WORKDIR /app
- 
-# Copy package files and install dependencies
+
 COPY package*.json ./
 RUN npm ci
- 
-# Install Puppeteer Chrome browser
+
+# Install Chrome for Puppeteer
 RUN npx puppeteer browsers install chrome
- 
-# Copy application code
+
 COPY . .
- 
+
 # Stage 2: Runtime Stage
 FROM node:20-slim
- 
+
 WORKDIR /app
- 
-# Install curl + Chrome runtime dependencies
+
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
@@ -33,12 +30,14 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libasound2 \
 && rm -rf /var/lib/apt/lists/*
- 
-# Copy built application from build stage
+
 COPY --from=build /app /app
- 
+
+# ⭐ IMPORTANT FIX
+COPY --from=build /root/.cache/puppeteer /root/.cache/puppeteer
+
 EXPOSE 5010
- 
+
 RUN npm install ts-node
- 
+
 CMD ["npx", "ts-node", "src/index.ts"]
