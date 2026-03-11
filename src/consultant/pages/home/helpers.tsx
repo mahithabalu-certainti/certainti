@@ -570,11 +570,67 @@ export const getInitials = (name?: string) => {
 
 // Format amount for annotations
 export const formatAmount = (amount: number): string => {
-  if (amount >= 10000000) return `${(amount / 10000000).toFixed(1)}CR`;
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
-  if (amount >= 100000) return `${(amount / 100000).toFixed(1)}L`;
-  if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K`;
+  const fmt = (val: number, suffix: string) => {
+    const fixed = val.toFixed(1);
+    return fixed.endsWith('.0')
+      ? `${Math.round(val)}${suffix}`
+      : `${fixed}${suffix}`;
+  };
+
+  if (amount >= 1_000_000_000_000) return fmt(amount / 1_000_000_000_000, 'T');
+  if (amount >= 1_000_000_000) return fmt(amount / 1_000_000_000, 'B');
+  if (amount >= 1_000_000) return fmt(amount / 1_000_000, 'M');
+  if (amount >= 1_000) return fmt(amount / 1_000, 'K');
   return `${amount}`;
+};
+
+/** Sign-aware compact notation: -1.2M, 500K, 0 */
+export const formatAmountWithSign = (amount: number): string => {
+  if (amount < 0) return `-${formatAmount(Math.abs(amount))}`;
+  return formatAmount(amount);
+};
+
+/**
+ * Generates human-readable axis ticks spanning [minVal, maxVal].
+ * Uses a single step based on the overall range.
+ * Always includes 0. Capped at 20 ticks.
+ */
+export const generateChartTicks = (
+  minVal: number,
+  maxVal: number
+): { v: number; f: string }[] => {
+  if (minVal === 0 && maxVal === 0) {
+    return [{ v: 0, f: '0' }];
+  }
+
+  const range = Math.max(Math.abs(maxVal), Math.abs(minVal));
+  const scale = [
+    10, 50, 100, 200, 500, 1_000, 5_000, 10_000, 50_000, 100_000, 500_000,
+    1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000,
+    100_000_000, 200_000_000, 500_000_000, 1_000_000_000, 2_000_000_000,
+    5_000_000_000, 10_000_000_000, 20_000_000_000, 50_000_000_000,
+    100_000_000_000, 200_000_000_000, 500_000_000_000, 1_000_000_000_000,
+    5_000_000_000_000,
+  ];
+
+  let step = scale[scale.length - 1]; // fallback
+  for (const s of scale) {
+    if (range / s <= 8) {
+      step = s;
+      break;
+    }
+  }
+
+  const ticks: { v: number; f: string }[] = [];
+  const lower = minVal < 0 ? Math.floor(minVal / step) * step : 0;
+  const upper = Math.ceil(maxVal / step) * step;
+
+  const maxTicks = 20;
+  for (let i = lower; i <= upper; i += step) {
+    ticks.push({ v: i, f: formatAmountWithSign(i) });
+    if (ticks.length >= maxTicks) break;
+  }
+  return ticks;
 };
 
 export const COMMON_SELECT_STYLES = {
@@ -705,4 +761,10 @@ export const getAvatarColor = (name?: string) => {
 
   const index = Math.abs(hash) % PROJECT_COLORS.length;
   return PROJECT_COLORS[index];
+};
+
+export const colorMap: Record<string, string> = {
+  GREEN: '#008000 ',
+  RED: '#FF0000',
+  ORANGE: '#FFA500',
 };

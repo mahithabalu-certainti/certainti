@@ -81,8 +81,9 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
     ];
 
     apiData.countryWiseConsolidation.forEach((country, index) => {
+      const symbol = country.currency_symbol || '$';
       const tooltipHtml = `<div style="bachfont-size:12px;white-space:nowrap;">
-        <span style="color:#000;">Total RD Credits Approved:</span>  <span style="color:#000;font-weight:bold;">${formatAmount(country.approved)}</span>
+        <span style="color:#000;">Total RD Credits Approved:</span>  <span style="color:#000;font-weight:bold;">${symbol}${formatAmount(country.approved)}</span>
       </div>`;
 
       if (selectedCountry) {
@@ -264,6 +265,9 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
                   minHeight={520}
                   customTooltip={true}
                   itemsPerPage={10}
+                  getCurrencySymbol={(d: AccountWiseConsolidation) =>
+                    d.currency_symbol || '$'
+                  }
                   series={[
                     {
                       key: 'final_credit_submitted',
@@ -271,32 +275,35 @@ const WorldMapChart: React.FC<MapChartProps> = ({ title, subtitle }) => {
                       color: '#4A90E2',
                     },
                   ]}
-                  getTooltipData={(d: AccountWiseConsolidation) => [
-                    {
-                      label: 'Total Project Cost',
-                      value: formatAmount(Number(d.total_project_cost)),
-                    },
-                    {
-                      label: 'Qualified Project Cost',
-                      value: formatAmount(Number(d.qualified_project_cost)),
-                    },
-                    {
-                      label: 'QRE Cost',
-                      value: formatAmount(Number(d.qre_cost)),
-                    },
-                    {
-                      label: 'RD Credits Computed',
-                      value: formatAmount(d.final_credit_computed),
-                    },
-                    {
-                      label: 'RD Credits Submitted',
-                      value: formatAmount(d.final_credit_submitted),
-                    },
-                    {
-                      label: 'RD Credits Approved',
-                      value: formatAmount(d.final_credit_approved),
-                    },
-                  ]}
+                  getTooltipData={(d: AccountWiseConsolidation) => {
+                    const symbol = d.currency_symbol || '$';
+                    return [
+                      {
+                        label: 'Total Project Cost',
+                        value: `${symbol}${formatAmount(Number(d.total_project_cost))}`,
+                      },
+                      {
+                        label: 'Qualified Project Cost',
+                        value: `${symbol}${formatAmount(Number(d.qualified_project_cost))}`,
+                      },
+                      {
+                        label: 'QRE Cost',
+                        value: `${symbol}${formatAmount(Number(d.qre_cost))}`,
+                      },
+                      {
+                        label: 'RD Credits Computed',
+                        value: `${symbol}${formatAmount(d.final_credit_computed)}`,
+                      },
+                      {
+                        label: 'RD Credits Submitted',
+                        value: `${symbol}${formatAmount(d.final_credit_submitted)}`,
+                      },
+                      {
+                        label: 'RD Credits Approved',
+                        value: `${symbol}${formatAmount(d.final_credit_approved)}`,
+                      },
+                    ];
+                  }}
                 />
               )}
             </div>

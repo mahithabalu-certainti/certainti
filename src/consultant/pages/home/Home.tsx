@@ -46,11 +46,10 @@ import {
 import { CardList, ReportCard, TaskCard } from './components/cards';
 import {
   AccountChart,
-  DonutChartsGroup,
+  BarChartsGroup,
   WorldMapChart,
 } from './components/charts';
 import {
-  DONUT_COLORS,
   formatDate,
   getTrendColor,
   getTrendIcon,
@@ -649,11 +648,10 @@ export const HomePage: React.FC = () => {
       )}
 
       {isOverAllProjectValueEnable && (
-        <DonutChartsGroup
-          title='Overall Project Value by Jurisdiction'
+        <BarChartsGroup
+          title='Project Value by Jurisdiction'
           subtitle='Aggregate Total R&D project value across all jurisdictions.'
           data={overallProjectValue || []}
-          colors={DONUT_COLORS}
           isLoading={isProjectValueLoading}
         />
       )}
