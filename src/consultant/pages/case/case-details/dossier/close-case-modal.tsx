@@ -16,6 +16,7 @@ import {
   AttachmentsSideIcon,
   CloseCircleIcon,
   ErrorInfoIcon,
+  DetailsKeyContactErrorIcon,
 } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -36,6 +37,7 @@ interface CloseCaseModalProps {
     country_rid?: string;
     country_code?: string;
     fiscal_year?: string | number;
+    all_task_completed?: boolean;
   };
   refetchCaseDetails?: () => void;
 }
@@ -360,7 +362,7 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
   >({});
 
   const [showConfirmation, setShowConfirmation] = useState(false);
-
+  const isTaskCompleted = caseDetails?.all_task_completed;
   const { successToast } = useToast();
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -644,7 +646,25 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
               </React.Suspense>
             </button>
           </div>
-
+          {!isTaskCompleted && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>
+                  Milestone Task
+                </span>
+                -
+                <span className='ml-1 font-medium'>
+                  Some tasks in this case are still incomplete. Please Complete
+                  all tasks before closing the case. .
+                </span>
+              </div>
+            </div>
+          )}
           {/* Body */}
           <div
             className='overflow-y-auto px-5 py-4 flex flex-col gap-5'
@@ -933,6 +953,7 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
             <TextButton
               label='Save'
               onClick={handleSubmit}
+              disabled={!isTaskCompleted}
               loading={isClosing}
               sx={{
                 width: '65px',

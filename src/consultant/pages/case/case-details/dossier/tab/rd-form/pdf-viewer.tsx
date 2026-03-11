@@ -25,6 +25,7 @@ interface PdfViewerProps {
   base64?: string; // Can be base64 string
   isLoadingPdf?: boolean;
   isPdfError?: boolean;
+  downloadName: string;
 }
 
 // Helper function to convert base64 to Uint8Array
@@ -48,6 +49,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   base64,
   isLoadingPdf,
   isPdfError,
+  downloadName,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -174,7 +176,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'rd-form.pdf';
+      link.download = downloadName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -314,14 +316,11 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           </Box>
 
           {/* Page Counter */}
-          <Typography
-            variant='body2'
-            className='text-[#7D98B6] ml-auto text-[13px]'
-          >
+          <Typography variant='body2' className='text-[#7D98B6] text-[13px]'>
             {pdfDoc && `Page ${currentPage} of ${pdfDoc.numPages}`}
           </Typography>
           <Box
-            className='border border-[#CBD6E2] rounded-[4px]'
+            className='border border-[#CBD6E2] flex items-center justify-center rounded-[4px] ml-auto'
             onClick={() => handleDownload()}
           >
             <IconButton
