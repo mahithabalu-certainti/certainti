@@ -230,6 +230,12 @@ const updateTechSummaryContextSchema = Joi.object({
   summary_context: Joi.string().required(),
 });
 
+const saveRefineSummarySchema = Joi.object({
+  tech_summary_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  technical_summary: Joi.any().required(),
+});
+
 const listAllTechnicalSummarySchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).optional(),
@@ -309,4 +315,5 @@ export {
   createInteractionTemplateSchema,
   listInteractionTemplatesSchema,
   updateInteractionTemplateSchema,
+  saveRefineSummarySchema,
 };

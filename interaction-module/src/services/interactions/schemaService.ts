@@ -31,7 +31,7 @@ class InteractionSchemaService {
     this.interactionModelService = new InteractionModelService();
   }
 
-   async createAccountInteractions(
+  async createAccountInteractions(
     accountNumber: string,
     interactionData: ICreateAccountInteraction,
     transaction: Transaction
@@ -52,13 +52,13 @@ class InteractionSchemaService {
       throw new Error("Error creating interaction: " + error);
     }
   }
-  
+
 
   async createInteractions(
     accountNumber: string,
     interactionData: ICreateInteraction,
     transaction: Transaction,
-    intLevel :string
+    intLevel: string
   ) {
     // Implementation for creating interactions in the database
     try {
@@ -127,7 +127,7 @@ class InteractionSchemaService {
               );
               break;
             default:
-            logMessage(
+              logMessage(
                 `[addInteractionItems] Unknown action_type: ${question.action_type}`
               );
           }
@@ -143,7 +143,7 @@ class InteractionSchemaService {
     }
   }
 
-   async addAccountInteractionItems(
+  async addAccountInteractionItems(
     accountNumber: string,
     interactionData: ICreateAccountInteraction,
     interactionRid: string,
@@ -178,7 +178,7 @@ class InteractionSchemaService {
                 transaction
               );
               break;
-               case "edit":
+            case "edit":
               await this.handleEditQuestionAccount(
                 InteractionItem,
                 InteractionHistory,
@@ -189,7 +189,7 @@ class InteractionSchemaService {
                 transaction
               );
               break;
-           
+
             default:
               logMessage(
                 `[addInteractionItems] Unknown action_type: ${question.action_type}`
@@ -209,9 +209,9 @@ class InteractionSchemaService {
 
   async fetchEmailSubjectPrefix() {
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
     }
-    const [emailPrefix]:any[] = await this.mainDbSequelize.query(
+    const [emailPrefix]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchInteractionEmailSubject(),
       {
         type: "SELECT",
@@ -248,8 +248,8 @@ class InteractionSchemaService {
           created_by: userId,
           status_rid: interactionData.status_rid,
           interaction_level_rid: interactionData.interaction_level_rid,
-          recipient_name : interactionData.email_info?.name,
-          recipient_email : interactionData.email_info?.email
+          recipient_name: interactionData.email_info?.name,
+          recipient_email: interactionData.email_info?.email
         }));
 
       // Utility: Bulk create with chunking
@@ -330,26 +330,24 @@ class InteractionSchemaService {
           const interactionItemsBulk = prepareInteractionItems(createdInteractions, interactionData.questions);
           await batchInsert(InteractionItem, interactionItemsBulk);
         }
-        let autoSendAccess:boolean = false;
-        if(!interactionData.trigger_send)
-        {
-           const globalInteractionAccess = await this.checkGlobalAutoSendAccess();
-           if(globalInteractionAccess) {
+        let autoSendAccess: boolean = false;
+        if (!interactionData.trigger_send) {
+          const globalInteractionAccess = await this.checkGlobalAutoSendAccess();
+          if (globalInteractionAccess) {
             autoSendAccess = true;
-           }
-           else
-           {
+          }
+          else {
             const accountInteraction = await this.checkAccountAutoSendAccess(accountNumber, interactionData.account_rid);
-            if(accountInteraction) {
+            if (accountInteraction) {
               autoSendAccess = true;
             }
-           }
+          }
         }
-       
-        const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId,interactionData.account_rid);
+
+        const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId, interactionData.account_rid);
         if (isParensettingsConfigured && (interactionData.trigger_send || autoSendAccess)) {
           // Filter projects: exclude those with no key contacts and no email_info
-          const filteredProjects = interactionData.projects.filter(proj => 
+          const filteredProjects = interactionData.projects.filter(proj =>
             !projectsWithoutKeyContacts.has(proj.project_fiscal_rid)
           );
           // Filter interactions based on their own project_fiscal_rid to avoid index misalignment
@@ -357,7 +355,7 @@ class InteractionSchemaService {
             const projectRid = (interaction as any).project_fiscal_rid;
             return projectRid ? !projectsWithoutKeyContacts.has(projectRid) : true;
           });
-          
+
           // Bulk insert SendEmailInfo only for projects with key contacts or email_info
           if (filteredProjects.length > 0 && filteredInteractions.length > 0) {
             const sendEmailInfoData = prepareSendEmailInfoData(filteredInteractions, filteredProjects);
@@ -373,27 +371,26 @@ class InteractionSchemaService {
             );
           }
         }
-        else
-        {
+        else {
           // Check project auto-send access and collect enabled projects
           const enabledProjects: IProject[] = [];
           const enabledInteractions: any[] = [];
-          
+
           // Create a map of interactions by project_fiscal_rid for accurate matching
           const interactionMap = new Map(
             createdInteractions.map((interaction: any) => [interaction.project_fiscal_rid, interaction])
           );
-          
+
           for (const project of interactionData.projects) {
             if (!project) continue; // Skip if project is undefined
-            
+
             // Skip projects that have no key contacts and no email_info
             if (projectsWithoutKeyContacts.has(project.project_fiscal_rid)) {
               continue;
             }
-            
+
             const isEnabled = await this.checkProjectAutoSendAccess(accountNumber, project.project_fiscal_rid);
-            
+
             if (isEnabled) {
               enabledProjects.push(project);
               // Find corresponding interaction for this project by project_fiscal_rid instead of array index
@@ -445,10 +442,10 @@ class InteractionSchemaService {
     }
   }
 
-  
+
   private async handleAddQuestionAccount(
     InteractionItem: any,
-    interactionData:  ICreateAccountInteraction,
+    interactionData: ICreateAccountInteraction,
     interactionRid: string,
     question: any,
     userId: string,
@@ -469,7 +466,7 @@ class InteractionSchemaService {
     }
   }
 
-   private async handleAddQuestionTemplate(
+  private async handleAddQuestionTemplate(
     InteractionTemplate: any,
     interactionData: ICreateTemplateInteraction,
     interactionRid: string,
@@ -501,7 +498,7 @@ class InteractionSchemaService {
       transaction,
     });
   }
-   private async handleEditQuestionTemplate(
+  private async handleEditQuestionTemplate(
     InteractionTemplateQuestions: any,
     interactionData: ICreateTemplateInteraction,
     interactionRid: string,
@@ -584,7 +581,7 @@ class InteractionSchemaService {
     );
   }
 
-   private async handleDeleteQuestionAccount(
+  private async handleDeleteQuestionAccount(
     InteractionItem: any,
     InteractionHistory: any,
     interactionRid: string,
@@ -650,7 +647,7 @@ class InteractionSchemaService {
   private async handleEditQuestionAccount(
     InteractionItem: any,
     InteractionHistory: any,
-    interactionData:  ICreateAccountInteraction,
+    interactionData: ICreateAccountInteraction,
     interactionRid: string,
     question: any,
     userId: string,
@@ -703,7 +700,7 @@ class InteractionSchemaService {
     ]);
   }
 
-  
+
   private async handleEditQuestion(
     InteractionItem: any,
     InteractionHistory: any,
@@ -760,70 +757,68 @@ class InteractionSchemaService {
     ]);
   }
 
-  
-    /**
-       * Fetches user full name, event type, and event name in a single query.
-       * @param params Object with userId, eventType, eventName
-       * @returns Object with fullName, eventType, eventName
-       */
-    async fetchUserAndEventInfo(params: { userId: string; eventType: string;}) {
-      const sequelize = await initMainDbSequelize();
-      // Assumes the rawQueries have the correct SQL for each subquery
-      // This query returns a single row with all three values
-      const query = rawQueries.fetchUserAndEventInfo();
-      const [result] = await sequelize.query(query, {
-        replacements: {
-          userId: params.userId,
-          eventType: params.eventType
-        },
-        type: "SELECT",
-      });
-      return result;
-    }
-  
-    /**
-     * Create an entry in the account_timeline table for the given schema.
-     * @param sequelize Sequelize instance connected to the main DB
-     * @param schemaName The schema name where the account_timeline table exists
-     * @param entryData Object containing the timeline entry fields
+
+  /**
+     * Fetches user full name, event type, and event name in a single query.
+     * @param params Object with userId, eventType, eventName
+     * @returns Object with fullName, eventType, eventName
      */
-    async createAccountTimelineEntry(accountNumber: string,
-      entryData: {
-        created_by: string;
-        account_rid: string;
-        entity_rid: string;
-        entity_name: string;
-        created_by_name: string;
-        event_type_rid: string;
-        event_name?: string;
-        descriptions?: string;
-        project_rid?: string;
-        case_rid?: string;
+  async fetchUserAndEventInfo(params: { userId: string; eventType: string; }) {
+    const sequelize = await initMainDbSequelize();
+    // Assumes the rawQueries have the correct SQL for each subquery
+    // This query returns a single row with all three values
+    const query = rawQueries.fetchUserAndEventInfo();
+    const [result] = await sequelize.query(query, {
+      replacements: {
+        userId: params.userId,
+        eventType: params.eventType
       },
-      entityTypes: string[]
-    ) {
-      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
-        if (!this.orgDbSequelize) {
-        this.orgDbSequelize = await this.interactionModelService.getSequelize();
-      }
-      for (const entityType of entityTypes) {
-        if(entityType === "account")
-          {
-              const [result] = await this.orgDbSequelize.query(rawQueries.insertTimeLine(schemaName,"account_timeline"), {
-              replacements: entryData,
-              type: QueryTypes.INSERT,
-          });
-          }
-          else if(entityType === "project")
-          {
-              const [result] = await this.orgDbSequelize.query(rawQueries.insertProjectTimeLine(schemaName,"project_timeline"), {
-              replacements: entryData,
-              type: QueryTypes.INSERT,
-          });
-          }
-  
-      }
+      type: "SELECT",
+    });
+    return result;
+  }
+
+  /**
+   * Create an entry in the account_timeline table for the given schema.
+   * @param sequelize Sequelize instance connected to the main DB
+   * @param schemaName The schema name where the account_timeline table exists
+   * @param entryData Object containing the timeline entry fields
+   */
+  async createAccountTimelineEntry(accountNumber: string,
+    entryData: {
+      created_by: string;
+      account_rid: string;
+      entity_rid: string;
+      entity_name: string;
+      created_by_name: string;
+      event_type_rid: string;
+      event_name?: string;
+      descriptions?: string;
+      project_rid?: string;
+      case_rid?: string;
+    },
+    entityTypes: string[]
+  ) {
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
     }
+    for (const entityType of entityTypes) {
+      if (entityType === "account") {
+        const [result] = await this.orgDbSequelize.query(rawQueries.insertTimeLine(schemaName, "account_timeline"), {
+          replacements: entryData,
+          type: QueryTypes.INSERT,
+        });
+      }
+      else if (entityType === "project") {
+        const [result] = await this.orgDbSequelize.query(rawQueries.insertProjectTimeLine(schemaName, "project_timeline"), {
+          replacements: entryData,
+          type: QueryTypes.INSERT,
+        });
+      }
+
+    }
+  }
 
   async addInteractionHistory(
     accountNumber: string,
@@ -996,8 +991,8 @@ class InteractionSchemaService {
         ...interactionData,
         modified_by: userId,
         modified_datetime: new Date(),
-        recipient_name : interactionData.email_info?.name,
-        recipient_email : interactionData.email_info?.email
+        recipient_name: interactionData.email_info?.name,
+        recipient_email: interactionData.email_info?.email
       },
       {
         where: {
@@ -1022,7 +1017,7 @@ class InteractionSchemaService {
     return updatedInteraction;
   }
 
-   async updateAccountInteraction(
+  async updateAccountInteraction(
     accountNumber: string,
     interactionData: ICreateAccountInteraction,
     userId: string,
@@ -1049,7 +1044,7 @@ class InteractionSchemaService {
     return updatedInteraction;
   }
 
-  
+
 
   async getPreviousInteractionStatus(statusRid: string, accountNumber: string) {
     if (!this.orgDbSequelize) {
@@ -1154,7 +1149,7 @@ class InteractionSchemaService {
       throw new Error("Error fetching account for email: " + (err as Error).message);
     }
   }
-   async listAccountInteractions(
+  async listAccountInteractions(
     accountNumber: string,
     accountRid: string,
     page: number = 1,
@@ -1162,22 +1157,21 @@ class InteractionSchemaService {
     filters: Record<string, string>,
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    interactionLevel:string = 'Project',
+    interactionLevel: string = 'Project',
     type: string = "list"
   ) {
     try {
       const offset = (page - 1) * limit;
-        let modifiedByFilter;
+      let modifiedByFilter;
       let modifiedByConditions;
       let createdByFilter;
       let createdByConditions;
       let totalResults: number = 0;
       let disablePagination = false;
-      if(type === "download")
-        {
-          disablePagination = true
-        }
-       const detectConditions = (filters: any) => {
+      if (type === "download") {
+        disablePagination = true
+      }
+      const detectConditions = (filters: any) => {
         if (!filters) return null;
         for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
           if (Object.keys(filters).includes(conditions)) return conditions;
@@ -1188,27 +1182,27 @@ class InteractionSchemaService {
         modifiedByFilter = filters.modified_user_name;
         modifiedByConditions = detectConditions(modifiedByFilter);
       }
-       if (filters?.created_user_name) {
+      if (filters?.created_user_name) {
         createdByFilter = filters.created_user_name;
         createdByConditions = detectConditions(createdByFilter);
       }
-       ["created_user_name","modified_user_name"].forEach(key => {
+      ["created_user_name", "modified_user_name"].forEach(key => {
         if (filters[key]) {
           disablePagination = true;
           delete filters[key];
         }
       });
       if (mainTableFilters[sortBy] !== undefined) {
-            disablePagination = true;
-          }
+        disablePagination = true;
+      }
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-          /\D/g,
-          ""
-        )}`;
+        /\D/g,
+        ""
+      )}`;
       const { whereClause } = this.buildWhereClause(filters, schemaName);
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
-      const { AccountInteraction,Interaction } = await this.interactionModelService.getModels(accountNumber);
+      const { AccountInteraction, Interaction } = await this.interactionModelService.getModels(accountNumber);
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
@@ -1225,15 +1219,15 @@ class InteractionSchemaService {
           : { limit: limit, offset: offset }),
         attributes: {
           include: [
-        [
-                  // Subquery to count interactions for each AccountInteraction.rid
-                Sequelize.literal(`(
+            [
+              // Subquery to count interactions for each AccountInteraction.rid
+              Sequelize.literal(`(
           SELECT COUNT(*)
           FROM "${schemaName}"."interactions" AS i
           WHERE i.account_interaction_rid = "AccountInteractions"."rid"
         )`),
-        'project_count'
-        ]
+              'project_count'
+            ]
           ]
         }
       });
@@ -1292,7 +1286,7 @@ class InteractionSchemaService {
       };
       if (modifiedByConditions != null && modifiedByConditions != undefined)
         finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
-        if (createdByConditions != null && createdByConditions != undefined)
+      if (createdByConditions != null && createdByConditions != undefined)
         finalData = applyFilters(finalData, createdByConditions, createdByFilter, "created_user_name");
       if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
@@ -1309,16 +1303,14 @@ class InteractionSchemaService {
       }
       totalResults = disablePagination ? finalData.length : count;
       let finalPaginatedData = [];
-      if(type === "download") 
-        {
-          finalPaginatedData = finalData;
-        }
-        else
-        {
-           finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
-        }
+      if (type === "download") {
+        finalPaginatedData = finalData;
+      }
+      else {
+        finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      }
 
-    
+
       return {
         accountInteractions: finalPaginatedData,
         count: totalResults
@@ -1337,16 +1329,16 @@ class InteractionSchemaService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     type: string = "list",
-    caseRid? : string,
-    accountRid? : string,
-    summaryType? : string 
+    caseRid?: string,
+    accountRid?: string,
+    summaryType?: string
   ) {
     try {
-      if(!this.orgDbSequelize) {
+      if (!this.orgDbSequelize) {
         this.orgDbSequelize = await initOrgSequelize();
       }
       const offset = (page - 1) * limit;
-        let modifiedByFilter;
+      let modifiedByFilter;
       let modifiedByConditions;
       let projectNameFilter;
       let projectNameConditions;
@@ -1354,11 +1346,10 @@ class InteractionSchemaService {
       let projectCodeConditions;
       let totalResults: number = 0;
       let disablePagination = false;
-      if(type === "download")
-        {
-          disablePagination = true
-        }
-       const detectConditions = (filters: any) => {
+      if (type === "download") {
+        disablePagination = true
+      }
+      const detectConditions = (filters: any) => {
         if (!filters) return null;
         for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
           if (Object.keys(filters).includes(conditions)) return conditions;
@@ -1377,7 +1368,7 @@ class InteractionSchemaService {
         projectCodeFilter = filters.project_code;
         projectCodeConditions = detectConditions(projectCodeFilter);
       }
-       ["modified_by"].forEach(key => {
+      ["modified_by"].forEach(key => {
         if (filters[key]) {
           disablePagination = true;
           delete filters[key];
@@ -1396,8 +1387,8 @@ class InteractionSchemaService {
         }
       });
       if (mainTableFilters[sortBy] !== undefined) {
-            disablePagination = true;
-          }
+        disablePagination = true;
+      }
       const { whereClause } = this.buildWhereClause(filters);
       const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
       const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
@@ -1407,17 +1398,17 @@ class InteractionSchemaService {
       let schemaName = rawQueries.fetchSchemaName(accountNumber)
       // Fetch technical summaries and count
       let whereCondition;
-      if(caseRid !== undefined && caseRid !== '') {
-        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
+      if (caseRid !== undefined && caseRid !== '') {
+        const projectFiscalIds: any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
         whereCondition = {
-          account_rid : accountRid,
+          account_rid: accountRid,
           project_fiscal_rid: {
-            [Op.in] : projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d : any) => d.project_fiscal_rid) : []
+            [Op.in]: projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d: any) => d.project_fiscal_rid) : []
           },
           [Op.and]: Sequelize.where(
-        Sequelize.col('"AiTechnicalSummary".version'),
-        '=',
-        Sequelize.literal(`
+            Sequelize.col('"AiTechnicalSummary".version'),
+            '=',
+            Sequelize.literal(`
           (
             SELECT MAX(t2.version)
             FROM ${schemaName}.ai_technical_summary AS t2
@@ -1448,7 +1439,7 @@ class InteractionSchemaService {
           count: 0
         };
       }
-      let fetchProjectDetails : any[] = [...new Set(technicalSummary.map((project : any) => project.project_fiscal_rid))];
+      let fetchProjectDetails: any[] = [...new Set(technicalSummary.map((project: any) => project.project_fiscal_rid))];
       let createdByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.created_by))];
       let modifiedByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.modified_by))];
       let statusIds: any[] = [...new Set(technicalSummary.map((user: any) => user.status_rid))];
@@ -1460,16 +1451,16 @@ class InteractionSchemaService {
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
-      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff }]))
       let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
         return {
           rid: d.rid,
-          account_rid : d.account_rid,
-          project_rid : d.project_rid,
-          project_fiscal_rid : d.project_fiscal_rid,
-          project_code : projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
-          project_name : projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
-          signoff : projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
+          account_rid: d.account_rid,
+          project_rid: d.project_rid,
+          project_fiscal_rid: d.project_fiscal_rid,
+          project_code: projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
+          project_name: projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
+          signoff: projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
           version: d.version,
@@ -1501,9 +1492,9 @@ class InteractionSchemaService {
       };
       if (modifiedByConditions != null && modifiedByConditions != undefined)
         finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
-      if(projectCodeConditions != null && projectCodeConditions != undefined)
+      if (projectCodeConditions != null && projectCodeConditions != undefined)
         finalData = applyFilters(finalData, projectCodeConditions, projectCodeFilter, "project_code")
-      if(projectNameConditions != null && projectNameConditions != undefined)
+      if (projectNameConditions != null && projectNameConditions != undefined)
         finalData = applyFilters(finalData, projectNameConditions, projectNameFilter, "project_name")
       if (mainTableFilters[sortBy] != undefined && sortOrder.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
@@ -1520,16 +1511,14 @@ class InteractionSchemaService {
       }
       totalResults = disablePagination ? finalData.length : count;
       let finalPaginatedData = [];
-      if(type === "download") 
-        {
-          finalPaginatedData = finalData;
-        }
-        else
-        {
-           finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
-        }
+      if (type === "download") {
+        finalPaginatedData = finalData;
+      }
+      else {
+        finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      }
 
-    
+
       return {
         technicalSummary: finalPaginatedData,
         count: totalResults
@@ -1540,7 +1529,7 @@ class InteractionSchemaService {
     }
   }
 
-   private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
+  private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
     whereClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
@@ -1556,7 +1545,7 @@ class InteractionSchemaService {
         'project_count': (value: any) => this.processProjectCountFilter(value, whereClause, schemaName ?? ""),
       };
       Object.keys(filters).forEach(key => {
-        
+
         const value = filters[key];
         if (value === undefined || value === null) return;
         if (filterProcessors[key]) {
@@ -1569,19 +1558,19 @@ class InteractionSchemaService {
     return { whereClause };
   }
 
-    /**
-   * Validates and normalizes sort parameters
-   * 
-   * @param {string} sortBy - Field to sort by
-   * @param {string} sortOrder - Sort order (ASC or DESC)
-   * @returns {[string, string]} - Tuple of validated sort parameters
-   */
+  /**
+ * Validates and normalizes sort parameters
+ * 
+ * @param {string} sortBy - Field to sort by
+ * @param {string} sortOrder - Sort order (ASC or DESC)
+ * @returns {[string, string]} - Tuple of validated sort parameters
+ */
   private getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "r_number",
       "created_datetime",
-      "modified_datetime",     
-       "version",
+      "modified_datetime",
+      "version",
       "status",
       "project_count"
     ];
@@ -1600,32 +1589,32 @@ class InteractionSchemaService {
    * @param {any} value - Filter value
    * @param {Record<string, any>} whereClause - Where clause to modify
    */
-  private processTextFilter(field: string, value: any,  whereClause: Record<string | symbol, any>): void {
+  private processTextFilter(field: string, value: any, whereClause: Record<string | symbol, any>): void {
     if (typeof value === 'string') {
       // Simple string value - treat as equals
       whereClause[field] = value;
     } else if (typeof value === 'object') {
       if (value.equals !== undefined) {
         whereClause[field] = Sequelize.where(
-        Sequelize.fn('LOWER', Sequelize.col(field)),
-        value.equals.toLowerCase()
-      );
+          Sequelize.fn('LOWER', Sequelize.col(field)),
+          value.equals.toLowerCase()
+        );
       } else if (value.not_equals !== undefined) {
         whereClause[field] = Sequelize.where(
-        Sequelize.fn('LOWER', Sequelize.col(field)),
-        '!=',
-        value.not_equals.toLowerCase()
-      );
+          Sequelize.fn('LOWER', Sequelize.col(field)),
+          '!=',
+          value.not_equals.toLowerCase()
+        );
       } else if (value.contains !== undefined) {
         whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
       } else if (Array.isArray(value.in) && value.in.length > 0) {
         whereClause[Op.or] = value.in.map((val: string) =>
-        Sequelize.where(
-          Sequelize.fn('LOWER', Sequelize.col(field)),
-          '=',
-          val.toLowerCase()
-        )
-      );
+          Sequelize.where(
+            Sequelize.fn('LOWER', Sequelize.col(field)),
+            '=',
+            val.toLowerCase()
+          )
+        );
       } else if (value.is_empty !== undefined) {
         if (value.is_empty) {
           whereClause[field] = { [Op.or]: [null, ''] };
@@ -1635,7 +1624,7 @@ class InteractionSchemaService {
       }
     }
   }
-    private processNumberFilter(field: string, value: any, whereClause: Record<string | symbol, any>): void {
+  private processNumberFilter(field: string, value: any, whereClause: Record<string | symbol, any>): void {
     if (typeof value === 'number') {
       // Simple number value - treat as equals
       whereClause[field] = value;
@@ -1646,7 +1635,7 @@ class InteractionSchemaService {
         whereClause[field] = { [Op.ne]: value.not_equals };
       } else if (value.greater_than !== undefined) {
         whereClause[field] = { ...(whereClause[field] || {}), [Op.gt]: value.greater_than };
-      } 
+      }
       if (value.less_than !== undefined) {
         whereClause[field] = { ...(whereClause[field] || {}), [Op.lt]: value.less_than };
       }
@@ -1662,16 +1651,16 @@ class InteractionSchemaService {
         };
       }
     }
-      if (value.is_empty !== undefined) {
-        if (value.is_empty) {
-          whereClause[field] = null;
-        } else {
-          whereClause[field] = { [Op.ne]: null };
-        }
+    if (value.is_empty !== undefined) {
+      if (value.is_empty) {
+        whereClause[field] = null;
+      } else {
+        whereClause[field] = { [Op.ne]: null };
       }
     }
-  
-   private processDateFilter(
+  }
+
+  private processDateFilter(
     field: string,
     value: any,
     whereClause: Record<string, any>
@@ -1718,64 +1707,64 @@ class InteractionSchemaService {
   }
 
   private processProjectCountFilter(value: any, whereClause: Record<string, any>, schemaName: string): void {
-  const conditions: any[] = [];
-  
-  if (typeof value === 'number') {
-    conditions.push(this.createProjectCountCondition('=', value,schemaName));
-  } else if (value && typeof value === 'object') {
-    if ('equals' in value) {
-      conditions.push(this.createProjectCountCondition('=', value.equals,schemaName));
+    const conditions: any[] = [];
+
+    if (typeof value === 'number') {
+      conditions.push(this.createProjectCountCondition('=', value, schemaName));
+    } else if (value && typeof value === 'object') {
+      if ('equals' in value) {
+        conditions.push(this.createProjectCountCondition('=', value.equals, schemaName));
+      }
+      if ('not_equals' in value) {
+        conditions.push(this.createProjectCountCondition('!=', value.not_equals, schemaName));
+      }
+      if ('greater_than' in value) {
+        conditions.push(this.createProjectCountCondition('>', value.greater_than, schemaName));
+      }
+      if ('less_than' in value) {
+        conditions.push(this.createProjectCountCondition('<', value.less_than, schemaName));
+      }
+      if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+        conditions.push({
+          [Op.and]: [
+            this.createProjectCountCondition('>=', value.between[0], schemaName),
+            this.createProjectCountCondition('<=', value.between[1], schemaName),
+          ]
+        });
+      }
+      if ('is_empty' in value) {
+        conditions.push(
+          value.is_empty
+            ? this.createProjectCountCondition('=', 0, schemaName)
+            : this.createProjectCountCondition('>', 0, schemaName)
+        );
+      }
     }
-    if ('not_equals' in value) {
-      conditions.push(this.createProjectCountCondition('!=', value.not_equals,schemaName));
-    }
-    if ('greater_than' in value) {
-      conditions.push(this.createProjectCountCondition('>', value.greater_than,schemaName));
-    }
-    if ('less_than' in value) {
-      conditions.push(this.createProjectCountCondition('<', value.less_than,schemaName));
-    }
-    if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
-      conditions.push({
-        [Op.and]: [
-          this.createProjectCountCondition('>=', value.between[0],schemaName),
-          this.createProjectCountCondition('<=', value.between[1],schemaName),
-        ]
-      });
-    }
-    if ('is_empty' in value) {
-      conditions.push(
-        value.is_empty
-          ? this.createProjectCountCondition('=', 0, schemaName)
-          : this.createProjectCountCondition('>', 0, schemaName)
-      );
+
+    if (conditions.length > 0) {
+      if (!whereClause[Op.and as any]) {  // Type assertion for Op.and
+        whereClause[Op.and as any] = [];
+      }
+      (whereClause[Op.and as any] as any[]).push(...conditions);
     }
   }
 
-  if (conditions.length > 0) {
-    if (!whereClause[Op.and as any]) {  // Type assertion for Op.and
-      whereClause[Op.and as any] = [];
-    }
-    (whereClause[Op.and as any] as any[]).push(...conditions);
-  }
-}
-
-private createProjectCountCondition(operator: string, value: number,schemaName: string): any {
-  return {
-    [Op.and as any]: [  // Type assertion for Op.and
-      Sequelize.literal(`(
+  private createProjectCountCondition(operator: string, value: number, schemaName: string): any {
+    return {
+      [Op.and as any]: [  // Type assertion for Op.and
+        Sequelize.literal(`(
         SELECT COUNT(*)
           FROM "${schemaName}"."interactions" AS i
           WHERE i.account_interaction_rid = "AccountInteractions"."rid"
       ) ${operator} ${value}`)
-    ]
-  };
-}
+      ]
+    };
+  }
   async fetchTechnicalSummaryDetailsById(
     accountNumber: string,
     techSummaryId: string
   ) {
-    if(!this.orgDbSequelize) {
+    if (!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
     const { AiTechnicalSummary } = await this.interactionModelService.getModels(
@@ -1787,19 +1776,19 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rid: techSummaryId,
       },
     });
-    if(techSummaryDetails && techSummaryDetails.dataValues){
-       const userInfo = await this.insertUserDetails(
+    if (techSummaryDetails && techSummaryDetails.dataValues) {
+      const userInfo = await this.insertUserDetails(
         techSummaryDetails.dataValues.created_by ?? "",
         techSummaryDetails.dataValues.modified_by ?? ""
       );
       const statusInfo = await this.insertStatusInfo(
         techSummaryDetails.dataValues.status_rid
       );
-      const fetchProjectDetails : string[] = []
+      const fetchProjectDetails: string[] = []
       fetchProjectDetails.push(techSummaryDetails.project_fiscal_rid!)
       let schemaName = rawQueries.fetchSchemaName(accountNumber)
       let projectFiscalDetails = await this.orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
-      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff }]))
 
       return {
         rid: techSummaryDetails.dataValues.rid,
@@ -1815,10 +1804,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         created_datetime: techSummaryDetails.dataValues.created_datetime,
         modified_datetime: techSummaryDetails.dataValues.modified_datetime,
         technical_summary_refinement_prompt: techSummaryDetails.dataValues.technical_summary_refinement_prompt,
-        project_fiscal_rid : techSummaryDetails.project_fiscal_rid,
-        project_code : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_code || null,
-        project_name : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_name || null,
-        signoff : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.signoff || null
+        project_fiscal_rid: techSummaryDetails.project_fiscal_rid,
+        project_code: projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_code || null,
+        project_name: projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_name || null,
+        signoff: projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.signoff || null
       }
     }
     return techSummaryDetails;
@@ -1884,10 +1873,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         interaction_rid: rid,
         r_number: r_number ?? "",
         project_name: metainfo?.project_name ?? "",
-        account_name : metainfo?.account_name ?? "",
-        account_rnumber : metainfo?.account_rnumber ?? "",
+        account_name: metainfo?.account_name ?? "",
+        account_rnumber: metainfo?.account_rnumber ?? "",
         project_code: metainfo?.project_code ?? "",
-        project_rnumber : metainfo?.project_rnumber ?? "",
+        project_rnumber: metainfo?.project_rnumber ?? "",
         account_rid,
         project_rid: project_rid ?? "",
         fiscal_year: fiscalYear,
@@ -1902,7 +1891,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         created_by: userInfo.created_name ?? "",
         created_datetime: created_datetime ?? null,
         modified_datetime:
-        interactionDetails.dataValues.modified_datetime ?? null,
+          interactionDetails.dataValues.modified_datetime ?? null,
         questions: interactionItems,
         response_updated_by: response_updated_by ?? null,
         response_updated_on: response_updated_on ?? null,
@@ -1941,7 +1930,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return result;
   }
 
-   async fetchAccountInteractionDetailsById(
+  async fetchAccountInteractionDetailsById(
     accountNumber: string,
     interactionRid: string
   ) {
@@ -1958,7 +1947,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       accountNumber,
       interactionRid
     );
-   
+
 
     if (interactionDetails && interactionDetails.dataValues) {
       const {
@@ -2003,14 +1992,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   }
 
   async updateTechSummaryContext(
-    summaryContext:string,
+    summaryContext: string,
     techSummaryId: string,
-    accountNumber: string,  
+    accountNumber: string,
     userId: string
-  )
-  {
+  ) {
     try {
-    
+
       const { AiTechnicalSummary } = await this.interactionModelService.getModels(
         accountNumber
       );
@@ -2026,27 +2014,27 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       techSummary.technical_summary_refinement_prompt = summaryContext;
       techSummary.modified_by = userId;
       techSummary.modified_datetime = new Date();
-      
+
       const payload = {
-            company_id:techSummary.account_rid,
-            project_id: techSummary.project_fiscal_rid,
-            refinment_prompt: summaryContext,
-            existing_summary: techSummary.technical_summary,
-            request_id: techSummaryId,
-          };
+        company_id: techSummary.account_rid,
+        project_id: techSummary.project_fiscal_rid,
+        refinment_prompt: summaryContext,
+        existing_summary: techSummary.technical_summary,
+        request_id: techSummaryId,
+      };
       let headers = {
-                  contentType: "application/json",
-                };
+        contentType: "application/json",
+      };
       await axios.post(
-            process.env.TRIGGER_AI_REFINE_SUMMARY!,
-            payload,
-            {
-              headers: headers,
-            }
-          );
+        process.env.TRIGGER_AI_REFINE_SUMMARY!,
+        payload,
+        {
+          headers: headers,
+        }
+      );
       await AiTechnicalSummary.update(
         {
-          technical_summary_refinement_prompt: summaryContext,  
+          technical_summary_refinement_prompt: summaryContext,
           modified_by: userId,
           modified_datetime: new Date(),
         },
@@ -2059,6 +2047,46 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     } catch (err) {
       logMessage(`Error updating technical summary context: ${err}`);
       throw new Error("Error updating technical summary context" + (err as Error).message);
+    }
+  }
+
+  async saveRefineSummary(
+    technicalSummary: any,
+    techSummaryId: string,
+    accountNumber: string,
+    userId: string
+  ) {
+    try {
+      const { AiTechnicalSummary } = await this.interactionModelService.getModels(
+        accountNumber
+      );
+      const techSummary = await AiTechnicalSummary.findOne({
+        where: {
+          rid: techSummaryId,
+        },
+      });
+      if (!techSummary) {
+        logMessage(`Invalid technical summary ID: ${techSummaryId}`);
+        throw new Error("Invalid technical summary ID");
+      }
+      
+      const summaryString = typeof technicalSummary === 'string' ? technicalSummary : JSON.stringify(technicalSummary);
+
+      await AiTechnicalSummary.update(
+        {
+          technical_summary: summaryString,
+          modified_by: userId,
+          modified_datetime: new Date(),
+        },
+        {
+          where: {
+            rid: techSummaryId,
+          },
+        }
+      );
+    } catch (err) {
+      logMessage(`Error updating technical summary: ${err}`);
+      throw new Error("Error updating technical summary" + (err as Error).message);
     }
   }
 
@@ -2102,16 +2130,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
   }
 
-  async insertStatusInfo(status_rid : any) {
+  async insertStatusInfo(status_rid: any) {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize =
           await this.interactionModelService.getMainSequelize();
       }
-     
+
 
       let status: any = null;
-     
+
       if (status_rid) {
         const result = await this.mainDbSequelize.query(
           rawQueries.getStatusByIdQuery(),
@@ -2125,13 +2153,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         status =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
-    
-    
+
+
       return {
-       
+
         status_name: status?.status_name || null,
       };
-      
+
       //return interactionDetails;
     } catch (err) {
       logMessage(`Error fetching geo data: ${err}`);
@@ -2151,7 +2179,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       let interaction_type: any = null;
       let interaction_status: any = null;
-      let interaction_level:any = null
+      let interaction_level: any = null
       let project_info: any = null;
       let hasEmailRecipient: boolean = false;
       let recipient_name: string | null = null;
@@ -2172,7 +2200,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
       if (interactionDetails?.dataValues?.interaction_level_rid) {
         const result = await this.mainDbSequelize.query(
-        rawQueries.fetchInteractionLevelById(interactionDetails.dataValues.interaction_level_rid),
+          rawQueries.fetchInteractionLevelById(interactionDetails.dataValues.interaction_level_rid),
           {
             type: "SELECT",
           }
@@ -2205,70 +2233,69 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
         project_info =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
-      
 
-      const [activeStatus]: any[] = await this.mainDbSequelize.query(
-                  rawQueries.fetchActiveStatusByType("Active"),
-                  { type: "SELECT" }
-                );
-       const [emailRecipients]: any[] = await this.orgDbSequelize.query(
-            rawQueries.fetchInteractionRecipient(
-              interactionDetails?.project_fiscal_rid,
-              activeStatus?.rid,
-              schemaName
-            )
-            );
-            if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
-            hasEmailRecipient = true;
-            recipient_name = emailRecipients[0]?.key_contact_name || null;
-            recipient_email = emailRecipients[0]?.key_contact_email || null;
-            } else {
-            hasEmailRecipient = false;
-            recipient_name = null;
-            recipient_email = null;
-            }
+
+        const [activeStatus]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchActiveStatusByType("Active"),
+          { type: "SELECT" }
+        );
+        const [emailRecipients]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchInteractionRecipient(
+            interactionDetails?.project_fiscal_rid,
+            activeStatus?.rid,
+            schemaName
+          )
+        );
+        if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
+          hasEmailRecipient = true;
+          recipient_name = emailRecipients[0]?.key_contact_name || null;
+          recipient_email = emailRecipients[0]?.key_contact_email || null;
+        } else {
+          hasEmailRecipient = false;
+          recipient_name = null;
+          recipient_email = null;
         }
-      if(interaction_level?.interaction_level_name === 'Account')
-      {
-         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      }
+      if (interaction_level?.interaction_level_name === 'Account') {
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
-         const [activeStatus]: any[] = await this.mainDbSequelize.query(
-                  rawQueries.fetchActiveStatusByType("Active"),
-                  { type: "SELECT" }
-                );
-         const [emailRecipients]: any[] = await this.orgDbSequelize.query(
-            rawQueries.fetchInteractionRecipientAccount(
-              interactionDetails?.dataValues?.account_rid,
-              activeStatus?.rid,
-              schemaName
-            )
-            );
-            if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
-            hasEmailRecipient = true;
-            recipient_name = emailRecipients[0]?.key_contact_name || null;
-            recipient_email = emailRecipients[0]?.key_contact_email || null;
-            } else {
-            hasEmailRecipient = false;
-            recipient_name = null;
-            recipient_email = null;
-            }
+        const [activeStatus]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchActiveStatusByType("Active"),
+          { type: "SELECT" }
+        );
+        const [emailRecipients]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchInteractionRecipientAccount(
+            interactionDetails?.dataValues?.account_rid,
+            activeStatus?.rid,
+            schemaName
+          )
+        );
+        if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
+          hasEmailRecipient = true;
+          recipient_name = emailRecipients[0]?.key_contact_name || null;
+          recipient_email = emailRecipients[0]?.key_contact_email || null;
+        } else {
+          hasEmailRecipient = false;
+          recipient_name = null;
+          recipient_email = null;
+        }
       }
-      const accountDetails : any = await this.mainDbSequelize.query(rawQueries.fetchAccountRnumber(interactionDetails.dataValues.account_rid))
+      const accountDetails: any = await this.mainDbSequelize.query(rawQueries.fetchAccountRnumber(interactionDetails.dataValues.account_rid))
       return {
         interaction_type_name: interaction_type?.interaction_type_name || null,
         interaction_status_name: interaction_status?.status_name || null,
-        interaction_level_name:interaction_level?.interaction_level_name || null, 
+        interaction_level_name: interaction_level?.interaction_level_name || null,
         project_code: project_info?.project_code || null,
         project_name: project_info?.project_name || null,
-        project_rnumber : project_info?.r_number || null,
+        project_rnumber: project_info?.r_number || null,
         fiscal_year: project_info?.fiscal_year || null,
-        account_name : accountDetails[0][0].account_name,
-        account_rnumber : accountDetails[0][0].r_number,
-        hasEmailRecipient:hasEmailRecipient,
-        recipient_email:recipient_email,
-        recipient_name:recipient_name
+        account_name: accountDetails[0][0].account_name,
+        account_rnumber: accountDetails[0][0].r_number,
+        hasEmailRecipient: hasEmailRecipient,
+        recipient_email: recipient_email,
+        recipient_name: recipient_name
       };
 
       //return interactionDetails;
@@ -2338,14 +2365,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     };
   }
 
-  async getInteractionStatus(status_scope?: string, currentStatus?: string, reminderFlag? : boolean) {
+  async getInteractionStatus(status_scope?: string, currentStatus?: string, reminderFlag?: boolean) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
     let whereClause =
       "status = 'active' AND (status_type IS NULL OR status_type = 'UI')";
-    let interactionStatus : any
+    let interactionStatus: any
     if (currentStatus) {
       // Fetch status_name for the given status_rid (currentStatus)
       const [statusResult]: any[] = await this.mainDbSequelize.query(
@@ -2359,25 +2386,25 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         whereClause += " OR status_type = 'CONDITIONAL'";
       }
     }
-    if(reminderFlag) {
+    if (reminderFlag) {
       interactionStatus = await this.mainDbSequelize.query(
         fetchStatusIdsForReminderList(),
         {
-          type : "SELECT"
+          type: "SELECT"
         }
       )
     } else {
-        interactionStatus = await this.mainDbSequelize.query(
-      rawQueries.fetchInteractionStatusList(whereClause),
-      {
-        type: "SELECT",
-      }
-    );
+      interactionStatus = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusList(whereClause),
+        {
+          type: "SELECT",
+        }
+      );
     }
 
     return interactionStatus;
   }
-  
+
 
   async getActiveStatusRid() {
     if (!this.mainDbSequelize) {
@@ -2441,7 +2468,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionSource = await this.mainDbSequelize.query(
-     rawQueries.getInteractionSourceByNameQuery(),
+      rawQueries.getInteractionSourceByNameQuery(),
       {
         replacements: { type },
         type: "SELECT",
@@ -2461,7 +2488,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionSource = await this.mainDbSequelize.query(
-     rawQueries.getInteractionAssessmentSourceByNameQuery(),
+      rawQueries.getInteractionAssessmentSourceByNameQuery(),
       {
         replacements: { type },
         type: "SELECT",
@@ -2474,7 +2501,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }>;
     return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
   }
-   async getInteractionLevelByRid(type: string) {
+  async getInteractionLevelByRid(type: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
@@ -2494,7 +2521,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }>;
     return levelArr.length > 0 ? levelArr[0]?.interaction_level_name : null;
   }
-   async getInteractionLevelByType(type: string) {
+  async getInteractionLevelByType(type: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
@@ -2561,7 +2588,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
     return interactionSource;
   }
-   async getInteractionLevel() {
+  async getInteractionLevel() {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
@@ -2575,7 +2602,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     );
 
     return interactionLevel;
-  
+
   }
   async getResponseSource() {
     if (!this.mainDbSequelize) {
@@ -2600,14 +2627,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     transaction: Transaction
   ) {
     try {
-      const { InteractionResponseHistory, InteractionAttachment, Interaction ,AiAssessmentEventTracker} =
+      const { InteractionResponseHistory, InteractionAttachment, Interaction, AiAssessmentEventTracker } =
         await this.interactionModelService.getModels(accountNumber);
       if (!this.mainDbSequelize) {
         this.mainDbSequelize =
           await this.interactionModelService.getMainSequelize();
       }
       let isAutoTriggerEnabled = false;
-       let resonseBy =userId
+      let resonseBy = userId
       const [responseSourceIDs]: any = await this.mainDbSequelize.query(
         rawQueries.fetchResponseSourceByType(responseData.response_source)
       );
@@ -2617,17 +2644,17 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         responseData.response_source === "Email"
       ) {
         const interaction = await Interaction.findOne({
-          where: { rid: responseData.interaction_rid
-           },
+          where: {
+            rid: responseData.interaction_rid
+          },
         });
         const fetchRecipientName = interaction
           ? [{ recipient_name: interaction.recipient_name }]
           : [{ recipient_name: null }];
         resonseBy = fetchRecipientName[0]?.recipient_name ?? userId;
       }
-      else
-      {
-        resonseBy =userId
+      else {
+        resonseBy = userId
       }
       const [emailInfo]: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchUserEmail(userId)
@@ -2712,8 +2739,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
               response_on: new Date(),
               response_email: userEmailId,
               response_source_rid: responseData.response_source_rid,
-              modified_by: userId, 
-              modified_datetime: new Date(), 
+              modified_by: userId,
+              modified_datetime: new Date(),
             }, { transaction });
           } else {
             created = await InteractionResponseHistory.create(
@@ -2752,7 +2779,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }
       }
 
-      let status : string = ``
+      let status: string = ``
 
       if (responseCreated) {
         const { Interaction, InteractionSummary } =
@@ -2799,17 +2826,19 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
             AiAssessmentEventTracker,
             responseData.account_rid,
           );
-            
-            logMessage(`account_rid: ${responseData.account_rid}, project_fiscal_account_id: ${responseData.project_fiscal_rid} isAutoTriggerEnabled: ${isAutoTriggerEnabled}`);
+
+          logMessage(`account_rid: ${responseData.account_rid}, project_fiscal_account_id: ${responseData.project_fiscal_rid} isAutoTriggerEnabled: ${isAutoTriggerEnabled}`);
         }
 
         await Interaction.update(updateData, {
-          where: { rid: responseData.interaction_rid
+          where: {
+            rid: responseData.interaction_rid
           },
         });
         await InteractionSummary.update(summaryUpdateData, {
-          where: { interaction_rid: responseData.interaction_rid
-           },
+          where: {
+            interaction_rid: responseData.interaction_rid
+          },
         });
       }
       return {
@@ -2989,7 +3018,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ["question_seq_num", "ASC"],
           ["created_datetime", "ASC"],
         ],
-        where: { interaction_rid: interactionRid},
+        where: { interaction_rid: interactionRid },
       });
       const plainItems = items.map((item) => item.get({ plain: true }));
       for (const item of plainItems) {
@@ -3011,13 +3040,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
         (item as any).attachments = Array.isArray(attachmentsList) && attachmentsList.length > 0
           ? await Promise.all(
-              attachmentsList.map(async (att: any) => ({
-                fileUrl: await generateSasUrl(att.attachment_url),
-                fileName: att?.attachment_name ?? "",
-                fileSize: att?.attachment_size ?? "",
-                fileType: att?.attachment_type ?? "",
-              }))
-            )
+            attachmentsList.map(async (att: any) => ({
+              fileUrl: await generateSasUrl(att.attachment_url),
+              fileName: att?.attachment_name ?? "",
+              fileSize: att?.attachment_size ?? "",
+              fileType: att?.attachment_type ?? "",
+            }))
+          )
           : [];
 
         // Fetch latest response history for each question
@@ -3071,7 +3100,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "notes",
           [Sequelize.literal("false"), "is_mandatory"],
         ],
-       order: [
+        order: [
           ["question_seq_num", "ASC"],
           ["created_datetime", "ASC"],
         ],
@@ -3088,7 +3117,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
 
 
-  
+
   async fetchInteractionQuestionsById(
     accountNumber: string,
     interactionRid: string
@@ -3159,10 +3188,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       )}`;
       const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId)
-      ); 
+      );
       const clientSecret = senderEmailInfo[0]?.client_secret;
       const decryptedSecret = await decryptClientSecret(clientSecret);
-      
+
       return {
         email: senderEmailInfo[0]?.support_email,
         clientId: senderEmailInfo[0]?.client_id,
@@ -3178,14 +3207,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     interactionRid: string,
     projectFiscalRid: string,
     accountRid: string,
-    emailInfo:any,
+    emailInfo: any,
     isRemainder?: boolean
   ) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
-      if(!this.mainDbSequelize) {
+      if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
       const [statusArr]: any[] = await this.mainDbSequelize.query(
@@ -3205,36 +3234,33 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ccEmails: [],
         };
       }
-      let keyContactName =null;
-      let keyContactEmail =null;
-      if ((!emailInfo || !emailInfo?.email) && !isRemainder) {  
-      const [interactionRecipients]: any[] = await this.orgDbSequelize.query(
-        rawQueries.fetchInteractionRecipient(projectFiscalRid, statusArr.rid, schemaName),
-        {
-          type: "SELECT",
-        }
-      );
-      keyContactName = interactionRecipients?.key_contact_name ?? null;
-      keyContactEmail = interactionRecipients?.key_contact_email ?? null;
-    }
-    else
-    {
-      if(isRemainder)
-        {
-          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
-            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+      let keyContactName = null;
+      let keyContactEmail = null;
+      if ((!emailInfo || !emailInfo?.email) && !isRemainder) {
+        const [interactionRecipients]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchInteractionRecipient(projectFiscalRid, statusArr.rid, schemaName),
+          {
+            type: "SELECT",
+          }
+        );
+        keyContactName = interactionRecipients?.key_contact_name ?? null;
+        keyContactEmail = interactionRecipients?.key_contact_email ?? null;
+      }
+      else {
+        if (isRemainder) {
+          const [remainderRecipients]: any[] = await this.orgDbSequelize.query(
+            rawQueries.fetchRemainderEmailInfo(interactionRid ? interactionRid : '', schemaName),
             { type: "SELECT" }
           );
           keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
           keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
         }
-        else
-        {
+        else {
           keyContactName = emailInfo?.name;
           keyContactEmail = emailInfo?.email;
         }
-      
-    }
+
+      }
 
       const interactionCCRecipients: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipientProject(
@@ -3246,7 +3272,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
-          rawQueries.fetchInteractionCCRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          rawQueries.fetchInteractionCCRecipientAccount(accountRid, statusArr.rid, schemaName),
           { type: "SELECT" }
         );
 
@@ -3275,7 +3301,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async fetchEmailInfoForAccount(
     accountNumber: string,
     accountRid: string,
-    emailInfo:any,
+    emailInfo: any,
     isRemainder?: boolean,
     interactionRid?: string
   ) {
@@ -3283,7 +3309,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
-      if(!this.mainDbSequelize) {
+      if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
       const [statusArr]: any[] = await this.mainDbSequelize.query(
@@ -3296,42 +3322,39 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
-      let keyContactName ="";
-      let keyContactEmail ="";
-       if ((!emailInfo || !emailInfo?.email) && !isRemainder) {
-      const [interactionRecipients]: any[] =
-        await this.orgDbSequelize.query(
-          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
-          { type: "SELECT" }
-        );
+      let keyContactName = "";
+      let keyContactEmail = "";
+      if ((!emailInfo || !emailInfo?.email) && !isRemainder) {
+        const [interactionRecipients]: any[] =
+          await this.orgDbSequelize.query(
+            rawQueries.fetchInteractionRecipientAccount(accountRid, statusArr.rid, schemaName),
+            { type: "SELECT" }
+          );
         keyContactName = interactionRecipients?.key_contact_name ?? null;
         keyContactEmail = interactionRecipients?.key_contact_email ?? null;
       }
-      else
-      {
-        if(isRemainder)
-        {
-          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
-            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+      else {
+        if (isRemainder) {
+          const [remainderRecipients]: any[] = await this.orgDbSequelize.query(
+            rawQueries.fetchRemainderEmailInfo(interactionRid ? interactionRid : '', schemaName),
             { type: "SELECT" }
           );
           keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
           keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
         }
-        else
-        {
-           keyContactName = emailInfo?.name;
-           keyContactEmail = emailInfo?.email;
+        else {
+          keyContactName = emailInfo?.name;
+          keyContactEmail = emailInfo?.email;
         }
       }
-      
-        const interactionCCRecipientsAccount: any[] =
+
+      const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
-          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          rawQueries.fetchInteractionRecipientAccount(accountRid, statusArr.rid, schemaName),
           { type: "SELECT" }
         );
 
-    
+
       const ccEmails = [
         ...interactionCCRecipientsAccount
           .map((rec) => rec.key_contact_email)
@@ -3549,8 +3572,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         sent_by_rid: userId,
         sent_by_mail_id: userEmailId,
         interaction_url: interactionLink,
-        sent_on_datetime : new Date(),
-        status_rid : statusRid
+        sent_on_datetime: new Date(),
+        status_rid: statusRid
       };
       await Interaction.update(updateData, { where: { rid: interactionRid } });
       await InteractionSummary.update(updateData, {
@@ -3598,7 +3621,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const updateData: any = {
         last_reminder_on: new Date(),
         last_reminder_by: userEmailId,
-        status_rid : statusRid
+        status_rid: statusRid
       };
 
       if (!interaction?.sent_on_datetime || interaction?.sent_on_datetime === null) {
@@ -3612,9 +3635,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
             ? statusArr[0].rid
             : null;
         updateData.status_rid = statusRid;
-      } 
+      }
 
-      await Interaction.update(updateData, { where: { rid: interactionRid ,project_fiscal_rid:projectFiscalRid} });
+      await Interaction.update(updateData, { where: { rid: interactionRid, project_fiscal_rid: projectFiscalRid } });
       await InteractionSummary.update(updateData, {
         where: { interaction_rid: interactionRid },
       });
@@ -3627,16 +3650,15 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   }
 
   async isEmailRecipientAvailable
-  (     
-    accountNumber: string,  
-    projectFiscalRid: string
-  ): Promise<boolean> {
+    (
+      accountNumber: string,
+      projectFiscalRid: string
+    ): Promise<boolean> {
     try {
-      if (!this.orgDbSequelize) {     
+      if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
-      if(!this.mainDbSequelize)
-      {
+      if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
       const [activeStatus]: any[] = await this.mainDbSequelize.query(
@@ -3644,37 +3666,36 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         { type: "SELECT" }
       );
 
-       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-          /\D/g,
-          ""
-        )}`;
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
       const [recipientInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipient(projectFiscalRid, activeStatus.rid, schemaName),
         { type: "SELECT" }
       );
 
       return !!(recipientInfo && recipientInfo.key_contact_email);
-    } catch (err) {   
-      logMessage(`Error checking email recipient availability: ${err}`);    
-        
+    } catch (err) {
+      logMessage(`Error checking email recipient availability: ${err}`);
+
       throw new Error(
         "Error checking email recipient availability: " +
-          (err as Error).message
+        (err as Error).message
       );
     }
   }
 
-   async isEmailRecipientAvailableForAccount
-  (     
-    accountNumber: string,  
-    accountRid: string
-  ): Promise<boolean> {
+  async isEmailRecipientAvailableForAccount
+    (
+      accountNumber: string,
+      accountRid: string
+    ): Promise<boolean> {
     try {
-      if (!this.orgDbSequelize) {     
+      if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
-      if(!this.mainDbSequelize)
-      {
+      if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
       const [activeStatus]: any[] = await this.mainDbSequelize.query(
@@ -3682,10 +3703,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         { type: "SELECT" }
       );
 
-       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-          /\D/g,
-          ""
-        )}`;
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
       const [recipientInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipientAccount(accountRid, activeStatus.rid, schemaName),
         { type: "SELECT" }
@@ -3695,7 +3716,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     } catch (err) {
       throw new Error(
         "Error checking email recipient availability: " +
-          (err as Error).message
+        (err as Error).message
       );
     }
   }
@@ -3715,12 +3736,12 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       logMessage(`Error checking global auto-send interaction access: ${err}`);
       throw new Error(
         "Error checking global auto-send interaction access: " +
-          (err as Error).message
+        (err as Error).message
       );
-    } 
+    }
   }
 
-  async checkAccountAutoSendAccess( accountNumber: string,
+  async checkAccountAutoSendAccess(accountNumber: string,
     accountRid: string) {
     try {
       if (!this.orgDbSequelize) {
@@ -3728,24 +3749,24 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           await this.interactionModelService.getMainSequelize();
       }
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-          /\D/g,
-          ""
-        )}`;
-       const [accountInfo]: any[] = await this.orgDbSequelize.query(
-          rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
-          { type: "SELECT" }
-        );
+        /\D/g,
+        ""
+      )}`;
+      const [accountInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),
+        { type: "SELECT" }
+      );
       return accountInfo?.autosend_interaction ?? false;
     } catch (err) {
       logMessage(`Error checking account auto-send interaction access: ${err}`);
       throw new Error(
         "Error checking global auto-send interaction access: " +
-          (err as Error).message
+        (err as Error).message
       );
-    } 
+    }
   }
 
-  async checkProjectAutoSendAccess( accountNumber: string,
+  async checkProjectAutoSendAccess(accountNumber: string,
     project_fiscal_rid: string) {
     try {
       if (!this.orgDbSequelize) {
@@ -3753,24 +3774,24 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           await this.interactionModelService.getMainSequelize();
       }
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-          /\D/g,
-          ""
-        )}`;
-       const [projectInfo]: any[] = await this.orgDbSequelize.query(
-          rawQueries.fetchisAutoSendEnabled(
-            project_fiscal_rid,
-            schemaName
-          ),
-          { type: "SELECT" }
-        );
+        /\D/g,
+        ""
+      )}`;
+      const [projectInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchisAutoSendEnabled(
+          project_fiscal_rid,
+          schemaName
+        ),
+        { type: "SELECT" }
+      );
       return projectInfo?.auto_send_ai_interaction ?? false;
     } catch (err) {
       logMessage(`Error checking project auto-send interaction access: ${err}`);
       throw new Error(
         "Error checking global auto-send interaction access: " +
-          (err as Error).message
+        (err as Error).message
       );
-    } 
+    }
   }
 
   async isAutoSendInteractionEnabled(
@@ -3786,23 +3807,23 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       if (globalInteractionAccess) {
         return true;
       } else {
-        
+
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
         const accountInteraction = await this.checkAccountAutoSendAccess(accountNumber, interactionDetails.account_rid);
-        if(accountInteraction){
+        if (accountInteraction) {
           return true;
         }
-        
+
         const projectInteraction = await this.checkProjectAutoSendAccess(accountNumber, interactionDetails.project_fiscal_rid);
-        if(projectInteraction){
+        if (projectInteraction) {
           return true;
         }
 
         // Fetch project info
-       
+
         return false;
       }
     } catch (err) {
@@ -3830,14 +3851,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       const responseReceivedEvent = await AiAssessmentEventTracker.findOne({
         where: {
-          is_active:true,
+          is_active: true,
           event_name: 'response_received'
         }
       });
 
-     if(!responseReceivedEvent || !responseReceivedEvent?.event_name){
-      return false;
-     }
+      if (!responseReceivedEvent || !responseReceivedEvent?.event_name) {
+        return false;
+      }
       if (globalAccess?.auto_access_rd && (responseReceivedEvent && responseReceivedEvent?.event_name)) {
         return true;
       } else {
@@ -3850,12 +3871,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ""
         )}`;
         const [accountInfo]: any[] = await this.orgDbSequelize.query(
-                    rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
-                    { type: "SELECT" }
-                  );
-        if(accountInfo?.auto_access_rd && (responseReceivedEvent && responseReceivedEvent?.event_name))
-        {
-            return true;
+          rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),
+          { type: "SELECT" }
+        );
+        if (accountInfo?.auto_access_rd && (responseReceivedEvent && responseReceivedEvent?.event_name)) {
+          return true;
         }
         // Fetch project info
         const [projectInfo]: any[] = await this.orgDbSequelize.query(
@@ -3868,7 +3888,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       logMessage(`Error checking auto-trigger enabled status: ${err}`);
       throw new Error(
         "Error checking auto-trigger interaction status: " +
-          (err as Error).message
+        (err as Error).message
       );
     }
   }
@@ -3941,7 +3961,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       ]);
       if (aiResponse.rid) {
         await AiTechnicalSummary.update(
-          { status_rid:activeStatus.find(s => s.status_name === 'In-Active')?.rid },
+          { status_rid: activeStatus.find(s => s.status_name === 'In-Active')?.rid },
           {
             where: {
               account_rid: accountId,
@@ -3952,22 +3972,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           }
         );
       }
-      const userEventInfo:any = await this.fetchUserAndEventInfo({
-                                                        userId: process.env.SYSTEM_USER_ID!,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-                     
+      const userEventInfo: any = await this.fetchUserAndEventInfo({
+        userId: process.env.SYSTEM_USER_ID!,
+        eventType: eventTypes.UI_HANDLER
+      });
+
       await this.createAccountTimelineEntry(accountNumber!, {
-                                          created_by: process.env.SYSTEM_USER_ID!,
-                                          account_rid: accountId,
-                                          entity_rid: aiResponse.rid!,
-                                          entity_name: entityTypes.TECHNICAL_SUMMARY,
-                                          created_by_name: userEventInfo.full_name,
-                                          event_type_rid: userEventInfo.event_type_rid,
-                                          event_name: eventNames.GENERATED,
-                                          descriptions:'for '+projectInfo.project_code,
-                                          project_rid: projectFiscalId,
-                                        }, ['project']);
+        created_by: process.env.SYSTEM_USER_ID!,
+        account_rid: accountId,
+        entity_rid: aiResponse.rid!,
+        entity_name: entityTypes.TECHNICAL_SUMMARY,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.GENERATED,
+        descriptions: 'for ' + projectInfo.project_code,
+        project_rid: projectFiscalId,
+      }, ['project']);
     } catch (err) {
       logMessage(`Error updating Tech Summary: ${err}`);
       throw new Error("Error updating Tech Summary: " + (err as Error).message);
@@ -3995,7 +4015,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       throw new Error("Error fetching project info: " + (err as Error).message);
     }
   }
-   async fetchAccountInfo(accountRid: string, accountNumber: string) {
+  async fetchAccountInfo(accountRid: string, accountNumber: string) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4049,7 +4069,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         ""
       )}`;
 
-      const interactionBatchInfo : any = await this.orgDbSequelize.query(
+      const interactionBatchInfo: any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteraction(schemaName),
         { type: "SELECT" }
       );
@@ -4060,7 +4080,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
   }
 
-  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId : string) {
+  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId: string) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4069,7 +4089,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
-      const interactionBatchInfo : any = await this.orgDbSequelize.query(
+      const interactionBatchInfo: any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
         { type: "SELECT" }
       );
@@ -4096,13 +4116,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           await this.interactionModelService.getMainSequelize();
       }
 
-       const [statusArr]: any = await this.mainDbSequelize.query(
-          rawQueries.fetchInteractionStatusByType(statusAction.RESPONSE_RECEIVED)
-        );
-        const statusRid =
-          Array.isArray(statusArr) && statusArr.length > 0
-            ? statusArr[0].rid
-            : null;
+      const [statusArr]: any = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusByType(statusAction.RESPONSE_RECEIVED)
+      );
+      const statusRid =
+        Array.isArray(statusArr) && statusArr.length > 0
+          ? statusArr[0].rid
+          : null;
 
 
       let isAiProcessed = false;
@@ -4180,24 +4200,24 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchProjectFiscal(projectFiscalRid, schemaName),
         { type: "SELECT" } // Correct type for SELECT
       );
-      
+
       // Step 2: Safely get qreAdjustment
       const qreAdjustment = projectFiscalData[0]?.rd_percent_adjustment ?? 0;
 
       const netQre = qreAdjustment + qrePercent;
-  
+
       const totalCost = projectFiscalData[0]?.total_cost_prj ?? 0;
       const totalFteCost = projectFiscalData[0]?.total_cost_fte_prj ?? 0;
       const totalSubconCost = projectFiscalData[0]?.total_cost_subcon_prj ?? 0;
       const totalNonlaborCost = projectFiscalData[0]?.total_cost_nonlabor_prj ?? 0;
-    
+
       const qreFinalCost = totalCost * (netQre / 100);
       const qreFteCost = totalFteCost * (netQre / 100);
       const qreSubconCost = totalSubconCost * (netQre / 100);
       const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
 
       const shouldUseStandardUpdate = qreAdjustment === null || qreAdjustment === undefined || qreAdjustment === 0;
-      
+
       const finalQreUpdateQuery = shouldUseStandardUpdate
         ? rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent, {
           qreFinalCost,
@@ -4217,7 +4237,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           netQre
         })
         : rawQueries.updateQreInfoSummarLocked(projectFiscalRid, qrePercent);
-      
+
       // Step 4: Run both updates in parallel
       await Promise.all([
         this.orgDbSequelize.query(finalQreUpdateQuery, { type: "UPDATE" }),
@@ -4265,22 +4285,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           where: { transaction_id: transaction_id },
         }),
       ]);
-      const userEventInfo:any = await this.fetchUserAndEventInfo({
-                                                        userId: process.env.SYSTEM_USER_ID!,
-                                                        eventType: eventTypes.UI_HANDLER
-                                                      });
-                     
+      const userEventInfo: any = await this.fetchUserAndEventInfo({
+        userId: process.env.SYSTEM_USER_ID!,
+        eventType: eventTypes.UI_HANDLER
+      });
+
       await this.createAccountTimelineEntry(accountNumber!, {
-                                          created_by: process.env.SYSTEM_USER_ID!,
-                                          account_rid: accountId,
-                                          entity_rid: aiResponse.rid!,
-                                          entity_name: entityTypes.QRE_PERCENT,
-                                          created_by_name: userEventInfo.full_name,
-                                          event_type_rid: userEventInfo.event_type_rid,
-                                          event_name: eventNames.UPDATE,
-                                          descriptions:'for '+projectInfo.project_code,
-                                          project_rid: projectFiscalRid,
-                                        }, ['project']);
+        created_by: process.env.SYSTEM_USER_ID!,
+        account_rid: accountId,
+        entity_rid: aiResponse.rid!,
+        entity_name: entityTypes.QRE_PERCENT,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.UPDATE,
+        descriptions: 'for ' + projectInfo.project_code,
+        project_rid: projectFiscalRid,
+      }, ['project']);
     } catch (err) {
       logMessage(`Error updating QRE percent: ${err}`);
       throw new Error("Error updating QRE percent: " + (err as Error).message);
@@ -4313,7 +4333,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
 
       const [account]: any[] = await this.mainDbSequelize.query(
-       rawQueries.getAccountByRNumberQuery(),
+        rawQueries.getAccountByRNumberQuery(),
         {
           replacements: { r_number: accountNumber },
           type: "SELECT",
@@ -4413,96 +4433,96 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return exportableFields;
   }
 
-  async createSchedulerRecords () {
+  async createSchedulerRecords() {
     const { SchedulerExecution } = await this.interactionModelService.getModels("");
     const findSchedulerExists = await SchedulerExecution.findOne({
-      where : {
-        scheduler_name : 'AITrigger',
-        status : schedulerStatus.Running
+      where: {
+        scheduler_name: 'AITrigger',
+        status: schedulerStatus.Running
       }
     })
-    if(!findSchedulerExists) {
+    if (!findSchedulerExists) {
       const createSchedulerExecution = await SchedulerExecution.create({
-        created_datetime : new Date(),
-        started_at : new Date(),
-        status : schedulerStatus.Running,
-        scheduler_name : 'AITrigger'
+        created_datetime: new Date(),
+        started_at: new Date(),
+        status: schedulerStatus.Running,
+        scheduler_name: 'AITrigger'
       })
       return createSchedulerExecution
     }
   }
 
-  async createSchedulerTaskRecords (executionRid : string, taskName : string) {
-    const {SchedulerTaskExecution, SchedulerExecution} = await this.interactionModelService.getModels("")
+  async createSchedulerTaskRecords(executionRid: string, taskName: string) {
+    const { SchedulerTaskExecution, SchedulerExecution } = await this.interactionModelService.getModels("")
     const findTaskAlreadyRunning = await SchedulerExecution.findOne({
-      where : {
-        rid : executionRid,
-        status : schedulerStatus.Running
+      where: {
+        rid: executionRid,
+        status: schedulerStatus.Running
       }
     })
-    if(findTaskAlreadyRunning) {
+    if (findTaskAlreadyRunning) {
       const taskCreationRecord = await SchedulerTaskExecution.create({
-        task_name : taskName,
-        execution_rid : executionRid,
-        started_at : new Date(),
-        created_datetime : new Date(),
-        status : schedulerStatus.Running
+        task_name: taskName,
+        execution_rid: executionRid,
+        started_at: new Date(),
+        created_datetime: new Date(),
+        status: schedulerStatus.Running
       })
       return taskCreationRecord;
     }
   }
 
-  async updateSchedulerRecords (executionRid : string, status : string) {
-    const {SchedulerExecution} = await this.interactionModelService.getModels("")
+  async updateSchedulerRecords(executionRid: string, status: string) {
+    const { SchedulerExecution } = await this.interactionModelService.getModels("")
     await SchedulerExecution.update({
-      status : status
+      status: status
     }, {
-      where : {
-        rid : executionRid
+      where: {
+        rid: executionRid
       }
     })
   }
 
-  async updateSchedulerTaskRecords (executionRid : string, taskName : string, status : string, errorMessage : string) {
-    const {SchedulerTaskExecution} = await this.interactionModelService.getModels("")
+  async updateSchedulerTaskRecords(executionRid: string, taskName: string, status: string, errorMessage: string) {
+    const { SchedulerTaskExecution } = await this.interactionModelService.getModels("")
     await SchedulerTaskExecution.update({
-      status : status,
-      error_message : errorMessage,
-      completed_at : status == schedulerStatus.Success ? new Date() : null
+      status: status,
+      error_message: errorMessage,
+      completed_at: status == schedulerStatus.Success ? new Date() : null
     }, {
-      where : {
-        execution_rid : executionRid,
-        task_name : taskName
+      where: {
+        execution_rid: executionRid,
+        task_name: taskName
       }
     })
   }
-  async findTaskRecordExists (executionRid : string, taskName : string) {
-    const {SchedulerTaskExecution} = await this.interactionModelService.getModels("")
+  async findTaskRecordExists(executionRid: string, taskName: string) {
+    const { SchedulerTaskExecution } = await this.interactionModelService.getModels("")
     return await SchedulerTaskExecution.findOne({
-      where : {
-        execution_rid : executionRid,
-        task_name : taskName
-      }, 
+      where: {
+        execution_rid: executionRid,
+        task_name: taskName
+      },
       attributes: ["rid"],
-      raw : true,
+      raw: true,
     })
   }
 
-  async insertEmailInfoDatas (data : any) {
-    const {SendEmailInfo} = await this.interactionModelService.getModels("");
+  async insertEmailInfoDatas(data: any) {
+    const { SendEmailInfo } = await this.interactionModelService.getModels("");
     const insertedData = await SendEmailInfo.create({
-      interaction_rid : data.interaction_rid,
-      account_rid : data.account_rid,
-      account_rnumber : data.account_rnumber,
-      email : data.email,
-      name : data.name,
-      project_fiscal_rid : data?.project_fiscal_rid || null,
-      user_rid : data.user_rid,
-      is_email_sent : false,
-      is_interaction_followup : data?.is_interaction_followup || false,
+      interaction_rid: data.interaction_rid,
+      account_rid: data.account_rid,
+      account_rnumber: data.account_rnumber,
+      email: data.email,
+      name: data.name,
+      project_fiscal_rid: data?.project_fiscal_rid || null,
+      user_rid: data.user_rid,
+      is_email_sent: false,
+      is_interaction_followup: data?.is_interaction_followup || false,
       is_interaction_reinitiated: data?.is_interaction_reinitiated || false,
       interaction_level: data.interaction_level || 'Project',
-      email_sent_at : null
+      email_sent_at: null
     })
     return insertedData
   }
@@ -4513,27 +4533,27 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       interaction_level: interaction_level,
       account_rid: account_rid,
       project_fiscal_rid: project_fiscal_rid,
-      
+
     });
     return createdEntry;
   }
 
-  async updateEmailSendFlag (interaction_rid : string) {
+  async updateEmailSendFlag(interaction_rid: string) {
     await SendEmailInfo.update({
-      is_email_sent : true,
-      email_sent_at : new Date().toISOString(),
-      modified_datetime : new Date()
-    }, 
-    {
-      where : {
-      interaction_rid : interaction_rid
-    }
-    })
+      is_email_sent: true,
+      email_sent_at: new Date().toISOString(),
+      modified_datetime: new Date()
+    },
+      {
+        where: {
+          interaction_rid: interaction_rid
+        }
+      })
   }
 
   async fetchAccountDetails(account_number: string, parentAccountId: string, accountRid: string) {
-    const {accountNumber} = await this.fetchValidAccountNumberByIdForEmail(accountRid);
-  
+    const { accountNumber } = await this.fetchValidAccountNumberByIdForEmail(accountRid);
+
     const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     try {
 
@@ -4544,16 +4564,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         type: "SELECT",
       });
 
-      if(fetchParentAccount && fetchParentAccount.length > 0){
+      if (fetchParentAccount && fetchParentAccount.length > 0) {
         const parentDetails = fetchParentAccount[0];
-        
+
         const isSubscriptionCreated = Boolean(
           parentDetails.subscription_created &&
           parentDetails.tenant_id &&
           parentDetails.client_id &&
           parentDetails.client_secret
         );
-      
+
         return isSubscriptionCreated;
       }
 
@@ -4570,8 +4590,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     // Implementation for creating interactions in the database
     try {
       const { InteractionTemplate } = await this.interactionModelService.getModels("");
-      
-      const isUnique = await this.checkIsTemplateUnique(interactionData.template_name,InteractionTemplate);
+
+      const isUnique = await this.checkIsTemplateUnique(interactionData.template_name, InteractionTemplate);
       if (!isUnique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
@@ -4579,8 +4599,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           errorMessage: `An template with the name "${interactionData.template_name}" already exists. Please choose a different name.`,
         };
       }
-      else
-      {
+      else {
         const interaction = await InteractionTemplate.create(interactionData);
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -4589,7 +4608,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         };
       }
 
-     
+
     } catch (error) {
       logMessage(`Error creating interaction template: ${error}`);
       throw new Error("Error creating interaction template: " + error);
@@ -4612,142 +4631,139 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
 
   async listInteractionTemplates(
-  page: number = 1,
-  limit: number = 100,
-  filters: Record<string, string>,
-  sortBy: string = "created_datetime",
-  sortOrder: string = "ASC",
-  type: string = "list"
-) {
-  try {
-    const offset = (page - 1) * limit;
+    page: number = 1,
+    limit: number = 100,
+    filters: Record<string, string>,
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    type: string = "list"
+  ) {
+    try {
+      const offset = (page - 1) * limit;
       let modifiedByFilter;
-    let modifiedByConditions;
-    let totalResults: number = 0;
-    let disablePagination = false;
-    if(type === "download")
-      {
+      let modifiedByConditions;
+      let totalResults: number = 0;
+      let disablePagination = false;
+      if (type === "download") {
         disablePagination = true
       }
       const detectConditions = (filters: any) => {
-      if (!filters) return null;
-      for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
-        if (Object.keys(filters).includes(conditions)) return conditions;
-      }
-      return null;
-    };
-    if (filters?.modified_by) {
-      modifiedByFilter = filters.modified_by;
-      modifiedByConditions = detectConditions(modifiedByFilter);
-    }
-      ["modified_by"].forEach(key => {
-      if (filters[key]) {
-        disablePagination = true;
-        delete filters[key];
-      }
-    });
-    if (mainTableFilters[sortBy] !== undefined) {
-          disablePagination = true;
+        if (!filters) return null;
+        for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+          if (Object.keys(filters).includes(conditions)) return conditions;
         }
-    const { whereClause } = this.buildWhereClause(filters);
-    const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
-    const { InteractionTemplate } = await this.interactionModelService.getModels("");
-    if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
-    }
-
-    // Fetch technical summaries and count
-    const { rows: interactionTemplates, count } = await InteractionTemplate.findAndCountAll({
-      where: whereClause,
-      order: [[finalSortBy, finalSortOrder]],
-      ...(disablePagination
-        ? {}
-        : { limit: limit, offset: offset }),
-    });
-    // You can now use both interactionTemplates (array) and count (number)
-    if (interactionTemplates.length === 0) {
-      return {
-        interactionTemplates: [],
-        count: 0
+        return null;
       };
-    }
-    let createdByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.created_by))];
-    let modifiedByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.modified_by))];
-    let statusIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.status_rid))];
-    let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
-    let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
-    let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
-    let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
-    let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
-    let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
-    let finalData = interactionTemplates == null ? [] : interactionTemplates.map((d: any) => {
-      return {
-        rid: d.rid,
-        r_number: d.r_number,
-        interaction_type_rid: d.interaction_type_rid,
-        interaction_type_name: d.interaction_type_name,
-        interaction_level_rid: d.interaction_level_rid,
-        interaction_level_name: d.interaction_level_name,
-        status_rid: d.status_rid,
-        created_by: d.created_by,
-        created_user_name: createdMap.get(d.created_by) || null,
-        modified_by: d.modified_by,
-        modified_user_name: modifiedMap.get(d.modified_by) || null,
-        created_datetime: d.created_datetime,
-        modified_datetime: d.modified_datetime
-      };
-    });
-    const applyFilters = (data: any[], conditions: any, value: any, field: any) => {
-      if (!conditions || !field) return data;
-      const val = value[conditions];
-      switch (conditions) {
-        case ALPHANUMERIC_CONDITIONS.equals:
-          return data.filter((d: any) => d[field]?.toLowerCase() === val?.toLowerCase());
-        case ALPHANUMERIC_CONDITIONS.notEquals:
-          return data.filter((d: any) => d[field]?.toLowerCase() != val?.toLowerCase());
-        case ALPHANUMERIC_CONDITIONS.contains:
-          return data.filter((d: any) => d[field]?.toLowerCase().includes(val?.toLowerCase()));
-        case ALPHANUMERIC_CONDITIONS.isEmpty:
-          return data.filter((d: any) => d[field] == null);
-        default:
-          return data;
+      if (filters?.modified_by) {
+        modifiedByFilter = filters.modified_by;
+        modifiedByConditions = detectConditions(modifiedByFilter);
       }
-    };
-    if (modifiedByConditions != null && modifiedByConditions != undefined)
-      finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
-    if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
-      finalData = finalData.sort((a: any, b: any) => {
-        if (!a?.[sortBy]) return 1;
-        if (!b?.[sortBy]) return -1;
-        return a[sortBy].localeCompare(b[sortBy]);
+      ["modified_by"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
       });
-    } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
-      finalData = finalData.sort((a: any, b: any) => {
-        if (!b?.[sortBy]) return 1;
-        if (!a?.[sortBy]) return -1;
-        return b[sortBy].localeCompare(a[sortBy]);
+      if (mainTableFilters[sortBy] !== undefined) {
+        disablePagination = true;
+      }
+      const { whereClause } = this.buildWhereClause(filters);
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
+      const { InteractionTemplate } = await this.interactionModelService.getModels("");
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+
+      // Fetch technical summaries and count
+      const { rows: interactionTemplates, count } = await InteractionTemplate.findAndCountAll({
+        where: whereClause,
+        order: [[finalSortBy, finalSortOrder]],
+        ...(disablePagination
+          ? {}
+          : { limit: limit, offset: offset }),
       });
-    }
-    totalResults = disablePagination ? finalData.length : count;
-    let finalPaginatedData = [];
-    if(type === "download") 
-      {
+      // You can now use both interactionTemplates (array) and count (number)
+      if (interactionTemplates.length === 0) {
+        return {
+          interactionTemplates: [],
+          count: 0
+        };
+      }
+      let createdByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.created_by))];
+      let modifiedByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.modified_by))];
+      let statusIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.status_rid))];
+      let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
+      let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
+      let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
+      let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+      let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+      let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
+      let finalData = interactionTemplates == null ? [] : interactionTemplates.map((d: any) => {
+        return {
+          rid: d.rid,
+          r_number: d.r_number,
+          interaction_type_rid: d.interaction_type_rid,
+          interaction_type_name: d.interaction_type_name,
+          interaction_level_rid: d.interaction_level_rid,
+          interaction_level_name: d.interaction_level_name,
+          status_rid: d.status_rid,
+          created_by: d.created_by,
+          created_user_name: createdMap.get(d.created_by) || null,
+          modified_by: d.modified_by,
+          modified_user_name: modifiedMap.get(d.modified_by) || null,
+          created_datetime: d.created_datetime,
+          modified_datetime: d.modified_datetime
+        };
+      });
+      const applyFilters = (data: any[], conditions: any, value: any, field: any) => {
+        if (!conditions || !field) return data;
+        const val = value[conditions];
+        switch (conditions) {
+          case ALPHANUMERIC_CONDITIONS.equals:
+            return data.filter((d: any) => d[field]?.toLowerCase() === val?.toLowerCase());
+          case ALPHANUMERIC_CONDITIONS.notEquals:
+            return data.filter((d: any) => d[field]?.toLowerCase() != val?.toLowerCase());
+          case ALPHANUMERIC_CONDITIONS.contains:
+            return data.filter((d: any) => d[field]?.toLowerCase().includes(val?.toLowerCase()));
+          case ALPHANUMERIC_CONDITIONS.isEmpty:
+            return data.filter((d: any) => d[field] == null);
+          default:
+            return data;
+        }
+      };
+      if (modifiedByConditions != null && modifiedByConditions != undefined)
+        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
+      if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!a?.[sortBy]) return 1;
+          if (!b?.[sortBy]) return -1;
+          return a[sortBy].localeCompare(b[sortBy]);
+        });
+      } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!b?.[sortBy]) return 1;
+          if (!a?.[sortBy]) return -1;
+          return b[sortBy].localeCompare(a[sortBy]);
+        });
+      }
+      totalResults = disablePagination ? finalData.length : count;
+      let finalPaginatedData = [];
+      if (type === "download") {
         finalPaginatedData = finalData;
       }
-      else
-      {
-          finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      else {
+        finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
       }
-    return {
-      interactionTemplates: finalPaginatedData,
-      count: totalResults
-    };
-  } catch (err) {
-    logMessage(`Error listing interaction templates: ${err}`);  
-    throw new Error("Error listing interaction templates: " + (err as Error).message);
+      return {
+        interactionTemplates: finalPaginatedData,
+        count: totalResults
+      };
+    } catch (err) {
+      logMessage(`Error listing interaction templates: ${err}`);
+      throw new Error("Error listing interaction templates: " + (err as Error).message);
+    }
   }
-  }
-  
+
   async updateInteractionTemplate(
     interactionData: ICreateTemplateInteraction,
     userId: string,
@@ -4755,46 +4771,45 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   ) {
     const { InteractionTemplate } =
       await this.interactionModelService.getModels("");
-const existingTemplate = await InteractionTemplate.findOne({
-        where: {
-          [Op.and]: [
-            where(
-              fn("LOWER", col("template_name")),
-              Op.eq,
-              interactionData.template_name.toLowerCase()
-            ),
-            { rid: { [Op.ne]: interactionData.template_rid } },
-          ],
-        },
-      });
-       if (existingTemplate) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `An account with the template name "${interactionData.template_name}" already exists. Please choose a different name.`,
-        };
-      }
-      else
-      {
-        const updatedInteraction = await InteractionTemplate.update(
-      {
-        ...interactionData,
-        modified_by: userId,
-        modified_datetime: new Date(),
+    const existingTemplate = await InteractionTemplate.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("template_name")),
+            Op.eq,
+            interactionData.template_name.toLowerCase()
+          ),
+          { rid: { [Op.ne]: interactionData.template_rid } },
+        ],
       },
-      {
-        where: {
-          rid: interactionData.template_rid
+    });
+    if (existingTemplate) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: `An account with the template name "${interactionData.template_name}" already exists. Please choose a different name.`,
+      };
+    }
+    else {
+      const updatedInteraction = await InteractionTemplate.update(
+        {
+          ...interactionData,
+          modified_by: userId,
+          modified_datetime: new Date(),
         },
-        transaction,
-      }
-    );
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: { interaction: updatedInteraction },
-        };
-      }
+        {
+          where: {
+            rid: interactionData.template_rid
+          },
+          transaction,
+        }
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: { interaction: updatedInteraction },
+      };
+    }
   }
   async addInteractionTemplateQuestions(
     interactionData: ICreateTemplateInteraction,
@@ -4803,7 +4818,7 @@ const existingTemplate = await InteractionTemplate.findOne({
     userId: string
   ) {
     try {
-       const { InteractionTemplateItem } = await this.interactionModelService.getModels("");
+      const { InteractionTemplateItem } = await this.interactionModelService.getModels("");
 
 
       if (Array.isArray(interactionData.questions)) {
@@ -4855,50 +4870,50 @@ const existingTemplate = await InteractionTemplate.findOne({
     }
   }
   async fetchInteractionTemplateDetailsById(
-  interactionRid: string
-) {
-  if (!this.mainDbSequelize) {
-    this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
-  }
+    interactionRid: string
+  ) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
 
-  const [interactionDetailsResult] = await this.mainDbSequelize.query(rawQueries.fetchInteractionTemplates, {
-    replacements: { interactionRid },
-    type: "SELECT"
-  }) as [any[], any];
+    const [interactionDetailsResult] = await this.mainDbSequelize.query(rawQueries.fetchInteractionTemplates, {
+      replacements: { interactionRid },
+      type: "SELECT"
+    }) as [any[], any];
 
-  if (!interactionDetailsResult || interactionDetailsResult.length === 0) {
-    return null;
-  }
+    if (!interactionDetailsResult || interactionDetailsResult.length === 0) {
+      return null;
+    }
 
-  const interactionDetails = interactionDetailsResult as any;
+    const interactionDetails = interactionDetailsResult as any;
 
-  let interactionItems = await this.fetchInteractionTemplateItems(
-    interactionRid
-  );
+    let interactionItems = await this.fetchInteractionTemplateItems(
+      interactionRid
+    );
 
-   const userInfo = await this.insertUserDetails(
-     interactionDetails.created_by ?? "",
-     interactionDetails.modified_by ?? ""
-   );
+    const userInfo = await this.insertUserDetails(
+      interactionDetails.created_by ?? "",
+      interactionDetails.modified_by ?? ""
+    );
 
-  const response: any = {
-    template_rid: interactionDetails?.rid,
-    template_name: interactionDetails?.template_name ?? "",
-    r_number: interactionDetails.r_number ?? "",
-    interaction_type: interactionDetails.interaction_type_rid ?? "",
-    interaction_type_name: interactionDetails.interaction_type_name ?? "",
-    interaction_level_rid: interactionDetails.interaction_level_rid ?? '',
-    interaction_level_name: interactionDetails.interaction_level_name ?? '',
-    status_rid: interactionDetails.status_rid ?? "",
-    status_name: interactionDetails.status_name ?? "",
-    modified_by: userInfo.modified_name ?? interactionDetails.modified_by,
-    created_by: userInfo.created_name ?? interactionDetails.created_by,
-    created_datetime: interactionDetails.created_datetime ?? null,
-    modified_datetime: interactionDetails.modified_datetime ?? null,
-    questions: interactionItems
-  };
+    const response: any = {
+      template_rid: interactionDetails?.rid,
+      template_name: interactionDetails?.template_name ?? "",
+      r_number: interactionDetails.r_number ?? "",
+      interaction_type: interactionDetails.interaction_type_rid ?? "",
+      interaction_type_name: interactionDetails.interaction_type_name ?? "",
+      interaction_level_rid: interactionDetails.interaction_level_rid ?? '',
+      interaction_level_name: interactionDetails.interaction_level_name ?? '',
+      status_rid: interactionDetails.status_rid ?? "",
+      status_name: interactionDetails.status_name ?? "",
+      modified_by: userInfo.modified_name ?? interactionDetails.modified_by,
+      created_by: userInfo.created_name ?? interactionDetails.created_by,
+      created_datetime: interactionDetails.created_datetime ?? null,
+      modified_datetime: interactionDetails.modified_datetime ?? null,
+      questions: interactionItems
+    };
 
-  return response;
+    return response;
   }
   async fetchInteractionTemplateItems(
     interactionRid: string,
@@ -4921,7 +4936,7 @@ const existingTemplate = await InteractionTemplate.findOne({
           ["question_seq_num", "ASC"],
           ["created_datetime", "ASC"],
         ],
-        where: { template_rid: interactionRid},
+        where: { template_rid: interactionRid },
       });
       const plainItems = items.map((item) => item.get({ plain: true }));
       return items;
@@ -4934,55 +4949,55 @@ const existingTemplate = await InteractionTemplate.findOne({
   }
 
   async getTemplateDetailsByCategory(categoryName: string) {
-      if (!this.mainDbSequelize) {
-        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
-      }
-      const [templateDetails]:any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchEmailTemplateByCategory(categoryName),
-        {
-          type: "SELECT",
-        }
-      );
-  
-  
-      return templateDetails;
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
     }
+    const [templateDetails]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchEmailTemplateByCategory(categoryName),
+      {
+        type: "SELECT",
+      }
+    );
 
-  async createFourPartAssessment (fourPartAssessment : FourPartAssessmentResponse, accountNumber : string, project_id : string, company_id : string, transaction_id : string) {
-    const {FourPartAssessment} = await this.interactionModelService.getModels(accountNumber);
-    await FourPartAssessment.create({
-      account_rid : company_id,
-      project_fiscal_rid : project_id,
-      created_by : process.env.SYSTEM_USER_ID!,
-      created_datetime : new Date(),
-      permitted_purpose_status : fourPartAssessment.assessment.four_part_assessment.permitted_purpose.status,
-      permitted_purpose_rationale : fourPartAssessment.assessment.four_part_assessment.permitted_purpose.rationale,
-      process_of_experimentation_status : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.status,
-      process_of_experimentation_rationale : fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.rationale,
-      project_metadata : JSON.stringify(fourPartAssessment.assessment.project_metadata),
-      rationale : fourPartAssessment.assessment.four_part_assessment.rationale,
-      rd_potential_category : fourPartAssessment.assessment.four_part_assessment.rd_potential_category,
-      status : fourPartAssessment.assessment.four_part_assessment.status,
-      summary_judgment : fourPartAssessment.assessment.four_part_assessment.summary_judgment,
-      technological_in_nature_status : fourPartAssessment.assessment.four_part_assessment.technological_in_nature.status,
-      technological_in_nature_rationale : fourPartAssessment.assessment.four_part_assessment.technological_in_nature.rationale,
-      technological_uncertainty_status : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.status,
-      technological_uncertainty_rationale : fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.rationale,
-      tracker_one_liner : fourPartAssessment.assessment.tracker_one_liner,
-      transaction_id : transaction_id
-    })
-}
 
-async getStatus() {
-  if(!this.mainDbSequelize) {
-    this.mainDbSequelize = await initMainDbSequelize();
+    return templateDetails;
   }
-  const fetchStatus = await this.mainDbSequelize.query<AllStatusType>(rawQueries.fetchAllStatus(), {type : QueryTypes.SELECT});
-  if(fetchStatus.length > 0) {
-    return fetchStatus;
-  } else return []
 
-}
+  async createFourPartAssessment(fourPartAssessment: FourPartAssessmentResponse, accountNumber: string, project_id: string, company_id: string, transaction_id: string) {
+    const { FourPartAssessment } = await this.interactionModelService.getModels(accountNumber);
+    await FourPartAssessment.create({
+      account_rid: company_id,
+      project_fiscal_rid: project_id,
+      created_by: process.env.SYSTEM_USER_ID!,
+      created_datetime: new Date(),
+      permitted_purpose_status: fourPartAssessment.assessment.four_part_assessment.permitted_purpose.status,
+      permitted_purpose_rationale: fourPartAssessment.assessment.four_part_assessment.permitted_purpose.rationale,
+      process_of_experimentation_status: fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.status,
+      process_of_experimentation_rationale: fourPartAssessment.assessment.four_part_assessment.process_of_experimentation.rationale,
+      project_metadata: JSON.stringify(fourPartAssessment.assessment.project_metadata),
+      rationale: fourPartAssessment.assessment.four_part_assessment.rationale,
+      rd_potential_category: fourPartAssessment.assessment.four_part_assessment.rd_potential_category,
+      status: fourPartAssessment.assessment.four_part_assessment.status,
+      summary_judgment: fourPartAssessment.assessment.four_part_assessment.summary_judgment,
+      technological_in_nature_status: fourPartAssessment.assessment.four_part_assessment.technological_in_nature.status,
+      technological_in_nature_rationale: fourPartAssessment.assessment.four_part_assessment.technological_in_nature.rationale,
+      technological_uncertainty_status: fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.status,
+      technological_uncertainty_rationale: fourPartAssessment.assessment.four_part_assessment.technological_uncertainty.rationale,
+      tracker_one_liner: fourPartAssessment.assessment.tracker_one_liner,
+      transaction_id: transaction_id
+    })
+  }
+
+  async getStatus() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    const fetchStatus = await this.mainDbSequelize.query<AllStatusType>(rawQueries.fetchAllStatus(), { type: QueryTypes.SELECT });
+    if (fetchStatus.length > 0) {
+      return fetchStatus;
+    } else return []
+
+  }
 
   /**
    * Bulk fetch projects that do NOT have key contacts

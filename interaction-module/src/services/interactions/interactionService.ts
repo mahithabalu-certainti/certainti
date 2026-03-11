@@ -784,6 +784,51 @@ export class InteractionService {
     }
   }
 
+  async saveRefineSummary(
+    technicalSummary: any,
+    techSummaryId: string,
+    accountId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          accountId
+        );
+
+      if (!accountNumber) {
+        logMessage(`Invalid account ID ${accountId}`);
+        throw new Error("Invalid account ID");
+      }
+      await this.interactionSchemaService.saveRefineSummary(
+        technicalSummary,
+        techSummaryId,
+        accountNumber,
+        userId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: "Technical summary updated successfully",
+        data: {
+          interactions: null,
+        },
+      };
+    } catch (err) {
+      errorLog("Error updating interaction", (err as Error).message);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.interactionUpdateFailed,
+        };
+    }
+  }
+
   async updateInteractionResponse(
     interactionData: InteractionResponse,
     userId: string
