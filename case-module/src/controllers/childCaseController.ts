@@ -259,10 +259,7 @@ async function exportSignOffDetails (req : Request, res : Response) {
 async function getDossierPackage (req : Request, res : Response) {
   const methodName = "getDossierPackage";
   try {
-    const {accountId, caseId} = req.params;
-    const data : any = {};
-    data.account_rid = accountId;
-    data.case_rid = caseId;
+    const data = req.body;
     const user_id = req.headers["x-user-id"] as string;
     if (!user_id) {
         errorLog(methodName, "User ID is required in headers");
