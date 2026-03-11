@@ -31,7 +31,7 @@ import { ProjectHistory } from "../models/projectHistory";
 import currency from "currency.js";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
-import { DEFAULT_PROJECT_DETAILS, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { DEFAULT_PROJECT_DETAILS, entityTypes, eventNames, eventTypes, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ProjectFiscalRegion,
 } from "../models/projectFiscalRegion";
@@ -382,7 +382,7 @@ class ProjectIngestionService {
         type: "project",
       };
       logMessage(`Triggering AI for project fiscal rid: ${req}`);
-      await this.triggerAI(req);
+      await this.triggerAI(req, userId, response.project_code,accountNumber,entityTypes.AUTO_RD_ASSESSMENT);
     }
 
     return response;
@@ -533,7 +533,7 @@ class ProjectIngestionService {
     }
   }
 
-  async triggerAI(req: any) {
+  async triggerAI(req: any, userId: string, projectCode: string, accountNumber: string, type: string = entityTypes.AUTO_RD_ASSESSMENT) {
     try {
       let payload: {
         company_id?: any;
@@ -565,6 +565,22 @@ class ProjectIngestionService {
       this.logger.info(
         `Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`
       );
+      const schemaService = new SchemaService();
+      const userEventInfo:any = await schemaService.fetchUserAndEventInfo({
+                                                      userId: userId!,
+                                                      eventType: eventTypes.UI_HANDLER
+                                                    });
+      await schemaService.createAccountTimelineEntry(accountNumber!, {
+                  created_by: userId!,
+                  account_rid: req.data[0].account_rid,
+                  entity_rid: req.data[0].project_fiscal_rid!,
+                  entity_name: entityTypes.AUTO_RD_ASSESSMENT,
+                  created_by_name: userEventInfo.full_name,
+                  event_type_rid: userEventInfo.event_type_rid,
+                  event_name: eventNames.TRIGGERED,
+                  descriptions:projectCode || '',
+                  project_rid: req.data[0].project_fiscal_rid
+                },["project"]);
       return {
         statusMessage: "RD Assessment Initiated",
         status: "success",

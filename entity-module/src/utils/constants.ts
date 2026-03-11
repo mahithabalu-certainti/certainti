@@ -91,12 +91,14 @@ export const entityTypes = {
   TAG: "Tag",
   SETTINGS: "Settings",
   QRE_PERCENT: "QRE Percent",
+  AUTO_RD_ASSESSMENT:"Auto RD Assessment",
 };
 
 export const eventNames = {
   CREATE: "created",
   UPDATE: "updated",
   ADJUST: "adjusted",
+  TRIGGERED: "triggered",
 }
 
 export const eventTypes = {
