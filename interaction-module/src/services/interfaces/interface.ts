@@ -108,6 +108,18 @@ export interface IInteractionService {
     data?: { interactions: any };
   }>;
 
+  saveRefineSummary(
+    technicalSummary: any,
+    techSummaryId: string,
+    accountId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
+
   
   updateInteractionResponse(
     interactionData: InteractionResponse,

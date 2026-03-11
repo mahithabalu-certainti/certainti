@@ -76,10 +76,15 @@ routes.put(
   controller.interactionsController.updateTechSummaryContext
 );
 routes.post(
+  "/refineSummary/save",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.interactionsController.saveRefineSummary
+);
+routes.post(
   "/accountInterctions/create",
   checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.createAccountInteraction
-);  
+);
 
 
 routes.get('/technicalSummary/export', checkUserStatusMiddleware("projects_tech_summary_export"), controller.interactionsController.exportTechnicalSummary)
