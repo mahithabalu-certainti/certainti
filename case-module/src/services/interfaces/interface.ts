@@ -556,13 +556,7 @@ export interface IChildCaseService extends ICaseService {
   } | undefined>
   initiateCreateDossierForm(data: any): Promise<string>
   exportCaseClosingRemarks(data: any): Promise<string | undefined>
-  fetchDossierPackage(data: any): Promise<{
-    statusCode: number;
-    data: DossierForm;
-  } | {
-    statusCode: number;
-    data: null;
-  }>
+  fetchDossierPackage(data: any): Promise<any>
   closeCase(data: CaseCloseType, files: Express.Multer.File[]): Promise<{
     statusCode: number;
     statusMessage: string;

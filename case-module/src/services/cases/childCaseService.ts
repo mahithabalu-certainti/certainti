@@ -400,12 +400,12 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const files: any[] = [
     {
       name: "Qualified Projects",
-      buffer: Buffer.from(generateQualifiedProjectsCSV, "base64"),
+      buffer: generateQualifiedProjectsCSV,
       extension: ".xlsx"
     },
     {
       name: "Resource Summary",
-      buffer: Buffer.from(generateResourceSummaryCSV, "base64"),
+      buffer: generateResourceSummaryCSV,
       extension: ".xlsx"
     },
     {
@@ -414,12 +414,12 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     },
     {
       name: "Approval Status",
-      buffer: Buffer.from(closingRemarksData || "", "base64"),
+      buffer: closingRemarksData,
       extension: ".xlsx"
     },
     {
       name: "RD Form Federal",
-      urls: countryUrls
+      url: countryUrls
     },
     {
       name: "RD Form State",
@@ -430,13 +430,12 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     finalStructuredData.forEach((pdf, index) => {
       files.push({
         name: `Technical Summary ${index + 1}`,
-        buffer: Buffer.from(pdf, "base64"),
+        buffer: pdf,
         extension: ".pdf"
       });
     });
   }
-  const convertToZip = await createZipFile(files);
-  const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", accountRid, caseDetails?.r_number!, accountNumber, "cases");
+  const jsonToString = JSON.stringify(files)
   const findData = await DossierFormModel.findOne({
     where : {
       case_rid : caseRid,
@@ -446,11 +445,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
 
   if(findData) {
     await DossierFormModel.update({
-      browse_url : uploadToAzure.url,
       modified_by : userId,
-      document_name : uploadToAzure.name,
-      extension : uploadToAzure.extension,
-      size : JSON.stringify(uploadToAzure.size),
+      dossier_metadata : jsonToString,
       modified_datetime : new Date()
     }, {
      where : {
@@ -462,12 +458,13 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     await DossierFormModel.create({
       account_rid : accountRid,
       case_rid : caseRid,
-      browse_url : uploadToAzure.url,
+      browse_url : '',
       created_by : userId,
-      document_name : uploadToAzure.name,
-      extension : uploadToAzure.extension,
-      size : JSON.stringify(uploadToAzure.size),
-      created_datetime : new Date()
+      document_name : '',
+      extension : '',
+      size : '',
+      created_datetime : new Date(),
+      dossier_metadata : jsonToString
     });
   }
 }
@@ -1099,7 +1096,7 @@ async getModels(schemaName: string) {
       AiTechnicalSummaryModel
     }
 }
-async fetchDossierPackage (data : any) {
+async fetchDossierPackage (data : any) : Promise<any> {
   const orgDbSequelize = await initOrgSequelize();
   if (!orgDbSequelize)
     throw new Error("Failed to initialize database connection");
@@ -1113,16 +1110,47 @@ async fetchDossierPackage (data : any) {
     where : {
       case_rid : data.case_rid,
       account_rid : data.account_rid
-    }, raw : true
+    }
   })
   if(getZipPackage) {
-    getZipPackage.browse_url = await generateSasUrl(getZipPackage.browse_url);
+    let responsePackage : any[] = [];
+    const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
+    for(let i = 0; i < data.downloaded_list.length; i++) {
+      for(let j = 0; j < stringToJson.length; j++) {
+        if(stringToJson[j].name.toLowerCase().startsWith(data.downloaded_list[i].toLowerCase())) {
+          if(stringToJson[j].extension === '.xlsx' || stringToJson[j].extension === '.pdf') {
+            responsePackage.push({
+              name : stringToJson[j].name,
+              buffer : Buffer.from(stringToJson[j].buffer, 'base64'),
+              extension : stringToJson[j].extension
+            });
+          } else {
+            responsePackage.push(stringToJson[j])
+          }
+        }
+      }
+    }
+    const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+    const convertToZip = await createZipFile(responsePackage);
+    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
+    await getZipPackage.update({
+      browse_url : uploadToAzure.url,
+      size : JSON.stringify(uploadToAzure.size),
+      document_name : uploadToAzure.name,
+      extension : uploadToAzure.extension
+    }, {
+      where : {
+        account_rid : data.account_rid,
+        case_rid : data.case_rid
+      }
+    })
+     getZipPackage.browse_url = await generateSasUrl(uploadToAzure.url);
      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                userId: data.user_id!,
-                eventType: eventTypes.UI_HANDLER
-              });
-      const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
-                                
+        userId: data.user_id!,
+        eventType: eventTypes.UI_HANDLER
+      });
+      const obj = getZipPackage.get({plain : true})
+      delete obj.dossier_metadata               
       await this.helperMethod.createAccountTimelineEntry(fetchParentNumber[0][0].r_number, {
       created_by: data.user_id!,
       account_rid: data.account_rid,
@@ -1136,7 +1164,7 @@ async fetchDossierPackage (data : any) {
     },["case"]);
     return {
       statusCode : HttpStatus.SUCCESS,
-      data : getZipPackage
+      data : obj
     }
   } else {
     return {

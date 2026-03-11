@@ -321,7 +321,7 @@ routes.post(
 routes.get('/regions/:accountId/:caseId', controller.childCaseController.regionListForFinancialHighlights)
 routes.post('/dossier/create', checkUserStatusMiddleware("NA"), controller.childCaseController.initiateCreateDossierForm)
 routes.post('/closureRemarks/export',checkUserStatusMiddleware("NA"),controller.childCaseController.exportSignOffDetails)
-routes.get('/dossierPackage/:accountId/:caseId', checkUserStatusMiddleware("NA"), controller.childCaseController.getDossierPackage)
+routes.post('/dossierPackage', checkUserStatusMiddleware("NA"), controller.childCaseController.getDossierPackage)
 routes.post('/close', checkUserStatusMiddleware("NA"),upload.any() ,controller.childCaseController.closeCase)
 routes.post('/computedValues', checkUserStatusMiddleware("NA"),controller.childCaseController.getComputedValue)
 export default routes;
