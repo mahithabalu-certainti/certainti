@@ -788,14 +788,10 @@ export class ReportService implements IReportService {
             });
 
             finalResult = finalResult.filter((row) => {
-                if ((Number(row.total_project_cost) === 0 &&
+                if (Number(row.total_project_cost) === 0 &&
                     Number(row.total_fte_cost) === 0 &&
                     Number(row.total_subcon_cost) === 0 &&
-                    Number(row.total_nonlabor_cost) === 0) ||
-                    (Number(row.total_project_cost) < 0 ||
-                        Number(row.total_fte_cost) < 0 ||
-                        Number(row.total_subcon_cost) < 0 ||
-                        Number(row.total_nonlabor_cost) < 0)) {
+                    Number(row.total_nonlabor_cost) === 0) {
                     return false;
                 }
                 return true;
