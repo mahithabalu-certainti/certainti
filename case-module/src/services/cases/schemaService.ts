@@ -2843,6 +2843,13 @@ class CaseSchemaService {
                                           userId: data.created_by!,
                                           eventType: eventTypes.UI_HANDLER
                                         });
+       const caseInfo:any = await Case.findOne({
+        where: {
+          rid: data.case_rid,
+          account_rid: data.account_rid,
+        },
+        raw: true,
+      });
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                                     created_by: data.created_by!,
                                     account_rid: data.account_rid,
@@ -2851,7 +2858,7 @@ class CaseSchemaService {
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.ADDED,
-                                    descriptions: totalCount +"to Case",
+                                    descriptions:  "to Case "+caseInfo.case_name+ "(" +totalCount +" project(s))",
                                     case_rid: data.case_rid,
                                   },["case"]);
     if (totalCount === iterationCount) {
@@ -3032,6 +3039,16 @@ class CaseSchemaService {
           project_fiscal_rid: p.project_fiscal_rid,
         },
       });
+    
+      iterationCount += 1;
+    }
+    const caseInfo:any = await Case.findOne({
+        where: {
+          rid: data.case_rid,
+          account_rid: data.account_rid,
+        },
+        raw: true,
+      });
       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
                                           userId: data.created_by!,
                                           eventType: eventTypes.UI_HANDLER
@@ -3039,16 +3056,14 @@ class CaseSchemaService {
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                                     created_by: data.created_by!,
                                     account_rid: data.account_rid,
-                                    entity_rid: p.project_fiscal_rid!,
+                                    entity_rid: data.case_rid!,
                                     entity_name: entityTypes.PROJECT,
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.REMOVED,
-                                    descriptions:p?.project_code || '' + "from Case",
+                                    descriptions:  "from Case "+caseInfo.case_name+ "(" +totalCount +" project(s))",
                                     case_rid: data.case_rid,
                                   },["case"]);
-      iterationCount += 1;
-    }
     if (totalCount === iterationCount) {
       const getTotalProjects: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
