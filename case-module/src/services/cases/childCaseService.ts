@@ -21,6 +21,7 @@ import { AiTechnicalSummary } from "../../models/aiTechnicalSummary";
 import { calculateCostForCaseSubmissionCurrentYear, calculateStateCostForCaseSubmissionCurrentYear } from "../../utils/rdFinancialWorkingQueries";
 import { CaseHistorySubmissionCreationAttributes } from "../../models/caseHistorySubmissionModel";
 import Decimal from "decimal.js";
+import { generatePdfBuffer } from "../../utils/generatePdf";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -306,7 +307,7 @@ async exportCaseClosingRemarks (data : any) {
                 "Approved On": d.signoff_at ? data.timezone && isValidTimezone(data.timezone) ? moment(d.signoff_at).tz(data.timezone).format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.signoff_at).utcOffset("+05:30").format("YYYY-MMM-DD, hh:mm:ss A") : "-",
             }
         });
-        const generateCsv = await generateExcelBase64(finalData, "Closing-Remarks");
+        const generateCsv = await generateExcelBase64(finalData, "Approval Status");
         return generateCsv;
     }
 }
@@ -322,7 +323,8 @@ async initiateCreateDossierForm (data : any) {
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones})}]
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,token : data.accessToken})}],
+        
     })
     console.log(`Message : ${JSON.stringify(result)}`)
     console.log(`Message published to ID : ${processingRid}`);
@@ -345,15 +347,9 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseProjectsPayload.type = "qualifiedProjects"
     caseProjectsPayload.timezone = timez
     const getProjectQualifiedData = await this.exportAssignedProjects(caseProjectsPayload);
-    const generateQualifiedProjectsCSV = await generateExcelBase64(
-          getProjectQualifiedData.data,
-          "Qualified-Projects"
-    )
+    const generateQualifiedProjectsCSV = await generateExcelBase64(getProjectQualifiedData.data,"Qualified-Projects")
     const getProjectResourceSummary = await this.projectResourceService.exportProjectResources(accountRid, caseRid,caseDetails!.fiscal_year, {}, "resource_code", "ASC", userId, "", "qualifiedProjects");
-    const generateResourceSummaryCSV = await generateExcelBase64(
-          getProjectResourceSummary.data?.projectResources,
-          "Resource-Summary"
-        )
+    const generateResourceSummaryCSV = await generateExcelBase64(getProjectResourceSummary.data?.projectResources,"Resource-Summary")
     let caseClosingPayload : any = {}
     caseClosingPayload.case_rid = caseRid;
     caseClosingPayload.account_rid = accountRid;
@@ -388,115 +384,59 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     } else {
       stateUrls = []
     }
-    const techSummary =
-        await this.listTechnicalSummary(
-          accountNumber,
-          '',
-          0,
-          0,
-          {},
-          'r_number',
-          'ASC',
-          "download",
-          caseRid,
-          accountRid,
-          "qualifedProjects"
-        );
-    const fields = await this.getAllowedExportFields(
-      userId,
-      "projects_tech_summary_view_edit"
-    );
-    const projectFields = await this.getAllowedExportFields(
-      userId,
-      "projects_view_edit"
-    )
-    const allowedFieldSet = new Set<string>();
-    const allowedProjectFieldSet = new Set<string>();
-    for(let p of projectFields) {
-      if(p.read) {
-        allowedProjectFieldSet.add(p.field_name)
-      }
-    }
-    for (const field of fields) {
-      if (field.read) {
-        allowedFieldSet.add(field.field_name);
-      }
-    }
-    const timezone = timez
-    const finalStructuredData =
-        techSummary.technicalSummary.length < 1
-          ? []
-          : techSummary.technicalSummary.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                project_code: d.project_code,
-                project_name : d.project_name, 
-                fiscal_year: d.fiscal_year,
-                status_name: d.status_name,
-                version: d.version,
-                summary_context: d.summary_context,
-                technical_summary: d.technical_summary,
-                created_by: d.created_user_name,
-                created_datetime: d.created_datetime ? timezone && isValidTimezone(timezone) ? moment.tz(d.created_datetime.toISOString(), timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.created_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
-                modified_by: d.modified_user_name,
-                modified_datetime: d.modified_datetime ? timezone && isValidTimezone(timezone) ? moment.tz(d.modified_datetime.toISOString(), timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.modified_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
-              };
-              const exportRecord: Record<string, any> = {};
-              techSummaryFieldMappings.forEach((mapping) => {
-                if (allowedFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
-                }
-                if(allowedProjectFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
-                }
-              });
-              return exportRecord;
-            });
-      const generateProjectSummaryCSV = await generateExcelBase64(
-        finalStructuredData,
-        "Project Summary"
-      );
+    let exportedAttachments;
+    let exportedUrls : string[]
     const exportProjectDocuments = await this.exportAttachments(userId, 'project', caseDetails?.rid, accountRid, '', {}, 'project_code', 'DESC', 0, {}, '', DOSSIER_NAME);
-    const convertToZip = await createZipFile([
-      {
-      name : "Qualified Projects",
-      buffer : Buffer.from(generateQualifiedProjectsCSV, 'base64'),
-      extension : ".xlsx"
-    },
-    {
-      name : "Technical Summary",
-      buffer : Buffer.from(generateProjectSummaryCSV, 'base64'),
-      extension : ".xlsx"
-    },
-    {
-      name : "Resource Summary",
-      buffer : Buffer.from(generateResourceSummaryCSV, 'base64'),
-      extension : ".xlsx"
-    },
-    {
-      name : "Project Documents",
-      buffer : Buffer.from(exportProjectDocuments.data, "base64"),
-      extension : ".xlsx"
-    },
-    {
-      name : "Approval Status",
-      buffer : Buffer.from(closingRemarksData! || '','base64'),
-      extension : ".xlsx"
-    },
-    {
-      name : "RD-Forms-Federal",
-      url : countryUrls
-    },
-    {
-      name : "RD-Forms-State",
-      urls : stateUrls
+    if(exportProjectDocuments.data.length > 0) {
+      exportedAttachments = exportProjectDocuments.data.map((d) => {
+        return {
+          url : d.browse_file
+        }
+      })
     }
-  ]);
-  console.log(`Converted to Zip Successfully : `, convertToZip);
-  const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", accountRid, caseDetails?.r_number!, accountNumber, "cases");
-  console.log(`Uploaded To Azure Successfully : `, uploadToAzure);
+    exportedUrls = exportedAttachments?.map((d : any) => d.url) || []
+
+    const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
+    const finalStructuredData = techSummary.technicalSummary.length < 1 ? [''] : await generatePdfBuffer(techSummary.technicalSummary)
+    const files: any[] = [
+    {
+      name: "Qualified Projects",
+      buffer: generateQualifiedProjectsCSV,
+      extension: ".xlsx"
+    },
+    {
+      name: "Resource Summary",
+      buffer: generateResourceSummaryCSV,
+      extension: ".xlsx"
+    },
+    {
+      name: "Project Documents",
+      urls : exportedUrls
+    },
+    {
+      name: "Approval Status",
+      buffer: closingRemarksData,
+      extension: ".xlsx"
+    },
+    {
+      name: "RD Form Federal",
+      url: countryUrls
+    },
+    {
+      name: "RD Form State",
+      urls: stateUrls
+    }
+  ];
+  if (Array.isArray(finalStructuredData)) {
+    finalStructuredData.forEach((pdf, index) => {
+      files.push({
+        name: `Technical Summary ${index + 1}`,
+        buffer: pdf,
+        extension: ".pdf"
+      });
+    });
+  }
+  const jsonToString = JSON.stringify(files)
   const findData = await DossierFormModel.findOne({
     where : {
       case_rid : caseRid,
@@ -506,11 +446,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
 
   if(findData) {
     await DossierFormModel.update({
-      browse_url : uploadToAzure.url,
       modified_by : userId,
-      document_name : uploadToAzure.name,
-      extension : uploadToAzure.extension,
-      size : JSON.stringify(uploadToAzure.size),
+      dossier_metadata : jsonToString,
       modified_datetime : new Date()
     }, {
      where : {
@@ -519,17 +456,17 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     }
     })
   } else {
-    const createdResult = await DossierFormModel.create({
+    await DossierFormModel.create({
       account_rid : accountRid,
       case_rid : caseRid,
-      browse_url : uploadToAzure.url,
+      browse_url : '',
       created_by : userId,
-      document_name : uploadToAzure.name,
-      extension : uploadToAzure.extension,
-      size : JSON.stringify(uploadToAzure.size),
-      created_datetime : new Date()
+      document_name : '',
+      extension : '',
+      size : '',
+      created_datetime : new Date(),
+      dossier_metadata : jsonToString
     });
-    console.log(`Dossier form created : `, await generateSasUrl(createdResult.dataValues.browse_url));
   }
 }
   async exportAttachments(
@@ -549,7 +486,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data:  string
+    data:  any[]
   }> {
      if (!accountRid) throw new Error("Account RID is required");
       const orgDbSequelize = await initOrgSequelize();
@@ -1145,79 +1082,10 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
         });
       }
 
-      const allowedFieldsForExport =
-        await this.getAllowedExportFields(
-          userId,
-          "attachments_view_edit"
-        );
-      const allowedProjectFieldsForExport =
-        await this.getAllowedExportFields(
-          userId,
-          "projects_view_edit"
-        );
-      const allowedFieldSet = new Set<string>();
-      const allowedFieldSetForProjects = new Set<string>();
-      for (const field of allowedFieldsForExport) {
-        if (field.read) {
-          allowedFieldSet.add(field.field_desc);
-        }
-      }
-      for (const field of allowedProjectFieldsForExport) {
-        if (field.read) {
-          allowedFieldSetForProjects.add(field.field_desc);
-        }
-      }
-      const labelMap: Record<string, string> = {
-        "Project Code": "Project Code",
-        "Project Name": "Name",
-        "Document Name": "Document Name",
-        Format: "Format",
-        Size: "Size",
-        "Fiscal Year": "Fiscal Year",
-        "Document Category": "Document Category",
-        "Document Type": "Document Type",
-        "Related Entity": "Related Entity",
-        "Related To ID": "Related To ID",
-        "Related To Name": "Related To Name",
-        "Attached By": "Attached By",
-        "Attached On": "Attached On",
-        "Attachment ID": "Attachment ID",
-      };
-      // Add "mb" suffix to size values for attachments
-      attachments = attachments.map((attachment) => ({
-        ...attachment,
-        size_in_mb: attachment.size_in_mb
-          ? `${attachment.size_in_mb} mb`
-          : null,
-      }));
-
-      attachments = attachments.map((at) => {
-        const rawMapped = mapAttachmentToCommonFormat(at, timezone);
-        const filtered: Record<string, any> = {};
-        let dynamicLabel : string;
-        for (const [fieldKey, value] of Object.entries(rawMapped)) {
-          const label = labelMap[fieldKey];
-          if (allowedFieldSet.has(label!)) {
-            filtered[label!] = value;
-          }
-          if (allowedFieldSetForProjects.has(label!)) {
-            if(label === 'Name') dynamicLabel = "Project Name"
-            else dynamicLabel = label!
-            filtered[dynamicLabel] = value
-          }
-        }
-        return filtered;
-      });
-
-      const generateCsv = await generateExcelBase64(
-          attachments,
-          "Project-Documents"
-        )
-
     return {
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,
-      data: generateCsv
+      data: attachments
     };
 }
 async getModels(schemaName: string) {
@@ -1229,7 +1097,7 @@ async getModels(schemaName: string) {
       AiTechnicalSummaryModel
     }
 }
-async fetchDossierPackage (data : any) {
+async fetchDossierPackage (data : any) : Promise<any> {
   const orgDbSequelize = await initOrgSequelize();
   if (!orgDbSequelize)
     throw new Error("Failed to initialize database connection");
@@ -1243,16 +1111,47 @@ async fetchDossierPackage (data : any) {
     where : {
       case_rid : data.case_rid,
       account_rid : data.account_rid
-    }, raw : true
+    }
   })
   if(getZipPackage) {
-    getZipPackage.browse_url = await generateSasUrl(getZipPackage.browse_url);
+    let responsePackage : any[] = [];
+    const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
+    for(let i = 0; i < data.downloaded_list.length; i++) {
+      for(let j = 0; j < stringToJson.length; j++) {
+        if(stringToJson[j].name.toLowerCase().startsWith(data.downloaded_list[i].toLowerCase())) {
+          if(stringToJson[j].extension === '.xlsx' || stringToJson[j].extension === '.pdf') {
+            responsePackage.push({
+              name : stringToJson[j].name,
+              buffer : Buffer.from(stringToJson[j].buffer, 'base64'),
+              extension : stringToJson[j].extension
+            });
+          } else {
+            responsePackage.push(stringToJson[j])
+          }
+        }
+      }
+    }
+    const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+    const convertToZip = await createZipFile(responsePackage);
+    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
+    await getZipPackage.update({
+      browse_url : uploadToAzure.url,
+      size : JSON.stringify(uploadToAzure.size),
+      document_name : uploadToAzure.name,
+      extension : uploadToAzure.extension
+    }, {
+      where : {
+        account_rid : data.account_rid,
+        case_rid : data.case_rid
+      }
+    })
+     getZipPackage.browse_url = await generateSasUrl(uploadToAzure.url);
      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
-                userId: data.user_id!,
-                eventType: eventTypes.UI_HANDLER
-              });
-      const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
-                                
+        userId: data.user_id!,
+        eventType: eventTypes.UI_HANDLER
+      });
+      const obj = getZipPackage.get({plain : true})
+      delete obj.dossier_metadata               
       await this.helperMethod.createAccountTimelineEntry(fetchParentNumber[0][0].r_number, {
       created_by: data.user_id!,
       account_rid: data.account_rid,
@@ -1266,7 +1165,7 @@ async fetchDossierPackage (data : any) {
     },["case"]);
     return {
       statusCode : HttpStatus.SUCCESS,
-      data : getZipPackage
+      data : obj
     }
   } else {
     return {

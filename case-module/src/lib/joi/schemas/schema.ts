@@ -1196,7 +1196,8 @@ const exportDataMapperSchema = Joi.object({
 
 const updateDataMapperMappingSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
-  mappings: Joi.array().required()
+  mappings: Joi.array().required(),
+  status_action:Joi.string().optional()
 })
 
 const updateDataMapperFormSchema = Joi.object({

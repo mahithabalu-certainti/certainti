@@ -310,6 +310,14 @@ class CaseSchemaService {
         }
       }
 
+        const fetchTaskTypeRid = await this.getTaskType();
+        const fetchTaskStatusRid = await this.getTaskStatus()
+        if (fetchTaskTypeRid) {
+          await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
+            caseRequest.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
+            fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
+        }
+
         
 
       //clone case team
@@ -462,6 +470,15 @@ class CaseSchemaService {
         );
         return cloneResponse;
       }
+
+        const [filingType]: any[] = await this.mainDbSequelize!.query(
+        rawQueries.fetchFilingTypeByName(caseFilingTypes.regular),
+        {
+          replacements: { rid: caseRequest.filing_type_rid },
+          type: "SELECT",
+        }
+      );
+      
       //  await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
@@ -473,7 +490,7 @@ class CaseSchemaService {
         const fetchTaskStatusRid = await this.getTaskStatus()
         if (fetchTaskTypeRid) {
           await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
-            casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
+            filingType.rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
             fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
         }
        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
@@ -1858,10 +1875,11 @@ class CaseSchemaService {
     schemaName: string,
     orgDb: Sequelize,
     accountRid: string,
-    activeStatusRid: string
+    activeStatusRid: string,
+    getCompletedTaskStatus : string
   ) {
     const [result] = await orgDb.query<CaseHeadersColumns>(
-      fetchCasesHeadersDatas(schemaName, caseRid, accountRid, activeStatusRid),
+      fetchCasesHeadersDatas(schemaName, caseRid, accountRid, activeStatusRid, getCompletedTaskStatus),
       { type: QueryTypes.SELECT }
     );
     if (result) {
@@ -1929,6 +1947,7 @@ class CaseSchemaService {
     assignedApi: boolean,
     accessibleIds: string[],
     isExport: boolean,
+    mainDb : Sequelize
   ) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -1971,6 +1990,10 @@ class CaseSchemaService {
       // Support array or single value
       projectTypes = platFormConfig.config_json.project_type;
     }
+    const getCaseStatus : any = await mainDb.query(rawQueries.fetchCaseStatusByType('Closed'));
+    let caseClosed : boolean;
+    if(caseInfo.status_rid === getCaseStatus[0][0].rid) caseClosed = true
+    else caseClosed = false
     const result = await orgDb.query(
       fetchProjectsForCases(
         schemaName,
@@ -1990,7 +2013,8 @@ class CaseSchemaService {
         accessibleIds,
         isExport,
         projectTypes,
-        data.type
+        caseClosed,
+        data.type,
       )
     );
     return result[0];
@@ -2812,24 +2836,31 @@ class CaseSchemaService {
         total_nonlabor_from_tasks: projectFiscal?.total_nonlabor_from_tasks || 0,
 
       });
+      p.project_case_rid = createdCaseProject.rid;
+      iterationCount += 1;
+    }
       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
                                           userId: data.created_by!,
                                           eventType: eventTypes.UI_HANDLER
                                         });
+       const caseInfo:any = await Case.findOne({
+        where: {
+          rid: data.case_rid,
+          account_rid: data.account_rid,
+        },
+        raw: true,
+      });
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                                     created_by: data.created_by!,
                                     account_rid: data.account_rid,
-                                    entity_rid: p.project_fiscal_rid!,
+                                    entity_rid: data.case_rid!,
                                     entity_name: entityTypes.PROJECT,
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.ADDED,
-                                    descriptions:p?.project_code || '' + "to Case",
+                                    descriptions:  "to Case "+caseInfo.case_name+ "(" +totalCount +" project(s))",
                                     case_rid: data.case_rid,
                                   },["case"]);
-      p.project_case_rid = createdCaseProject.rid;
-      iterationCount += 1;
-    }
     if (totalCount === iterationCount) {
       const getTotalProjects: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
@@ -3008,6 +3039,16 @@ class CaseSchemaService {
           project_fiscal_rid: p.project_fiscal_rid,
         },
       });
+    
+      iterationCount += 1;
+    }
+    const caseInfo:any = await Case.findOne({
+        where: {
+          rid: data.case_rid,
+          account_rid: data.account_rid,
+        },
+        raw: true,
+      });
       const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
                                           userId: data.created_by!,
                                           eventType: eventTypes.UI_HANDLER
@@ -3015,16 +3056,14 @@ class CaseSchemaService {
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
                                     created_by: data.created_by!,
                                     account_rid: data.account_rid,
-                                    entity_rid: p.project_fiscal_rid!,
+                                    entity_rid: data.case_rid!,
                                     entity_name: entityTypes.PROJECT,
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.REMOVED,
-                                    descriptions:p?.project_code || '' + "from Case",
+                                    descriptions:  "from Case "+caseInfo.case_name+ "(" +totalCount +" project(s))",
                                     case_rid: data.case_rid,
                                   },["case"]);
-      iterationCount += 1;
-    }
     if (totalCount === iterationCount) {
       const getTotalProjects: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
@@ -3906,14 +3945,21 @@ class CaseSchemaService {
     accessToken: string
   ) {
     try {
+      const mainDbSequelize = await this.caseModelService.getMainSequelize();
       const { CaseTask, CaseTeam, Case, TaskSummary } =
         await this.caseModelService.getModels(accountNumber);
+      const [activeStatusRid]: any[] = await mainDbSequelize.query(
+        rawQueries.getActiveStatusId(),
+        { type: "SELECT" }
+      );
+
       const teamMembers = await CaseTeam.findAll({
         attributes: ['user_rid', 'role_rid'],
         where: {
           case_rid: caseReq.case_rid,
           account_rid: caseReq.account_rid,
           is_primary: true,
+          status_rid: activeStatusRid.rid
         },
         raw: true,
       });

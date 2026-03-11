@@ -761,11 +761,35 @@ export class DataMapperService implements IDataMapperService {
             const sequelize = await this.getMainSequelize();
             const DataMapperFormMappingsModel = DataMapperFormMappings.initialize(sequelize, MAIN_SCHEMA_NAME);
             const DataMapperTableMappingsModel = DataMapperTableMappings.initialize(sequelize, MAIN_SCHEMA_NAME);
+            const DataMapperModel = DataMapperForms.initialize(sequelize, MAIN_SCHEMA_NAME);
 
             const [result] = await sequelize.query<any>(
                 rawQueries.getFieldArrayByFormRid(data.rid),
                 { type: QueryTypes.SELECT }
             );
+            if(data.status_action) {
+            let statusName = data.status_action;
+            if(data.status_action.toLowerCase() === 'submit') {
+                statusName = 'Waiting for approval';
+            }
+            const statusAction = statusName;
+            const [statusInfo]:any = await sequelize.query(rawQueries.getDataMapperStatusByName, {
+                replacements: { statusName: statusAction },
+                type: QueryTypes.SELECT
+            });
+             const statusRid = statusInfo ? statusInfo.rid : null;
+             if (statusRid) {
+                DataMapperModel.update({
+                    status_rid: statusRid,
+                    modified_by: userId,
+                    modified_datetime: new Date()
+                }, {
+                    where: {
+                        rid: data.rid
+                    }
+                });
+            }
+        }
 
             const fieldList = result ? result.field_array : [];
 

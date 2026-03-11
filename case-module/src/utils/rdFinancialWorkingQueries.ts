@@ -1,7 +1,10 @@
 import { MAIN_SCHEMA_NAME } from "./constants";
 import { ProjectFiscalIds } from "./types";
 
-export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number) => {
+export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number, caseClosed : boolean) => {
+    let alias = caseClosed ? 'c' : 'pf'
+    let whereCond = caseClosed ? `${alias}.project_fiscal_rid` : `${alias}.rid`
+
     let query = 
     `
     WITH fetch_project_ids AS (
@@ -14,19 +17,20 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     ),
     calculate_cost AS (
     SELECT 
-    CAST(SUM((COALESCE(cp.total_cost_fte_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS employees,
-    CAST(SUM((COALESCE(cp.total_cost_subcon_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS epw,
-    cp.project_name, cp.rid, cp.currency_rid
+    CAST(SUM((COALESCE(${alias}.total_cost_fte_prj, 0.00) * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS employees,
+    CAST(SUM((COALESCE(${alias}.total_cost_subcon_prj, 0.00) * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS epw,
+    ${alias}.project_name, ${whereCond}, ${alias}.currency_rid
     FROM
-    ${schemaName}.project_fiscal cp
-    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid
+    ${schemaName}.case_projects c
+    LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = c.project_fiscal_rid 
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = pf.rid
     WHERE
-    cp.rid = fpr.project_fiscal_rid
+    ${whereCond} = fpr.project_fiscal_rid
     AND
-    cp.is_qualified = true
+    pf.is_qualified = true
     GROUP BY
-    cp.project_name, cp.rid, cp.currency_rid
-    ORDER BY cp.project_name ASC
+    ${alias}.project_name, ${whereCond}, ${alias}.currency_rid
+    ORDER BY ${alias}.project_name ASC
     )
     SELECT 
     array_agg(jsonb_build_object(
@@ -44,7 +48,9 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     `
     return query;
 }
-export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number) => {
+export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accountRid : string, schemaName : string, reduction : number, caseClosed : boolean) => {
+    let alias = caseClosed ? 'c' : 'pf'
+    let whereCond = caseClosed ? `${alias}.project_fiscal_rid` : `${alias}.rid`
     let query = 
     `
     WITH fetch_project_ids AS (
@@ -57,19 +63,20 @@ export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accou
     ),
     calculate_cost AS (
     SELECT 
-    CAST(SUM((COALESCE(cp.total_cost_fte_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS employees,
-    CAST(SUM((COALESCE(cp.total_cost_subcon_prj, 0.00) * cp.rd_percent_final)/100) AS DECIMAL(18,2)) AS epw,
-    cp.project_client_group, COUNT(cp.rid) AS total_projects
+    CAST(SUM((COALESCE(${alias}.total_cost_fte_prj, 0.00) * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS employees,
+    CAST(SUM((COALESCE(${alias}.total_cost_subcon_prj, 0.00) * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS epw,
+    ${alias}.project_client_group, COUNT(${alias}.rid) AS total_projects
     FROM
-    ${schemaName}.project_fiscal cp
-    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = cp.rid AND fpr.project_client_group = cp.project_client_group
+    ${schemaName}.case_projects c
+    LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = c.project_fiscal_rid 
+    LEFT JOIN fetch_project_ids fpr ON fpr.project_fiscal_rid = pf.rid AND fpr.project_client_group = pf.project_client_group
     WHERE
-    cp.rid = fpr.project_fiscal_rid
+    ${whereCond} = fpr.project_fiscal_rid
     AND
-    cp.is_qualified = true
+    pf.is_qualified = true
     GROUP BY
-    cp.project_client_group
-    ORDER BY cp.project_client_group ASC
+    ${alias}.project_client_group
+    ORDER BY ${alias}.project_client_group ASC
     )
     SELECT 
     array_agg(jsonb_build_object(
@@ -86,18 +93,19 @@ export const fetchProjectCostDetailsForUkBasedOnCases = (caseRid : string, accou
     `
     return query;
 }
-export const calculateRDExpenditureQuery = (schemaName : string, caseRid : string, accountRid : string) => {
+export const calculateRDExpenditureQuery = (schemaName : string, caseRid : string, accountRid : string, caseClosed : boolean) => {
+    let alias = caseClosed ? 'c' : 'pf'
     let query = `
     SELECT 
-    CAST((COALESCE(pf.total_cost_fte_prj, 0.00) * COALESCE(pf.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS fte_qre_amount,
-    CAST((COALESCE(pf.total_cost_subcon_prj, 0.00) * COALESCE(pf.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount
+    CAST((COALESCE(${alias}.total_cost_fte_prj, 0.00) * COALESCE(${alias}.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS fte_qre_amount,
+    CAST((COALESCE(${alias}.total_cost_subcon_prj, 0.00) * COALESCE(${alias}.rd_percent_final, 0.00))/100 AS DECIMAL(18,2)) AS subcon_qre_amount
     FROM
     ${schemaName}.project_fiscal pf
-    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    LEFT JOIN ${schemaName}.case_projects c ON c.project_fiscal_rid = pf.rid
     WHERE
-    cp.case_rid = '${caseRid}'
+    c.case_rid = '${caseRid}'
     AND
-    cp.account_rid = '${accountRid}'
+    ${alias}.account_rid = '${accountRid}'
     AND
     pf.is_qualified = true
     `
@@ -106,31 +114,72 @@ export const calculateRDExpenditureQuery = (schemaName : string, caseRid : strin
 export const fetchCountryData = (schemaName : string, caseRid : string) => {
     return `SELECT rid, created_datetime, modified_datetime, case_rid, country_rid, input_params, computed_fields FROM ${schemaName}.rd_credit_country_calculations WHERE case_rid = '${caseRid}'`
 }
-export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string) => {
+export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string, caseClosed : boolean) => {
+    let alias = caseClosed ? 'cp' : 'pf'
+    let whereCond = caseClosed ? `${alias}.project_fiscal_rid` : `${alias}.rid`
     let query = 
     `SELECT
+        ${alias}.project_code,
+        ${alias}.project_name,
+        COALESCE(${alias}.total_effort_prj,0.00) AS total_effort_prj,
+        COALESCE(${alias}.total_cost_prj, 0.00) AS total_cost_prj,
+        CAST((COALESCE(${alias}.total_cost_fte_prj, 0.00) * ${alias}.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(${alias}.total_cost_subcon_prj, 0.00) * ${alias}.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(${alias}.total_cost_nonlabor_prj, 0.00) * ${alias}.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
+        COALESCE(${alias}.rd_percent_final, 0.00) AS rd_percent_final
+    FROM
+        ${schemaName}.case_projects cp
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    WHERE
+        ${whereCond} IN (${caseRid.map((d : any) => `'${d.project_fiscal_rid}'`).join(',')})
+        AND
+        ${alias}.account_rid = '${accountRid}'
+        AND
+        pf.is_qualified = true
+    `
+    return query;
+}
+export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string, regionRid : string, caseClosed : boolean) => {
+    let fromTable : string
+    let joinTable : string
+    let dynamicQuery : string
+    if(caseClosed) {
+        dynamicQuery = `
+        SELECT 
+        cp.project_fiscal_rid,
         cp.project_code,
         cp.project_name,
         COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
         COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * cp.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_fte_prj,
-        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * cp.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_subcon_prj,
-        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * cp.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
+        CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
-    FROM
-        ${schemaName}.project_fiscal cp
-    WHERE
-        cp.rid IN (${caseRid.map((d : any) => `'${d.project_fiscal_rid}'`).join(',')})
+        FROM ${schemaName}.case_projects cp
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+        LEFT JOIN ${schemaName}.case_project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
+        WHERE
+        cp.project_fiscal_rid IN (${caseRid.map((d : any) => `'${d.rid}'`).join(',')})
         AND
         cp.account_rid = '${accountRid}'
         AND
-        cp.is_qualified = true
-    `
-    return query;
-}
-export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, caseRid : ProjectFiscalIds[], accountRid : string, regionRid : string) => {
-    let query = 
-    `SELECT 
+        pf.is_qualified = true
+        AND
+        pfr.region_rid = '${regionRid}'
+        GROUP BY
+        cp.project_fiscal_rid,
+        cp.project_code,
+        cp.project_name,
+        cp.total_effort_prj,
+        cp.total_cost_prj,
+        cp.total_cost_fte_prj,
+        cp.total_cost_subcon_prj,
+        cp.total_cost_nonlabor_prj,
+        cp.rd_percent_final
+        `
+    } else {
+        dynamicQuery = `
+        SELECT 
         cp.rid,
         cp.project_code,
         cp.project_name,
@@ -140,10 +189,10 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
         CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
-    FROM
+        FROM
         ${schemaName}.project_fiscal cp
         LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = cp.rid
-    WHERE
+        WHERE
         cp.rid IN (${caseRid.map((d : any) => `'${d.rid}'`).join(',')})
         AND
         cp.account_rid = '${accountRid}'
@@ -153,8 +202,9 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         pfr.region_rid = '${regionRid}'
         GROUP BY
         cp.rid
-    `
-    return query;
+        `
+    }
+    return dynamicQuery;
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
     return `SELECT COALESCE(COUNT(pf.rid), 0) AS total 

@@ -54,7 +54,7 @@ import { Case } from "../models/caseModel";
 import { getFiscalEndYear, parseFiscalDate } from "../utils/dateUtils";
 
 export class ProjectService {
-  private schemaService: SchemaService;
+  public schemaService: SchemaService;
   private projectIngestion: ProjectIngestionService;
   private logger: Logger;
 

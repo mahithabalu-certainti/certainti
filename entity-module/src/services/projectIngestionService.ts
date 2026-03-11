@@ -31,7 +31,7 @@ import { ProjectHistory } from "../models/projectHistory";
 import currency from "currency.js";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
-import { DEFAULT_PROJECT_DETAILS, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { DEFAULT_PROJECT_DETAILS, entityTypes, eventNames, eventTypes, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ProjectFiscalRegion,
 } from "../models/projectFiscalRegion";
@@ -49,6 +49,7 @@ import { CaseProject } from "../models/caseProjectsModel";
 import { Case } from "../models/caseModel";
 import { CaseProjectFiscalRegion } from "../models/caseProjectFiscalRegionModel";
 import { CaseKeyContactDetails } from "../models/caseKeyContactModel";
+import { calculateFiscalYearDateRange } from "../utils/dateFunction";
 
 
 class ProjectIngestionService {
@@ -381,7 +382,7 @@ class ProjectIngestionService {
         type: "project",
       };
       logMessage(`Triggering AI for project fiscal rid: ${req}`);
-      await this.triggerAI(req);
+      await this.triggerAI(req, userId, response.project_code,accountNumber,entityTypes.AUTO_RD_ASSESSMENT);
     }
 
     return response;
@@ -532,7 +533,7 @@ class ProjectIngestionService {
     }
   }
 
-  async triggerAI(req: any) {
+  async triggerAI(req: any, userId: string, projectCode: string, accountNumber: string, type: string = entityTypes.AUTO_RD_ASSESSMENT) {
     try {
       let payload: {
         company_id?: any;
@@ -564,6 +565,22 @@ class ProjectIngestionService {
       this.logger.info(
         `Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`
       );
+      const schemaService = new SchemaService();
+      const userEventInfo:any = await schemaService.fetchUserAndEventInfo({
+                                                      userId: userId!,
+                                                      eventType: eventTypes.UI_HANDLER
+                                                    });
+      await schemaService.createAccountTimelineEntry(accountNumber!, {
+                  created_by: userId!,
+                  account_rid: req.data[0].account_rid,
+                  entity_rid: req.data[0].project_fiscal_rid!,
+                  entity_name: entityTypes.AUTO_RD_ASSESSMENT,
+                  created_by_name: userEventInfo.full_name,
+                  event_type_rid: userEventInfo.event_type_rid,
+                  event_name: eventNames.TRIGGERED,
+                  descriptions:projectCode || '',
+                  project_rid: req.data[0].project_fiscal_rid
+                },["project"]);
       return {
         statusMessage: "RD Assessment Initiated",
         status: "success",
@@ -3578,23 +3595,9 @@ class ProjectIngestionService {
       if (Array.isArray(project.ProjectFiscal)) {
         updatedProject.ProjectFiscal = project.ProjectFiscal.map((child: any) => {
           const childObj = typeof child.toJSON === "function" ? child.toJSON() : child;
-          // Construct fiscal year start and end using account fiscal start/end and child's fiscal year
-          // fiscalStart: e.g. 'Apr/01', fiscalEnd: e.g. 'Mar/31', child.fiscal_year: e.g. 2024
-          const [startMonth, startDay] = (fiscalStart || 'Apr/01').split('/');
-          const [endMonth, endDay] = (fiscalEnd || 'Mar/31').split('/');
-          const fiscalYear = Number(child.fiscal_year);
-          const fiscalYearStart = new Date(`${fiscalYear}-${startMonth}-${startDay}`);
-          // If fiscal year starts in April, fiscal end is next year March
-          let fiscalYearEndYear = fiscalYear;
-          if (startMonth !== endMonth || startDay !== endDay) {
-            // If fiscal year end is before start (e.g. Apr to Mar), increment year
-            const startMonthNum = new Date(`${fiscalYear}-${startMonth}-01`).getMonth();
-            const endMonthNum = new Date(`${fiscalYear}-${endMonth}-01`).getMonth();
-            if (endMonthNum < startMonthNum) {
-              fiscalYearEndYear = fiscalYear + 1;
-            }
-          }
-          const fiscalYearEnd = new Date(`${fiscalYearEndYear}-${endMonth}-${endDay}`);
+          const [splitMonthStart, splitDateStart] = fiscalStart.split("/");
+          const [splitMonthEnd, splitDateEnd] = fiscalEnd.split("/");
+          const fetchedStartEndDate = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, child.fiscal_year, splitDateStart, splitDateEnd)
 
           // Check if this fiscal period falls within any platform config's effective dates
           let is_rd_trigger_qualified = false;
@@ -3611,10 +3614,9 @@ class ProjectIngestionService {
             } else if (pjType != null) {
               configProjectTypes = [String(pjType)];
             }
-            if (
-              fiscalYearStart <= effEnd &&
-              fiscalYearEnd >= effStart &&
-              configProjectTypes.includes(String(childObj.project_type_rid))
+            if ( (config.effective_start_date <= fetchedStartEndDate.endDate || config.effective_start_date == null)
+            && (config.effective_end_date >= fetchedStartEndDate.startDate || config.effective_end_date == null)
+            && configProjectTypes.includes(String(childObj.project_type_rid))
             ) {
               is_rd_trigger_qualified = true;
               break;

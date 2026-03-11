@@ -188,10 +188,10 @@ export class RdCreditCalculatorForID {
         "[10] Enter average annual Idaho gross receipts from page 2, Part C": this.round2(qretInfo.average_annual_gross_receipts),
         "[11] Base amount. Multiply line 10 by the percentage on line 9": this.round2(qretInfo.base_amount),
         "[12] Subtract line 11 from line 8. If zero or less, enter zero": this.round2(qretInfo.difference),
-        [`[13] Multiply line 8 by ${config.qre_credit_percentage_c1 || 0}%`]: this.round2(qretInfo.credit_rate_percent),
+        [`[13] Multiply line 8 by ${config.credit_rate || 0}%`]: this.round2(qretInfo.credit_rate_percent),
         "[14] Enter the smaller amount from line 12 or line 13": this.round2(qretInfo.min_credit_rate),
         "[15] Add lines 3 and 14": this.round2(qretInfo.tot_base_amount),
-        [`[16] Credit earned. Multiply line 15 by ${config.qre_credit_percentage_c2 || 0}%`]: this.round2(qretInfo.credit_earned),
+        [`[16] Credit earned. Multiply line 15 by ${config.credit_earned || 0}%`]: this.round2(qretInfo.credit_earned),
 
         "[17] Pass-through share of credit from an S corporation, partnership, trust, or estate": "",
         "[18] Credit received through unitary sharing. Include a schedule": "",

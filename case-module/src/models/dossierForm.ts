@@ -15,6 +15,7 @@ interface DossierFormAttributes {
   document_name : string
   size : string
   extension : string
+  dossier_metadata? : string
 }
 interface DossierFormCreationAttributes extends Optional<DossierFormAttributes, "rid"> {}
 
@@ -32,6 +33,7 @@ implements DossierFormAttributes {
   public document_name! : string
   public size! : string
   public extension! : string
+  public dossier_metadata? : string
 
   static initialise (sequelize : Sequelize, schemaName : string) {
     return DossierForm.init({
@@ -60,7 +62,8 @@ implements DossierFormAttributes {
       browse_url : {type : DataTypes.STRING(500), allowNull : true},
       document_name : {type : DataTypes.STRING, allowNull : true},
       size : {type : DataTypes.STRING, allowNull : true},
-      extension : {type : DataTypes.STRING, allowNull : true}
+      extension : {type : DataTypes.STRING, allowNull : true},
+      dossier_metadata : {type : DataTypes.TEXT, allowNull : true}
     }, {
       sequelize,
       schema : schemaName,

@@ -167,12 +167,23 @@ export class RdFormMapperService {
       effectiveEnd,
     );
 
+    if(!formInfo) {
+       await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        countryRid,
+        orgDb,
+        accountNumber,
+        "No valid RD form data available to process"
+      );
+    }
+
     if (!formInfo?.browse_file && formInfo?.form_type === FORM_TYPE.Fillable) {
       await this.rdFormMapperSchemaService.updateFederalFormError(
         caseRid,
         countryRid,
         orgDb,
         accountNumber,
+        "No valid RD form data available to process"
       );
     }
 
@@ -186,8 +197,12 @@ export class RdFormMapperService {
       );
 
     if (!mapperConfig || mapperConfig.length === 0) {
-      throw new Error(
-        `No mapper configuration found for form RID: ${formInfo.rid}`,
+      await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        countryRid,
+        orgDb,
+        accountNumber,
+        `No valid RD form data available to process`
       );
     }
 
@@ -291,11 +306,11 @@ export class RdFormMapperService {
     } catch (error) {
       this.logger.error("Error processing federal form:", error);
       await this.updateFederalFormError(caseRid, countryRid, error instanceof Error ? error.message : String(error), orgDb);
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: "Federal form processing failed",
-        errorMessage: error instanceof Error ? error.message : String(error),
-      };
+       return {
+      statusCode: HttpStatus.SUCCESS,
+      message: "Federal form processed successfully",
+      data:''
+    }
     }
   }
 
@@ -484,6 +499,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          "No valid RD form data available to process"
         );
         logMessage(
           `No state form found for ${state}. Browse file URL: ${formInfo?.browse_file}`,
@@ -507,6 +523,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          `No valid RD form data available to process`
         );
         continue;
       }
@@ -605,6 +622,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
+          "No valid RD form data available to process"
         );
       }
     }
@@ -1433,10 +1451,12 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
 
     result = result.replace(/#YES\b/gi, "1").replace(/#NO\b/gi, "0");
 
-    result = result.replace(
-      /IF\s*\(([^)]*)\)\s*\{\s*THEN\s*([^}]*)\}\s*ELSE\s*\{\s*THEN\s*([^}]*)\}/gi,
-      "IF($1, $2, $3)",
-    );
+    // Delegate block-style IF / ELSE IF / ELSE normalisation to transformIfExpressions
+    // so both code paths use the same chain-aware logic. Only run it here if the
+    // expression hasn't been through transformIfExpressions yet (i.e. still has { THEN }).
+    if (/\{\s*THEN\b/i.test(result)) {
+      result = this.transformIfExpressions(result);
+    }
 
     // Add # if missing before id pattern
     result = result.replace(
@@ -1460,12 +1480,38 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
 private transformIfExpressions(expression: string) {
 let result = expression;
 
-// ✅ STEP 1: Convert block-style IF to comma-style IF
-// Supports:
-// IF(condition) { THEN expr1 } ELSE { THEN expr2 }
+// ✅ STEP 1: Convert block-style IF / ELSE IF / ELSE chains to nested IF(c,t,f) form.
+//
+// Handles both:
+//   IF(cond1) { THEN val1 } ELSE IF(cond2) { THEN val2 } ELSE { THEN val3 }
+//   IF(cond1) { THEN val1 } ELSE { THEN val2 }
+//
+// ELSE IF branches are nested right-to-left:
+//   IF(c1, t1, IF(c2, t2, elseVal))
 result = result.replace(
-  /IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}\s*ELSE\s*\{\s*THEN\s*([\s\S]*?)\s*\}/gi,
-  "IF($1, $2, $3)"
+  /IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}((?:\s*ELSE\s+IF\s*\([\s\S]*?\)\s*\{\s*THEN\s*[\s\S]*?\s*\})*)\s*(?:ELSE\s*\{\s*THEN\s*([\s\S]*?)\s*\})?/gi,
+  (_match: string, cond1: string, then1: string, elseIfBlock: string, finalElse: string | undefined) => {
+    // Parse all ELSE IF(...) { THEN ... } fragments
+    const elseIfBranches: { cond: string; then: string }[] = [];
+    const elseIfPattern = /ELSE\s+IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}/gi;
+    let m: RegExpExecArray | null;
+    while ((m = elseIfPattern.exec(elseIfBlock)) !== null) {
+      if (m[1] !== undefined && m[2] !== undefined) {
+        elseIfBranches.push({ cond: m[1].trim(), then: m[2].trim() });
+      }
+    }
+
+    // Build nested IF from right to left
+    let nested = finalElse !== undefined ? finalElse.trim() : '""';
+    for (let i = elseIfBranches.length - 1; i >= 0; i--) {
+      const branch = elseIfBranches[i];
+      if (branch) {
+        nested = `IF(${branch.cond}, ${branch.then}, ${nested})`;
+      }
+    }
+
+    return `IF(${cond1.trim()}, ${then1.trim()}, ${nested})`;
+  }
 );
 
   const ifRegex = /\bIF\s*\(/i;
@@ -1914,7 +1960,7 @@ private async handleTableConfig(
             // Replace #field_id / #label refs — allow spaces in labels (e.g. #Software Development)
             // Uses lookahead to stop at operators, comparisons, block delimiters, or next #
             resolved = resolved.replace(
-              /#([^#+*/]+?)(?=\s*[+*\/:<>{}=!]|\s+-\s+|,\s*#|\s*#|\s*\)|\s*$)/g,
+              /#([^#+*/]+?)(?=\s*[+*\/:<>{}=!]|\s+-\s+(?=[#\d])|\s*,|\s*#|\s*\)|\s*$)/g,
               (_m: string, fieldRef: string) => {
                 const cleanRef = fieldRef.trim().replace(/[\s,:{}<>]+$/, "").trim();
 
@@ -2213,6 +2259,23 @@ private async handleTableConfig(
 
       const normalizedKey = this.normalizeFieldRef(rawKey);
       valueMap.set(normalizedKey, value ?? 0);
+
+      // Index by leading line-number prefix (e.g. "17a" from "17a. Regular credit. Add line 4...")
+      // Allows #17a to resolve even when the full label contains commas that truncate the regex capture.
+      const linePrefixMatch = rawKey.match(/^(\d+[a-z]?\b)/i);
+      if (linePrefixMatch && linePrefixMatch[1]) {
+        valueMap.set(linePrefixMatch[1], value ?? 0);
+        valueMap.set(linePrefixMatch[1].toLowerCase(), value ?? 0);
+      }
+
+      // Also index up to the first comma — the #label regex stops at commas, so a reference like
+      // #17a. Regular credit. Add line 4 and line 16. If you do not elect...
+      // gets captured only up to the comma. Storing that prefix ensures the lookup still hits.
+      const upToComma = rawKey.split(",")[0]?.trim();
+      if (upToComma && upToComma !== rawKey) {
+        valueMap.set(upToComma, value ?? 0);
+        valueMap.set(upToComma.replace(/\s+/g, ""), value ?? 0);
+      }
     };
 
     enhancedConfigs.forEach((item) => {
@@ -2311,7 +2374,7 @@ private async handleTableConfig(
         const isExpression = ((): boolean => {
           if (/#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(/i.test(expression)) return true;
           if (/[+*/]/.test(expression)) return true;                   // +, *, / are always arithmetic
-          if (/\s-\s/.test(expression)) return true;                  // space-dash-space = binary minus
+          if (/\s-\s(?=[#\d])/.test(expression)) return true;         // space-dash-space before ref/digit = binary minus
           if (/^[\d.]+$/.test(expression)) return true;               // pure number
           if (/^[\d.\s+\-*/()]+$/.test(expression)) return true;    // pure arithmetic expression
           if (/^[A-Za-z]\d{3}-[0-9a-fA-F-]{36}$/.test(expression)) return true;  // bare RID
@@ -2360,15 +2423,26 @@ private async handleTableConfig(
           return (num !== null ? String(num) : "0") + suffix;
         }
 
+        // Build a progressively broader set of lookup keys:
+        // 1. exact normalised label
+        // 2. whitespace-collapsed version
+        // 3. indexes stripped (e.g. label[0] → label)
+        // 4. last path segment
+        // 5. up to first comma (handles labels truncated by the comma stop rule in the # regex)
+        // 6. leading line-number prefix (e.g. "17a" from "17a. Regular credit...")
+        const upToCommaKey = normalizedKey?.split(",")?.[0]?.trim() || "";
+        const linePrefixMatch = normalizedKey?.match(/^(\d+[a-z]?\b)/i);
         const lookupKeys = [
           normalizedKey,
           normalizedKey.replace(/\s+/g, ""),
           this.stripIndexes(normalizedKey),
           this.normalizeFieldRef(normalizedKey),
+          ...(upToCommaKey && upToCommaKey !== normalizedKey ? [upToCommaKey, upToCommaKey.replace(/\s+/g, "")] : []),
+          ...(linePrefixMatch ? [linePrefixMatch[1], linePrefixMatch[1]?.toLowerCase()] : []),
         ];
 
         for (const key of lookupKeys) {
-          if (valueMap.has(key)) {
+          if (key && valueMap.has(key)) {
             const rawValue = valueMap.get(key);
             const num = this.tryParseNumber(rawValue);
             evalCache.set(normalizedKey, rawValue);
@@ -2435,7 +2509,7 @@ private async handleTableConfig(
       // Unbalanced trailing ) are stripped in resolveRef and re-appended after substitution.
       // : stops capture for ternary operator context; space-dash-space stops for binary minus.
       replaced = replaced.replace(
-        /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+|,\s*#|\s*#|\s*$)/g,
+        /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+(?=[#\d])|\s*,|\s*#|\s*$)/g,
         (_match: string, rawKey: string) => resolveRef(rawKey)
       );
       
@@ -2445,6 +2519,13 @@ private async handleTableConfig(
           .replace(/(?<!Math\.)\bmin\s*\(/gi, "Math.min(")
           .replace(/(?<!Math\.)\bmax\s*\(/gi, "Math.max(");
         replaced = this.transformIfExpressions(replaced);
+
+        // Post-substitution cleanup: strip residual plain-text fragments left when a long
+        // #label was partially captured (the comma stop-rule left a prose tail).
+        // e.g. ", enter the result here, and see instructions for the schedule to attach * 0.9116"
+        //   becomes "* 0.9116"
+        // Only strips text between a comma and an arithmetic operator so no numeric data is lost.
+        replaced = replaced.replace(/,\s*[^+\-*/()#\d,][^+\-*/()*]*(?=[+\-*/])/g, " ");
 
         // Defensive: Validate only allowed characters/operators
         // After # substitution, expression should only contain digits, arithmetic operators,
@@ -2458,7 +2539,7 @@ private async handleTableConfig(
         if (!/^[\d\s+\-*/().,?:<>=!&|'"]+$/.test(validationTarget)) {
           // If the original expression contained no # refs or operators, it's a plain
           // text value (e.g. "P202-001", "Software Development") — preserve it as-is.
-          const hadExpressionMarkers = /#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(|[+*/]|\s-\s/i.test(expression);
+          const hadExpressionMarkers = /#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(|[+*/]|\s-\s(?=[#\d])/i.test(expression);
           if (!hadExpressionMarkers) {
             // Plain string value — not an expression, leave value unchanged
             logMessage(
@@ -2568,11 +2649,9 @@ private async handleTableConfig(
     errorMessage?: string;
     data?: { task: any };
   }> {
-    try {
-      const parsedMessage =
+     const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
-
-      const {
+     const {
         caseRid,
         accountRid,
         effectiveStart,
@@ -2581,11 +2660,15 @@ private async handleTableConfig(
         schemaName,
         fiscalYear
       } = parsedMessage;
-      const mainDb = await this.getMainDb();
+        const mainDb = await this.getMainDb();
       const orgDb = await this.getOrgDb();
       const [fetchAccountCountryId]: any[] = await mainDb.query(
         rawQueries.fetchAccountAndCountryDetails(accountRid),
       );
+    try {
+     
+     
+    
       const availableConfig =
         await this.rdFormMapperSchemaService.findAvailableCountryAndState(
           accountNumber,
@@ -2705,11 +2788,23 @@ private async handleTableConfig(
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : err;
       logMessage(`Error processing RD Mapper requests: ${errorMessage}`);
+      await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        fetchAccountCountryId[0].country_rid,
+        orgDb,
+        accountNumber,
+        "No valid RD form data available to process"
+      );
       return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage:"Failed to process RD form mapper requests",
-      };
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: { task: null },
+      }
+      // return {
+      //   statusCode: HttpStatus.FAILED,
+      //   message: HttpStatus.FAILED_MESSAGE,
+      //   errorMessage:"Failed to process RD form mapper requests",
+      // };
     }
   }
 

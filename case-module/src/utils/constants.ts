@@ -310,7 +310,7 @@ export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
 
 export const entityTypes = {
   ACCOUNT: "Account",
-  PROJECT: "Project",
+  PROJECT: "Projects",
   RESOURCE: "Resource",
   PROJECT_TASK: "Project Task",
   NOTES: "Notes",
@@ -1029,6 +1029,13 @@ export const rawQueries = {
       return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN (${ids})`
     }
   },
+  getCaseFilingTypeByIds(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, filing_type_name FROM ${MAIN_SCHEMA_NAME}.case_filing_type WHERE rid IN (${ids})`
+    }
+  },
   getAllProjectsByAccountId(schemaName: string, accountRid: string, accessibleIds: string[]) {
     let query = `SELECT rid, project_name FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`;
     if (Array.isArray(accessibleIds) && accessibleIds.length > 0) {
@@ -1182,7 +1189,7 @@ export const rawQueries = {
     }
   },
   fetchCaseInfo(schemaName: string, caseRid: string) {
-    return `SELECT rid, r_number, case_name, account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
+    return `SELECT rid, r_number, case_name, account_rid, fiscal_year, status_rid FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
   },
   getTaskInfo(rid: string, schemaName: string) {
     return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid = '${rid}'`
@@ -1836,7 +1843,7 @@ export const rawQueries = {
   getFieldArrayByFormRid(form_rid: string) {
     return `SELECT field_array FROM ${MAIN_SCHEMA_NAME}.data_mapper_forms WHERE rid = '${form_rid}'`
   },
-  getDataMapperStatusByName: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE status_name = :statusName LIMIT 1`,
+  getDataMapperStatusByName: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE lower(status_name) = lower(:statusName) LIMIT 1`,
   getDataMapperUploadStatuses: `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.data_mapper_upload_status WHERE rid IN (:rids)`,
   fetchAccountStartEndDate(accountRid: string, schemaName: string) {
     return `SELECT fiscal_start_date, fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
@@ -1937,13 +1944,16 @@ WHERE dmf.country_rid = '${countryRid}'
   },
   updateFederalFormError(schemaName: string) {
     return `UPDATE ${schemaName}.rd_credit_country_calculations
-      SET form_error_message = 'Federal form file not found'
+      SET form_error_message = :errorMessage,
+      rd_form_url = null
+
       WHERE case_rid = :caseRid
       and country_rid  =:countryRid`
   },
   updateStateFormError(schemaName: string) {
     return `UPDATE ${schemaName}.rd_credit_state_calculations
-            SET form_error_message = 'State form file not found'
+            SET form_error_message = :errorMessage,
+             rd_form_url = null
             WHERE case_rid = :caseRid
             and country_rid  =:countryRid
             and state_rid = :stateRid`
@@ -2137,6 +2147,9 @@ WHERE dmf.country_rid = '${countryRid}'
       ${stateRid ? "AND state_rid = :state_rid" : "AND (state_rid IS NULL OR state_rid = '')"}
       LIMIT 1
     `;
+  },
+  getCaseTaskCompletedStatus () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%Completed%'`
   }
 
 };
@@ -2468,11 +2481,13 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+  dossierPackageCreated: "Dossier Package",
 }
 
 export const entityNames = {
   case: "Case",
   task: "Task",
+  dossier:"Dossier"
 }
 
 
