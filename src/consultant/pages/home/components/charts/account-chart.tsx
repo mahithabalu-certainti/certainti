@@ -3,6 +3,7 @@ import Chart from 'react-google-charts';
 import { MenuItem, Select, SelectChangeEvent, Skeleton } from '@mui/material';
 import {
   blendWithWhite,
+  colorMap,
   COMMON_MENU_PROPS,
   getDynamicSvgIcon,
   getSelectStyles,
@@ -39,12 +40,6 @@ const AccountChart: React.FC<Props> = ({
   const chartRows = React.useMemo(() => {
     const rows: (string | number | null)[][] = [];
 
-    const colorMap: Record<string, string> = {
-      GREEN: '#3EA72F',
-      RED: '#FF3C03',
-      ORANGE: '#FF9800',
-    };
-
     data.forEach((acc) => {
       // Since response is now single year per account, we take the first item
       const y = acc.years[0];
@@ -57,7 +52,7 @@ const AccountChart: React.FC<Props> = ({
       rows.push([
         acc.account,
         y.progress,
-        blendWithWhite(barColor, 0.5),
+        blendWithWhite(barColor, 0.4),
         `FY-${y.year}:  ${y.progress}%`,
       ]);
     });
@@ -93,6 +88,16 @@ const AccountChart: React.FC<Props> = ({
       resizeObserver.unobserve(currentChartRef);
     };
   }, []);
+
+  const LEGEND_ITEMS = [
+    {
+      key: 'onTrack',
+      label: 'On Track',
+      color: colorMap.GREEN,
+    },
+    { key: 'atRisk', label: 'At Risk', color: colorMap.ORANGE },
+    { key: 'critical', label: 'Critical', color: colorMap.RED },
+  ];
 
   return (
     <div
@@ -230,6 +235,18 @@ const AccountChart: React.FC<Props> = ({
               backgroundColor: 'transparent',
             }}
           />
+          {/* Shared Legend */}
+          <div className='px-4 flex flex-wrap justify-center gap-4 border-t border-[#CBD6E2] pt-3'>
+            {LEGEND_ITEMS.map((item) => (
+              <div key={item.key} className='flex items-center gap-2'>
+                <span
+                  className='inline-block h-3 w-3 rounded-[2px]'
+                  style={{ backgroundColor: blendWithWhite(item.color, 0.4) }}
+                />
+                <span className='text-sm text-[#2A2A2A]'>{item.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
