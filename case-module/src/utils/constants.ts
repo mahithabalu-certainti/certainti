@@ -1944,13 +1944,16 @@ WHERE dmf.country_rid = '${countryRid}'
   },
   updateFederalFormError(schemaName: string) {
     return `UPDATE ${schemaName}.rd_credit_country_calculations
-      SET form_error_message = :errorMessage
+      SET form_error_message = :errorMessage,
+      rd_form_url = null
+
       WHERE case_rid = :caseRid
       and country_rid  =:countryRid`
   },
   updateStateFormError(schemaName: string) {
     return `UPDATE ${schemaName}.rd_credit_state_calculations
-            SET form_error_message = :errorMessage
+            SET form_error_message = :errorMessage,
+             rd_form_url = null
             WHERE case_rid = :caseRid
             and country_rid  =:countryRid
             and state_rid = :stateRid`
@@ -2478,11 +2481,13 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+  dossierPackageCreated: "Dossier Package",
 }
 
 export const entityNames = {
   case: "Case",
   task: "Task",
+  dossier:"Dossier"
 }
 
 

@@ -173,7 +173,7 @@ export class RdFormMapperService {
         countryRid,
         orgDb,
         accountNumber,
-        "No valid data uploaded to process RD forms"
+        "No valid RD form data available to process"
       );
     }
 
@@ -183,7 +183,7 @@ export class RdFormMapperService {
         countryRid,
         orgDb,
         accountNumber,
-        "No valid data uploaded to process RD forms"
+        "No valid RD form data available to process"
       );
     }
 
@@ -202,10 +202,7 @@ export class RdFormMapperService {
         countryRid,
         orgDb,
         accountNumber,
-        `No valid data uploaded to process RD forms`
-      );
-      throw new Error(
-        `No valid data uploaded to process RD forms`
+        `No valid RD form data available to process`
       );
     }
 
@@ -309,11 +306,11 @@ export class RdFormMapperService {
     } catch (error) {
       this.logger.error("Error processing federal form:", error);
       await this.updateFederalFormError(caseRid, countryRid, error instanceof Error ? error.message : String(error), orgDb);
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: "Federal form processing failed",
-        errorMessage: error instanceof Error ? error.message : String(error),
-      };
+       return {
+      statusCode: HttpStatus.SUCCESS,
+      message: "Federal form processed successfully",
+      data:''
+    }
     }
   }
 
@@ -502,7 +499,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
-          "No valid data uploaded to process RD forms"
+          "No valid RD form data available to process"
         );
         logMessage(
           `No state form found for ${state}. Browse file URL: ${formInfo?.browse_file}`,
@@ -526,7 +523,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
-          `No valid data uploaded to process RD forms`
+          `No valid RD form data available to process`
         );
         continue;
       }
@@ -625,7 +622,7 @@ export class RdFormMapperService {
           state,
           orgDb,
           accountNumber,
-          "No valid data uploaded to process RD forms"
+          "No valid RD form data available to process"
         );
       }
     }
@@ -2652,11 +2649,9 @@ private async handleTableConfig(
     errorMessage?: string;
     data?: { task: any };
   }> {
-    try {
-      const parsedMessage =
+     const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
-
-      const {
+     const {
         caseRid,
         accountRid,
         effectiveStart,
@@ -2665,11 +2660,15 @@ private async handleTableConfig(
         schemaName,
         fiscalYear
       } = parsedMessage;
-      const mainDb = await this.getMainDb();
+        const mainDb = await this.getMainDb();
       const orgDb = await this.getOrgDb();
       const [fetchAccountCountryId]: any[] = await mainDb.query(
         rawQueries.fetchAccountAndCountryDetails(accountRid),
       );
+    try {
+     
+     
+    
       const availableConfig =
         await this.rdFormMapperSchemaService.findAvailableCountryAndState(
           accountNumber,
@@ -2789,11 +2788,23 @@ private async handleTableConfig(
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : err;
       logMessage(`Error processing RD Mapper requests: ${errorMessage}`);
+      await this.rdFormMapperSchemaService.updateFederalFormError(
+        caseRid,
+        fetchAccountCountryId[0].country_rid,
+        orgDb,
+        accountNumber,
+        "No valid RD form data available to process"
+      );
       return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage:"Failed to process RD form mapper requests",
-      };
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: { task: null },
+      }
+      // return {
+      //   statusCode: HttpStatus.FAILED,
+      //   message: HttpStatus.FAILED_MESSAGE,
+      //   errorMessage:"Failed to process RD form mapper requests",
+      // };
     }
   }
 

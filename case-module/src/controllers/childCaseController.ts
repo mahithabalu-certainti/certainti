@@ -190,6 +190,7 @@ async function fetchCaseClosingRemarks (req : Request, res : Response) {
     const methodName = "initiateCreateDossierForm"
     try {
        const userId = req.headers["x-user-id"] as string;
+        const accessToken = req.headers["authorization"] as string;
         if (!userId) {
             errorLog(methodName, "User ID is required in headers");
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
@@ -197,6 +198,7 @@ async function fetchCaseClosingRemarks (req : Request, res : Response) {
         }
         const data = req.body;
         data.userId = userId;
+        data.accessToken = accessToken;
         const result = await childCaseService.initiateCreateDossierForm(data);
         if(result) {
           return res.status(HttpStatus.SUCCESS).send({
