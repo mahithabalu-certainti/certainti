@@ -55,6 +55,7 @@ export class RdCreditCalculatorForAZ {
             totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
             totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
             totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+            averageAnnualGrossReceipts:this.round2(rrcResult.average_gross_receipts) || 0
         }
 
     }
@@ -120,7 +121,7 @@ export class RdCreditCalculatorForAZ {
         // If line 22 is more than $2,500,000, skip line 23 and complete lines 24 through 26.
         if (line22.lte(config.qre_threshold_amount)) {
             //-- Line 23: Multiple line 22 by 24%
-            line23 = line22.mul(config.qre_credit_percentage_c1/100);
+            line23 = line22.mul(config.qre_credit_percentage_c2/100);
             line27a = line23;
         } else {
             line23 = new Decimal(0)

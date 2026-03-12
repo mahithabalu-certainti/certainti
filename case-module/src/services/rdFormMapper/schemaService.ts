@@ -1,5 +1,5 @@
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { Sequelize } from "sequelize";
+import { Sequelize, where } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
@@ -53,10 +53,11 @@ class RdFormMapperSchemaService {
     countryRid: string,
     orgDb: Sequelize,
     accountNumber: string,
+    errorMessage: string,
   ): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
     await orgDb.query(rawQueries.updateFederalFormError(schemaName), {
-      replacements: { caseRid, countryRid },
+      replacements: { caseRid, countryRid, errorMessage },
       raw: true,
     });
     logMessage(`Federal form error updated for case RID: ${caseRid}`);
@@ -68,10 +69,11 @@ class RdFormMapperSchemaService {
     stateRid: string,
     orgDb: Sequelize,
     accountNumber: string,
+    errorMessage: string,
   ): Promise<void> {
     let schemaName = rawQueries.fetchSchemaName(accountNumber);
     await orgDb.query(rawQueries.updateStateFormError(schemaName), {
-      replacements: { caseRid, countryRid, stateRid },
+      replacements: { caseRid, countryRid, stateRid, errorMessage },
       raw: true,
     });
     logMessage(`State form error updated for case RID: ${caseRid}`);
@@ -554,188 +556,176 @@ class RdFormMapperSchemaService {
    * Fetch all values from a table field as a list
    * For table field types, this method returns all rows of data for the specified column
    */
-  async fetchTableValues(
-    refTable: string,
-    fieldName: string,
-    is_json: boolean,
-    data_order_by: string,
-    account_rid: string,
-    case_rid: string,
-    schemaName: string,
-    stateRid: string,
-    fiscalYear?: string,
-  ): Promise<any[]> {
-    const orgDb = await this.getOrgDb();
-    logMessage(
-      `Fetching table values for field: ${fieldName} from ${refTable} (JSON: ${is_json}, Fiscal Year: ${fiscalYear})`,
-    );
+async fetchTableValues(
+  refTable: string,
+  fieldName: string,
+  is_json: boolean,
+  data_order_by: string,
+  account_rid: string,
+  case_rid: string,
+  schemaName: string,
+  stateRid: string,
+  fiscalYear?: string,
+): Promise<any[]> {
+  const orgDb = await this.getOrgDb();
+  logMessage(
+    `Fetching table values for field: ${fieldName} from ${refTable} (JSON: ${is_json}, Fiscal Year: ${fiscalYear})`,
+  );
 
-    let query: string;
-    let results: any[] = [];
+  let query: string;
+  let results: any[] = [];
 
-    try {
-      if (is_json) {
-        // For JSON fields, extract all values from the specified JSON path
-        let jsonPath = fieldName.replace(/^\$\.computed_fields\./, "$.");
-
-        // Quote the JSON path properly
-        function quoteJsonPath(path: string): string {
-          const parts: string[] = [];
-          let buffer = "";
-          let bracketDepth = 0;
-          let inQuotes = false;
-          let quoteChar = "";
-
-          // Remove leading $. if present
-          let processPath = path.startsWith("$.") ? path.substring(2) : path;
-
-          for (let i = 0; i < processPath.length; i++) {
-            const ch = processPath[i];
-
-            if ((ch === '"' || ch === "'") && !inQuotes) {
-              inQuotes = true;
-              quoteChar = ch;
-              buffer += ch;
-              continue;
-            }
-
-            if (ch === quoteChar && inQuotes) {
-              inQuotes = false;
-              quoteChar = "";
-              buffer += ch;
-              continue;
-            }
-
-            if (ch === "[") bracketDepth++;
-            if (ch === "]") bracketDepth--;
-
-            if (ch === "." && bracketDepth === 0 && !inQuotes) {
-              if (buffer) {
-                parts.push(buffer);
-                buffer = "";
-              }
-            } else {
-              buffer += ch;
-            }
-          }
-          if (buffer) parts.push(buffer);
-
-          const quotedParts = parts.map((part) => {
-            // Leave filters/wildcards untouched
-            if (part.startsWith("[")) return part;
-            // Already quoted
-            if (
-              (part.startsWith('"') && part.endsWith('"')) ||
-              (part.startsWith("'") && part.endsWith("'"))
-            )
-              return part;
-            // Quote names with spaces/special chars
-            if (/[^a-zA-Z0-9_]/.test(part)) return `"${part}"`;
-            return part;
-          });
-
-          const filteredParts = quotedParts.filter((part) => part.length > 0);
-          return "$." + filteredParts.join(".");
-        }
-
-        const quotedJsonPath = quoteJsonPath(jsonPath);
-          let whereClause = "WHERE case_rid = :case_rid";
-        let replacements: any = { case_rid };
-         if (fiscalYear) {
-          whereClause += " AND fiscal_year = :fiscalYear";
-          replacements.fiscalYear = fiscalYear;
-        }
-        if(refTable === "case_history_submission")
-          {
-            replacements = {};
-            whereClause = `WHERE account_rid = :account_rid AND state_rid = :state_rid`;
-            replacements.account_rid = account_rid;
-            replacements.state_rid = stateRid;
-          }
-        if(refTable === "account")
-        {
-            replacements = {};
-            whereClause = `WHERE rid = :account_rid`;
-            replacements.account_rid = account_rid;
-        }
-       
-       
-
-       
-
-        const orderByField = data_order_by || 'created_datetime';
-        
-        query = `
-          SELECT 
-            jsonb_path_query(computed_fields, '${quotedJsonPath}')::text as field_value,
-            ROW_NUMBER() OVER (ORDER BY ${orderByField} ASC) as row_index
-          FROM ${schemaName}.${refTable}
-          ${whereClause}
-          ORDER BY ${orderByField} ASC`;
-
-        const [queryResults] = await orgDb.query(query, {
-          replacements,
-          raw: true,
-        });
-
-        results = (queryResults as any[]).map((row: any, index: number) => ({
-          value: row.field_value,
-          index: index + 1,
-          row_number: index + 1,
-        }));
-      } else {
-        // For regular fields, get all distinct values from the column
-        let whereClause = `WHERE case_rid = :case_rid AND ${fieldName} IS NOT NULL`;
-        let replacements: any = { case_rid };
-
-        if (fiscalYear) {
-          whereClause += " AND fiscal_year = :fiscalYear";
-          replacements.fiscalYear = fiscalYear;
-        }
-        if(refTable === "case_history_submission")
-          {
-            replacements = {};
-            whereClause = `WHERE account_rid = :account_rid AND state_rid = :state_rid`;
-            replacements.account_rid = account_rid;
-            replacements.state_rid = stateRid;
-
-          }
-
-        const orderByField = data_order_by || 'created_datetime';
-        
-        query = `
-          SELECT 
-            ${fieldName} AS field_value,
-            ROW_NUMBER() OVER (ORDER BY ${orderByField} ASC) as row_index
-          FROM ${schemaName}.${refTable}
-          ${whereClause}
-          ORDER BY ${orderByField} ASC`;
-
-        const [queryResults] = await orgDb.query(query, {
-          replacements,
-          raw: true,
-        });
-
-        results = (queryResults as any[]).map((row: any, index: number) => ({
-          value: row.field_value,
-          index: index + 1,
-          row_number: row.row_index,
-        }));
+  // Helper to build WHERE clause and replacements based on refTable
+  const buildWhereClause = (refTable: string) => {
+    if (refTable === "case_history_submission") {
+      return {
+        whereClause: `WHERE t.account_rid = :account_rid AND t.state_rid = :state_rid`,
+        replacements: { account_rid, state_rid: stateRid } as any,
+      };
+    }
+    if (refTable === "account") {
+      return {
+        whereClause: `WHERE t.rid = :account_rid`,
+        replacements: { account_rid } as any,
+      };
+    }
+    if (refTable === "case_projects") {
+      let whereClause = `WHERE t.case_rid = :case_rid AND pf.is_qualified = true`;
+      const replacements: any = { case_rid };
+      if (fiscalYear) {
+        whereClause += ` AND pf.fiscal_year = :fiscalYear`;
+        replacements.fiscalYear = fiscalYear;
       }
+      return { whereClause, replacements };
+    }
+    // Default
+    let whereClause = `WHERE t.case_rid = :case_rid`;
+    const replacements: any = { case_rid };
+    if (fiscalYear) {
+      whereClause += ` AND t.fiscal_year = :fiscalYear`;
+      replacements.fiscalYear = fiscalYear;
+    }
+    return { whereClause, replacements };
+  };
 
-      logMessage(
-        `Retrieved ${results.length} table values for ${refTable}.${fieldName}`,
-      );
-      return results;
-    } catch (error) {
-      console.error(
-        `Error fetching table values from ${refTable}.${fieldName}:`,
-        error,
-      );
-      logMessage(`Error details: ${JSON.stringify(error)}`);
-      return [];
+  // Build JOIN clause for case_projects
+  const buildFromClause = (refTable: string, schemaName: string) => {
+    if (refTable === "case_projects") {
+      return `
+        FROM ${schemaName}.case_projects t
+        INNER JOIN ${schemaName}.project_fiscal pf
+          ON pf.rid = t.project_fiscal_rid`;
+    }
+    return `FROM ${schemaName}.${refTable} t`;
+  };
+
+  try {
+    const { whereClause, replacements } = buildWhereClause(refTable);
+    const fromClause = buildFromClause(refTable, schemaName);
+    const orderByField = data_order_by || "created_datetime";
+
+    if (is_json) {
+      let jsonPath = fieldName.replace(/^\$\.computed_fields\./, "$.");
+      const quotedJsonPath = this.quoteJsonPath(jsonPath);
+
+      query = `
+        SELECT
+          jsonb_path_query(t.computed_fields, '${quotedJsonPath}')::text AS field_value,
+          ROW_NUMBER() OVER (ORDER BY t.${orderByField} ASC) AS row_index
+        ${fromClause}
+        ${whereClause}
+        ORDER BY t.${orderByField} ASC`;
+    } else {
+      query = `
+        SELECT
+          t.${fieldName} AS field_value,
+          ROW_NUMBER() OVER (ORDER BY t.${orderByField} ASC) AS row_index
+        ${fromClause}
+        ${whereClause}
+        ORDER BY t.${orderByField} ASC`;
+    }
+
+    logMessage(`Executing query: ${query}`);
+    logMessage(`Replacements: ${JSON.stringify(replacements)}`);
+
+    const [queryResults] = await orgDb.query(query, {
+      replacements,
+      raw: true,
+    });
+
+    results = (queryResults as any[]).map((row: any, index: number) => ({
+      value: row.field_value,
+      index: index + 1,
+      row_number: index + 1,
+    }));
+
+    logMessage(
+      `Retrieved ${results.length} table values for ${refTable}.${fieldName}`,
+    );
+    return results;
+  } catch (error) {
+    logMessage(
+      `Error fetching table values from ${refTable}.${fieldName}: ${JSON.stringify(error)}`,
+    );
+    return [];
+  }
+}
+
+// Extracted as a private method — was previously defined inline
+private quoteJsonPath(path: string): string {
+  const parts: string[] = [];
+  let buffer = "";
+  let bracketDepth = 0;
+  let inQuotes = false;
+  let quoteChar = "";
+
+  const processPath = path.startsWith("$.") ? path.substring(2) : path;
+
+  for (let i = 0; i < processPath.length; i++) {
+    const ch = processPath[i];
+
+    if ((ch === '"' || ch === "'") && !inQuotes) {
+      inQuotes = true;
+      quoteChar = ch;
+      buffer += ch;
+      continue;
+    }
+    if (ch === quoteChar && inQuotes) {
+      inQuotes = false;
+      quoteChar = "";
+      buffer += ch;
+      continue;
+    }
+
+    if (ch === "[") bracketDepth++;
+    if (ch === "]") bracketDepth--;
+
+    if (ch === "." && bracketDepth === 0 && !inQuotes) {
+      if (buffer) {
+        parts.push(buffer);
+        buffer = "";
+      }
+    } else {
+      buffer += ch;
     }
   }
+  if (buffer) parts.push(buffer);
+
+  const quotedParts = parts
+    .map((part) => {
+      if (part.startsWith("[")) return part;
+      if (
+        (part.startsWith('"') && part.endsWith('"')) ||
+        (part.startsWith("'") && part.endsWith("'"))
+      )
+        return part;
+      if (/[^a-zA-Z0-9_]/.test(part)) return `"${part}"`;
+      return part;
+    })
+    .filter((part) => part.length > 0);
+
+  return "$." + quotedParts.join(".");
+}
 
   /**
    * Get column ID list from data_mapper_table_mappings where rid matches the provided column ID

@@ -190,6 +190,7 @@ async function fetchCaseClosingRemarks (req : Request, res : Response) {
     const methodName = "initiateCreateDossierForm"
     try {
        const userId = req.headers["x-user-id"] as string;
+        const accessToken = req.headers["authorization"] as string;
         if (!userId) {
             errorLog(methodName, "User ID is required in headers");
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
@@ -197,6 +198,7 @@ async function fetchCaseClosingRemarks (req : Request, res : Response) {
         }
         const data = req.body;
         data.userId = userId;
+        data.accessToken = accessToken;
         const result = await childCaseService.initiateCreateDossierForm(data);
         if(result) {
           return res.status(HttpStatus.SUCCESS).send({
@@ -259,10 +261,7 @@ async function exportSignOffDetails (req : Request, res : Response) {
 async function getDossierPackage (req : Request, res : Response) {
   const methodName = "getDossierPackage";
   try {
-    const {accountId, caseId} = req.params;
-    const data : any = {};
-    data.account_rid = accountId;
-    data.case_rid = caseId;
+    const data = req.body;
     const user_id = req.headers["x-user-id"] as string;
     if (!user_id) {
         errorLog(methodName, "User ID is required in headers");
@@ -431,6 +430,56 @@ async function getComputedValue(req : Request, res : Response) {
     return;
   }
 }
+async function revokeApprovals (req : Request, res : Response) {
+  const methodName = "revokeApprovals";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+        errorLog(methodName, "User ID is required in headers");
+        handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+        return;
+    }
+    const data = req.body;
+    data.userId = userId; 
+    const result = await childCaseService.revokeSignOff(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+  } else if (result.statusCode === HttpStatus.FAILED) {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode : HttpStatus.FAILED,
+        statusCodeValue : HttpStatus.FAILED_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+  } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    } 
+    else {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    } 
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
     signOffFinancialWorking,
     regionListForFinancialHighlights,
@@ -440,5 +489,6 @@ export default {
     exportSignOffDetails,
     getDossierPackage,
     closeCase,
-    getComputedValue
+    getComputedValue,
+    revokeApprovals
 }

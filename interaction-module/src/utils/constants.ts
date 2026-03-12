@@ -410,7 +410,7 @@ export const rawQueries = {
 
   fetchActiveStatus() {
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
+    SELECT rid, status_name, status FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%Active%' limit 1`;
   },
   fetchInteractionStatusByType(type: string) {
     return `

@@ -322,27 +322,31 @@ export class InteractionService {
         parentAccountId,
         accountRid
       );
+      const mainDb = await this.getMainDb();
       logMessage(
         `Auto-send: ${interactionData?.trigger_send ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`
       );
+       const [findStatus] = await mainDb.query<AllStatusType>(rawQueries.fetchActiveStatus(), {type : QueryTypes.SELECT});
       if (interactionData?.trigger_send && isParensettingsConfigured) {
-        await this.sendInteraction(
-          [
+        if(findStatus?.rid === (interactionData.interaction_status_rid ?? findStatus?.rid)) {
+          await this.sendInteraction(
+            [
+              {
+                interaction_rid: interactionId,
+                project_fiscal_rid: interactionData.project_fiscal_rid,
+                interaction_level: interactionLevel,
+              },
+            ],
             {
-              interaction_rid: interactionId,
-              project_fiscal_rid: interactionData.project_fiscal_rid,
-              interaction_level: interactionLevel,
+              email: interactionData.email_info?.email || null,
+              name: interactionData.email_info?.name || null,
             },
-          ],
-          {
-            email: interactionData.email_info?.email || null,
-            name: interactionData.email_info?.name || null,
-          },
-          interactionData.account_rid,
-          userId,
-          false,
-          "Manual-Send"
-        );
+            interactionData.account_rid,
+            userId,
+            false,
+            "Manual-Send"
+          );
+        }
       } else {
         const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(
           accountNumber,
@@ -380,23 +384,25 @@ export class InteractionService {
               interactionData.account_rid
             );
           if (!ismaxInteractionsSent) return;
-          await this.sendInteraction(
-            [
+          if(findStatus?.rid === (interactionData.interaction_status_rid ?? findStatus!.rid)) {
+            await this.sendInteraction(
+              [
+                {
+                  interaction_rid: interactionId,
+                  project_fiscal_rid: interactionData.project_fiscal_rid,
+                  interaction_level: interactionLevel,
+                },
+              ],
               {
-                interaction_rid: interactionId,
-                project_fiscal_rid: interactionData.project_fiscal_rid,
-                interaction_level: interactionLevel,
+                email: interactionData.email_info?.email || null,
+                name: interactionData.email_info?.name || null,
               },
-            ],
-            {
-              email: interactionData.email_info?.email || null,
-              name: interactionData.email_info?.name || null,
-            },
-            interactionData.account_rid,
-            userId,
-            false,
-            "Auto-Send"
-          );
+              interactionData.account_rid,
+              userId,
+              false,
+              "Auto-Send"
+            ); 
+          }
         }
       }
     } catch (err) {
@@ -990,7 +996,8 @@ export class InteractionService {
                 true,
                 userId,
                 accountNumber,
-                interactionData.account_rid
+                interactionData.account_rid,
+                interactionInfo.interactionInfo
 
 
 
@@ -1894,6 +1901,7 @@ export class InteractionService {
     createdBy: string,
     accountNumber: string,
     data: any,
+    interactionInfo: any
   ) {
     let emailResponse = false;
     try {
@@ -1964,16 +1972,7 @@ export class InteractionService {
         if(interactionLevel.toLowerCase() === 'project')
         {
           timelineTypes = ["project"]
-        }
-        let eventName = eventNames.SENT;
-        if(is_interaction_followup)
-        {            
-          eventName = eventNames.REMAINDER
-        }
-        if(data.interaction_reinitiated)
-        {
-          eventName = eventNames.REINITIATED
-        }             
+        }           
         await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
                                             created_by: createdBy!,
                                             account_rid: data.account_rid!,
@@ -1982,7 +1981,7 @@ export class InteractionService {
                                             created_by_name: userEventInfo.full_name,
                                             event_type_rid: userEventInfo.event_type_rid,
                                             event_name: data.is_interaction_followup ? eventNames.REMAINDER : eventNames.SENT,
-                                            descriptions: data.r_number + ' to ' + emailInfo.email,
+                                            descriptions: interactionInfo.interaction_id + ' to ' + emailInfo.email,
                                             project_rid: interactionLevel?.toLowerCase() === 'project' ? data?.project_fiscal_rid : null,
                                           }, timelineTypes);
       return emailResponse;
@@ -2265,7 +2264,8 @@ export class InteractionService {
         reminderFlag,
         reminderIds,
         apiType,
-        data.rid
+        data.rid,
+        data.assessment_type
       )
     );
     let hasEmailRecipient = false;
@@ -3863,7 +3863,8 @@ export class InteractionService {
         false,
         createdBy,
         accountNumber,
-        data
+        data,
+        interactionInfo.interactionInfo
       );
       if (emailResponse) {
         logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);

@@ -24,7 +24,9 @@ const createInteractionSchema = Joi.object({
   email_info: Joi.object({
     email: Joi.string().email().optional().allow("",null),
     name: Joi.string().max(255).optional().allow("",null),
-  }).optional()
+  }).optional(),
+  interaction_assessment_source_rid : Joi.string().optional(),
+  interaction_status_rid : Joi.string().optional()
 });
 
 const createInteractionTemplateSchema = Joi.object({
@@ -73,7 +75,9 @@ const createAccountInteractionSchema = Joi.object({
   email_info : Joi.object({
     email: Joi.string().email().optional().allow("",null),
     name: Joi.string().max(255).optional().allow("",null),
-  }).optional()
+  }).optional(),
+  interaction_assessment_source_rid : Joi.string().optional(),
+  interaction_status_rid : Joi.string().optional()
 });
 const listAccountInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),

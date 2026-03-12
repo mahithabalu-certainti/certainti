@@ -7,7 +7,7 @@ import {
   validColumnsForSorting,
 } from "./types";
 
-export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid: string, activeStatusRid: string) => {
+export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid: string, activeStatusRid: string, getCompletedTaskStatus : string) => {
   let query = `
     WITH fetch_fiscal_year AS (
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
@@ -20,11 +20,19 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     CROSS JOIN fetch_fiscal_year f
     WHERE
     rid = f.project_fiscal_rid
+    ),
+    fetch_completed_count AS (
+    SELECT case_rid, COALESCE(COUNT(rid) OVER(), 0) AS count 
+    FROM ${schemaName}.case_task
+    WHERE 
+    task_status_rid != '${getCompletedTaskStatus}'
+    AND
+    case_rid = '${caseRid}'
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,c.parent_case_rid,
     c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,f.case_total_qualified_projects,
-    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
+    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, CAST(NULLIF(c.case_total_qre_cost, 0) AS DECIMAL(18,2)) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
     c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
@@ -33,6 +41,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,rd_form_signoff,
     c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
     rcc.final_credit,
+    CASE WHEN fcc.count > 0 THEN false ELSE true END AS all_task_completed,
     CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}') THEN true ELSE false END AS is_initiated,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
     ELSE FALSE END AS is_case_team_created
@@ -40,6 +49,8 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
     LEFT JOIN ${schemaName}.rd_credit_country_calculations rcc ON rcc.case_rid = c.rid
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
+    LEFT JOIN fetch_completed_count fcc ON fcc.case_rid = c.rid
     CROSS JOIN fetch_project_count_cost f
     WHERE
     c.rid = '${caseRid}'
@@ -65,7 +76,8 @@ export const fetchProjectsForCases = (
   accessibleIds: string[],
   isExport: boolean,
   projectTypeRids: string[],
-  type? : string
+  caseClosed : boolean,
+  type? : string,
 ) => {
   let pagination: string = ``
   if (!isExport) {
@@ -95,14 +107,17 @@ export const fetchProjectsForCases = (
   let subQueryJoinConditions: string = ``;
   let accessibleProjects: string = ``;
   let projectTypeCondition: string = ``;
+  let closedAlias : string;
 
   if (accessibleIds.length > 0)
     accessibleProjects = `AND pf.rid IN (${accessibleIds
       .map((d: any) => `'${d}'`)
       .join(",")})`;
   else accessibleProjects = ``;
+  if(caseClosed) closedAlias = 'cp'
+  else closedAlias = 'pf'
   if( projectTypeRids.length > 0 ) {
-    projectTypeCondition = ` AND pf.project_type_rid IN (${projectTypeRids .map((d: any) => `'${d}'`).join(",")}) `;
+    projectTypeCondition = ` AND ${closedAlias}.project_type_rid IN (${projectTypeRids .map((d: any) => `'${d}'`).join(",")}) `;
   }
 
   if (assignedApi) {
@@ -118,7 +133,7 @@ export const fetchProjectsForCases = (
         `;
     subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`;
     subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`;
-    whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects} ${projectTypeCondition}`;
+    whereConditions = `${closedAlias}.account_rid = '${accountRid}' AND ${closedAlias}.fiscal_year = ${fiscalYear} ${accessibleProjects} ${projectTypeCondition}`;
   }
 
   if (!isSorting) {
@@ -136,9 +151,12 @@ export const fetchProjectsForCases = (
       dynamicAlias = `tpoc`;
       sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (sort.includes(validColumnsForSorting[sort])) {
-      dynamicAlias = `pf`;
+      dynamicAlias = caseClosed ? 'cp' : 'pf';
       sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
-    } else sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
+    } else {
+      dynamicAlias = caseClosed ? 'cp' : 'pf';
+      sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
+    }
   } else {
     sortValue = ``;
   }
@@ -156,7 +174,7 @@ export const fetchProjectsForCases = (
         if (validKey === "project_point_of_contact") dynamicAlias = `poc`;
         else if (validKey === "project_technical_point_of_contact")
           dynamicAlias = `tpoc`;
-        else dynamicAlias = `pf`;
+        else dynamicAlias = caseClosed ? 'cp' : 'pf' 
         for (let [cond, value] of Object.entries(condition)) {
           switch (columnType[validKey]) {
             case "string": {
@@ -305,13 +323,13 @@ export const fetchProjectsForCases = (
     ), 
 
     fetch_projects AS (
-    SELECT DISTINCT pf.rid, pf.project_code, pf.project_name, pf.project_type_rid, 
-    pf.fiscal_year, pf.project_classification_rid, pf.project_client_group,
-    pf.project_group, pf.total_effort_prj, pf.total_cost_prj, pf.total_cost_fte_prj,
-    pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
-    pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
-    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
+    SELECT DISTINCT pf.rid, ${closedAlias}.project_code, ${closedAlias}.project_name, ${closedAlias}.project_type_rid, 
+    ${closedAlias}.fiscal_year, ${closedAlias}.project_classification_rid, ${closedAlias}.project_client_group,
+    ${closedAlias}.project_group, ${closedAlias}.total_effort_prj, ${closedAlias}.total_cost_prj, ${closedAlias}.total_cost_fte_prj,
+    ${closedAlias}.total_cost_subcon_prj, ${closedAlias}.total_cost_nonlabor_prj, ${closedAlias}.assessment_status,
+    ${closedAlias}.rd_percent_final, ${closedAlias}.qre_final, ${closedAlias}.comments, ${closedAlias}.modified_datetime, pf.r_number,
+    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, ${closedAlias}.account_rid,
+    ${closedAlias}.project_rid, ${closedAlias}.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -339,6 +357,7 @@ export const fetchProjectsForCases = (
     )
     SELECT * FROM paginated_projects
     `;
+  console.log(query)
   return query;
 };
 
@@ -883,6 +902,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   m.milestone_name, m.milestone_description, m.status_rid AS "milestone_status_rid", m.case_filing_type_rid
   FROM
   ${MAIN_SCHEMA_NAME}.milestone_template m
+  where m.case_filing_type_rid = '${filingTypeRid}'
   ORDER BY m.r_number ASC
   ),
   fetch_task_data AS (
@@ -899,6 +919,8 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   t.task_type_rid = '${taskTypeRid}'
   AND
   t.status_rid = '${statusId}'
+  AND
+  m.case_filing_type_rid = '${filingTypeRid}'
   ORDER BY t.milestone_sequence ASC
   ),
   fetch_workflow_connector_map AS (
@@ -985,7 +1007,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   ct.case_rid, ct.account_rid, ct.rid
   ),
   fetch_task AS (
-  SELECT cm.rid, cm.account_rid, cm.case_rid,
+  SELECT cm.rid, cm.account_rid, cm.case_rid, cm.case_filing_type_rid,
   array_agg(jsonb_build_object(
   'rid', t.rid,
   'task_name', t.task_name,
@@ -1055,11 +1077,12 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   AND
   t.account_rid = '${accountRid}'
   GROUP BY
-  cm.rid, cm.account_rid, cm.case_rid
+  cm.rid, cm.account_rid, cm.case_rid,cm.case_filing_type_rid
   )
   SELECT array_agg(jsonb_build_object(
   'rid', m.rid,
   'milestone_name', m.milestone_name,
+  'case_filing_type_rid', m.case_filing_type_rid,
   'task_count', (SELECT COUNT(DISTINCT ct.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.case_milestone cm ON ct.milestone_template_rid = cm.rid where ct.milestone_template_rid = m.rid AND ct.account_rid = '${accountRid}' AND ct.case_rid = '${caseRid}'),
   'tasks', ft.tasks
   ))

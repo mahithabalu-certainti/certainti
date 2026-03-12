@@ -206,7 +206,9 @@ export class StateComputationService {
                     let result;
                     
                     if(config.state_code === "ON") {
-                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
+                        const [getCompletedTaskStatus] = await mainDb.query<{rid : string}>(rawQueries.getCaseTaskCompletedStatus(), {type : QueryTypes.SELECT});
+                        let caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid ? true : false
+                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails, caseClosed)
                     } else {
                         result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
                     }                  

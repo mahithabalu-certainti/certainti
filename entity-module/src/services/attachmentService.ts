@@ -141,6 +141,28 @@ export class AttachmentService {
         comments: attachmentData.comments || null,
         created_by: userId,
       });
+      if(attachment_level === 'project')
+      {
+        const projectData = await this.projectIngestionService.fetchProjectInfoById(accountNumber, attachmentData.attach_to)
+        //trigger ai event for project attachments
+         const isTriggerEnabled = await this.projectIngestionService.isAutoTriggerRDAssessment(accountNumber, {
+          account_rid: account_rid,
+          project_fiscal_rid: attachmentData.attach_to,
+    });
+          if (isTriggerEnabled) {
+            const req = {
+              data: [
+                {
+                  account_rid: account_rid,
+                  project_fiscal_rid: [attachmentData.attach_to],
+                },
+              ],
+              type: "project",
+            };
+            logMessage(`Triggering AI for project fiscal rid: ${req}`);
+            await this.projectIngestionService.triggerAI(req,userId,projectData?.project_code || '',accountNumber, entityTypes.AUTO_RD_ASSESSMENT);
+          }
+      }
       let projectFiscalId = attachmentData.attach_to;
         if(attachment_level === 'project_resource' || attachment_level === 'project_task') {
           if(attachment_level === 'project_resource') {

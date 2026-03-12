@@ -438,6 +438,7 @@ export const rawQueries = {
       SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
       FROM "${schemaName}".project_timeline
       WHERE project_rid = :projectId
+      and document_rid is null
       ORDER BY created_datetime DESC
       LIMIT :limit OFFSET :offset
     `;
@@ -447,6 +448,7 @@ export const rawQueries = {
       SELECT count(*) as count
       FROM "${schemaName}".account_timeline
       WHERE account_rid = :accountId
+       and document_rid is null
     `;
   },
   fetchProjectTimelineEntriesCount(schemaName: string) {
@@ -454,6 +456,7 @@ export const rawQueries = {
       SELECT count(*) as count
       FROM "${schemaName}".project_timeline
       WHERE project_rid = :projectId
+       and document_rid is null
     `;
   },
   fetchCaseTimelineEntriesCount(schemaName: string) {
@@ -1171,6 +1174,7 @@ export const rawQueries = {
         project_rid VARCHAR(50) NULL,
         entity_name VARCHAR(255) NULL,
         created_by_name VARCHAR(255) NULL,
+         source_record_count integer,
         descriptions VARCHAR(2000) NULL,
         CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
       );
@@ -3436,6 +3440,7 @@ export const rawQueries = {
         entity_rid VARCHAR(50) NOT NULL,  
         entity_name VARCHAR(255) NOT NULL,
         created_by_name VARCHAR(255) NULL,
+        source_record_count integer,
         descriptions VARCHAR(2000)
       );
     `;

@@ -4,6 +4,11 @@ import { logMessage } from "../utils/helpers";
 import RDCreditSchemaService from "../services/rdComputation/schemaService";
 import { ChildCaseService } from "../services/cases/childCaseService";
 import Configurations from "../config/config"
+import { entityNames, rawQueries, ruleNames } from "../utils/constants";
+import { QueryTypes } from "sequelize";
+import { initMainDbSequelize } from "../config/mainDataSource";
+import { CaseModelService } from "../services/caseModelsService";
+import { HelperMethods } from "../services/cases/helperMethods";
 
 /**
  * Kafka Consumer Service
@@ -13,6 +18,8 @@ export class KafkaConsumerService {
     private stateComputationService: StateComputationService;
     private childCaseService : ChildCaseService
     private rdFormMapperService: any;
+    private caseModelService: CaseModelService;
+    private helperMethod: HelperMethods
 
     constructor() {
         this.rdCreditSchemaService = new RDCreditSchemaService();
@@ -23,7 +30,10 @@ export class KafkaConsumerService {
         const logger = Configurations.getInstance().getLogger()
         this.rdFormMapperService = Services.rdFormMapperService;
         this.childCaseService = new ChildCaseService(logger)
-    }
+        this.caseModelService = new CaseModelService();
+        this.helperMethod = new HelperMethods(
+        this.caseModelService
+        );    }
 
     private consumer = kafka.consumer({ groupId: ENV.KAFKA_GROUP_ID });
     private formConsumer = kafka.consumer({ groupId: ENV.KAFKA_FORM_GROUP_ID });
@@ -120,6 +130,33 @@ export class KafkaConsumerService {
 
                     const markInProgress = await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, key, 'dossier-form');
                     await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key, payload.timezone);
+                   const mainDb = await initMainDbSequelize()
+                    const [caseInfo]: any[] = await mainDb.query(
+                            rawQueries.fetchCasesInfo(payload.caseRid),
+                            {
+                              replacements: { case_rid: payload.caseRid },
+                              type: "SELECT"
+                            });
+                          
+                    let ruleEnginePayload = {
+                            entityName: caseInfo.case_name,
+                            entity: entityNames.case,
+                            eventName: ruleNames.caseCreated,
+                            userId: payload.userId,
+                            accountRid: payload.accountRid,
+                            targetUserID: caseInfo.case_owner_rid,
+                            targetEmail: caseInfo.email || "",
+                            entityRid: payload.caseRid,
+                            ruleScope: ruleNames.dossierPackageCreated,
+                            caseName: caseInfo.case_name || "",
+                            dossierPackage: "created",
+                            triggerType: "validation",
+                            status: "completed"
+                          };
+                    await this.helperMethod.triggerDynamicRuleEngine(ruleEnginePayload, {
+                    newValue: "",
+                    oldValue: ""
+                    }, payload.accessToken);
                     await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, key,'dossier-form');
                     console.log(`Dossier processing complete for ID: ${key}`);
                 } catch (error) {
