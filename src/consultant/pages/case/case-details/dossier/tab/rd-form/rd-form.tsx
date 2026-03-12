@@ -278,6 +278,22 @@ const RDForm: React.FC<RDFormProps> = ({
               fontWeight: 400,
             }}
           />
+          {/* <TextButton
+            label={'Revoke'}
+            onClick={() => setIsSignOffModalOpen(true)}
+            disabled={
+              !isFinancialWorkingSignoff ||
+              !previewData?.data?.rdformUrl ||
+              caseDetails?.rd_form_signoff === true
+            }
+            hide={!isSignoffVisible}
+            sx={{
+              width: 'auto',
+              minWidth: '65px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          /> */}
         </div>
       </div>
       <SectionHeaderTab
