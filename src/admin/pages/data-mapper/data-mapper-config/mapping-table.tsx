@@ -4322,8 +4322,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         TransitionProps={{ timeout: 0 }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
         disableScrollLock
-        sx={{ zIndex: 1200 }}
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {
@@ -4677,8 +4681,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         TransitionProps={{ timeout: 0 }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
         disableScrollLock
-        sx={{ zIndex: 1200 }}
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {
@@ -4868,8 +4876,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
         TransitionProps={{
           timeout: 0,
         }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
         disableScrollLock
-        sx={{ zIndex: 1100 }}
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {
@@ -5039,8 +5051,12 @@ const MappingTable: React.FC<MappingTableProps> = ({
         TransitionProps={{
           timeout: 0,
         }}
+        disableEnforceFocus
+        disableAutoFocus
+        disableRestoreFocus
         disableScrollLock
-        sx={{ zIndex: 1100 }}
+        hideBackdrop
+        sx={{ pointerEvents: 'none', zIndex: 1100 }}
         slotProps={{
           paper: {
             sx: {

@@ -29,11 +29,13 @@ interface FieldExpression {
     | 'function'
     | 'number'
     | 'conditional'
-    | 'bracket';
+    | 'bracket'
+    | 'sumOf';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
   conditionalData?: ConditionalExpression;
+  sumOfArg?: { type: 'chip' | 'manual'; value: string };
 }
 
 interface ConditionalClause {

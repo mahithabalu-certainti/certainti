@@ -437,11 +437,13 @@ interface FieldExpression {
     | 'function'
     | 'number'
     | 'conditional'
-    | 'bracket';
+    | 'bracket'
+    | 'sumOf';
   value: string;
   functionType?: 'MIN' | 'MAX';
   functionArgs?: string[];
   conditionalData?: ConditionalExpression;
+  sumOfArg?: { type: 'chip' | 'manual'; value: string };
 }
 
 interface MappingItemForValidation {
@@ -546,13 +548,15 @@ export function validateMappingItem(
         current.type === 'manual' ||
         current.type === 'number' ||
         current.type === 'function' ||
-        current.type === 'bracket';
+        current.type === 'bracket' ||
+        current.type === 'sumOf';
       const isNextValue =
         next.type === 'chip' ||
         next.type === 'manual' ||
         next.type === 'number' ||
         next.type === 'function' ||
-        next.type === 'bracket';
+        next.type === 'bracket' ||
+        next.type === 'sumOf';
 
       if (isCurrentValue && isNextValue) {
         errors.targetError = 'Missing operator between Object IDs';
