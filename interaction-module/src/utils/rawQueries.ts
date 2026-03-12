@@ -1577,6 +1577,7 @@ export const fetchFpaDetails = (rid : string, schemaName : string) => {
   jsonb_build_object(
   'interaction_rid', ii.interaction_rid,
   'r_number', i.r_number,
+  'project_fiscal_rid', ii.project_fiscal_rid,
   'question_details', array_agg(jsonb_build_object(
     'question_seq_num', ii.question_seq_num,
     'question', ii.question
@@ -1589,7 +1590,7 @@ export const fetchFpaDetails = (rid : string, schemaName : string) => {
   WHERE
   f.rid = '${rid}'
   GROUP BY
-  ii.interaction_rid, i.r_number)
+  ii.interaction_rid, i.r_number, ii.project_fiscal_rid)
 
   SELECT 
   jsonb_build_object(
