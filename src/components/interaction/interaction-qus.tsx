@@ -577,7 +577,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       }
                       className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
                     >
-                      <AttachmentsSideIcon className='w-3.5 h-3.5' />
+                      <AttachmentsSideIcon className='w-3.5 h-3.5 [&>path]:stroke-[#2D3E4F]' />
                     </button>
                   </Tooltip>
                   <Tooltip
