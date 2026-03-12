@@ -365,9 +365,9 @@ export const rawQueries = {
     } else {
       return `
       with fetch_account_details AS (
-      SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      SELECT rid, r_number, parent_account_rid, currency_rid, account_name AS child_account_name FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent, a.currency_rid, a.storage_type
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent, a.currency_rid, a.storage_type, ad.child_account_name
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -2176,6 +2176,14 @@ WHERE dmf.country_rid = '${countryRid}'
       finalQuery = `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = false WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
     }
     return finalQuery;
+  },
+  fetchAllActiveCountries() {
+    return `
+      SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE status = 'active'`;
+  },
+  fetchAllActiveStates() {
+    return `
+        SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE status = 'active'`;
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
