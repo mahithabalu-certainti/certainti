@@ -749,7 +749,9 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const interactionModelColumn = getInteractionListModelColumns(
     // handleViewInteraction,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap,
+    projectPermissionMap
   );
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
@@ -766,7 +768,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   const modelFIlterFields = getInteractionModelFilterFields(
     memoizedInteractionStatusReminder,
     memoizedInteractionLevel,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap,
+    projectPermissionMap,
+    assessmentSourceOptions
   );
   const RestrictedColumns = [
     {

@@ -8,7 +8,9 @@ export const getProjectInteractionListModelColumns = (
   //     rNumber: string,
   //     proFiscalRid: string
   //   ) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  fourPartPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
@@ -27,6 +29,46 @@ export const getProjectInteractionListModelColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+  },
+  {
+    id: 'interaction_assessment_source_name',
+    sortId: 'interaction_assessment_source_name',
+    label: 'Assessment Type',
+    width: 150,
+    sortable: true,
+    hide:
+      !permissionMap?.['interaction_assessment_source_name']?.edit &&
+      !permissionMap?.['interaction_assessment_source_name']?.read,
+  },
+  {
+    id: 'four_part_r_number',
+    sortId: 'four_part_r_number',
+    label: 'Four Part Assessment ID',
+    width: 200,
+    sortable: true,
+    hide:
+      !fourPartPermissionMap?.['r_number']?.edit &&
+      !fourPartPermissionMap?.['r_number']?.read,
+  },
+  {
+    id: 'interaction_batch_id',
+    sortId: 'interaction_batch_id',
+    label: 'Batch ID',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['interaction_batch_id']?.edit &&
+      !permissionMap?.['interaction_batch_id']?.read,
+  },
+  {
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    width: 120,
+    sortable: true,
+    hide:
+      !projectPermissionMap?.['project_code']?.edit &&
+      !projectPermissionMap?.['project_code']?.read,
   },
   {
     id: 'interaction_age',

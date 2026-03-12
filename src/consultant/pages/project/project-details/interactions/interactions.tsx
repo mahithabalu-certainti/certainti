@@ -660,7 +660,8 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const interactionModelColumn = getProjectInteractionListModelColumns(
     // handleViewInteraction,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap
   );
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
@@ -845,7 +846,9 @@ const Interactions: React.FC<InteractionsProps> = ({
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const modelFIlterFields = getProjectInteractionFilterFields(
     memoizedInteractionStatusReminder,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap,
+    assessmentSourceOptions
   );
   const RestrictedColumns = [
     {

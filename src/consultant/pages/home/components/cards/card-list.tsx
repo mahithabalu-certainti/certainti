@@ -120,7 +120,7 @@ const CardList = <T,>({
       ) : (
         <div
           className={`px-4 py-3 overflow-y-auto space-y-3`}
-          style={{ maxHeight: `${maxHeight}px`, minHeight: `${maxHeight}px` }}
+          style={{ maxHeight: `${maxHeight}px` }}
         >
           {items.map((item, index) => {
             // Determine if this specific item is disabled

@@ -48,6 +48,10 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   const fourPartAssessmentId = searchParams.get('fpa_id') || '';
   const isFromInteraction =
     searchParams.get('navigate_source') === 'interactions';
+  const isFromMainInteraction =
+    searchParams.get('main_navigate_source') === 'interactions';
+
+  console.log('isFromMainInteraction---->', isFromMainInteraction);
 
   const { data, isLoading, isError } = useFourPartAssessmentDetails(
     accountid || accountID,
@@ -89,9 +93,9 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   }, [projectViewEditFields]);
 
   const handleBackClick = () => {
-    if (isFromInteraction) {
-      searchParams.delete('fpa_id');
+    if (isFromInteraction || isFromMainInteraction) {
       searchParams.delete('navigate_source');
+      searchParams.delete('main_navigate_source');
       searchParams.set('list', 'interactions');
 
       if (moduleLevel === 'account') {
@@ -119,6 +123,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
           replace: true,
         });
       }
+      searchParams.delete('fpa_id');
     } else {
       searchParams.delete('fpa_id');
       navigate({ search: searchParams.toString() }, { replace: true });
@@ -127,9 +132,10 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
 
   const headerButtons = [
     {
-      label: isFromInteraction
-        ? 'Back To Interactions'
-        : 'Back To Four Part Assessment',
+      label:
+        isFromInteraction || isFromMainInteraction
+          ? 'Back To Interactions'
+          : 'Back To Four Part Assessment',
       variant: 'contained' as const,
       onClick: () => handleBackClick(),
       sx: { width: 'auto', padding: '0 9px' },
@@ -193,6 +199,10 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     searchParams.set('interaction_id', interaction?.interaction_rid);
     searchParams.set('interaction_number', interaction?.r_number);
     searchParams.set('navigate_source', 'four_part');
+    if (isFromInteraction) {
+      searchParams.set('main_navigate_source', 'interactions');
+    }
+    searchParams.set('project_fiscal_rid', interaction?.project_fiscal_rid);
 
     navigate(
       { search: searchParams.toString() },
