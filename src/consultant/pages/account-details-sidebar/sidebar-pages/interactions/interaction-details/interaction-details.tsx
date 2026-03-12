@@ -126,6 +126,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       searchParams.delete('interaction_id');
       searchParams.delete('interaction_number');
       searchParams.delete('navigate_source');
+      searchParams.delete('project_fiscal_rid');
 
       navigate({ search: searchParams.toString() }, { replace: true });
     } else {

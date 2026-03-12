@@ -100,6 +100,7 @@ export interface FourPartAssessmentQuestionDetail {
 export interface FourPartAssessmentInteractionQuestions {
   interaction_rid: string;
   r_number: string;
+  project_fiscal_rid: string;
   question_details: FourPartAssessmentQuestionDetail[];
 }
 
