@@ -3,7 +3,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import RdFormMapperSchemaService from "./schemaService";
-import { generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
+import { downloadBufferFromAzureBlob, generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
 import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE, FORM_TYPE, eventTypes, entityTypes, eventNames } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
@@ -157,8 +157,28 @@ export class RdFormMapperService {
     } else if (countryNameNorm === 'united kingdom' || countryNameNorm === 'uk' || countryNameNorm === 'gb') {
       return await this.processUKForms(accountRid, caseRid, countryRid, accountNumber, mainDb, orgDb, schemaName, countryName);
     } else if (countryNameNorm === 'canada' || countryNameNorm === 'can') {
-      logMessage('Country is Canada. Filling T661 PDF using pdf-lib.');
-      const filledFormUrl = await this.generateT661Pdf(caseRid, schemaName, accountNumber);
+       const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
+        accountRid,
+        countryRid,
+        mainDb,
+        effectiveStart,
+        effectiveEnd,
+      );
+      if (!formInfo?.browse_file) {
+        await this.rdFormMapperSchemaService.updateFederalFormError(
+          caseRid,
+          countryRid,
+          orgDb,
+          accountNumber,
+          'No valid T661 template available to process',
+        );
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: 'No T661 template found',
+          data: '',
+        };
+      }
+      const filledFormUrl = await this.generateT661Pdf(caseRid, schemaName, accountNumber, formInfo.browse_file);
       logMessage(`T661 PDF filling completed. URL: ${filledFormUrl}`);
       await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
         caseRid,
@@ -658,6 +678,7 @@ export class RdFormMapperService {
     caseRid: string,
     schemaName: string,
     accountNumber: string,
+    templateBlobUrl: string,
   ): Promise<string> {
     // ── PDF Annotation approach ────────────────────────────────────────────
     // Overlays data onto the official blank CRA T661 form template using
@@ -720,12 +741,21 @@ export class RdFormMapperService {
     };
 
     // ── 2. Load blank template ─────────────────────────────────────────────
-    const templatePath = path.join(__dirname, 'canadaform.pdf');
-    if (!fs.existsSync(templatePath))
-      throw new Error(`T661 blank template not found at: ${templatePath}`);
+    const parsedTemplateUrl = new URL(templateBlobUrl);
+    const [templateContainer] = parsedTemplateUrl.pathname
+      .split('/')
+      .filter(Boolean);
+    if (!templateContainer)
+      throw new Error('Invalid T661 template blob URL: container name not found');
 
-    const pdfBytes  = fs.readFileSync(templatePath);
-    const pdfDoc    = await PDFDocument.load(pdfBytes);
+    const templateBlobName = decodeURIComponent(
+      parsedTemplateUrl.pathname.split('/').slice(2).join('/'),
+    );
+    logMessage(
+      `Downloading T661 template from container: ${templateContainer}, blob: ${templateBlobName}`,
+    );
+    const pdfBytes = await downloadBufferFromAzureBlob(templateContainer, templateBlobName);
+    const pdfDoc   = await PDFDocument.load(pdfBytes);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const pages     = pdfDoc.getPages();
 
