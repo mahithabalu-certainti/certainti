@@ -844,7 +844,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         assessmentSourceOptions
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
-  const modelFIlterFields = getProjectInteractionFilterFields(
+  const modelFilterFields = getProjectInteractionFilterFields(
     memoizedInteractionStatusReminder,
     permissionMap,
     fourPartPermissionMap,
@@ -1076,7 +1076,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to send reminder'
                   />
                   <ReInitiateModal
@@ -1098,7 +1098,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to re-initiate'
                   />
                 </div>

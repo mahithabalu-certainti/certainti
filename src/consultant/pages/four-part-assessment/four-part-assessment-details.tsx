@@ -51,8 +51,6 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   const isFromMainInteraction =
     searchParams.get('main_navigate_source') === 'interactions';
 
-  console.log('isFromMainInteraction---->', isFromMainInteraction);
-
   const { data, isLoading, isError } = useFourPartAssessmentDetails(
     accountid || accountID,
     fourPartAssessmentId,
