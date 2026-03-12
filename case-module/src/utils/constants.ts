@@ -224,7 +224,8 @@ export const STATUS_MESSAGE = {
   activityCompleted: "Meeting completed successfully",
   activityCompletionFailed: "Meeting completion failed",
   caseClosedSuccess: "Case Closed Successfully",
-  computedDataFetchedSuccess: "Computed data fetched successfully"
+  computedDataFetchedSuccess: "Computed data fetched successfully",
+  revokedSuccessfully : "Approval revoked successfully"
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
@@ -343,6 +344,7 @@ export const eventNames = {
   REMOVED: "removed",
   SENT: "sent",
   SIGNOFF: "approved",
+  REVOKED: "revoked"
 }
 
 export const eventTypes = {
@@ -2150,8 +2152,31 @@ WHERE dmf.country_rid = '${countryRid}'
   },
   getCaseTaskCompletedStatus () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%Completed%'`
+  },
+  revokRdFormSignOff(schemaName: string, caseRid: string) {
+    return `UPDATE ${schemaName}.cases SET rd_form_signoff = false WHERE rid = '${caseRid}'`
+  },
+  revokeClaimQualifiedInCaseProject(caseRid: string, projectFiscalRids: string[], accountRid: string, schemaName: string) {
+    return `UPDATE ${schemaName}.case_projects SET is_rd_claim_qualified = false WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' AND project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')})`
+  },
+  revokeClaimQualifiedInProjectFiscal(projectFiscalRids: string[], accountRid: string, schemaName: string) {
+    return `UPDATE ${schemaName}.project_fiscal SET is_rd_claim_qualified = false WHERE rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  },
+  revokeClaimQualifiedInProjectFiscalSummary(projectFiscalRids: string[], accountRid: string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = false WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  },
+  revokeClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
+    let ids = ProjectRegionIds.filter((d: any) => d.region_rid !== null)
+    let validIds;
+    validIds = ids.map((d: any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
+    let finalQuery;
+    if (validIds === '') {
+      finalQuery = ''
+    } else {
+      finalQuery = `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = false WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
+    }
+    return finalQuery;
   }
-
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
