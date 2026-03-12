@@ -50,8 +50,11 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
               responseType: "stream",
               timeout: 30_000,
             });
+            let splittedName = url.split('/').pop() as string;
+
+            let finalizedName = splittedName.split('_').slice(2,4).join('_');
               archive.append(response.data, {
-                name: `${file.name}_${index}${ext}`,
+                name: `RD Form-${finalizedName}${ext}`,
               });
 
               index++;
