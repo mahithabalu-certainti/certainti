@@ -333,6 +333,7 @@ async initiateCreateDossierForm (data : any) {
 }
 async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string, timez : string) {
     const orgDb = await this.getOrgDb()
+    const mainDB = await this.getMainDb()
     let schemaName = rawQueries.fetchSchemaName(accountNumber)
     const {DossierFormModel} = await this.getModels(schemaName)
     const [caseDetails] = await orgDb.query<CaseData>(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
@@ -358,7 +359,6 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseClosingPayload.sort_by = 'ASC';
     caseClosingPayload.timezone = timez
     const closingRemarksData = await this.exportCaseClosingRemarks(caseClosingPayload);
-
     const fetchCountryUrl : any = await orgDb.query(fetchRdFormUrlForCountry(schemaName, caseRid));
     const fetchStateUrl : any = await orgDb.query(fetchRdFormUrlForState(schemaName, caseRid));
     let countryUrlData = fetchCountryUrl[0].filter((c : any) => c.country_url !== null);
@@ -366,21 +366,22 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     let stateUrls : string[];
     let countryUrls : string;
     if(countryUrlData.length > 0) {
-      countryUrlData = await Promise.all(countryUrlData.map(async (c : any) => {
+      countryUrlData = countryUrlData.map((c : any) => {
       return {
         url : c.country_url
       }
-    }))
+    })
     countryUrls = countryUrlData[0].url
     } else {
       countryUrls = ''
     }
     if(stateUrlData.length > 0) {
-      stateUrlData = await Promise.all(stateUrlData.map(async (s : any) => {
+      stateUrlData = stateUrlData.map((s : any) => {
       return {
+        
         url : s.state_url
       }
-    }))
+    })
     stateUrls = stateUrlData.map((d : any) => d.url)
     } else {
       stateUrls = []
@@ -398,7 +399,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     exportedUrls = exportedAttachments?.map((d : any) => d.url) || []
 
     const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
-    const finalStructuredData = techSummary.technicalSummary.length < 1 ? [''] : await generatePdfBuffer(techSummary.technicalSummary)
+    const finalStructuredData = techSummary.technicalSummary.length < 1 ? [] : await generatePdfBuffer(techSummary.technicalSummary)
     const files: any[] = [
     {
       name: "Qualified Projects",
@@ -429,13 +430,15 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     }
   ];
   if (Array.isArray(finalStructuredData)) {
-    finalStructuredData.forEach((pdf, index) => {
-      files.push({
-        name: `Technical Summary ${index + 1}`,
-        buffer: pdf,
-        extension: ".pdf"
+    if(finalStructuredData.length > 0) {
+        finalStructuredData.forEach((pdf, index) => {
+        files.push({
+          name: `Technical Summary-${pdf.projectCode}`,
+          buffer: pdf.base64,
+          extension: ".pdf"
+        });
       });
-    });
+    }
   }
   const jsonToString = JSON.stringify(files)
   const findData = await DossierFormModel.findOne({
@@ -449,7 +452,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     await DossierFormModel.update({
       modified_by : userId,
       dossier_metadata : jsonToString,
-      modified_datetime : new Date()
+      modified_datetime : new Date(),
+      dossier_version : (findData.dossier_version ?? 0) + 1
     }, {
      where : {
       case_rid : caseRid,
@@ -466,7 +470,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       extension : '',
       size : '',
       created_datetime : new Date(),
-      dossier_metadata : jsonToString
+      dossier_metadata : jsonToString,
+      dossier_version : 1
     });
   }
 }
@@ -1117,6 +1122,7 @@ async fetchDossierPackage (data : any) : Promise<any> {
   if(getZipPackage) {
     let responsePackage : any[] = [];
     const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
+
     for(let i = 0; i < data.downloaded_list.length; i++) {
       for(let j = 0; j < stringToJson.length; j++) {
         if(stringToJson[j].name.toLowerCase().startsWith(data.downloaded_list[i].toLowerCase())) {
@@ -1127,14 +1133,19 @@ async fetchDossierPackage (data : any) : Promise<any> {
               extension : stringToJson[j].extension
             });
           } else {
-            if(stringToJson[j].name.startsWith('RD Form Federal')) {
+            if(stringToJson[j].name === 'RD Form Federal') {
+              let finalizedName : string = '';
+              if(stringToJson[j].url !== '') {
+                let splittedName = stringToJson[j].url.split('/').pop() as string
+                finalizedName = splittedName.split('_').slice(2,3).join('_')
+              }
               responsePackage.push({
-                name : stringToJson[j].name,
+                name : `RD Form-${finalizedName}`,
                 url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
               })
             } else {
               responsePackage.push({
-                name : stringToJson[j].name,
+                name : '',
                 urls : stringToJson[j].urls.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
                   return await generateSasUrl(d)
                 })) : []
@@ -1146,11 +1157,12 @@ async fetchDossierPackage (data : any) : Promise<any> {
     }
     const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
     const convertToZip = await createZipFile(responsePackage);
-    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
+    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails.fiscal_year}-V${getZipPackage.dossier_version}-${getZipPackage.created_datetime.toISOString().split('T')[0]}`
+    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, documentName, data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
     await getZipPackage.update({
       browse_url : uploadToAzure.url,
       size : JSON.stringify(uploadToAzure.size),
-      document_name : uploadToAzure.name,
+      document_name : documentName,
       extension : uploadToAzure.extension
     }, {
       where : {
@@ -1746,6 +1758,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         if(data.type === 'RD Forms') {
           await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
           await orgDbTransaction.commit();
+          await mainDbTransaction.commit();
           dynamicEntityType = entityTypes.RD_FORM  
         }
         else {
@@ -1776,6 +1789,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           if(query) {
               await orgDb.query(query, {transaction : orgDbTransaction})
           }
+          await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
           await orgDbTransaction.commit();
           await mainDbTransaction.commit();
           dynamicEntityType = entityTypes.FINANCIAL_WORKING

@@ -2709,6 +2709,8 @@ async function getFpaDetails (req : Request, res : Response) {
       return;
     }
     data.isExport = true
+    data.page = 0
+    data.limit = 1
     const result = await interactionService.exportFpaList(data);
     if (result.statusCode == HttpStatus.SUCCESS) {
           const fields = await interactionService.getAllowedExportFields(

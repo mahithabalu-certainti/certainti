@@ -1497,7 +1497,7 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   counted_results AS (
   SELECT *, COUNT(*) OVER() AS total_results FROM fetch_fpa_data
   )
-  SELECT * FROM counted_results ${pagination}
+  SELECT * FROM counted_results ${doPagination}
   `
   return query;
 }

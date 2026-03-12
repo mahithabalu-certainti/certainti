@@ -41,7 +41,7 @@ function formatSummary(summary: string): string {
   return result;
 }
 
-export async function generatePdfBuffer(data: any): Promise<string[]> {
+export async function generatePdfBuffer(data: any): Promise<Record<string, string>[]> {
 
 const template = `
     <html>
@@ -177,7 +177,7 @@ const template = `
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
-  const results: string[] = [];
+  const results: Record<string, string>[] = [];
 
   for (const item of data) {
 
@@ -220,7 +220,10 @@ const template = `
 
     const base64Pdf = Buffer.from(pdfBuffer).toString("base64");
 
-    results.push(base64Pdf);
+    results.push({
+      projectCode : item.project_code,
+      base64 : base64Pdf
+    });
 
     await page.close();
   }
