@@ -469,7 +469,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     }
     })
   } else {
-    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${1}-${new Date().toISOString().split('T')[0]}`
+    let now = new Date();
+    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${1}-${now.toISOString().split('T')[0]}`
     await DossierFormModel.create({
       account_rid : accountRid,
       case_rid : caseRid,
@@ -478,7 +479,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       document_name : documentName,
       extension : '',
       size : '',
-      created_datetime : new Date(),
+      created_datetime : now,
       dossier_metadata : jsonToString,
       dossier_version : 1
     });
