@@ -38,6 +38,7 @@ import {
   updateInteractionResponseSchema,
   updateInteractionSchema,
   updateTechSummaryContextSchema,
+  refineSummarySchema,
 } from "../lib/joi/schemas/schema";
 
 // import Joi schemas and interaction services as needed
@@ -850,6 +851,79 @@ async function updateTechSummaryContext(
 }
 
 /**
+ * Refines the summary.
+ *
+ * @param {Request} req - Express HTTP request object containing the request body and headers.
+ * @param {Response} res - Express HTTP response object used to send results back to the client.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending a response.
+ */
+async function refineSummary(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Refine summary";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(
+      req,
+      refineSummarySchema,
+      res,
+      "POST"
+    );
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.refineSummary(
+      value.refinement_prompt,
+      value.existing_summary,
+      value.tech_summary_rid,
+      value.account_rid,
+      value.project_fiscal_rid,
+      userId
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      // Returning interaction.data as the main response
+      handleCustomResponse(res, interaction.data, interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
  * Updates the context of a technical summary for a given summary and account RID.
  *
  * This controller method follows these steps:
@@ -899,6 +973,7 @@ async function saveRefineSummary(
       value.technical_summary,
       value.tech_summary_rid,
       value.account_rid,
+      value.project_fiscal_rid,
       userId
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
@@ -2959,5 +3034,6 @@ export default {
   exportFetchFourPartAssessmentList,
   updateInteractionStatus,
   getInteractionAssessmentSource,
-  saveRefineSummary
+  saveRefineSummary,
+  refineSummary
 };
