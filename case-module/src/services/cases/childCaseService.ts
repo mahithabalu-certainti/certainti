@@ -325,14 +325,14 @@ async initiateCreateDossierForm (data : any) {
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,accessToken : data.accessToken})}],
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,token : data.accessToken, fetchParentNumber})}],
         
     })
     console.log(`Message : ${JSON.stringify(result)}`)
     console.log(`Message published to ID : ${processingRid}`);
     return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
 }
-async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string, timez : string) {
+async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string, timez : string,fetchParentNumber : any) {
     const orgDb = await this.getOrgDb()
     const mainDB = await this.getMainDb()
     let schemaName = rawQueries.fetchSchemaName(accountNumber)
@@ -404,11 +404,13 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const files: any[] = [
     {
       name: "Qualified Projects",
+      project_code : null,
       buffer: generateQualifiedProjectsCSV,
       extension: ".xlsx"
     },
     {
       name: "Resource Summary",
+      project_code : null,
       buffer: generateResourceSummaryCSV,
       extension: ".xlsx"
     },
@@ -418,6 +420,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     },
     {
       name: "Approval Status",
+      project_code : null,
       buffer: closingRemarksData,
       extension: ".xlsx"
     },
@@ -434,7 +437,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     if(finalStructuredData.length > 0) {
         finalStructuredData.forEach((pdf, index) => {
         files.push({
-          name: `Technical Summary-${pdf.projectCode}`,
+          name: `Technical Summary`,
+          project_code : pdf.projectCode,
           buffer: pdf.base64,
           extension: ".pdf"
         });
@@ -450,11 +454,14 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
   })
 
   if(findData) {
+    let dossierVersion = (findData.dossier_version ?? 0) + 1
+    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${dossierVersion}-${findData.created_datetime.toISOString().split('T')[0]}`
     await DossierFormModel.update({
       modified_by : userId,
       dossier_metadata : jsonToString,
       modified_datetime : new Date(),
-      dossier_version : (findData.dossier_version ?? 0) + 1
+      document_name : documentName,
+      dossier_version : dossierVersion
     }, {
      where : {
       case_rid : caseRid,
@@ -462,15 +469,17 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     }
     })
   } else {
+    let now = new Date();
+    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${1}-${now.toISOString().split('T')[0]}`
     await DossierFormModel.create({
       account_rid : accountRid,
       case_rid : caseRid,
       browse_url : '',
       created_by : userId,
-      document_name : '',
+      document_name : documentName,
       extension : '',
       size : '',
-      created_datetime : new Date(),
+      created_datetime : now,
       dossier_metadata : jsonToString,
       dossier_version : 1
     });
@@ -1191,55 +1200,41 @@ async fetchDossierPackage (data : any) : Promise<any> {
   if(getZipPackage) {
     let responsePackage : any[] = [];
     const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
-
-    for(let i = 0; i < data.downloaded_list.length; i++) {
-      for(let j = 0; j < stringToJson.length; j++) {
-        if(stringToJson[j].name.toLowerCase().startsWith(data.downloaded_list[i].toLowerCase())) {
-          if(stringToJson[j].extension === '.xlsx' || stringToJson[j].extension === '.pdf') {
-            responsePackage.push({
-              name : stringToJson[j].name,
-              buffer : Buffer.from(stringToJson[j].buffer, 'base64'),
-              extension : stringToJson[j].extension
-            });
-          } else {
-            if(stringToJson[j].name === 'RD Form Federal') {
-              let finalizedName : string = '';
-              if(stringToJson[j].url !== '') {
-                let splittedName = stringToJson[j].url.split('/').pop() as string
-                finalizedName = splittedName.split('_').slice(2,3).join('_')
-              }
-              responsePackage.push({
-                name : `RD Form-${finalizedName}`,
-                url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
-              })
-            } else {
-              responsePackage.push({
-                name : '',
-                urls : stringToJson[j].urls.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
-                  return await generateSasUrl(d)
-                })) : []
-              })
+    const storeRequestSet = new Set(data.downloaded_list)
+    for(let j = 0; j < stringToJson.length; j++) {
+      if(storeRequestSet.has(stringToJson[j].name)) {
+        if(stringToJson[j].extension === '.xlsx' || stringToJson[j].extension === '.pdf') {
+          responsePackage.push({
+            name : stringToJson[j].name,
+            project_code : stringToJson[j].project_code,
+            buffer : Buffer.from(stringToJson[j].buffer, 'base64'),
+            extension : stringToJson[j].extension
+          });
+        } else {
+          if(stringToJson[j].name === 'RD Form Federal') {
+            let finalizedName : string = '';
+            if(stringToJson[j].url !== '') {
+              let splittedName = stringToJson[j].url.split('/').pop() as string
+              finalizedName = splittedName.split('_').slice(2,3).join('_')
             }
+            responsePackage.push({
+              name : `RD Form-${finalizedName}`,
+              url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
+            })
+          } else {
+            responsePackage.push({
+              name : '',
+              urls : stringToJson[j].urls.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
+                return await generateSasUrl(d)
+              })) : []
+            })
           }
         }
       }
     }
     const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
     const convertToZip = await createZipFile(responsePackage);
-    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails.fiscal_year}-V${getZipPackage.dossier_version}-${getZipPackage.created_datetime.toISOString().split('T')[0]}`
-    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, documentName, data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
-    await getZipPackage.update({
-      browse_url : uploadToAzure.url,
-      size : JSON.stringify(uploadToAzure.size),
-      document_name : documentName,
-      extension : uploadToAzure.extension
-    }, {
-      where : {
-        account_rid : data.account_rid,
-        case_rid : data.case_rid
-      }
-    })
-     getZipPackage.browse_url = await generateSasUrl(uploadToAzure.url);
+    const base64 = Buffer.from(convertToZip).toString('base64');
      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
         userId: data.user_id!,
         eventType: eventTypes.UI_HANDLER
@@ -1259,7 +1254,10 @@ async fetchDossierPackage (data : any) : Promise<any> {
     },["case"]);
     return {
       statusCode : HttpStatus.SUCCESS,
-      data : obj
+      data : {
+        document_name : getZipPackage.document_name,
+        base64 : base64
+      }
     }
   } else {
     return {
