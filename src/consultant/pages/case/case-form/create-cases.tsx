@@ -33,11 +33,46 @@ import SingleSkeleton from '../../../../components/skeleton-component/singleskel
 import {
   formatDateToYYYYMMDDWithTime,
   getDateFormatYYYYMMDD,
+  REGEX_PATTERNS,
 } from '../../../../common-utils';
 import { generateCaseNamePrefix, transformCaseFormPayload } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../../../store/store';
 import { fetchAccountsThunk } from '../../../../store/slices';
+import { useFetchState } from '../../../services/account';
+import {
+  ErrorInfoIcon,
+  KeyContactAddIcon,
+  KeyContactRemoveIcon,
+} from '../../../../assets';
+import {
+  Select,
+  MenuItem,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Tooltip,
+} from '@mui/material';
+
+type AmendmentInfo = {
+  fiscal_year?: number;
+  country_rid: string;
+  country_name?: string; // UI only
+  is_federal: boolean;
+  state_rid: string;
+  state_name: string; // UI only
+  total_fte_cost: string;
+  total_subcon_cost: string;
+  total_nonlabor_cost: string;
+  total_project_cost: string;
+  total_qre: string;
+  total_rd_credits: string;
+  annual_gross_receipts: string;
+  action_type: 'add' | 'edit' | 'delete';
+};
 
 export const CreateCases: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -59,6 +94,8 @@ export const CreateCases: React.FC = () => {
   const [selectedCountryRid, setSelectedCountryRid] = useState<string>('');
   const [selectedAccountRid, setSelectedAccountRid] = useState<string>('');
   const [isAmendmentType, setIsAmendmentType] = useState<boolean>(false);
+  const [hasParentCase, setHasParentCase] = useState<boolean>(false);
+  const [parentCaseFiscalYear, setParentCaseFiscalYear] = useState<string>('');
   const [isCaseClosed, setIsCaseClosed] = useState<boolean>(false);
   const [calculatedStatutoryDate, setCalculatedStatutoryDate] =
     useState<string>('');
@@ -77,6 +114,13 @@ export const CreateCases: React.FC = () => {
     start_date_max: '',
     start_date_min: '',
   });
+
+  const [amendmentCaseInfo, setAmendmentCaseInfo] = useState<AmendmentInfo[]>(
+    []
+  );
+  const [amendmentErrors, setAmendmentErrors] = useState<
+    Record<number, Record<string, string>>
+  >({});
 
   const { userId } = useSelector<RootState, { userId: unknown }>(
     (state: RootState) => state.auth
@@ -122,6 +166,8 @@ export const CreateCases: React.FC = () => {
       Number(selectedFiscalYear),
       effectiveAccountRid
     );
+
+  const regionList = useFetchState(effectiveCountryRid, 'active');
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
 
@@ -287,6 +333,47 @@ export const CreateCases: React.FC = () => {
     [allCountries.data?.data.country]
   );
 
+  const regionOptions = useMemo(() => {
+    return (
+      regionList?.data?.data.states.map((item) => ({
+        value: item.rid,
+        label: item.state_name || '',
+      })) || []
+    );
+  }, [regionList]);
+
+  useEffect(() => {
+    if (isAmendmentType && !isEditView && !hasParentCase) {
+      if (amendmentCaseInfo.length === 0) {
+        const country = countryOptions.find(
+          (c) => c.value === effectiveCountryRid
+        );
+        setAmendmentCaseInfo([
+          {
+            country_rid: effectiveCountryRid,
+            country_name: country?.label || '',
+            is_federal: true,
+            state_rid: '',
+            state_name: '',
+            total_fte_cost: '',
+            total_subcon_cost: '',
+            total_nonlabor_cost: '',
+            total_project_cost: '',
+            total_qre: '',
+            total_rd_credits: '',
+            annual_gross_receipts: '',
+            action_type: 'add' as const,
+          },
+        ]);
+      }
+    } else {
+      if (!isEditView) {
+        setAmendmentCaseInfo([]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAmendmentType, isEditView, hasParentCase, effectiveCountryRid]);
+
   const memoizedAccounts: ParentChildSelectOption[] = useMemo(() => {
     if (!accounts) return [];
 
@@ -434,6 +521,7 @@ export const CreateCases: React.FC = () => {
       );
       setCaseNamePrefix(newPrefix);
       setCalculatedStatutoryDate('');
+      setHasParentCase(false);
     }
 
     if (fieldName === 'fiscal_year') {
@@ -448,6 +536,29 @@ export const CreateCases: React.FC = () => {
       setSelectedFiscalYear(year);
     }
 
+    if (fieldName === 'parent_case_rid') {
+      if (isEditView) return;
+      setHasParentCase(!!fieldValue);
+      setAmendmentCaseInfo([]);
+      const accName = accountName || selectedAccountName;
+      const country = countryCode || selectedCountryCode;
+      if (fieldValue) {
+        const selectedParentCase = closedCaseList?.data?.data?.cases?.find(
+          (option) => String(option.rid) === String(fieldValue)
+        );
+        const parentYear = selectedParentCase?.fiscal_year || '';
+        setParentCaseFiscalYear(parentYear);
+        setSelectedFiscalYear(parentYear);
+        setCaseNamePrefix(generateCaseNamePrefix(accName, country, parentYear));
+      } else {
+        setParentCaseFiscalYear('');
+        setSelectedFiscalYear(selectedFiscalYear);
+        setCaseNamePrefix(
+          generateCaseNamePrefix(accName, country, selectedFiscalYear)
+        );
+      }
+    }
+
     if (fieldName === 'filing_type') {
       const selectedFilingType = caseFilingTypesOptions?.find(
         (option) => String(option.value) === String(fieldValue)
@@ -456,16 +567,154 @@ export const CreateCases: React.FC = () => {
       setIsAmendmentType(
         selectedFilingType?.label.toLowerCase() === 'amendment'
       );
+      setAmendmentCaseInfo([]);
     }
   };
 
+  const addNewAmendmentRow = () => {
+    const country = countryOptions.find((c) => c.value === effectiveCountryRid);
+    setAmendmentCaseInfo((prev) => [
+      ...prev,
+      {
+        country_rid: effectiveCountryRid,
+        country_name: country?.label || '',
+        is_federal: false,
+        state_rid: '',
+        state_name: '',
+        total_fte_cost: '',
+        total_subcon_cost: '',
+        total_nonlabor_cost: '',
+        total_project_cost: '',
+        total_qre: '',
+        total_rd_credits: '',
+        annual_gross_receipts: '',
+        action_type: 'add' as const,
+      },
+    ]);
+  };
+
+  const removeAmendmentRow = (index: number) => {
+    setAmendmentCaseInfo((prev) => prev.filter((_, i) => i !== index));
+    // Re-align errors
+    setAmendmentErrors((prev) => {
+      const newErrors: Record<number, Record<string, string>> = {};
+      Object.keys(prev).forEach((key) => {
+        const k = parseInt(key);
+        if (k < index) newErrors[k] = prev[k];
+        if (k > index) newErrors[k - 1] = prev[k];
+      });
+      return newErrors;
+    });
+  };
+
+  const handleRowChange = (
+    index: number,
+    field: string,
+    value: string,
+    updates: Partial<AmendmentInfo> = {}
+  ) => {
+    setAmendmentCaseInfo((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value, ...updates };
+      return updated;
+    });
+
+    // Clear error for this field
+    setAmendmentErrors((prev) => {
+      if (!prev[index]) return prev;
+      const updatedRow = { ...prev[index] };
+      delete updatedRow[field];
+      return { ...prev, [index]: updatedRow };
+    });
+  };
+
+  const validateAmendmentInfo = (): boolean => {
+    const newErrors: Record<number, Record<string, string>> = {};
+    let isValid = true;
+    const amountRegex = REGEX_PATTERNS.EFFORTS_NUMBER;
+
+    amendmentCaseInfo.forEach((row, index) => {
+      const rowErrors: Record<string, string> = {};
+
+      // Validate Region for non-federal rows
+      if (!row.is_federal && !row.state_rid) {
+        rowErrors.state_rid = 'Field is required';
+        isValid = false;
+      }
+
+      const fieldsToValidate = [
+        'total_fte_cost',
+        'total_subcon_cost',
+        'total_nonlabor_cost',
+        'total_project_cost',
+        'total_qre',
+        'total_rd_credits',
+      ];
+
+      fieldsToValidate.forEach((field) => {
+        const value = String(row[field as keyof AmendmentInfo] || '');
+        if (!value.trim()) {
+          rowErrors[field] = 'Field is required';
+          isValid = false;
+        } else if (!amountRegex.test(value.replace(/,/g, ''))) {
+          rowErrors[field] =
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places';
+          isValid = false;
+        }
+      });
+
+      // Optional validation for annual_gross_receipts
+      const grossReceipts = String(row.annual_gross_receipts || '');
+      if (
+        grossReceipts.trim() &&
+        !amountRegex.test(grossReceipts.replace(/,/g, ''))
+      ) {
+        rowErrors.annual_gross_receipts =
+          'Only positive numbers allowed, up to 16 digits and 2 decimal places';
+        isValid = false;
+      }
+
+      if (Object.keys(rowErrors).length > 0) {
+        newErrors[index] = rowErrors;
+      }
+    });
+
+    setAmendmentErrors(newErrors);
+    return isValid;
+  };
+
   const submitData = (formValues: Partial<CaseFormPayload>) => {
+    if (isAmendmentType && !isEditView && !hasParentCase) {
+      if (!validateAmendmentInfo()) {
+        return;
+      }
+    }
+
     const payload = transformCaseFormPayload(
       accountId,
       formValues as CaseFormFields,
       isEditView,
       caseData,
-      isAmendmentType
+      isAmendmentType,
+      hasParentCase,
+      amendmentCaseInfo.map((row) => ({
+        fiscal_year: Number(formValues.fiscal_year || 0),
+        country_rid: row.country_rid,
+        state_rid: row.state_rid || '',
+        state_name: row.state_name || '',
+        is_federal: row.is_federal,
+        total_project: 0,
+        total_qualified_project: 0,
+        total_qualified_project_cost: 0,
+        total_fte_cost: Number(row.total_fte_cost || 0),
+        total_subcon_cost: Number(row.total_subcon_cost || 0),
+        total_nonlabor_cost: Number(row.total_nonlabor_cost || 0),
+        total_project_cost: Number(row.total_project_cost || 0),
+        total_qre: Number(row.total_qre || 0),
+        total_rd_credits: Number(row.total_rd_credits || 0),
+        annual_gross_receipts: Number(row.annual_gross_receipts || 0),
+        action_type: row.action_type,
+      }))
     );
     if (isEditView) {
       updateCase.mutate(payload);
@@ -475,6 +724,9 @@ export const CreateCases: React.FC = () => {
   };
 
   const handleExternalSubmit = () => {
+    if (isAmendmentType && !isEditView && !hasParentCase) {
+      validateAmendmentInfo();
+    }
     formRef.current?.requestSubmit();
   };
 
@@ -505,7 +757,9 @@ export const CreateCases: React.FC = () => {
     countryName ?? undefined,
     isAmendmentType,
     closedCaseList.isLoading,
-    isCaseClosed
+    isCaseClosed,
+    hasParentCase,
+    parentCaseFiscalYear
   );
 
   const formLoading =
@@ -608,6 +862,549 @@ export const CreateCases: React.FC = () => {
             onChange={onChangeField}
             layout={Layout.TYPE_1}
           />
+        )}
+
+        {isAmendmentType && !isEditView && !hasParentCase && (
+          <div className='mt-4'>
+            <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+              Amendment Case Information
+            </div>
+
+            <div className='px-10 py-5 flex flex-col gap-4'>
+              <div className='mb-4'>
+                <TableContainer
+                  sx={{
+                    overflowX: 'auto',
+                    overflowY: 'hidden',
+                    border: '1px solid #CBD6E2',
+                    position: 'relative',
+                  }}
+                >
+                  <Table sx={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                    <TableHead
+                      sx={{
+                        '& .MuiTableCell-root': {
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          color: '#2A2A2A',
+                          padding: '0px 8px',
+                          height: '29px',
+                          boxSizing: 'border-box',
+                          borderRight: '1px solid #CBD6E2',
+                          borderBottom: '1px solid #CBD6E2',
+                        },
+                      }}
+                    >
+                      <TableRow sx={{ height: 29 }}>
+                        <TableCell
+                          sx={{
+                            width: '150px',
+                            minWidth: '150px',
+                            position: 'sticky',
+                            left: 0,
+                            zIndex: 4,
+                            backgroundColor: '#fff',
+                          }}
+                        >
+                          Country
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            width: '100px',
+                            minWidth: '100px',
+                            position: 'sticky',
+                            left: 150,
+                            zIndex: 4,
+                            backgroundColor: '#fff',
+                          }}
+                        >
+                          Is Federal?
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            width: '180px',
+                            minWidth: '180px',
+                            position: 'sticky',
+                            left: 250,
+                            zIndex: 4,
+                            backgroundColor: '#fff',
+                          }}
+                        >
+                          Region
+                        </TableCell>
+                        {[
+                          {
+                            label: 'Total FTE Cost',
+                            required: true,
+                            width: '160px',
+                          },
+                          {
+                            label: 'Total Subcon Cost',
+                            required: true,
+                            width: '160px',
+                          },
+                          {
+                            label: 'Total Non-Labor Cost',
+                            required: true,
+                            width: '160px',
+                          },
+                          {
+                            label: 'Total Project Cost',
+                            required: true,
+                            width: '160px',
+                          },
+                          {
+                            label: 'Total QRE',
+                            required: true,
+                            width: '160px',
+                          },
+                          {
+                            label: 'Total RD Credits',
+                            required: true,
+                            width: '160px',
+                          },
+                          {
+                            label: 'Gross Receipts',
+                            required: false,
+                            width: '160px',
+                            showTooltip: true,
+                            tooltipMessage:
+                              'Annual Gross Receipt is the total money received in a year.',
+                          },
+                        ].map((col) => (
+                          <TableCell
+                            key={col.label}
+                            sx={{
+                              width: col.width,
+                              minWidth: col.width,
+                            }}
+                          >
+                            <div className='flex items-center justify-between gap-1'>
+                              <span>
+                                {col.label}
+                                {col.required && (
+                                  <span className='text-red-500'> *</span>
+                                )}
+                              </span>
+                              {col.showTooltip && (
+                                <Tooltip
+                                  title={col.tooltipMessage || ''}
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        mr: 1,
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <span className='w-5 mt-1 inline-flex items-center justify-center cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]' />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
+                            </div>
+                          </TableCell>
+                        ))}
+                        <TableCell sx={{ minWidth: '80px', width: '80px' }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody
+                      sx={{
+                        '& .MuiTableCell-root': {
+                          padding: '0px',
+                          '& input': {
+                            border: '1px solid transparent',
+                            outline: 'none',
+                            boxShadow: 'none',
+                            background: 'transparent',
+                            width: '100%',
+                            height: '28px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            '&:focus': {
+                              border: '1px solid #60A5FA',
+                            },
+                          },
+                        },
+                      }}
+                    >
+                      {amendmentCaseInfo.length > 0 ? (
+                        amendmentCaseInfo.map((row, index) => (
+                          <TableRow key={index}>
+                            {/* Country Column */}
+                            <TableCell
+                              sx={{
+                                height: '28px',
+                                width: '150px',
+                                minWidth: '150px',
+                                paddingLeft: '8px !important',
+                                borderRight: '1px solid #CBD6E2',
+                                borderBottom: '1px solid #CBD6E2',
+                                fontWeight: 600,
+                                color: '#1A3D6F',
+                                fontSize: '12px',
+                                backgroundColor: 'white',
+                                position: 'sticky',
+                                left: 0,
+                                zIndex: 3,
+                              }}
+                            >
+                              {row.country_name}
+                            </TableCell>
+
+                            {/* Is Federal Column */}
+                            <TableCell
+                              sx={{
+                                height: '28px',
+                                width: '100px',
+                                minWidth: '100px',
+                                paddingLeft: '8px !important',
+                                borderRight: '1px solid #CBD6E2',
+                                borderBottom: '1px solid #CBD6E2',
+                                fontWeight: 600,
+                                color: '#1A3D6F',
+                                fontSize: '12px',
+                                backgroundColor: 'white',
+                                position: 'sticky',
+                                left: 150,
+                                zIndex: 3,
+                              }}
+                            >
+                              {row.is_federal ? 'Yes' : 'No'}
+                            </TableCell>
+
+                            {/* Region Column */}
+                            <TableCell
+                              sx={{
+                                height: '28px',
+                                width: '180px',
+                                minWidth: '180px',
+                                padding: '0px !important',
+                                borderRight: '1px solid #CBD6E2',
+                                borderBottom: '1px solid #CBD6E2',
+                                backgroundColor: row.is_federal
+                                  ? '#F3F4F6'
+                                  : amendmentErrors[index]?.state_rid
+                                    ? '#FEF2F2'
+                                    : 'white',
+                                position: 'sticky',
+                                left: 250,
+                                zIndex: 3,
+                              }}
+                            >
+                              {row.is_federal ? (
+                                <div className='px-2 text-[#7D98B6] font-medium'>
+                                  Choose Region
+                                </div>
+                              ) : (
+                                <div className='flex items-center'>
+                                  <Select
+                                    fullWidth
+                                    value={row.state_rid}
+                                    onChange={(e) => {
+                                      const selectedOption = regionOptions.find(
+                                        (opt) => opt.value === e.target.value
+                                      );
+                                      handleRowChange(
+                                        index,
+                                        'state_rid',
+                                        e.target.value as string,
+                                        {
+                                          state_name:
+                                            selectedOption?.label || '',
+                                        }
+                                      );
+                                    }}
+                                    displayEmpty
+                                    size='small'
+                                    sx={{
+                                      height: '28px',
+                                      fontSize: '13px',
+                                      borderRadius: '2px',
+                                      '& .MuiSelect-select': {
+                                        padding: '4px 8px',
+                                        color: row.state_rid
+                                          ? '#425A76'
+                                          : '#7D98B6',
+                                        fontWeight: 500,
+                                      },
+                                      '& .MuiOutlinedInput-notchedOutline': {
+                                        border: 'none',
+                                      },
+                                      '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                        {
+                                          border: '1px solid #60A5FA',
+                                        },
+                                    }}
+                                    MenuProps={{
+                                      PaperProps: {
+                                        sx: {
+                                          marginTop: '4px',
+                                          maxHeight: '200px',
+                                          borderRadius: '0px',
+                                          boxShadow:
+                                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                          '& .MuiMenuItem-root': {
+                                            fontSize: '13px',
+                                            fontWeight: 500,
+                                            padding: '6px 12px',
+                                          },
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <MenuItem
+                                      value=''
+                                      sx={{
+                                        color: '#7D98B6',
+                                        fontSize: '13px',
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      Choose Region
+                                    </MenuItem>
+                                    {regionOptions
+                                      .filter(
+                                        (opt) =>
+                                          !amendmentCaseInfo.some(
+                                            (info, i) =>
+                                              i !== index &&
+                                              info.state_rid === opt.value
+                                          )
+                                      )
+                                      .map((opt) => (
+                                        <MenuItem
+                                          key={opt.value}
+                                          value={opt.value}
+                                          sx={{ fontSize: '12px' }}
+                                        >
+                                          {opt.label}
+                                        </MenuItem>
+                                      ))}
+                                  </Select>
+                                  {amendmentErrors[index]?.state_rid && (
+                                    <Tooltip
+                                      title={amendmentErrors[index].state_rid}
+                                      arrow
+                                      placement='top'
+                                      slotProps={{
+                                        tooltip: {
+                                          sx: {
+                                            backgroundColor: '#FEF2F2',
+                                            mr: 1,
+                                          },
+                                        },
+                                      }}
+                                    >
+                                      <span className='absolute right-8 top-2.5 flex items-center cursor-pointer'>
+                                        <React.Suspense fallback={null}>
+                                          <ErrorInfoIcon className='w-4 h-3.5' />
+                                        </React.Suspense>
+                                      </span>
+                                    </Tooltip>
+                                  )}
+                                </div>
+                              )}
+                            </TableCell>
+
+                            {(
+                              [
+                                {
+                                  key: 'total_fte_cost',
+                                  label: 'Total FTE Cost',
+                                  width: '180px',
+                                },
+                                {
+                                  key: 'total_subcon_cost',
+                                  label: 'Total Subcon Cost',
+                                  width: '200px',
+                                },
+                                {
+                                  key: 'total_nonlabor_cost',
+                                  label: 'Total Non-Labor Cost',
+                                  width: '210px',
+                                },
+                                {
+                                  key: 'total_project_cost',
+                                  label: 'Total Project Cost',
+                                  width: '190px',
+                                },
+                                {
+                                  key: 'total_qre',
+                                  label: 'Total QRE',
+                                  width: '180px',
+                                },
+                                {
+                                  key: 'total_rd_credits',
+                                  label: 'Total RD Credits',
+                                  width: '180px',
+                                },
+                                {
+                                  key: 'annual_gross_receipts',
+                                  label: 'Gross Receipts',
+                                  width: '180px',
+                                },
+                              ] as const
+                            ).map((col) => (
+                              <TableCell
+                                key={col.key}
+                                sx={{
+                                  borderRight: '1px solid #CBD6E2',
+                                  borderBottom: '1px solid #CBD6E2',
+                                  width: col.width,
+                                  minWidth: col.width,
+                                  backgroundColor: amendmentErrors[index]?.[
+                                    col.key
+                                  ]
+                                    ? '#FEF2F2'
+                                    : 'white',
+                                  position: 'relative',
+                                  padding: '0px !important',
+                                  '& input': {
+                                    background: 'transparent',
+                                    border: amendmentErrors[index]?.[col.key]
+                                      ? '1px solid #EF4444'
+                                      : '1px solid transparent',
+                                    '&:focus': {
+                                      border: '1px solid #60A5FA',
+                                      backgroundColor: amendmentErrors[index]?.[
+                                        col.key
+                                      ]
+                                        ? '#FEF2F2'
+                                        : 'white',
+                                    },
+                                  },
+                                }}
+                              >
+                                <input
+                                  type='text'
+                                  value={row[col.key]}
+                                  onChange={(e) =>
+                                    handleRowChange(
+                                      index,
+                                      col.key,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder={`Enter ${col.label}`}
+                                  className='placeholder-custom-color placeholder-[#7D98B6]'
+                                />
+                                {amendmentErrors[index]?.[col.key] && (
+                                  <Tooltip
+                                    title={amendmentErrors[index][col.key]}
+                                    arrow
+                                    placement='top'
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          backgroundColor: '#FEF2F2',
+                                          mr: 1,
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <span className='h-[22px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                      <React.Suspense fallback={null}>
+                                        <ErrorInfoIcon
+                                          alt='error'
+                                          className='w-4 h-3.5'
+                                        />
+                                      </React.Suspense>
+                                    </span>
+                                  </Tooltip>
+                                )}
+                              </TableCell>
+                            ))}
+                            <TableCell
+                              sx={{
+                                height: '28px',
+                                paddingLeft: '8px !important',
+                                borderRight: '1px solid #CBD6E2',
+                                borderBottom: '1px solid #CBD6E2',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'white',
+                              }}
+                            >
+                              {!row.is_federal ? (
+                                <Tooltip
+                                  title='Remove Entry'
+                                  arrow
+                                  placement='top'
+                                >
+                                  <button
+                                    type='button'
+                                    onClick={() => removeAmendmentRow(index)}
+                                    style={{
+                                      cursor: 'pointer',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      padding: 0,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                    aria-label='Remove entry'
+                                  >
+                                    <React.Suspense fallback={null}>
+                                      <KeyContactRemoveIcon
+                                        style={{
+                                          width: 20,
+                                          height: 20,
+                                        }}
+                                      />
+                                    </React.Suspense>
+                                  </button>
+                                </Tooltip>
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={11}
+                            align='center'
+                            sx={{
+                              height: '32px',
+                              color: '#7D98B6',
+                              fontSize: '13px',
+                              borderBottom: '1px solid #CBD6E2',
+                            }}
+                          >
+                            No data available
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <div className='mt-2'>
+                  <button
+                    className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] text-[#2D3E4F] px-2 text-[12px] font-semibold border-none rounded-[2px] hover:bg-[#D9E2E9]'
+                    type='button'
+                    onClick={addNewAmendmentRow}
+                  >
+                    <span>
+                      <React.Suspense fallback={null}>
+                        <KeyContactAddIcon className='w-5 h-5' />
+                      </React.Suspense>
+                    </span>
+                    Add New
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>

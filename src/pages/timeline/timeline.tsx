@@ -471,6 +471,7 @@ const getTimelineIcon = (
 const getTypeIconConfig = (
   entity_name: string,
   // kept for API compatibility — no longer drives the color
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _entitytype: string
 ): IconConfig => {
   const iconKey = ICON_KEY_MAP[normaliseEntityKey(entity_name)];
