@@ -1147,9 +1147,13 @@ export class RdFormMapperService {
   doc.fontSize(16).font('Helvetica-Bold').text('Ireland R&D Credit Summary', { align: 'center' });
   doc.moveDown(1);
   doc.fontSize(11).font('Helvetica');
-  Object.entries(titleFields).forEach(([label, value]) => {
-    doc.font('Helvetica-Bold').text(label + ':', { continued: true }).font('Helvetica').text(' ' + value);
-  });
+  // Print only Account Name and Fiscal Year (Expleo)
+  if (titleFields['Account Name']) {
+    doc.font('Helvetica-Bold').text('Account Name:', { continued: true }).font('Helvetica').text(' ' + titleFields['Account Name']);
+  }
+  if (titleFields['Expleo']) {
+    doc.font('Helvetica-Bold').text('Fiscal Year:', { continued: true }).font('Helvetica').text(' ' + titleFields['Expleo']);
+  }
   doc.moveDown(1);
 
   const columns: string[] = computedFields.Columns || [];
@@ -1160,89 +1164,124 @@ export class RdFormMapperService {
 
 
   // Helper to render a table for a given set of projects
+const ROW_PADDING = 5;
+  const FONT_SIZE = 9;
+  const HEADER_FONT_SIZE = 9;
+
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'number')
+      return currencySymbol
+        ? `${currencySymbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+        : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return String(value);
+  };
+
+  // Helper to render a bordered table for a given slice of projects
   const renderProjectTable = (projectSlice: any[], projectOffset: number, isLastPage: boolean) => {
-    // Use the actual number of projects in the slice, no padding
-    const maxProjects = projectSlice.length;
-    const projectNames = [];
-    for (let idx = 0; idx < maxProjects; idx++) {
-      if (projectSlice[idx]) {
-        projectNames.push(projectSlice[idx]['Project Name'] || projectSlice[idx]['Project Credit Summary'] || `Project ${projectOffset + idx + 1}`);
-      } else {
-        projectNames.push('-');
-      }
-    }
-    const tableCols = isLastPage ? ['', ...projectNames, 'Total'] : ['', ...projectNames];
-    const colWidths = tableCols.map(() => Math.floor((doc.page.width - doc.page.margins.left - doc.page.margins.right) / tableCols.length));
+    const left = doc.page.margins.left;
+    const usableWidth = doc.page.width - left - doc.page.margins.right;
 
-    // Table header row
-    doc.font('Helvetica-Bold').fontSize(10);
-    let tableStartX = doc.page.margins.left;
-    let x = tableStartX;
-    tableCols.forEach((col, i) => {
-      doc.text(col, x, doc.y, {
-        width: colWidths[i],
-        align: 'center',
-        continued: i < tableCols.length - 1
-      });
-      x += colWidths[i];
-    });
-    doc.moveDown(1);  // Spacing after header
+    // Build column definitions: [row-label col, ...project cols, optional Total col]
+    const projectNames = projectSlice.map(
+      (p, i) => p?.['Project Name'] || p?.['Project Credit Summary'] || `Project ${projectOffset + i + 1}`
+    );
+    const headerLabels = isLastPage
+      ? ['', ...projectNames, 'Total']
+      : ['', ...projectNames];
 
-    // Print each field (column heading) as a row
-    columns.slice(1).forEach((field, fieldIdx) => {
-      x = tableStartX;
-      doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
-      // Field name
-      doc.text(field, x, doc.y, {
-        width: colWidths[0],
-        align: 'left',
-        continued: true
-      });
-      x += colWidths[0];
+    const numCols = headerLabels.length;
+    // First column (row label) gets 35% of usable width; rest split equally
+    const labelColWidth = Math.floor(usableWidth * 0.35);
+    const dataColWidth  = Math.floor((usableWidth - labelColWidth) / (numCols - 1));
+    const colWidths = [labelColWidth, ...Array(numCols - 1).fill(dataColWidth)];
 
-      // Each project value for this field (each in its own column)
-      for (let projIdx = 0; projIdx < maxProjects; projIdx++) {
-        let value: any = '-';
-        if (projectSlice[projIdx]) {
-          value = projectSlice[projIdx][field] ?? '-';
+    // ── Draw header row ──────────────────────────────────────────────────────
+  const drawRow = (
+      cellTexts: string[],
+      currentY: number,
+      rowHeight: number,
+      isBold: boolean,
+      isHeader: boolean,
+    ) => {
+      let cellX = left;
+      cellTexts.forEach((text, colIdx) => {
+        const cw = colWidths[colIdx];
+        // Cell background for header
+        if (isHeader) {
+          doc.save().rect(cellX, currentY, cw, rowHeight).fill('#E8E8E8').restore();
         }
-        doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
-        const formattedValue = typeof value === 'number'
-          ? (currencySymbol ? `${currencySymbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : value.toLocaleString(undefined, { maximumFractionDigits: 2 }))
-          : String(value);
-        doc.text(
-          formattedValue,
-          x,
-          doc.y,
-          {
-            width: colWidths[projIdx + 1],
-            align: 'right',
-            continued: projIdx < maxProjects - 1 || isLastPage  // Continue if not the last project or if last page (for total)
-          }
-        );
-        x += colWidths[projIdx + 1];
-      }
+        // Cell border
+        doc.rect(cellX, currentY, cw, rowHeight).stroke();
+        // Cell text — save y before, restore after so pdfkit cursor never drifts
+        const savedY = doc.y;
+        doc
+          .font(isBold || isHeader ? 'Helvetica-Bold' : 'Helvetica')
+          .fontSize(isHeader ? HEADER_FONT_SIZE : FONT_SIZE)
+          .text(
+            text,
+            cellX + ROW_PADDING,
+            currentY + ROW_PADDING,
+            {
+              width: cw - ROW_PADDING * 2,
+              align: colIdx === 0 ? 'left' : 'right',
+              lineBreak: false,
+              lineGap: 0,
+            },
+          );
+        doc.y = savedY; // prevent pdfkit from advancing the cursor between cells
+        cellX += cw;
+      });
+    };
 
-      // Total value for this field (only on last page)
-      if (isLastPage) {
-        doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
-        const totalValue = total[field] ?? '';
-        const formattedTotal = typeof totalValue === 'number'
-          ? (currencySymbol ? `${currencySymbol}${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 }))
-          : totalValue;
-        doc.text(
-          formattedTotal,
-          x,
-          doc.y,
-          {
-            width: colWidths[colWidths.length - 1],
-            align: 'right',
-            continued: false
-          }
-        );
+    // Measure row height for a set of cell texts
+    const measureRowHeight = (cellTexts: string[], isHeader: boolean): number => {
+      const maxHeight = Math.max(
+        ...cellTexts.map((text, colIdx) =>
+          doc
+            .fontSize(isHeader ? HEADER_FONT_SIZE : FONT_SIZE)
+            .heightOfString(text, { width: colWidths[colIdx] - ROW_PADDING * 2 })
+        ),
+      );
+      return maxHeight + ROW_PADDING * 2;
+    };
+
+    // Page-break-aware row emitter
+    const emitRow = (
+      cellTexts: string[],
+      isBold: boolean,
+      isHeader: boolean,
+    ) => {
+      const rowHeight = measureRowHeight(cellTexts, isHeader);
+      // If row won't fit, add a new page and reset Y
+      if (doc.y + rowHeight > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
       }
-      doc.moveDown(1.5);  // Increased spacing between rows
+      drawRow(cellTexts, doc.y, rowHeight, isBold, isHeader);
+      doc.y += rowHeight; // advance cursor manually (we used absolute coords)
+    };
+
+    // ── Header row (project names) ───────────────────────────────────────────
+    emitRow(headerLabels, true, true);
+
+    // ── Data rows (one per field) ────────────────────────────────────────────
+    columns.slice(1).forEach((field) => {
+      const isBold = boldFields.includes(field);
+
+      const projectValues = projectSlice.map((proj) =>
+        formatValue(proj?.[field] ?? '-')
+      );
+
+      const totalValue = isLastPage ? formatValue(total[field] ?? '') : null;
+
+      const cellTexts = totalValue !== null
+        ? [field, ...projectValues, totalValue]
+        : [field, ...projectValues];
+
+      emitRow(cellTexts, isBold, false);
     });
+
+    doc.moveDown(1);
   };
   // Paginate projects: 2 per page
   const projectsPerPage = 2;
