@@ -200,15 +200,6 @@ export interface CaseFormFields {
   illinois_rd_credit_partnership_corp: string | null;
   credit_carry_forward_py: string | null;
   current_year_gross_receipts: string | null;
-  // Parent Case Information (amendment create only)
-  parent_region_rid?: string;
-  parent_total_fte_cost?: string;
-  parent_total_subcon_cost?: string;
-  parent_total_nonlabor_cost?: string;
-  parent_total_project_cost?: string;
-  parent_total_qre?: string;
-  parent_total_rd_credits?: string;
-  parent_annual_gross_receipts?: string;
 }
 
 export interface CaseFormPayload {
@@ -247,6 +238,25 @@ export interface CaseFormPayload {
   illinois_rd_credit_partnership_corp: string | null;
   credit_carry_forward_py: string | null;
   current_year_gross_receipts: string | null;
+  // Nested amendment info (only sent on amendment create)
+  amendment_case_info?: {
+    fiscal_year: number;
+    country_rid?: string;
+    state_rid?: string;
+    state_name?: string;
+    is_federal?: boolean;
+    total_project?: number;
+    total_qualified_project?: number;
+    total_qualified_project_cost?: number;
+    total_fte_cost: number;
+    total_subcon_cost: number;
+    total_nonlabor_cost: number;
+    total_project_cost: number;
+    total_qre: number;
+    total_rd_credits: number;
+    annual_gross_receipts: number;
+    action_type: 'add' | 'edit' | 'delete';
+  }[];
 }
 
 export interface updateCaseJurisdictionPayload {

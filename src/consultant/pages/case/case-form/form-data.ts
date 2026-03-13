@@ -48,7 +48,9 @@ export const CaseFormData = (
   CountryName?: string,
   isAmendmentType?: boolean,
   isParentCaseLoading?: boolean,
-  isCaseClosed?: boolean
+  isCaseClosed?: boolean,
+  hasParentCase?: boolean,
+  parentCaseFiscalYear?: string
 ): FormType[] => {
   const isCreateAndAmendmentType = !isEditView && isAmendmentType;
   return useMemo(
@@ -65,6 +67,7 @@ export const CaseFormData = (
             hide: !globalType,
             expandedAll: true,
             disabled: isEditView || isCaseClosed,
+            resetDependsFields: ['parent_case_rid'],
           }),
           createTextField('account_name', 'Account Name', {
             required: false,
@@ -103,6 +106,7 @@ export const CaseFormData = (
             hide: !isAmendmentType,
             disabled: isEditView || isCaseClosed,
             isLoading: isParentCaseLoading,
+            onChange: true,
             // disabled:
             //   isEditView &&
             //   !permissionMap?.['parent_case_rid']?.edit &&
@@ -118,7 +122,10 @@ export const CaseFormData = (
             required: true,
             onChange: true,
             isFiscalYear: true,
-            disabled: isEditView || isCaseClosed || isCreateAndAmendmentType,
+            defaultValue: parentCaseFiscalYear,
+            assignDefaultValue:
+              !!parentCaseFiscalYear && isCreateAndAmendmentType,
+            disabled: isEditView || isCaseClosed || hasParentCase,
             hide:
               isEditView &&
               !permissionMap?.['fiscal_year']?.edit &&
@@ -940,6 +947,8 @@ export const CaseFormData = (
       isParentCaseLoading,
       isCaseClosed,
       isCreateAndAmendmentType,
+      hasParentCase,
+      parentCaseFiscalYear,
     ]
   );
 };

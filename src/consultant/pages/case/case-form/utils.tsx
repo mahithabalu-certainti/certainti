@@ -13,7 +13,9 @@ export const transformCaseFormPayload = (
   formData: CaseFormFields,
   isEditView: boolean,
   originalData?: CaseDetails,
-  isAmendmentType?: boolean
+  isAmendmentType?: boolean,
+  hasParentCase?: boolean,
+  amendmentCaseInfo?: CaseFormPayload['amendment_case_info']
 ): CaseFormPayload => {
   const basePayload: CaseFormPayload = {
     account_rid: accountId || formData.account_rid || '',
@@ -56,6 +58,10 @@ export const transformCaseFormPayload = (
       formData.illinois_rd_credit_partnership_corp || null,
     credit_carry_forward_py: formData.credit_carry_forward_py || null,
     current_year_gross_receipts: formData.current_year_gross_receipts || null,
+    amendment_case_info:
+      isAmendmentType && !isEditView && !hasParentCase && amendmentCaseInfo
+        ? amendmentCaseInfo
+        : [],
   };
 
   if (isEditView && originalData) {
