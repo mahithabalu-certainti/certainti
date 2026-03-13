@@ -52,7 +52,7 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import {
   useDossierInitiate,
-  useDossierSheetStatus,
+  useDownloadDossierSheet,
   useRDCreditStatus,
 } from '../../../../services/case-dossier/cases-financial-services';
 import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
@@ -308,13 +308,15 @@ const Dossier: React.FC<DossierProps> = ({
   const handleSearchReset = () => {
     setResetSearch(false);
   };
-  const { refetch: refetchRDCreditStatus, isLoading: isRDCreditStatusLoading } =
-    useRDCreditStatus(accountid, caseId ?? '', false);
+  const {
+    refetch: refetchRDCreditStatus,
+    isFetching: isRDCreditStatusLoading,
+  } = useRDCreditStatus(accountid, caseId ?? '', false);
   const { mutate: refetchDossierInitiate } = useDossierInitiate();
   const {
     mutate: refetchDossierSheetStatus,
     isPending: isDossierSheetStatusLoading,
-  } = useDossierSheetStatus();
+  } = useDownloadDossierSheet();
   const handleRefresh = async () => {
     // Skip API call for COMPLETED or any empty/undefined value
     if (
@@ -633,9 +635,8 @@ const Dossier: React.FC<DossierProps> = ({
       label: 'Close Case',
       variant: 'outlined' as const,
       disabled:
-        !caseDetails?.financial_working_signoff ||
-        caseDetails?.status_name?.toLowerCase() === 'closed' ||
-        (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''),
+        !!caseDetails?.rd_form_signoff ||
+        caseDetails?.status_name?.toLowerCase() === 'closed',
       onClick: () => setIsModalOpen(true),
       sx: { width: '90px', minWidth: '90px' },
       hide: !isCaseCloseEnable,

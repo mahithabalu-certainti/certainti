@@ -21,6 +21,7 @@ import { useFetchCasesConfigFields } from '../../../../../../services/case-team'
 import TextButton from '../../../../../../../components/button/text-button';
 import { checkPermission } from '../../../../../../../common-utils';
 import SignOffModal from '../financial-working/sign-off-modal';
+import { useRdFormRevoke } from '../../../../../../services/case-dossier/cases-financial-services';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
@@ -66,7 +67,7 @@ const RDForm: React.FC<RDFormProps> = ({
   const configDetails = data?.data.states;
   const [previewData, setPreviewData] = useState<RDFormResponse | null>(null);
   const [isPreviewError, setIsPreviewError] = useState<boolean>(false);
-  const { errorToast } = useToast();
+  const { successToast, errorToast } = useToast();
 
   const setRdformGenerateStatus = (status: boolean) => {
     dispatch(setRdformGenerateStatusAction(status));
@@ -130,7 +131,30 @@ const RDForm: React.FC<RDFormProps> = ({
       }
     );
   };
+  const { mutate: rdFormRevoke, isPending: isRevoking } = useRdFormRevoke();
+  const handleRevoke = () => {
+    rdFormRevoke(
+      {
+        case_rid: caseId ?? '',
+        account_rid: accountid,
+        type: 'RD Forms',
+      },
+      {
+        onSuccess: (data) => {
+          if (data.statusCode === 200) {
+            refetchCaseDetails();
+            successToast(data.statusMessage);
+          }
+        },
+        onError: (error) => {
+          console.error('Error revoking RD form', error);
+          errorToast('Failed to revoke RD form');
+        },
+      }
+    );
+  };
   const isRDFormSignOff = caseDetails?.rd_form_signoff;
+
   // Auto-initiate Generate if not already done
   useEffect(() => {
     if (
@@ -267,7 +291,7 @@ const RDForm: React.FC<RDFormProps> = ({
             onClick={() => setIsSignOffModalOpen(true)}
             disabled={
               !isFinancialWorkingSignoff ||
-              !previewData?.data?.rdformUrl ||
+              // !previewData?.data?.rdformUrl ||
               caseDetails?.rd_form_signoff === true
             }
             hide={!isSignoffVisible}
@@ -278,13 +302,13 @@ const RDForm: React.FC<RDFormProps> = ({
               fontWeight: 400,
             }}
           />
-          {/* <TextButton
+          <TextButton
             label={'Revoke'}
-            onClick={() => setIsSignOffModalOpen(true)}
+            onClick={handleRevoke}
+            loading={isRevoking}
             disabled={
-              !isFinancialWorkingSignoff ||
-              !previewData?.data?.rdformUrl ||
-              caseDetails?.rd_form_signoff === true
+              !isRDFormSignOff ||
+              caseDetails?.status_name?.toLowerCase() === 'closed'
             }
             hide={!isSignoffVisible}
             sx={{
@@ -293,7 +317,7 @@ const RDForm: React.FC<RDFormProps> = ({
               fontSize: '13px',
               fontWeight: 400,
             }}
-          /> */}
+          />
         </div>
       </div>
       <SectionHeaderTab

@@ -8,6 +8,8 @@ import {
   SignOffFinancialHighlightsPayload,
   UserPreferencePayload,
   DossierPackageResponse,
+  RDFormRevokePayload,
+  RDFormRevokeResponse,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -19,6 +21,7 @@ import {
   getRDFormMapperURL,
   getDossierInitiateURL,
   getDossierSheetStatusURL,
+  getRdFormRevokeURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -245,7 +248,7 @@ export const ExportDossierPackage = async (
   }
 };
 
-export const useDossierSheetStatus = () => {
+export const useDownloadDossierSheet = () => {
   return useMutation<
     DossierPackageResponse | undefined,
     Error,
@@ -253,5 +256,18 @@ export const useDossierSheetStatus = () => {
   >({
     mutationFn: ({ accountRid, caseRid, downloaded_list }) =>
       ExportDossierPackage(accountRid, caseRid, downloaded_list),
+  });
+};
+
+export const rdformRevoke = async (
+  payload: RDFormRevokePayload
+): Promise<RDFormRevokeResponse> => {
+  const url = getRdFormRevokeURL();
+  const response = await caseServiceApi.post(url, payload);
+  return response.data;
+};
+export const useRdFormRevoke = () => {
+  return useMutation<RDFormRevokeResponse, Error, RDFormRevokePayload>({
+    mutationFn: (payload: RDFormRevokePayload) => rdformRevoke(payload),
   });
 };
