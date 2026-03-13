@@ -1871,6 +1871,7 @@ export const rawQueries = {
                     AND pr.region_rid = pfr.region_rid
                 WHERE cp.case_rid = :case_rid 
                     AND pf.fiscal_year = cp.fiscal_year
+                    AND pf.is_qualified = true
                     AND pfr.region_rid IN (:stateRids)
                 GROUP BY pfr.region_rid
             `
