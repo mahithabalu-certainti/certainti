@@ -56,6 +56,7 @@ import {
 import {
   checkPermission,
   costDisplay,
+  getFiscalYears,
   valueDisplay,
 } from '../../../../../common-utils/common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -82,21 +83,6 @@ interface CaseTeamProps {
   isDetailLoading?: boolean;
   accountDetails?: accountDetailsProps;
 }
-
-// Generate years from 1950 to current year
-const generateYearOptions = () => {
-  const currentYear = new Date().getFullYear();
-  const years = [];
-
-  for (let year = 1950; year < currentYear; year++) {
-    years.push({
-      value: year,
-      label: `FY-${year}`,
-    });
-  }
-
-  return years.reverse();
-};
 
 interface FormSubmission extends Omit<historySummary, 'fiscal_year'> {
   user_id: string; // Temporary ID for form management
@@ -249,7 +235,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
 
   const updateHistorySubmissionMutation = useUpdateHistorySubmission();
   const formLoading = isDataLoading || isDetailLoading;
-  const yearOptions = generateYearOptions();
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const yearOptions = getFiscalYears(currentYear - minYear + 1);
 
   // Handle region selection change
   const handleRegionChange = (value: string) => {

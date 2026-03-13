@@ -385,6 +385,21 @@ export const getProjectColumns = (
     },
   },
   {
+    id: 'is_assesed',
+    sortId: 'is_assesed',
+    label: 'Is Assessed?',
+    sortable: true,
+    width: 120,
+    hide:
+      !permissionMap?.['is_assesed']?.read &&
+      !permissionMap?.['is_assesed']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return <span>{row.is_assesed ? 'Yes' : 'No'}</span>;
+    },
+  },
+  {
     id: 'classification_name',
     editId: 'project_classification_rid',
     label: 'Project Classification',

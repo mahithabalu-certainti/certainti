@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  FormControlLabel,
+} from '@mui/material';
+import {
   AllPermissions,
   OverviewTabs,
   useGetAllCountries,
@@ -64,6 +72,7 @@ import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
 import CloseCaseModal from './close-case-modal';
 import { useGetProjectType } from '../../../../services/project';
 import Timeline from '../../../../../pages/timeline/timeline';
+import TextButton from '../../../../../components/button/text-button';
 
 const DossierTabs: OverviewTabs[] = [
   {
@@ -147,6 +156,20 @@ const Dossier: React.FC<DossierProps> = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [currentCategory, setCurrentCategory] = useState<string>('');
+  const [isDownloadModalOpen, setIsDownloadModalOpen] =
+    useState<boolean>(false);
+
+  const DOWNLOAD_OPTIONS = [
+    'Qualified Projects',
+    'Technical Summary',
+    'Resource Summary',
+    'Project Documents',
+    'Approval Status',
+    'RD Forms',
+  ];
+
+  const [selectedDownloadItems, setSelectedDownloadItems] =
+    useState<string[]>(DOWNLOAD_OPTIONS);
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -367,12 +390,11 @@ const Dossier: React.FC<DossierProps> = ({
     [resourceStatusOptions?.data?.data?.resourceStatus]
   );
 
-  const handleGenerateDossierSheet = async () => {
+  const handleGenerateDossierSheet = () => {
     if (caseDetails?.is_initiated) {
-      refetchDossierSheetStatus({
-        accountRid: accountid,
-        caseRid: caseId ?? '',
-      });
+      // Open the download options modal
+      setSelectedDownloadItems(DOWNLOAD_OPTIONS);
+      setIsDownloadModalOpen(true);
     } else {
       const payload = {
         account_rid: accountid,
@@ -384,14 +406,45 @@ const Dossier: React.FC<DossierProps> = ({
           setDossierCreditStatus(
             'Dossier Packages is In-Progress. Refresh the page to check the status'
           );
-          // handleStatusUpdate(data);
         },
         onError: (error) => {
           console.error('Error initiating', error);
-          // errorToast('Failed to initiate');
         },
       });
     }
+  };
+
+  const handleDownloadToggle = (option: string) => {
+    setSelectedDownloadItems((prev) =>
+      prev.includes(option)
+        ? prev.filter((item) => item !== option)
+        : [...prev, option]
+    );
+  };
+
+  const handleSelectAllDownload = () => {
+    setSelectedDownloadItems(
+      selectedDownloadItems.length === DOWNLOAD_OPTIONS.length
+        ? []
+        : [...DOWNLOAD_OPTIONS]
+    );
+  };
+
+  const handleConfirmDownload = () => {
+    let finalDownloadList = [...selectedDownloadItems];
+    if (finalDownloadList.includes('RD Forms')) {
+      finalDownloadList = finalDownloadList.filter(
+        (item) => item !== 'RD Forms'
+      );
+      finalDownloadList.push('RD Form Federal', 'RD Form State');
+    }
+
+    refetchDossierSheetStatus({
+      accountRid: accountid,
+      caseRid: caseId ?? '',
+      downloaded_list: finalDownloadList,
+    });
+    setIsDownloadModalOpen(false);
   };
 
   const technicalSummaryViewEditFields = useMemo(
@@ -810,9 +863,142 @@ const Dossier: React.FC<DossierProps> = ({
           country_rid: caseDetails?.country_rid,
           country_code: caseDetails?.country_code,
           fiscal_year: caseDetails?.fiscal_year,
+          all_task_completed: caseDetails?.all_task_completed,
         }}
         refetchCaseDetails={refetchCaseDetails}
       />
+
+      {/* Download Dossier Selection Modal */}
+      <Dialog
+        open={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '8px',
+            minWidth: '380px',
+            maxWidth: '440px',
+            p: 0,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: '15px',
+            fontWeight: 600,
+            color: '#2D3E4F',
+            borderBottom: '1px solid #CBD6E2',
+            pb: '12px',
+            pt: '16px',
+            px: '20px',
+          }}
+        >
+          Select Dossier Tab List
+        </DialogTitle>
+        <DialogContent sx={{ px: '20px', pt: '16px !important', pb: '8px' }}>
+          <p
+            style={{
+              fontSize: '12px',
+              color: '#637589',
+              marginBottom: '12px',
+              marginTop: 0,
+            }}
+          >
+            Choose which tab list to include in your dossier download.
+          </p>
+
+          {/* Select All */}
+          <div
+            style={{
+              borderBottom: '1px solid #E8EEF4',
+              paddingBottom: '8px',
+              marginBottom: '4px',
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={
+                    selectedDownloadItems.length === DOWNLOAD_OPTIONS.length
+                  }
+                  indeterminate={
+                    selectedDownloadItems.length > 0 &&
+                    selectedDownloadItems.length < DOWNLOAD_OPTIONS.length
+                  }
+                  onChange={handleSelectAllDownload}
+                  size='small'
+                  sx={{
+                    color: '#1755E7',
+                    '&.Mui-checked': { color: '#1755E7' },
+                    '&.MuiCheckbox-indeterminate': { color: '#1755E7' },
+                  }}
+                />
+              }
+              label={
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#2D3E4F',
+                  }}
+                >
+                  Select All
+                </span>
+              }
+            />
+          </div>
+
+          {/* Individual options */}
+          {DOWNLOAD_OPTIONS.map((option) => (
+            <div key={option}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedDownloadItems.includes(option)}
+                    onChange={() => handleDownloadToggle(option)}
+                    size='small'
+                    sx={{
+                      color: '#1755E7',
+                      '&.Mui-checked': { color: '#1755E7' },
+                    }}
+                  />
+                }
+                label={
+                  <span style={{ fontSize: '13px', color: '#2D3E4F' }}>
+                    {option}
+                  </span>
+                }
+              />
+            </div>
+          ))}
+        </DialogContent>
+        <DialogActions
+          sx={{
+            px: '20px',
+            pb: '16px',
+            pt: '12px',
+            borderTop: '1px solid #CBD6E2',
+            gap: '8px',
+          }}
+        >
+          <TextButton
+            onClick={() => setIsDownloadModalOpen(false)}
+            sx={{
+              px: '16px',
+            }}
+          >
+            Cancel
+          </TextButton>
+          <TextButton
+            disabled={selectedDownloadItems.length === 0}
+            onClick={handleConfirmDownload}
+            sx={{
+              px: '16px',
+            }}
+          >
+            Download
+          </TextButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

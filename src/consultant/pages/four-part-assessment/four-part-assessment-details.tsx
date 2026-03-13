@@ -48,6 +48,8 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   const fourPartAssessmentId = searchParams.get('fpa_id') || '';
   const isFromInteraction =
     searchParams.get('navigate_source') === 'interactions';
+  const isFromMainInteraction =
+    searchParams.get('main_navigate_source') === 'interactions';
 
   const { data, isLoading, isError } = useFourPartAssessmentDetails(
     accountid || accountID,
@@ -89,9 +91,9 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
   }, [projectViewEditFields]);
 
   const handleBackClick = () => {
-    if (isFromInteraction) {
-      searchParams.delete('fpa_id');
+    if (isFromInteraction || isFromMainInteraction) {
       searchParams.delete('navigate_source');
+      searchParams.delete('main_navigate_source');
       searchParams.set('list', 'interactions');
 
       if (moduleLevel === 'account') {
@@ -119,6 +121,7 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
           replace: true,
         });
       }
+      searchParams.delete('fpa_id');
     } else {
       searchParams.delete('fpa_id');
       navigate({ search: searchParams.toString() }, { replace: true });
@@ -127,9 +130,10 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
 
   const headerButtons = [
     {
-      label: isFromInteraction
-        ? 'Back To Interactions'
-        : 'Back To Four Part Assessment',
+      label:
+        isFromInteraction || isFromMainInteraction
+          ? 'Back To Interactions'
+          : 'Back To Four Part Assessment',
       variant: 'contained' as const,
       onClick: () => handleBackClick(),
       sx: { width: 'auto', padding: '0 9px' },
@@ -185,14 +189,6 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     },
   ];
 
-  const description: DetailItem[] = [
-    {
-      label: 'Summary',
-      value: data?.record_information?.tracker_one_liner || '',
-      key: 'summary_judgment',
-    },
-  ];
-
   const handleInteractionNavigate = (
     interaction: FourPartAssessmentInteractionQuestions | null
   ) => {
@@ -201,6 +197,10 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
     searchParams.set('interaction_id', interaction?.interaction_rid);
     searchParams.set('interaction_number', interaction?.r_number);
     searchParams.set('navigate_source', 'four_part');
+    if (isFromInteraction) {
+      searchParams.set('main_navigate_source', 'interactions');
+    }
+    searchParams.set('project_fiscal_rid', interaction?.project_fiscal_rid);
 
     navigate(
       { search: searchParams.toString() },
@@ -258,12 +258,14 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
               customStyle='pt-0 mt-0'
             />
             {!hideSummary && (
-              <DetailsSection
-                title='Summary'
-                data={description}
-                fullColumn={true}
-                customStyle='pt-[1px]'
-              />
+              <div className='pt-[1px]'>
+                <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+                  Summary
+                </div>
+                <div className='font-medium text-[13px] text-[#425A76] px-6 my-[6px]'>
+                  {data?.record_information?.tracker_one_liner || '-'}
+                </div>
+              </div>
             )}
           </>
         )}

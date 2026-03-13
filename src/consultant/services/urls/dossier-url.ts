@@ -107,9 +107,6 @@ export const getRDFormMapperPreviewURL = (
 export const getDossierInitiateURL = (): string => {
   return `/api/cases/dossier/create`;
 };
-export const getDossierSheetStatusURL = (
-  accountRid: string,
-  caseRid: string
-): string => {
-  return `/api/cases/dossierPackage/${accountRid}/${caseRid}`;
+export const getDossierSheetStatusURL = (): string => {
+  return `/api/cases/dossierPackage`;
 };

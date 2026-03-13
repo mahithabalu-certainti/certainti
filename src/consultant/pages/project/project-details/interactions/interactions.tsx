@@ -660,7 +660,8 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const interactionModelColumn = getProjectInteractionListModelColumns(
     // handleViewInteraction,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap
   );
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
@@ -843,9 +844,11 @@ const Interactions: React.FC<InteractionsProps> = ({
         assessmentSourceOptions
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
-  const modelFIlterFields = getProjectInteractionFilterFields(
+  const modelFilterFields = getProjectInteractionFilterFields(
     memoizedInteractionStatusReminder,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap,
+    assessmentSourceOptions
   );
   const RestrictedColumns = [
     {
@@ -1073,7 +1076,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to send reminder'
                   />
                   <ReInitiateModal
@@ -1095,7 +1098,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to re-initiate'
                   />
                 </div>

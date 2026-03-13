@@ -121,7 +121,7 @@ export const getFourPartAssessmentTableColumns = (
     id: 'rd_potential_category',
     sortId: 'rd_potential_category',
     label: 'R&D Potential Category',
-    width: 180,
+    width: 210,
     sortable: true,
     hide:
       !permissionMap?.['rd_potential_category']?.edit &&

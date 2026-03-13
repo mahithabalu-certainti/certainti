@@ -79,6 +79,11 @@ export const dateOptions: { option: string; value: string }[] = [
   { option: 'Is-Empty', value: 'is_empty' },
 ];
 
+const IsAssessedOptions: { option: string; value: string }[] = [
+  { option: 'Yes', value: 'true' },
+  { option: 'No', value: 'false' },
+];
+
 export const projectFilterFields = (
   classificationOption: FilterSelectOption[],
   projectTypeOptions: { option: string; value: string }[],
@@ -122,6 +127,16 @@ export const projectFilterFields = (
     hide:
       !projectPermissionMap?.['fiscal_year']?.read &&
       !projectPermissionMap?.['fiscal_year']?.edit,
+  },
+  {
+    name: 'Is Assessed',
+    value: 'is_assesed',
+    type: 'enum',
+    options: IsAssessedOptions,
+    operatorOption: fiscalOptions,
+    hide:
+      !projectPermissionMap?.['is_assesed']?.read &&
+      !projectPermissionMap?.['is_assesed']?.edit,
   },
   {
     name: 'Project Classification',

@@ -224,7 +224,12 @@ const RDForm: React.FC<RDFormProps> = ({
       hide: false,
     },
   ];
-
+  const selectedStateName =
+    regionListOptions.find((r) => r.value === selectedRegion)?.label ?? '';
+  const downloadName =
+    activeTab === 'state_wise' && selectedStateName
+      ? `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}-${selectedStateName}`
+      : `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}`;
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     if (value === 'federal') {
@@ -273,6 +278,22 @@ const RDForm: React.FC<RDFormProps> = ({
               fontWeight: 400,
             }}
           />
+          {/* <TextButton
+            label={'Revoke'}
+            onClick={() => setIsSignOffModalOpen(true)}
+            disabled={
+              !isFinancialWorkingSignoff ||
+              !previewData?.data?.rdformUrl ||
+              caseDetails?.rd_form_signoff === true
+            }
+            hide={!isSignoffVisible}
+            sx={{
+              width: 'auto',
+              minWidth: '65px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          /> */}
         </div>
       </div>
       <SectionHeaderTab
@@ -394,6 +415,7 @@ const RDForm: React.FC<RDFormProps> = ({
                 base64={previewData.data.rdformUrl}
                 isLoadingPdf={isPreviewLoading}
                 isPdfError={isPreviewError}
+                downloadName={downloadName}
               />
             ) : (
               <div className='flex items-center justify-center h-[100px] text-[#7D98B6] text-[13px]'>
