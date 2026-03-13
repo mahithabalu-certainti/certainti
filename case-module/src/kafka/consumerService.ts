@@ -129,7 +129,7 @@ export class KafkaConsumerService {
                 try {
 
                     const markInProgress = await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, key, 'dossier-form');
-                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key, payload.timezone);
+                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key, payload.timezone, payload.fetchParentNumber);
                    const mainDb = await initMainDbSequelize()
                     const [caseInfo]: any[] = await mainDb.query(
                             rawQueries.fetchCasesInfo(payload.caseRid),
