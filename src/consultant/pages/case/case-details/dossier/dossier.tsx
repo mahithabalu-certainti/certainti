@@ -431,10 +431,18 @@ const Dossier: React.FC<DossierProps> = ({
   };
 
   const handleConfirmDownload = () => {
+    let finalDownloadList = [...selectedDownloadItems];
+    if (finalDownloadList.includes('RD Forms')) {
+      finalDownloadList = finalDownloadList.filter(
+        (item) => item !== 'RD Forms'
+      );
+      finalDownloadList.push('RD Form Federal', 'RD Form State');
+    }
+
     refetchDossierSheetStatus({
       accountRid: accountid,
       caseRid: caseId ?? '',
-      downloaded_list: selectedDownloadItems,
+      downloaded_list: finalDownloadList,
     });
     setIsDownloadModalOpen(false);
   };

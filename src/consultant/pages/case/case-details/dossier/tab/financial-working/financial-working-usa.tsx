@@ -82,6 +82,7 @@ interface Selection280CProps {
   logKey: string;
   onSuccess: () => void;
   otherValues: { asc_credit_280_c?: string; rrc_credit_280_c?: string };
+  isSignOff: boolean;
 }
 
 const Selection280C: React.FC<Selection280CProps> = ({
@@ -89,6 +90,7 @@ const Selection280C: React.FC<Selection280CProps> = ({
   logKey,
   onSuccess,
   otherValues,
+  isSignOff,
 }) => {
   const [currentValue, setCurrentValue] = React.useState(value);
   const { caseId } = useParams();
@@ -130,6 +132,7 @@ const Selection280C: React.FC<Selection280CProps> = ({
       displayEmpty
       size='small'
       MenuProps={COMMON_MENU_PROPS}
+      disabled={isSignOff}
       sx={{
         ...getSelectStyles(false, false),
         color: '#2D3E4F',
@@ -169,12 +172,14 @@ interface FinancialWorkingUSAProps {
   data: FinancialHighlightsResponse | null;
   onSuccess: () => void;
   currencySymbol: string;
+  isSignOff: boolean;
 }
 
 const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
   data,
   onSuccess,
   currencySymbol,
+  isSignOff,
 }) => {
   // Check if data is present
   const rawComputedFields = data?.data?.computed_fields as USAComputedFields;
@@ -410,6 +415,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                                 logKey={logKey}
                                 onSuccess={onSuccess}
                                 otherValues={otherValues}
+                                isSignOff={isSignOff}
                               />
                             </div>
                           </td>

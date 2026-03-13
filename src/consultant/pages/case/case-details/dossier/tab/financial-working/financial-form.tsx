@@ -471,6 +471,18 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 fontWeight: 400,
               }}
             />
+            {/* <TextButton
+              label={'Revoke'}
+              onClick={() => setIsSignOffModalOpen(true)}
+              disabled={!financialData || isFinancialWorkingSignoff}
+              hide={!isSignoffVisible}
+              sx={{
+                width: 'auto',
+                minWidth: '65px',
+                fontSize: '13px',
+                fontWeight: 400,
+              }}
+            /> */}
           </div>
         </div>
         <div className='px-4'>
@@ -645,6 +657,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 data={financialData}
                 onSuccess={handleInitiateFinancialHighlights}
                 currencySymbol={responseCurrencySymbol}
+                isSignOff={isFinancialWorkingSignoff || false}
               />
             ) : (
               <FinancialWorking
