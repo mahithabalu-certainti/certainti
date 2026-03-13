@@ -2393,7 +2393,7 @@ class SchemaService {
         child: sort.sortCol,
       };
       const isChildOnlySort =
-        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final";
+        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final" || sort.sortCol === "is_assesed";
 
       const parentSortClause =
         bothParentAndChild && sortConfig.parent
