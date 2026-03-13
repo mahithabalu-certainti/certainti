@@ -22,6 +22,7 @@ import { calculateCostForCaseSubmissionCurrentYear, calculateStateCostForCaseSub
 import { CaseHistorySubmissionCreationAttributes } from "../../models/caseHistorySubmissionModel";
 import Decimal from "decimal.js";
 import { generatePdfBuffer } from "../../utils/generatePdf";
+import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -474,6 +475,73 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       dossier_version : 1
     });
   }
+  await this.cloneTechnicalSummaryForDossierForm(accountNumber, caseRid, accountRid, userId, schemaName);
+
+}
+
+private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid: string, accountRid: string, userId: string, schemaName: string) {
+  if (caseRid !== undefined && caseRid !== '') {
+  const orgDb = await this.getOrgDb();
+  const {  CaseTechnicalSummaryModel } = await this.getModels(schemaName);
+
+  // First, get qualified project IDs for the case
+  const projectQuery = `
+    SELECT DISTINCT cp.project_fiscal_rid
+    FROM ${schemaName}.case_projects cp
+    INNER JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    WHERE cp.case_rid = $1
+      AND cp.account_rid = $2
+  `;
+  
+  const projectIds: any = await orgDb.query(projectQuery, {
+    bind: [caseRid, accountRid],
+    type: QueryTypes.SELECT
+  });
+
+  if (projectIds.length === 0) {
+    // No qualified projects found
+    return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
+  }
+
+  const projectFiscalRidList = projectIds.map((d: any) => d.project_fiscal_rid);
+
+  // Then, get the max version records for these projects
+  const technicalQuery = `
+    SELECT DISTINCT ON (ats.project_fiscal_rid) ats.*
+    FROM ${schemaName}.ai_technical_summary ats
+    WHERE ats.account_rid = $1
+      AND ats.project_fiscal_rid = ANY($2::text[])
+    ORDER BY ats.project_fiscal_rid, ats.version DESC
+  `;
+
+  const technicalSummaryData = await orgDb.query(technicalQuery, {
+    bind: [accountRid, projectFiscalRidList],
+    type: QueryTypes.SELECT
+  });
+  console.log("Technical Summary Data : ", technicalSummaryData)
+
+  if (technicalSummaryData.length > 0) {
+    // Minimal mapping to reduce processing time
+    const clonedTechnicalSummaryData = technicalSummaryData.map((d: any) => ({
+      account_rid: d.account_rid,
+      r_number: d.r_number,
+      project_rid: d.project_rid,
+      case_rid: caseRid,
+      project_fiscal_rid: d.project_fiscal_rid,
+      fiscal_year: d.fiscal_year,
+      version: d.version,
+      title: d.title,
+      content: d.content,
+      created_by: d.created_by,
+      created_datetime: d.created_datetime,
+      modified_by: d.modified_by,
+      modified_datetime: d.modified_datetime
+    }));
+
+    // Bulk insert (already optimized)
+    await CaseTechnicalSummaryModel.bulkCreate(clonedTechnicalSummaryData, { validate: false }); // Skip validation for speed if data is trusted
+  }
+}
 }
   async exportAttachments(
     userId: string,
@@ -1098,9 +1166,10 @@ async getModels(schemaName: string) {
     const sequelize = await initOrgSequelize();
     const DossierFormModel = DossierForm.initialise(sequelize, schemaName)
     const AiTechnicalSummaryModel = AiTechnicalSummary.initialize(sequelize, schemaName)
+    const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(sequelize, schemaName)
     return {
       DossierFormModel,
-      AiTechnicalSummaryModel
+      AiTechnicalSummaryModel,CaseTechnicalSummaryModel
     }
 }
 async fetchDossierPackage (data : any) : Promise<any> {
