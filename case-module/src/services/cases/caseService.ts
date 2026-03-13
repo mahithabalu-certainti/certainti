@@ -181,6 +181,24 @@ export class CaseService {
       }
       const { statusRid } = await this.getCaseStatusForCreate();
       caseRequest.status_rid = statusRid || "";
+        // Validate historical submission data early if available
+        if (caseRequest.amendment_case_info && caseRequest.amendment_case_info.length > 0) {
+          const validationError = await this.helperMethod.validateHistoricalSubmissionData(
+            accountNumber,
+            caseRequest.amendment_case_info,
+            caseRequest.account_rid
+          );
+          if (validationError) {
+            return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: validationError,
+          data: {
+            cases: null,
+          },
+        }
+          }
+        }
 
       const response = await this.caseSchemaService.createCases(
         accountNumber,

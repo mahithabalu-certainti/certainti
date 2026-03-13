@@ -1459,6 +1459,7 @@ export const rawQueries = {
     WHERE ct.case_rid = '${caseRid}'
     AND ct.role_rid = '${roleRid}'
     AND ct.status_rid = '${statusActiveRid}'
+    and ct.is_primary = true
     `;
   },
   fetchEmailRecipientsByRids(userRids: string[]) {
@@ -1871,6 +1872,7 @@ export const rawQueries = {
                     AND pr.region_rid = pfr.region_rid
                 WHERE cp.case_rid = :case_rid 
                     AND pf.fiscal_year = cp.fiscal_year
+                    AND pf.is_qualified = true
                     AND pfr.region_rid IN (:stateRids)
                 GROUP BY pfr.region_rid
             `
