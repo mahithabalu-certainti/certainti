@@ -110,3 +110,7 @@ export const getDossierInitiateURL = (): string => {
 export const getDossierSheetStatusURL = (): string => {
   return `/api/cases/dossierPackage`;
 };
+
+export const getRdFormRevokeURL = () => {
+  return `/api/cases/approvals/revoke`;
+};

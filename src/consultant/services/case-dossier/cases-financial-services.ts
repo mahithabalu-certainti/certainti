@@ -8,6 +8,8 @@ import {
   SignOffFinancialHighlightsPayload,
   UserPreferencePayload,
   DossierPackageResponse,
+  RDFormRevokePayload,
+  RDFormRevokeResponse,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -19,6 +21,7 @@ import {
   getRDFormMapperURL,
   getDossierInitiateURL,
   getDossierSheetStatusURL,
+  getRdFormRevokeURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -204,31 +207,39 @@ export const ExportDossierPackage = async (
   accountRid: string,
   caseRid: string,
   downloaded_list: string[]
-): Promise<DossierPackageResponse | undefined> => {
+): Promise<DossierPackageResponse> => {
   try {
     const url = getDossierSheetStatusURL();
+
+    // Call the actual API (uncommented to ensure actual payload fires too)
     const response = await caseServiceApi.post<DossierPackageResponse>(url, {
       case_rid: caseRid,
       account_rid: accountRid,
       downloaded_list,
     });
+
     const status = response.data;
-    const downloadUrl = status?.data?.browse_url;
 
-    if (!downloadUrl) {
-      console.error('No download URL available');
-      return status;
+    const base64Data = status?.data?.base64;
+
+    const filename = `${status?.data?.document_name ?? 'dossier-sheet'}.zip`;
+
+    if (base64Data) {
+      // Decode base64 and create a Blob
+      const binary = atob(base64Data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/zip' });
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
-
-    const filename =
-      `${status.data.document_name}${status.data.extension}` ||
-      'dossier-sheet.zip';
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 
     return status;
   } catch (error) {
@@ -237,7 +248,7 @@ export const ExportDossierPackage = async (
   }
 };
 
-export const useDossierSheetStatus = () => {
+export const useDownloadDossierSheet = () => {
   return useMutation<
     DossierPackageResponse | undefined,
     Error,
@@ -245,5 +256,18 @@ export const useDossierSheetStatus = () => {
   >({
     mutationFn: ({ accountRid, caseRid, downloaded_list }) =>
       ExportDossierPackage(accountRid, caseRid, downloaded_list),
+  });
+};
+
+export const rdformRevoke = async (
+  payload: RDFormRevokePayload
+): Promise<RDFormRevokeResponse> => {
+  const url = getRdFormRevokeURL();
+  const response = await caseServiceApi.post(url, payload);
+  return response.data;
+};
+export const useRdFormRevoke = () => {
+  return useMutation<RDFormRevokeResponse, Error, RDFormRevokePayload>({
+    mutationFn: (payload: RDFormRevokePayload) => rdformRevoke(payload),
   });
 };
