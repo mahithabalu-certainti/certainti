@@ -2299,7 +2299,8 @@ export class ProjectService {
       "modified_datetime",
       "assessment_status",
       "qre_final",
-      "rd_percent_final"
+      "rd_percent_final",
+      "is_assesed"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -2447,7 +2448,7 @@ export class ProjectService {
       "fiscal_year",
       "ProjectFiscal.project_type_rid",
     ];
-    const booleanFields = ["is_rd_qualified"];
+    const booleanFields = ["is_rd_qualified", "is_assesed"];
 
     const filterFields = this.getFilterFields(isAllProject, isParent);
 
@@ -2594,6 +2595,24 @@ export class ProjectService {
       }
       if (fieldFilter.isFalse === true) {
         return { [Op.eq]: false };
+      }
+      if (fieldFilter.equals !== undefined) {
+        const boolVal =
+          fieldFilter.equals === "true" || fieldFilter.equals === true;
+        return { [Op.eq]: boolVal };
+      }
+      if (fieldFilter.not_equals !== undefined) {
+        const boolVal =
+          fieldFilter.not_equals === "true" || fieldFilter.not_equals === true;
+        return {
+          [Op.or]: [{ [Op.ne]: boolVal }, { [Op.is]: null }],
+        };
+      }
+      if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+        const boolValues = fieldFilter.in.map(
+          (v: any) => v === "true" || v === true
+        );
+        return { [Op.in]: boolValues };
       }
       if (fieldFilter.is_empty === true) {
         return { [Op.or]: [null] };
@@ -2743,6 +2762,7 @@ export class ProjectService {
       { clientField: "qre", dbField: "qre" },
       { clientField: "modified_datetime", dbField: "modified_datetime" },
       { clientField: "assessment_status", dbField: "assessment_status" },
+      { clientField: "is_assesed", dbField: "is_assesed" },
     ];
 
     return projectFilterFields;

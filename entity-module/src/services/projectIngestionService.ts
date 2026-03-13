@@ -2603,7 +2603,7 @@ class ProjectIngestionService {
                 ]);
               }
               else {
-                if (field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final') {
+                if (field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final' && field !== 'is_assesed') {
                   fullOrder.push([
                     Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
                   ]);
