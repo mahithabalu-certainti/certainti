@@ -3493,7 +3493,7 @@ export class InteractionService {
                 question : d
               }
             })
-            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber);
+            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber, company_id);
             if(findBatchAndIncrement) {
               const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1])
               const incrementedBatchNumber = splitBatchNumber + 1

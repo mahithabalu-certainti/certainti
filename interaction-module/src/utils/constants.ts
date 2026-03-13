@@ -1182,7 +1182,7 @@ export const rawQueries = {
      fetchFpaRid (schemaName : string, transactionId : string) {
     return `SELECT rid FROM ${schemaName}.four_part_assessment WHERE transaction_id = '${transactionId}'`
   },
-  fetchBatchInInteraction(schemaName : string) {
+  fetchBatchInInteraction(schemaName : string, accountId : string) {
     return `
     SELECT interaction_batch_id 
     FROM 
@@ -1192,6 +1192,8 @@ export const rawQueries = {
     FROM
     ${schemaName}.interactions
     where
+    account_rid = '${accountId}'
+    AND
 	  four_part_assessment_rid IS NOT NULL
     )
     WHERE
