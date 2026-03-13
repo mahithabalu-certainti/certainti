@@ -385,7 +385,42 @@ export class RdFormMapperService {
       });
     }
 
+    // Fetch project resources for all states to filter states with resources
+    const projectResourceData: any[] = await orgDb.query(
+      rawQueries.fetchProjectCountsAndQreByState(schemaName),
+      {
+        replacements: { case_rid: caseRid, stateRids: states },
+        type: QueryTypes.SELECT,
+      },
+    );
+
+    // Create a map of state_rid to resource count for quick lookup
+    const stateResourceMap = new Map<string, number>();
+    projectResourceData.forEach((data: any) => {
+      stateResourceMap.set(
+        data.state_rid,
+        Number(data.total_resources || 0),
+      );
+    });
+
     for (const state of states) {
+      // Skip states that have no project resources
+      const totalResources = stateResourceMap.get(state) || 0;
+      if (totalResources === 0) {
+        this.logger.warn(
+          `Skipping state ${state} as it has no project resources assigned.`,
+        );
+        this.rdFormMapperSchemaService.updateStateFormError(
+          caseRid,
+          countryRid,
+          state,
+          orgDb,
+          accountNumber,
+          "No project resources assigned for this state,",
+        );
+          continue;
+      }
+
       const stateInfo = stateInfoMap.get(state) || {};
       const resolvedStateName = stateInfo.state_name || stateName || state;
       const resolvedStateCode = stateInfo.state_code || stateCode || "";
