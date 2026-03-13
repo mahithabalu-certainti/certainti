@@ -4,7 +4,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, entityTypes, ENV_PREFIX, eventNames, eventTypes, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
-import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, StateType } from "../../utils/types";
+import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
 import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
@@ -22,6 +22,7 @@ import { calculateCostForCaseSubmissionCurrentYear, calculateStateCostForCaseSub
 import { CaseHistorySubmissionCreationAttributes } from "../../models/caseHistorySubmissionModel";
 import Decimal from "decimal.js";
 import { generatePdfBuffer } from "../../utils/generatePdf";
+import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -233,6 +234,7 @@ export class ChildCaseService extends CaseService {
             message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
             data: { cases: closedCases.map(d => ({
                 rid: d.rid,
+                fiscal_year: d.fiscal_year,
                 case_full_name: accountInfo.account_name + '-' + accountInfo.country_code + '-' + d.fiscal_year + '-' + d.case_name
             })) },
           };
@@ -323,7 +325,7 @@ async initiateCreateDossierForm (data : any) {
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,token : data.accessToken})}],
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,accessToken : data.accessToken})}],
         
     })
     console.log(`Message : ${JSON.stringify(result)}`)
@@ -332,6 +334,7 @@ async initiateCreateDossierForm (data : any) {
 }
 async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string, timez : string) {
     const orgDb = await this.getOrgDb()
+    const mainDB = await this.getMainDb()
     let schemaName = rawQueries.fetchSchemaName(accountNumber)
     const {DossierFormModel} = await this.getModels(schemaName)
     const [caseDetails] = await orgDb.query<CaseData>(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
@@ -357,7 +360,6 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseClosingPayload.sort_by = 'ASC';
     caseClosingPayload.timezone = timez
     const closingRemarksData = await this.exportCaseClosingRemarks(caseClosingPayload);
-
     const fetchCountryUrl : any = await orgDb.query(fetchRdFormUrlForCountry(schemaName, caseRid));
     const fetchStateUrl : any = await orgDb.query(fetchRdFormUrlForState(schemaName, caseRid));
     let countryUrlData = fetchCountryUrl[0].filter((c : any) => c.country_url !== null);
@@ -365,21 +367,22 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     let stateUrls : string[];
     let countryUrls : string;
     if(countryUrlData.length > 0) {
-      countryUrlData = await Promise.all(countryUrlData.map(async (c : any) => {
+      countryUrlData = countryUrlData.map((c : any) => {
       return {
-        url : await generateSasUrl(c.country_url)
+        url : c.country_url
       }
-    }))
+    })
     countryUrls = countryUrlData[0].url
     } else {
       countryUrls = ''
     }
     if(stateUrlData.length > 0) {
-      stateUrlData = await Promise.all(stateUrlData.map(async (s : any) => {
+      stateUrlData = stateUrlData.map((s : any) => {
       return {
-        url : await generateSasUrl(s.state_url)
+        
+        url : s.state_url
       }
-    }))
+    })
     stateUrls = stateUrlData.map((d : any) => d.url)
     } else {
       stateUrls = []
@@ -397,7 +400,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     exportedUrls = exportedAttachments?.map((d : any) => d.url) || []
 
     const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
-    const finalStructuredData = techSummary.technicalSummary.length < 1 ? [''] : await generatePdfBuffer(techSummary.technicalSummary)
+    const finalStructuredData = techSummary.technicalSummary.length < 1 ? [] : await generatePdfBuffer(techSummary.technicalSummary)
     const files: any[] = [
     {
       name: "Qualified Projects",
@@ -428,13 +431,15 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     }
   ];
   if (Array.isArray(finalStructuredData)) {
-    finalStructuredData.forEach((pdf, index) => {
-      files.push({
-        name: `Technical Summary ${index + 1}`,
-        buffer: pdf,
-        extension: ".pdf"
+    if(finalStructuredData.length > 0) {
+        finalStructuredData.forEach((pdf, index) => {
+        files.push({
+          name: `Technical Summary-${pdf.projectCode}`,
+          buffer: pdf.base64,
+          extension: ".pdf"
+        });
       });
-    });
+    }
   }
   const jsonToString = JSON.stringify(files)
   const findData = await DossierFormModel.findOne({
@@ -448,7 +453,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     await DossierFormModel.update({
       modified_by : userId,
       dossier_metadata : jsonToString,
-      modified_datetime : new Date()
+      modified_datetime : new Date(),
+      dossier_version : (findData.dossier_version ?? 0) + 1
     }, {
      where : {
       case_rid : caseRid,
@@ -465,9 +471,77 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       extension : '',
       size : '',
       created_datetime : new Date(),
-      dossier_metadata : jsonToString
+      dossier_metadata : jsonToString,
+      dossier_version : 1
     });
   }
+  await this.cloneTechnicalSummaryForDossierForm(accountNumber, caseRid, accountRid, userId, schemaName);
+
+}
+
+private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid: string, accountRid: string, userId: string, schemaName: string) {
+  if (caseRid !== undefined && caseRid !== '') {
+  const orgDb = await this.getOrgDb();
+  const {  CaseTechnicalSummaryModel } = await this.getModels(schemaName);
+
+  // First, get qualified project IDs for the case
+  const projectQuery = `
+    SELECT DISTINCT cp.project_fiscal_rid
+    FROM ${schemaName}.case_projects cp
+    INNER JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    WHERE cp.case_rid = $1
+      AND cp.account_rid = $2
+  `;
+  
+  const projectIds: any = await orgDb.query(projectQuery, {
+    bind: [caseRid, accountRid],
+    type: QueryTypes.SELECT
+  });
+
+  if (projectIds.length === 0) {
+    // No qualified projects found
+    return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
+  }
+
+  const projectFiscalRidList = projectIds.map((d: any) => d.project_fiscal_rid);
+
+  // Then, get the max version records for these projects
+  const technicalQuery = `
+    SELECT DISTINCT ON (ats.project_fiscal_rid) ats.*
+    FROM ${schemaName}.ai_technical_summary ats
+    WHERE ats.account_rid = $1
+      AND ats.project_fiscal_rid = ANY($2::text[])
+    ORDER BY ats.project_fiscal_rid, ats.version DESC
+  `;
+
+  const technicalSummaryData = await orgDb.query(technicalQuery, {
+    bind: [accountRid, projectFiscalRidList],
+    type: QueryTypes.SELECT
+  });
+  console.log("Technical Summary Data : ", technicalSummaryData)
+
+  if (technicalSummaryData.length > 0) {
+    // Minimal mapping to reduce processing time
+    const clonedTechnicalSummaryData = technicalSummaryData.map((d: any) => ({
+      account_rid: d.account_rid,
+      r_number: d.r_number,
+      project_rid: d.project_rid,
+      case_rid: caseRid,
+      project_fiscal_rid: d.project_fiscal_rid,
+      fiscal_year: d.fiscal_year,
+      version: d.version,
+      title: d.title,
+      content: d.content,
+      created_by: d.created_by,
+      created_datetime: d.created_datetime,
+      modified_by: d.modified_by,
+      modified_datetime: d.modified_datetime
+    }));
+
+    // Bulk insert (already optimized)
+    await CaseTechnicalSummaryModel.bulkCreate(clonedTechnicalSummaryData, { validate: false }); // Skip validation for speed if data is trusted
+  }
+}
 }
   async exportAttachments(
     userId: string,
@@ -1092,9 +1166,10 @@ async getModels(schemaName: string) {
     const sequelize = await initOrgSequelize();
     const DossierFormModel = DossierForm.initialise(sequelize, schemaName)
     const AiTechnicalSummaryModel = AiTechnicalSummary.initialize(sequelize, schemaName)
+    const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(sequelize, schemaName)
     return {
       DossierFormModel,
-      AiTechnicalSummaryModel
+      AiTechnicalSummaryModel,CaseTechnicalSummaryModel
     }
 }
 async fetchDossierPackage (data : any) : Promise<any> {
@@ -1116,6 +1191,7 @@ async fetchDossierPackage (data : any) : Promise<any> {
   if(getZipPackage) {
     let responsePackage : any[] = [];
     const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
+
     for(let i = 0; i < data.downloaded_list.length; i++) {
       for(let j = 0; j < stringToJson.length; j++) {
         if(stringToJson[j].name.toLowerCase().startsWith(data.downloaded_list[i].toLowerCase())) {
@@ -1126,18 +1202,36 @@ async fetchDossierPackage (data : any) : Promise<any> {
               extension : stringToJson[j].extension
             });
           } else {
-            responsePackage.push(stringToJson[j])
+            if(stringToJson[j].name === 'RD Form Federal') {
+              let finalizedName : string = '';
+              if(stringToJson[j].url !== '') {
+                let splittedName = stringToJson[j].url.split('/').pop() as string
+                finalizedName = splittedName.split('_').slice(2,3).join('_')
+              }
+              responsePackage.push({
+                name : `RD Form-${finalizedName}`,
+                url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
+              })
+            } else {
+              responsePackage.push({
+                name : '',
+                urls : stringToJson[j].urls.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
+                  return await generateSasUrl(d)
+                })) : []
+              })
+            }
           }
         }
       }
     }
     const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
     const convertToZip = await createZipFile(responsePackage);
-    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
+    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails.fiscal_year}-V${getZipPackage.dossier_version}-${getZipPackage.created_datetime.toISOString().split('T')[0]}`
+    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, documentName, data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
     await getZipPackage.update({
       browse_url : uploadToAzure.url,
       size : JSON.stringify(uploadToAzure.size),
-      document_name : uploadToAzure.name,
+      document_name : documentName,
       extension : uploadToAzure.extension
     }, {
       where : {
@@ -1716,6 +1810,89 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           countryComputedData : null,
           stateComputedData : []
         }
+      }
+    }
+  }
+  async revokeSignOff (data : RevokeSignoffRequest) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const orgDbTransaction = await orgDb.transaction();
+    const mainDbTransaction = await mainDb.transaction();
+    try {
+      const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+      if(fetchParentAccount) {
+        const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+        let dynamicEntityType : string
+        const [caseDetails] : any[] = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+        if(data.type === 'RD Forms') {
+          await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDbTransaction.commit();
+          await mainDbTransaction.commit();
+          dynamicEntityType = entityTypes.RD_FORM  
+        }
+        else {
+          const getProjectIdsAssignedForCases = await orgDb.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(data.case_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
+          let caseProjectIds : string[] = [];
+          if(getProjectIdsAssignedForCases.length > 0) {
+            getProjectIdsAssignedForCases.forEach((fiscalIds) => {
+              caseProjectIds.push(fiscalIds.project_fiscal_rid)
+            })
+          } else {
+            await orgDbTransaction.rollback()
+            await mainDbTransaction.rollback()
+            return {
+              statusCode : HttpStatus.BAD_REQUEST,
+              statusMessage : STATUS_MESSAGE.noProjectsAssignedToCase
+            }
+          }
+          await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, false), {transaction : orgDbTransaction});
+          await orgDb.query(rawQueries.revokeClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
+          await orgDb.query(rawQueries.revokeClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
+          await mainDb.query(rawQueries.revokeClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid), {transaction : mainDbTransaction})
+          let mapIdsForCaseProjectregions : any[] = []
+          let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
+          caseProjectIds.forEach((d) => {
+              mapIdsForCaseProjectregions.push(mappedValuesForCasesRegions.get(d))
+          })
+          let query = rawQueries.revokeClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName)
+          if(query) {
+              await orgDb.query(query, {transaction : orgDbTransaction})
+          }
+          await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDbTransaction.commit();
+          await mainDbTransaction.commit();
+          dynamicEntityType = entityTypes.FINANCIAL_WORKING
+        }
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({userId: data.userId!,eventType: eventTypes.UI_HANDLER});
+        await this.helperMethod.createAccountTimelineEntry(fetchParentAccount.r_number, {
+          created_by: data.userId!,
+          account_rid: data.account_rid,
+          entity_rid: data.case_rid!,
+          entity_name: dynamicEntityType,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.REVOKED,
+          descriptions: caseDetails?.case_name || '',
+          case_rid: data.case_rid,
+          },["case"]);
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.revokedSuccessfully
+          }
+        }
+        await orgDbTransaction.rollback()
+        await mainDbTransaction.rollback()
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.accountNoFound
+      }
+    } 
+    catch (error) {
+      await orgDbTransaction.rollback()
+      await mainDbTransaction.rollback()
+      return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.failedToUpdate
       }
     }
   }

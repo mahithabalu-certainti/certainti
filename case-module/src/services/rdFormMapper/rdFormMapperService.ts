@@ -3,7 +3,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import RdFormMapperSchemaService from "./schemaService";
-import { generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
+import { downloadBufferFromAzureBlob, generateSasUrl, logMessage, uploadBufferToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { pdfFiller } from "../../utils/pdfFiller";
 import { HttpStatus, rawQueries, RD_FORM_HEADER_BY_COUNTRY, STATUS_MESSAGE, COUNTRY_CURRENCY_CODE, FORM_TYPE, eventTypes, entityTypes, eventNames } from "../../utils/constants";
 import RDCreditSchemaService from "../rdComputation/schemaService";
@@ -156,6 +156,42 @@ export class RdFormMapperService {
       };
     } else if (countryNameNorm === 'united kingdom' || countryNameNorm === 'uk' || countryNameNorm === 'gb') {
       return await this.processUKForms(accountRid, caseRid, countryRid, accountNumber, mainDb, orgDb, schemaName, countryName);
+    } else if (countryNameNorm === 'canada' || countryNameNorm === 'can') {
+       const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
+        accountRid,
+        countryRid,
+        mainDb,
+        effectiveStart,
+        effectiveEnd,
+      );
+      if (!formInfo?.browse_file) {
+        await this.rdFormMapperSchemaService.updateFederalFormError(
+          caseRid,
+          countryRid,
+          orgDb,
+          accountNumber,
+          'No valid T661 template available to process',
+        );
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: 'No T661 template found',
+          data: '',
+        };
+      }
+      const filledFormUrl = await this.generateT661Pdf(caseRid, schemaName, accountNumber, formInfo.browse_file);
+      logMessage(`T661 PDF filling completed. URL: ${filledFormUrl}`);
+      await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
+        caseRid,
+        countryRid,
+        filledFormUrl,
+        orgDb,
+        accountNumber,
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: 'Federal form processed successfully',
+        data: filledFormUrl,
+      };
     }
 
     try {
@@ -631,10 +667,462 @@ export class RdFormMapperService {
       `Successfully completed state form processing for case: ${caseRid}`,
     );
   }
-async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumber: string): Promise<string> {
-  const orgDb = await this.getOrgDb();
-  const mainDb = await this.getMainDb();
-  const currencySymbol = await this.getCurrencySymbolByCountry('Ireland', mainDb);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T661 — Canada SR&ED Expenditures Claim
+  // Static sections: Part 1 (claimant), Part 3 (totals), Part 4 (calculation),
+  //                  Part 5 (certification)
+  // Dynamic section: Part 2 — one page per project
+  // ─────────────────────────────────────────────────────────────────────────
+  async generateT661Pdf(
+    caseRid: string,
+    schemaName: string,
+    accountNumber: string,
+    templateBlobUrl: string,
+  ): Promise<string> {
+    // ── PDF Annotation approach ────────────────────────────────────────────
+    // Overlays data onto the official blank CRA T661 form template using
+    // pdf-lib annotations. The blank template must exist at:
+    //   src/modules/rdForm/templates/canadaform.pdf
+    //
+    // Field layout coordinates were extracted from the blank T661 PDF
+    // (canadaform.pdf) using structure analysis. Each annotation maps to
+    // the exact field entry box on the form.
+    // ──────────────────────────────────────────────────────────────────────
+    const fs   = require('fs');
+    const path = require('path');
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+
+    const orgDb  = await this.getOrgDb();
+    const mainDb = await this.getMainDb();
+
+    // ── 1. Fetch case + computed fields ───────────────────────────────────
+    const [caseRow]: any[] = await orgDb.query(
+      rawQueries.fetchCaseInfo(schemaName, caseRid),
+      { replacements: { caseRid }, type: QueryTypes.SELECT },
+    );
+    if (!caseRow) throw new Error('Case not found');
+
+    const [calcRow]: any[] = await orgDb.query(
+      rawQueries.fetchCountryCalculationForCase(schemaName),
+      { replacements: { caseRid }, type: QueryTypes.SELECT },
+    );
+    if (!calcRow) throw new Error('No calculation found for this case');
+
+    const computedFields = typeof calcRow.computed_fields === 'string'
+      ? JSON.parse(calcRow.computed_fields) : calcRow.computed_fields;
+    if (!computedFields) throw new Error('No computed_fields found');
+
+    const inputParams = typeof calcRow.input_params === 'string'
+      ? JSON.parse(calcRow.input_params) : calcRow.input_params;
+
+    // DB shape: { computedFields: { Total, Projects, Title }, finalCredit }
+    const inner       = computedFields?.computedFields ?? computedFields;
+    const totals      = inner?.Total    ?? {};
+    const projects    = (inner?.Projects ?? []) as any[];
+    const titleObj    = inner?.Title    ?? {};
+    const finalCredit = (computedFields?.finalCredit ?? inner?.finalCredit ?? 0) as number;
+    const p1 = computedFields?.Part1 ?? {}; // legacy
+
+    const fiscalYearStr = String(titleObj['Fiscal Year'] || inputParams?.fiscal_year || '');
+    const fyMatch       = fiscalYearStr.match(/(\d{4})[-\/](\d{4})/);
+    const taxYearFrom   = inputParams?.fiscal_year_start || (fyMatch ? fyMatch[1] : fiscalYearStr);
+    const taxYearTo     = inputParams?.fiscal_year       || (fyMatch ? fyMatch[2] : fiscalYearStr);
+
+    // Dummy SR&ED project data for any missing text fields
+
+    const fmt = (v: any): string => {
+      if (v === null || v === undefined || v === '') return '';
+      const n = Number(v);
+      if (!isNaN(n) && String(v).trim() !== '') {
+        return n.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return String(v);
+    };
+
+    // ── 2. Load blank template ─────────────────────────────────────────────
+    const parsedTemplateUrl = new URL(templateBlobUrl);
+    const [templateContainer] = parsedTemplateUrl.pathname
+      .split('/')
+      .filter(Boolean);
+    if (!templateContainer)
+      throw new Error('Invalid T661 template blob URL: container name not found');
+
+    const templateBlobName = decodeURIComponent(
+      parsedTemplateUrl.pathname.split('/').slice(2).join('/'),
+    );
+    logMessage(
+      `Downloading T661 template from container: ${templateContainer}, blob: ${templateBlobName}`,
+    );
+    const pdfBytes = await downloadBufferFromAzureBlob(templateContainer, templateBlobName);
+    const pdfDoc   = await PDFDocument.load(pdfBytes);
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const pages     = pdfDoc.getPages();
+
+    // Helper: draw text at PDF coords (y from bottom, x from left)
+    // PDF is 612 x 792. Our coords are "top from top", so y_pdf = 792 - top - height
+    const draw = (
+      pageIndex: number,
+      text: string,
+      x: number,
+      topFromTop: number,
+      fontSize = 8,
+      maxWidth = 500,
+    ) => {
+      if (!text || text.trim() === '') return;
+      const page = pages[pageIndex];
+      const y = 792 - topFromTop - fontSize;
+      // Truncate text to maxWidth
+      let t = text;
+      while (t.length > 0 && helvetica.widthOfTextAtSize(t, fontSize) > maxWidth) {
+        t = t.slice(0, -1);
+      }
+      page.drawText(t, { x, y, size: fontSize, font: helvetica, color: rgb(0, 0, 0) });
+    };
+
+    // Helper: multiline text in a box
+    const drawBox = (
+      pageIndex: number,
+      text: string,
+      x: number,
+      topFromTop: number,
+      boxHeight: number,
+      fontSize = 6,
+      lineSpacing = 1.3,
+    ) => {
+      if (!text || text.trim() === '') return;
+      const page     = pages[pageIndex];
+      const maxWidth = 580 - x;
+      const lineH    = fontSize * lineSpacing;
+      const words    = text.split(/\s+/);
+      let line = '';
+      let yOffset = topFromTop + fontSize;
+
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        if (helvetica.widthOfTextAtSize(test, fontSize) > maxWidth && line) {
+          page.drawText(line, {
+            x, y: 792 - yOffset, size: fontSize, font: helvetica, color: rgb(0,0,0),
+          });
+          yOffset += lineH;
+          if (yOffset - topFromTop > boxHeight) break;
+          line = word;
+        } else {
+          // Handle newlines in text
+          if (word.includes('\n')) {
+            const parts = word.split('\n');
+            line = (line ? line + ' ' : '') + parts[0];
+            page.drawText(line, {
+              x, y: 792 - yOffset, size: fontSize, font: helvetica, color: rgb(0,0,0),
+            });
+            for (let i = 1; i < parts.length; i++) {
+              yOffset += lineH;
+              if (yOffset - topFromTop > boxHeight) return;
+              if (parts[i]) {
+                page.drawText(parts[i], {
+                  x, y: 792 - yOffset, size: fontSize, font: helvetica, color: rgb(0,0,0),
+                });
+              }
+            }
+            line = parts[parts.length - 1] || '';
+          } else {
+            line = test;
+          }
+        }
+      }
+      if (line) {
+        page.drawText(line, {
+          x, y: 792 - yOffset, size: fontSize, font: helvetica, color: rgb(0,0,0),
+        });
+      }
+    };
+
+    // ── 3. PAGE 1 — Part 1 General information ────────────────────────────
+    const corpName  = caseRow.client_name || '';
+    const totalProj = String(projects.length || '');
+
+    draw(0, corpName,    23,  345, 9, 270); // 010 name of claimant
+    draw(0, taxYearFrom, 68,  421, 8,  55); // from year
+    draw(0, taxYearTo,   195, 421, 8,  55); // to year
+    draw(0, totalProj,   214, 437, 8,  30); // 050 total projects
+
+    // ── 4. PAGE 4 — Part 3 SR&ED Expenditures ─────────────────────────────
+    draw(3, 'X', 51, 103, 8); // 160 proxy method elected
+
+    draw(3, fmt(totals['FTE QRE']    ?? ''), 525, 192, 8); // 300 employees other than specified
+    draw(3, fmt(totals['FTE QRE']    ?? ''), 525, 222, 8); // 306 subtotal salaries
+    draw(3, fmt(totals['Subcon QRE'] ?? ''), 525, 334, 8); // 340 arm-length contracts
+   // draw(3, '0',                              525, 374, 8); // 360 overhead = 0
+    draw(3, fmt(totals['FTE QRE'] + (totals['Subcon QRE'] ?? 0)), 525, 386, 8); // 380 total allowable
+    draw(3, fmt(totals['FTE QRE'] + (totals['Subcon QRE'] ?? 0)), 525, 460, 8); // 420 = line 380
+    draw(3, fmt(totals['FTE QRE'] + (totals['Subcon QRE'] ?? 0)), 525, 558, 8); // 442 subtotal
+    draw(3, fmt(totals['FTE QRE'] + (totals['Subcon QRE'] ?? 0)), 525, 639, 8); // 455 amount available
+    draw(3, fmt(totals['FTE QRE'] + (totals['Subcon QRE'] ?? 0)), 525, 659, 8); // 460 deduction claimed
+    draw(3, '0',                              525, 694, 8); // 470 carry-forward
+
+    // ── 5. PAGE 5 — Part 4 Qualified expenditures ─────────────────────────
+    draw(4, fmt(totals['QRE']                   ?? ''), 525,  73, 8); // 492 total allowable
+    draw(4, fmt(totals['FTE Proxy (55%)']       ?? ''), 525, 116, 8); // 502 prescribed proxy
+    draw(4, fmt(totals['QRE']                   ?? ''), 525, 147, 8); // 511 subtotal
+    draw(4, fmt(totals['Contractors Amt (20%)'] ?? ''), 525, 249, 8); // 529 20% subcon
+    draw(4, fmt(totals['QRE']                   ?? ''), 525, 367, 8); // 559 qualified
+    draw(4, fmt(totals['QRE']                   ?? ''), 525, 411, 8); // 570 total qualified
+
+    // ── 6. PAGE 6 — Part 5 PPA + Part 6 Project Costs ─────────────────────
+    draw(5, fmt(totals['FTE QRE']         ?? ''), 525, 108, 8); // 810 salary base
+    draw(5, fmt(totals['FTE QRE']         ?? ''), 525, 157, 8); // 814 subtotal salary base
+    draw(5, fmt(totals['FTE QRE']         ?? ''), 525, 421, 8); // 818 salary base total
+    draw(5, fmt(totals['FTE Proxy (55%)'] ?? ''), 525, 464, 8); // 820 PPA 55%
+
+    const rowTops: number[] = [627, 647, 668, 689, 710];
+    projects.slice(0, 5).forEach((proj: any, idx: number) => {
+      const top: number = rowTops[idx] ?? 0;
+      draw(5, String(proj['Project Code'] || proj['Project Name'] || ''), 49,  top, 7, 150);
+      draw(5, fmt(proj['FTE QRE']    ?? ''), 217, top, 7, 90);
+      draw(5, fmt(proj['Subcon QRE'] ?? ''), 395, top, 7, 90);
+    });
+    draw(5, fmt(totals['FTE QRE']    ?? ''), 217, 735, 7, 90); // totals row salary
+    draw(5, fmt(totals['Subcon QRE'] ?? ''), 395, 735, 7, 90); // totals row contract
+
+    // ── 7. PAGE 7 — Part 7 Additional information ─────────────────────────
+    draw(6, fmt(totals['FTE QRE'] ?? ''), 525, 54, 8); // 605 SR&ED salaries in Canada
+   /* draw(6, 'X', 51, 270, 8); // 622 Experimental development
+    [410, 426, 442, 458, 476, 514, 530, 546, 562].forEach(top => draw(6, 'X', 545, top, 8));
+
+    // ── 8. PAGE 8 — Part 9 Claim preparer ─────────────────────────────────
+    draw(7, 'X', 61, 134, 8);
+    draw(7, 'Certainti.ai',         23,  310, 8, 170);
+    draw(7, '30-1409524',           197, 310, 8, 68);
+    draw(7, '1',                    270, 310, 8, 50);
+    draw(7, fmt(finalCredit ?? ''), 527, 310, 8, 60);
+    draw(7, fmt(finalCredit ?? ''), 527, 433, 8, 60);*/
+
+    // ── 9. PAGE 9 — Part 10 Certification ─────────────────────────────────
+    draw(8, corpName,                               43,  90, 8);
+    draw(8, new Date().toISOString().slice(0, 10), 475,  90, 8);
+    draw(8, 'Certainti.ai',                         43, 133, 8);
+
+    // ── 10. Dynamic Part 2 — one CLEAN page per project ──────────────────
+    //
+    // KEY POINT: Part 2 is dynamic — one full copy of pages 2+3 per project.
+    //
+    // Problem with naive copyPages(pdfDoc, [1]):
+    //   After project-1 text is drawn onto pdfDoc's page index 1, any
+    //   subsequent copyPages call from pdfDoc gives a page that ALREADY
+    //   contains project-1's annotations.  Project-2's text then draws
+    //   on top → overlap / corruption.
+    //
+    // Solution: For each project, reload the original blank template bytes
+    //   (pdfBytes, read once at the top of this method) into a fresh
+    //   PDFDocument, annotate its pages 1+2 (form pages 2+3) with that
+    //   project's data, then copy those two clean annotated pages into the
+    //   final assembled document.
+    //
+    // Final page order:
+    //   [0]        Part 1  (already annotated in pdfDoc)
+    //   [1..2]     Project-1  Part 2 Sec A+B / Sec C
+    //   [3..4]     Project-2  Part 2 Sec A+B / Sec C   (if exists)
+    //   ...
+    //   [n..n+5]   Parts 3-10 (pages 3-8 of pdfDoc, already annotated)
+
+    // Helper — annotate blank-doc pages for one project and return the two
+    // finished PDFPage objects (already copied into pdfDoc ready to insert).
+    const buildProjectPages = async (proj: any): Promise<any> => {
+      // Fresh blank doc from original bytes — completely empty
+      const blankDoc  = await PDFDocument.load(pdfBytes);
+      const blankFont = await blankDoc.embedFont(StandardFonts.Helvetica);
+      const bp        = blankDoc.getPages(); // bp[1] = Part2 SecA+B, bp[2] = Part2 SecC
+
+      // --- local draw helpers that write into blankDoc ---
+      const bd = (
+        pageIdx: number, text: string, x: number,
+        topFromTop: number, fontSize = 8, maxWidth = 500,
+      ) => {
+        if (!text?.trim()) return;
+        const page = bp[pageIdx];
+        const y    = 792 - topFromTop - fontSize;
+        let t = text;
+        while (t.length > 1 && blankFont.widthOfTextAtSize(t, fontSize) > maxWidth)
+          t = t.slice(0, -1);
+        page.drawText(t, { x, y, size: fontSize, font: blankFont, color: rgb(0,0,0) });
+      };
+
+      const bdBox = (
+        pageIdx: number, text: string, x: number,
+        topFromTop: number, boxHeight: number,
+        fontSize = 6, lineSpacing = 1.3,
+      ) => {
+        if (!text?.trim()) return;
+        const page     = bp[pageIdx];
+        const maxWidth = 580 - x;
+        const lineH    = fontSize * lineSpacing;
+        const words    = text.split(/\s+/);
+        let line = '';
+        let yOffset = topFromTop + fontSize;
+        for (const word of words) {
+          const test = line ? `${line} ${word}` : word;
+          if (blankFont.widthOfTextAtSize(test, fontSize) > maxWidth && line) {
+            page.drawText(line, { x, y: 792 - yOffset, size: fontSize, font: blankFont, color: rgb(0,0,0) });
+            yOffset += lineH;
+            if (yOffset - topFromTop > boxHeight) break;
+            line = word;
+          } else {
+            line = test;
+          }
+        }
+        if (line && (yOffset - topFromTop <= boxHeight))
+          page.drawText(line, { x, y: 792 - yOffset, size: fontSize, font: blankFont, color: rgb(0,0,0) });
+      };
+      // ---------------------------------------------------------
+
+      // ── Page 1 of blank (form page 2) — Sec A + Sec B ────────
+      // Coordinates verified against actual PDF rendering (no overlaps)
+      const pName  = String(proj['Project Name'] || proj['Project Code'] || 'SR&ED Project');
+      const pStart = String(proj['Start Year']   || taxYearFrom);
+      const pEnd   = String(proj['End Year']     || taxYearTo);
+      const pStartM= String(proj['Start Month']  || '');
+      const pEndM  = String(proj['End Month']    || '');
+      const fos    = String(proj['Field of Science'] || '2.02.09');
+      const isCont = Boolean(proj['Continuation']);
+
+      bd(1, pName,  23,  86,  8, 560);  // 200 title (below label top=74)
+      bd(1, pStart, 30,  149, 8, 52);   // 202 start year (below Year header top=137)
+      bd(1, pStartM,87,  149, 8, 35);   // 202 start month
+      bd(1, pEnd,   217, 149, 8, 52);   // 204 end year
+      bd(1, pEndM,  272, 149, 8, 35);   // 204 end month
+      bd(1, fos,    391, 130, 7, 190);  // 206 field of science (below sub-label top=118)
+      bd(1, isCont ? 'X' : '',  44,  163, 8, 14);  // 208 continuation checkbox
+      bd(1, isCont ? '' : 'X', 284,  163, 8, 14);  // 210 first claim checkbox
+      bd(1, 'X',                548,  185, 8, 14);  // 218 No — not joint work
+
+      // Section B — text stamped line-by-line onto ruled lines
+      // Ruled line tops from pdfplumber (top-origin). Text placed just ABOVE each line.
+      // LINES_xxx[0] = label/question row → skip it; use [1:] for entry rows.
+      const LINES_242 = [316.2, 329.7, 344.1, 358.5, 372.9, 387.6];
+      const LINES_244 = [405.8, 420.0, 434.4, 448.8, 463.2, 477.6, 492.0, 506.4,
+                         520.8, 535.2, 549.6, 564.0, 578.4, 592.8, 607.2, 621.6, 640.3];
+      const LINES_246 = [640.3, 658.6, 672.7, 687.1, 701.5, 715.9];
+
+      const stampLines = (lineList: number[], text: string, fontSize = 7) => {
+        if (!text?.trim()) return;
+        const entryLines = lineList.slice(1); // skip first (label row)
+        const charsPerLine = Math.floor(560 / (fontSize * 0.52));
+        const wrapped: string[] = [];
+        for (const para of text.split('\n')) {
+          const words = para.split(' ');
+          let line = '';
+          for (const word of words) {
+            const test = line ? line + ' ' + word : word;
+            if (test.length > charsPerLine && line) { wrapped.push(line); line = word; }
+            else line = test;
+          }
+          if (line) wrapped.push(line);
+        }
+        wrapped.forEach((line, i) => {
+          if (i >= entryLines.length) return;
+          const lineValue = entryLines[i];
+          if (lineValue === undefined) return;
+          const textTop = lineValue - fontSize - 1; // just above the ruled line
+          bd(1, line, 23, textTop, fontSize, 560);
+        });
+      };
+
+      let uncertainty   = String(proj['Uncertainty']    || proj['242'] || '');
+      const workPerformed = String(proj['Work Performed'] || proj['244'] || '');
+      const advancements  = String(proj['Advancements']   || proj['246'] || '');
+     
+      stampLines(LINES_242, uncertainty);
+      stampLines(LINES_244, workPerformed);
+      stampLines(LINES_246, advancements);
+
+      // ── Page 2 of blank (form page 3) — Sec C ─────────────────
+      // Coords verified: ruled lines at 131.3 (257 row), 155.4 (name/firm entry),
+      //   183.6 (personnel row 1), 201.6 (row 2), 219.6 (row 3)
+     /* const prepName = String(proj['PreparedByName'] || 'Certainti.ai');
+      const prepFirm = String(proj['PreparedByFirm'] || 'Certainti.ai');
+      const personnel: any[] = proj['KeyPersonnel'] || [];
+
+      // 257 External consultant checkbox (label top=141) + name/firm on entry line (top=144)
+      bd(2, 'X',        44,  141, 8, 14);  // 257 checkbox
+      bd(2, prepName,   235, 144, 8, 200); // 258 name (entry below ruled line 131.3)
+      bd(2, prepFirm,   467, 144, 8, 118); // 259 firm
+
+      // Key personnel: entry rows at 183, 201, 219 (ruled lines at 183.6, 201.6, 219.6)
+      const personnelTops = [183, 201, 219];
+      personnel.slice(0, 3).forEach((p: any, idx: number) => {
+        const top = personnelTops[idx] || 0;
+        bd(2, String(p.name  || ''), 35,  top, 8, 260);
+        bd(2, String(p.quals || ''), 309, top, 8, 270);
+      });
+
+      // 265 No / 266 No / 267 Yes — label tops: 244.6 / 259.3 / ~274
+      bd(2, 'X', 557, 245, 8, 14);  // 265 No
+      bd(2, 'X', 557, 260, 8, 14);  // 266 No
+      bd(2, 'X', 522, 275, 8, 14);  // 267 Yes
+
+      // Evidence checkboxes — positions measured from pdfplumber word coordinates
+      const evidence: string[] = proj['Evidence'] || ['270','274','276','280','281'];
+      const evidencePos: Record<string, [number, number]> = {
+        '270': [44,  370], '271': [44,  383], '272': [44,  396],
+        '273': [44,  409], '274': [44,  424], '275': [44,  437],
+        '276': [331, 370], '277': [331, 383], '278': [331, 396],
+        '279': [331, 409], '280': [331, 424], '281': [331, 437],
+      };
+      evidence.forEach(code => {
+        const pos = evidencePos[code];
+        if (pos) bd(2, 'X', pos[0], pos[1], 8);
+      });
+      if (proj['EvidenceOther'])
+        bd(2, String(proj['EvidenceOther']), 365, 443, 8, 220);
+*/
+      // Return the annotated blankDoc itself — pages will be copied into
+      // finalDoc at assembly time using finalDoc.copyPages(blankDoc, [1, 2])
+      return blankDoc;
+    };
+
+    // ── Assemble final document ────────────────────────────────────────────
+    // Build a brand-new PDFDocument with pages in correct order:
+    //   Part 1  →  [Project-1 p2+p3]  →  [Project-2 p2+p3]  →  Parts 3-10
+    const finalDoc = await PDFDocument.create();
+
+    // Part 1 (index 0 of pdfDoc — already annotated)
+    const [part1Page] = await finalDoc.copyPages(pdfDoc, [0]);
+    finalDoc.addPage(part1Page);
+
+    // One Part-2 spread (2 pages) per project — copy from each project's own blankDoc
+    for (const proj of projects) {
+      const blankDoc = await buildProjectPages(proj);
+      const [secAB, secC] = await finalDoc.copyPages(blankDoc, [1, 2]);
+      finalDoc.addPage(secAB);
+      finalDoc.addPage(secC);
+    }
+
+    // Parts 3-10 (indices 3-8 of pdfDoc — already annotated)
+    const staticPages = await finalDoc.copyPages(pdfDoc, [3, 4, 5, 6, 7, 8]);
+    staticPages.forEach((p: any) => finalDoc.addPage(p));
+
+    // ── 11. Serialize and upload ───────────────────────────────────────────
+    const filledBytes = await finalDoc.save();
+    const pdfBuf      = Buffer.from(filledBytes);
+    const localDir = path.resolve(__dirname, '../../../output/pdfs');
+      if (!fs.existsSync(localDir)) {
+        fs.mkdirSync(localDir, { recursive: true });
+      }
+      const localPath = path.join(localDir, `ireland_credit_${caseRid}_${Date.now()}.pdf`);
+      fs.writeFileSync(localPath, pdfBuf);
+      logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
+
+    const blobName = `cases/${caseRid}/rdForms/t661_${caseRid}_${Date.now()}.pdf`;
+    const blobUrl  = await uploadBufferToAzureBlob(pdfBuf, blobName, accountNumber);
+    logMessage(`[T661] PDF generated (${projects.length} project pages): ${blobUrl}`);
+    return blobUrl;
+  }
+
+
+  async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumber: string): Promise<string> {
+    const orgDb = await this.getOrgDb();
+    const mainDb = await this.getMainDb();
+    const currencySymbol = await this.getCurrencySymbolByCountry('Ireland', mainDb);
   const [caseRow]: any[] = await orgDb.query(
    rawQueries.fetchCaseInfo(schemaName,caseRid),
     { replacements: { caseRid }, type: QueryTypes.SELECT }
@@ -659,9 +1147,13 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
   doc.fontSize(16).font('Helvetica-Bold').text('Ireland R&D Credit Summary', { align: 'center' });
   doc.moveDown(1);
   doc.fontSize(11).font('Helvetica');
-  Object.entries(titleFields).forEach(([label, value]) => {
-    doc.font('Helvetica-Bold').text(label + ':', { continued: true }).font('Helvetica').text(' ' + value);
-  });
+  // Print only Account Name and Fiscal Year (Expleo)
+  if (titleFields['Account Name']) {
+    doc.font('Helvetica-Bold').text('Account Name:', { continued: true }).font('Helvetica').text(' ' + titleFields['Account Name']);
+  }
+  if (titleFields['Expleo']) {
+    doc.font('Helvetica-Bold').text('Fiscal Year:', { continued: true }).font('Helvetica').text(' ' + titleFields['Expleo']);
+  }
   doc.moveDown(1);
 
   const columns: string[] = computedFields.Columns || [];
@@ -672,89 +1164,124 @@ async generateIrelandCreditPdf(caseRid: string, schemaName: string, accountNumbe
 
 
   // Helper to render a table for a given set of projects
+const ROW_PADDING = 5;
+  const FONT_SIZE = 9;
+  const HEADER_FONT_SIZE = 9;
+
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'number')
+      return currencySymbol
+        ? `${currencySymbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+        : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return String(value);
+  };
+
+  // Helper to render a bordered table for a given slice of projects
   const renderProjectTable = (projectSlice: any[], projectOffset: number, isLastPage: boolean) => {
-    // Use the actual number of projects in the slice, no padding
-    const maxProjects = projectSlice.length;
-    const projectNames = [];
-    for (let idx = 0; idx < maxProjects; idx++) {
-      if (projectSlice[idx]) {
-        projectNames.push(projectSlice[idx]['Project Name'] || projectSlice[idx]['Project Credit Summary'] || `Project ${projectOffset + idx + 1}`);
-      } else {
-        projectNames.push('-');
-      }
-    }
-    const tableCols = isLastPage ? ['', ...projectNames, 'Total'] : ['', ...projectNames];
-    const colWidths = tableCols.map(() => Math.floor((doc.page.width - doc.page.margins.left - doc.page.margins.right) / tableCols.length));
+    const left = doc.page.margins.left;
+    const usableWidth = doc.page.width - left - doc.page.margins.right;
 
-    // Table header row
-    doc.font('Helvetica-Bold').fontSize(10);
-    let tableStartX = doc.page.margins.left;
-    let x = tableStartX;
-    tableCols.forEach((col, i) => {
-      doc.text(col, x, doc.y, {
-        width: colWidths[i],
-        align: 'center',
-        continued: i < tableCols.length - 1
-      });
-      x += colWidths[i];
-    });
-    doc.moveDown(1);  // Spacing after header
+    // Build column definitions: [row-label col, ...project cols, optional Total col]
+    const projectNames = projectSlice.map(
+      (p, i) => p?.['Project Name'] || p?.['Project Credit Summary'] || `Project ${projectOffset + i + 1}`
+    );
+    const headerLabels = isLastPage
+      ? ['', ...projectNames, 'Total']
+      : ['', ...projectNames];
 
-    // Print each field (column heading) as a row
-    columns.slice(1).forEach((field, fieldIdx) => {
-      x = tableStartX;
-      doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
-      // Field name
-      doc.text(field, x, doc.y, {
-        width: colWidths[0],
-        align: 'left',
-        continued: true
-      });
-      x += colWidths[0];
+    const numCols = headerLabels.length;
+    // First column (row label) gets 35% of usable width; rest split equally
+    const labelColWidth = Math.floor(usableWidth * 0.35);
+    const dataColWidth  = Math.floor((usableWidth - labelColWidth) / (numCols - 1));
+    const colWidths = [labelColWidth, ...Array(numCols - 1).fill(dataColWidth)];
 
-      // Each project value for this field (each in its own column)
-      for (let projIdx = 0; projIdx < maxProjects; projIdx++) {
-        let value: any = '-';
-        if (projectSlice[projIdx]) {
-          value = projectSlice[projIdx][field] ?? '-';
+    // ── Draw header row ──────────────────────────────────────────────────────
+  const drawRow = (
+      cellTexts: string[],
+      currentY: number,
+      rowHeight: number,
+      isBold: boolean,
+      isHeader: boolean,
+    ) => {
+      let cellX = left;
+      cellTexts.forEach((text, colIdx) => {
+        const cw = colWidths[colIdx];
+        // Cell background for header
+        if (isHeader) {
+          doc.save().rect(cellX, currentY, cw, rowHeight).fill('#E8E8E8').restore();
         }
-        doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
-        const formattedValue = typeof value === 'number'
-          ? (currencySymbol ? `${currencySymbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : value.toLocaleString(undefined, { maximumFractionDigits: 2 }))
-          : String(value);
-        doc.text(
-          formattedValue,
-          x,
-          doc.y,
-          {
-            width: colWidths[projIdx + 1],
-            align: 'right',
-            continued: projIdx < maxProjects - 1 || isLastPage  // Continue if not the last project or if last page (for total)
-          }
-        );
-        x += colWidths[projIdx + 1];
-      }
+        // Cell border
+        doc.rect(cellX, currentY, cw, rowHeight).stroke();
+        // Cell text — save y before, restore after so pdfkit cursor never drifts
+        const savedY = doc.y;
+        doc
+          .font(isBold || isHeader ? 'Helvetica-Bold' : 'Helvetica')
+          .fontSize(isHeader ? HEADER_FONT_SIZE : FONT_SIZE)
+          .text(
+            text,
+            cellX + ROW_PADDING,
+            currentY + ROW_PADDING,
+            {
+              width: cw - ROW_PADDING * 2,
+              align: colIdx === 0 ? 'left' : 'right',
+              lineBreak: false,
+              lineGap: 0,
+            },
+          );
+        doc.y = savedY; // prevent pdfkit from advancing the cursor between cells
+        cellX += cw;
+      });
+    };
 
-      // Total value for this field (only on last page)
-      if (isLastPage) {
-        doc.font(boldFields.includes(field) ? 'Helvetica-Bold' : 'Helvetica');
-        const totalValue = total[field] ?? '';
-        const formattedTotal = typeof totalValue === 'number'
-          ? (currencySymbol ? `${currencySymbol}${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 }))
-          : totalValue;
-        doc.text(
-          formattedTotal,
-          x,
-          doc.y,
-          {
-            width: colWidths[colWidths.length - 1],
-            align: 'right',
-            continued: false
-          }
-        );
+    // Measure row height for a set of cell texts
+    const measureRowHeight = (cellTexts: string[], isHeader: boolean): number => {
+      const maxHeight = Math.max(
+        ...cellTexts.map((text, colIdx) =>
+          doc
+            .fontSize(isHeader ? HEADER_FONT_SIZE : FONT_SIZE)
+            .heightOfString(text, { width: colWidths[colIdx] - ROW_PADDING * 2 })
+        ),
+      );
+      return maxHeight + ROW_PADDING * 2;
+    };
+
+    // Page-break-aware row emitter
+    const emitRow = (
+      cellTexts: string[],
+      isBold: boolean,
+      isHeader: boolean,
+    ) => {
+      const rowHeight = measureRowHeight(cellTexts, isHeader);
+      // If row won't fit, add a new page and reset Y
+      if (doc.y + rowHeight > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
       }
-      doc.moveDown(1.5);  // Increased spacing between rows
+      drawRow(cellTexts, doc.y, rowHeight, isBold, isHeader);
+      doc.y += rowHeight; // advance cursor manually (we used absolute coords)
+    };
+
+    // ── Header row (project names) ───────────────────────────────────────────
+    emitRow(headerLabels, true, true);
+
+    // ── Data rows (one per field) ────────────────────────────────────────────
+    columns.slice(1).forEach((field) => {
+      const isBold = boldFields.includes(field);
+
+      const projectValues = projectSlice.map((proj) =>
+        formatValue(proj?.[field] ?? '-')
+      );
+
+      const totalValue = isLastPage ? formatValue(total[field] ?? '') : null;
+
+      const cellTexts = totalValue !== null
+        ? [field, ...projectValues, totalValue]
+        : [field, ...projectValues];
+
+      emitRow(cellTexts, isBold, false);
     });
+
+    doc.moveDown(1);
   };
   // Paginate projects: 2 per page
   const projectsPerPage = 2;

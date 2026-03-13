@@ -137,6 +137,13 @@ export class KafkaConsumerService {
                               replacements: { case_rid: payload.caseRid },
                               type: "SELECT"
                             });
+                    const [userInfo]:any[] = await mainDb.query(
+                        rawQueries.fetchUserDetails(payload.userId),
+                        {
+                          replacements: { rid: payload.userId },
+                          type: "SELECT"
+                        }
+                    );
                           
                     let ruleEnginePayload = {
                             entityName: caseInfo.case_name,
@@ -144,8 +151,8 @@ export class KafkaConsumerService {
                             eventName: ruleNames.caseCreated,
                             userId: payload.userId,
                             accountRid: payload.accountRid,
-                            targetUserID: caseInfo.case_owner_rid,
-                            targetEmail: caseInfo.email || "",
+                            targetUserID:payload.userId,
+                            targetEmail: userInfo.email || "",
                             entityRid: payload.caseRid,
                             ruleScope: ruleNames.dossierPackageCreated,
                             caseName: caseInfo.case_name || "",

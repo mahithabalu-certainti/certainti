@@ -42,6 +42,7 @@ import {
   ComputedValueRequest,
   CaseStateComputedType,
   CaseCountryComputedType,
+  RevokeSignoffRequest,
 } from "../../utils/types";
 
 export interface ICaseService {
@@ -569,6 +570,10 @@ export interface IChildCaseService extends ICaseService {
       stateComputedData: CaseStateComputedType[];
     };
   }>
+  revokeSignOff(data : RevokeSignoffRequest): Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;
