@@ -231,7 +231,10 @@ export const getProjectColumns = (
     editId: 'is_assesed',
     label: 'Is Assessed?',
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['is_assesed']?.read &&
+      permissionMap?.['is_assesed']?.edit &&
+      !accountInActive,
     width: 120,
     hide:
       !permissionMap?.['is_assesed']?.read &&

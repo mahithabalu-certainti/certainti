@@ -237,7 +237,9 @@ export const getAllProjectListColumns = (
     editId: 'is_assesed',
     label: 'Is Assessed?',
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['is_assesed']?.read &&
+      permissionMap?.['is_assesed']?.edit,
     width: 120,
     hide:
       !permissionMap?.['is_assesed']?.read &&
@@ -252,6 +254,17 @@ export const getAllProjectListColumns = (
       required: true,
       options: IsAssessedOptions,
     },
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'classification_name',
