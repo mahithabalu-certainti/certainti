@@ -1746,6 +1746,7 @@ export class ProjectService {
         "Project Type": "Project Type",
         "Account Name": "Name",
         "Fiscal Year": "Fiscal Year",
+        "Is Assessed": "Is Assessed",
         "Project Classification": "Classification",
         "Customer Group": "Client Group",
         "Project Group": "Project Group",
@@ -1764,7 +1765,6 @@ export class ProjectService {
         Comments: "Comments",
         "Last Modified": "Updated On",
         "Project ID": "Project ID",
-        "Is Assessed": "Is Assessed",
       };
 
       rawResult.forEach((project: any) => {
@@ -1775,6 +1775,7 @@ export class ProjectService {
           "Project Type": "-",
           "Account Name": "-",
           "Fiscal Year": "-",
+          "Is Assessed": "-",
           "Project Classification": "-",
           "Customer Group": "-",
           "Project Group": "-",
@@ -1809,7 +1810,6 @@ export class ProjectService {
           Comments: "-",
           "Last Modified": "-",
           "Project ID": project.r_number || "-",
-          "Is Assessed": "-",
         };
         const filteredProjectRow: Record<string, string> = {};
         for (const [label, value] of Object.entries(projectInfo)) {
@@ -1832,6 +1832,7 @@ export class ProjectService {
               "Project Type": fiscal.project_type_name || "-",
               "Account Name": fiscal.account_name || "-",
               "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
+              "Is Assessed": fiscal.is_assesed ? "Yes" : "No",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
               "Project Group": fiscal?.project_group || "-",
@@ -1877,7 +1878,6 @@ export class ProjectService {
                   )
                 : "-",
               "Project ID": fiscal.r_number || "-",
-              "Is Assessed": fiscal.is_assesed ? "Yes" : "No",
             };
             const filteredFiscalRow: Record<string, string> = {};
             for (const [label, value] of Object.entries(fiscalInfo)) {
