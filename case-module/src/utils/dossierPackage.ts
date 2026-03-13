@@ -5,7 +5,7 @@ import { BlobServiceClient } from "@azure/storage-blob";
 import { getSecret } from "./azureSecrets";
 
 type ZipFile =
-  | { name: string; buffer: Buffer; extension?: string }
+  | { name: string; project_code : string | null; buffer: Buffer; extension?: string }
   | { name: string; url: string; extension?: string }
   | { name: string; urls: string[]; extension?: string };
 
@@ -26,9 +26,15 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
       for (const file of files) {
         const ext = file.extension ?? ".pdf";
         if ("buffer" in file) {
-          archive.append(file.buffer, {
-            name: `${file.name}${ext}`,
-          });
+          if(file.name === 'Technical Summary') {
+              archive.append(file.buffer, {
+              name: `Technical Summary-${file.project_code}${ext}`,
+            });
+          } else {
+            archive.append(file.buffer, {
+              name: `${file.name}${ext}`,
+            });
+          }
         }
         else if ("url" in file) {
           if(file.url !== '') {
