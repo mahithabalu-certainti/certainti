@@ -311,7 +311,10 @@ const Dossier: React.FC<DossierProps> = ({
   const { refetch: refetchRDCreditStatus, isLoading: isRDCreditStatusLoading } =
     useRDCreditStatus(accountid, caseId ?? '', false);
   const { mutate: refetchDossierInitiate } = useDossierInitiate();
-  const { mutate: refetchDossierSheetStatus } = useDossierSheetStatus();
+  const {
+    mutate: refetchDossierSheetStatus,
+    isPending: isDossierSheetStatusLoading,
+  } = useDossierSheetStatus();
   const handleRefresh = async () => {
     // Skip API call for COMPLETED or any empty/undefined value
     if (
@@ -618,8 +621,9 @@ const Dossier: React.FC<DossierProps> = ({
     {
       label: caseDetails?.is_initiated ? 'Download Dossier' : 'Create Dossier',
       variant: 'outlined' as const,
+      isLoading: isDossierSheetStatusLoading,
       disabled:
-        !caseDetails?.financial_working_signoff ||
+        !caseDetails?.rd_form_signoff ||
         (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''), // need to change rd form sign after rd form complete
       onClick: handleGenerateDossierSheet,
       sx: { width: '125px', minWidth: '125px' },
