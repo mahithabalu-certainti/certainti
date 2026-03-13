@@ -46,7 +46,7 @@ const RDForm: React.FC<RDFormProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
-  const accountid = searchParams.get('accountID') ?? '';
+  const accountId = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
 
@@ -60,7 +60,7 @@ const RDForm: React.FC<RDFormProps> = ({
     (state: RootState) => state.account
   );
   const { data } = useFetchCasesConfigFields(
-    accountid as string,
+    accountId as string,
     'case',
     caseId as string
   );
@@ -81,7 +81,7 @@ const RDForm: React.FC<RDFormProps> = ({
   const handleRDFormMapperGenerate = async () => {
     generateRDForm(
       {
-        accountRid: accountid,
+        accountRid: accountId,
         caseRid: caseId ?? '',
         fiscalYear: Number(caseDetails?.fiscal_year || 0),
       },
@@ -106,7 +106,7 @@ const RDForm: React.FC<RDFormProps> = ({
     setIsPreviewError(false);
     previewRDForm(
       {
-        accountRid: accountid,
+        accountRid: accountId,
         caseRid: caseId ?? '',
         countryRid: caseCountryDetails.country_id,
         isFederal: activeTab === 'federal',
@@ -136,7 +136,7 @@ const RDForm: React.FC<RDFormProps> = ({
     rdFormRevoke(
       {
         case_rid: caseId ?? '',
-        account_rid: accountid,
+        account_rid: accountId,
         type: 'RD Forms',
       },
       {
@@ -453,7 +453,7 @@ const RDForm: React.FC<RDFormProps> = ({
         isOpen={isSignOffModalOpen}
         onClose={() => setIsSignOffModalOpen(false)}
         caseId={caseId ?? ''}
-        accountId={accountid}
+        accountId={accountId}
         refetchCaseDetails={refetchCaseDetails}
         title='RD Form'
         isRdform={true}

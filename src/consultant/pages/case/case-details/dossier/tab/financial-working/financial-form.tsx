@@ -187,7 +187,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
-  const accountid = searchParams.get('accountID') ?? '';
+  const accountId = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
   const { successToast, errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
@@ -195,7 +195,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     useState<boolean>(false);
 
   const { data, isLoading } = useFetchCasesConfigFields(
-    accountid as string,
+    accountId as string,
     'case',
     caseId as string
   );
@@ -285,7 +285,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     rdRevoke(
       {
         case_rid: caseId ?? '',
-        account_rid: accountid ?? '',
+        account_rid: accountId ?? '',
         type: 'Financial Working',
       },
       {
@@ -369,7 +369,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleViewFinancialHighlightsForRegion = async () => {
     previewRDCredit(
       {
-        accountrid: accountid,
+        accountrid: accountId,
         caseId: caseId ?? '',
         type: selectedRegion ? 'state' : 'summary',
         ...(selectedRegion && { stateRid: selectedRegion }),
@@ -396,7 +396,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const handleViewFinancialHighlights = async () => {
     const payload = {
-      account_rid: accountid,
+      account_rid: accountId,
       case_rid: caseId ?? '',
     };
 
@@ -416,7 +416,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleInitiateFinancialHighlights = async () => {
     setShowFinancialValues(false);
     const payload = {
-      account_rid: accountid,
+      account_rid: accountId,
       case_rid: caseId ?? '',
       fiscal_year: Number(caseDetails?.fiscal_year || 0),
     };
@@ -735,7 +735,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         isOpen={isSignOffModalOpen}
         onClose={() => setIsSignOffModalOpen(false)}
         caseId={caseId ?? ''}
-        accountId={accountid}
+        accountId={accountId}
         refetchCaseDetails={refetchCaseDetails}
       />
 
