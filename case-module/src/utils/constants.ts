@@ -2186,6 +2186,9 @@ WHERE dmf.country_rid = '${countryRid}'
   fetchAllActiveStates() {
     return `
         SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE status = 'active'`;
+  },
+  updateStatusForWorkFlowConnector(statusRid : string, templateRid : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.workflow_connector_mapping SET status_rid = '${statusRid}' WHERE source_rid = '${templateRid}' OR target_rid = '${templateRid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
