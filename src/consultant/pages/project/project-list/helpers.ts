@@ -77,9 +77,9 @@ export const getAllProjectFilterFields = (
     type: 'enum',
     options: IsAssessedOptions,
     operatorOption: fiscalOptions,
-    // hide:
-    //   !projectPermissionMap?.['is_assesed']?.read &&
-    //   !projectPermissionMap?.['is_assesed']?.edit,
+    hide:
+      !projectPermissionMap?.['is_assesed']?.read &&
+      !projectPermissionMap?.['is_assesed']?.edit,
   },
   {
     name: 'Project Classification',
