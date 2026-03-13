@@ -64,7 +64,31 @@ const createCaseSchema = Joi.object({
   qualified_computer_rental_time_expenses: positiveDecimal18_2,
   credit_carry_forward_py: positiveDecimal18_2,
   current_year_gross_receipts: positiveDecimal18_2,
-  other_credits_total: positiveDecimal18_2
+  other_credits_total: positiveDecimal18_2,
+  amendment_case_info: Joi.array()
+    .items(
+      Joi.object({
+        is_federal: Joi.boolean().required(),
+        history_submission_rid: Joi.string().optional(),
+        fiscal_year: Joi.number().required(),
+        total_project: Joi.number().integer().required(),
+        total_qualified_project: Joi.number().integer().required(),
+        total_project_cost: Joi.number().precision(2).required(),
+        total_qualified_project_cost: Joi.number().precision(2).required(),
+        total_qre: Joi.number().precision(2).required(),
+        total_rd_credits: Joi.number().precision(2).required(),
+        annual_gross_receipts: Joi.number().precision(2).optional(),
+        total_fte_cost: Joi.number().optional(),
+        total_subcon_cost: Joi.number().optional(),
+        total_nonlabor_cost: Joi.number().optional(),
+        country_rid: Joi.string().required(),
+        state_rid: Joi.string().optional().allow("", null),
+        state_name:Joi.string().optional().allow("", null),
+        eid: Joi.string().optional(),
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .optional()
 });
 
 

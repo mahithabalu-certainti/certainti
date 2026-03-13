@@ -470,7 +470,8 @@ class CaseSchemaService {
         );
         return cloneResponse;
       }
-
+      else
+      {
         const [filingType]: any[] = await this.mainDbSequelize!.query(
         rawQueries.fetchFilingTypeByName(caseFilingTypes.regular),
         {
@@ -510,14 +511,6 @@ class CaseSchemaService {
                                     case_rid: casecreationResponse.rid,
                                   },["account","case"]);
 
-        // await this.addCaseManagementTimeline(
-        //   accountNumber,
-        //   casecreationResponse.rid,
-        //   caseRequest.account_rid,
-        //   caseRequest,
-        //   caseRequest.created_by || "",
-        //   "created"
-        // );
         await this.addJurisdiction(
           casecreationResponse.account_rid,
           casecreationResponse.rid,
@@ -525,9 +518,22 @@ class CaseSchemaService {
           caseRequest,
           transaction
         );
+
+        // Process historical submission data after case creation with caseRid
+        if (caseRequest.amendment_case_info && caseRequest.amendment_case_info.length > 0) {
+          await this.helperMethod.processHistoricalSubmissionData(
+            accountNumber,
+            casecreationResponse.rid,
+            caseRequest.amendment_case_info,
+            caseRequest.created_by,
+            caseRequest.account_rid
+          );
+        }
+    
+      }
+      return casecreationResponse;
       }
 
-      return casecreationResponse;
     } catch (error) {
       logMessage(`Error creating case: ${error}`);
       throw new Error("Error creating case: " + error);
@@ -5039,6 +5045,9 @@ const getSortColumnForReviewProjects = (sortField: string): string => {
 
   return sortMapping[sortField] || "c.r_number";
 };
+
+
+
 
 export default CaseSchemaService;
 function filterForCases(
