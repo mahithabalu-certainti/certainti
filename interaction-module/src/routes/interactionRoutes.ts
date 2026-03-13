@@ -76,6 +76,11 @@ routes.put(
   controller.interactionsController.updateTechSummaryContext
 );
 routes.post(
+  "/refineSummary",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.interactionsController.refineSummary
+);
+routes.post(
   "/refineSummary/save",
   checkUserStatusMiddleware("projects_tech_summary_view_edit"),
   controller.interactionsController.saveRefineSummary

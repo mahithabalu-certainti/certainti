@@ -2050,13 +2050,55 @@ class InteractionSchemaService {
     }
   }
 
+  async refineSummary(
+    refinementPrompt: string,
+    existingSummary: any,
+    techSummaryId: string,
+    accountRid: string,
+    projectFiscalRid: string,
+    userId: string
+  ): Promise<any> {
+    try {
+      const payload = {
+        company_id: accountRid,
+        project_id: projectFiscalRid,
+        refinment_prompt: refinementPrompt,
+        existing_summary: existingSummary,
+        request_id: techSummaryId,
+      };
+
+      let headers = {
+        "Content-Type": "application/json",
+      };
+
+      const response = await axios.post(
+        process.env.TRIGGER_AI_REFINE_SUMMARY!,
+        payload,
+        {
+          headers: headers,
+        }
+      );
+
+      return response.data;
+    } catch (err) {
+      logMessage(`Error refining summary context: ${err}`);
+      throw new Error("Error refining summary context: " + (err as Error).message);
+    }
+  }
+
   async saveRefineSummary(
     technicalSummary: any,
     techSummaryId: string,
     accountNumber: string,
+    projectFiscalId: string,
     userId: string
   ) {
     try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+
       const { AiTechnicalSummary } = await this.interactionModelService.getModels(
         accountNumber
       );
@@ -2069,24 +2111,57 @@ class InteractionSchemaService {
         logMessage(`Invalid technical summary ID: ${techSummaryId}`);
         throw new Error("Invalid technical summary ID");
       }
-      
+
       const summaryString = typeof technicalSummary === 'string' ? technicalSummary : JSON.stringify(technicalSummary);
 
-      await AiTechnicalSummary.update(
-        {
-          technical_summary: summaryString,
-          modified_by: userId,
-          modified_datetime: new Date(),
-        },
-        {
-          where: {
-            rid: techSummaryId,
-          },
-        }
+      const activeStatus: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAllStatus(),
+        { type: "SELECT" }
       );
+      const activeStatusObj = activeStatus.find(s => s.status_name === 'Active');
+
+      // Get the next version number
+      const maxVersion = await AiTechnicalSummary.max("version", {
+        where: {
+          account_rid: techSummary.account_rid,
+          project_rid: techSummary.project_rid,
+          project_fiscal_rid: projectFiscalId,
+        },
+      });
+      const version =
+        (typeof maxVersion === "number"
+          ? maxVersion
+          : parseInt(maxVersion as any) || 0) + 1;
+
+      // Create new record with the next version
+      const newTechSummary = await AiTechnicalSummary.create({
+        created_by: userId,
+        account_rid: techSummary.account_rid,
+        fiscal_year: techSummary.fiscal_year,
+        project_rid: techSummary.project_rid,
+        project_fiscal_rid: projectFiscalId,
+        technical_summary: summaryString,
+        version,
+        status_rid: activeStatusObj?.rid,
+      });
+
+      // Mark all older records as In-Active
+      if (newTechSummary.rid) {
+        await AiTechnicalSummary.update(
+          { status_rid: activeStatus.find(s => s.status_name === 'In-Active')?.rid },
+          {
+            where: {
+              account_rid: techSummary.account_rid,
+              project_rid: techSummary.project_rid,
+              project_fiscal_rid: projectFiscalId,
+              rid: { [require("sequelize").Op.ne]: newTechSummary.rid },
+            },
+          }
+        );
+      }
     } catch (err) {
-      logMessage(`Error updating technical summary: ${err}`);
-      throw new Error("Error updating technical summary" + (err as Error).message);
+      logMessage(`Error saving refined technical summary: ${err}`);
+      throw new Error("Error saving refined technical summary: " + (err as Error).message);
     }
   }
 

@@ -414,22 +414,22 @@ export class ProjectService {
               accountNumber
             );
           }
-        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                                              userId: userId!,
-                                              eventType: eventTypes.UI_HANDLER
-                                            });
-        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
-          created_by: userId!,
-          account_rid: projectData.account_id,
-          entity_rid: createdProjectFiscal?.rid!,
-          entity_name: entityTypes.PROJECT,
-          created_by_name: userEventInfo.full_name,
-          event_type_rid: userEventInfo.event_type_rid,
-          event_name: eventNames.CREATE,
-          descriptions:projectData.project_code,
-          project_rid: createdProjectFiscal.rid
-        },["account","project"]);
-    
+          const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+            userId: userId!,
+            eventType: eventTypes.UI_HANDLER
+          });
+          await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+            created_by: userId!,
+            account_rid: projectData.account_id,
+            entity_rid: createdProjectFiscal?.rid!,
+            entity_name: entityTypes.PROJECT,
+            created_by_name: userEventInfo.full_name,
+            event_type_rid: userEventInfo.event_type_rid,
+            event_name: eventNames.CREATE,
+            descriptions: projectData.project_code,
+            project_rid: createdProjectFiscal.rid
+          }, ["account", "project"]);
+
         }
       }
 
@@ -524,21 +524,21 @@ export class ProjectService {
         accountData,
         userId
       );
-       const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                                              userId: userId!,
-                                              eventType: eventTypes.UI_HANDLER
-                                            });
-        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
-          created_by: userId!,
-          account_rid: projectData.account_id,
-          entity_rid: projectData?.project_fiscal_id!,
-          entity_name: entityTypes.PROJECT,
-          created_by_name: userEventInfo.full_name,
-          event_type_rid: userEventInfo.event_type_rid,
-          event_name: eventNames.UPDATE,
-          descriptions:projectData.project_code,
-          project_rid: projectData?.project_fiscal_id!
-        },["account","project"]);
+      const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+        userId: userId!,
+        eventType: eventTypes.UI_HANDLER
+      });
+      await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+        created_by: userId!,
+        account_rid: projectData.account_id,
+        entity_rid: projectData?.project_fiscal_id!,
+        entity_name: entityTypes.PROJECT,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.UPDATE,
+        descriptions: projectData.project_code,
+        project_rid: projectData?.project_fiscal_id!
+      }, ["account", "project"]);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -592,7 +592,7 @@ export class ProjectService {
 
 
     const orgDb = await initOrgSequelize()
-    let existingRegionId : string = ``
+    let existingRegionId: string = ``
     existingRegionId = existingFiscalData?.region_rid!
 
     let findProjectFiscal: any = await orgDb.query(rawQueries.findProjectFiscal(schemaName, projectData.project_id, accountData.rid, projectData.project_fiscal_id))
@@ -709,34 +709,34 @@ export class ProjectService {
     }
   }
 
-/**
- * Retrieves detailed information about a project and its attachments by account and project IDs.
- *
- * @async
- * @function projectById
- * @param {string} accountId - The ID of the account to which the project belongs.
- * @param {string} projectId - The ID of the project to retrieve.
- * @returns {Promise<{
- *   statusCode: number;
-  *   message: string;
-  *   errorMessage?: string;
-  *   data?: {
-  *     project: any;
-  *     attachment: any[];
-  *   };
-  * }>} Returns the status, message, and project details with attachments, or throws an error.
-  *
-  * @throws {Error} If the account ID is invalid or any other error occurs during processing.
-  *
-  * @description
-  * - Validates the account ID and fetches the account details.
-  * - Resolves the correct account schema based on whether the account stores data in a parent schema.
-  * - Checks if the relevant schema and tables exist.
-  * - If schema/tables do not exist, returns success with empty project and attachments.
-  * - Fetches project details and enriches them with additional data such as currency, key contacts, geo data, industry, project type and status, classification, user details, and account info.
-  * - Retrieves project attachments and enriches them with document types, categories, uploader info, and formatted size.
-  * - Returns the project data and mapped attachments in the response.
-  */
+  /**
+   * Retrieves detailed information about a project and its attachments by account and project IDs.
+   *
+   * @async
+   * @function projectById
+   * @param {string} accountId - The ID of the account to which the project belongs.
+   * @param {string} projectId - The ID of the project to retrieve.
+   * @returns {Promise<{
+   *   statusCode: number;
+    *   message: string;
+    *   errorMessage?: string;
+    *   data?: {
+    *     project: any;
+    *     attachment: any[];
+    *   };
+    * }>} Returns the status, message, and project details with attachments, or throws an error.
+    *
+    * @throws {Error} If the account ID is invalid or any other error occurs during processing.
+    *
+    * @description
+    * - Validates the account ID and fetches the account details.
+    * - Resolves the correct account schema based on whether the account stores data in a parent schema.
+    * - Checks if the relevant schema and tables exist.
+    * - If schema/tables do not exist, returns success with empty project and attachments.
+    * - Fetches project details and enriches them with additional data such as currency, key contacts, geo data, industry, project type and status, classification, user details, and account info.
+    * - Retrieves project attachments and enriches them with document types, categories, uploader info, and formatted size.
+    * - Returns the project data and mapped attachments in the response.
+    */
   async projectById(
     accountId: string,
     projectId: string
@@ -804,33 +804,33 @@ export class ProjectService {
         const mainDbInit = await initMainDbSequelize();
         const orgDb = await initOrgSequelize()
         const [accountFiscalInfo]: any[] = await orgDb.query(
-        rawQueries.fetchAccountInfo(
-          schemaName,accountId, 
-        ), { type: 'SELECT' }
-      );
-      const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
-      const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
-      const fiscalYear = projectData.dataValues.fiscal_year || new Date().getFullYear();
-      // Start date
-      const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
-      const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
-      const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
+          rawQueries.fetchAccountInfo(
+            schemaName, accountId,
+          ), { type: 'SELECT' }
+        );
+        const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
+        const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
+        const fiscalYear = projectData.dataValues.fiscal_year || new Date().getFullYear();
+        // Start date
+        const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
+        const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
+        const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
         const [platFormConfig]: any[] = await mainDbInit.query(
-                      rawQueries.fetchPlatformConfig(
-                        accountData.country_rid,formattedStartDate,formattedEndDate
-                      ),{type: 'SELECT'}
-                );
+          rawQueries.fetchPlatformConfig(
+            accountData.country_rid, formattedStartDate, formattedEndDate
+          ), { type: 'SELECT' }
+        );
         let projectType: string[] = [];
         if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
           let projectTypes = platFormConfig.config_json.project_type;
           projectType = projectTypes;
-          }
+        }
         projectData.dataValues.total_fte = projectData.dataValues.total_fte == 0 ? null : projectData.dataValues.total_fte
         projectData.dataValues.total_nonlabor_prj = projectData.dataValues.total_nonlabor_prj == 0 ? null : projectData.dataValues.total_nonlabor_prj
         projectData.dataValues.total_subcon = projectData.dataValues.total_subcon == 0 ? null : projectData.dataValues.total_subcon
 
-        
-       
+
+
         let isResExists: boolean;
         const checkResExistsInPrjRes = await orgDb.query(checkProjectMappedToProjectRes(schemaName, projectData.rid))
         if (checkResExistsInPrjRes[0].length > 0) isResExists = true
@@ -1764,6 +1764,7 @@ export class ProjectService {
         Comments: "Comments",
         "Last Modified": "Updated On",
         "Project ID": "Project ID",
+        "Is Assessed": "Is Assessed",
       };
 
       rawResult.forEach((project: any) => {
@@ -1808,6 +1809,7 @@ export class ProjectService {
           Comments: "-",
           "Last Modified": "-",
           "Project ID": project.r_number || "-",
+          "Is Assessed": "-",
         };
         const filteredProjectRow: Record<string, string> = {};
         for (const [label, value] of Object.entries(projectInfo)) {
@@ -1875,6 +1877,7 @@ export class ProjectService {
                   )
                 : "-",
               "Project ID": fiscal.r_number || "-",
+              "Is Assessed": fiscal.is_assesed ? "Yes" : "No",
             };
             const filteredFiscalRow: Record<string, string> = {};
             for (const [label, value] of Object.entries(fiscalInfo)) {
@@ -2668,6 +2671,8 @@ export class ProjectService {
       "created_datetime",
       "assessment_status",
       "project_type_name",
+      "is_assesed",
+      "rd_percent_final",
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";

@@ -109,6 +109,7 @@ interface CaseProjectAttributes {
   is_rd_claim_qualified: boolean | null;
   rd_percent_potential_ai_updated: number | null;
   total_nonlabor_from_tasks: number | null;
+  is_assesed?: boolean | null;
 }
 
 export interface CaseProjectCreationAttributes
@@ -218,6 +219,7 @@ export class CaseProject
   public effective_subcon_cost!: number;
   public effective_subcon_effort!: number;
   public effective_nonlabor_cost!: number;
+  public is_assesed?: boolean | null;
   public effective_metric_type?: string;
   public default_metric_type?: string;
   public is_rd_claim_qualified!: boolean;
@@ -636,6 +638,10 @@ export class CaseProject
           type: DataTypes.INTEGER,
           allowNull: true,
           defaultValue: 0
+        },
+        is_assesed: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true
         },
       },
       {

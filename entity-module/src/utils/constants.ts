@@ -2037,7 +2037,8 @@ export const rawQueries = {
           COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
           COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
           pfs.rd_percent_final,
-          pfs.is_rd_claim_qualified
+          pfs.is_rd_claim_qualified,
+          pfs.is_assesed
         FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -2092,7 +2093,8 @@ export const rawQueries = {
             pfs.project_rid, 
             pfs.project_fiscal_rid, 
             pfs.r_number, 
-            pfs.account_rid
+            pfs.account_rid,
+            pfs.is_assesed
           FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
           INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
