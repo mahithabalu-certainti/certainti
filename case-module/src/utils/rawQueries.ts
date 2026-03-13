@@ -856,8 +856,8 @@ export const fetchAdminTemplates = (page: number, limit: number, sort: string, s
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type tt ON tt.rid = t.task_type_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid AND t.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid AND ttt.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
     LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector wc ON wc.rid = w.relationship_connector_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_weightage wt ON wt.rid = t.weightage_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_category tc ON tc.rid = t.task_category_rid
@@ -867,7 +867,6 @@ export const fetchAdminTemplates = (page: number, limit: number, sort: string, s
     uu.first_name ILIKE '${searchValue}' OR uu.last_name ILIKE '${searchValue}' OR CONCAT(uu.first_name,' ', uu.last_name) ILIKE '${searchValue}' OR
     r.role_name ILIKE '${searchValue}' OR c.checklist_name ILIKE '${searchValue}' OR p.priority_name ILIKE '${searchValue}' OR
     s.status_name ILIKE '${searchValue}' OR m.milestone_name ILIKE '${searchValue}')
-    AND ttt.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
     ${graphqlConditions}
     ${andConditions}
     ${finalContainer}
@@ -1480,7 +1479,7 @@ export const taskCardDetails = (schemaName: string, taskRid: string, accountRid:
     )) AS workflow_connector
     FROM
     ${schemaName}.case_task t
-    LEFT JOIN ${schemaName}.case_task_dependency_mapping w ON w.source_rid = t.rid AND w.account_rid = t.account_rid AND w.case_rid = t.case_rid
+    LEFT JOIN ${schemaName}.case_task_dependency_mapping w ON w.source_rid = t.rid
     WHERE
     t.rid = '${taskRid}'
     AND
