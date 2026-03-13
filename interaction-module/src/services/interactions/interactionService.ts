@@ -4343,13 +4343,18 @@ export class InteractionService {
         let totalResultCount;
         if (!isPagination) totalResultCount = result.length
         else totalResultCount = result[0]?.total_results || 0
-        result = isPagination && !data.isExport ? result : result.slice(((data.page - 1) * data.limit), data.page * data.limit)
+        let responseResult;
+        if (!data.isExport) {
+          responseResult = isPagination ? result : result.slice(((data.page - 1) * data.limit), data.page * data.limit)
+        } else {
+          responseResult = result
+        }
 
         const finalData = {
           page: data.page,
           limit: data.limit,
           total_results: totalResultCount,
-          data: result
+          data: responseResult
         }
         return {
           statusCode: HttpStatus.SUCCESS,

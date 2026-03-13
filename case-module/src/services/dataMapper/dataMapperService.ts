@@ -779,7 +779,7 @@ export class DataMapperService implements IDataMapperService {
             });
              const statusRid = statusInfo ? statusInfo.rid : null;
              if (statusRid) {
-                DataMapperModel.update({
+                await DataMapperModel.update({
                     status_rid: statusRid,
                     modified_by: userId,
                     modified_datetime: new Date()
