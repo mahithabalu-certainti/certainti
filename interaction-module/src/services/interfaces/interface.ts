@@ -118,7 +118,7 @@ export interface IInteractionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { interactions: any };
+    data?: { technicalSummary: any };
   }>;
 
   refineSummary(

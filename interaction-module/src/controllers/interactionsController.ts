@@ -864,7 +864,7 @@ async function refineSummary(
 ): Promise<void> {
   const methodName = "Refine summary";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)}`);
     const value = await validateRequest(
       req,
       refineSummarySchema,
@@ -947,7 +947,7 @@ async function saveRefineSummary(
 ): Promise<void> {
   const methodName = "Save refine summary";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)}`);
     const value = await validateRequest(
       req,
       saveRefineSummarySchema,

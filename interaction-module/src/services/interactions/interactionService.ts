@@ -793,6 +793,16 @@ export class InteractionService {
     data?: any;
   }> {
     try {
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          accountId
+        );
+
+      if (!accountNumber) {
+        logMessage(`Invalid account ID ${accountId}`);
+        throw new Error("Invalid account ID");
+      }
+
       const aiResponse = await this.interactionSchemaService.refineSummary(
         refinementPrompt,
         existingSummary,
@@ -827,8 +837,10 @@ export class InteractionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { interactions: any };
+    data?: { technicalSummary: any };
   }> {
+    const dbInit = await this.interactionModelService.getSequelize();
+    const transaction = await dbInit.transaction();
     try {
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -839,23 +851,25 @@ export class InteractionService {
         logMessage(`Invalid account ID ${accountId}`);
         throw new Error("Invalid account ID");
       }
-      await this.interactionSchemaService.saveRefineSummary(
+      const savedSummary = await this.interactionSchemaService.saveRefineSummary(
         technicalSummary,
         techSummaryId,
         accountNumber,
         projectFiscalId,
         userId
       );
+      await transaction.commit();
 
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: "Technical summary updated successfully",
+        message: "Technical summary saved successfully",
         data: {
-          interactions: null,
+          technicalSummary: savedSummary,
         },
       };
     } catch (err) {
-      errorLog("Error updating interaction", (err as Error).message);
+      errorLog("Error saving refined summary", (err as Error).message);
+      await transaction.rollback();
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
