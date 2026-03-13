@@ -23,6 +23,11 @@ const getFiscalYears = (range: number) => {
 
 const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 
+const IsAssessedOptions: { label: string; value: string }[] = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' },
+];
+
 export const getAllProjectListColumns = (
   onClick: (row: Project) => void,
   projectTypeOption: ListOption[],
@@ -213,6 +218,41 @@ export const getAllProjectListColumns = (
       required: true,
       placeholder: '',
       options: fiscalYears,
+    },
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
+  },
+  {
+    id: 'is_assesed',
+    sortId: 'is_assesed',
+    editId: 'is_assesed',
+    label: 'Is Assessed?',
+    sortable: true,
+    editable:
+      permissionMap?.['is_assesed']?.read &&
+      permissionMap?.['is_assesed']?.edit,
+    width: 120,
+    hide:
+      !permissionMap?.['is_assesed']?.read &&
+      !permissionMap?.['is_assesed']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return <span>{row.is_assesed ? 'Yes' : 'No'}</span>;
+    },
+    field: {
+      type: 'select',
+      required: true,
+      options: IsAssessedOptions,
     },
     conditionallyEdit: [
       { key: 'account_status_name', matchValue: ['Active'] },
