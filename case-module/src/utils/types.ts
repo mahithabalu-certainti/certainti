@@ -37,6 +37,24 @@ export interface ICreateCases {
   current_year_gross_receipts?: number
   other_credits_total?: number
   parent_case_rid?: string;
+  amendment_case_info?: Array<{
+    fiscal_year: number;
+    total_project: number;
+    total_qualified_project: number;
+    total_project_cost: number;
+    total_qualified_project_cost: number;
+    total_nonlabor_cost: number;
+    total_subcon_cost: number;
+    total_fte_cost: number;
+    total_qre: number;
+    total_rd_credits: number;
+    annual_gross_receipts: number;
+    action_type: "add" | "edit" | "delete";
+    country_rid: string;
+    state_rid?: string;
+    state_name?: string;
+    is_federal: boolean;
+  }>;
 }
 
 export type CaseHeadersColumns = {

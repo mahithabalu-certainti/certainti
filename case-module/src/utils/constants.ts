@@ -1459,6 +1459,7 @@ export const rawQueries = {
     WHERE ct.case_rid = '${caseRid}'
     AND ct.role_rid = '${roleRid}'
     AND ct.status_rid = '${statusActiveRid}'
+    and ct.is_primary = true
     `;
   },
   fetchEmailRecipientsByRids(userRids: string[]) {
