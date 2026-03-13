@@ -2858,7 +2858,7 @@ class CaseSchemaService {
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.ADDED,
-                                    descriptions:  "to Case "+caseInfo.case_name+ "(" +totalCount +" project(s))",
+                                    descriptions:  "to Case "+caseInfo.case_name+ "(" +totalCount +" " + (totalCount > 1 ? "projects" : "project") + ")",
                                     case_rid: data.case_rid,
                                   },["case"]);
     if (totalCount === iterationCount) {
@@ -3061,7 +3061,7 @@ class CaseSchemaService {
                                     created_by_name: userEventInfo.full_name,
                                     event_type_rid: userEventInfo.event_type_rid,
                                     event_name: eventNames.REMOVED,
-                                    descriptions:  "from Case "+caseInfo.case_name+ "(" +totalCount +" project(s))",
+                                    descriptions:  "from Case "+caseInfo.case_name+ "(" +totalCount +" " + (totalCount > 1 ? "projects" : "project") + ")",
                                     case_rid: data.case_rid,
                                   },["case"]);
     if (totalCount === iterationCount) {
