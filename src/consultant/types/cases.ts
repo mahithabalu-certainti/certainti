@@ -200,6 +200,15 @@ export interface CaseFormFields {
   illinois_rd_credit_partnership_corp: string | null;
   credit_carry_forward_py: string | null;
   current_year_gross_receipts: string | null;
+  // Parent Case Information (amendment create only)
+  parent_region_rid?: string;
+  parent_total_fte_cost?: string;
+  parent_total_subcon_cost?: string;
+  parent_total_nonlabor_cost?: string;
+  parent_total_project_cost?: string;
+  parent_total_qre?: string;
+  parent_total_rd_credits?: string;
+  parent_annual_gross_receipts?: string;
 }
 
 export interface CaseFormPayload {
@@ -373,6 +382,7 @@ export interface CaseSubmissionDateResponse {
 export interface ClosedCaseList {
   rid: string;
   case_full_name: string;
+  fiscal_year: string;
 }
 
 export interface ClosedCaseListResponse {
