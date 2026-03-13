@@ -4039,7 +4039,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
   }
 
-  async fetchInteractionBatch(accountNumber: string) {
+  async fetchInteractionBatch(accountNumber: string, accountId : string) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4050,7 +4050,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       )}`;
 
       const interactionBatchInfo : any = await this.orgDbSequelize.query(
-        rawQueries.fetchBatchInInteraction(schemaName),
+        rawQueries.fetchBatchInInteraction(schemaName, accountId),
         { type: "SELECT" }
       );
       return interactionBatchInfo[0]?.interaction_batch_id ?? null
