@@ -62,7 +62,8 @@ const RDForm: React.FC<RDFormProps> = ({
   const { data } = useFetchCasesConfigFields(
     accountId as string,
     'case',
-    caseId as string
+    caseId as string,
+    'Dossier'
   );
   const configDetails = data?.data.states;
   const [previewData, setPreviewData] = useState<RDFormResponse | null>(null);
