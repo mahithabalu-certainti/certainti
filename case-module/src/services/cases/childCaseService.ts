@@ -325,7 +325,7 @@ async initiateCreateDossierForm (data : any) {
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,token : data.accessToken, fetchParentNumber})}],
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,accessToken : data.accessToken, fetchParentNumber})}],
         
     })
     console.log(`Message : ${JSON.stringify(result)}`)
