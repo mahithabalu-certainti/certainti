@@ -40,7 +40,10 @@ export class RdCreditCalculatorForIL {
             inputFields,
             computedFields,
             finalCredit: this.round2(columnBCurrentYearExpenseInfo.il_research_development_credit),
-            totalQRE: this.round2(columnBCurrentYearExpenseInfo.total_qre)
+            totalQRE: this.round2(columnBCurrentYearExpenseInfo.total_qre),
+            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0
         }
     }
 
@@ -118,7 +121,9 @@ export class RdCreditCalculatorForIL {
             il_research_development_credit : this.round2(il_research_development_credit),
             cost_of_supplies : cost_of_supplies,
             lease_costs_of_computers : lease_costs_of_computers,
-            llinois_research_payments_corp_only : llinois_research_payments_corp_only
+            llinois_research_payments_corp_only : llinois_research_payments_corp_only,
+           
+
         }
     }
 

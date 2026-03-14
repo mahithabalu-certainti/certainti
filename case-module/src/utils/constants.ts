@@ -1864,10 +1864,10 @@ export const rawQueries = {
                     pfr.region_rid as state_rid,
                     COUNT(DISTINCT cp.project_fiscal_rid) as total_projects,
                     COUNT(DISTINCT pr.rid) as total_resources,
-                    SUM(pfr.total_cost_fte_from_prj_res + pfr.total_cost_nonlabor_from_prj_res + pfr.total_cost_subcon_from_prj_res) as total_qre
+                    SUM(pfr.total_cost_pro_res) as total_qre
                 FROM ${schemaName}.case_projects cp
                 JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
-                JOIN ${schemaName}.project_fiscal_region pfr ON pf.rid = pfr.project_fiscal_rid
+                JOIN ${schemaName}.project_resource_fiscal pfr ON pf.rid = pfr.project_fiscal_rid
                 LEFT JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid 
                     AND pr.region_rid = pfr.region_rid
                 WHERE cp.case_rid = :case_rid 
@@ -2519,6 +2519,7 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+  dossierCreated: "Dossier Event",
   dossierPackageCreated: "Dossier Package",
 }
 
