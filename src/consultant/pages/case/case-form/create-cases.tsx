@@ -870,13 +870,14 @@ export const CreateCases: React.FC = () => {
               Amendment Case Information
             </div>
 
-            <div className='px-10 py-5 flex flex-col gap-4'>
+            <div className='px-10 pb-5 flex flex-col gap-4'>
               <div className='mb-4'>
                 <TableContainer
                   sx={{
                     overflowX: 'auto',
                     overflowY: 'hidden',
                     border: '1px solid #CBD6E2',
+                    borderTop: 'none',
                     position: 'relative',
                   }}
                 >
@@ -1098,119 +1099,116 @@ export const CreateCases: React.FC = () => {
                                 zIndex: 3,
                               }}
                             >
-                              {row.is_federal ? (
-                                <div className='px-2 text-[#7D98B6] font-medium'>
-                                  Choose Region
-                                </div>
-                              ) : (
-                                <div className='flex items-center'>
-                                  <Select
-                                    fullWidth
-                                    value={row.state_rid}
-                                    onChange={(e) => {
-                                      const selectedOption = regionOptions.find(
-                                        (opt) => opt.value === e.target.value
-                                      );
-                                      handleRowChange(
-                                        index,
-                                        'state_rid',
-                                        e.target.value as string,
-                                        {
-                                          state_name:
-                                            selectedOption?.label || '',
-                                        }
-                                      );
-                                    }}
-                                    displayEmpty
-                                    size='small'
-                                    sx={{
-                                      height: '28px',
-                                      fontSize: '13px',
-                                      borderRadius: '2px',
-                                      '& .MuiSelect-select': {
-                                        padding: '4px 8px',
-                                        color: row.state_rid
-                                          ? '#425A76'
-                                          : '#7D98B6',
-                                        fontWeight: 500,
+                              <div className='flex items-center'>
+                                <Select
+                                  fullWidth
+                                  value={row.state_rid}
+                                  onChange={(e) => {
+                                    const selectedOption = regionOptions.find(
+                                      (opt) => opt.value === e.target.value
+                                    );
+                                    handleRowChange(
+                                      index,
+                                      'state_rid',
+                                      e.target.value as string,
+                                      {
+                                        state_name: selectedOption?.label || '',
+                                      }
+                                    );
+                                  }}
+                                  displayEmpty
+                                  disabled={row.is_federal}
+                                  size='small'
+                                  sx={{
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    borderRadius: '2px',
+                                    '& .MuiSelect-select': {
+                                      padding: '4px 8px',
+                                      color: row.state_rid
+                                        ? '#425A76'
+                                        : '#7D98B6',
+                                      fontWeight: 500,
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: '1px solid #60A5FA',
                                       },
-                                      '& .MuiOutlinedInput-notchedOutline': {
-                                        border: 'none',
-                                      },
-                                      '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                        {
-                                          border: '1px solid #60A5FA',
+                                    '& svg': {
+                                      color: '#7D98B6',
+                                    },
+                                  }}
+                                  MenuProps={{
+                                    PaperProps: {
+                                      sx: {
+                                        marginTop: '4px',
+                                        maxHeight: '200px',
+                                        borderRadius: '0px',
+                                        boxShadow:
+                                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                        '& .MuiMenuItem-root': {
+                                          fontSize: '13px',
+                                          fontWeight: 500,
+                                          padding: '6px 12px',
                                         },
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <MenuItem
+                                    value=''
+                                    sx={{
+                                      color: '#7D98B6',
+                                      fontSize: '13px',
+                                      fontWeight: 500,
                                     }}
-                                    MenuProps={{
-                                      PaperProps: {
+                                  >
+                                    Choose Region
+                                  </MenuItem>
+                                  {regionOptions
+                                    .filter(
+                                      (opt) =>
+                                        !amendmentCaseInfo.some(
+                                          (info, i) =>
+                                            i !== index &&
+                                            info.state_rid === opt.value
+                                        )
+                                    )
+                                    .map((opt) => (
+                                      <MenuItem
+                                        key={opt.value}
+                                        value={opt.value}
+                                        sx={{ fontSize: '12px' }}
+                                      >
+                                        {opt.label}
+                                      </MenuItem>
+                                    ))}
+                                </Select>
+                                {amendmentErrors[index]?.state_rid && (
+                                  <Tooltip
+                                    title={amendmentErrors[index].state_rid}
+                                    arrow
+                                    placement='top'
+                                    slotProps={{
+                                      tooltip: {
                                         sx: {
-                                          marginTop: '4px',
-                                          maxHeight: '200px',
-                                          borderRadius: '0px',
-                                          boxShadow:
-                                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                                          '& .MuiMenuItem-root': {
-                                            fontSize: '13px',
-                                            fontWeight: 500,
-                                            padding: '6px 12px',
-                                          },
+                                          backgroundColor: '#FEF2F2',
+                                          mr: 1,
                                         },
                                       },
                                     }}
                                   >
-                                    <MenuItem
-                                      value=''
-                                      sx={{
-                                        color: '#7D98B6',
-                                        fontSize: '13px',
-                                        fontWeight: 500,
-                                      }}
-                                    >
-                                      Choose Region
-                                    </MenuItem>
-                                    {regionOptions
-                                      .filter(
-                                        (opt) =>
-                                          !amendmentCaseInfo.some(
-                                            (info, i) =>
-                                              i !== index &&
-                                              info.state_rid === opt.value
-                                          )
-                                      )
-                                      .map((opt) => (
-                                        <MenuItem
-                                          key={opt.value}
-                                          value={opt.value}
-                                          sx={{ fontSize: '12px' }}
-                                        >
-                                          {opt.label}
-                                        </MenuItem>
-                                      ))}
-                                  </Select>
-                                  {amendmentErrors[index]?.state_rid && (
-                                    <Tooltip
-                                      title={amendmentErrors[index].state_rid}
-                                      arrow
-                                      placement='top'
-                                      slotProps={{
-                                        tooltip: {
-                                          sx: {
-                                            backgroundColor: '#FEF2F2',
-                                            mr: 1,
-                                          },
-                                        },
-                                      }}
-                                    >
-                                      <span className='absolute right-8 top-2.5 flex items-center cursor-pointer'>
-                                        <React.Suspense fallback={null}>
-                                          <ErrorInfoIcon className='w-4 h-3.5' />
-                                        </React.Suspense>
-                                      </span>
-                                    </Tooltip>
-                                  )}
-                                </div>
-                              )}
+                                    <span className='absolute right-8 top-2.5 flex items-center cursor-pointer'>
+                                      <React.Suspense fallback={null}>
+                                        <ErrorInfoIcon className='w-4 h-3.5' />
+                                      </React.Suspense>
+                                    </span>
+                                  </Tooltip>
+                                )}
+                              </div>
                             </TableCell>
 
                             {(
