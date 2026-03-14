@@ -1209,7 +1209,14 @@ export const rawQueries = {
     transaction_id = '${transactionId}'
     ORDER BY interaction_batch_id DESC
     `
-  }
+  },
+    fetchCaseStatusByType(type: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = '${type}'`;
+  },
+    fetchCaseInfo(schemaName: string, caseRid: string) {
+    return `SELECT rid, r_number, case_name, account_rid, fiscal_year, status_rid FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
+  },
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
