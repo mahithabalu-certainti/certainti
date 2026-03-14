@@ -2154,11 +2154,32 @@ class InteractionSchemaService {
               account_rid: techSummary.account_rid,
               project_rid: techSummary.project_rid,
               project_fiscal_rid: projectFiscalId,
-              rid: { [require("sequelize").Op.ne]: newTechSummary.rid },
+              rid: { [Op.ne]: newTechSummary.rid },
             },
           }
         );
       }
+
+      const projectInfo = await this.fetchProjectInfo(accountNumber, projectFiscalId);
+
+      const userEventInfo: any = await this.fetchUserAndEventInfo({
+        userId: userId,
+        eventType: eventTypes.UI_HANDLER
+      });
+
+      await this.createAccountTimelineEntry(accountNumber, {
+        created_by: userId,
+        account_rid: techSummary.account_rid,
+        entity_rid: newTechSummary.rid,
+        entity_name: entityTypes.TECHNICAL_SUMMARY,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.UPDATE,
+        descriptions: 'for ' + projectInfo.project_code,
+        project_rid: projectFiscalId,
+      }, ['project']);
+
+      return newTechSummary;
     } catch (err) {
       logMessage(`Error saving refined technical summary: ${err}`);
       throw new Error("Error saving refined technical summary: " + (err as Error).message);
