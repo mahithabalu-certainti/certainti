@@ -114,7 +114,7 @@ async function getJurisdictionConfiguration(req: Request, res: Response): Promis
     );
 
     // Step 2: Extract parameters
-    const { accountRid, caseRid, level } = req.query;
+    const { accountRid, caseRid, level,type } = req.query;
     const userId = req.headers["x-user-id"] as string;
 
     // Validate required parameters
@@ -165,7 +165,7 @@ async function getJurisdictionConfiguration(req: Request, res: Response): Promis
     const entity_rid = level === "case" ? caseRid : accountRid;
 
     // Step 3: Call service
-    const result = await jurisdictionService.getJurisdictionConfiguration(accountRid as string, entity_rid as string);
+    const result = await jurisdictionService.getJurisdictionConfiguration(accountRid as string, entity_rid as string,level as string,type as string);
 
     // Step 4: Handle service response
     if (result.statusCode === HttpStatus.SUCCESS) {

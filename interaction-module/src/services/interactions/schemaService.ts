@@ -21,6 +21,7 @@ import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import axios from "axios";
+import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1405,27 +1406,61 @@ class InteractionSchemaService {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
       let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      
+      // Check if case is closed if caseRid is provided
+      let isCaseClosed = false;
+      let TechnicalSummaryModel = AiTechnicalSummary;
+      
+      if(caseRid !== undefined && caseRid !== '') {
+        const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(this.orgDbSequelize, schemaName);
+        
+        
+        const [caseDetails]: any = await this.orgDbSequelize.query(rawQueries.fetchCaseInfo(schemaName, caseRid), {
+          replacements: { caseId: caseRid },
+          type: 'SELECT'
+        });
+        
+        // Fetch closed case status
+        const [closedStatus]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchCaseStatusByType('Closed'),
+          { type: 'SELECT' }
+        );
+        
+        // Check if case status matches closed status
+        if (caseDetails && closedStatus && caseDetails.status_rid === closedStatus.rid) {
+          isCaseClosed = true;
+  
+          TechnicalSummaryModel = CaseTechnicalSummaryModel;
+        }
+      }
+      
       // Fetch technical summaries and count
       let whereCondition;
       if(caseRid !== undefined && caseRid !== '') {
         const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
+        
+        // Determine the correct table name and model reference based on case status
+        const technicalSummaryTable = isCaseClosed ? 'case_technical_summary' : 'ai_technical_summary';
+        const technicalSummaryModelName = isCaseClosed ? 'CaseTechnicalSummary' : 'AiTechnicalSummary';
+        
+        // Build where condition for case-specific queries with dynamic table reference
         whereCondition = {
           account_rid : accountRid,
           project_fiscal_rid: {
             [Op.in] : projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d : any) => d.project_fiscal_rid) : []
           },
           [Op.and]: Sequelize.where(
-        Sequelize.col('"AiTechnicalSummary".version'),
-        '=',
-        Sequelize.literal(`
-          (
-            SELECT MAX(t2.version)
-            FROM ${schemaName}.ai_technical_summary AS t2
-            WHERE 
-              t2.account_rid = "AiTechnicalSummary".account_rid
-              AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
-          )
-        `)),
+            Sequelize.col(`"${technicalSummaryModelName}".version`),
+            '=',
+            Sequelize.literal(`
+              (
+                SELECT MAX(t2.version)
+                FROM ${schemaName}.${technicalSummaryTable} AS t2
+                WHERE 
+                  t2.account_rid = "${technicalSummaryModelName}".account_rid
+                  AND t2.project_fiscal_rid = "${technicalSummaryModelName}".project_fiscal_rid
+              )
+            `)),
           ...whereClause
         }
       } else {
@@ -1434,7 +1469,7 @@ class InteractionSchemaService {
           ...whereClause
         }
       }
-      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+      const { rows: technicalSummary, count } = await TechnicalSummaryModel.findAndCountAll({
         where: whereCondition,
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination

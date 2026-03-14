@@ -479,7 +479,7 @@ class RDCreditSchemaService {
                 prev_year3_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev3yearQRE || 0) : (stateRdData.prior3YearsQREs[2]?.qre || 0),
                 total_wages: result?.totalWages,
                 total_supplies: result?.totalSupplies,
-                total_subcontract: result?.totalSubCon,
+                total_subcontract: result?.totalContract,
                 config_json: config
                 
             },

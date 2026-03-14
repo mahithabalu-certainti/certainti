@@ -7,6 +7,9 @@ import { logMessage } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { HelperMethods } from "../cases/helperMethods";
+import {
+  fetchStateRidsWithResourcesForCase,
+} from "../../utils/rdFinancialWorkingQueries";
 
 export class JurisdictionService {
   private jurisdictionSchemaService: JurisdictionSchemaService;
@@ -119,7 +122,9 @@ export class JurisdictionService {
    */
   async getJurisdictionConfiguration(
     accountRid: string,
-    entityRid: string
+    entityRid: string,
+    level: string,
+    type: string = 'All'
   ): Promise<{
     statusCode: number;
     message: string;
@@ -139,11 +144,38 @@ export class JurisdictionService {
       const { Jurisdiction } = await this.caseModelService.getModels(
         accountNumber
       );
-
+      const db = await this.caseModelService.getSequelize();
+      
       // Step 3: Fetch jurisdiction record
       const jurisdiction = await Jurisdiction.findOne({
         where: { entity_rid: entityRid },
       });
+
+      // Filter states if case-level dossier
+      if(level === 'case' &&  type === 'Dossier' && jurisdiction)
+      {
+        console.log("inside jurisdiction filter")
+        const schemaName = `${rawQueries.fetchSchemaName(accountNumber)}`;
+      
+        const statesWithResources: any[] = await db.query(fetchStateRidsWithResourcesForCase(schemaName), {
+          replacements: { case_rid: entityRid },
+          type: 'SELECT'
+        });
+
+        const stateRidsWithResources = statesWithResources.map((r: any) => r.state_rid).filter(Boolean);
+
+        // Parse states array from jurisdiction
+        let statesArray = jurisdiction.states ? (typeof jurisdiction.states === 'string' ? JSON.parse(jurisdiction.states) : jurisdiction.states) : [];
+        
+        // Filter to keep only states with resources
+        if (Array.isArray(statesArray)) {
+          statesArray = statesArray.filter((state: any) => {
+            const stateRid = typeof state === 'object' ? state.state_rid : state;
+            return stateRidsWithResources.includes(stateRid);
+          });
+          jurisdiction.states = statesArray;
+        }
+      }
 
       // Step 4: Return success response
       return {
