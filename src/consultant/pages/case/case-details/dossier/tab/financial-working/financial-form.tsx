@@ -197,7 +197,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const { data, isLoading } = useFetchCasesConfigFields(
     accountId as string,
     'case',
-    caseId as string
+    caseId as string,
+    'Dossier'
   );
   const configDetails = data?.data.states;
   const configFedral = data?.data;
