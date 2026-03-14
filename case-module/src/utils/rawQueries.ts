@@ -925,6 +925,8 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   fetch_workflow_connector_map AS (
   SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
   FROM ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w
+  WHERE
+  status_rid = '${statusId}'
   ),
   aggregate_milestone AS (
   SELECT array_agg(jsonb_build_object(
