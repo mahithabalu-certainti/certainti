@@ -188,7 +188,7 @@ export class RdFormHelperService {
     let result = expression;
 
     result = result.replace(
-      /IF\s*\([\s\S]*?\)\s*\{\s*THEN\s*[\s\S]*?\s*\}((?:\s*ELSE\s+IF\s*\([\s\S]*?\)\s*\{\s*THEN\s*[\s\S]*?\s*\})*)\s*(?:ELSE\s*\{\s*THEN\s*([\s\S]*?)\s*\})?/gi,
+      /IF\s*\(([\s\S]*?)\)\s*\{\s*THEN\s*([\s\S]*?)\s*\}((?:\s*ELSE\s+IF\s*\([\s\S]*?\)\s*\{\s*THEN\s*[\s\S]*?\s*\})*)\s*(?:ELSE\s*\{\s*THEN\s*([\s\S]*?)\s*\})?/gi,
       (
         _match: string,
         cond1: string,
@@ -212,7 +212,9 @@ export class RdFormHelperService {
             nested = `IF(${branch.cond}, ${branch.then}, ${nested})`;
           }
         }
-        return `IF(${cond1.trim()}, ${then1.trim()}, ${nested})`;
+        const safeCond = cond1 != null ? cond1.trim() : '';
+        const safeThen = then1 != null ? then1.trim() : '""';
+        return `IF(${safeCond}, ${safeThen}, ${nested})`;
       },
     );
 
