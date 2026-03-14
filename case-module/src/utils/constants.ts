@@ -2519,6 +2519,7 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+  dossierCreated: "Dossier Event",
   dossierPackageCreated: "Dossier Package",
 }
 
