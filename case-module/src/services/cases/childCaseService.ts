@@ -493,7 +493,15 @@ private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid
   const orgDb = await this.getOrgDb();
   const {  CaseTechnicalSummaryModel } = await this.getModels(schemaName);
 
-  // First, get qualified project IDs for the case
+  // First, delete any existing technical summaries for this case
+  await CaseTechnicalSummaryModel.destroy({
+    where: {
+      case_rid: caseRid,
+      account_rid: accountRid
+    }
+  });
+
+  // Get qualified project IDs for the case
   const projectQuery = `
     SELECT DISTINCT cp.project_fiscal_rid
     FROM ${schemaName}.case_projects cp
@@ -514,7 +522,7 @@ private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid
 
   const projectFiscalRidList = projectIds.map((d: any) => d.project_fiscal_rid);
 
-  // Then, get the max version records for these projects
+  // Get the max version records for these projects from AiTechnicalSummary
   const technicalQuery = `
     SELECT DISTINCT ON (ats.project_fiscal_rid) ats.*
     FROM ${schemaName}.ai_technical_summary ats
