@@ -110,7 +110,7 @@ export class RdCreditCalculatorForCT {
         const tentativeBalance = Decimal.max(tentativeTotalQREs.minus(tentativeExcessQRE), 0);
 
         //Line 4c: Tetative credit rate.
-        const tentativeCreditRate = tentativeBalance.mul(new Decimal(extractConfig.tc_tentative_credit_rate || 0));
+        const tentativeCreditRate = tentativeBalance.mul(new Decimal((extractConfig.tc_tentative_credit_rate / 100) || 0));
 
         //Line 4: Tentative credit rate from line 4c
         const tentativeCredit = tentativeCreditRate;
