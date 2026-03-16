@@ -65,7 +65,7 @@ export class RdCreditCalculatorForCT {
 
         //Part I - Credit Computation
         //---- Line 1: Total QREs
-        const totalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
+        const totalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract * 0.65));
 
         //---- Line 2: PriorYear 1 QREs
         const priorYear1QREs = new Decimal(prior3YearsQREs[0]?.qre ?? 0);
@@ -101,7 +101,8 @@ export class RdCreditCalculatorForCT {
 
         //Part I - Tentative Credit Computation
         //Line 1: Total QREs
-        const tentativeTotalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
+
+        const tentativeTotalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract * 0.65));
 
         //Line 2: Excess QREs (Line 3 from Part I)
         const tentativeExcessQRE = excessQRE;
