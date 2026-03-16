@@ -231,10 +231,10 @@ export class RdCreditCalculatorForIL {
                     columnBCurrentYearExpenseInfo.llinois_research_payments_corp_only,
 
                 "[Line 28] Add lines 23 through 27 of each column. Total Illinois qualifying expenses":
-                    columnBCurrentYearExpenseInfo.total_qre,
+                    this.round2(columnBCurrentYearExpenseInfo.total_qre) || 0.00,
 
                 "[Line 29] Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero":
-                    columnBCurrentYearExpenseInfo.final_excess_qre,
+                    this.round2(columnBCurrentYearExpenseInfo.final_excess_qre) || 0.00,
 
                 [`[Line 30] Multiply Line 29 by ${config.fixed_base_percentage}%`]:
                     columnBCurrentYearExpenseInfo.final_credit,
