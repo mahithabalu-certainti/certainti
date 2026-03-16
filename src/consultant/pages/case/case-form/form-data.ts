@@ -48,7 +48,9 @@ export const CaseFormData = (
   CountryName?: string,
   isAmendmentType?: boolean,
   isParentCaseLoading?: boolean,
-  isCaseClosed?: boolean
+  isCaseClosed?: boolean,
+  hasParentCase?: boolean,
+  parentCaseFiscalYear?: string
 ): FormType[] => {
   const isCreateAndAmendmentType = !isEditView && isAmendmentType;
   return useMemo(
@@ -65,6 +67,7 @@ export const CaseFormData = (
             hide: !globalType,
             expandedAll: true,
             disabled: isEditView || isCaseClosed,
+            resetDependsFields: ['parent_case_rid'],
           }),
           createTextField('account_name', 'Account Name', {
             required: false,
@@ -99,10 +102,36 @@ export const CaseFormData = (
           createSelectField('parent_case_rid', 'Parent Case', {
             options: parentCaseOptions || [],
             placeholder: 'Choose Parent Case',
-            required: true,
+            required: false,
             hide: !isAmendmentType,
             disabled: isEditView || isCaseClosed,
             isLoading: isParentCaseLoading,
+            onChange: true,
+            resetDependsFields: [
+              'heat_light_power',
+              'total_nonlabor_cost',
+              'tax_liability',
+              'employers_pension_contribution',
+              'material_software_cost',
+              'sub_contracts',
+              'cloud_software',
+              'unpaid_amounts_paid',
+              'unpaid_amounts',
+              'aggregated_turnover',
+              'total_expenses',
+              'taxable_income',
+              'export_sales_revenue',
+              'lease_costs_of_computers',
+              'illinois_rd_credit_partnership_corp',
+              'illinois_research_payments_corp_only',
+              'basic_research_payments',
+              'qualified_computer_rental_time_expenses',
+              'current_year_gross_receipts',
+              'credit_carry_forward_py',
+              'other_credits_total',
+              'other',
+              'description',
+            ],
             // disabled:
             //   isEditView &&
             //   !permissionMap?.['parent_case_rid']?.edit &&
@@ -118,7 +147,10 @@ export const CaseFormData = (
             required: true,
             onChange: true,
             isFiscalYear: true,
-            disabled: isEditView || isCaseClosed || isCreateAndAmendmentType,
+            defaultValue: parentCaseFiscalYear,
+            assignDefaultValue:
+              !!parentCaseFiscalYear && isCreateAndAmendmentType,
+            disabled: isEditView || isCaseClosed || hasParentCase,
             hide:
               isEditView &&
               !permissionMap?.['fiscal_year']?.edit &&
@@ -154,7 +186,7 @@ export const CaseFormData = (
             required: true,
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['case_owner_rid']?.edit &&
                 permissionMap?.['case_owner_rid']?.read),
@@ -201,14 +233,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Heating & Lighting Cost: your estimated Heating & Lighting Cost.',
+              tooltipMessage: 'Actual Heating & Lighting Cost.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['heat_light_power']?.edit &&
                 permissionMap?.['heat_light_power']?.read),
@@ -226,15 +257,14 @@ export const CaseFormData = (
             placeholder: 'Enter Total NonLabor Cost',
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Total NonLabor Cost: your estimated Total NonLabor Cost.',
+              tooltipMessage: 'Actual Total NonLabor Cost.',
             },
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['total_nonlabor_cost']?.edit &&
                 permissionMap?.['total_nonlabor_cost']?.read),
@@ -249,13 +279,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Tax Liability: your estimated tax due.',
+              tooltipMessage: 'Actual Tax Liability Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['tax_liability']?.edit &&
                 permissionMap?.['tax_liability']?.read),
@@ -274,14 +304,13 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Employers Pension Contribution: your estimated pension contribution due.',
+                tooltipMessage: 'Actual Employer Pension Contribution Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['employers_pension_contribution']?.edit &&
                   permissionMap?.['employers_pension_contribution']?.read),
@@ -301,14 +330,13 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Material & Software Cost: your estimated cost due.',
+                tooltipMessage: 'Actual Material & Software Cost Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['material_software_cost']?.edit &&
                   permissionMap?.['material_software_cost']?.read),
@@ -325,13 +353,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Subcontracts: your estimated subcontracts due.',
+              tooltipMessage: 'Actual Subcontracts Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['sub_contracts']?.edit &&
                 permissionMap?.['sub_contracts']?.read),
@@ -347,14 +375,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Cloud Software: your estimated cloud software due.',
+              tooltipMessage: 'Actual Cloud Software Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['cloud_software']?.edit &&
                 permissionMap?.['cloud_software']?.read),
@@ -370,14 +397,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Unpaid Amounts (+): your estimated unpaid amounts due.',
+              tooltipMessage: 'Actual Unpaid Amounts Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['unpaid_amounts_paid']?.edit &&
                 permissionMap?.['unpaid_amounts_paid']?.read),
@@ -395,14 +421,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Unpaid Amounts (-): your estimated unpaid amounts due.',
+              tooltipMessage: 'Actual Unpaid Amounts Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['unpaid_amounts']?.edit &&
                 permissionMap?.['unpaid_amounts']?.read),
@@ -420,14 +445,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Aggregated Turnover: your estimated aggregated turnover due.',
+              tooltipMessage: 'Actual Aggregated Turnover Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['aggregated_turnover']?.edit &&
                 permissionMap?.['aggregated_turnover']?.read),
@@ -443,14 +467,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Total Expenses: your estimated total expenses due.',
+              tooltipMessage: 'Actual Total Expenses Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['total_expenses']?.edit &&
                 permissionMap?.['total_expenses']?.read),
@@ -466,14 +489,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Taxable Income: your estimated taxable income due.',
+              tooltipMessage: 'Actual Taxable Income Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['taxable_income']?.edit &&
                 permissionMap?.['taxable_income']?.read),
@@ -489,14 +511,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Export Sales Revenue: your estimated export sales revenue due.',
+              tooltipMessage: 'Actual Export Sales Revenue Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['export_sales_revenue']?.edit &&
                 permissionMap?.['export_sales_revenue']?.read),
@@ -515,14 +536,13 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Lease Costs of Computers: your estimated lease costs of computers due.',
+                tooltipMessage: 'Actual Lease Costs of Computers Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['lease_costs_of_computers']?.edit &&
                   permissionMap?.['lease_costs_of_computers']?.read),
@@ -543,13 +563,13 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Illinois RD Credit Partnership (Corp): your estimated illinois rd credit partnership (corp) due.',
+                  'Actual Illinois RD Credit Partnership (Corp) Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['illinois_rd_credit_partnership_corp']
                     ?.edit &&
@@ -573,13 +593,13 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Illinois Research Payments (Corp Only): your estimated illinois research payments (corp only) due.',
+                  'Actual Illinois Research Payments (Corp Only) Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['illinois_research_payments_corp_only']
                     ?.edit &&
@@ -603,14 +623,13 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Basic Research Payments: your estimated basic research payments due.',
+                tooltipMessage: 'Actual Basic Research Payments Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['basic_research_payments']?.edit &&
                   permissionMap?.['basic_research_payments']?.read),
@@ -631,13 +650,13 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Qualified Computer Rental Time Expenses: your estimated qualified computer rental time expenses.',
+                  'Actual Qualified Computer Rental Time Expenses Due.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['qualified_computer_rental_time_expenses']
                     ?.edit &&
@@ -658,13 +677,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Gross Receipts: your estimated gross receipts.',
+              tooltipMessage: 'Actual Gross Receipts.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['current_year_gross_receipts']?.edit &&
                 permissionMap?.['current_year_gross_receipts']?.read),
@@ -683,14 +702,13 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage:
-                  'Credit Carry Forward PY: your estimated credit carry forward PY.',
+                tooltipMessage: 'Actual Credit Carry Forward PY.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
               disabled:
                 isCaseClosed ||
-                isCreateAndAmendmentType ||
+                (isCreateAndAmendmentType && hasParentCase) ||
                 (isEditView &&
                   !permissionMap?.['credit_carry_forward_py']?.edit &&
                   permissionMap?.['credit_carry_forward_py']?.read),
@@ -707,14 +725,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage:
-                'Other Credits Total: your estimated other credits total.',
+              tooltipMessage: 'Actual Other Credits Total.',
             },
             regexErrorMessage:
               'Numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['other_credits_total']?.edit &&
                 permissionMap?.['other_credits_total']?.read),
@@ -730,13 +747,13 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Other: your estimated other due.',
+              tooltipMessage: 'Actual Other Due.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['other']?.edit &&
                 permissionMap?.['other']?.read),
@@ -865,7 +882,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.DESCRIPTION,
             disabled:
               isCaseClosed ||
-              isCreateAndAmendmentType ||
+              (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
                 !permissionMap?.['case_description']?.edit &&
                 permissionMap?.['case_description']?.read),
@@ -955,6 +972,8 @@ export const CaseFormData = (
       isParentCaseLoading,
       isCaseClosed,
       isCreateAndAmendmentType,
+      hasParentCase,
+      parentCaseFiscalYear,
     ]
   );
 };

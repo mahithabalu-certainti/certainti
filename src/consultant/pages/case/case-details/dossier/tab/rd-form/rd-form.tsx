@@ -21,6 +21,7 @@ import { useFetchCasesConfigFields } from '../../../../../../services/case-team'
 import TextButton from '../../../../../../../components/button/text-button';
 import { checkPermission } from '../../../../../../../common-utils';
 import SignOffModal from '../financial-working/sign-off-modal';
+import { useRdFormRevoke } from '../../../../../../services/case-dossier/cases-financial-services';
 
 interface RDFormProps {
   caseDetails?: CaseDetails;
@@ -45,7 +46,7 @@ const RDForm: React.FC<RDFormProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
-  const accountid = searchParams.get('accountID') ?? '';
+  const accountId = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
 
@@ -59,9 +60,10 @@ const RDForm: React.FC<RDFormProps> = ({
     (state: RootState) => state.account
   );
   const { data } = useFetchCasesConfigFields(
-    accountid as string,
+    accountId as string,
     'case',
-    caseId as string
+    caseId as string,
+    'Dossier'
   );
   const configDetails = data?.data.states;
   const [previewData, setPreviewData] = useState<RDFormResponse | null>(null);
@@ -80,7 +82,7 @@ const RDForm: React.FC<RDFormProps> = ({
   const handleRDFormMapperGenerate = async () => {
     generateRDForm(
       {
-        accountRid: accountid,
+        accountRid: accountId,
         caseRid: caseId ?? '',
         fiscalYear: Number(caseDetails?.fiscal_year || 0),
       },
@@ -88,9 +90,6 @@ const RDForm: React.FC<RDFormProps> = ({
         onSuccess: (data) => {
           if (data.statusCode === 200) {
             setRdformGenerateStatus(true);
-            successToast(
-              data.statusMessage || 'RD Form generated successfully'
-            );
           }
         },
         onError: (error) => {
@@ -108,7 +107,7 @@ const RDForm: React.FC<RDFormProps> = ({
     setIsPreviewError(false);
     previewRDForm(
       {
-        accountRid: accountid,
+        accountRid: accountId,
         caseRid: caseId ?? '',
         countryRid: caseCountryDetails.country_id,
         isFederal: activeTab === 'federal',
@@ -133,6 +132,29 @@ const RDForm: React.FC<RDFormProps> = ({
       }
     );
   };
+  const { mutate: rdFormRevoke, isPending: isRevoking } = useRdFormRevoke();
+  const handleRevoke = () => {
+    rdFormRevoke(
+      {
+        case_rid: caseId ?? '',
+        account_rid: accountId,
+        type: 'RD Forms',
+      },
+      {
+        onSuccess: (data) => {
+          if (data.statusCode === 200) {
+            refetchCaseDetails();
+            successToast(data.statusMessage);
+          }
+        },
+        onError: (error) => {
+          console.error('Error revoking RD form', error);
+          errorToast('Failed to revoke RD form');
+        },
+      }
+    );
+  };
+  const isRDFormSignOff = caseDetails?.rd_form_signoff;
 
   // Auto-initiate Generate if not already done
   useEffect(() => {
@@ -143,14 +165,18 @@ const RDForm: React.FC<RDFormProps> = ({
       caseDetails?.case_total_projects !== 0 &&
       caseDetails?.case_total_projects !== '0'
     ) {
-      handleRDFormMapperGenerate();
+      if (isRDFormSignOff) {
+        handleRDFormMapperPreview();
+      } else {
+        handleRDFormMapperGenerate();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFinancialWorkingSignoff, rdformGenerateStatus, caseDetails]);
 
   // Call Preview when status is true or tab/region changes
   useEffect(() => {
-    if (rdformGenerateStatus) {
+    if (rdformGenerateStatus || isRDFormSignOff) {
       handleRDFormMapperPreview();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -223,7 +249,12 @@ const RDForm: React.FC<RDFormProps> = ({
       hide: false,
     },
   ];
-
+  const selectedStateName =
+    regionListOptions.find((r) => r.value === selectedRegion)?.label ?? '';
+  const downloadName =
+    activeTab === 'state_wise' && selectedStateName
+      ? `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}-${selectedStateName}`
+      : `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}`;
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     if (value === 'federal') {
@@ -261,8 +292,24 @@ const RDForm: React.FC<RDFormProps> = ({
             onClick={() => setIsSignOffModalOpen(true)}
             disabled={
               !isFinancialWorkingSignoff ||
-              !previewData?.data?.rdformUrl ||
+              // !previewData?.data?.rdformUrl ||
               caseDetails?.rd_form_signoff === true
+            }
+            hide={!isSignoffVisible}
+            sx={{
+              width: 'auto',
+              minWidth: '65px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label={'Revoke'}
+            onClick={handleRevoke}
+            loading={isRevoking}
+            disabled={
+              !isRDFormSignOff ||
+              caseDetails?.status_name?.toLowerCase() === 'closed'
             }
             hide={!isSignoffVisible}
             sx={{
@@ -384,10 +431,10 @@ const RDForm: React.FC<RDFormProps> = ({
       </div>
       {previewData?.data && (
         <div>
-          <div className='capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+          <div className='sticky top-0 z-10 capitalize h-[30px] border-b border-t border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
             PDF Viewer
           </div>
-          <div className='max-h-[600px] overflow-auto p-3'>
+          <div className='p-3'>
             {previewData.data.rdformUrl ? (
               <PdfViewer
                 // base64={previewData.data.rdformUrl}
@@ -396,6 +443,7 @@ const RDForm: React.FC<RDFormProps> = ({
                 }
                 isLoadingPdf={isPreviewLoading}
                 isPdfError={isPreviewError}
+                downloadName={downloadName}
               />
             ) : (
               <div className='flex items-center justify-center h-[100px] text-[#7D98B6] text-[13px]'>
@@ -409,7 +457,7 @@ const RDForm: React.FC<RDFormProps> = ({
         isOpen={isSignOffModalOpen}
         onClose={() => setIsSignOffModalOpen(false)}
         caseId={caseId ?? ''}
-        accountId={accountid}
+        accountId={accountId}
         refetchCaseDetails={refetchCaseDetails}
         title='RD Form'
         isRdform={true}

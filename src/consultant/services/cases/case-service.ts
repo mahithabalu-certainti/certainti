@@ -284,7 +284,7 @@ export const ExportAuditTimelineList = async (
   fileName?: string
 ): Promise<void> => {
   try {
-    const filename = `${fileName || 'audit-timeline'}.xlsx`;
+    const filename = `${fileName || 'approval-status'}.xlsx`;
     const response = await caseServiceApi.post<CaseExportResponse>(
       getAuditTimelineExportUrl(),
       params

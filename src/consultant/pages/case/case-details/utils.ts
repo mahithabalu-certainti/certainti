@@ -129,6 +129,31 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
           label: 'Filing Type',
           value: cases?.filing_type_name || '-',
         },
+        {
+          label: '',
+          value: '',
+        },
+        {
+          label: 'Submission Date',
+          value: cases?.planned_submission_date || '-',
+        },
+        {
+          label: 'Case Progress',
+          value: (() => {
+            const pct = Number(cases?.case_completion_percentage);
+            if (!cases?.case_completion_percentage) return '-';
+            if (pct >= 80) return 'On Track';
+            if (pct >= 60) return 'At Risk';
+            return 'Critical';
+          })(),
+          className: (() => {
+            const pct = Number(cases?.case_completion_percentage);
+            if (!cases?.case_completion_percentage) return '';
+            if (pct >= 80) return 'text-[#3EA72F] font-semibold';
+            if (pct >= 60) return 'text-[#FF9800] font-semibold';
+            return 'text-[#FF3C03] font-semibold';
+          })(),
+        },
       ],
     },
   ];

@@ -71,7 +71,6 @@ import {
   ProjectsSideIcon,
   ProjectTaskIcon,
   ResourcesIcon,
-  ReviewProjectIcon,
   SettingIcon,
   TaskCreateIcon,
   TechSummaryIcon,
@@ -94,6 +93,7 @@ import {
   setTemporaryFiscalYear,
   setDossierFinancialStatus as setDossierFinancialStatusAction,
   setFinancialData as setFinancialDataAction,
+  setRdformGenerateStatus as setRdformGenerateStatusAction,
 } from '../../../../store/slices/account-slice';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
@@ -193,6 +193,9 @@ export const CaseDetails = () => {
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
   const isFinancialWorkingSignoff = caseData?.financial_working_signoff;
+  const isAmendmentView =
+    caseData?.filing_type_name === 'Amendment' &&
+    caseData?.parent_case_rid !== '';
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -298,8 +301,8 @@ export const CaseDetails = () => {
       account_rid: '',
       search: '',
       filter: {},
-      sort: 'ASC',
-      sort_by: 'r_number',
+      sort: 'r_number',
+      sort_by: 'ASC',
       type: 'case',
     });
 
@@ -370,6 +373,7 @@ export const CaseDetails = () => {
   useEffect(() => {
     // Reset dossier states when case changes to avoid showing stale data from previous case
     setDossierFinancialStatus(false);
+    setRdformGenerateStatus(false);
     setFinancialData(null);
   }, [caseId]);
 
@@ -491,6 +495,11 @@ export const CaseDetails = () => {
     call: !!isActivityCallExportEnable,
   };
 
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -595,11 +604,14 @@ export const CaseDetails = () => {
         exportType === 'dossier-resource-summary' ? 'resource-summary' : ''
       );
     } else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
-      ExportAuditTimelineList({
-        ...auditTimelineParams,
-        account_rid: accountId,
-        case_rid: caseId,
-      });
+      ExportAuditTimelineList(
+        {
+          ...auditTimelineParams,
+          account_rid: accountId,
+          case_rid: caseId,
+        },
+        'approval-status'
+      );
     } else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
         exportFinancialProjectCost({
@@ -654,7 +666,8 @@ export const CaseDetails = () => {
           flag: 'case',
           reminder_specific_list: true,
           case_rid: caseId || '',
-          // search: interactionsParams?.search || '',
+          search: interactionsParams?.search || '',
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportInteractions(projectInteractionExportPayload);
         return;
@@ -679,7 +692,7 @@ export const CaseDetails = () => {
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
-      return false;
+      return !isFourPartExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
       const tab = searchParams.get('tab') || 'all';
       if (tab === 'all') {
@@ -792,6 +805,9 @@ export const CaseDetails = () => {
     },
     []
   );
+  const setRdformGenerateStatus = (status: boolean) => {
+    dispatch(setRdformGenerateStatusAction(status));
+  };
 
   const handleToggleActionItems = (
     value: boolean | ((prevState: boolean) => boolean)
@@ -860,6 +876,7 @@ export const CaseDetails = () => {
               setIsActionItemsExpanded={handleToggleActionItems}
               isCaseTeamCreated={isCaseTeamCreated}
               refetchCaseDetails={refetchCaseDetails}
+              isAmendmentView={isAmendmentView}
             />
           </div>
         );
@@ -1085,13 +1102,6 @@ export const CaseDetails = () => {
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
-      },
-      {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: ReviewProjectIcon,
       },
       {
         name: 'Case Team',

@@ -48,6 +48,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const interactionId = searchParams.get('interaction_id') || undefined;
+  const isFromFourPart = searchParams.get('navigate_source') === 'four_part';
 
   const { permission } = useSelector((state: RootState) => state.permission);
   const sendInteraction = useSendInteraction();
@@ -118,6 +119,20 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     });
     return map;
   }, [interactionsViewEditFields]);
+
+  const handleBack = () => {
+    if (isFromFourPart) {
+      searchParams.set('list', 'four_part_assessment');
+      searchParams.delete('interaction_id');
+      searchParams.delete('interaction_number');
+      searchParams.delete('navigate_source');
+      searchParams.delete('project_fiscal_rid');
+
+      navigate({ search: searchParams.toString() }, { replace: true });
+    } else {
+      handleBackClick();
+    }
+  };
 
   const handleEdit = () => {
     const accountId = accountid ?? '';
@@ -196,10 +211,12 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       loading: sendInteraction.isPending,
     },
     {
-      label: 'Back To Interactions',
+      label: isFromFourPart
+        ? 'Back To Four Part Assessment'
+        : 'Back To Interactions',
       variant: 'contained' as const,
-      onClick: () => handleBackClick(),
-      sx: { width: '140px', minWidth: '140px' },
+      onClick: () => handleBack(),
+      sx: { width: 'auto', padding: '0 9px' },
     },
   ];
 
@@ -392,6 +409,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
             : []
         }
         onSuccessRefetch={refetch}
+        isReinitiated={true}
       />
     </>
   );

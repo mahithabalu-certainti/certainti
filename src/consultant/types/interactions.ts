@@ -81,6 +81,7 @@ export interface InteractionListExportParams {
   page?: number;
   limit?: number;
   search?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface InteractionFormTableColumn {
@@ -150,6 +151,8 @@ export type InteractionFormPayload = {
   trigger_send?: boolean;
   interaction_level_rid?: string;
   projects?: SendIntractionProject[];
+  interaction_assessment_source_rid?: string;
+  interaction_status_rid?: string;
 };
 
 export interface InteractionQuestionErrors {
@@ -219,7 +222,8 @@ export type InteractionList = {
   four_part_assessment_rid: string | null;
   interaction_assessment_source_rid: string | null;
   interaction_assessment_source_name: string | null;
-  record_status: string | null;
+  interaction_status_rid: string | null;
+  interaction_status_name: 'Active' | 'In-Active';
 };
 
 export type InteractionTemplateList = {
@@ -277,6 +281,7 @@ export interface InteractionListURLParams {
   search?: string;
   reminder_specific_list?: boolean;
   case_rid?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface InteractionTemplatePayload {
@@ -541,6 +546,7 @@ export interface SendInteractionPayload {
   };
   customRecipient?: boolean;
   is_interaction_followup?: boolean;
+  is_interaction_reinitiated?: boolean;
 }
 
 export interface SendIntractionProject {
@@ -560,4 +566,14 @@ export interface IRecipient {
 export interface InteractionKeyContacts {
   key_contact_email: string;
   key_contact_name: string;
+}
+
+export interface AssessmentSourceResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    rid: string;
+    interaction_assessment_source_name: string;
+  }[];
 }

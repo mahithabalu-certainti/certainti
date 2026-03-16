@@ -25,9 +25,11 @@ import {
 } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import {
+  useGetAssessmentSource,
   useInteractionList,
   useInteractionListModel,
   useSendInteraction,
+  useUpdateInteractionStatus,
 } from '../../../../services/interactions/interactions-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -160,6 +162,9 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   });
   const [searchText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
+  const [showAssessmentToggle, setShowAssessmentToggle] =
+    useState<boolean>(false);
+
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -167,7 +172,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-  const { successToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const sendInteraction = useSendInteraction();
   const interactionId = searchParams.get('interaction_id');
   const interactionNumber = searchParams.get('interaction_number') || '';
@@ -202,6 +207,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       flag: 'case',
       search: searchText,
       case_rid: caseId || '',
+      assessment_type: showAssessmentToggle ? 'all' : 'fpa',
     },
     !viewDetails && !viewInteractionHistory && !viewInteractionAttachment,
     refreshInteractions
@@ -249,6 +255,8 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
   const interactionStatusReminder = useGetInteractionStatusByReminder(true);
+  const updateInteractionStatus = useUpdateInteractionStatus();
+  const assessmentSource = useGetAssessmentSource();
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -303,6 +311,23 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     return map;
   }, [projectListViewEditFields]);
 
+  //Four part assessment permissions
+  const fourPartAssessmentEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const fourPartPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    fourPartAssessmentEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [fourPartAssessmentEditFields]);
+
   const memoizedInteractionStatus = useMemo(
     () =>
       interactionStatus.data?.data.interactionStatus.map((status) => ({
@@ -338,14 +363,27 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     [interactionResSources.data?.data.responseSource]
   );
 
+  const assessmentSourceOptions = useMemo(() => {
+    return (
+      assessmentSource?.data?.data?.map((item) => ({
+        value: item.rid,
+        option: item.interaction_assessment_source_name,
+      })) || []
+    );
+  }, [assessmentSource?.data?.data]);
+
   useEffect(() => {
     if (data) {
       const updatedInteractions =
         data.interactions?.map((item) => {
           const status = (item.status_name || '').toLowerCase();
+          const recordStatus = (
+            item.interaction_status_name || ''
+          ).toLowerCase();
           const checkBoxMessage = getDisableReason(
             item.has_email_recipient,
             status,
+            recordStatus,
             sendInteractionsEnable
           );
           return {
@@ -381,10 +419,14 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
       search: searchText,
     };
-    setInteractionsParams(updatedParams);
+    setInteractionsParams({
+      ...updatedParams,
+      assessment_type: showAssessmentToggle ? 'all' : 'fpa',
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     sortField,
+    showAssessmentToggle,
     appliedFilters,
     currentPage,
     rowsPerPage,
@@ -618,7 +660,9 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
 
   const interactionModelColumn = getProjectInteractionListModelColumns(
     // handleViewInteraction,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap,
+    projectPermissionMap
   );
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
@@ -694,6 +738,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
         email: recipient?.email.trim() || '',
         name: recipient?.name.trim() || recipient?.email.split('@')[0] || '',
       },
+      is_interaction_reinitiated: true,
     };
 
     sendInteraction.mutate(payload, {
@@ -728,8 +773,38 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   };
 
   const handleToggleRecordStatus = (row: InteractionList, checked: boolean) => {
-    const updatedStatus = checked ? 'active' : 'inactive';
-    console.log(`Toggling record status for ${row.rid} to ${updatedStatus}`);
+    const status_name = checked ? 'Active' : 'In-Active';
+
+    // Optimistic UI update — reflect the change instantly
+    const previousList = interactionList;
+    setInteractionList((prev) =>
+      prev.map((item) =>
+        item.rid === row.rid
+          ? { ...item, interaction_status_name: status_name }
+          : item
+      )
+    );
+
+    updateInteractionStatus.mutate(
+      {
+        rid: row.rid,
+        status_name,
+        account_rid: accountId,
+      },
+      {
+        onSuccess: (response) => {
+          successToast(
+            response?.statusMessage || 'Interaction Status updated successfully'
+          );
+          refetch();
+        },
+        onError: () => {
+          // Revert to previous state on failure
+          setInteractionList(previousList);
+          errorToast('Failed to update interaction status');
+        },
+      }
+    );
   };
 
   const handleFourPartNavigation = (row: InteractionList) => {
@@ -739,11 +814,9 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       caseId: caseId || '',
     });
 
-    const searchParams = new URLSearchParams({
-      list: 'four_part_assessment',
-      fpa_id: row.four_part_assessment_rid,
-      navigate_source: 'interactions',
-    });
+    searchParams.set('list', 'four_part_assessment');
+    searchParams.set('fpa_id', row.four_part_assessment_rid);
+    searchParams.set('navigate_source', 'interactions');
 
     navigate(`${path}?${searchParams.toString()}`, {
       state: { activeKey: 'four_part_assessment' },
@@ -758,6 +831,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     handleViewInteractionAttachmentCount,
     permissionMap,
     projectPermissionMap,
+    fourPartPermissionMap,
     handleToggleRecordStatus,
     handleFourPartNavigation
   );
@@ -768,16 +842,26 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
         memoizedInteractionResSources,
         memoizedInteractionStatus,
         permissionMap,
-        projectPermissionMap
+        projectPermissionMap,
+        fourPartPermissionMap,
+        assessmentSourceOptions
       )
     : getCaseInteractionHistoryFilterFields(memoizedInteractionStatus);
-  const modelFIlterFields = getProjectCaseInteractionFilterFields(
+  const modelFilterFields = getProjectCaseInteractionFilterFields(
     memoizedInteractionStatusReminder,
-    permissionMap
+    permissionMap,
+    projectPermissionMap,
+    fourPartPermissionMap,
+    assessmentSourceOptions
   );
   const RestrictedColumns = [
     {
       id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+    {
+      id: 'status_action',
       canHide: false,
       canDrag: false,
     },
@@ -861,6 +945,15 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
             !viewInteractionHistory
           }
           activityMenuItems={activityMenuItems}
+          showToggle={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory &&
+            !viewResponseHistory
+          }
+          toggleLabel={'To include RD Assessment'}
+          toggleEnabled={showAssessmentToggle}
+          setToggleEnabled={setShowAssessmentToggle}
         />
         {isTimeLineView ? (
           <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
@@ -987,7 +1080,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to send reminder'
                   />
                   <ReInitiateModal
@@ -1009,7 +1102,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to re-initiate'
                   />
                 </div>

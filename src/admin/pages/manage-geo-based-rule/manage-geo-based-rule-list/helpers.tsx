@@ -45,7 +45,7 @@ export const getGeoBasedRuleFilterFields = (
 ): FieldConfig[] => {
   return [
     {
-      label: 'Geo Based ID',
+      label: 'Jurisdiction Rule ID',
       name: 'r_number',
       type: 'text',
       operatorOption: textfieldOptions,

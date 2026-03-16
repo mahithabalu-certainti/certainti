@@ -101,14 +101,6 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['rd_percent_final']?.edit,
   },
   {
-    name: 'QRE Final',
-    value: 'qre_final',
-    type: 'text',
-    hide:
-      !resourcepermissionMap?.['qre_final']?.read &&
-      !resourcepermissionMap?.['qre_final']?.edit,
-  },
-  {
     name: 'Status',
     value: 'status_rid',
     type: 'enum',

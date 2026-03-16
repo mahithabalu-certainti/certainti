@@ -61,6 +61,7 @@ import {
   AllPermissions,
   useGetInteractionLevel,
   useGetInteractionStatus,
+  useGetStatus,
   // useGetInteractionStatusById,
 } from '../../../../common-service';
 import { RootState } from '../../../../store/store';
@@ -167,6 +168,7 @@ const CaseInteractionForm = () => {
   const interactionStatus = useGetInteractionStatus();
   const getInteractionLevel = useGetInteractionLevel();
   const interactionTemplates = useGetInteractionTemplate();
+  const accountStatusOptions = useGetStatus();
   const interactionTemplateDetails = useGetInteractionTemplateDetails(
     currentTemplate.value as string
   );
@@ -624,6 +626,10 @@ const CaseInteractionForm = () => {
         ...payload,
         trigger_send: !!trigger_send,
         ...(recipiants?.email && { email_info: recipiants }),
+        interaction_assessment_source_rid: 'Manual',
+        interaction_status_rid: accountStatusOptions?.data?.data?.status.find(
+          (option) => option.status_name.toLowerCase() === 'active'
+        )?.rid,
       },
       {
         onError: () => {

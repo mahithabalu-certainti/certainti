@@ -97,7 +97,7 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
         saveAndSendComplete(externalRecipiants);
       }
     } else {
-      saveAndSendComplete(externalRecipiants);
+      saveAndSendComplete(recipiants);
     }
   };
   const cancel = () => {

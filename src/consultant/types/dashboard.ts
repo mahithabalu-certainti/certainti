@@ -39,11 +39,15 @@ export interface HealthStatusResponse {
 export interface OverallProjectValueDetail {
   country_rid: string;
   country_code: string;
-  country_name: string | null;
+  country_name: string;
+  currency_code: string;
+  currency_symbol: string;
   total_project_cost: string;
-  total_fte_cost: string;
-  total_subcon_cost: string;
-  total_nonlabor_cost: string;
+  qre_cost: string;
+  qualified_project_cost: string;
+  rd_credits: string;
+  rd_credits_submitted: string;
+  rd_credits_approved: string;
 }
 
 export interface OverallProjectValueResponse {
@@ -59,6 +63,8 @@ export interface AccountWiseConsolidation {
   country_rid: string;
   country_name: string;
   country_code: string;
+  currency_code: string;
+  currency_symbol: string;
   total_project_cost: string;
   qualified_project_cost: string;
   qre_cost: string;
@@ -71,6 +77,8 @@ export interface CountryWiseConsolidation {
   country_rid: string;
   country_name: string;
   country_code: string;
+  currency_code: string;
+  currency_symbol: string;
   approved: number;
 }
 

@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-google-charts';
-import { formatAmount, getDynamicSvgIcon, blendWithWhite } from '../../helpers';
+import {
+  formatAmount,
+  getDynamicSvgIcon,
+  blendWithWhite,
+  generateChartTicks,
+} from '../../helpers';
 
 interface SummaryItem {
   label: string;
@@ -32,6 +37,7 @@ interface StackedBarChartProps {
   YAxis?: string;
   customTooltip?: boolean;
   getTooltipData?: (item: any) => TooltipItem[];
+  getCurrencySymbol?: (item: any) => string;
   itemsPerPage?: number; // New prop for pagination
 }
 
@@ -49,6 +55,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
   YAxis = '',
   customTooltip = false,
   getTooltipData,
+  getCurrencySymbol,
   itemsPerPage = 5, // Default 5 items per page
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,7 +99,8 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
       const rows = paginatedData.map((item) => {
         const label = getLabel(item);
         const value = Number(item[valueSeries.key] ?? 0);
-        const annotation = formatAmount(value);
+        const symbol = getCurrencySymbol ? getCurrencySymbol(item) : '';
+        const annotation = `${symbol}${formatAmount(value)}`;
 
         if (customTooltip && getTooltipData) {
           const tooltipItems = getTooltipData(item) || [];
@@ -138,6 +146,25 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
 
   const chartData = prepareChartData();
 
+  // Compute max value from chart data for formatted hAxis ticks
+  const maxChartValue = useMemo(() => {
+    if (!chartData || chartData.length <= 1) return 0;
+    let max = 0;
+    for (let i = 1; i < chartData.length; i++) {
+      const row = chartData[i];
+      for (let j = 1; j < row.length; j++) {
+        const val = Number(row[j]);
+        if (isFinite(val) && val > max) max = val;
+      }
+    }
+    return max;
+  }, [chartData]);
+
+  const hAxisTicks = useMemo(
+    () => generateChartTicks(0, maxChartValue),
+    [maxChartValue]
+  );
+
   const chartOptions: any = {
     title: hideHeader ? title : '',
     isStacked: true,
@@ -151,14 +178,18 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
       width: '85%',
       height: '75%',
     },
-    hAxis: { title: XAxis, minValue: 0, textStyle: { fontSize: 12 } },
+    hAxis: {
+      title: XAxis,
+      minValue: 0,
+      textStyle: { fontSize: 12 },
+      ticks: hAxisTicks,
+    },
     vAxis: { title: YAxis, textStyle: { fontSize: 12 } },
     bar: { groupWidth: series.length === 1 ? '50%' : '30%' },
     backgroundColor: 'transparent',
     annotations: {
       alwaysOutside: false,
-      textStyle: { fontSize: 10, color: '#ffffff', bold: true },
-      stem: { color: 'none' },
+      textStyle: { fontSize: 10, color: '#2A2A2A', bold: true },
     },
     tooltip: customTooltip ? { isHtml: true, trigger: 'focus' } : {},
   };
@@ -213,14 +244,6 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
           height={paginatedData.length * 40 + 100}
           data={chartData}
           options={chartOptions}
-          loader={
-            <div className='flex items-center justify-center h-full'>
-              <div className='text-center'>
-                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
-                <p className='text-sm text-gray-600'>Loading chart...</p>
-              </div>
-            </div>
-          }
         />
       </div>
 

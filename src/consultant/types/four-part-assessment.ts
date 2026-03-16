@@ -7,7 +7,7 @@ export interface FourPartAssessmentListURLParams {
   search: string;
   filter: object;
   sort: string;
-  sort_by: string;
+  sort_by: 'ASC' | 'DESC';
   type: 'account' | 'project' | 'case';
 }
 
@@ -18,7 +18,7 @@ export interface FourPartAssessmentListExportURLParams {
   search: string;
   filter: object;
   sort: string;
-  sort_by: string;
+  sort_by: 'ASC' | 'DESC';
   type: 'account' | 'project' | 'case';
   timezone?: string;
 }
@@ -29,12 +29,14 @@ export type FourPartAssessmentList = {
   project_code: string | null;
   rd_potential_category: 'Low' | 'Medium' | 'High' | string;
   status: string;
+  summary_judgment: string | null;
   created_by: string;
   created_by_name: string;
   created_datetime: string;
-  modified_by?: string | null;
-  modified_by_name?: string | null;
-  modified_datetime?: string | null;
+  permitted_purpose_status: string;
+  technological_uncertainty_status: string;
+  technological_in_nature_status: string;
+  process_of_experimentation_status: string;
 };
 
 export interface FourPartAssessmentListApiResponse {
@@ -56,11 +58,16 @@ export interface FourPartAssessmentAttachment {
   fileType: string;
 }
 
+export interface FourPartAssessmentQuestionItem {
+  status: string;
+  rationale: string | null;
+}
+
 export interface FourPartAssessmentQuestions {
-  permitted_purpose: string;
-  technological_uncertainty: string;
-  process_of_experimentation: string;
-  technological_in_nature: string;
+  permitted_purpose: FourPartAssessmentQuestionItem;
+  technological_uncertainty: FourPartAssessmentQuestionItem;
+  process_of_experimentation: FourPartAssessmentQuestionItem;
+  technological_in_nature: FourPartAssessmentQuestionItem;
 }
 
 export interface FourPartAssessmentDetailsTitle {
@@ -71,8 +78,9 @@ export interface FourPartAssessmentDetailsTitle {
 export interface FourPartAssessmentDetailsBasicInfo {
   rid: string;
   status: string;
+  created_on: string | null;
   project_code: string | null;
-  project_description: string | null;
+  tracker_one_liner: string | null;
   rd_potential_category: string;
 }
 
@@ -80,18 +88,28 @@ export interface FourPartAssessmentDetailsAuditInfo {
   record_id: string;
   created_by: string;
   created_on: string | null;
-  updated_on: string | null;
-  modified_by: string | null;
   four_part_assessment_id: string;
   created_by_name: string;
-  modified_by_name: string | null;
+}
+
+export interface FourPartAssessmentQuestionDetail {
+  question: string;
+  question_seq_num: string;
+}
+
+export interface FourPartAssessmentInteractionQuestions {
+  interaction_rid: string;
+  r_number: string;
+  project_fiscal_rid: string;
+  question_details: FourPartAssessmentQuestionDetail[];
 }
 
 export interface FourPartAssessmentDetails {
   title: FourPartAssessmentDetailsTitle;
-  basic_information: FourPartAssessmentDetailsBasicInfo;
-  four_part_assessment: FourPartAssessmentQuestions;
+  record_information: FourPartAssessmentDetailsBasicInfo;
+  four_part_assessment_evaluation: FourPartAssessmentQuestions;
   audit_information: FourPartAssessmentDetailsAuditInfo;
+  interaction_questions: FourPartAssessmentInteractionQuestions | null;
 }
 
 export interface FourPartAssessmentDetailsResponse {

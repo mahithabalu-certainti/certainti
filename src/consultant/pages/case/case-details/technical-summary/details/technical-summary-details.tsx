@@ -248,7 +248,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                 .replace(/^[ \t]*[-*•][ \t]*/gm, '')
                 .replace(/^[ \t]+/gm, '')
                 .replace(/([^ \n])\s*\*\*(.*?)\*\*/g, '$1\n\n**$2**')
-                .replace(/\*\*(.*?)\*\*:\s*/g, '**$1**:\n\n');
+                .replace(/\*\*(.*?)\*\*:\s*/g, '**$1**:\n\n')
+                .replace(/^\*([^*\n]+\*\*)/gm, '**$1');
               return (
                 <div key={index} className='flex flex-col'>
                   {/* Label as Header Banner */}
@@ -256,7 +257,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                     {item.label}
                   </div>
                   {/* Value as content */}
-                  <div className='py-2 px-6 markdown font-medium text-[13px] text-[#425A76] [&>p]:mb-2'>
+                  <div className='py-0.5 px-6 markdown font-medium text-[13px] text-[#425A76] '>
                     <Markdown>{formattedText || ''}</Markdown>
                   </div>
                 </div>

@@ -24,9 +24,11 @@ import {
   StatusTypeEnum,
 } from '../../../../types';
 import {
+  useGetAssessmentSource,
   useInteractionList,
   useInteractionListModel,
   useSendInteraction,
+  useUpdateInteractionStatus,
 } from '../../../../services/interactions/interactions-service';
 import {
   ACCOUNT_DETAILS,
@@ -152,6 +154,9 @@ const Interactions: React.FC<InteractionsProps> = ({
     filter: {},
   });
   const [reInitiateModalOpen, setReInitiateModalOpen] = useState(false);
+  const [showAssessmentToggle, setShowAssessmentToggle] =
+    useState<boolean>(false);
+
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -180,7 +185,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
   const viewResponseHistory = !!responseHistory;
-  const { successToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const sendInteraction = useSendInteraction();
   const { data, isLoading, isError, refetch } = useInteractionList(
     {
@@ -193,6 +198,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       fiscal_year: newFiscalYear,
       search: searchText,
       flag: 'account',
+      assessment_type: showAssessmentToggle ? 'all' : 'fpa',
     },
     !viewDetails &&
       !viewInteractionHistory &&
@@ -239,6 +245,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionStatusReminder = useGetInteractionStatusByReminder(true);
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
+  const updateInteractionStatus = useUpdateInteractionStatus();
+  const assessmentSource = useGetAssessmentSource();
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -289,6 +297,24 @@ const Interactions: React.FC<InteractionsProps> = ({
     });
     return map;
   }, [projectListViewEditFields]);
+
+  //Four part assessment permissions
+  const fourPartAssessmentEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.FOUR_PART_ASSESSMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const fourPartPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    fourPartAssessmentEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [fourPartAssessmentEditFields]);
+
   const memoizedInteractionStatus = useMemo(
     () =>
       interactionStatus.data?.data.interactionStatus.map((status) => ({
@@ -330,15 +356,28 @@ const Interactions: React.FC<InteractionsProps> = ({
     [interactionResSources.data?.data.responseSource]
   );
 
+  const assessmentSourceOptions = useMemo(() => {
+    return (
+      assessmentSource?.data?.data?.map((item) => ({
+        value: item.rid,
+        option: item.interaction_assessment_source_name,
+      })) || []
+    );
+  }, [assessmentSource?.data?.data]);
+
   useEffect(() => {
     if (data) {
       setCount(data.count || 0);
       const updatedInteractions =
         data.interactions?.map((item) => {
           const status = (item.status_name || '').toLowerCase();
+          const recordStatus = (
+            item.interaction_status_name || ''
+          ).toLowerCase();
           const checkBoxMessage = getDisableReason(
             item.has_email_recipient,
             status,
+            recordStatus,
             sendInteractionsEnable
           );
           return {
@@ -375,9 +414,20 @@ const Interactions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
       search: searchText,
     };
-    setInteractionsParams(updatedParams);
+    setInteractionsParams({
+      ...updatedParams,
+      assessment_type: showAssessmentToggle ? 'all' : 'fpa',
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy, searchText]);
+  }, [
+    sortField,
+    appliedFilters,
+    currentPage,
+    rowsPerPage,
+    sortBy,
+    searchText,
+    showAssessmentToggle,
+  ]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -560,6 +610,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     const payload = {
       account_rid: accountid || '',
       interactions,
+      is_interaction_reinitiated: true,
       email_info: {
         email: recipient?.email.trim() || '',
         name: recipient?.name.trim() || recipient?.email.split('@')[0] || '',
@@ -635,8 +686,38 @@ const Interactions: React.FC<InteractionsProps> = ({
   ];
 
   const handleToggleRecordStatus = (row: InteractionList, checked: boolean) => {
-    const updatedStatus = checked ? 'active' : 'inactive';
-    console.log(`Toggling record status for ${row.rid} to ${updatedStatus}`);
+    const status_name = checked ? 'Active' : 'In-Active';
+
+    // Optimistic UI update — reflect the change instantly
+    const previousList = interactionList;
+    setInteractionList((prev) =>
+      prev.map((item) =>
+        item.rid === row.rid
+          ? { ...item, interaction_status_name: status_name }
+          : item
+      )
+    );
+
+    updateInteractionStatus.mutate(
+      {
+        rid: row.rid,
+        status_name,
+        account_rid: accountid || '',
+      },
+      {
+        onSuccess: (response) => {
+          successToast(
+            response?.statusMessage || 'Interaction Status updated successfully'
+          );
+          refetch();
+        },
+        onError: () => {
+          // Revert to previous state on failure
+          setInteractionList(previousList);
+          errorToast('Failed to update interaction status');
+        },
+      }
+    );
   };
 
   const handleFourPartNavigation = (row: InteractionList) => {
@@ -646,11 +727,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountid: accountid || '',
     });
 
-    const searchParams = new URLSearchParams({
-      list: 'four_part_assessment',
-      fpa_id: row.four_part_assessment_rid,
-      navigate_source: 'interactions',
-    });
+    searchParams.set('list', 'four_part_assessment');
+    searchParams.set('fpa_id', row.four_part_assessment_rid);
+    searchParams.set('navigate_source', 'interactions');
 
     navigate(`${path}?${searchParams.toString()}`, {
       state: { activeKey: 'four_part_assessment' },
@@ -664,12 +743,15 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteractionAttachmentCount,
     permissionMap,
     projectPermissionMap,
+    fourPartPermissionMap,
     handleToggleRecordStatus,
     handleFourPartNavigation
   );
   const interactionModelColumn = getInteractionListModelColumns(
     // handleViewInteraction,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap,
+    projectPermissionMap
   );
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
@@ -678,17 +760,27 @@ const Interactions: React.FC<InteractionsProps> = ({
         memoizedInteractionStatus,
         memoizedInteractionLevel,
         permissionMap,
-        projectPermissionMap
+        projectPermissionMap,
+        fourPartPermissionMap,
+        assessmentSourceOptions
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
-  const modelFIlterFields = getInteractionModelFilterFields(
+  const modelFilterFields = getInteractionModelFilterFields(
     memoizedInteractionStatusReminder,
     memoizedInteractionLevel,
-    permissionMap
+    permissionMap,
+    fourPartPermissionMap,
+    projectPermissionMap,
+    assessmentSourceOptions
   );
   const RestrictedColumns = [
     {
       id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+    {
+      id: 'status_action',
       canHide: false,
       canDrag: false,
     },
@@ -827,6 +919,15 @@ const Interactions: React.FC<InteractionsProps> = ({
             !viewInteractionHistory
           }
           activityMenuItems={activityMenuItems}
+          showToggle={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory &&
+            !viewResponseHistory
+          }
+          toggleLabel={'To include RD Assessment'}
+          toggleEnabled={showAssessmentToggle}
+          setToggleEnabled={setShowAssessmentToggle}
         />
         {isTimeLineView ? (
           <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
@@ -952,7 +1053,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to send reminder'
                   />
                   <ReInitiateModal
@@ -974,7 +1075,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                     showRefresh={true}
                     filterVisibility={modelShowFilter}
                     showFilter={true}
-                    filterMenu={modelFIlterFields}
+                    filterMenu={modelFilterFields}
                     emptyMessage='No interaction available to re-initiate'
                   />
                 </div>

@@ -1552,7 +1552,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                               openPickerIcon: () => (
                                                 <CalendarIcon
                                                   alt='calendar'
-                                                  className='w-3 h-3 flex-shrink-0'
+                                                  className='w-3 h-3 mr-2 flex-shrink-0'
                                                 />
                                               ),
                                               clearIcon: () => (

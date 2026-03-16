@@ -249,7 +249,7 @@ export const GeoBasedRuleFormFieldsData = (
               !permissionMap?.['created_by']?.edit &&
               !permissionMap?.['created_by']?.read,
           }),
-          createTextField('r_number', 'Geo Based ID', {
+          createTextField('r_number', 'Jurisdiction Rule ID', {
             required: false,
             disabled: true,
             hide:
