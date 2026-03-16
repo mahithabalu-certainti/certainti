@@ -122,7 +122,7 @@ export class CaseModelService {
       ""
     )}`;
 
-    const sequelize = await initOrgSequelize();
+    const sequelize = await this.getSequelize();
     const mainDbSequelize = await this.getMainSequelize();
     const CaseModel = Case.initialize(sequelize, schemaName);
     const CaseSummaryModel = CaseSummary.initialize(mainDbSequelize, "");

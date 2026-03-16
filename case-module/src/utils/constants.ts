@@ -225,7 +225,8 @@ export const STATUS_MESSAGE = {
   activityCompletionFailed: "Meeting completion failed",
   caseClosedSuccess: "Case Closed Successfully",
   computedDataFetchedSuccess: "Computed data fetched successfully",
-  revokedSuccessfully : "Approval revoked successfully"
+  revokedSuccessfully : "Approval revoked successfully",
+  dossierFormFetchedSuccess: "Dossier Form fetched successfully",
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
@@ -1459,6 +1460,7 @@ export const rawQueries = {
     WHERE ct.case_rid = '${caseRid}'
     AND ct.role_rid = '${roleRid}'
     AND ct.status_rid = '${statusActiveRid}'
+    and ct.is_primary = true
     `;
   },
   fetchEmailRecipientsByRids(userRids: string[]) {
@@ -1863,14 +1865,15 @@ export const rawQueries = {
                     pfr.region_rid as state_rid,
                     COUNT(DISTINCT cp.project_fiscal_rid) as total_projects,
                     COUNT(DISTINCT pr.rid) as total_resources,
-                    SUM(pfr.total_cost_fte_from_prj_res + pfr.total_cost_nonlabor_from_prj_res + pfr.total_cost_subcon_from_prj_res) as total_qre
+                    SUM(pfr.total_cost_pro_res) as total_qre
                 FROM ${schemaName}.case_projects cp
                 JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
-                JOIN ${schemaName}.project_fiscal_region pfr ON pf.rid = pfr.project_fiscal_rid
+                JOIN ${schemaName}.project_resource_fiscal pfr ON pf.rid = pfr.project_fiscal_rid
                 LEFT JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid 
                     AND pr.region_rid = pfr.region_rid
                 WHERE cp.case_rid = :case_rid 
                     AND pf.fiscal_year = cp.fiscal_year
+                    AND pf.is_qualified = true
                     AND pfr.region_rid IN (:stateRids)
                 GROUP BY pfr.region_rid
             `
@@ -2184,6 +2187,9 @@ WHERE dmf.country_rid = '${countryRid}'
   fetchAllActiveStates() {
     return `
         SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE status = 'active'`;
+  },
+  updateStatusForWorkFlowConnector(statusRid : string, templateRid : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.workflow_connector_mapping SET status_rid = '${statusRid}' WHERE source_rid = '${templateRid}' OR target_rid = '${templateRid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
@@ -2514,6 +2520,7 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+  dossierCreated: "Dossier Event",
   dossierPackageCreated: "Dossier Package",
 }
 
@@ -2634,3 +2641,16 @@ export const FormExtractionFieldTypes = {
   TABLE_ITEM: "Table-Item"
 }
 
+export const filterColumnsDossierForm = {
+  dossier_version: `d.dossier_version`,
+  created_datetime: `d.created_datetime`,
+  document_name: `d.document_name`,
+  r_number: `d.r_number`
+}
+
+export const filterColumnsDossierFormTypes : any = {
+  dossier_version: `number`,
+  created_datetime: `date`,
+  document_name: `string`,
+  r_number: `string`
+}

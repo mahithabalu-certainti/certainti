@@ -1,5 +1,5 @@
 
-import { filterColumnsCaseTask, filterColumnsCaseTaskTypes, MAIN_SCHEMA_NAME, sortByColumnsCaseTask, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
+import { filterColumnsCaseTask, filterColumnsCaseTaskTypes, filterColumnsDossierForm, filterColumnsDossierFormTypes, MAIN_SCHEMA_NAME, sortByColumnsCaseTask, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
 import {
   FilterType,
   validColumns,
@@ -856,8 +856,8 @@ export const fetchAdminTemplates = (page: number, limit: number, sort: string, s
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type tt ON tt.rid = t.task_type_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid AND t.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid AND ttt.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
     LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector wc ON wc.rid = w.relationship_connector_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_weightage wt ON wt.rid = t.weightage_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_category tc ON tc.rid = t.task_category_rid
@@ -867,7 +867,6 @@ export const fetchAdminTemplates = (page: number, limit: number, sort: string, s
     uu.first_name ILIKE '${searchValue}' OR uu.last_name ILIKE '${searchValue}' OR CONCAT(uu.first_name,' ', uu.last_name) ILIKE '${searchValue}' OR
     r.role_name ILIKE '${searchValue}' OR c.checklist_name ILIKE '${searchValue}' OR p.priority_name ILIKE '${searchValue}' OR
     s.status_name ILIKE '${searchValue}' OR m.milestone_name ILIKE '${searchValue}')
-    AND ttt.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
     ${graphqlConditions}
     ${andConditions}
     ${finalContainer}
@@ -926,6 +925,8 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   fetch_workflow_connector_map AS (
   SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
   FROM ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w
+  WHERE
+  status_rid = '${statusId}'
   ),
   aggregate_milestone AS (
   SELECT array_agg(jsonb_build_object(
@@ -2399,6 +2400,141 @@ export const fetchRdCreditConfigStateLevelQuery = () => {
   select config_json, state_code, state_rid, country_rid
   from eligible_configs
   where rn = 1
+  `
+  return query;
+}
+
+export const fetchDossierForm = (page : number, limit : number, sort : string, sort_by : string, filter : FilterType, search : string, schemaName : string,  paginationAllowed : boolean, sortingAllowed : boolean, filterAllowed : boolean, accountRid : string, caseRid : string) => {
+  let offset = (page - 1 ) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let searchValue : string;
+  let sortValue : string
+  let filterQueryArray : string[] = [];
+  let andOperator : string = ''
+  let validKey : string;
+  let combinedQueryString : string;
+  let doPagination : string;
+
+  if(paginationAllowed) doPagination = pagination
+  else doPagination = ''
+
+  if(sortingAllowed) {
+    if(sort === 'r_number') sortValue = `ORDER BY d.r_number ${sort_by}`
+    else if(sort === 'document_name') sortValue = `ORDER BY d.document_name ${sort_by} NULLS LAST`
+    else if(sort === 'dossier_version') sortValue = `ORDER BY d.dossier_version ${sort_by} NULLS LAST`
+    else if(sort === 'created_datetime') sortValue = `ORDER BY d.created_datetime ${sort_by}`
+    else sortValue = `ORDER BY d.r_number ASC`
+  } else {
+    sortValue = ''
+  }
+
+  if(search) searchValue = `'%${search}%'`
+  else searchValue = `'%%'`
+
+  if(filterAllowed) {
+    if (Object.keys(filter).length > 0) {
+      andOperator = ` AND `
+      for (let [key, conditions] of Object.entries(filter)) {
+        if (Object.keys(filterColumnsDossierForm).includes(key)) {
+          validKey = key;
+          for (let [cond, values] of Object.entries(conditions)) {
+            switch (filterColumnsDossierFormTypes[validKey]) {
+              case "string": {
+                if (cond === 'equals')
+                  filterQueryArray.push(`LOWER(${validKey}) = '${values.toLowerCase()}'`)
+                if (cond === 'not_equals')
+                  filterQueryArray.push(`(LOWER(${validKey}) != '${values.toLowerCase()}' OR ${validKey} IS NULL)`)
+                if (cond === 'contains')
+                  filterQueryArray.push(`${validKey} ILIKE '%${values}%'`)
+                if (cond === 'is_empty')
+                  filterQueryArray.push(`(${validKey} IS NULL OR ${validKey} = '')`)
+                if (cond === 'in')
+                  filterQueryArray.push(`${validKey} IN (${values.map((d: any) => `'${d}'`).join(',')})`)
+                break;
+              }
+              case "number": {
+                switch (cond) {
+                  case "equals": {
+                    filterQueryArray.push(`${validKey} = ${values}`)
+                    break
+                  }
+                  case "not_equals": {
+                    filterQueryArray.push(`${validKey} != ${values}`)
+                    break;
+                  }
+                  case "greater_than": {
+                    filterQueryArray.push(`${validKey} > ${values}`)
+                    break;
+                  }
+                  case "less_than": {
+                    filterQueryArray.push(`${validKey} < ${values}`)
+                    break;
+                  }
+                  case "is_empty": {
+                    filterQueryArray.push(`${validKey} IS NULL`)
+                    break;
+                  }
+                  case "between": {
+                    filterQueryArray.push(`${validKey} BETWEEN ${values.map((d: any) => `${d}`).join(' AND ')}`)
+                    break;
+                  }
+                  default: {
+                    break;
+                  }
+                }
+                break;
+              }
+              case "date": {
+                if (cond === 'equals')
+                  filterQueryArray.push(`ct.${validKey} = '${values}'`)
+                if (cond === 'before')
+                  filterQueryArray.push(`ct.${validKey} < '${values}'`)
+                if (cond === 'after')
+                  filterQueryArray.push(`ct.${validKey} > '${values}'`)
+                if (cond === 'is_empty')
+                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                if (cond === 'between')
+                  filterQueryArray.push(`ct.${validKey} BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
+                break;
+              }
+              default:
+                break;
+              }
+            }
+          }
+        }
+      } 
+      else {
+        filterQueryArray = []
+        andOperator = ` `
+    }
+  } else {
+    filterQueryArray = []
+    andOperator = ` `
+  }
+
+  if (filterQueryArray.length > 0) {
+    combinedQueryString = filterQueryArray.join(' AND ')
+  } else {
+    combinedQueryString = ` `
+  }
+
+  let query = `
+  WITH fetch_data AS (
+  SELECT COUNT(rid) OVER() AS total_result, d.rid, d.r_number, d.document_name, d.created_by, d.created_datetime, d.dossier_version
+  FROM 
+  ${schemaName}.dossier_form d
+  WHERE
+  d.account_rid = '${accountRid}'
+  AND
+  d.case_rid = '${caseRid}'
+  AND
+  (d.r_number ILIKE ${searchValue} OR d.document_name ILIKE ${searchValue})
+  ${andOperator}
+  ${combinedQueryString}
+  ${sortValue}
+  )
+  SELECT * FROM fetch_data ${doPagination}
   `
   return query;
 }

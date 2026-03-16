@@ -3583,8 +3583,8 @@ export class InteractionService {
                 question: d
               }
             })
-            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber);
-            if (findBatchAndIncrement) {
+            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber, company_id);
+            if(findBatchAndIncrement) {
               const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1])
               const incrementedBatchNumber = splitBatchNumber + 1
               batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`

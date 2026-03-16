@@ -110,7 +110,7 @@ export class RdCreditCalculatorForGA {
             const prior_receipts = Number(grossReceiptsItem?.grossReceipts || 0);
 
             const ratio = prior_receipts > 0 ? new Decimal(this.round2((prior_qre / prior_receipts) * 100)) : new Decimal(0);
-
+            console.log("raton"+ratio)
             return {
                 fiscal_year: qreItem.fiscalYear,
                 prior_qre,
@@ -120,10 +120,9 @@ export class RdCreditCalculatorForGA {
         });
         // sum of ratios
         const sum_ratio = details.reduce((sum, item) => sum + Number(item.ratio), 0);
-
         return {
             previous_years: details,
-            sum_ratio,
+            sum_ratio: this.round2(sum_ratio),
             average_ratio: this.round2(sum_ratio / 3)
         };
     }

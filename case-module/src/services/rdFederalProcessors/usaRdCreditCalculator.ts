@@ -159,14 +159,18 @@ export class RdCreditCalculatorForUSA {
         //---- Line 6: fixedBasePercentage
 
         //---- Line 7: Average Gross Receipts
-        const line7 = prior4YearsGrossReceiptsTotal.div(priorYearsCount); // usually 4
-
+        // Ensure valid inputs to prevent NaN
+        const validYearsCount = priorYearsCount > 0 ? priorYearsCount : 1;
+        const validGrossReceipts = Decimal.isDecimal(prior4YearsGrossReceiptsTotal) ? prior4YearsGrossReceiptsTotal : new Decimal(0);
+        const line7 = validGrossReceipts.div(validYearsCount); // usually 4
+        logMessage(`RRC Line 7 (Average Annual Gross Receipts): ${line7}`);
         //---- Line 8: Multiply line 7 by percentage on line 6 (configRRC.fixedBasePercentage)
-        const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage/100));
+        const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage ?? 0.16 / 100));
 
         //---- Line 9: Subtract line 8 from line 5
-        const line9 = currentYearQRE.minus(line8)
-        const maxLine9 = Decimal.max(line9, 0)
+        const line9 = currentYearQRE.minus(line8);
+        const maxLine9 = Decimal.max(line9, 0);
+        logMessage(`RRC Line 9 (QRE - Base): ${maxLine9}`);
 
         //---- Line 10: Multiply line 5 by 50%
         const line10 = currentYearQRE.mul(configRRC.rrc_qre_credit_percentage/100 || 0.5);

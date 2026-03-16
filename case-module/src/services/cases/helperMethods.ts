@@ -1115,4 +1115,155 @@ export class HelperMethods {
 
     }
   }
+
+    /**
+     * Validates historical submission data for duplicates before case creation
+     * @param accountNumber - Account number
+     * @param amendmentData - Array of historical submission data to validate
+     * @param accountRid - Account RID
+     * @returns {Promise<string>} - Error message if duplicates found, empty string if valid
+     */
+    async validateHistoricalSubmissionData(
+      accountNumber: string,
+      amendmentData: Array<{
+        fiscal_year: number;
+        country_rid: string;
+        state_rid?: string;
+        is_federal: boolean;
+        action_type: string;
+        state_name?: string;
+      }>,
+      accountRid: string
+    ): Promise<string> {
+      try {
+        if (!amendmentData || amendmentData.length === 0) {
+          return '';
+        }
+
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.caseModelService.getSequelize();
+        }
+
+        const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
+
+        // Check only "add" operations for duplicates
+        for (const submission of amendmentData) {
+          if (submission.action_type && submission.action_type.toLowerCase() === "add") {
+            const whereCondition: any = {
+              account_rid: accountRid,
+              country_rid: submission.country_rid,
+              fiscal_year: submission.fiscal_year.toString(),
+            };
+
+            // Include state_rid in the condition if provided
+            if (submission.state_rid) {
+              whereCondition.state_rid = submission.state_rid;
+            } else {
+              whereCondition.state_rid = '';
+            }
+
+            const existingRecord = await CaseHistorySubmission.findOne({
+              where: whereCondition,
+            });
+
+            if (existingRecord) {
+              const errorMsg = `Duplicate historical submission found for fiscal year ${submission.fiscal_year}, ${
+                submission.is_federal ? "Federal" : "State: " + submission?.state_name || ''
+              } - record already exists for account`;
+              return errorMsg;
+            }
+          }
+        }
+
+        return '';
+      } catch (error) {
+        logMessage(`Error validating historical submission data: ${error}`);
+        throw new Error(`Failed to validate historical submission data: ${error instanceof Error ? error.message : error}`);
+      }
+    }
+
+    /**
+     * Process historical submission data for amendment cases
+     * @param accountNumber - Account number
+     * @param caseRid - Case RID
+     * @param amendmentData - Array of historical submission data
+     * @param createdBy - User ID who is creating the historical data
+     * @param accountRid - Account RID
+     */
+ async processHistoricalSubmissionData(
+      accountNumber: string,
+      caseRid: string,
+      amendmentData: Array<{
+        fiscal_year: number;
+        total_project: number;
+        total_qualified_project: number;
+        total_project_cost: number;
+        total_qualified_project_cost: number;
+        total_nonlabor_cost: number;
+        total_subcon_cost: number;
+        total_fte_cost: number;
+        total_qre: number;
+        total_rd_credits: number;
+        annual_gross_receipts: number;
+        action_type: string;
+        country_rid: string;
+        state_rid?: string;
+        is_federal: boolean;
+      }>,
+      createdBy: string,
+      accountRid: string
+    ): Promise<void> {
+      try {
+        // Initialize OrgDb for historical submission operations
+         if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+  
+        const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+        const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
+  
+        // Process each amendment data entry with add operations
+        for (const submission of amendmentData) {
+          if (submission.action_type && submission.action_type.toLowerCase() === "add") {
+            try {
+              // Create historical submission record
+              const historicalData = {
+                account_rid: accountRid,
+                country_rid: submission.country_rid,
+                state_rid: submission.state_rid || '',
+                fiscal_year: submission.fiscal_year.toString(),
+                total_project: submission.total_project,
+                total_qualified_project: submission.total_qualified_project,
+                total_project_cost: submission.total_project_cost,
+                total_qualified_project_cost: submission.total_qualified_project_cost,
+                total_fte_cost: submission.total_fte_cost,
+                total_subcon_cost: submission.total_subcon_cost,
+                total_nonlabor_cost: submission.total_nonlabor_cost,
+                total_qre: submission.total_qre,
+                total_rd_credits: submission.total_rd_credits,
+                annual_gross_receipts: submission.annual_gross_receipts,
+                created_by: createdBy,
+                created_datetime: new Date(),
+              };
+  
+              await CaseHistorySubmission.create(historicalData);
+  
+              logMessage(
+                `Historical submission added for fiscal year ${submission.fiscal_year}, ${
+                  submission.is_federal ? "Federal" : "State: " + submission.state_rid
+                }`
+              );
+            } catch (recordError) {
+              logMessage(
+                `Error adding historical submission for fiscal year ${submission.fiscal_year}: ${recordError}`
+              );
+              throw recordError;
+            }
+          }
+        }
+      } catch (error) {
+        logMessage(`Error processing historical submission data: ${error}`);
+        throw new Error(`Failed to process historical submission data: ${error instanceof Error ? error.message : error}`);
+      }
+    }
 }

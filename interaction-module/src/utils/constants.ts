@@ -1182,7 +1182,7 @@ export const rawQueries = {
      fetchFpaRid (schemaName : string, transactionId : string) {
     return `SELECT rid FROM ${schemaName}.four_part_assessment WHERE transaction_id = '${transactionId}'`
   },
-  fetchBatchInInteraction(schemaName : string) {
+  fetchBatchInInteraction(schemaName : string, accountId : string) {
     return `
     SELECT interaction_batch_id 
     FROM 
@@ -1192,6 +1192,8 @@ export const rawQueries = {
     FROM
     ${schemaName}.interactions
     where
+    account_rid = '${accountId}'
+    AND
 	  four_part_assessment_rid IS NOT NULL
     )
     WHERE
@@ -1207,7 +1209,14 @@ export const rawQueries = {
     transaction_id = '${transactionId}'
     ORDER BY interaction_batch_id DESC
     `
-  }
+  },
+    fetchCaseStatusByType(type: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = '${type}'`;
+  },
+    fetchCaseInfo(schemaName: string, caseRid: string) {
+    return `SELECT rid, r_number, case_name, account_rid, fiscal_year, status_rid FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
+  },
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
