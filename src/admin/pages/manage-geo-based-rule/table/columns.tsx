@@ -75,7 +75,7 @@ export const getGeoBasedRuleColumns = (
   {
     id: 'effective_start_date',
     sortId: 'effective_start_date',
-    label: 'Effective Start Date',
+    label: 'Start Date',
     sortable: true,
     editable: true,
     hide:
@@ -93,8 +93,8 @@ export const getGeoBasedRuleColumns = (
         disableFutureDates: false,
         startFieldId: 'effective_start_date',
         endFieldId: 'effective_end_date',
-        startFieldLabel: 'Effective Start Date',
-        endFieldLabel: 'Effective End Date',
+        startFieldLabel: 'Start Date',
+        endFieldLabel: 'End Date',
         bothStartEndRequireValidate: false,
       },
       getFieldData: (rowData: DependencyRowData) => {
@@ -115,7 +115,7 @@ export const getGeoBasedRuleColumns = (
   {
     id: 'effective_end_date',
     sortId: 'effective_end_date',
-    label: 'Effective End Date',
+    label: 'End Date',
     sortable: true,
     editable: true,
     hide:
@@ -132,8 +132,8 @@ export const getGeoBasedRuleColumns = (
         disableFutureDates: false,
         startFieldId: 'effective_start_date',
         endFieldId: 'effective_end_date',
-        startFieldLabel: 'Effective Start Date',
-        endFieldLabel: 'Effective End Date',
+        startFieldLabel: 'Start Date',
+        endFieldLabel: 'End Date',
         minDate: dateRange.endMin || '',
         bothStartEndRequireValidate: false,
       },

@@ -2484,8 +2484,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ...field,
                     error:
                       field.name === 'effective_from_date'
-                        ? 'Effective From Date cannot be the same as Effective To Date'
-                        : 'Effective To Date cannot be the same as Effective From Date',
+                        ? 'Start Date cannot be the same as End Date'
+                        : 'End Date cannot be the same as Start Date',
                   };
                 }
 
@@ -2495,8 +2495,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ...field,
                     error:
                       field.name === 'effective_from_date'
-                        ? 'Effective From Date cannot be after Effective To Date'
-                        : 'Effective To Date cannot be before Effective From Date',
+                        ? 'Start Date cannot be after End Date'
+                        : 'End Date cannot be before Start Date',
                   };
                 }
               }

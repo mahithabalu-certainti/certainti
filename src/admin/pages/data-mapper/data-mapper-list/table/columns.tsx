@@ -166,12 +166,12 @@ export const getDataMapperColumns = (
     id: 'effective_from_date',
     editId: 'effective_from_date',
     sortId: 'effective_from_date',
-    label: 'Effective From Date',
+    label: 'Start Date',
     sortable: true,
     editable:
       permissionMap?.['effective_from_date']?.read &&
       permissionMap?.['effective_from_date']?.edit,
-    width: 165,
+    width: 160,
     hide:
       !permissionMap?.['effective_from_date']?.read &&
       !permissionMap?.['effective_from_date']?.edit,
@@ -186,8 +186,8 @@ export const getDataMapperColumns = (
         disableFutureDates: false,
         startFieldId: 'effective_from_date',
         endFieldId: 'effective_to_date',
-        startFieldLabel: 'Effective From Date',
-        endFieldLabel: 'Effective To Date',
+        startFieldLabel: 'Start Date',
+        endFieldLabel: 'End Date',
         bothStartEndRequireValidate: false,
       },
       getFieldData: (rowData: DependencyRowData) => {
@@ -209,7 +209,7 @@ export const getDataMapperColumns = (
     id: 'effective_to_date',
     editId: 'effective_to_date',
     sortId: 'effective_to_date',
-    label: 'Effective To Date',
+    label: 'End Date',
     sortable: true,
     width: 160,
     editable:
@@ -228,8 +228,8 @@ export const getDataMapperColumns = (
         disableFutureDates: false,
         startFieldId: 'effective_from_date',
         endFieldId: 'effective_to_date',
-        startFieldLabel: 'Effective From Date',
-        endFieldLabel: 'Effective To Date',
+        startFieldLabel: 'Start Date',
+        endFieldLabel: 'End Date',
         minDate: dateRange.endMin || '',
         bothStartEndRequireValidate: false,
       },

@@ -282,36 +282,36 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
       permissionKey: 'fiscal_year',
     },
     {
-      key: 'total_fte_cost',
-      label: 'Total FTE Cost',
-      type: 'text',
-      required: true,
-      width: '180px',
-      permissionKey: 'total_fte_cost',
-    },
-    {
-      key: 'total_subcon_cost',
-      label: 'Total Subcon Cost',
-      type: 'text',
-      required: true,
-      width: '180px',
-      permissionKey: 'total_subcon_cost',
-    },
-    {
-      key: 'total_nonlabor_cost',
-      label: 'Total Non-Labor Cost',
-      type: 'text',
-      required: true,
-      width: '180px',
-      permissionKey: 'total_nonlabor_cost',
-    },
-    {
       key: 'total_project_cost',
       label: 'Total Project Cost',
       type: 'text',
       required: true,
       width: '180px',
       permissionKey: 'total_project_cost',
+    },
+    {
+      key: 'total_fte_cost',
+      label: 'Total FTE QRE Cost',
+      type: 'text',
+      required: true,
+      width: '200px',
+      permissionKey: 'total_fte_cost',
+    },
+    {
+      key: 'total_subcon_cost',
+      label: 'Total Subcon QRE Cost',
+      type: 'text',
+      required: true,
+      width: '200px',
+      permissionKey: 'total_subcon_cost',
+    },
+    {
+      key: 'total_nonlabor_cost',
+      label: 'Total Non-Labor QRE Cost',
+      type: 'text',
+      required: true,
+      width: '220px',
+      permissionKey: 'total_nonlabor_cost',
     },
     {
       key: 'total_qre',
@@ -685,38 +685,38 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
 
       // Total FTE Cost validation
       if (!submission.total_fte_cost?.trim()) {
-        submissionError.total_fte_cost = 'Total FTE Cost is required';
+        submissionError.total_fte_cost = 'Total FTE QRE Cost is required';
         isValid = false;
       } else if (
         !amountRegex.test(removeCommas(submission.total_fte_cost || ''))
       ) {
         submissionError.total_fte_cost =
-          'Total FTE Cost must be 1–16 digits and up to 2 decimals';
+          'Total FTE QRE Cost must be 1–16 digits and up to 2 decimals';
         isValid = false;
       }
 
       // Total Subcon Cost validation
       if (!submission.total_subcon_cost?.trim()) {
-        submissionError.total_subcon_cost = 'Total Subcon Cost is required';
+        submissionError.total_subcon_cost = 'Total Subcon QRE Cost is required';
         isValid = false;
       } else if (
         !amountRegex.test(removeCommas(submission.total_subcon_cost || ''))
       ) {
         submissionError.total_subcon_cost =
-          'Total Subcon Cost must be 1–16 digits and up to 2 decimals';
+          'Total Subcon QRE Cost must be 1–16 digits and up to 2 decimals';
         isValid = false;
       }
 
       // Total Non-Labor Cost validation
       if (!submission.total_nonlabor_cost?.trim()) {
         submissionError.total_nonlabor_cost =
-          'Total Non-Labor Cost is required';
+          'Total Non-Labor QRE Cost is required';
         isValid = false;
       } else if (
         !amountRegex.test(removeCommas(submission.total_nonlabor_cost || ''))
       ) {
         submissionError.total_nonlabor_cost =
-          'Total Non-Labor Cost must be 1–16 digits and up to 2 decimals';
+          'Total Non-Labor QRE Cost must be 1–16 digits and up to 2 decimals';
         isValid = false;
       }
 
@@ -1435,6 +1435,104 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                   </TableCell>
                                 )}
 
+                                {/* Total Project Cost Text Field */}
+                                {shouldShowField('total_project_cost') && (
+                                  <TableCell
+                                    style={{
+                                      position: 'relative',
+                                      backgroundColor: errors
+                                        .historicalSubmissions?.[rowIndex]
+                                        ?.total_project_cost
+                                        ? '#FEF2F2'
+                                        : 'transparent',
+                                    }}
+                                    sx={{ padding: '0px !important' }}
+                                  >
+                                    <div>
+                                      <TextField
+                                        value={
+                                          submission.total_project_cost
+                                            ? costDisplay(
+                                                submission.total_project_cost ||
+                                                  '',
+                                                submission.currency_symbol
+                                              )
+                                            : ''
+                                        }
+                                        onChange={(e) => {
+                                          const rawValue = removeCommas(
+                                            e.target.value
+                                          );
+                                          handleSubmissionChange(
+                                            rowIndex,
+                                            'total_project_cost',
+                                            rawValue
+                                          );
+                                        }}
+                                        disabled={
+                                          !isFieldEditable(
+                                            'total_project_cost',
+                                            isNewRow
+                                          )
+                                        }
+                                        size='small'
+                                        fullWidth
+                                        placeholder='Enter Total Project Cost'
+                                        sx={{
+                                          '& .MuiInputBase-root': {
+                                            height: '28px',
+                                            fontSize: '13px',
+                                            '& input': {
+                                              padding: '4px 8px',
+                                              color: '#425A76',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none',
+                                              },
+                                          },
+                                        }}
+                                      />
+                                    </div>
+                                    {errors.historicalSubmissions?.[rowIndex]
+                                      ?.total_project_cost && (
+                                      <Tooltip
+                                        title={
+                                          errors.historicalSubmissions[rowIndex]
+                                            .total_project_cost
+                                        }
+                                        arrow
+                                        placement='top'
+                                        slotProps={{
+                                          tooltip: {
+                                            sx: {
+                                              backgroundColor: '#FEF2F2',
+                                              mr: 1,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                          <React.Suspense fallback={null}>
+                                            <ErrorInfoIcon
+                                              alt='error'
+                                              className='w-5 h-3.5'
+                                            />
+                                          </React.Suspense>
+                                        </span>
+                                      </Tooltip>
+                                    )}
+                                  </TableCell>
+                                )}
+
                                 {/* Total FTE Cost Text Field */}
                                 {shouldShowField('total_fte_cost') && (
                                   <TableCell
@@ -1476,7 +1574,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         }
                                         size='small'
                                         fullWidth
-                                        placeholder='Enter Total FTE Cost'
+                                        placeholder='Enter Total FTE QRE Cost'
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1574,7 +1672,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         }
                                         size='small'
                                         fullWidth
-                                        placeholder='Enter Total Subcon Cost'
+                                        placeholder='Enter Total Subcon QRE Cost'
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1672,7 +1770,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         }
                                         size='small'
                                         fullWidth
-                                        placeholder='Enter Total Non-Labor Cost'
+                                        placeholder='Enter Total Non-Labor QRE Cost'
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1703,104 +1801,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         title={
                                           errors.historicalSubmissions[rowIndex]
                                             .total_nonlabor_cost
-                                        }
-                                        arrow
-                                        placement='top'
-                                        slotProps={{
-                                          tooltip: {
-                                            sx: {
-                                              backgroundColor: '#FEF2F2',
-                                              mr: 1,
-                                            },
-                                          },
-                                        }}
-                                      >
-                                        <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                          <React.Suspense fallback={null}>
-                                            <ErrorInfoIcon
-                                              alt='error'
-                                              className='w-5 h-3.5'
-                                            />
-                                          </React.Suspense>
-                                        </span>
-                                      </Tooltip>
-                                    )}
-                                  </TableCell>
-                                )}
-
-                                {/* Total Project Cost Text Field */}
-                                {shouldShowField('total_project_cost') && (
-                                  <TableCell
-                                    style={{
-                                      position: 'relative',
-                                      backgroundColor: errors
-                                        .historicalSubmissions?.[rowIndex]
-                                        ?.total_project_cost
-                                        ? '#FEF2F2'
-                                        : 'transparent',
-                                    }}
-                                    sx={{ padding: '0px !important' }}
-                                  >
-                                    <div>
-                                      <TextField
-                                        value={
-                                          submission.total_project_cost
-                                            ? costDisplay(
-                                                submission.total_project_cost ||
-                                                  '',
-                                                submission.currency_symbol
-                                              )
-                                            : ''
-                                        }
-                                        onChange={(e) => {
-                                          const rawValue = removeCommas(
-                                            e.target.value
-                                          );
-                                          handleSubmissionChange(
-                                            rowIndex,
-                                            'total_project_cost',
-                                            rawValue
-                                          );
-                                        }}
-                                        disabled={
-                                          !isFieldEditable(
-                                            'total_project_cost',
-                                            isNewRow
-                                          )
-                                        }
-                                        size='small'
-                                        fullWidth
-                                        placeholder='Enter Total Project Cost'
-                                        sx={{
-                                          '& .MuiInputBase-root': {
-                                            height: '28px',
-                                            fontSize: '13px',
-                                            '& input': {
-                                              padding: '4px 8px',
-                                              color: '#425A76',
-                                            },
-                                            '& .MuiOutlinedInput-notchedOutline':
-                                              {
-                                                border: 'none',
-                                              },
-                                            '&:hover .MuiOutlinedInput-notchedOutline':
-                                              {
-                                                border: 'none',
-                                              },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                              {
-                                                border: 'none',
-                                              },
-                                          },
-                                        }}
-                                      />
-                                    </div>
-                                    {errors.historicalSubmissions?.[rowIndex]
-                                      ?.total_project_cost && (
-                                      <Tooltip
-                                        title={
-                                          errors.historicalSubmissions[rowIndex]
-                                            .total_project_cost
                                         }
                                         arrow
                                         placement='top'
