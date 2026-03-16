@@ -228,7 +228,9 @@ export class RdCreditCalculatorForCT {
         "[1] Enter the amount of Connecticut research and experimental expenditures for the current income year.": this.round2(part1TentativeComputation.tentative_total_qre),
         "[2] Enter the amount of excess Connecticut research and experimental expenditures for the current income year. From Form CT-1120RC Part I, Line 3.": this.round2(part1TentativeComputation.tentative_excess_qre),
         [`[3] Balance: Subtract Line 2 from Line 1. Net research and development expenses for ${currentYear - 2}`]: this.round2(part1TentativeComputation.tentative_balance),
-        "[4 c] All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.": this.round2(part1TentativeComputation.tentative_credit),
+        "[4 a] Qualified small businesses multiply amount on Line 3 by 6% (.06)": "-",
+        "[4 b] Companies headquartered in an Enterprise Zone, with revenues in excess of $3 billion, employing more than 2,500 employees, may elect to multiply amount on Line 3 by 3.5% (.035).": "-",
+        "[4 c] All other taxpayers multiply amount on Line 3 by 2.5% (.025).": this.round2(part1TentativeComputation.tentative_balance.mul(new Decimal(0.025))),
         "[4] Tentative credit: Enter the amount from Line 4a, 4b, or 4c.": this.round2(part1TentativeComputation.tentative_credit),
         "[5] Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.": this.round2(part1TentativeComputation.reduction_tentative_tax_credit),
         "[6] Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4.": this.round2(part1TentativeComputation.allowable_tentative_tax_credit)
