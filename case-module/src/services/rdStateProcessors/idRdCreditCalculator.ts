@@ -64,7 +64,7 @@ export class RdCreditCalculatorForID {
      */
     qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson, totalGrossReceipts: Decimal, priorYearsCount: number,caseDetails: Case | undefined,) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         const basic_research_payments = new Decimal(caseDetails?.basic_research_payments_id || 0);
         const qualified_organization_base_period_amount = new Decimal(0);
         const line_3 = Decimal.max(0, basic_research_payments.minus(qualified_organization_base_period_amount));

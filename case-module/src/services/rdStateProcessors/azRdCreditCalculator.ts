@@ -14,6 +14,7 @@ export interface ConfigJson {
     rrc_qre_addition: number;
     qre_threshold_amount: number;
     fixed_base_percentage: number;
+    sub_con_percent: number;
 }
 export class RdCreditCalculatorForAZ {
 
@@ -83,7 +84,8 @@ export class RdCreditCalculatorForAZ {
         const line13 = caseData.lease_costs_of_computers_az || 0;
 
         //---- Line 14: contract
-        const line14 = currentYearQREs.contract || 0;
+        const line14 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+
 
         const totalCurrentYearQRE = new Decimal(line11 || 0).plus(line12 || 0).plus(line14 || 0).plus(line13 || 0);
         //---- Line 15: total QRE
@@ -175,7 +177,7 @@ export class RdCreditCalculatorForAZ {
         const line80 = new Decimal(caseData.lease_costs_of_computers_az || 0);
 
         //---- Line 81: contract
-        const line81 = new Decimal(currentYearQREs.contract || 0);
+        const line81 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
 
         //---- Line 82: total QRE
         const line82 = new Decimal(line78.plus(line79).plus(line80).plus(line81))

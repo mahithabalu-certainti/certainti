@@ -79,7 +79,7 @@ export const eventNames = {
 }
 
 export const eventTypes = {
-   UI_HANDLER: "web",
+  UI_HANDLER: "web",
 }
 
 export const rawQueries = {
@@ -394,7 +394,7 @@ export const rawQueries = {
         AND entity_type = 'Account'
     `;
   },
-   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
     accountRid: any,
     mainSequelize: Sequelize
@@ -466,16 +466,15 @@ export const rawQueries = {
       WHERE case_rid = :caseId
     `;
   },
-  insertTimeLine(schemaName: string,tableName: string)
-  {
-   return  `
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
           INSERT INTO "${schemaName}".${tableName} (
             created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
           ) VALUES (
             :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
           )
           RETURNING *;
-        ` 
+        `
   },
   fetchUserAndEventInfo() {
     return `
@@ -500,7 +499,7 @@ export const rawQueries = {
       WHERE account_rid IN (:accountRids)
       GROUP BY account_rid, fiscal_year
     `;
-  }, 
+  },
   getAccountFiscalSummaryQuery(schemaName: string) {
     return `
       SELECT 
@@ -659,7 +658,7 @@ export const rawQueries = {
       "total_projects_qre",
       "total_projects_rd_credits",
     ];
-  
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_account_fiscal_${field}_idx`;
       return `
@@ -744,7 +743,7 @@ export const rawQueries = {
       REFERENCES "${schemaName}".account_details(account_rid)
       ON UPDATE CASCADE;
     `;
-  },                            
+  },
   getCreateProjectSequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_seq START 1;
@@ -801,7 +800,7 @@ export const rawQueries = {
         qre_detailed_breakdown JSON
       );
     `;
-  },  
+  },
   getAddProjectAccountForeignKeyQuery(schemaName: string): string {
     return `
       ALTER TABLE "${schemaName}".project
@@ -948,7 +947,8 @@ export const rawQueries = {
         comments VARCHAR(2000),
         project_description VARCHAR(2000),
         is_qualified BOOLEAN DEFAULT false,
-        signoff BOOLEAN DEFAULT false
+        signoff BOOLEAN DEFAULT false,
+        is_assesed BOOLEAN DEFAULT false
       );
     `;
   },
@@ -978,7 +978,7 @@ export const rawQueries = {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_history_seq START 1;
     `;
-  },        
+  },
   getCreateProjectHistoryTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".project_history (
@@ -1410,7 +1410,7 @@ export const rawQueries = {
       "region_rid",
       "status_rid",
     ];
-  
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resources_${field}_idx"
       ON "${schemaName}".resources (${field});
@@ -1543,7 +1543,7 @@ export const rawQueries = {
   },
   getCreateResourceCostIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = ["resource_code"];
-  
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_cost_${field}_idx"
       ON "${schemaName}".resource_cost (${field});
@@ -1673,7 +1673,7 @@ export const rawQueries = {
   },
   getCreateResourceSkillIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = ["resource_code"];
-  
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_skill_${field}_idx"
       ON "${schemaName}".resource_skill (${field});
@@ -1822,7 +1822,7 @@ export const rawQueries = {
       "total_cost_for_year_project",
       "estimated_rd_hours",
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_fiscal_${field}_idx"
       ON "${schemaName}".resource_fiscal (${field});
@@ -1833,11 +1833,11 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_seq START 1;
     `;
   },
-  getCreateCaseHistorySubmissionSequenceQuery (schemaName : string) : string {
+  getCreateCaseHistorySubmissionSequenceQuery(schemaName: string): string {
     return `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_history_submission_seq START 1`
   },
   getCreateCaseHistorySubmissionTableQuery(schemaName: string): string {
-  return `
+    return `
     CREATE TABLE IF NOT EXISTS "${schemaName}"."case_history_submission" (
       rid VARCHAR(50) NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
       r_number VARCHAR(20) UNIQUE,
@@ -1864,7 +1864,7 @@ export const rawQueries = {
       CONSTRAINT case_history_submission_r_number_key UNIQUE (r_number)
     );
     `;
-  },                                                            
+  },
   getCreateAttachmentsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}"."attachments" (
@@ -1910,7 +1910,7 @@ export const rawQueries = {
       "document_type_rid",
       "comments",
     ];
-  
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_attachments_${field}_idx`;
       return `
@@ -2122,7 +2122,7 @@ export const rawQueries = {
         REFERENCES "${schemaName}".project_resource(rid)
         ON UPDATE CASCADE;
     `;
-  },                
+  },
   getCreateProjectResourceHistorySequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resource_history_seq START 1;
@@ -2416,7 +2416,7 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_attachments_seq START 1;
     `;
   },
-   getCreateInteractionsTableQuery(schemaName: string): string {
+  getCreateInteractionsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2470,12 +2470,12 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_history_seq START 1;
     `;
   },
-   getCreateTaskHistorySequenceQuery(schemaName: string): string {
+  getCreateTaskHistorySequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_history_seq START 1;
     `;
   },
-   getCreateTaskTagsSequenceQuery(schemaName: string): string {
+  getCreateTaskTagsSequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_tags_seq START 1;
     `;
@@ -2520,7 +2520,7 @@ export const rawQueries = {
       );
     `;
   },
-   getCreateTaskHistoryTableQuery(schemaName: string): string {
+  getCreateTaskHistoryTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".task_history (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2744,7 +2744,7 @@ export const rawQueries = {
       );
     `;
   },
-   getCreateChecklistIndexesQueries(schemaName: string): string[] {
+  getCreateChecklistIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "rid",
@@ -2752,7 +2752,7 @@ export const rawQueries = {
       "attach_to",
       "attachment_level"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_checklists_${field}_idx`;
       return `
@@ -2761,7 +2761,7 @@ export const rawQueries = {
       `;
     });
   },
-   getCreateActivitiesIndexesQueries(schemaName: string): string[] {
+  getCreateActivitiesIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "rid",
@@ -2769,7 +2769,7 @@ export const rawQueries = {
       "attach_to",
       "attachment_level"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_checklists_${field}_idx`;
       return `
@@ -2778,13 +2778,13 @@ export const rawQueries = {
       `;
     });
   },
-   getCreateActivityAttachmentsIndexesQueries(schemaName: string): string[] {
+  getCreateActivityAttachmentsIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "rid",
       "activity_rid"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_activity_attachments_${field}_idx`;
       return `
@@ -2793,7 +2793,7 @@ export const rawQueries = {
       `;
     });
   },
-   getCreateCheckListItemTableQuery(schemaName: string): string {
+  getCreateCheckListItemTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".checklist_items (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2818,13 +2818,13 @@ export const rawQueries = {
       );
     `;
   },
-   getCreateCheckListItemIndexesQueries(schemaName: string): string[] {
+  getCreateCheckListItemIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "checklist_rid",
       "rid"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_checklist_items_${field}_idx`;
       return `
@@ -2841,7 +2841,7 @@ export const rawQueries = {
       "project_fiscal_rid",
       "interaction_level_rid"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_interactions_${field}_idx`;
       return `
@@ -2963,7 +2963,7 @@ export const rawQueries = {
       "interaction_rid",
       "project_fiscal_rid"
     ];
-    
+
     return fields.map(field => {
       const indexName = `${schemaName}_interaction_items_${field}_idx`;
       return `
@@ -3079,7 +3079,7 @@ export const rawQueries = {
       "interaction_item_rid",
       "interaction_response_rid"
     ];
-    
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_interaction_attachments_${field}_idx"
       ON "${schemaName}"."interaction_attachments"("${field}");
@@ -3130,7 +3130,7 @@ export const rawQueries = {
       "project_fiscal_rid",
       "status_rid"
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_ai_technical_summary_${field}_idx"
       ON "${schemaName}"."ai_technical_summary"("${field}");
@@ -3254,7 +3254,7 @@ export const rawQueries = {
   },
   getCreateAutosendInteractionAuditIndexes(schemaName: string): string[] {
     const fieldsToIndex = ["project_fiscal_rid"];
-    
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_autosend_interaction_audit_${field}_idx"
       ON "${schemaName}".autosend_interaction_audit("${field}");
@@ -3392,7 +3392,7 @@ export const rawQueries = {
     const fieldsToIndex = [
       "entity_rid",
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "idx_jurisdictions_${field}"
       ON "${schemaName}"."jurisdictions"("${field}");
@@ -3415,13 +3415,13 @@ export const rawQueries = {
       "notes_owner",
       "descriptions",
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_notes_${field}_idx"
       ON "${schemaName}"."notes"("${field}");
     `);
   },
-   getCreateAccountTimelineSequenceQuery(schemaName: string): string {
+  getCreateAccountTimelineSequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_timeline_seq START 1;
     `;
@@ -3492,7 +3492,7 @@ export const rawQueries = {
       ON "${schemaName}"."project_history"("${field}");
     `;
   },
-   getActivityHistoryIndexQuery(schemaName: string, field: string): string {
+  getActivityHistoryIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_activity_history_${field}_idx`;
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
@@ -3632,21 +3632,21 @@ export const rawQueries = {
       ON "${schemaName}"."task_history"("${field}");
     `;
   },
-  
+
   getAiTechnicalSummaryIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_ai_technical_summary_${field}_idx`;
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."ai_technical_summary"("${field}");
     `;
-  },                                                                                      
+  },
   getInteractionTimelineIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_interaction_timeline_${field}_idx`;
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."interaction_timeline"("${field}");
     `;
-  },  
+  },
   getAiAssessmentAuditIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_ai_assessment_audit_${field}_idx`;
     return `
@@ -3688,21 +3688,21 @@ export const rawQueries = {
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."notes_timeline"("${field}");
     `;
-  }, 
-    getAccountTimelineIndexQuery(schemaName: string, field: string): string {
+  },
+  getAccountTimelineIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_account_timeline_${field}_idx`;
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."account_timeline"("${field}");
     `;
   },
-  checkCaseExistsForAccount (schemaName : string, accountRid : string) {
+  checkCaseExistsForAccount(schemaName: string, accountRid: string) {
     return `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`
   },
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
-  },    
-  checkCaseTableExists(schemaName : string) {
+  },
+  checkCaseTableExists(schemaName: string) {
     return `SELECT EXISTS (
     SELECT 1
     FROM information_schema.tables
@@ -3710,7 +3710,7 @@ export const rawQueries = {
     AND table_name = 'cases'
     )`
   },
-  getCreateFourPartAssessmentTableQuery (schemaName : string) {
+  getCreateFourPartAssessmentTableQuery(schemaName: string) {
     return `
     CREATE TABLE IF NOT EXISTS ${schemaName}.four_part_assessment(
     rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -3739,7 +3739,7 @@ export const rawQueries = {
     transaction_id VARCHAR);
     `
   },
-  getFourPartAssessmentSequenceQuery (schemaName : string) {
+  getFourPartAssessmentSequenceQuery(schemaName: string) {
     return `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".four_part_assessment_sequence START 1`
   }
 };
