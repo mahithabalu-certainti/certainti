@@ -81,7 +81,7 @@ export class RdCreditCalculatorForAZ {
         const line12 = currentYearQREs.supplies || 0;
 
         //---- Line 13: cost to rent
-        const line13 = caseData.lease_costs_of_computers || 0;
+        const line13 = caseData.lease_costs_of_computers_az || 0;
 
         //---- Line 14: contract
         const line14 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
@@ -174,7 +174,7 @@ export class RdCreditCalculatorForAZ {
         const line79 = new Decimal(currentYearQREs.supplies || 0);
 
         //---- Line 80: cost to rent
-        const line80 = new Decimal(caseData.lease_costs_of_computers || 0);
+        const line80 = new Decimal(caseData.lease_costs_of_computers_az || 0);
 
         //---- Line 81: contract
         const line81 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;

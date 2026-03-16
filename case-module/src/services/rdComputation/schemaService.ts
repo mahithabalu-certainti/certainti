@@ -85,13 +85,18 @@ class RDCreditSchemaService {
                         CAST(SUM((cpr.total_cost_fte_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
                         CAST(SUM((cpr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2))  AS total_supplies,
                         CAST(SUM((cpr.total_cost_subcon_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
-                        cs.tax_liability as business_tax_liability
+                        cs.tax_liability_sc as business_tax_liability_sc, 
+                        cs.tax_liability_ct as business_tax_liability_ct,
+                        cs.tax_liability_ga as business_tax_liability_ga
                     FROM ${schemaName}.cases cs
                     JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
                     JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
                     JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid
                     WHERE cs.rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid AND pf.is_qualified = true
-                    GROUP BY cs.tax_liability
+                    GROUP BY 
+                    cs.tax_liability_sc,
+                    cs.tax_liability_ct,
+                    cs.tax_liability_ga
                 `,
                 {
                     replacements: { caseRid, regionRid, currentFiscalYear },
@@ -103,7 +108,9 @@ class RDCreditSchemaService {
                 wages: Number(data?.total_wages || 0),
                 supplies: Number(data?.total_supplies || 0),
                 contract: Number(data?.total_contract || 0),
-                business_tax_liability: Number(data?.business_tax_liability || 0)
+                business_tax_liability_sc: Number(data?.business_tax_liability_sc || 0),
+                business_tax_liability_ct: Number(data?.business_tax_liability_ct || 0),
+                business_tax_liability_ga: Number(data?.business_tax_liability_ga || 0)
             };
         } catch (err) {
             logMessage(`Error fetching account: ${err}`);
@@ -132,13 +139,18 @@ class RDCreditSchemaService {
                         CAST(SUM((${alias}.total_cost_fte_prj * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
                         CAST(SUM((${alias}.total_cost_nonlabor_prj * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_supplies,
                         CAST(SUM((${alias}.total_cost_subcon_prj * ${alias}.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
-                        cs.tax_liability as business_tax_liability
+                        cs.tax_liability_sc as business_tax_liability_sc, 
+                        cs.tax_liability_ct as business_tax_liability_ct,
+                        cs.tax_liability_ga as business_tax_liability_ga
                     FROM ${schemaName}.case_projects cp
                     JOIN ${schemaName}.project_fiscal pf
                         ON cp.project_fiscal_rid = pf.rid
                     JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
                     WHERE cp.case_rid = :caseRid AND cs.fiscal_year = pf.fiscal_year AND pf.country_rid = :countryRid AND pf.is_qualified = true
-                    GROUP BY cs.tax_liability
+                    GROUP BY 
+                    cs.tax_liability_sc,
+                    cs.tax_liability_ct,
+                    cs.tax_liability_ga
                 `,
                 {
                     replacements: { caseRid, countryRid },
@@ -151,7 +163,9 @@ class RDCreditSchemaService {
                 wages: Number(data?.total_wages || 0),
                 supplies: Number(data?.total_supplies || 0),
                 contract: Number(data?.total_contract || 0),
-                business_tax_liability: Number(data?.business_tax_liability || 0)
+                business_tax_liability_sc: Number(data?.business_tax_liability_sc || 0),
+                business_tax_liability_ct: Number(data?.business_tax_liability_ct || 0),
+                business_tax_liability_ga: Number(data?.business_tax_liability_ga || 0)
             };
         } catch (err) {
             logMessage(`Error fetching account: ${err}`);

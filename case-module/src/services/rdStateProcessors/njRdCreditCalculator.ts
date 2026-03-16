@@ -72,7 +72,7 @@ export class RdCreditCalculatorForNJ {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         const costOfSupplies = new Decimal(currentYearQREs.supplies || 0)
-        const leaseComputerCost = new Decimal(caseDetails.lease_costs_of_computers || 0.00)
+        const leaseComputerCost = new Decimal(caseDetails.lease_costs_of_computers_nj || 0.00)
 
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(costOfSupplies).plus(leaseComputerCost);
        
