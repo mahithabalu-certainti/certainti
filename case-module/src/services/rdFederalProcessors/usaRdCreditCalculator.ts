@@ -2,7 +2,6 @@ import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import { Decimal } from "decimal.js";
 import { AnnualGrossReceipt, QRE, FederalRDData } from "../rdComputation/rdCreditTypes";
-import { FederalMockDataLoadMap } from "../rdComputation/rdDataLoadMockService";
 import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {

@@ -1161,11 +1161,12 @@ export const rawQueries = {
   fetchCaseById(schemaName: string) {
     return `
     SELECT rid,r_number,case_name,account_rid ,fiscal_year, material_software_cost, heat_light_power, total_nonlabor_cost,
-    employers_pension_contribution,other, total_expenses, other, sub_contracts, cloud_software, unpaid_amounts_paid,
+    employers_pension_contribution,other_can, total_expenses, other_on,other_uk, other_irl, sub_contracts, cloud_software, unpaid_amounts_paid,
     unpaid_amounts, aggregated_turnover, taxable_income, export_sales_revenue,
-    lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
-    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total,
-    rrc_credit_280_c, asc_credit_280_c
+    lease_costs_of_computers_nj, lease_costs_of_computers_il, lease_costs_of_computers_ca,
+    lease_costs_of_computers_az, lease_costs_of_computers_id, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
+    basic_research_payments_ma, basic_research_payments_id, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total_ga,
+    other_credits_total_sc, rrc_credit_280_c, asc_credit_280_c
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;

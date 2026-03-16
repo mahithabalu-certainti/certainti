@@ -63,7 +63,7 @@ export class RdCreditCalculatorForGA {
         const wages = currentYearQREs.wages || 0;
         const supplies = currentYearQREs.supplies || 0;
         const contract = currentYearQREs.contract || 0;
-        const tax_liability = currentYearQREs.business_tax_liability || 0;
+        const tax_liability = currentYearQREs.business_tax_liability_ga || 0;
         const currentYearGrossReceipts = new Decimal(caseDetails.current_year_gross_receipts || 0.00)
 
         //Total current year QREs
@@ -75,7 +75,7 @@ export class RdCreditCalculatorForGA {
 
         //Enter current year - any other credit for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
-        const totalOfAllOtherCredits = new Decimal(caseDetails.other_credits_total || 0) 
+        const totalOfAllOtherCredits = new Decimal(caseDetails.other_credits_total_ga || 0) 
 
         //Enter any carry forward from prior years for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
@@ -169,7 +169,7 @@ export class RdCreditCalculatorForGA {
      */
     creditAndCreditForwardCalculation(current_year_tax_liability: number, tax_credit: Decimal, config: ConfigJson,caseDetails : Case) {
         //TODO:2) Value of all Other Credits Claimed - C
-        const value_of_other_credit_claimed = new Decimal(caseDetails.other_credits_total || 0.00)
+        const value_of_other_credit_claimed = new Decimal(caseDetails.other_credits_total_ga || 0.00)
 
         const remaining_tax_liability = new Decimal(current_year_tax_liability).minus(value_of_other_credit_claimed);
         const max_credits_allowed = remaining_tax_liability.mul(config.max_credit_allowed_percent / 100);

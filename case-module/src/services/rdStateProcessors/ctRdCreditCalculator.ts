@@ -31,7 +31,7 @@ export class RdCreditCalculatorForCT {
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year :number) {
         const part1Computation = this.part1CreditComputation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const part1TentativeComputation = this.part1TentativeTaxCreditComputation(stateRdData.currentYearQREs, part1Computation.excess_qre, config);
-        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, stateRdData.currentYearQREs.business_tax_liability || 0, config);
+        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, stateRdData.currentYearQREs.business_tax_liability_ct || 0, config);
 
         const inputFields = await this.buildInputParams(part1Computation.total_qre, part1Computation.prior_year_1_qre, {
             country: this.country,

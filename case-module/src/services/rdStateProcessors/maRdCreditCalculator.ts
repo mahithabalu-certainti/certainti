@@ -149,7 +149,7 @@ export class RdCreditCalculatorForMA {
         const calculateDifference = part1TotalAggregate.minus(base_amount)
         const line17 = new Decimal(calculateDifference.lessThan(0) ? 0.00 : calculateDifference);
         const line18 = line17.mul(config.total_group_qre_percent/100)
-        const line19 = caseDetails.basic_research_payments || 0.00
+        const line19 = caseDetails.basic_research_payments_ma || 0.00
         const line20 = new Decimal(line18.add(line19))
         const line21 = part1TotalQre.div(part1TotalAggregate)
         const line21Final = line21.mul(100)

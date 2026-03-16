@@ -79,7 +79,7 @@ export class RdCreditCalculatorForCA {
         const line6 = currentYearQREs.supplies || 0;
 
         //---- Line 7: cost to rent
-        const line7 = caseData.lease_costs_of_computers || 0;
+        const line7 = caseData.lease_costs_of_computers_ca || 0;
 
         //---- Line 8: contract
         const line8 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
