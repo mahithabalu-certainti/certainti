@@ -225,7 +225,8 @@ export const STATUS_MESSAGE = {
   activityCompletionFailed: "Meeting completion failed",
   caseClosedSuccess: "Case Closed Successfully",
   computedDataFetchedSuccess: "Computed data fetched successfully",
-  revokedSuccessfully : "Approval revoked successfully"
+  revokedSuccessfully : "Approval revoked successfully",
+  dossierFormFetchedSuccess: "Dossier Form fetched successfully",
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
@@ -2640,3 +2641,16 @@ export const FormExtractionFieldTypes = {
   TABLE_ITEM: "Table-Item"
 }
 
+export const filterColumnsDossierForm = {
+  dossier_version: `d.dossier_version`,
+  created_datetime: `d.created_datetime`,
+  document_name: `d.document_name`,
+  r_number: `d.r_number`
+}
+
+export const filterColumnsDossierFormTypes : any = {
+  dossier_version: `number`,
+  created_datetime: `date`,
+  document_name: `string`,
+  r_number: `string`
+}

@@ -32,11 +32,13 @@ import {
   listAccountInteractionSchema,
   listAllTechnicalSummarySchema,
   listTechnicalSummarySchema,
+  saveRefineSummarySchema,
   sendInteractionSchema,
   updateAccountInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
   updateTechSummaryContextSchema,
+  refineSummarySchema,
 } from "../lib/joi/schemas/schema";
 
 // import Joi schemas and interaction services as needed
@@ -130,7 +132,7 @@ async function createAccountInteraction(
 ): Promise<void> {
   const methodName = "Create account interaction";
   try {
-   
+
     const value = await validateRequest(req, createAccountInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
@@ -201,8 +203,8 @@ async function listAccountInteractions(
 ): Promise<void> {
   const methodName = "List account interactions";
   try {
-   
-    const value = await validateRequest(req, listAccountInteractionSchema, res,"GET");
+
+    const value = await validateRequest(req, listAccountInteractionSchema, res, "GET");
     const userId = req.headers["x-user-id"] as string;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
 
@@ -289,7 +291,7 @@ async function updateAccountInteraction(
 ): Promise<void> {
   const methodName = "Update account interaction";
   try {
-    
+
     const value = await validateRequest(req, updateAccountInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
@@ -358,7 +360,7 @@ async function updateAccountInteraction(
 async function updateInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update interaction";
   try {
-    
+
     const value = await validateRequest(req, updateInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
@@ -431,7 +433,7 @@ async function updateInteractionResponse(
 ): Promise<void> {
   const methodName = "Update interaction response";
   try {
-   
+
     const value = await validateRequest(
       req,
       updateInteractionResponseSchema,
@@ -458,7 +460,7 @@ async function updateInteractionResponse(
       value,
       userId
     );
-   
+
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interaction.data);
@@ -506,12 +508,12 @@ async function updateInteractionResponse(
  * @throws {Error} - Handles and logs any unexpected errors and responds with a 400 status code.
  */
 async function getInteractionDetailsById(
-  req: Request<{interactionRid : string, accountId : string}>,
+  req: Request<{ interactionRid: string, accountId: string }>,
   res: Response
 ): Promise<void> {
   const methodName = "Get interaction details";
   try {
-   
+
     const { interactionRid, accountId } = req.params;
     const userId = req.headers["x-user-id"] as string;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
@@ -641,14 +643,14 @@ async function getKeyContactsByCaseId(
 
     const keyContacts = await interactionService.getKeyContactsByCaseId(
       caseId as string,
-      accountId as string 
+      accountId as string
     );
 
     console.log(
       `[${methodName}] Service response:`,
       JSON.stringify(keyContacts)
     );
-    
+
     if (keyContacts.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, keyContacts.data);
@@ -741,7 +743,7 @@ async function getTechnicalSummaryDetailsById(
         value.tech_summary_rid,
         value.account_rid
       );
-  
+
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionDetails.data);
@@ -849,6 +851,159 @@ async function updateTechSummaryContext(
 }
 
 /**
+ * Refines the summary.
+ *
+ * @param {Request} req - Express HTTP request object containing the request body and headers.
+ * @param {Response} res - Express HTTP response object used to send results back to the client.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending a response.
+ */
+async function refineSummary(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Refine summary";
+  try {
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)}`);
+    const value = await validateRequest(
+      req,
+      refineSummarySchema,
+      res,
+      "POST"
+    );
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.refineSummary(
+      value.refinement_prompt,
+      value.existing_summary,
+      value.tech_summary_rid,
+      value.account_rid,
+      value.project_fiscal_rid,
+      userId
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      // Returning interaction.data as the main response
+      handleCustomResponse(res, interaction.data, interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * Updates the context of a technical summary for a given summary and account RID.
+ *
+ * This controller method follows these steps:
+ * 1. Logs the incoming request body for auditing and debugging.
+ * 2. Validates the request body against the `updateTechSummaryContextSchema`.
+ * 3. Extracts the user ID from request headers (`x-user-id`) and ensures it's present.
+ * 4. Ensures the validated request body contains required values.
+ * 5. Invokes the service method `updateTechSummaryContext` to update the summary context.
+ * 6. If the service returns success, responds with the updated data and success message.
+ * 7. If the service returns an error, responds with `BAD_REQUEST` and the error message.
+ * 8. Catches and handles any unexpected errors gracefully with a standardized error response.
+ *
+ * @param {Request} req - Express HTTP request object containing the request body and headers.
+ * @param {Response} res - Express HTTP response object used to send results back to the client.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending a response.
+ */
+async function saveRefineSummary(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Save refine summary";
+  try {
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)}`);
+    const value = await validateRequest(
+      req,
+      saveRefineSummarySchema,
+      res
+    );
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.saveRefineSummary(
+      value.technical_summary,
+      value.tech_summary_rid,
+      value.account_rid,
+      value.project_fiscal_rid,
+      userId
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data, interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
  * Retrieves the list of questions associated with a specific interaction.
  *
  * This controller method performs the following steps:
@@ -866,7 +1021,7 @@ async function updateTechSummaryContext(
  * @returns {Promise<void>} - A Promise that resolves once the response is sent.
  */
 async function getInteractionQuestionsById(
-  req: Request<{interactionRid : string, accountId : string}>,
+  req: Request<{ interactionRid: string, accountId: string }>,
   res: Response
 ): Promise<void> {
   const methodName = "Get interaction questions";
@@ -952,10 +1107,10 @@ async function getInteractionStatus(
 ): Promise<void> {
   const methodName = "Get resource roles";
   try {
-    const value = await validateRequest(req, getInteractionStatusSchema, res,"GET");
+    const value = await validateRequest(req, getInteractionStatusSchema, res, "GET");
     const userId = req.headers["x-user-id"] as string;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
-    const interactionStatus = await interactionService.getInteractionStatus(value.status_scope,value.current_status, value.reminder_specific_list);
+    const interactionStatus = await interactionService.getInteractionStatus(value.status_scope, value.current_status, value.reminder_specific_list);
     if (interactionStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionStatus.data);
@@ -1293,9 +1448,9 @@ async function exportAllInteractions(req: Request, res: Response) {
     const formatDate = (date?: Date) =>
       date
         ? moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .utcOffset('+05:30')
-            .format("YYYY-MMM-DD, hh:mm:ss A")
+          .tz(isValidTZ ? data.timezone : "UTC")
+          .utcOffset('+05:30')
+          .format("YYYY-MMM-DD, hh:mm:ss A")
         : null;
 
     if (result.status == HttpStatus.SUCCESS) {
@@ -1303,73 +1458,73 @@ async function exportAllInteractions(req: Request, res: Response) {
         result.data.interactions.length < 1
           ? []
           : result.data.interactions.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                interaction_level_name: d.interaction_level_name,
-                project_code: d.project_code,
-                interaction_age: d.interaction_age,
-                fiscal_year: d.fiscal_year,
-                status_name: d.status_name,
-                recipient_name: d.recipient_name,
-                recipient_email: d.recipient_email,
-                last_resent_on:
-                  d.last_resent_on === null ? "" : formatDate(d.last_resent_on),
-                last_reminder_on:
-                  d.last_reminder_on == null
-                    ? ""
-                    : formatDate(d.last_reminder_on),
-                response_submitted_on:
-                  d.response_submitted_on === null
-                    ? ""
-                    : formatDate(d.response_submitted_on),
-                response_updated_on:
-                  d.response_updated_on == null
-                    ? ""
-                    : formatDate(d.response_updated_on),
-                attachment_count:
-                  d.attachment_count === 0 || d.attachment_count === ""
-                    ? null
-                    : d.attachment_count,
-                interaction_url: d.interaction_url
-                  ? {
-                      text: "Link",
-                      hyperlink: d.interaction_url,
-                      style: {
-                        fontColor: "1755E7",
-                      },
-                    }
-                  : null,
-                interaction_type_name: d.interaction_type_name,
-                response_source_name: d.response_source_name,
-                created_by: d.created_user_name,
-                created_datetime: formatDate(d.created_datetime),
-                modified_by: d.updated_user_name,
-                modified_datetime:
-                  d.modified_datetime == null
-                    ? ""
-                    : formatDate(d.modified_datetime),
-              };
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              interaction_level_name: d.interaction_level_name,
+              project_code: d.project_code,
+              interaction_age: d.interaction_age,
+              fiscal_year: d.fiscal_year,
+              status_name: d.status_name,
+              recipient_name: d.recipient_name,
+              recipient_email: d.recipient_email,
+              last_resent_on:
+                d.last_resent_on === null ? "" : formatDate(d.last_resent_on),
+              last_reminder_on:
+                d.last_reminder_on == null
+                  ? ""
+                  : formatDate(d.last_reminder_on),
+              response_submitted_on:
+                d.response_submitted_on === null
+                  ? ""
+                  : formatDate(d.response_submitted_on),
+              response_updated_on:
+                d.response_updated_on == null
+                  ? ""
+                  : formatDate(d.response_updated_on),
+              attachment_count:
+                d.attachment_count === 0 || d.attachment_count === ""
+                  ? null
+                  : d.attachment_count,
+              interaction_url: d.interaction_url
+                ? {
+                  text: "Link",
+                  hyperlink: d.interaction_url,
+                  style: {
+                    fontColor: "1755E7",
+                  },
+                }
+                : null,
+              interaction_type_name: d.interaction_type_name,
+              response_source_name: d.response_source_name,
+              created_by: d.created_user_name,
+              created_datetime: formatDate(d.created_datetime),
+              modified_by: d.updated_user_name,
+              modified_datetime:
+                d.modified_datetime == null
+                  ? ""
+                  : formatDate(d.modified_datetime),
+            };
 
-              // Build exportRecord using allowed fields and resultMap
-              const exportRecord: Record<string, any> = {};
-              if (data.flag === "account") {
-                accountinteractionFieldMappings.forEach((mapping) => {
-                  if (allowedFieldSet.has(mapping.permissionField)) {
-                    exportRecord[mapping.exportField] =
-                      resultMap[mapping.dataField];
-                  }
-                });
-              } else {
-                interactionFieldMappings.forEach((mapping) => {
-                  if (allowedFieldSet.has(mapping.permissionField)) {
-                    exportRecord[mapping.exportField] =
-                      resultMap[mapping.dataField];
-                  }
-                });
-              }
-              if(exportRecord["Fiscal Year"] != undefined) exportRecord["Fiscal Year"] = `FY-${exportRecord["Fiscal Year"]}`
-              return exportRecord;
-            });
+            // Build exportRecord using allowed fields and resultMap
+            const exportRecord: Record<string, any> = {};
+            if (data.flag === "account") {
+              accountinteractionFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+            } else {
+              interactionFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+            }
+            if (exportRecord["Fiscal Year"] != undefined) exportRecord["Fiscal Year"] = `FY-${exportRecord["Fiscal Year"]}`
+            return exportRecord;
+          });
 
       const base64Response = await generateExcelBase64(
         finalStructuredData,
@@ -1378,14 +1533,14 @@ async function exportAllInteractions(req: Request, res: Response) {
       handleSuccessResponse(res, base64Response);
       return;
     } else {
-        return res.status(HttpStatus.SUCCESS).json({
-          statusCode : HttpStatus.SUCCESS,
-          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-          statusMessage : STATUS_MESSAGE.dataNotFound,
-          data : null
-        })
-      }
-  } catch (error : any) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotFound,
+        data: null
+      })
+    }
+  } catch (error: any) {
     errorLog("listOutAllInteractionSummary", error.message);
     handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
   }
@@ -1459,7 +1614,7 @@ async function listOutAllInteractionSummary(req: Request, res: Response) {
         data: finalData,
       });
     }
-  } catch (error : any) {
+  } catch (error: any) {
     errorLog("listOutAllInteractionSummary", error.message);
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
@@ -1528,73 +1683,73 @@ async function exportAllInteractionSummary(req: Request, res: Response) {
     const formatDate = (date?: Date) =>
       date
         ? moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .format("YYYY-MM-DD, hh:mm:ss A")
+          .tz(isValidTZ ? data.timezone : "UTC")
+          .format("YYYY-MM-DD, hh:mm:ss A")
         : null;
     if (result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData =
         result.data.length < 1
           ? []
           : result.data.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                account_name: d.account_name,
-                project_code: d.project_code,
-                interaction_age: d.interaction_age,
-                fiscal_year: d.fiscal_year,
-                status_name: d.status_name,
-                recipient_name: d.recipient_name,
-                recipient_email: d.recipient_email,
-                last_sent_date:
-                  d.last_resent_on === null ? "" : formatDate(d.last_resent_on),
-                last_reminder_date:
-                  d.last_reminder_on == null
-                    ? ""
-                    : formatDate(d.last_reminder_on),
-                response_submitted_on:
-                  d.response_submitted_on === null
-                    ? ""
-                    : formatDate(d.response_submitted_on),
-                response_updated_on:
-                  d.response_updated_on == null
-                    ? ""
-                    : formatDate(d.response_updated_on),
-                attachment_count:
-                  d.attachment_count === 0 || d.attachment_count === ""
-                    ? null
-                    : d.attachment_count,
-                interaction_url: d.interaction_url
-                  ? {
-                      text: "Link",
-                      hyperlink: d.interaction_url,
-                      style: {
-                        fontColor: "1755E7",
-                      },
-                    }
-                  : null,
-                interaction_type_name: d.interaction_type_name,
-                response_source_name: d.response_source_name,
-                created_by: d.created_user_name,
-                created_datetime:
-                  d.created_datetime == null
-                    ? ""
-                    : formatDate(d.created_datetime),
-                modified_by: d.updated_user_name,
-                modified_datetime:
-                  d.modified_datetime == null
-                    ? ""
-                    : formatDate(d.modified_datetime),
-              };
-
-              const exportRecord: Record<string, any> = {};
-              interactionFieldMappings.forEach((mapping) => {
-                if (allowedFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              account_name: d.account_name,
+              project_code: d.project_code,
+              interaction_age: d.interaction_age,
+              fiscal_year: d.fiscal_year,
+              status_name: d.status_name,
+              recipient_name: d.recipient_name,
+              recipient_email: d.recipient_email,
+              last_sent_date:
+                d.last_resent_on === null ? "" : formatDate(d.last_resent_on),
+              last_reminder_date:
+                d.last_reminder_on == null
+                  ? ""
+                  : formatDate(d.last_reminder_on),
+              response_submitted_on:
+                d.response_submitted_on === null
+                  ? ""
+                  : formatDate(d.response_submitted_on),
+              response_updated_on:
+                d.response_updated_on == null
+                  ? ""
+                  : formatDate(d.response_updated_on),
+              attachment_count:
+                d.attachment_count === 0 || d.attachment_count === ""
+                  ? null
+                  : d.attachment_count,
+              interaction_url: d.interaction_url
+                ? {
+                  text: "Link",
+                  hyperlink: d.interaction_url,
+                  style: {
+                    fontColor: "1755E7",
+                  },
                 }
-              });
-              return exportRecord;
+                : null,
+              interaction_type_name: d.interaction_type_name,
+              response_source_name: d.response_source_name,
+              created_by: d.created_user_name,
+              created_datetime:
+                d.created_datetime == null
+                  ? ""
+                  : formatDate(d.created_datetime),
+              modified_by: d.updated_user_name,
+              modified_datetime:
+                d.modified_datetime == null
+                  ? ""
+                  : formatDate(d.modified_datetime),
+            };
+
+            const exportRecord: Record<string, any> = {};
+            interactionFieldMappings.forEach((mapping) => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
+              }
             });
+            return exportRecord;
+          });
       const base64Response = await generateExcelBase64(
         structuredData,
         "Interactions"
@@ -1602,14 +1757,14 @@ async function exportAllInteractionSummary(req: Request, res: Response) {
       handleSuccessResponse(res, base64Response);
       return;
     } else {
-        return res.status(HttpStatus.SUCCESS).json({
-          statusCode : HttpStatus.SUCCESS,
-          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-          statusMessage : STATUS_MESSAGE.dataNotFound,
-          data : null
-        })
-      }
-  } catch (error : any) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotFound,
+        data: null
+      })
+    }
+  } catch (error: any) {
     errorLog("exportAllInteractionSummary", error.message);
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
@@ -1678,7 +1833,7 @@ async function listResponseHistory(req: Request, res: Response) {
         data: responseData,
       });
     }
-  } catch (error : any) {
+  } catch (error: any) {
     errorLog("listResponseHistory", error.message);
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
@@ -1722,7 +1877,7 @@ async function exportResponseHistory(req: Request, res: Response) {
     );
     if (result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let timezone;
-      if(data.timezone != undefined) timezone = data.timezone
+      if (data.timezone != undefined) timezone = data.timezone
       else timezone = "UTC"
       let structuredData = result.data.map((d: any) => {
         let isoDate = new Date(d.response_on).toISOString();
@@ -1745,14 +1900,14 @@ async function exportResponseHistory(req: Request, res: Response) {
       handleSuccessResponse(res, base64Response);
       return;
     } else {
-        return res.status(HttpStatus.SUCCESS).json({
-          statusCode : HttpStatus.SUCCESS,
-          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-          statusMessage : STATUS_MESSAGE.dataNotFound,
-          data : null
-        })
-      }
-  } catch (error : any) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotFound,
+        data: null
+      })
+    }
+  } catch (error: any) {
     errorLog("exportResponseHistory", error.message);
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
@@ -1794,13 +1949,13 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-     const interaction = await interactionService.sendInteraction(
-       value.interactions,
-       value.email_info,
-       value.account_rid,
-       userId,
-       value.is_interaction_followup
-     );
+    const interaction = await interactionService.sendInteraction(
+      value.interactions,
+      value.email_info,
+      value.account_rid,
+      userId,
+      value.is_interaction_followup
+    );
 
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1865,7 +2020,7 @@ async function uploadAttachmentToAzure(
       );
       return;
     }
-    const accountInfo =  await interactionService.getAccountNumberByRid(value?.account_rid);
+    const accountInfo = await interactionService.getAccountNumberByRid(value?.account_rid);
     const accountNumber = accountInfo.data?.account_number || "account";
     if (req.file) {
       let fileInfo = await uploadToAzureBlob(
@@ -2089,14 +2244,14 @@ async function exportTechnicalSummary(req: Request, res: Response) {
       "projects_view_edit"
     )
     const allowedFieldSet = new Set<string>();
-     const allowedProjectFieldSet = new Set<string>();
+    const allowedProjectFieldSet = new Set<string>();
     for (const field of fields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
       }
     }
-    for(let p of projectFields) {
-      if(p.read) {
+    for (let p of projectFields) {
+      if (p.read) {
         allowedProjectFieldSet.add(p.field_name)
       }
     }
@@ -2106,10 +2261,10 @@ async function exportTechnicalSummary(req: Request, res: Response) {
       const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
       return date
         ? moment
-            .utc(convertedDate)
-            .tz(isValidTZ ? value.timezone : "UTC")
-            .utcOffset('-012:30')
-            .format("YYYY-MMM-DD, hh:mm:ss A")
+          .utc(convertedDate)
+          .tz(isValidTZ ? value.timezone : "UTC")
+          .utcOffset('-012:30')
+          .format("YYYY-MMM-DD, hh:mm:ss A")
         : null;
     }
     if (result.statusCode === HttpStatus.SUCCESS) {
@@ -2117,36 +2272,36 @@ async function exportTechnicalSummary(req: Request, res: Response) {
         result?.data?.techSummaryInfo.length < 1
           ? []
           : result?.data?.techSummaryInfo.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                project_code: d.project_code,
-                project_name : d.project_name, 
-                fiscal_year: d.fiscal_year,
-                status_name: d.status_name,
-                version: d.version,
-                summary_context: d.summary_context,
-                technical_summary: d.technical_summary,
-                created_by: d.created_user_name,
-                created_datetime: d.created_datetime ? value.timezone && isValidTimezone(value.timezone) ? moment.tz(d.created_datetime.toISOString(), value.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.created_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
-                modified_by: d.modified_user_name,
-                modified_datetime: d.modified_datetime ? value.timezone && isValidTimezone(value.timezone) ? moment.tz(d.modified_datetime.toISOString(), value.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.modified_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
-              };
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              project_code: d.project_code,
+              project_name: d.project_name,
+              fiscal_year: d.fiscal_year,
+              status_name: d.status_name,
+              version: d.version,
+              summary_context: d.summary_context,
+              technical_summary: d.technical_summary,
+              created_by: d.created_user_name,
+              created_datetime: d.created_datetime ? value.timezone && isValidTimezone(value.timezone) ? moment.tz(d.created_datetime.toISOString(), value.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.created_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
+              modified_by: d.modified_user_name,
+              modified_datetime: d.modified_datetime ? value.timezone && isValidTimezone(value.timezone) ? moment.tz(d.modified_datetime.toISOString(), value.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.modified_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
+            };
 
-              // Build exportRecord using allowed fields and resultMap
-              const exportRecord: Record<string, any> = {};
-              techSummaryFieldMappings.forEach((mapping) => {
-                if (allowedFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
-                }
-                if(allowedProjectFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
-                }
-              });
-
-              return exportRecord;
+            // Build exportRecord using allowed fields and resultMap
+            const exportRecord: Record<string, any> = {};
+            techSummaryFieldMappings.forEach((mapping) => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
+              }
+              if (allowedProjectFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
+              }
             });
+
+            return exportRecord;
+          });
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
@@ -2173,7 +2328,7 @@ async function exportTechnicalSummary(req: Request, res: Response) {
     return;
   }
 }
-async function listInteractionHistory (req : Request, res : Response) {
+async function listInteractionHistory(req: Request, res: Response) {
   const methodName = "listInteractionHistory"
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -2236,7 +2391,7 @@ async function listInteractionHistory (req : Request, res : Response) {
 async function fetchInteractionAttachments(req: Request, res: Response) {
   const methodName = "fetchInteractionAttachments";
   try {
-  
+
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
@@ -2307,9 +2462,9 @@ async function fetchInteractionAttachments(req: Request, res: Response) {
  *
  * @returns {Promise<void>} Resolves after sending the HTTP response.
  */
-async function fetchResponseHistoryDetails (req : Request, res : Response) {
-   const methodName = "fetchResponseHistoryDetails"
-    try {
+async function fetchResponseHistoryDetails(req: Request, res: Response) {
+  const methodName = "fetchResponseHistoryDetails"
+  try {
     console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
@@ -2384,15 +2539,15 @@ async function triggerAIAndPassResponse(req: Request, res: Response) {
       return;
     }
     const result = await interactionService.triggerAI(data, userId);
-    if(result.statusCode != HttpStatus.SUCCESS) {
-       return res.status(HttpStatus.FAILED).json({
-      statusCode: HttpStatus.FAILED,
-      statusCodeValue: HttpStatus.FAILED_MESSAGE,
-      statusMessage: result.statusMessage,
-      data: result.data,
-    });
+    if (result.statusCode != HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      });
     }
-  
+
     return res.status(HttpStatus.SUCCESS).json({
       statusCode: HttpStatus.SUCCESS,
       statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
@@ -2430,7 +2585,7 @@ async function triggerAIAndPassResponse(req: Request, res: Response) {
 async function exportInteractionHistory(req: Request, res: Response) {
   const methodName = "exportInteractionHistory";
   try {
-   
+
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
     logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
@@ -2446,12 +2601,12 @@ async function exportInteractionHistory(req: Request, res: Response) {
     }
     const result = await interactionService.fetchInteractionHistory(data);
     if (result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
-      let timezone : string
-      if(data.timezone != undefined) {
+      let timezone: string
+      if (data.timezone != undefined) {
         const res = isValidTimezone(data.timezone)
-        if(res) timezone = data.timezone
-      }else timezone = "UTC"
-      
+        if (res) timezone = data.timezone
+      } else timezone = "UTC"
+
       let finalStructuredData = result.data.data.interaction_history.map(
         (data: any) => {
           return {
@@ -2602,7 +2757,7 @@ async function fetchInteractionListForReminder(req: Request, res: Response) {
  *
  * @returns {Promise<void>} Resolves after the HTTP response is sent.
  */
-async function fetchFourPartAssessmentList (req : Request, res : Response) {
+async function fetchFourPartAssessmentList(req: Request, res: Response) {
   const methodName = "fetchFourPartAssessmentList";
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -2621,21 +2776,21 @@ async function fetchFourPartAssessmentList (req : Request, res : Response) {
     data.isExport = false;
     const result = await interactionService.getFourPartAssessmentList(data);
     if (result.statusCode == HttpStatus.SUCCESS) {
-        return res.status(HttpStatus.SUCCESS).json({
-          statusCode: HttpStatus.SUCCESS,
-          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-          statusMessage: result.statusMessage,
-          data: result.data,
-        });
-      } else {
-        return res.status(HttpStatus.SUCCESS).json({
-          statusCode: HttpStatus.SUCCESS,
-          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-          statusMessage: result.statusMessage,
-          data: result.data,
-        });
-      }
-  } catch (err : any) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      });
+    }
+  } catch (err: any) {
     return res.status(HttpStatus.SUCCESS).json({
       statusCode: HttpStatus.SUCCESS,
       statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
@@ -2663,26 +2818,26 @@ async function fetchFourPartAssessmentList (req : Request, res : Response) {
  *
  * @returns {Promise<void>} Resolves after sending the HTTP response.
  */
-async function getFpaDetails (req : Request, res : Response) {
+async function getFpaDetails(req: Request, res: Response) {
   try {
     const data = req.body;
     const result = await interactionService.getFpaDetailsById(data);
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
-          statusCode: HttpStatus.SUCCESS,
-          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-          statusMessage: result.statusMessage,
-          data: result.data,
-        });
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      });
     } else {
       return res.status(HttpStatus.SUCCESS).json({
-          statusCode: HttpStatus.SUCCESS,
-          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-          statusMessage: result.statusMessage,
-          data: result.data,
-        });
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      });
     }
-  }catch (err : any) {
+  } catch (err: any) {
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
       statusCodeValue: HttpStatus.FAILED_MESSAGE,
@@ -2692,7 +2847,7 @@ async function getFpaDetails (req : Request, res : Response) {
   }
 }
 
- async function exportFetchFourPartAssessmentList (req : Request, res : Response) {
+async function exportFetchFourPartAssessmentList(req: Request, res: Response) {
   const methodName = "exportFetchFourPartAssessmentList";
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -2713,37 +2868,37 @@ async function getFpaDetails (req : Request, res : Response) {
     data.limit = 1
     const result = await interactionService.exportFpaList(data);
     if (result.statusCode == HttpStatus.SUCCESS) {
-          const fields = await interactionService.getAllowedExportFields(
-      userId,
-      "four_part_assessment_export"
-    );
-    const allowedFieldSet = new Set<string>();
-    for (const field of fields) {
-      if (field.read) {
-        allowedFieldSet.add(field.field_name);
+      const fields = await interactionService.getAllowedExportFields(
+        userId,
+        "four_part_assessment_export"
+      );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
       }
-    }
-    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-    const formatDate = (date?: Date) =>
-      date
-        ? moment(date)
+      const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+      const formatDate = (date?: Date) =>
+        date
+          ? moment(date)
             .tz(isValidTZ ? data.timezone : "UTC")
             .format("YYYY-MM-DD, hh:mm:ss A")
-        : null;
-    if (result.statusCode == HttpStatus.SUCCESS) {
-      let structuredData =
-        result.data.data.length < 1
-          ? []
-          : result.data.data.map((d: any) => {
+          : null;
+      if (result.statusCode == HttpStatus.SUCCESS) {
+        let structuredData =
+          result.data.data.length < 1
+            ? []
+            : result.data.data.map((d: any) => {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
                 project_code: d.project_code,
                 rd_potential_category: d.rd_potential_category,
                 permitted_purpose_status: d.permitted_purpose_status,
-                technological_uncertainty_status : d.technological_uncertainty_status,
+                technological_uncertainty_status: d.technological_uncertainty_status,
                 technological_in_nature_status: d.technological_in_nature_status,
-                process_of_experimentation_status : d.process_of_experimentation_status,
-                status : d.status,
+                process_of_experimentation_status: d.process_of_experimentation_status,
+                status: d.status,
                 summary_judgment: d.summary_judgment,
                 created_datetime: d.created_datetime === null ? "" : formatDate(d.created_datetime),
                 created_by: d.created_by_name
@@ -2758,15 +2913,15 @@ async function getFpaDetails (req : Request, res : Response) {
               });
               return exportRecord;
             });
-      const base64Response = await generateExcelBase64(
-        structuredData,
-        "FourPart Assessment"
-      );
-      handleSuccessResponse(res, base64Response);
-      return;
+        const base64Response = await generateExcelBase64(
+          structuredData,
+          "FourPart Assessment"
+        );
+        handleSuccessResponse(res, base64Response);
+        return;
       }
-  } 
-}catch (err : any) {
+    }
+  } catch (err: any) {
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
       statusCodeValue: HttpStatus.FAILED_MESSAGE,
@@ -2776,7 +2931,7 @@ async function getFpaDetails (req : Request, res : Response) {
   }
 }
 
- async function updateInteractionStatus (req : Request, res : Response) {
+async function updateInteractionStatus(req: Request, res: Response) {
   const methodName = "updateInteractionStatus";
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -2793,14 +2948,14 @@ async function getFpaDetails (req : Request, res : Response) {
       return;
     }
     const result = await interactionService.updateInteractionStatus(data, userId);
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
-          statusCode: HttpStatus.SUCCESS,
-          statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-          statusMessage: result.statusMessage
-        });
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage
+      });
     }
-}catch (err : any) {
+  } catch (err: any) {
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
       statusCodeValue: HttpStatus.FAILED_MESSAGE,
@@ -2808,7 +2963,7 @@ async function getFpaDetails (req : Request, res : Response) {
     });
   }
 }
-async function getInteractionAssessmentSource (req : Request, res : Response) {
+async function getInteractionAssessmentSource(req: Request, res: Response) {
   const methodName = "getInteractionAssessmentSource"
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -2825,15 +2980,15 @@ async function getInteractionAssessmentSource (req : Request, res : Response) {
       return;
     }
     const result = await interactionService.getInteractionAssessmentSource();
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
         statusMessage: STATUS_MESSAGE.assessmentFetchedSuccess,
-        data : result.data
+        data: result.data
       });
     }
-  } catch (err : any) {
+  } catch (err: any) {
     return res.status(HttpStatus.FAILED).json({
       statusCode: HttpStatus.FAILED,
       statusCodeValue: HttpStatus.FAILED_MESSAGE,
@@ -2880,5 +3035,7 @@ export default {
   getFpaDetails,
   exportFetchFourPartAssessmentList,
   updateInteractionStatus,
-  getInteractionAssessmentSource
+  getInteractionAssessmentSource,
+  saveRefineSummary,
+  refineSummary
 };

@@ -499,6 +499,14 @@ export const setPrjFiscalData = (dbData: any, requestData: any) => {
           )}`;
     newPrjFisArray.push(data);
   }
+  if (requestData.is_assesed != undefined) {
+    newPrjFisData.is_assesed =
+      requestData.is_assesed !== dbData.is_assesed
+        ? requestData.is_assesed
+        : dbData.is_assesed;
+    let data = `is_assesed = ${newPrjFisData.is_assesed}`;
+    newPrjFisArray.push(data);
+  }
   let data = `modified_by = '${requestData.userId}'`;
   newPrjFisArray.push(data);
   let datas = `modified_datetime = NOW()`;
@@ -829,6 +837,14 @@ export const setProjectFiscalSummary = (dbData: any, requestData: any) => {
         ? requestData.fiscal_year
         : dbData.fiscal_year;
     let data = `fiscal_year = ${newFisSummary.fiscal_year}`;
+    newFisSummaryArray.push(data);
+  }
+  if (requestData.is_assesed != undefined) {
+    newFisSummary.is_assesed =
+      requestData.is_assesed !== dbData.is_assesed
+        ? requestData.is_assesed
+        : dbData.is_assesed;
+    let data = `is_assesed = ${newFisSummary.is_assesed}`;
     newFisSummaryArray.push(data);
   }
   let data = `modified_by = '${requestData.userId}'`;

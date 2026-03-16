@@ -325,4 +325,5 @@ routes.post('/dossierPackage', checkUserStatusMiddleware("NA"), controller.child
 routes.post('/close', checkUserStatusMiddleware("NA"),upload.any() ,controller.childCaseController.closeCase)
 routes.post('/computedValues', checkUserStatusMiddleware("NA"),controller.childCaseController.getComputedValue)
 routes.post("/approvals/revoke", checkUserStatusMiddleware("NA"), controller.childCaseController.revokeApprovals)
+routes.post("/dossier/version", checkUserStatusMiddleware("NA"), controller.childCaseController.getDossierFormVersion)
 export default routes;

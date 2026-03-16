@@ -209,6 +209,7 @@ export interface ICreateProject {
   assessment_status?: string;
   is_rd_qualified?: boolean;
   qre?: number;
+  is_assesed?: boolean;
 }
 
 export interface IUpdateProject {
@@ -266,6 +267,7 @@ export interface IUpdateProject {
   key_contacts: any;
   comments?: string;
   project_fiscal_id: string;
+  is_assesed?: boolean;
 }
 
 export interface IKeyContactDetail {

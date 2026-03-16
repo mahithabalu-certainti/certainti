@@ -1154,12 +1154,19 @@ export const rawQueries = {
     LEFT JOIN (
      SELECT 
         rcc.country_rid,
-        SUM(CASE WHEN rcc.final_credit = 'NaN' THEN 0 ELSE rcc.final_credit END) AS final_credit_computed,
-        SUM(CASE WHEN rcc.final_credit_submitted = 'NaN' THEN 0 ELSE rcc.final_credit_submitted END) AS final_credit_submitted,
-        SUM(CASE WHEN rcc.final_credit_approved = 'NaN' THEN 0 ELSE rcc.final_credit_approved END) AS final_credit_approved
+        SUM((CASE WHEN rcc.final_credit = 'NaN' THEN 0 ELSE rcc.final_credit END) * COALESCE(cc.conversion_rate, 1)) AS final_credit_computed,
+        SUM((CASE WHEN rcc.final_credit_submitted = 'NaN' THEN 0 ELSE rcc.final_credit_submitted END) * COALESCE(cc.conversion_rate, 1)) AS final_credit_submitted,
+        SUM((CASE WHEN rcc.final_credit_approved = 'NaN' THEN 0 ELSE rcc.final_credit_approved END) * COALESCE(cc.conversion_rate, 1)) AS final_credit_approved
       FROM ${MAIN_SCHEMA_NAME}.rd_credit_calculations_summary rcc
       JOIN ${MAIN_SCHEMA_NAME}.case_summary cs 
         ON rcc.case_rid = cs.case_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.country rcc_c 
+        ON rcc_c.rid = rcc.country_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency rcc_curr 
+        ON rcc_curr.rid = rcc_c.default_currency_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency_conversion cc 
+        ON cc.from_currency_code = rcc_curr.currency_code 
+        AND cc.to_currency_code = '${US_FLAG.currency_code}'
       ${rccFilters}
       GROUP BY rcc.country_rid
     ) rcc ON c.rid = rcc.country_rid
@@ -1228,12 +1235,19 @@ export const rawQueries = {
       SELECT 
         rcc.country_rid,
         cs.account_rid,
-        SUM(CASE WHEN rcc.final_credit = 'NaN' THEN 0 ELSE rcc.final_credit END) AS final_credit_computed,
-        SUM(CASE WHEN rcc.final_credit_submitted = 'NaN' THEN 0 ELSE rcc.final_credit_submitted END) AS final_credit_submitted,
-        SUM(CASE WHEN rcc.final_credit_approved = 'NaN' THEN 0 ELSE rcc.final_credit_approved END) AS final_credit_approved
+        SUM((CASE WHEN rcc.final_credit = 'NaN' THEN 0 ELSE rcc.final_credit END) * COALESCE(cc.conversion_rate, 1)) AS final_credit_computed,
+        SUM((CASE WHEN rcc.final_credit_submitted = 'NaN' THEN 0 ELSE rcc.final_credit_submitted END) * COALESCE(cc.conversion_rate, 1)) AS final_credit_submitted,
+        SUM((CASE WHEN rcc.final_credit_approved = 'NaN' THEN 0 ELSE rcc.final_credit_approved END) * COALESCE(cc.conversion_rate, 1)) AS final_credit_approved
       FROM ${MAIN_SCHEMA_NAME}.rd_credit_calculations_summary rcc
       JOIN ${MAIN_SCHEMA_NAME}.case_summary cs 
         ON rcc.case_rid = cs.case_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.country rcc_c 
+        ON rcc_c.rid = rcc.country_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency rcc_curr 
+        ON rcc_curr.rid = rcc_c.default_currency_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency_conversion cc 
+        ON cc.from_currency_code = rcc_curr.currency_code 
+        AND cc.to_currency_code = '${US_FLAG.currency_code}'
       ${rccFilters}
       GROUP BY rcc.country_rid, cs.account_rid
     ),

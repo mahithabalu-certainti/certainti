@@ -574,6 +574,7 @@ export interface IChildCaseService extends ICaseService {
     statusCode: number;
     statusMessage: string;
 }>
+getDossierFormDetails(data : any) : Promise<any>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;

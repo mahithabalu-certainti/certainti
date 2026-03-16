@@ -133,6 +133,7 @@ export interface ProjectFiscalSummaryAttributes {
   project_point_of_contact_email?: string | null;
   technical_point_of_contact_email?: string | null;
   is_interaction_recipient: boolean | false;
+  is_assesed?: boolean | null;
 }
 interface ProjectFiscalSummaryCreationAttributes
   extends Optional<ProjectFiscalSummaryAttributes, "rid"> {}
@@ -273,6 +274,7 @@ export class ProjectFiscalSummary
   public comments?: string | null;
   public project_description?: string | null;
   public is_interaction_recipient!: boolean | false;
+  public is_assesed?: boolean | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectFiscalSummary.init(
@@ -519,6 +521,10 @@ export class ProjectFiscalSummary
           type: DataTypes.BOOLEAN,
           allowNull: true,
         },
+        is_assesed: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+        }
       },
       {
         sequelize,
