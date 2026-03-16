@@ -480,6 +480,51 @@ async function revokeApprovals (req : Request, res : Response) {
     return;
   }
 }
+
+async function getDossierFormVersion (req : Request, res : Response) {
+  const methodName = "getDossierFormVersion";
+  try {
+     const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+      return;
+    }
+    const data = req.body;
+    const result = await childCaseService.getDossierFormDetails(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : result.total,
+        data : result.data
+      }
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dossierFormFetchedSuccess,
+        data : finalData
+      })
+    } else {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      })
+    } 
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+
+}
 export default {
     signOffFinancialWorking,
     regionListForFinancialHighlights,
@@ -490,5 +535,6 @@ export default {
     getDossierPackage,
     closeCase,
     getComputedValue,
-    revokeApprovals
+    revokeApprovals,
+    getDossierFormVersion
 }

@@ -1143,3 +1143,13 @@ export interface RevokeSignoffRequest {
   type : string
   userId : string
 }
+export interface DossierFormResponse {
+  rid : string
+  r_number : string
+  created_by : string
+  created_by_name : string
+  created_datetime : Date
+  dossier_version : number
+  document_name : string
+  total_result : string
+}

@@ -12,9 +12,9 @@ import {
 
 export interface IInteractionService {
   processKafkaMessage(data: any): Promise<void>;
-  listInteractionPrjAccount(data: any,userId: string,apiType: string, reminderSpecificList : boolean, statusIdsForReminderList : string[]): Promise<any>;
+  listInteractionPrjAccount(data: any, userId: string, apiType: string, reminderSpecificList: boolean, statusIdsForReminderList: string[]): Promise<any>;
   fetchInteractionSummary(
-    data: any,userId: string
+    data: any, userId: string
   ): Promise<{ statusCodeValue: string; data: any }>;
   listInteractionResponseHistory(
     data: any
@@ -39,7 +39,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-   createInteractionTemplate(
+  createInteractionTemplate(
     interactionData: ICreateTemplateInteraction,
     userId: string
   ): Promise<{
@@ -48,7 +48,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-    getInteractionTemplateDetailsById(
+  getInteractionTemplateDetailsById(
     templateRid: string
   ): Promise<{
     statusCode: number;
@@ -56,7 +56,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionDetails: any };
   }>;
-   updateInteractionTemplate(
+  updateInteractionTemplate(
     interactionData: ICreateTemplateInteraction,
     userId: string
   ): Promise<{
@@ -65,17 +65,17 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-   listInteractionTemplates(data: any,userId: string, filters: Record<string, any>,apitype:string): Promise<{
+  listInteractionTemplates(data: any, userId: string, filters: Record<string, any>, apitype: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { interactions: any , count: number};
+    data?: { interactions: any, count: number };
   }>;
-   listAccountInteractions(data: any, page: number, limit: number, filters: Record<string, any>): Promise<{
+  listAccountInteractions(data: any, page: number, limit: number, filters: Record<string, any>): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { accountInteractions: any , count: number};
+    data?: { accountInteractions: any, count: number };
   }>;
 
   updateInteraction(
@@ -87,7 +87,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-   updateAccountInteraction(
+  updateAccountInteraction(
     interactionData: IUpdateInteraction,
     userId: string
   ): Promise<{
@@ -96,8 +96,8 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-   updateTechSummaryContext(
-    summaryContext:string,
+  updateTechSummaryContext(
+    summaryContext: string,
     techSummaryId: string,
     accountId: string,
     userId: string
@@ -108,7 +108,33 @@ export interface IInteractionService {
     data?: { interactions: any };
   }>;
 
-  
+  saveRefineSummary(
+    technicalSummary: any,
+    techSummaryId: string,
+    accountId: string,
+    projectFiscalId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { technicalSummary: any };
+  }>;
+
+  refineSummary(
+    refinementPrompt: string,
+    existingSummary: any,
+    techSummaryId: string,
+    accountId: string,
+    projectFiscalId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+
   updateInteractionResponse(
     interactionData: InteractionResponse,
     userId: string
@@ -118,7 +144,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-  
+
   getInteractionLevel(
     statusScope?: string,
     currentStatus?: string
@@ -132,7 +158,7 @@ export interface IInteractionService {
   getInteractionStatus(
     statusScope?: string,
     currentStatus?: string,
-    reminderFlag? : boolean
+    reminderFlag?: boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -166,7 +192,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionDetails: any };
   }>;
-  
+
   getKeyContactsByCaseId(
     caseRid: string,
     accountRid: string
@@ -186,7 +212,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionDetails: any };
   }>;
-   getTechnicalSummaryDetailsById(
+  getTechnicalSummaryDetailsById(
     techSummaryId: string,
     accountId: string
   ): Promise<{
@@ -196,7 +222,7 @@ export interface IInteractionService {
     data?: any;
   }>;
 
-  
+
   getInteractionQuestionsById(
     interactionRid: string,
     accountId: string
@@ -213,10 +239,10 @@ export interface IInteractionService {
       interaction_level: string;
     }[],
     email_info: {
-        email: string;
-        name: string | null;
-      },
-    accountRid : string,
+      email: string;
+      name: string | null;
+    },
+    accountRid: string,
     userId: string,
     is_interaction_followup?: boolean
   ): Promise<{
@@ -226,7 +252,7 @@ export interface IInteractionService {
     data?: { interactionResponse: any };
   }>;
 
-  
+
   fetchInteractionHistory(data: any): Promise<{
     statusCodeValue: string;
     data: any;
@@ -246,47 +272,47 @@ export interface IInteractionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { techSummaryInfo: any , count: number};
+    data?: { techSummaryInfo: any, count: number };
   }>;
   exportTechnicalSummary(data: any, filters: Record<string, any>): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { techSummaryInfo: any , count: number};
+    data?: { techSummaryInfo: any, count: number };
   }>;
-  triggerAI(data : any, userId: string) : Promise<{
-    statusMessage : string,
-    statusCode : number,
-    status : any,
-    data : any
+  triggerAI(data: any, userId: string): Promise<{
+    statusMessage: string,
+    statusCode: number,
+    status: any,
+    data: any
   }>
-  triggerAiFromScheduler(schedulerRecord : SchedulerExecutions) : Promise<void>
-   getAllowedExportFields(
-      userId: string,
-      permission_name: string
-    ): Promise<any[]>;
-  sendEmailInBatch() : Promise<void>
-  fetchStatusIdsForReminder() : Promise<any>,
+  triggerAiFromScheduler(schedulerRecord: SchedulerExecutions): Promise<void>
+  getAllowedExportFields(
+    userId: string,
+    permission_name: string
+  ): Promise<any[]>;
+  sendEmailInBatch(): Promise<void>
+  fetchStatusIdsForReminder(): Promise<any>,
   getAccountNumberByRid(accountRid: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { account_number: string };
   }>;
-  getFourPartAssessmentList(data : FourPartAssessmentRequestPayload): Promise<{
+  getFourPartAssessmentList(data: FourPartAssessmentRequestPayload): Promise<{
     statusCode: number;
     statusMessage: string;
     data: {
-        page: number;
-        limit: number;
-        total_results: string | number;
-        data: FourPartAssessmentListResponse[];
+      page: number;
+      limit: number;
+      total_results: string | number;
+      data: FourPartAssessmentListResponse[];
     };
-}>
-getFpaDetailsById(data : any) : Promise<any>
-exportFpaList(data : any) : Promise<any>
-updateInteractionStatus(data : any, userId : string) : Promise<any>
-getInteractionAssessmentSource() : Promise<any>
+  }>
+  getFpaDetailsById(data: any): Promise<any>
+  exportFpaList(data: any): Promise<any>
+  updateInteractionStatus(data: any, userId: string): Promise<any>
+  getInteractionAssessmentSource(): Promise<any>
 }
 
 export interface IWebHookService {
