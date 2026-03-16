@@ -20,7 +20,9 @@ export const AppLayout: React.FC = () => {
     const saved = localStorage.getItem('sidebarExpand');
     return saved ? JSON.parse(saved) : true;
   });
-  const [showAdminSidebar, setShowAdminSidebar] = useState<boolean>(false);
+  const [showAdminSidebar, setShowAdminSidebar] = useState<boolean>(() => {
+    return window.location.pathname.startsWith(ADMIN);
+  });
   const { menus } = useSelector((state: RootState) => state.permission);
 
   // Initialize WebSocket connection for authenticated users
@@ -50,13 +52,6 @@ export const AppLayout: React.FC = () => {
     }
   }, [permission, requestPermission, subscribe]);
 
-  useEffect(() => {
-    const showAdminSidebarLocalStorage =
-      localStorage.getItem('showAdminSidebar');
-    if (showAdminSidebarLocalStorage) {
-      setShowAdminSidebar(JSON.parse(showAdminSidebarLocalStorage));
-    }
-  }, []);
 
   // This ensures sidebar/navbar menus are consistent when navigating via browser back/forward buttons
   useEffect(() => {
@@ -73,8 +68,7 @@ export const AppLayout: React.FC = () => {
       setShowAdminSidebar(isAdminRoute);
       localStorage.setItem('showAdminSidebar', JSON.stringify(isAdminRoute));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, showAdminSidebar]);
 
   useEffect(() => {
     const handleResize = () => {

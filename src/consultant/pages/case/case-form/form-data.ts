@@ -103,7 +103,11 @@ export const CaseFormData = (
             options: parentCaseOptions || [],
             placeholder: 'Choose Parent Case',
             required: false,
-            hide: !isAmendmentType,
+            hide:
+              !isAmendmentType ||
+              (isEditView &&
+                !permissionMap?.['parent_case_rid']?.edit &&
+                !permissionMap?.['parent_case_rid']?.read),
             disabled: isEditView || isCaseClosed,
             isLoading: isParentCaseLoading,
             onChange: true,
@@ -132,14 +136,6 @@ export const CaseFormData = (
               'other',
               'description',
             ],
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['parent_case_rid']?.edit &&
-            //   permissionMap?.['parent_case_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['parent_case_rid']?.edit &&
-            //   !permissionMap?.['parent_case_rid']?.read,
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
