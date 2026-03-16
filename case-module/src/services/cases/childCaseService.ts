@@ -1948,7 +1948,8 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           }
         })
         if(!filterAllowed) {
-          if(Object.keys(data.filter['created_by_name']).some((d) => d ==='equals')) {
+          if(Object.keys(data.filter).length > 0) {
+            if(Object.keys(data.filter['created_by_name']).some((d) => d ==='equals')) {
             iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase() === data.filter['created_by_name']['equals'].toLowerCase())
           }
           if(Object.keys(data.filter['created_by_name']).some((d) => d === 'not_equals')) {
@@ -1956,6 +1957,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           }
           if(Object.keys(data.filter['created_by_name']).some((d) => d === 'contains')) {
             iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase().includes(data.filter['created_by_name']['contains'].toLowerCase()))
+          }
           }
         }
         if(!sortingAllowed) {
