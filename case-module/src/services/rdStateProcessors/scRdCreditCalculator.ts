@@ -114,8 +114,8 @@ export class RdCreditCalculatorForSC {
          let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;       
         storeData.push({
             year : metadata.currentYear,
-            wages: currentYearQREs.wages,
-            contract: currentYearContract,
+            wages: this.round2(currentYearQREs.wages),
+            contract: this.round2(currentYearContract),
             sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract))
         })
  
