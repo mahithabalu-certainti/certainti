@@ -46,7 +46,7 @@ export class RdCreditCalculatorForCT {
             inputFields,
             computedFields,
             finalCredit: part2Computation.final_credit,
-            totalQRE: part1TentativeComputation.tentative_total_qre,
+            totalQRE: part1TentativeComputation.allowable_tentative_tax_credit,
               totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
             totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
             totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0
@@ -158,10 +158,9 @@ export class RdCreditCalculatorForCT {
         const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c3 || 0));
 
         //Line 5b: Enter 90% of Line 3
-        const taxLimit = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c4/100 || 0));
-
+        const taxLimit = currentYearCTBusinessTaxLiability?.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c4/100 || 0)) || 0;
         //Line 5: Enter the lesser of Line 5a or Line 5b
-        const minFinal = Decimal.min(doubleCredit, taxLimit);
+        const minFinal = Decimal.min(doubleCredit, taxLimit); 
 
         //Line 6: Enter the greater of Line 4 or Line 5 
         const allowableCredit = Decimal.max(halfTaxLiability, minFinal);
