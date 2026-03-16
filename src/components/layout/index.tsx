@@ -52,7 +52,6 @@ export const AppLayout: React.FC = () => {
     }
   }, [permission, requestPermission, subscribe]);
 
-
   // This ensures sidebar/navbar menus are consistent when navigating via browser back/forward buttons
   useEffect(() => {
     // Skip synchronization if this was a manual toggle
