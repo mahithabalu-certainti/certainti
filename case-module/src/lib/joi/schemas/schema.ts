@@ -14,7 +14,7 @@ const positiveDecimal18_2 = Joi.string()
   .custom((value, helpers) => {
     try {
       const num = new Decimal(value);
-      if (num.lte(0)) {
+      if (num.lt(0)) {
         return helpers.error("any.invalid");
       }
       return value;
