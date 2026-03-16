@@ -2011,8 +2011,11 @@ export class RdFormHelperService {
         // Labels may contain parens like '(.15)' so ( and ) are NOT in the capture exclusion set.
         // Unbalanced trailing ) are stripped in resolveRef and re-appended after substitution.
         // : stops capture for ternary operator context; space-dash-space stops for binary minus.
+        // = and ? are also stop characters so that ternary/comparison operators produced by
+        // normalizeExpressionSyntax (=== → ==, IF → ternary ?) are never swallowed into the label.
+        // e.g. "#Item01b == 0 ? ..." must capture only "Item01b", not "Item01b == 0 ?".
         replaced = replaced.replace(
-          /#([^#+*/]+?)(?=\s*[+*\/:<>{}]|\s+-\s+(?=[#\d])|\s*,|\s*#|\s*$)/g,
+          /#([^#+*/=?]+?)(?=\s*[+*\/:<>{}=?]|\s+-\s+(?=[#\d])|\s*,|\s*#|\s*$)/g,
           (_match: string, rawKey: string) => resolveRef(rawKey),
         );
 
