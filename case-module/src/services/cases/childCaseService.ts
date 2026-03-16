@@ -4,8 +4,8 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, entityTypes, ENV_PREFIX, eventNames, eventTypes, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
-import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
-import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
+import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
+import { fetchDossierForm, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
 import { ENV, kafka } from "../../config/kafka";
@@ -23,6 +23,7 @@ import { CaseHistorySubmissionCreationAttributes } from "../../models/caseHistor
 import Decimal from "decimal.js";
 import { generatePdfBuffer } from "../../utils/generatePdf";
 import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
+import { truncate } from "node:fs";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -450,42 +451,29 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     where : {
       case_rid : caseRid,
       account_rid : accountRid
-    }, raw : true
+    }, raw : true,
+    order : [['created_datetime', 'DESC']]
   })
-
+  let dossierVersion;
+  let now = new Date();
   if(findData) {
-    let dossierVersion = (findData.dossier_version ?? 0) + 1
-    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${dossierVersion}-${findData.created_datetime.toISOString().split('T')[0]}`
-    await DossierFormModel.update({
-      modified_by : userId,
-      dossier_metadata : jsonToString,
-      modified_datetime : new Date(),
-      document_name : documentName,
-      dossier_version : dossierVersion
-    }, {
-     where : {
-      case_rid : caseRid,
-      account_rid : accountRid
-    }
-    })
+    dossierVersion = (findData.dossier_version ?? 0) + 1
   } else {
-    let now = new Date();
-    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${1}-${now.toISOString().split('T')[0]}`
-    await DossierFormModel.create({
-      account_rid : accountRid,
-      case_rid : caseRid,
-      browse_url : '',
-      created_by : userId,
-      document_name : documentName,
-      extension : '',
-      size : '',
-      created_datetime : now,
-      dossier_metadata : jsonToString,
-      dossier_version : 1
-    });
+    dossierVersion = 1
   }
+  await DossierFormModel.create({
+    account_rid : accountRid,
+    case_rid : caseRid,
+    browse_url : '',
+    created_by : userId,
+    document_name : `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${dossierVersion}-${now.toISOString().split('T')[0]}`,
+    extension : '',
+    size : '',
+    created_datetime : now,
+    dossier_metadata : jsonToString,
+    dossier_version : dossierVersion
+  });
   await this.cloneTechnicalSummaryForDossierForm(accountNumber, caseRid, accountRid, userId, schemaName);
-
 }
 
 private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid: string, accountRid: string, userId: string, schemaName: string) {
@@ -1203,7 +1191,9 @@ async fetchDossierPackage (data : any) : Promise<any> {
     where : {
       case_rid : data.case_rid,
       account_rid : data.account_rid
-    }
+    },
+    order : [['created_datetime', 'DESC']],
+    limit : 1
   })
   if(getZipPackage) {
     let responsePackage : any[] = [];
@@ -1900,6 +1890,103 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           statusCode : HttpStatus.FAILED,
           statusMessage : STATUS_MESSAGE.failedToUpdate
       }
+    }
+  }
+   async getDossierFormDetails (data : any) : Promise<any> {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb(); 
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      let paginationAllowed : boolean = false;
+      let sortingAllowed : boolean = false;
+      let filterAllowed : boolean = false;
+      let totalResult = 0;
+      if(Object.keys(data.filter).length > 1) {
+        for(let [key, cond] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') {
+            paginationAllowed = false
+            filterAllowed = true
+            break
+          } else {
+            paginationAllowed = true
+            filterAllowed = true
+            break;
+          }
+        }
+      } else if(Object.keys(data.filter).length === 1) {
+        for(let [key, cond] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') {
+            paginationAllowed = false
+            filterAllowed = false
+            break;
+          } else {
+            paginationAllowed = true
+            filterAllowed = true
+            break;
+          }
+        }
+      }
+      else {
+        paginationAllowed = true
+        filterAllowed = false
+      }
+      if(data.sort === 'created_by_name') {
+        sortingAllowed = false
+      } else {
+        sortingAllowed = true
+      }
+      const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+      const result = await orgDb.query<DossierFormResponse>(fetchDossierForm(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName, paginationAllowed, sortingAllowed, filterAllowed, data.account_rid, data.case_rid), {type : QueryTypes.SELECT});
+      if(result.length > 0) {
+        const getUserIds = [...new Set(result.map((d) => d.created_by))];
+        const getUserMetaData : any = await mainDb.query(rawQueries.getOwnerDetails(getUserIds));
+        const mapUser : Map<string, string>= new Map(getUserMetaData[0].map((d : any) => [d.rid, d.name]));
+        let iteratedResult = result.map((d) => {
+          return {
+            ...d,
+            created_by_name : mapUser.get(d.created_by) || ''
+          }
+        })
+        if(!filterAllowed) {
+          if(Object.keys(data.filter['created_by_name']).some((d) => d ==='equals')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase() === data.filter['created_by_name']['equals'].toLowerCase())
+          }
+          if(Object.keys(data.filter['created_by_name']).some((d) => d === 'not_equals')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase() !== data.filter['created_by_name']['not_equals'].toLowerCase())
+          }
+          if(Object.keys(data.filter['created_by_name']).some((d) => d === 'contains')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase().includes(data.filter['created_by_name']['contains'].toLowerCase()))
+          }
+        }
+        if(!sortingAllowed) {
+          if(data.sort_by === 'ASC')
+            iteratedResult.sort((a, b) => a.created_by_name.localeCompare(b.created_by_name))
+          else 
+            iteratedResult.sort((a, b) => b.created_by_name.localeCompare(a.created_by_name))
+        }
+        totalResult = paginationAllowed ? Number(result[0]!.total_result) : iteratedResult.length
+
+        if(!paginationAllowed) {
+          iteratedResult = iteratedResult.slice(((data.page - 1) * data.limit), data.limit)
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : iteratedResult,
+          total : totalResult
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : [],
+          totalResult : 0
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : [],
+          totalResult : 0
+        }
     }
   }
 }

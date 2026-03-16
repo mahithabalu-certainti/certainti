@@ -1,5 +1,5 @@
 
-import { filterColumnsCaseTask, filterColumnsCaseTaskTypes, MAIN_SCHEMA_NAME, sortByColumnsCaseTask, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
+import { filterColumnsCaseTask, filterColumnsCaseTaskTypes, filterColumnsDossierForm, filterColumnsDossierFormTypes, MAIN_SCHEMA_NAME, sortByColumnsCaseTask, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
 import {
   FilterType,
   validColumns,
@@ -2400,6 +2400,141 @@ export const fetchRdCreditConfigStateLevelQuery = () => {
   select config_json, state_code, state_rid, country_rid
   from eligible_configs
   where rn = 1
+  `
+  return query;
+}
+
+export const fetchDossierForm = (page : number, limit : number, sort : string, sort_by : string, filter : FilterType, search : string, schemaName : string,  paginationAllowed : boolean, sortingAllowed : boolean, filterAllowed : boolean, accountRid : string, caseRid : string) => {
+  let offset = (page - 1 ) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let searchValue : string;
+  let sortValue : string
+  let filterQueryArray : string[] = [];
+  let andOperator : string = ''
+  let validKey : string;
+  let combinedQueryString : string;
+  let doPagination : string;
+
+  if(paginationAllowed) doPagination = pagination
+  else doPagination = ''
+
+  if(sortingAllowed) {
+    if(sort === 'r_number') sortValue = `ORDER BY d.r_number ${sort_by}`
+    else if(sort === 'document_name') sortValue = `ORDER BY d.document_name ${sort_by} NULLS LAST`
+    else if(sort === 'dossier_version') sortValue = `ORDER BY d.dossier_version ${sort_by} NULLS LAST`
+    else if(sort === 'created_datetime') sortValue = `ORDER BY d.created_datetime ${sort_by}`
+    else sortValue = `ORDER BY d.r_number ASC`
+  } else {
+    sortValue = ''
+  }
+
+  if(search) searchValue = `'%${search}%'`
+  else searchValue = `'%%'`
+
+  if(filterAllowed) {
+    if (Object.keys(filter).length > 0) {
+      andOperator = ` AND `
+      for (let [key, conditions] of Object.entries(filter)) {
+        if (Object.keys(filterColumnsDossierForm).includes(key)) {
+          validKey = key;
+          for (let [cond, values] of Object.entries(conditions)) {
+            switch (filterColumnsDossierFormTypes[validKey]) {
+              case "string": {
+                if (cond === 'equals')
+                  filterQueryArray.push(`LOWER(${validKey}) = '${values.toLowerCase()}'`)
+                if (cond === 'not_equals')
+                  filterQueryArray.push(`(LOWER(${validKey}) != '${values.toLowerCase()}' OR ${validKey} IS NULL)`)
+                if (cond === 'contains')
+                  filterQueryArray.push(`${validKey} ILIKE '%${values}%'`)
+                if (cond === 'is_empty')
+                  filterQueryArray.push(`(${validKey} IS NULL OR ${validKey} = '')`)
+                if (cond === 'in')
+                  filterQueryArray.push(`${validKey} IN (${values.map((d: any) => `'${d}'`).join(',')})`)
+                break;
+              }
+              case "number": {
+                switch (cond) {
+                  case "equals": {
+                    filterQueryArray.push(`${validKey} = ${values}`)
+                    break
+                  }
+                  case "not_equals": {
+                    filterQueryArray.push(`${validKey} != ${values}`)
+                    break;
+                  }
+                  case "greater_than": {
+                    filterQueryArray.push(`${validKey} > ${values}`)
+                    break;
+                  }
+                  case "less_than": {
+                    filterQueryArray.push(`${validKey} < ${values}`)
+                    break;
+                  }
+                  case "is_empty": {
+                    filterQueryArray.push(`${validKey} IS NULL`)
+                    break;
+                  }
+                  case "between": {
+                    filterQueryArray.push(`${validKey} BETWEEN ${values.map((d: any) => `${d}`).join(' AND ')}`)
+                    break;
+                  }
+                  default: {
+                    break;
+                  }
+                }
+                break;
+              }
+              case "date": {
+                if (cond === 'equals')
+                  filterQueryArray.push(`ct.${validKey} = '${values}'`)
+                if (cond === 'before')
+                  filterQueryArray.push(`ct.${validKey} < '${values}'`)
+                if (cond === 'after')
+                  filterQueryArray.push(`ct.${validKey} > '${values}'`)
+                if (cond === 'is_empty')
+                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                if (cond === 'between')
+                  filterQueryArray.push(`ct.${validKey} BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
+                break;
+              }
+              default:
+                break;
+              }
+            }
+          }
+        }
+      } 
+      else {
+        filterQueryArray = []
+        andOperator = ` `
+    }
+  } else {
+    filterQueryArray = []
+    andOperator = ` `
+  }
+
+  if (filterQueryArray.length > 0) {
+    combinedQueryString = filterQueryArray.join(' AND ')
+  } else {
+    combinedQueryString = ` `
+  }
+
+  let query = `
+  WITH fetch_data AS (
+  SELECT COUNT(rid) OVER() AS total_result, d.rid, d.r_number, d.document_name, d.created_by, d.created_datetime, d.dossier_version
+  FROM 
+  ${schemaName}.dossier_form d
+  WHERE
+  d.account_rid = '${accountRid}'
+  AND
+  d.case_rid = '${caseRid}'
+  AND
+  (d.r_number ILIKE ${searchValue} OR d.document_name ILIKE ${searchValue})
+  ${andOperator}
+  ${combinedQueryString}
+  ${sortValue}
+  )
+  SELECT * FROM fetch_data ${doPagination}
   `
   return query;
 }
