@@ -223,6 +223,96 @@ export const CaseFormData = (
             //   !permissionMap?.['status_rid']?.edit &&
             //   permissionMap?.['status_rid']?.read,
           }),
+
+          createDateField('case_startdate', 'Planned Start Date', {
+            required: true,
+            onChange: true,
+            allowFutureDates: true,
+            customDateOpen: selectedFiscalYear
+              ? new Date(`${Number(selectedFiscalYear) - 1}-04-01`)
+              : undefined,
+            maxDate: dateConstraints?.start_date_max
+              ? new Date(dateConstraints.start_date_max)
+              : undefined,
+            disableDatesBefore: dateConstraints?.start_date_min
+              ? new Date(dateConstraints.start_date_min)
+              : undefined,
+            disabled:
+              isCaseClosed ||
+              (isEditView &&
+                !permissionMap?.['start_date']?.edit &&
+                permissionMap?.['start_date']?.read),
+            hide:
+              isEditView &&
+              !permissionMap?.['start_date']?.edit &&
+              !permissionMap?.['start_date']?.read,
+          }),
+          createDateField(
+            'planned_submission_date',
+            'Planned Submission Date',
+            {
+              required: true,
+              onChange: true,
+              allowFutureDates: true,
+              customDateOpen: selectedFiscalYear
+                ? new Date(`${selectedFiscalYear}-04-01`)
+                : undefined,
+              disableDatesBefore: dateConstraints?.planned_min
+                ? new Date(dateConstraints.planned_min)
+                : undefined,
+              maxDate: dateConstraints?.planned_max
+                ? new Date(dateConstraints.planned_max)
+                : undefined,
+              disabled:
+                isCaseClosed ||
+                (isEditView &&
+                  !permissionMap?.['planned_submission_date']?.edit &&
+                  permissionMap?.['planned_submission_date']?.read),
+              hide:
+                isEditView &&
+                !permissionMap?.['planned_submission_date']?.edit &&
+                !permissionMap?.['planned_submission_date']?.read,
+            }
+          ),
+          createDateField(
+            'statutory_submission_date',
+            'Statutory Submission Date',
+            {
+              required: true,
+              onChange: true,
+              allowFutureDates: true,
+              customDateOpen: selectedFiscalYear
+                ? new Date(`${selectedFiscalYear}-04-01`)
+                : undefined,
+              minDate: dateConstraints?.statutory_min
+                ? new Date(dateConstraints.statutory_min)
+                : undefined,
+              maxDate: dateConstraints?.statutory_max
+                ? new Date(dateConstraints.statutory_max)
+                : undefined,
+              disabled: true,
+              hide:
+                isEditView &&
+                !permissionMap?.['statutory_submission_date']?.edit &&
+                !permissionMap?.['statutory_submission_date']?.read,
+              defaultValue: calculatedStatutoryDate,
+              assignDefaultValue: !isEditView || !!calculatedStatutoryDate,
+              requiredErrorMessage:
+                'Field is required. Please add statutory submission date in the platform level configuration.',
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Statutory Submission Date: Please add statutory submission date in the platform level configuration.',
+              },
+            }
+          ),
+        ],
+      },
+      {
+        sectionName: 'Financial Information',
+        fillType: 'half',
+        // hide: !isEditView,
+        fields: [
           createTextField('heat_light_power', 'Heating & Lighting Cost', {
             required: false,
             placeholder: 'Enter Heating & Lighting Cost',
@@ -248,34 +338,57 @@ export const CaseFormData = (
                 !permissionMap?.['heat_light_power']?.edit &&
                 !permissionMap?.['heat_light_power']?.read),
           }),
-          createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
+          createTextField('tax_liability_ct', 'Tax Liability CT', {
             required: false,
-            placeholder: 'Enter Total NonLabor Cost',
+            placeholder: 'Enter Tax Liability CT',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Total NonLabor Cost.',
+              tooltipMessage: 'Actual Tax Liability Due To Connecticut.',
             },
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
               (isEditView &&
-                !permissionMap?.['total_nonlabor_cost']?.edit &&
-                permissionMap?.['total_nonlabor_cost']?.read),
+                !permissionMap?.['tax_liability']?.edit &&
+                permissionMap?.['tax_liability']?.read),
             hide:
-              isEditView &&
-              !permissionMap?.['total_nonlabor_cost']?.edit &&
-              !permissionMap?.['total_nonlabor_cost']?.read,
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                !permissionMap?.['tax_liability']?.read),
           }),
-          createTextField('tax_liability', 'Tax Liability', {
+          createTextField('tax_liability_ga', 'Tax Liability GA', {
             required: false,
-            placeholder: 'Enter Tax Liability',
+            placeholder: 'Enter Tax Liability GA',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Tax Liability Due.',
+              tooltipMessage: 'Actual Tax Liability Due To Georgia.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                permissionMap?.['tax_liability']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                !permissionMap?.['tax_liability']?.read),
+          }),
+          createTextField('tax_liability_sc', 'Tax Liability SC', {
+            required: false,
+            placeholder: 'Enter Tax Liability SC',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Actual Tax Liability Due To South Carolina',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -524,15 +637,123 @@ export const CaseFormData = (
                 !permissionMap?.['export_sales_revenue']?.read),
           }),
           createTextField(
-            'lease_costs_of_computers',
-            'Lease Costs of Computers',
+            'lease_costs_of_computers_az',
+            'Lease Costs of Computers AZ',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers',
+              placeholder: 'Enter Lease Costs of Computers AZ',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Actual Lease Costs of Computers Due.',
+                tooltipMessage:
+                  'Actual Lease Costs of Computers Due To Arizona.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_ca',
+            'Lease Costs of Computers CA',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers CA',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Actual Lease Costs of Computers Due To California.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_id',
+            'Lease Costs of Computers ID',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers ID',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage: 'Actual Lease Costs of Computers Due To Idaho.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_il',
+            'Lease Costs of Computers IL',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers IL',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Actual Lease Costs of Computers Due To Illinois.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_nj',
+            'Lease Costs of Computers NJ',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers NJ',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Actual Lease Costs of Computers Due To New Jersey.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -611,15 +832,42 @@ export const CaseFormData = (
             }
           ),
           createTextField(
-            'basic_research_payments',
-            'Basic Research Payments',
+            'basic_research_payments_id',
+            'Basic Research Payments ID',
             {
               required: false,
-              placeholder: 'Enter Basic Research Payments',
+              placeholder: 'Enter Basic Research Payments ID',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Actual Basic Research Payments Due.',
+                tooltipMessage: 'Actual Basic Research Payments Due To Idaho.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  permissionMap?.['basic_research_payments']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  !permissionMap?.['basic_research_payments']?.read),
+            }
+          ),
+          createTextField(
+            'basic_research_payments_ma',
+            'Basic Research Payments MA',
+            {
+              required: false,
+              placeholder: 'Enter Basic Research Payments MA',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Actual Basic Research Payments Due.To Massachusetts.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -715,13 +963,13 @@ export const CaseFormData = (
                   !permissionMap?.['credit_carry_forward_py']?.read),
             }
           ),
-          createTextField('other_credits_total', 'Other Credits Total', {
+          createTextField('other_credits_total_ga', 'Other Credits Total GA', {
             required: false,
-            placeholder: 'Enter Other Credits Total',
+            placeholder: 'Enter Other Credits Total GA',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Other Credits Total.',
+              tooltipMessage: 'Actual Other Credits Total Due To Georgia.',
             },
             regexErrorMessage:
               'Numbers allowed, up to 16 digits and 2 decimal places',
@@ -737,7 +985,74 @@ export const CaseFormData = (
                 !permissionMap?.['other_credits_total']?.edit &&
                 !permissionMap?.['other_credits_total']?.read),
           }),
-          createTextField('other', 'Other', {
+          createTextField('other_credits_total_sc', 'Other Credits Total SC', {
+            required: false,
+            placeholder: 'Enter Other Credits Total SC',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Actual Other Credits Total Due To South Carolina.',
+            },
+            regexErrorMessage:
+              'Numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other_credits_total']?.edit &&
+                permissionMap?.['other_credits_total']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['other_credits_total']?.edit &&
+                !permissionMap?.['other_credits_total']?.read),
+          }),
+          createTextField('other_can', 'Other CAN', {
+            required: false,
+            placeholder: 'Enter Other CAN',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Actual Other Due To Canada',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Canada ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createTextField('other_ont', 'Other ON', {
+            required: false,
+            placeholder: 'Enter Other ON',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Actual Other Due To Ontario',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Canada ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createTextField('other_uk', 'Other', {
             required: false,
             placeholder: 'Enter Other',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -754,9 +1069,32 @@ export const CaseFormData = (
                 !permissionMap?.['other']?.edit &&
                 permissionMap?.['other']?.read),
             hide:
-              isEditView &&
-              !permissionMap?.['other']?.edit &&
-              !permissionMap?.['other']?.read,
+              CountryName !== FinancialWorkingCountries.UK ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createTextField('other_irl', 'Other', {
+            required: false,
+            placeholder: 'Enter Other',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Actual Other Due.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Ireland ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
           }),
           createEmptyField('', '', {
             name: 'emptyData',
@@ -783,90 +1121,9 @@ export const CaseFormData = (
               ].includes(CountryName as FinancialWorkingCountries) ||
               isEditView,
           }),
-          createDateField('case_startdate', 'Planned Start Date', {
-            required: true,
-            onChange: true,
-            allowFutureDates: true,
-            customDateOpen: selectedFiscalYear
-              ? new Date(`${Number(selectedFiscalYear) - 1}-04-01`)
-              : undefined,
-            maxDate: dateConstraints?.start_date_max
-              ? new Date(dateConstraints.start_date_max)
-              : undefined,
-            disableDatesBefore: dateConstraints?.start_date_min
-              ? new Date(dateConstraints.start_date_min)
-              : undefined,
-            disabled:
-              isCaseClosed ||
-              (isEditView &&
-                !permissionMap?.['start_date']?.edit &&
-                permissionMap?.['start_date']?.read),
-            hide:
-              isEditView &&
-              !permissionMap?.['start_date']?.edit &&
-              !permissionMap?.['start_date']?.read,
-          }),
-          createDateField(
-            'planned_submission_date',
-            'Planned Submission Date',
-            {
-              required: true,
-              onChange: true,
-              allowFutureDates: true,
-              customDateOpen: selectedFiscalYear
-                ? new Date(`${selectedFiscalYear}-04-01`)
-                : undefined,
-              disableDatesBefore: dateConstraints?.planned_min
-                ? new Date(dateConstraints.planned_min)
-                : undefined,
-              maxDate: dateConstraints?.planned_max
-                ? new Date(dateConstraints.planned_max)
-                : undefined,
-              disabled:
-                isCaseClosed ||
-                (isEditView &&
-                  !permissionMap?.['planned_submission_date']?.edit &&
-                  permissionMap?.['planned_submission_date']?.read),
-              hide:
-                isEditView &&
-                !permissionMap?.['planned_submission_date']?.edit &&
-                !permissionMap?.['planned_submission_date']?.read,
-            }
-          ),
-          createDateField(
-            'statutory_submission_date',
-            'Statutory Submission Date',
-            {
-              required: true,
-              onChange: true,
-              allowFutureDates: true,
-              customDateOpen: selectedFiscalYear
-                ? new Date(`${selectedFiscalYear}-04-01`)
-                : undefined,
-              minDate: dateConstraints?.statutory_min
-                ? new Date(dateConstraints.statutory_min)
-                : undefined,
-              maxDate: dateConstraints?.statutory_max
-                ? new Date(dateConstraints.statutory_max)
-                : undefined,
-              disabled: true,
-              hide:
-                isEditView &&
-                !permissionMap?.['statutory_submission_date']?.edit &&
-                !permissionMap?.['statutory_submission_date']?.read,
-              defaultValue: calculatedStatutoryDate,
-              assignDefaultValue: !isEditView || !!calculatedStatutoryDate,
-              requiredErrorMessage:
-                'Field is required. Please add statutory submission date in the platform level configuration.',
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Statutory Submission Date: Please add statutory submission date in the platform level configuration.',
-              },
-            }
-          ),
         ],
       },
+
       {
         sectionName: '',
         fillType: 'full',
