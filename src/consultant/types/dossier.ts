@@ -591,18 +591,8 @@ export interface DossierPackageResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    rid: string;
-    r_number: string | null;
-    created_by: string;
-    modified_by: string;
-    created_datetime: string;
-    modified_datetime: string;
-    case_rid: string;
-    account_rid: string;
-    browse_url: string;
     document_name: string;
-    size: string;
-    extension: string;
+    base64?: string;
   };
 }
 
@@ -662,4 +652,17 @@ export interface CaseClosePayload {
   files?: Record<string, File>; // key: file_country_{rid} or file_state_{rid}
   fiscal_year?: string | number;
   user_preference?: string; // 'true' or ''
+}
+
+export interface RDFormRevokePayload {
+  case_rid: string;
+  account_rid: string;
+  type: string;
+}
+
+export interface RDFormRevokeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: string;
 }

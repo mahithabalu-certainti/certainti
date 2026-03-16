@@ -4,7 +4,18 @@ import FinancialWorking from './financial-working';
 import FinancialWorkingAustralia from './financial-working-australia';
 import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
-import { Box, MenuItem, Select, Tab, Tabs } from '@mui/material';
+import {
+  Box,
+  MenuItem,
+  Select,
+  Tab,
+  Tabs,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+} from '@mui/material';
 import { useParams, useSearchParams } from 'react-router-dom';
 // import { useQueryClient } from '@tanstack/react-query';
 import { RootState } from '../../../../../../../store/store';
@@ -26,6 +37,7 @@ import {
   useFinancialHighlights,
   useInitiateRDCreditProcess,
   useRDCreditPreviewMutation,
+  useRdFormRevoke,
 } from '../../../../../../services/case-dossier/cases-financial-services';
 import SignOffModal from './sign-off-modal';
 import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
@@ -175,15 +187,18 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
-  const accountid = searchParams.get('accountID') ?? '';
+  const accountId = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
-  const { errorToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
+  const [isRevokeConfirmOpen, setIsRevokeConfirmOpen] =
+    useState<boolean>(false);
 
   const { data, isLoading } = useFetchCasesConfigFields(
-    accountid as string,
+    accountId as string,
     'case',
-    caseId as string
+    caseId as string,
+    'Dossier'
   );
   const configDetails = data?.data.states;
   const configFedral = data?.data;
@@ -213,7 +228,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   }, [financialData]);
 
   const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
-
+  const isRDFormSignOff = caseDetails?.rd_form_signoff;
   // Auto-initiate on component mount (only once)
   useEffect(() => {
     if (
@@ -266,6 +281,28 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     useFinancialHighlights();
   const { mutate: previewRDCredit, isPending: isPreviewLoading } =
     useRDCreditPreviewMutation();
+  const { mutate: rdRevoke, isPending: isRevoking } = useRdFormRevoke();
+  const handleRevoke = () => {
+    rdRevoke(
+      {
+        case_rid: caseId ?? '',
+        account_rid: accountId ?? '',
+        type: 'Financial Working',
+      },
+      {
+        onSuccess: (data) => {
+          if (data.statusCode === 200) {
+            refetchCaseDetails();
+            successToast(data.statusMessage);
+          }
+        },
+        onError: (error) => {
+          console.error('Error revoking RD form', error);
+          errorToast('Failed to revoke RD form');
+        },
+      }
+    );
+  };
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -333,7 +370,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleViewFinancialHighlightsForRegion = async () => {
     previewRDCredit(
       {
-        accountrid: accountid,
+        accountrid: accountId,
         caseId: caseId ?? '',
         type: selectedRegion ? 'state' : 'summary',
         ...(selectedRegion && { stateRid: selectedRegion }),
@@ -360,7 +397,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const handleViewFinancialHighlights = async () => {
     const payload = {
-      account_rid: accountid,
+      account_rid: accountId,
       case_rid: caseId ?? '',
     };
 
@@ -380,7 +417,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleInitiateFinancialHighlights = async () => {
     setShowFinancialValues(false);
     const payload = {
-      account_rid: accountid,
+      account_rid: accountId,
       case_rid: caseId ?? '',
       fiscal_year: Number(caseDetails?.fiscal_year || 0),
     };
@@ -471,10 +508,20 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 fontWeight: 400,
               }}
             />
-            {/* <TextButton
+            <TextButton
               label={'Revoke'}
-              onClick={() => setIsSignOffModalOpen(true)}
-              disabled={!financialData || isFinancialWorkingSignoff}
+              onClick={() => {
+                if (isRDFormSignOff) {
+                  setIsRevokeConfirmOpen(true);
+                } else {
+                  handleRevoke();
+                }
+              }}
+              loading={isRevoking && !isRevokeConfirmOpen}
+              disabled={
+                !isFinancialWorkingSignoff ||
+                caseDetails?.status_name?.toLowerCase() === 'closed'
+              }
               hide={!isSignoffVisible}
               sx={{
                 width: 'auto',
@@ -482,7 +529,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 fontSize: '13px',
                 fontWeight: 400,
               }}
-            /> */}
+            />
           </div>
         </div>
         <div className='px-4'>
@@ -689,9 +736,54 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         isOpen={isSignOffModalOpen}
         onClose={() => setIsSignOffModalOpen(false)}
         caseId={caseId ?? ''}
-        accountId={accountid}
+        accountId={accountId}
         refetchCaseDetails={refetchCaseDetails}
       />
+
+      <Dialog
+        open={isRevokeConfirmOpen}
+        onClose={() => setIsRevokeConfirmOpen(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle className='flex justify-between items-center'>
+          <span className='text-[#2D3E4F] text-[16px] font-semibold leading-[20px]'>
+            Confirmation
+          </span>
+        </DialogTitle>
+        <DialogContent>
+          <Typography className='text-[14px] text-[#425A76]'>
+            The Revoke will be applied on RD form also. Please confirm you want
+            to apply revoke to both.
+          </Typography>
+        </DialogContent>
+        <DialogActions className='pr-4 mb-2'>
+          <TextButton
+            label='Cancel'
+            onClick={() => setIsRevokeConfirmOpen(false)}
+            sx={{
+              width: 'auto',
+              minWidth: '55px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Revoke'
+            onClick={() => {
+              setIsRevokeConfirmOpen(false);
+              handleRevoke();
+            }}
+            loading={isRevoking}
+            sx={{
+              width: 'auto',
+              minWidth: '65px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
