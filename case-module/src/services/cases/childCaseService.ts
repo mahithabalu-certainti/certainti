@@ -1190,7 +1190,8 @@ async fetchDossierPackage (data : any) : Promise<any> {
   let getZipPackage = await DossierFormModel.findOne({
     where : {
       case_rid : data.case_rid,
-      account_rid : data.account_rid
+      account_rid : data.account_rid,
+      dossier_version : data.dossier_version
     },
     order : [['created_datetime', 'DESC']],
     limit : 1
