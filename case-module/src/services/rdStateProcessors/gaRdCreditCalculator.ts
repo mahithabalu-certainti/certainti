@@ -60,14 +60,14 @@ export class RdCreditCalculatorForGA {
      * @returns 
      */
     computeInputInformation(currentYearQREs: QRE, annualGrossReceipts: AnnualGrossReceipt[], caseDetails : Case) {
-        const wages = currentYearQREs.wages || 0;
-        const supplies = currentYearQREs.supplies || 0;
-        const contract = currentYearQREs.contract || 0;
-        const tax_liability = currentYearQREs.business_tax_liability_ga || 0;
+        const wages = new Decimal(currentYearQREs.wages ?? 0.00);
+        const supplies = new Decimal(currentYearQREs.supplies ?? 0.00);
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00);
+        const tax_liability = new Decimal(currentYearQREs.business_tax_liability_ga ?? 0.00);
         const currentYearGrossReceipts = new Decimal(caseDetails.current_year_gross_receipts || 0.00)
 
         //Total current year QREs
-        const totalCurrentYearQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
+        const totalCurrentYearQREs = wages.plus(supplies).plus(contract);
 
         // const currentYearGrossReceipts = annualGrossReceipts.find(
         //     (item) => item.fiscalYear === this.getCurrentFiscalYear()
@@ -166,11 +166,11 @@ export class RdCreditCalculatorForGA {
      * @param config 
      * @returns 
      */
-    creditAndCreditForwardCalculation(current_year_tax_liability: number, tax_credit: Decimal, config: ConfigJson,caseDetails : Case) {
+    creditAndCreditForwardCalculation(current_year_tax_liability: Decimal, tax_credit: Decimal, config: ConfigJson,caseDetails : Case) {
         //TODO:2) Value of all Other Credits Claimed - C
         const value_of_other_credit_claimed = new Decimal(caseDetails.other_credits_total_ga || 0.00)
 
-        const remaining_tax_liability = new Decimal(current_year_tax_liability).minus(value_of_other_credit_claimed);
+        const remaining_tax_liability = current_year_tax_liability.minus(value_of_other_credit_claimed);
         const max_credits_allowed = remaining_tax_liability.mul(config.max_credit_allowed_percent / 100);
         const research_tax_credit = tax_credit.gt(0) ? tax_credit : 0;
         const tax_carryover_py = new Decimal(caseDetails.credit_carry_forward_py || 0.00)
