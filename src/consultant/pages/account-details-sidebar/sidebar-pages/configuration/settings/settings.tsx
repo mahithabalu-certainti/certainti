@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import { useAccountUpdateSettings } from '../../../../../services/settings';
 import { useFetchAccountFields } from '../../../../../services/account';
 import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
+import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
 
 interface SettingsProps {
   formRef: React.RefObject<HTMLFormElement>;
@@ -44,6 +45,12 @@ const Settings: React.FC<SettingsProps> = ({
   const [emailRequried, setEmailRequried] = useState<boolean>(false);
   const [idRequried, setIdRequried] = useState<boolean>(false);
   const { accountid } = useParams();
+  const [confirmationState, setConfirmationState] = useState({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
 
   const { data, isLoading, refetch } = useFetchAccountFields(
     accountid as string
@@ -133,43 +140,59 @@ const Settings: React.FC<SettingsProps> = ({
   const handleFormSubmit = (data: object) => {
     const formData = data as FormValues;
 
-    const payload = {
-      account_rid: accountDetails?.account_rid ?? accountid ?? '',
-      flag: 'account',
-      level: isParentAccount ? 'parent' : 'child',
-      fiscal_start_date: formData.fiscal_start_date,
-      fiscal_end_date: formData.fiscal_end_date,
-      max_ai_interactions: isParentAccount
-        ? 5
-        : Number(formData.max_interaction_follow_up) || 0,
-      autosend_interaction: isParentAccount
-        ? false
-        : formData.auto_send_ai_interaction === 'Yes',
-      auto_access_rd: isParentAccount
-        ? false
-        : formData.auto_assessment === 'Yes',
-      blended_rate_fte: isParentAccount ? '' : formData.blended_rate_fte,
-      blended_rate_subcon: isParentAccount ? '' : formData.blended_rate_subcon,
-      support_email: formData.support_email,
-      tenant_id: formData.tenant_id,
-      client_id: formData.client_id,
-      client_secret: formData.client_secret,
+    const performUpdate = (applyToAll: boolean) => {
+      const payload = {
+        account_rid: accountDetails?.account_rid ?? accountid ?? '',
+        flag: 'account',
+        level: isParentAccount ? 'parent' : 'child',
+        fiscal_start_date: formData.fiscal_start_date,
+        fiscal_end_date: formData.fiscal_end_date,
+        max_ai_interactions: isParentAccount
+          ? 5
+          : Number(formData.max_interaction_follow_up) || 0,
+        autosend_interaction: isParentAccount
+          ? false
+          : formData.auto_send_ai_interaction === 'Yes',
+        auto_access_rd: isParentAccount
+          ? false
+          : formData.auto_assessment === 'Yes',
+        blended_rate_fte: isParentAccount ? '' : formData.blended_rate_fte,
+        blended_rate_subcon: isParentAccount ? '' : formData.blended_rate_subcon,
+        support_email: formData.support_email,
+        tenant_id: formData.tenant_id,
+        client_id: formData.client_id,
+        client_secret: formData.client_secret,
+        ...(isParentAccount === false && {
+          update_all_projects: applyToAll ? 'yes' : 'no',
+        }),
+      };
+      setIsFormSaving(true);
+      updateSettings.mutate(payload, {
+        onSuccess: (res: UpdateSettingsSuccess) => {
+          successToast(res.statusMessage);
+          setIsFormSaving(false);
+          refetch();
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+          setIsFormSaving(false);
+        },
+        onSettled: () => {
+          setIsFormSaving(false);
+        },
+      });
     };
-    setIsFormSaving(true);
-    updateSettings.mutate(payload, {
-      onSuccess: (res: UpdateSettingsSuccess) => {
-        successToast(res.statusMessage);
-        setIsFormSaving(false);
-        refetch();
-      },
-      onError: (error) => {
-        console.error('Update failed:', error);
-        setIsFormSaving(false);
-      },
-      onSettled: () => {
-        setIsFormSaving(false);
-      },
-    });
+
+    if (isParentAccount === false) {
+      setConfirmationState({
+        isOpen: true,
+        message: 'These changes will be synchronized across all projects associated with this account. Would you like to apply these settings globally?',
+        onConfirm: () => performUpdate(true),
+        onCancel: () => performUpdate(false),
+      });
+    } else {
+      performUpdate(false);
+    }
   };
 
   const onChangeField = (data: OnChange) => {
@@ -223,6 +246,26 @@ const Settings: React.FC<SettingsProps> = ({
           />
         )}
       </Box>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </div>
   );
 };

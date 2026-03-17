@@ -5,7 +5,12 @@ import {
   QualifiedProjectItem,
   QualifiedProjectsListURLParams,
 } from '../../../../../../types';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -18,6 +23,7 @@ import { getAssignedProjectColumns } from '../../../case-assign-projects/assigne
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../common-service';
+import { PROJECT_DETAILS } from '../../../../../../../routes';
 
 interface QualifiedProjectsProps {
   refreshTrigger: number;
@@ -48,6 +54,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   searchValue,
   fiscalYear,
 }) => {
+  const navigate = useNavigate();
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
@@ -160,8 +167,25 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
     });
     return map;
   }, [projectViewEditlistFields]);
-  // const qualifiedProjectsColumns = getQualifiedProjectsColumns();
-  const qualifiedProjectsColumns = getAssignedProjectColumns(permissionMap);
+
+  const handleViewProject = (project: AssignProject) => {
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: project?.rid ?? '',
+    });
+    const queryParams = new URLSearchParams({
+      accountID: project?.account_rid ?? '',
+      source: 'account',
+      currency_rid: project?.currency_rid ?? '',
+      navigateFrom: 'case',
+    });
+
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const qualifiedProjectsColumns = getAssignedProjectColumns(
+    permissionMap,
+    handleViewProject
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
