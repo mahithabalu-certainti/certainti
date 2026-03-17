@@ -2488,15 +2488,15 @@ export const fetchDossierForm = (page : number, limit : number, sort : string, s
               }
               case "date": {
                 if (cond === 'equals')
-                  filterQueryArray.push(`ct.${validKey} = '${values}'`)
+                  filterQueryArray.push(`DATE(${validKey}) = '${values}'`)
                 if (cond === 'before')
-                  filterQueryArray.push(`ct.${validKey} < '${values}'`)
+                  filterQueryArray.push(`DATE(${validKey}) < '${values}'`)
                 if (cond === 'after')
-                  filterQueryArray.push(`ct.${validKey} > '${values}'`)
+                  filterQueryArray.push(`DATE(${validKey}) > '${values}'`)
                 if (cond === 'is_empty')
-                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                  filterQueryArray.push(`DATE(${validKey}) IS NULL`)
                 if (cond === 'between')
-                  filterQueryArray.push(`ct.${validKey} BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
+                  filterQueryArray.push(`DATE(${validKey}) BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
                 break;
               }
               default:
