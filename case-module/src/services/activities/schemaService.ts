@@ -2155,7 +2155,6 @@ class ActivitySchemaService {
       }
     } catch (err) {
       logMessage(`Error scheduling Teams meeting: ${err}`);
-      console.log("yoki 1", err);
     }
   }
 
