@@ -319,7 +319,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Heating & Lighting Cost.',
+              tooltipMessage:
+                'Total expenses incurred for heating, electricity, and lighting related to business operations.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -338,13 +339,14 @@ export const CaseFormData = (
                 !permissionMap?.['heat_light_power']?.edit &&
                 !permissionMap?.['heat_light_power']?.read),
           }),
-          createTextField('tax_liability_ct', 'Tax Liability CT', {
+          createTextField('tax_liability_ct', 'Tax Liability-CT', {
             required: false,
-            placeholder: 'Enter Tax Liability CT',
+            placeholder: 'Enter Tax Liability - CT',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Tax Liability Due To Connecticut.',
+              tooltipMessage:
+                '	Actual Connecticut tax liability for the current year.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -360,13 +362,14 @@ export const CaseFormData = (
                 !permissionMap?.['tax_liability']?.edit &&
                 !permissionMap?.['tax_liability']?.read),
           }),
-          createTextField('tax_liability_ga', 'Tax Liability GA', {
+          createTextField('tax_liability_ga', 'Tax Liability - GA', {
             required: false,
-            placeholder: 'Enter Tax Liability GA',
+            placeholder: 'Enter Tax Liability - GA',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Tax Liability Due To Georgia.',
+              tooltipMessage:
+                'Actual Georgia tax liability for the current year.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -382,13 +385,14 @@ export const CaseFormData = (
                 !permissionMap?.['tax_liability']?.edit &&
                 !permissionMap?.['tax_liability']?.read),
           }),
-          createTextField('tax_liability_sc', 'Tax Liability SC', {
+          createTextField('tax_liability_sc', 'Tax Liability - SC', {
             required: false,
-            placeholder: 'Enter Tax Liability SC',
+            placeholder: 'Enter Tax Liability - SC',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Tax Liability Due To South Carolina',
+              tooltipMessage:
+                'Actual South Carolina tax liability for the current year.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -406,14 +410,15 @@ export const CaseFormData = (
           }),
           createTextField(
             'employers_pension_contribution',
-            'Employers Pension Contribution',
+            'Employer Pension Contribution',
             {
               required: false,
-              placeholder: 'Enter Employers Pension Contribution',
+              placeholder: 'Enter Employer Pension Contribution',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Actual Employer Pension Contribution Due.',
+                tooltipMessage:
+                  'Total pension contributions made by the employer on behalf of employees.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -439,7 +444,8 @@ export const CaseFormData = (
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Actual Material & Software Cost Due.',
+                tooltipMessage:
+                  'Total cost of materials and software used for operational or development activities.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -462,7 +468,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Subcontracts Due.',
+              tooltipMessage:
+                'Payments made to subcontractors for services related to the project or business activities.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -484,7 +491,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Cloud Software Due.',
+              tooltipMessage:
+                'Expenses incurred for cloud-based software services and platforms.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -506,7 +514,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Unpaid Amounts Due.',
+              tooltipMessage:
+                'Eligible unpaid expenses that are added back for calculation purposes.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -530,7 +539,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Unpaid Amounts Due.',
+              tooltipMessage:
+                'Unpaid expenses that are deducted based on applicable rules or adjustments.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -554,7 +564,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Aggregated Turnover Due.',
+              tooltipMessage:
+                'Combined turnover of the company and any associated or related entities.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -576,7 +587,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Total Expenses Due.',
+              tooltipMessage:
+                'Total allowable business expenses recorded during the reporting period.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -598,7 +610,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Taxable Income Due.',
+              tooltipMessage:
+                'Income subject to taxation after allowable deductions and adjustments.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -620,7 +633,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Export Sales Revenue Due.',
+              tooltipMessage:
+                'Revenue generated from sales made to customers outside the domestic market.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -638,15 +652,15 @@ export const CaseFormData = (
           }),
           createTextField(
             'lease_costs_of_computers_az',
-            'Lease Costs of Computers AZ',
+            'Lease Costs of Computers - AZ',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers AZ',
+              placeholder: 'Enter Lease Costs of Computers - AZ',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Actual Lease Costs of Computers Due To Arizona.',
+                  'Total lease expenses for computers used in Arizona.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -665,15 +679,15 @@ export const CaseFormData = (
           ),
           createTextField(
             'lease_costs_of_computers_ca',
-            'Lease Costs of Computers CA',
+            'Lease Costs of Computers - CA',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers CA',
+              placeholder: 'Enter Lease Costs of Computers - CA',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Actual Lease Costs of Computers Due To California.',
+                  'Total lease expenses for computers used in California.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -692,14 +706,15 @@ export const CaseFormData = (
           ),
           createTextField(
             'lease_costs_of_computers_id',
-            'Lease Costs of Computers ID',
+            'Lease Costs of Computers - ID',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers ID',
+              placeholder: 'Enter Lease Costs of Computers - ID',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Actual Lease Costs of Computers Due To Idaho.',
+                tooltipMessage:
+                  'Total lease expenses for computers used in Idaho.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -718,15 +733,15 @@ export const CaseFormData = (
           ),
           createTextField(
             'lease_costs_of_computers_il',
-            'Lease Costs of Computers IL',
+            'Lease Costs of Computers - IL',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers IL',
+              placeholder: 'Enter Lease Costs of Computers - IL',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Actual Lease Costs of Computers Due To Illinois.',
+                  'Total lease expenses for computers used in Illinois.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -745,15 +760,15 @@ export const CaseFormData = (
           ),
           createTextField(
             'lease_costs_of_computers_nj',
-            'Lease Costs of Computers NJ',
+            'Lease Costs of Computers - NJ',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers NJ',
+              placeholder: 'Enter Lease Costs of Computers - NJ',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Actual Lease Costs of Computers Due To New Jersey.',
+                  'Total lease expenses for computers used in New Jersey.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -772,15 +787,15 @@ export const CaseFormData = (
           ),
           createTextField(
             'illinois_rd_credit_partnership_corp',
-            'Illinois RD Credit Partnership (Corp)',
+            'Illinois RD Credit - Partnership (Corp)',
             {
               required: false,
-              placeholder: 'Enter Illinois RD Credit Partnership (Corp)',
+              placeholder: 'Enter Illinois RD Credit - Partnership (Corp)',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Actual Illinois RD Credit Partnership (Corp) Due.',
+                  'R&D credit received from Illinois partnerships applicable to corporations..',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -810,7 +825,7 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Actual Illinois Research Payments (Corp Only) Due.',
+                  'Qualified research payments made in Illinois (corporations only).',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -833,14 +848,15 @@ export const CaseFormData = (
           ),
           createTextField(
             'basic_research_payments_id',
-            'Basic Research Payments ID',
+            'Basic Research Payments - ID',
             {
               required: false,
-              placeholder: 'Enter Basic Research Payments ID',
+              placeholder: 'Enter Basic Research Payments - ID',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Actual Basic Research Payments Due To Idaho.',
+                tooltipMessage:
+                  'Qualified basic research payments made in Idaho.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -859,15 +875,15 @@ export const CaseFormData = (
           ),
           createTextField(
             'basic_research_payments_ma',
-            'Basic Research Payments MA',
+            'Basic Research Payments - MA',
             {
               required: false,
-              placeholder: 'Enter Basic Research Payments MA',
+              placeholder: 'Enter Basic Research Payments - MA',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Actual Basic Research Payments Due.To Massachusetts.',
+                  'Qualified basic research payments made in Massachusetts.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -921,7 +937,7 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Gross Receipts.',
+              tooltipMessage: 'Total gross receipts for the reporting period.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -939,14 +955,15 @@ export const CaseFormData = (
           }),
           createTextField(
             'credit_carry_forward_py',
-            'Credit Carry Forward PY',
+            'Credit Carry Forward from PY',
             {
               required: false,
-              placeholder: 'Enter Credit Carry Forward PY',
+              placeholder: 'Enter Credit Carry Forward from PY',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Actual Credit Carry Forward PY.',
+                tooltipMessage:
+                  'R&D credit carried forward from the previous year.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -963,58 +980,68 @@ export const CaseFormData = (
                   !permissionMap?.['credit_carry_forward_py']?.read),
             }
           ),
-          createTextField('other_credits_total_ga', 'Other Credits Total GA', {
-            required: false,
-            placeholder: 'Enter Other Credits Total GA',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Other Credits Total Due To Georgia.',
-            },
-            regexErrorMessage:
-              'Numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['other_credits_total']?.edit &&
-                permissionMap?.['other_credits_total']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.US ||
-              (isEditView &&
-                !permissionMap?.['other_credits_total']?.edit &&
-                !permissionMap?.['other_credits_total']?.read),
-          }),
-          createTextField('other_credits_total_sc', 'Other Credits Total SC', {
-            required: false,
-            placeholder: 'Enter Other Credits Total SC',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage:
-                'Actual Other Credits Total Due To South Carolina.',
-            },
-            regexErrorMessage:
-              'Numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['other_credits_total']?.edit &&
-                permissionMap?.['other_credits_total']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.US ||
-              (isEditView &&
-                !permissionMap?.['other_credits_total']?.edit &&
-                !permissionMap?.['other_credits_total']?.read),
-          }),
+          createTextField(
+            'other_credits_total_ga',
+            'Other Credits Total - GA',
+            {
+              required: false,
+              placeholder: 'Enter Other Credits Total - GA',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total additional Georgia credits applied against tax liability.',
+              },
+              regexErrorMessage:
+                'Numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  permissionMap?.['other_credits_total']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  !permissionMap?.['other_credits_total']?.read),
+            }
+          ),
+          createTextField(
+            'other_credits_total_sc',
+            'Other Credits Total - SC',
+            {
+              required: false,
+              placeholder: 'Enter Other Credits Total - SC',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total additional South Carolina credits applied against tax liability',
+              },
+              regexErrorMessage:
+                'Numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  permissionMap?.['other_credits_total']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  !permissionMap?.['other_credits_total']?.read),
+            }
+          ),
           createTextField('other_can', 'Other CAN', {
             required: false,
             placeholder: 'Enter Other CAN',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Other Due To Canada',
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields - Canada.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -1036,7 +1063,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Other Due To Ontario',
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields - Ontario.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -1058,7 +1086,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Other Due.',
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -1080,7 +1109,8 @@ export const CaseFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
-              tooltipMessage: 'Actual Other Due.',
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields.',
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',

@@ -753,8 +753,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         </DialogTitle>
         <DialogContent>
           <Typography className='text-[14px] text-[#425A76]'>
-            The Revoke will be applied on RD form also. Please confirm you want
-            to apply revoke to both.
+            The revoke action will be applied to the RD form as well. Kindly
+            confirm if you would like the revoke to be applied to both
           </Typography>
         </DialogContent>
         <DialogActions className='pr-4 mb-2'>
