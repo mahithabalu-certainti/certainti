@@ -405,7 +405,7 @@ CA: {
             order: 5
             },
             {
-            pattern: "[4 c] All other taxpayers multiply amount on Line 3 by 2.5% (.025).",
+            pattern: "[4 c] All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.",
             order: 6
             },
             {
