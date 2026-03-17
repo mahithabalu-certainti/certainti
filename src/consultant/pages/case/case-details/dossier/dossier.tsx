@@ -663,7 +663,7 @@ const Dossier: React.FC<DossierProps> = ({
       label: 'Close Case',
       variant: 'outlined' as const,
       disabled:
-        !!caseDetails?.rd_form_signoff ||
+        !caseDetails?.rd_form_signoff ||
         caseDetails?.status_name?.toLowerCase() === 'closed',
       onClick: () => setIsModalOpen(true),
       sx: { width: '90px', minWidth: '90px' },
