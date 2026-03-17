@@ -103,7 +103,11 @@ export const CaseFormData = (
             options: parentCaseOptions || [],
             placeholder: 'Choose Parent Case',
             required: false,
-            hide: !isAmendmentType,
+            hide:
+              !isAmendmentType ||
+              (isEditView &&
+                !permissionMap?.['parent_case_rid']?.edit &&
+                !permissionMap?.['parent_case_rid']?.read),
             disabled: isEditView || isCaseClosed,
             isLoading: isParentCaseLoading,
             onChange: true,
@@ -132,14 +136,6 @@ export const CaseFormData = (
               'other',
               'description',
             ],
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['parent_case_rid']?.edit &&
-            //   permissionMap?.['parent_case_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['parent_case_rid']?.edit &&
-            //   !permissionMap?.['parent_case_rid']?.read,
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
@@ -227,566 +223,7 @@ export const CaseFormData = (
             //   !permissionMap?.['status_rid']?.edit &&
             //   permissionMap?.['status_rid']?.read,
           }),
-          createTextField('heat_light_power', 'Heating & Lighting Cost', {
-            required: false,
-            placeholder: 'Enter Heating & Lighting Cost',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Heating & Lighting Cost.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['heat_light_power']?.edit &&
-                permissionMap?.['heat_light_power']?.read),
-            hide:
-              ![
-                FinancialWorkingCountries.Ireland,
-                FinancialWorkingCountries.UK,
-              ].includes(CountryName as FinancialWorkingCountries) ||
-              (isEditView &&
-                !permissionMap?.['heat_light_power']?.edit &&
-                !permissionMap?.['heat_light_power']?.read),
-          }),
-          createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
-            required: false,
-            placeholder: 'Enter Total NonLabor Cost',
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Total NonLabor Cost.',
-            },
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['total_nonlabor_cost']?.edit &&
-                permissionMap?.['total_nonlabor_cost']?.read),
-            hide:
-              isEditView &&
-              !permissionMap?.['total_nonlabor_cost']?.edit &&
-              !permissionMap?.['total_nonlabor_cost']?.read,
-          }),
-          createTextField('tax_liability', 'Tax Liability', {
-            required: false,
-            placeholder: 'Enter Tax Liability',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Tax Liability Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['tax_liability']?.edit &&
-                permissionMap?.['tax_liability']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.US ||
-              (isEditView &&
-                !permissionMap?.['tax_liability']?.edit &&
-                !permissionMap?.['tax_liability']?.read),
-          }),
-          createTextField(
-            'employers_pension_contribution',
-            'Employers Pension Contribution',
-            {
-              required: false,
-              placeholder: 'Enter Employers Pension Contribution',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage: 'Actual Employer Pension Contribution Due.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['employers_pension_contribution']?.edit &&
-                  permissionMap?.['employers_pension_contribution']?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.Australia ||
-                (isEditView &&
-                  !permissionMap?.['employers_pension_contribution']?.edit &&
-                  !permissionMap?.['employers_pension_contribution']?.read),
-            }
-          ),
-          createTextField(
-            'material_software_cost',
-            'Material & Software Cost',
-            {
-              required: false,
-              placeholder: 'Enter Material & Software Cost',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage: 'Actual Material & Software Cost Due.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['material_software_cost']?.edit &&
-                  permissionMap?.['material_software_cost']?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.UK ||
-                (isEditView &&
-                  !permissionMap?.['material_software_cost']?.edit &&
-                  !permissionMap?.['material_software_cost']?.read),
-            }
-          ),
-          createTextField('sub_contracts', 'Subcontracts', {
-            required: false,
-            placeholder: 'Enter Subcontracts',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Subcontracts Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['sub_contracts']?.edit &&
-                permissionMap?.['sub_contracts']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.UK ||
-              (isEditView &&
-                !permissionMap?.['sub_contracts']?.edit &&
-                !permissionMap?.['sub_contracts']?.read),
-          }),
-          createTextField('cloud_software', 'Cloud Software', {
-            required: false,
-            placeholder: 'Enter Cloud Software',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Cloud Software Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['cloud_software']?.edit &&
-                permissionMap?.['cloud_software']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.Ireland ||
-              (isEditView &&
-                !permissionMap?.['cloud_software']?.edit &&
-                !permissionMap?.['cloud_software']?.read),
-          }),
-          createTextField('unpaid_amounts_paid', 'Unpaid Amounts (+)', {
-            required: false,
-            placeholder: 'Enter Unpaid Amounts (+)',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Unpaid Amounts Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['unpaid_amounts_paid']?.edit &&
-                permissionMap?.['unpaid_amounts_paid']?.read),
-            hide:
-              ![FinancialWorkingCountries.Ireland].includes(
-                CountryName as FinancialWorkingCountries
-              ) ||
-              (isEditView &&
-                !permissionMap?.['unpaid_amounts_paid']?.edit &&
-                !permissionMap?.['unpaid_amounts_paid']?.read),
-          }),
-          createTextField('unpaid_amounts', 'Unpaid Amounts (-)', {
-            required: false,
-            placeholder: 'Enter Unpaid Amounts (-)',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Unpaid Amounts Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['unpaid_amounts']?.edit &&
-                permissionMap?.['unpaid_amounts']?.read),
-            hide:
-              ![FinancialWorkingCountries.Ireland].includes(
-                CountryName as FinancialWorkingCountries
-              ) ||
-              (isEditView &&
-                !permissionMap?.['unpaid_amounts']?.edit &&
-                !permissionMap?.['unpaid_amounts']?.read),
-          }),
-          createTextField('aggregated_turnover', 'Aggregated Turnover', {
-            required: false,
-            placeholder: 'Enter Aggregated Turnover',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Aggregated Turnover Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['aggregated_turnover']?.edit &&
-                permissionMap?.['aggregated_turnover']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.Australia ||
-              (isEditView &&
-                !permissionMap?.['aggregated_turnover']?.edit &&
-                !permissionMap?.['aggregated_turnover']?.read),
-          }),
-          createTextField('total_expenses', 'Total Expenses', {
-            required: isAustralianCountry,
-            placeholder: 'Enter Total Expenses',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Total Expenses Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['total_expenses']?.edit &&
-                permissionMap?.['total_expenses']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.Australia ||
-              (isEditView &&
-                !permissionMap?.['total_expenses']?.edit &&
-                !permissionMap?.['total_expenses']?.read),
-          }),
-          createTextField('taxable_income', 'Taxable Income', {
-            required: false,
-            placeholder: 'Enter Taxable Income',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Taxable Income Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['taxable_income']?.edit &&
-                permissionMap?.['taxable_income']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.Australia ||
-              (isEditView &&
-                !permissionMap?.['taxable_income']?.edit &&
-                !permissionMap?.['taxable_income']?.read),
-          }),
-          createTextField('export_sales_revenue', 'Export Sales Revenue', {
-            required: false,
-            placeholder: 'Enter Export Sales Revenue',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Export Sales Revenue Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                permissionMap?.['export_sales_revenue']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.Australia ||
-              (isEditView &&
-                !permissionMap?.['export_sales_revenue']?.edit &&
-                !permissionMap?.['export_sales_revenue']?.read),
-          }),
-          createTextField(
-            'lease_costs_of_computers',
-            'Lease Costs of Computers',
-            {
-              required: false,
-              placeholder: 'Enter Lease Costs of Computers',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage: 'Actual Lease Costs of Computers Due.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['lease_costs_of_computers']?.edit &&
-                  permissionMap?.['lease_costs_of_computers']?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.US ||
-                (isEditView &&
-                  !permissionMap?.['lease_costs_of_computers']?.edit &&
-                  !permissionMap?.['lease_costs_of_computers']?.read),
-            }
-          ),
-          createTextField(
-            'illinois_rd_credit_partnership_corp',
-            'Illinois RD Credit Partnership (Corp)',
-            {
-              required: false,
-              placeholder: 'Enter Illinois RD Credit Partnership (Corp)',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Actual Illinois RD Credit Partnership (Corp) Due.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['illinois_rd_credit_partnership_corp']
-                    ?.edit &&
-                  permissionMap?.['illinois_rd_credit_partnership_corp']?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.US ||
-                (isEditView &&
-                  !permissionMap?.['illinois_rd_credit_partnership_corp']
-                    ?.edit &&
-                  !permissionMap?.['illinois_rd_credit_partnership_corp']
-                    ?.read),
-            }
-          ),
-          createTextField(
-            'illinois_research_payments_corp_only',
-            'Illinois Research Payments (Corp Only)',
-            {
-              required: false,
-              placeholder: 'Enter Illinois Research Payments (Corp Only)',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Actual Illinois Research Payments (Corp Only) Due.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['illinois_research_payments_corp_only']
-                    ?.edit &&
-                  permissionMap?.['illinois_research_payments_corp_only']
-                    ?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.US ||
-                (isEditView &&
-                  !permissionMap?.['illinois_research_payments_corp_only']
-                    ?.edit &&
-                  !permissionMap?.['illinois_research_payments_corp_only']
-                    ?.read),
-            }
-          ),
-          createTextField(
-            'basic_research_payments',
-            'Basic Research Payments',
-            {
-              required: false,
-              placeholder: 'Enter Basic Research Payments',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage: 'Actual Basic Research Payments Due.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['basic_research_payments']?.edit &&
-                  permissionMap?.['basic_research_payments']?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.US ||
-                (isEditView &&
-                  !permissionMap?.['basic_research_payments']?.edit &&
-                  !permissionMap?.['basic_research_payments']?.read),
-            }
-          ),
-          createTextField(
-            'qualified_computer_rental_time_expenses',
-            'Qualified Computer Rental Time Expenses',
-            {
-              required: false,
-              placeholder: 'Enter Qualified Computer Rental Time Expenses',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Actual Qualified Computer Rental Time Expenses Due.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['qualified_computer_rental_time_expenses']
-                    ?.edit &&
-                  permissionMap?.['qualified_computer_rental_time_expenses']
-                    ?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.US ||
-                (isEditView &&
-                  !permissionMap?.['qualified_computer_rental_time_expenses']
-                    ?.edit &&
-                  !permissionMap?.['qualified_computer_rental_time_expenses']
-                    ?.read),
-            }
-          ),
-          createTextField('current_year_gross_receipts', 'Gross Receipts', {
-            required: false,
-            placeholder: 'Enter Gross Receipts',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Gross Receipts.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['current_year_gross_receipts']?.edit &&
-                permissionMap?.['current_year_gross_receipts']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.US ||
-              (isEditView &&
-                !permissionMap?.['current_year_gross_receipts']?.edit &&
-                !permissionMap?.['current_year_gross_receipts']?.read),
-          }),
-          createTextField(
-            'credit_carry_forward_py',
-            'Credit Carry Forward PY',
-            {
-              required: false,
-              placeholder: 'Enter Credit Carry Forward PY',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage: 'Actual Credit Carry Forward PY.',
-              },
-              regexErrorMessage:
-                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['credit_carry_forward_py']?.edit &&
-                  permissionMap?.['credit_carry_forward_py']?.read),
-              hide:
-                CountryName !== FinancialWorkingCountries.US ||
-                (isEditView &&
-                  !permissionMap?.['credit_carry_forward_py']?.edit &&
-                  !permissionMap?.['credit_carry_forward_py']?.read),
-            }
-          ),
-          createTextField('other_credits_total', 'Other Credits Total', {
-            required: false,
-            placeholder: 'Enter Other Credits Total',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Other Credits Total.',
-            },
-            regexErrorMessage:
-              'Numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['other_credits_total']?.edit &&
-                permissionMap?.['other_credits_total']?.read),
-            hide:
-              CountryName !== FinancialWorkingCountries.US ||
-              (isEditView &&
-                !permissionMap?.['other_credits_total']?.edit &&
-                !permissionMap?.['other_credits_total']?.read),
-          }),
-          createTextField('other', 'Other', {
-            required: false,
-            placeholder: 'Enter Other',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            labelTooltip: {
-              showTooltip: true,
-              tooltipMessage: 'Actual Other Due.',
-            },
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            disabled:
-              isCaseClosed ||
-              (isCreateAndAmendmentType && hasParentCase) ||
-              (isEditView &&
-                !permissionMap?.['other']?.edit &&
-                permissionMap?.['other']?.read),
-            hide:
-              isEditView &&
-              !permissionMap?.['other']?.edit &&
-              !permissionMap?.['other']?.read,
-          }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
-            hide:
-              ![
-                FinancialWorkingCountries.Australia,
-                FinancialWorkingCountries.UK,
-              ].includes(CountryName as FinancialWorkingCountries) ||
-              isEditView,
-          }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
-            hide:
-              ![
-                FinancialWorkingCountries.Canada,
-                FinancialWorkingCountries.Australia,
-                FinancialWorkingCountries.US,
-              ].includes(CountryName as FinancialWorkingCountries) ||
-              isEditView,
-          }),
+
           createDateField('case_startdate', 'Planned Start Date', {
             required: true,
             onChange: true,
@@ -871,6 +308,852 @@ export const CaseFormData = (
           ),
         ],
       },
+      {
+        sectionName: 'Financial Information',
+        fillType: 'half',
+        // hide: !isEditView,
+        fields: [
+          createTextField('heat_light_power', 'Heating & Lighting Cost', {
+            required: false,
+            placeholder: 'Enter Heating & Lighting Cost',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Total expenses incurred for heating, electricity, and lighting related to business operations.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['heat_light_power']?.edit &&
+                permissionMap?.['heat_light_power']?.read),
+            hide:
+              ![
+                FinancialWorkingCountries.Ireland,
+                FinancialWorkingCountries.UK,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              (isEditView &&
+                !permissionMap?.['heat_light_power']?.edit &&
+                !permissionMap?.['heat_light_power']?.read),
+          }),
+          createTextField('tax_liability_ct', 'Tax Liability-CT', {
+            required: false,
+            placeholder: 'Enter Tax Liability - CT',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                '	Actual Connecticut tax liability for the current year.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                permissionMap?.['tax_liability']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                !permissionMap?.['tax_liability']?.read),
+          }),
+          createTextField('tax_liability_ga', 'Tax Liability - GA', {
+            required: false,
+            placeholder: 'Enter Tax Liability - GA',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Actual Georgia tax liability for the current year.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                permissionMap?.['tax_liability']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                !permissionMap?.['tax_liability']?.read),
+          }),
+          createTextField('tax_liability_sc', 'Tax Liability - SC', {
+            required: false,
+            placeholder: 'Enter Tax Liability - SC',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Actual South Carolina tax liability for the current year.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                permissionMap?.['tax_liability']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['tax_liability']?.edit &&
+                !permissionMap?.['tax_liability']?.read),
+          }),
+          createTextField(
+            'employers_pension_contribution',
+            'Employer Pension Contribution',
+            {
+              required: false,
+              placeholder: 'Enter Employer Pension Contribution',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total pension contributions made by the employer on behalf of employees.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['employers_pension_contribution']?.edit &&
+                  permissionMap?.['employers_pension_contribution']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.Australia ||
+                (isEditView &&
+                  !permissionMap?.['employers_pension_contribution']?.edit &&
+                  !permissionMap?.['employers_pension_contribution']?.read),
+            }
+          ),
+          createTextField(
+            'material_software_cost',
+            'Material & Software Cost',
+            {
+              required: false,
+              placeholder: 'Enter Material & Software Cost',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total cost of materials and software used for operational or development activities.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['material_software_cost']?.edit &&
+                  permissionMap?.['material_software_cost']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.UK ||
+                (isEditView &&
+                  !permissionMap?.['material_software_cost']?.edit &&
+                  !permissionMap?.['material_software_cost']?.read),
+            }
+          ),
+          createTextField('sub_contracts', 'Subcontracts', {
+            required: false,
+            placeholder: 'Enter Subcontracts',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Payments made to subcontractors for services related to the project or business activities.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['sub_contracts']?.edit &&
+                permissionMap?.['sub_contracts']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.UK ||
+              (isEditView &&
+                !permissionMap?.['sub_contracts']?.edit &&
+                !permissionMap?.['sub_contracts']?.read),
+          }),
+          createTextField('cloud_software', 'Cloud Software', {
+            required: false,
+            placeholder: 'Enter Cloud Software',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Expenses incurred for cloud-based software services and platforms.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['cloud_software']?.edit &&
+                permissionMap?.['cloud_software']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Ireland ||
+              (isEditView &&
+                !permissionMap?.['cloud_software']?.edit &&
+                !permissionMap?.['cloud_software']?.read),
+          }),
+          createTextField('unpaid_amounts_paid', 'Unpaid Amounts (+)', {
+            required: false,
+            placeholder: 'Enter Unpaid Amounts (+)',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Eligible unpaid expenses that are added back for calculation purposes.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts_paid']?.edit &&
+                permissionMap?.['unpaid_amounts_paid']?.read),
+            hide:
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts_paid']?.edit &&
+                !permissionMap?.['unpaid_amounts_paid']?.read),
+          }),
+          createTextField('unpaid_amounts', 'Unpaid Amounts (-)', {
+            required: false,
+            placeholder: 'Enter Unpaid Amounts (-)',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Unpaid expenses that are deducted based on applicable rules or adjustments.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts']?.edit &&
+                permissionMap?.['unpaid_amounts']?.read),
+            hide:
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts']?.edit &&
+                !permissionMap?.['unpaid_amounts']?.read),
+          }),
+          createTextField('aggregated_turnover', 'Aggregated Turnover', {
+            required: false,
+            placeholder: 'Enter Aggregated Turnover',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Combined turnover of the company and any associated or related entities.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['aggregated_turnover']?.edit &&
+                permissionMap?.['aggregated_turnover']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['aggregated_turnover']?.edit &&
+                !permissionMap?.['aggregated_turnover']?.read),
+          }),
+          createTextField('total_expenses', 'Total Expenses', {
+            required: isAustralianCountry,
+            placeholder: 'Enter Total Expenses',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Total allowable business expenses recorded during the reporting period.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['total_expenses']?.edit &&
+                permissionMap?.['total_expenses']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['total_expenses']?.edit &&
+                !permissionMap?.['total_expenses']?.read),
+          }),
+          createTextField('taxable_income', 'Taxable Income', {
+            required: false,
+            placeholder: 'Enter Taxable Income',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Income subject to taxation after allowable deductions and adjustments.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['taxable_income']?.edit &&
+                permissionMap?.['taxable_income']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['taxable_income']?.edit &&
+                !permissionMap?.['taxable_income']?.read),
+          }),
+          createTextField('export_sales_revenue', 'Export Sales Revenue', {
+            required: false,
+            placeholder: 'Enter Export Sales Revenue',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Revenue generated from sales made to customers outside the domestic market.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read),
+          }),
+          createTextField(
+            'lease_costs_of_computers_az',
+            'Lease Costs of Computers - AZ',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers - AZ',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total lease expenses for computers used in Arizona.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_ca',
+            'Lease Costs of Computers - CA',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers - CA',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total lease expenses for computers used in California.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_id',
+            'Lease Costs of Computers - ID',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers - ID',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total lease expenses for computers used in Idaho.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_il',
+            'Lease Costs of Computers - IL',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers - IL',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total lease expenses for computers used in Illinois.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'lease_costs_of_computers_nj',
+            'Lease Costs of Computers - NJ',
+            {
+              required: false,
+              placeholder: 'Enter Lease Costs of Computers - NJ',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total lease expenses for computers used in New Jersey.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  permissionMap?.['lease_costs_of_computers']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['lease_costs_of_computers']?.edit &&
+                  !permissionMap?.['lease_costs_of_computers']?.read),
+            }
+          ),
+          createTextField(
+            'illinois_rd_credit_partnership_corp',
+            'Illinois RD Credit - Partnership (Corp)',
+            {
+              required: false,
+              placeholder: 'Enter Illinois RD Credit - Partnership (Corp)',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'R&D credit received from Illinois partnerships applicable to corporations..',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.edit &&
+                  permissionMap?.['illinois_rd_credit_partnership_corp']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.edit &&
+                  !permissionMap?.['illinois_rd_credit_partnership_corp']
+                    ?.read),
+            }
+          ),
+          createTextField(
+            'illinois_research_payments_corp_only',
+            'Illinois Research Payments (Corp Only)',
+            {
+              required: false,
+              placeholder: 'Enter Illinois Research Payments (Corp Only)',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Qualified research payments made in Illinois (corporations only).',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.edit &&
+                  permissionMap?.['illinois_research_payments_corp_only']
+                    ?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.edit &&
+                  !permissionMap?.['illinois_research_payments_corp_only']
+                    ?.read),
+            }
+          ),
+          createTextField(
+            'basic_research_payments_id',
+            'Basic Research Payments - ID',
+            {
+              required: false,
+              placeholder: 'Enter Basic Research Payments - ID',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Qualified basic research payments made in Idaho.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  permissionMap?.['basic_research_payments']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  !permissionMap?.['basic_research_payments']?.read),
+            }
+          ),
+          createTextField(
+            'basic_research_payments_ma',
+            'Basic Research Payments - MA',
+            {
+              required: false,
+              placeholder: 'Enter Basic Research Payments - MA',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Qualified basic research payments made in Massachusetts.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  permissionMap?.['basic_research_payments']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['basic_research_payments']?.edit &&
+                  !permissionMap?.['basic_research_payments']?.read),
+            }
+          ),
+          createTextField(
+            'qualified_computer_rental_time_expenses',
+            'Qualified Computer Rental Time Expenses',
+            {
+              required: false,
+              placeholder: 'Enter Qualified Computer Rental Time Expenses',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Actual Qualified Computer Rental Time Expenses Due.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.edit &&
+                  permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.edit &&
+                  !permissionMap?.['qualified_computer_rental_time_expenses']
+                    ?.read),
+            }
+          ),
+          createTextField('current_year_gross_receipts', 'Gross Receipts', {
+            required: false,
+            placeholder: 'Enter Gross Receipts',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Total gross receipts for the reporting period.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['current_year_gross_receipts']?.edit &&
+                permissionMap?.['current_year_gross_receipts']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.US ||
+              (isEditView &&
+                !permissionMap?.['current_year_gross_receipts']?.edit &&
+                !permissionMap?.['current_year_gross_receipts']?.read),
+          }),
+          createTextField(
+            'credit_carry_forward_py',
+            'Credit Carry Forward from PY',
+            {
+              required: false,
+              placeholder: 'Enter Credit Carry Forward from PY',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'R&D credit carried forward from the previous year.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  permissionMap?.['credit_carry_forward_py']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  !permissionMap?.['credit_carry_forward_py']?.read),
+            }
+          ),
+          createTextField(
+            'other_credits_total_ga',
+            'Other Credits Total - GA',
+            {
+              required: false,
+              placeholder: 'Enter Other Credits Total - GA',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total additional Georgia credits applied against tax liability.',
+              },
+              regexErrorMessage:
+                'Numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  permissionMap?.['other_credits_total']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  !permissionMap?.['other_credits_total']?.read),
+            }
+          ),
+          createTextField(
+            'other_credits_total_sc',
+            'Other Credits Total - SC',
+            {
+              required: false,
+              placeholder: 'Enter Other Credits Total - SC',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total additional South Carolina credits applied against tax liability',
+              },
+              regexErrorMessage:
+                'Numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  permissionMap?.['other_credits_total']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['other_credits_total']?.edit &&
+                  !permissionMap?.['other_credits_total']?.read),
+            }
+          ),
+          createTextField('other_can', 'Other CAN', {
+            required: false,
+            placeholder: 'Enter Other CAN',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields - Canada.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Canada ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createTextField('other_ont', 'Other ON', {
+            required: false,
+            placeholder: 'Enter Other ON',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields - Ontario.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Canada ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createTextField('other_uk', 'Other', {
+            required: false,
+            placeholder: 'Enter Other',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.UK ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createTextField('other_irl', 'Other', {
+            required: false,
+            placeholder: 'Enter Other',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Ireland ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide:
+              ![
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.UK,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide:
+              ![
+                FinancialWorkingCountries.Canada,
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.US,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
+          }),
+        ],
+      },
+
       {
         sectionName: '',
         fillType: 'full',

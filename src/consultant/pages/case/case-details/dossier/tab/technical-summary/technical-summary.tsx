@@ -5,7 +5,7 @@ import {
   TechnicalSummaryList,
   TechnicalSummaryListURLParams,
 } from '../../../../../../types';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -42,6 +42,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
 }) => {
+  const navigate = useNavigate();
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
@@ -156,8 +157,21 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
     return map;
   }, [technicalSummaryViewEditFields]);
 
+  const handleViewTechnicalSummary = (row: TechnicalSummaryList) => {
+    if (row) {
+      searchParams.set('list', 'technicalSummary');
+      searchParams.set('technical_summary_id', row.rid);
+      searchParams.set('project_id', row.project_rid);
+      searchParams.set('navigate_source', 'dossier_technical_summary');
+      navigate(
+        { search: searchParams.toString() },
+        { state: { activeKey: 'technicalSummary' }, replace: true }
+      );
+    }
+  };
+
   const technicalSummaryColumns = getTechnicalSummaryListColumns(
-    undefined,
+    handleViewTechnicalSummary,
     permissionMap
   );
 

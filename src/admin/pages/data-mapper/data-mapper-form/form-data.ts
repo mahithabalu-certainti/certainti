@@ -50,7 +50,7 @@ export const DataMapperFormData = (
             },
           ],
         }),
-        createDateField('effective_from_date', 'Effective From Date', {
+        createDateField('effective_from_date', 'Start Date', {
           required: true,
           allowFutureDates: true,
           onChange: true,
@@ -63,7 +63,7 @@ export const DataMapperFormData = (
             permissionMap?.['effective_from_date']?.read &&
             !permissionMap?.['effective_from_date']?.edit,
         }),
-        createDateField('effective_to_date', 'Effective To Date', {
+        createDateField('effective_to_date', 'End Date', {
           required: false,
           allowFutureDates: true,
           minDate: effectiveFromDate

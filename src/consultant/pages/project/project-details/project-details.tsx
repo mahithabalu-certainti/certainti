@@ -253,6 +253,8 @@ export const ProjectDetails = () => {
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
 
+  const isNavigateFrom = searchParams.get('navigateFrom');
+
   const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
     projectID || ''
@@ -921,7 +923,9 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    if (parent === 'account') {
+    if (isNavigateFrom === 'case') {
+      navigate(-1);
+    } else if (parent === 'account') {
       navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
     } else if (parent === 'project') {
       navigate(PROJECT);
@@ -1102,7 +1106,9 @@ export const ProjectDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
-          backBtnLabel='Back To Projects'
+          backBtnLabel={
+            isNavigateFrom === 'case' ? 'Back To Case' : 'Back To Projects'
+          }
           isLoading={isLoading}
         />
       </div>

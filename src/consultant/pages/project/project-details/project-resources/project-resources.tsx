@@ -168,6 +168,7 @@ export const ProjectResources = ({
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
   const activeMenuPath = searchParams.get('activeMenu') || '';
+  const originPath = searchParams.get('origin') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -225,8 +226,8 @@ export const ProjectResources = ({
     isLoading: isDetailsLoading,
     error: detailsError,
   } = useProjectResourceDetail(
-    projectResData?.account_rid as string,
-    projectResData?.rid as string,
+    projectResData?.account_rid || accountID || '',
+    projectResData?.rid || resID || '',
     detailrefecth as number
     // searchText as string
   );
@@ -428,17 +429,22 @@ export const ProjectResources = ({
     });
   };
   const handleBackClick = () => {
-    setShowProjectResourceDetails(!showProjectResourceDetails);
-    setProjectResData(null);
-    setShowFilter(false);
-    // clear query params
-    searchParams.delete('pro_res_id');
-    searchParams.delete('page');
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    });
+    if (originPath === 'case_dossier') {
+      window.history.back();
+    } else {
+      setShowProjectResourceDetails(!showProjectResourceDetails);
+      setProjectResData(null);
+      setShowFilter(false);
+      // clear query params
+      searchParams.delete('pro_res_id');
+      searchParams.delete('page');
+      navigate({
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      });
+    }
   };
+
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
 
@@ -525,11 +531,14 @@ export const ProjectResources = ({
       hide: viewDetails ? true : false,
     },
     {
-      label: 'Back To Project Resources',
+      label:
+        originPath === 'case_dossier'
+          ? 'Back To Dossier'
+          : 'Back To Project Resources',
       variant: 'outlined' as const,
       disabled: false,
       onClick: handleBackClick,
-      sx: { ...BUTTON_STYLES, width: '175px', minWidth: '175px' },
+      sx: { ...BUTTON_STYLES, width: 'auto', padding: '0px 9px' },
       hide: viewDetails ? false : true,
     },
   ];

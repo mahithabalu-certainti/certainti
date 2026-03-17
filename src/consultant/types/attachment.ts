@@ -25,6 +25,10 @@ export type AttachmentList = {
   attached_to: string;
   status_name?: string;
   status_rid?: string;
+  project_name?: string;
+  project_code?: string;
+  project_fiscal_rid?: string;
+  project_currency_rid?: string;
 };
 
 export interface globalFilters {

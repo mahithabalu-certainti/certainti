@@ -14,6 +14,7 @@ interface SettingsPayload {
   auto_access_rd: boolean;
   blended_rate_fte: string;
   blended_rate_subcon: string;
+  update_all_projects?: string;
 }
 
 interface UpdateSettingsResponse {
