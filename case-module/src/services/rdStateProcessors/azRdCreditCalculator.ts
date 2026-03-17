@@ -75,19 +75,21 @@ export class RdCreditCalculatorForAZ {
         const line10 = 0;
 
         //---- Line 11: wages
-        const line11 = currentYearQREs.wages || 0;
+        const line11 = new Decimal(currentYearQREs.wages ?? 0.00)
 
         //---- Line 12: supplies
-        const line12 = currentYearQREs.supplies || 0;
+        const line12 = new Decimal(currentYearQREs.supplies ?? 0.00)
 
         //---- Line 13: cost to rent
-        const line13 = caseData.lease_costs_of_computers_az || 0;
+        const line13 = new Decimal(caseData.lease_costs_of_computers_az ?? 0.00);
+
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00)
 
         //---- Line 14: contract
-        const line14 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+        const line14 = contract.mul(config.sub_con_percent/100);
 
 
-        const totalCurrentYearQRE = new Decimal(line11 || 0).plus(line12 || 0).plus(line14 || 0).plus(line13 || 0);
+        const totalCurrentYearQRE = line11.plus(line12).plus(line14).plus(line13);
         //---- Line 15: total QRE
         const line15 = totalCurrentYearQRE;
 

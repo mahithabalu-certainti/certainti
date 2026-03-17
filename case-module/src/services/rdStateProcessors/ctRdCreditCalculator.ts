@@ -60,13 +60,14 @@ export class RdCreditCalculatorForCT {
      * @param extractConfig 
      */
     part1CreditComputation(currentYearQREs: QRE, prior3YearsQREs: QRE[], extractConfig: ConfigJson) {
-        const wages = currentYearQREs.wages || 0;
-        const supplies = currentYearQREs.supplies || 0;
-        const contract = currentYearQREs.contract || 0;
+        const wages = new Decimal(currentYearQREs.wages ?? 0.00);
+        const supplies = new Decimal(currentYearQREs.supplies ?? 0.00);
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00);
+        const subConPercent = (extractConfig.sub_con_percent/100)
 
         //Part I - Credit Computation
         //---- Line 1: Total QREs
-        const totalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract * extractConfig.sub_con_percent/100 || 0));
+        const totalQREs = wages.plus(supplies).plus(contract.mul(subConPercent));
 
         //---- Line 2: PriorYear 1 QREs
         const priorYear1QREs = new Decimal(prior3YearsQREs[0]?.qre ?? 0);
@@ -95,15 +96,15 @@ export class RdCreditCalculatorForCT {
      * @returns 
      */
     part1TentativeTaxCreditComputation(currentYearQREs: QRE, excessQRE: Decimal, extractConfig: ConfigJson) {
-        const wages = currentYearQREs.wages || 0;
-        const supplies = currentYearQREs.supplies || 0;
-        const contract = currentYearQREs.contract || 0;
-
+        const wages = new Decimal(currentYearQREs.wages ?? 0.00);
+        const supplies = new Decimal(currentYearQREs.supplies ?? 0.00);
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00);
+        const contractPercent = (extractConfig.sub_con_percent/100)
 
         //Part I - Tentative Credit Computation
         //Line 1: Total QREs
 
-        const tentativeTotalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract * extractConfig.sub_con_percent/100));
+        const tentativeTotalQREs = wages.plus(supplies).plus(contract.mul(contractPercent));
 
         //Line 2: Excess QREs (Line 3 from Part I)
         const tentativeExcessQRE = excessQRE;

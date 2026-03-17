@@ -321,9 +321,9 @@ export class RdCreditCalculatorForUSA {
             "Average Annual Gross Receipts" : priorYearGross,
             "Total Qualified Research Expenses" : priorYearsQre,
             "qreSummary" : {
-                "Wages" : currentYearQREs.wages,
-                "Supplies" : currentYearQREs.supplies,
-                [`${metadata.subConPercent}% Contract Expenses`] : currentYearQREs.contract
+                "Wages" : new Decimal(currentYearQREs.wages ?? 0.00),
+                "Supplies" : new Decimal(currentYearQREs.supplies ?? 0.00),
+                [`${metadata.subConPercent}% Contract Expenses`] : new Decimal(currentYearQREs.contract ?? 0.00)
             }
         };
 
