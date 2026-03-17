@@ -140,7 +140,8 @@ const Settings: React.FC<SettingsProps> = ({
   const handleFormSubmit = (data: object) => {
     const formData = data as FormValues;
 
-    const performUpdate = (applyToAll: boolean) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const performUpdate = (_applyToAll: boolean) => {
       const payload = {
         account_rid: accountDetails?.account_rid ?? accountid ?? '',
         flag: 'account',
@@ -157,14 +158,16 @@ const Settings: React.FC<SettingsProps> = ({
           ? false
           : formData.auto_assessment === 'Yes',
         blended_rate_fte: isParentAccount ? '' : formData.blended_rate_fte,
-        blended_rate_subcon: isParentAccount ? '' : formData.blended_rate_subcon,
+        blended_rate_subcon: isParentAccount
+          ? ''
+          : formData.blended_rate_subcon,
         support_email: formData.support_email,
         tenant_id: formData.tenant_id,
         client_id: formData.client_id,
         client_secret: formData.client_secret,
-        ...(isParentAccount === false && {
-          update_all_projects: applyToAll ? 'yes' : 'no',
-        }),
+        // ...(isParentAccount === false && {
+        //   update_all_projects: applyToAll ? 'yes' : 'no',
+        // }),
       };
       setIsFormSaving(true);
       updateSettings.mutate(payload, {
@@ -183,16 +186,16 @@ const Settings: React.FC<SettingsProps> = ({
       });
     };
 
-    if (isParentAccount === false) {
-      setConfirmationState({
-        isOpen: true,
-        message: 'These changes will be synchronized across all projects associated with this account. Would you like to apply these settings globally?',
-        onConfirm: () => performUpdate(true),
-        onCancel: () => performUpdate(false),
-      });
-    } else {
-      performUpdate(false);
-    }
+    // if (isParentAccount === false) {
+    //   setConfirmationState({
+    //     isOpen: true,
+    //     message: 'These changes will be synchronized across all projects associated with this account. Would you like to apply these settings globally?',
+    //     onConfirm: () => performUpdate(true),
+    //     onCancel: () => performUpdate(false),
+    //   });
+    // } else {
+    performUpdate(false);
+    // }
   };
 
   const onChangeField = (data: OnChange) => {
