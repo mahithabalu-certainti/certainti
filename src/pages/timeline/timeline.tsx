@@ -845,7 +845,7 @@ const Timeline: React.FC<TimelineProps> = ({ entitytype }) => {
                         lineHeight: '1.4',
                       }}
                     >
-                      {item.created_by_name}
+                      {`${item.created_by_name} • ${group.dateLabel}`}
                     </div>
                   )}
                 </div>
