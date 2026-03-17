@@ -108,7 +108,9 @@ export type CaseHeadersColumns = {
   is_state_available: boolean
   state_rid: string | null,
   state_name: string | null
-  financial_working_signoff: boolean
+  financial_working_signoff: boolean,
+  effective_progress: number | null,
+  case_progress: string | null
 }
 
 export type FilingType = {

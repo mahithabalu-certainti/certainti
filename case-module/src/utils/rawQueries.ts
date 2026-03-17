@@ -28,6 +28,26 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     task_status_rid != '${getCompletedTaskStatus}'
     AND
     case_rid = '${caseRid}'
+    ),
+    case_progress_summary AS (
+      SELECT 
+        rid,
+        CASE
+          WHEN case_startdate IS NULL OR planned_submission_date IS NULL OR planned_submission_date::date <= case_startdate::date THEN 100
+          ELSE LEAST(100, GREATEST(0, ((CURRENT_DATE - case_startdate::date)::NUMERIC / NULLIF((planned_submission_date::date - case_startdate::date), 0)::NUMERIC) * 100))
+        END as time_progress_percentage
+      FROM ${schemaName}.cases
+      WHERE rid = '${caseRid}'
+    ),
+    effective_progress_summary AS (
+      SELECT 
+        cps.rid,
+        CASE 
+          WHEN cps.time_progress_percentage = 0 THEN 100
+          ELSE (c.case_completion_percentage / cps.time_progress_percentage) * 100
+        END as effective_progress
+      FROM case_progress_summary cps
+      JOIN ${schemaName}.cases c ON c.rid = cps.rid
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,c.parent_case_rid,
@@ -46,13 +66,20 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     CASE WHEN fcc.count > 0 THEN false ELSE true END AS all_task_completed,
     CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}') THEN true ELSE false END AS is_initiated,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
-    ELSE FALSE END AS is_case_team_created
+    ELSE FALSE END AS is_case_team_created,
+    COALESCE(ROUND(eps.effective_progress, 2), 0) as effective_progress,
+    CASE
+      WHEN eps.effective_progress >= 0 AND eps.effective_progress <= 40 THEN 'Critical'
+      WHEN eps.effective_progress > 40 AND eps.effective_progress <= 80 THEN 'At Risk'
+      WHEN eps.effective_progress > 80 THEN 'On Track'
+    END as case_progress
     FROM
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
     LEFT JOIN ${schemaName}.rd_credit_country_calculations rcc ON rcc.case_rid = c.rid
     LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
     LEFT JOIN fetch_completed_count fcc ON fcc.case_rid = c.rid
+    LEFT JOIN effective_progress_summary eps ON eps.rid = c.rid
     CROSS JOIN fetch_project_count_cost f
     WHERE
     c.rid = '${caseRid}'

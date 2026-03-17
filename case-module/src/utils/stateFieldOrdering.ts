@@ -493,14 +493,6 @@ CA: {
             "[PART VI] CALCULATION OF THE ALLOWABLE CREDIT AMOUNT AND CARRYOVER"
         ],
         sectionFieldOrders: {
-            "computed_fields": [
-                { pattern: /^\[PART I\]/, order: 1 },
-                { pattern: /^\[PART II\]/, order: 2 },
-                { pattern: /^\[PART III\]/, order: 3 },
-                { pattern: /^\[PART IV\]/, order: 4 },
-                { pattern: /^\[PART V\]/, order: 5 },
-                { pattern: /^\[PART VI\]/, order: 6 }
-            ],
             "[PART I] CREDIT CALCULATION FOR BASIC RESEARCH PAYMENTS": [
                 { pattern: /^\[1\]\s*Enter the basic research payments paid or incurred to qualified organizations/, order: 1 }
             ],

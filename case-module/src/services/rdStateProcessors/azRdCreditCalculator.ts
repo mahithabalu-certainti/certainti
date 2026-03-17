@@ -83,11 +83,10 @@ export class RdCreditCalculatorForAZ {
         //---- Line 13: cost to rent
         const line13 = new Decimal(caseData.lease_costs_of_computers_az ?? 0.00);
 
-        const contract = new Decimal(currentYearQREs.contract ?? 0.00)
-
         //---- Line 14: contract
-        const line14 = contract.mul(config.sub_con_percent/100);
-
+        let line14 = new Decimal(0);
+        line14 = this.round2(new Decimal(currentYearQREs.contract || 0).mul(new Decimal((config.sub_con_percent ?? 0) / 100)));
+        
 
         const totalCurrentYearQRE = line11.plus(line12).plus(line14).plus(line13);
         //---- Line 15: total QRE
@@ -140,7 +139,7 @@ export class RdCreditCalculatorForAZ {
             wages: line11,
             supplies: line12,
             cost_to_rent: this.round2(line13) || 0.00,
-            contract: line14,
+            contract: this.round2(line14) || 0.00,
             total_current_year_qre: this.round2(line15) || 0.00,
             average_gross_receipts: this.round2(line16) || 0.00,
             fixed_base_percentage: line17,
@@ -179,7 +178,7 @@ export class RdCreditCalculatorForAZ {
         const line80 = new Decimal(caseData.lease_costs_of_computers_az || 0);
 
         //---- Line 81: contract
-        const line81 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+        const line81 = this.round2(new Decimal(currentYearQREs.contract || 0).mul(new Decimal((config.sub_con_percent ?? 0) / 100)));
 
         //---- Line 82: total QRE
         const line82 = new Decimal(line78.plus(line79).plus(line80).plus(line81))
@@ -221,7 +220,7 @@ export class RdCreditCalculatorForAZ {
                 wages: this.round2(line78),
                 supplies: this.round2(line79),
                 lease_computers : this.round2(line80),
-                contract: this.round2(line81),
+                contract: this.round2(line81) || 0.00,
                 total_current_year_qre: this.round2(line82) || 0.00,
                 total_prior_3years_qre: this.round2(line83)|| 0.00,
                 adjusted_base_amount: this.round2(line84) || 0.00,
