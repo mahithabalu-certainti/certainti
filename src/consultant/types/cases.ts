@@ -153,6 +153,7 @@ export interface CaseDetails {
   rd_form_signoff?: boolean;
   final_credit?: string | number | null;
   all_task_completed?: boolean;
+  case_progress?: string;
 }
 
 export interface CaseDetailsResponse {
