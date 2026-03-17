@@ -41,7 +41,6 @@ export const getTechnicalSummaryListColumns = (
     label: 'Project Code',
     width: 160,
     sortable: true,
-    sx: { textAlign: 'right' },
     // hide:
     //   !permissionMap?.['project_code']?.edit &&
     //   !permissionMap?.['project_code']?.read,
@@ -52,7 +51,6 @@ export const getTechnicalSummaryListColumns = (
     label: 'Project Name',
     width: 160,
     sortable: true,
-    sx: { textAlign: 'right' },
     // hide:
     //   !permissionMap?.['project_name']?.edit &&
     //   !permissionMap?.['project_name']?.read,

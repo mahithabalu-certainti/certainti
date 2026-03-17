@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { TechSummaryIcon } from '../../../../../../assets';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useTechnicalSummaryDetails,
   useUpdateTechnicalSummaryText,
@@ -35,11 +35,13 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   setIsActionItemsExpanded,
 }) => {
   const [searchParams] = useSearchParams();
-  // const { projectid } = useParams();
+  const navigate = useNavigate();
   const { successToast, errorToast } = useToast();
   const accountId = searchParams.get('accountID') || '';
   const technicalSummaryId = searchParams.get('technical_summary_id') || '';
   const projectid = searchParams.get('project_id') || '';
+  const isFromDossier =
+    searchParams.get('navigate_source') === 'dossier_technical_summary';
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -92,6 +94,19 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     });
     return map;
   }, [technicalSummaryViewEditFields]);
+
+  const handleBack = () => {
+    if (isFromDossier) {
+      searchParams.set('list', 'dossier');
+      searchParams.delete('technical_summary_id');
+      searchParams.delete('project_id');
+      searchParams.delete('navigate_source');
+
+      navigate({ search: searchParams.toString() }, { replace: true });
+    } else {
+      handleBackClick();
+    }
+  };
 
   const handleSave = () => {
     const payload = {
@@ -162,7 +177,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
           disabled: false,
           onClick: () => {
             if (setIsActionItemsExpanded) setIsActionItemsExpanded(false);
-            handleBackClick();
+            handleBack();
           },
           sx: { width: '178px', minWidth: '178px' },
           hide: hideAdditionalSummaryText,

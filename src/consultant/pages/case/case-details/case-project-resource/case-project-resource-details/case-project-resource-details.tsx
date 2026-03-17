@@ -171,8 +171,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const description: DetailItem[] = [
     {
       label: 'Comments',
-      value: resourceData.description,
-      key: 'comments',
+      value: resourceData.description || '-',
+      key: 'description',
     },
   ];
 
@@ -243,7 +243,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         data={locationDetails}
       />
       <DetailsSection title='Project Details' data={projectDetails} />
-      <DetailsSection title='Comments' data={descriptionDetails} />
+      <DetailsSection title='' data={descriptionDetails} fullColumn={true} />
       <DetailsSection
         title='Audit Information'
         data={auditInfoDetails}

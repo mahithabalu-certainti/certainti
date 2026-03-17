@@ -947,7 +947,7 @@ const Interactions: React.FC<InteractionsProps> = ({
             !viewInteractionHistory &&
             !viewResponseHistory
           }
-          toggleLabel={'To include RD Assessment'}
+          toggleLabel={'List RD Assessment(s)'}
           toggleEnabled={showAssessmentToggle}
           setToggleEnabled={setShowAssessmentToggle}
         />
