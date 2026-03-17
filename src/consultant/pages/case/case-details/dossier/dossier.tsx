@@ -46,6 +46,7 @@ import {
   getProjectDocumentsFilterFields,
   getQualifiedProjectsFilterFields,
 } from './helper';
+import { getVersionControlFilterFields } from './tab/version-control/helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
@@ -73,6 +74,7 @@ import CloseCaseModal from './close-case-modal';
 import { useGetProjectType } from '../../../../services/project';
 import Timeline from '../../../../../pages/timeline/timeline';
 import TextButton from '../../../../../components/button/text-button';
+import VersionControl from './tab/version-control/version-control';
 
 const DossierTabs: OverviewTabs[] = [
   {
@@ -452,6 +454,25 @@ const Dossier: React.FC<DossierProps> = ({
     setIsDownloadModalOpen(false);
   };
 
+  /**
+   * Called from the Version Control tab's per-row download button.
+   * Sends ALL items in downloaded_list (same as "Select All") plus the
+   * dossier_version from the clicked row — no popup is shown.
+   */
+  const handleVersionDownload = (dossier_version: string) => {
+    let fullDownloadList = [...DOWNLOAD_OPTIONS];
+    if (fullDownloadList.includes('RD Forms')) {
+      fullDownloadList = fullDownloadList.filter((item) => item !== 'RD Forms');
+      fullDownloadList.push('RD Form Federal', 'RD Form State');
+    }
+    refetchDossierSheetStatus({
+      accountRid: accountid,
+      caseRid: caseId ?? '',
+      downloaded_list: fullDownloadList,
+      dossier_version,
+    });
+  };
+
   const technicalSummaryViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -545,6 +566,8 @@ const Dossier: React.FC<DossierProps> = ({
           memoizedResourceType,
           memoizedResourceStatus
         );
+      case 'version_control':
+        return getVersionControlFilterFields();
       default:
         return [];
     }
@@ -604,6 +627,11 @@ const Dossier: React.FC<DossierProps> = ({
       label: 'Approval Status',
       value: 'approval_status',
       hide: !isAuditTimelineView,
+    },
+    {
+      label: 'Version Control',
+      value: 'version_control',
+      // hide: !isAuditTimelineView,
     },
   ];
 
@@ -853,6 +881,18 @@ const Dossier: React.FC<DossierProps> = ({
                     columnAnchorEl={columnAnchorEl}
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
+                  />
+                )}
+                {tabParam === 'version_control' && (
+                  <VersionControl
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    onVersionDownload={handleVersionDownload}
                   />
                 )}
               </div>

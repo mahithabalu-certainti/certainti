@@ -78,6 +78,10 @@ export const getClosingRemarksListURL = () // accountRid: string,
   return `/api/cases/closureRemarks`;
 };
 
+export const getDossierVersionListURL = (): string => {
+  return `api/cases/dossier/version`;
+};
+
 export const getRDFormMapperURL = (): string => {
   return `/api/rdFormMapper/process/initiate`;
 };
