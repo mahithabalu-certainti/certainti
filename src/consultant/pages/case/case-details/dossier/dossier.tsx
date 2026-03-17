@@ -869,6 +869,7 @@ const Dossier: React.FC<DossierProps> = ({
           country_code: caseDetails?.country_code,
           fiscal_year: caseDetails?.fiscal_year,
           all_task_completed: caseDetails?.all_task_completed,
+          currency_symbol: caseDetails?.currency_symbol,
         }}
         refetchCaseDetails={refetchCaseDetails}
       />

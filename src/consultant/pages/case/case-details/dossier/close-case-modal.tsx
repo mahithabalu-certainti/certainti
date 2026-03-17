@@ -28,6 +28,12 @@ import {
   useComputedData,
   useCaseCloseMutation,
 } from '../../../../services/case-dossier/case-dossier-service';
+import { costDisplay } from '../../../../../common-utils/common-utils';
+
+const removeCommas = (value: string): string => {
+  // Remove currency symbol and spaces first, then commas
+  return value.replace(/[^0-9.,]/g, '').replace(/,/g, '');
+};
 
 interface CloseCaseModalProps {
   open: boolean;
@@ -38,6 +44,7 @@ interface CloseCaseModalProps {
     country_code?: string;
     fiscal_year?: string | number;
     all_task_completed?: boolean;
+    currency_symbol?: string;
   };
   refetchCaseDetails?: () => void;
 }
@@ -436,7 +443,15 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
   };
 
   const updateCountryField = (field: keyof RowFormData, value: string) => {
-    setCountryForm((prev) => ({ ...prev, [field]: value }));
+    let finalValue = value;
+    if (
+      field === 'rd_credits_submitted' ||
+      field === 'rd_credits_approved' ||
+      field === 'rd_credits_computed'
+    ) {
+      finalValue = removeCommas(value);
+    }
+    setCountryForm((prev) => ({ ...prev, [field]: finalValue }));
     setCountryErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
@@ -445,11 +460,19 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
     field: keyof RowFormData,
     value: string
   ) => {
+    let finalValue = value;
+    if (
+      field === 'rd_credits_submitted' ||
+      field === 'rd_credits_approved' ||
+      field === 'rd_credits_computed'
+    ) {
+      finalValue = removeCommas(value);
+    }
     setStateFormData((prev) => ({
       ...prev,
       [stateRid]: {
         ...(prev[stateRid] ?? EMPTY_ROW),
-        [field]: value,
+        [field]: finalValue,
       },
     }));
     setStateErrors((prev) => ({
@@ -720,7 +743,14 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
 
                       <TableCell>
                         <CellInput
-                          value={countryForm.rd_credits_computed}
+                          value={
+                            countryForm.rd_credits_computed
+                              ? costDisplay(
+                                  countryForm.rd_credits_computed,
+                                  caseDetails?.currency_symbol
+                                )
+                              : ''
+                          }
                           onChange={() => undefined}
                           placeholder={
                             computedDataQuery.isLoading ? 'Loading...' : '-'
@@ -736,7 +766,14 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
                         }}
                       >
                         <CellInput
-                          value={countryForm.rd_credits_submitted}
+                          value={
+                            countryForm.rd_credits_submitted
+                              ? costDisplay(
+                                  countryForm.rd_credits_submitted,
+                                  caseDetails?.currency_symbol
+                                )
+                              : ''
+                          }
                           onChange={(v) =>
                             updateCountryField('rd_credits_submitted', v)
                           }
@@ -753,7 +790,14 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
                         }}
                       >
                         <CellInput
-                          value={countryForm.rd_credits_approved}
+                          value={
+                            countryForm.rd_credits_approved
+                              ? costDisplay(
+                                  countryForm.rd_credits_approved,
+                                  caseDetails?.currency_symbol
+                                )
+                              : ''
+                          }
                           onChange={(v) =>
                             updateCountryField('rd_credits_approved', v)
                           }
@@ -841,7 +885,14 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
                             </TableCell>
                             <TableCell>
                               <CellInput
-                                value={d.rd_credits_computed}
+                                value={
+                                  d.rd_credits_computed
+                                    ? costDisplay(
+                                        d.rd_credits_computed,
+                                        caseDetails?.currency_symbol
+                                      )
+                                    : ''
+                                }
                                 onChange={() => undefined}
                                 placeholder={
                                   computedDataQuery.isLoading
@@ -859,7 +910,14 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
                               }}
                             >
                               <CellInput
-                                value={d.rd_credits_submitted}
+                                value={
+                                  d.rd_credits_submitted
+                                    ? costDisplay(
+                                        d.rd_credits_submitted,
+                                        caseDetails?.currency_symbol
+                                      )
+                                    : ''
+                                }
                                 onChange={(v) =>
                                   updateStateField(
                                     s.state_rid,
@@ -880,7 +938,14 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
                               }}
                             >
                               <CellInput
-                                value={d.rd_credits_approved}
+                                value={
+                                  d.rd_credits_approved
+                                    ? costDisplay(
+                                        d.rd_credits_approved,
+                                        caseDetails?.currency_symbol
+                                      )
+                                    : ''
+                                }
                                 onChange={(v) =>
                                   updateStateField(
                                     s.state_rid,
