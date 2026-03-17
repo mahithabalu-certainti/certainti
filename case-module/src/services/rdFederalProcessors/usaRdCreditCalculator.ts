@@ -164,7 +164,7 @@ export class RdCreditCalculatorForUSA {
         const line7 = validGrossReceipts.div(validYearsCount); // usually 4
         logMessage(`RRC Line 7 (Average Annual Gross Receipts): ${line7}`);
         //---- Line 8: Multiply line 7 by percentage on line 6 (configRRC.fixedBasePercentage)
-        const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage ?? 0.16 / 100));
+        const line8 = line7.mul(new Decimal((configRRC.fixed_base_percentage ?? 0.16)/100));
 
         //---- Line 9: Subtract line 8 from line 5
         const line9 = currentYearQRE.minus(line8);
