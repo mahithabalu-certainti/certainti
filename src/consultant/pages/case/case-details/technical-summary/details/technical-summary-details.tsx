@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { TechSummaryIcon } from '../../../../../../assets';
@@ -155,8 +156,6 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     };
     updateRefinePrompt.mutate(payload, {
       onSuccess: (response) => {
-        console.log('Refine prompt response:', response);
-        // Handle both possible response shapes: { data: { updated_summary } } or { updated_summary }
         const updatedSummary = (response as any)?.data?.data?.updated_summary;
         setIsRefinePrompt(updatedSummary);
         successToast('Refinement applied successfully. Click Save to confirm.');
@@ -166,7 +165,6 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       },
     });
   };
-  console.log(isRefinePrompt);
   const handleCancel = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
