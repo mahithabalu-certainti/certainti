@@ -678,11 +678,70 @@ async fetchTableValues(
       raw: true,
     });
 
-    results = (queryResults as any[]).map((row: any, index: number) => ({
-      value: row.field_value,
-      index: index + 1,
-      row_number: index + 1,
-    }));
+    // Special handling for industry_rid: the raw value is a RID foreign key.
+    // Resolve each RID to its human-readable industry_name by joining with
+    // the industry table in mainDb.
+    if (fieldName === "industry_rid") {
+      const rawRows = queryResults as any[];
+
+      // Collect distinct non-null RIDs to look up in a single query
+      const uniqueRids = [
+        ...new Set(
+          rawRows
+            .map((r: any) => r.field_value)
+            .filter((v: any) => v !== null && v !== undefined && v !== ""),
+        ),
+      ] as string[];
+
+      // Build a rid -> industry_name lookup map from mainDb
+      const ridToName: Record<string, string> = {};
+      if (uniqueRids.length > 0) {
+        try {
+          const placeholders = uniqueRids
+            .map((_: string, i: number) => `:rid_${i}`)
+            .join(", ");
+          const ridReplacements: Record<string, string> = {};
+          uniqueRids.forEach((rid: string, i: number) => {
+            ridReplacements[`rid_${i}`] = rid;
+          });
+
+          const industryQuery = `
+            SELECT rid, industry_name
+            FROM ${MAIN_SCHEMA_NAME}.industry
+            WHERE rid IN (${placeholders})
+          `;
+
+          const [industryRows] = await mainDb.query(industryQuery, {
+            replacements: ridReplacements,
+            raw: true,
+          });
+
+          (industryRows as any[]).forEach((row: any) => {
+            if (row.rid && row.industry_name) {
+              ridToName[row.rid] = row.industry_name;
+            }
+          });
+
+          logMessage(
+            `Resolved ${Object.keys(ridToName).length} industry name(s) for industry_rid field`,
+          );
+        } catch (err) {
+          logMessage(`Error resolving industry names for industry_rid: ${err}`);
+        }
+      }
+
+      results = rawRows.map((row: any, index: number) => ({
+        value: ridToName[row.field_value] ?? row.field_value,
+        index: index + 1,
+        row_number: index + 1,
+      }));
+    } else {
+      results = (queryResults as any[]).map((row: any, index: number) => ({
+        value: row.field_value,
+        index: index + 1,
+        row_number: index + 1,
+      }));
+    }
 
     logMessage(
       `Retrieved ${results.length} table values for ${refTable}.${fieldName}`,
