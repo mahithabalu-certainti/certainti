@@ -720,7 +720,7 @@ export const getColumnsNamesForTaskCommentsUpdate = (data: UpdateCommentsType, d
   return columns;
 }
 
-export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promise<string> {
+export async function generateSasUrl(blobUrl: string, expiryMinutes = 1440): Promise<string> {
   try {
     const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     // const connectionString = "storage-account-connection-string";
@@ -731,7 +731,9 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       throw new Error("Azure storage connection string is required");
     }
 
-    const parsedUrl = parse(blobUrl);
+    // ✅ Remove existing SAS token if present
+    const cleanUrl = blobUrl.split("?")[0] as string;
+    const parsedUrl = parse(cleanUrl);
     const hostnameParts = parsedUrl.hostname?.split(".") || [];
     const accountName = hostnameParts[0];
     const pathParts = parsedUrl.pathname?.replace(/^\/+/, "").split("/") || [];
@@ -764,7 +766,7 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       credential
     ).toString();
 
-    const sasUrl = `${blobUrl}?${sasToken}`;
+    const sasUrl = `${cleanUrl}?${sasToken}`;
     return sasUrl;
   } catch (error) {
     logMessage(`Error generating SAS URL: ${error}`);

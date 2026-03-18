@@ -2955,3 +2955,4 @@ export const taskCardDetails = (schemaName: string, taskRid: string, accountRid:
 }
 
 export const getCaseSummaryByRids = () => `SELECT rid as case_rid, case_name FROM trd365.case_summary WHERE rid IN (:caseRids)`
+export const fetchProjectIds = (schemaName : string, rid : any[]) => `SELECT rid, currency_rid FROM ${schemaName}.project_fiscal WHERE rid IN (${rid.map((d) => `'${d.attach_to}'`).join(',')})`

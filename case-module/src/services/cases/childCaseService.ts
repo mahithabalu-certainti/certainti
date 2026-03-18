@@ -1187,14 +1187,29 @@ async fetchDossierPackage (data : any) : Promise<any> {
   const fetchParentNumber : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize));
   let schemaName = rawQueries.fetchSchemaName(fetchParentNumber[0][0].r_number)
   const {DossierFormModel} = await this.getModels(schemaName);
-  let getZipPackage = await DossierFormModel.findOne({
-    where : {
-      case_rid : data.case_rid,
-      account_rid : data.account_rid
-    },
-    order : [['created_datetime', 'DESC']],
-    limit : 1
-  })
+  let getZipPackage : DossierForm | null
+  if(data.dossier_version === undefined) {
+    getZipPackage = await DossierFormModel.findOne({
+        where : {
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+        },
+        order : [['created_datetime', 'DESC']],
+        limit : 1
+      })
+  } 
+  else {
+    getZipPackage = await DossierFormModel.findOne({
+      where : {
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        dossier_version : data.dossier_version
+      },
+      order : [['created_datetime', 'DESC']],
+      limit : 1
+    })
+  }
+  
   if(getZipPackage) {
     let responsePackage : any[] = [];
     const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
