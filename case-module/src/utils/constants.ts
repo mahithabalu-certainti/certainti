@@ -2169,6 +2169,12 @@ WHERE dmf.country_rid = '${countryRid}'
   revokeClaimQualifiedInProjectFiscalSummary(projectFiscalRids: string[], accountRid: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = false WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
   },
+  revokeDossierFormInitiateStatus(schemaName: string, caseRid : string) {
+    return `UPDATE ${schemaName}.dossier_form
+    SET is_initiated = false
+    WHERE
+    rid = (select rid FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' ORDER BY dossier_version DESC LIMIT 1)`
+  },
   revokeClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
     let ids = ProjectRegionIds.filter((d: any) => d.region_rid !== null)
     let validIds;
