@@ -1716,22 +1716,37 @@ export class RdFormHelperService {
     }
 
     const valueMap = new Map<string, any>();
+    // Regex to detect an unresolved RID value — used to prevent a resolved
+    // numeric/string value from being overwritten by a stale raw RID.
+    const RID_VALUE_PATTERN = /^[A-Za-z]\d{3}-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const safeSet = (key: string, value: any) => {
+      // Never downgrade an already-resolved value back to a raw RID string.
+      // This prevents later config items (whose values haven't been resolved yet)
+      // from clobbering a key that a previous item already resolved correctly.
+      const existing = valueMap.get(key);
+      const incomingIsRid = typeof value === 'string' && RID_VALUE_PATTERN.test(value.trim());
+      const existingIsResolved =
+        existing !== undefined &&
+        !(typeof existing === 'string' && RID_VALUE_PATTERN.test(String(existing).trim()));
+      if (existingIsResolved && incomingIsRid) return; // don't overwrite resolved with stale RID
+      valueMap.set(key, value ?? 0);
+    };
     const addToValueMap = (rawKey: string, value: any) => {
       if (!rawKey) return;
-      valueMap.set(rawKey, value ?? 0);
+      safeSet(rawKey, value ?? 0);
 
       const noIndexKey = this.stripIndexes(rawKey);
-      valueMap.set(noIndexKey, value ?? 0);
+      safeSet(noIndexKey, value ?? 0);
 
       const normalizedKey = this.normalizeFieldRef(rawKey);
-      valueMap.set(normalizedKey, value ?? 0);
+      safeSet(normalizedKey, value ?? 0);
 
       // Index by leading line-number prefix (e.g. "17a" from "17a. Regular credit. Add line 4...")
       // Allows #17a to resolve even when the full label contains commas that truncate the regex capture.
       const linePrefixMatch = rawKey.match(/^(\d+[a-z]?\b)/i);
       if (linePrefixMatch && linePrefixMatch[1]) {
-        valueMap.set(linePrefixMatch[1], value ?? 0);
-        valueMap.set(linePrefixMatch[1].toLowerCase(), value ?? 0);
+        safeSet(linePrefixMatch[1], value ?? 0);
+        safeSet(linePrefixMatch[1].toLowerCase(), value ?? 0);
       }
 
       // Also index up to the first comma — the #label regex stops at commas, so a reference like
@@ -1739,8 +1754,8 @@ export class RdFormHelperService {
       // gets captured only up to the comma. Storing that prefix ensures the lookup still hits.
       const upToComma = rawKey.split(",")[0]?.trim();
       if (upToComma && upToComma !== rawKey) {
-        valueMap.set(upToComma, value ?? 0);
-        valueMap.set(upToComma.replace(/\s+/g, ""), value ?? 0);
+        safeSet(upToComma, value ?? 0);
+        safeSet(upToComma.replace(/\s+/g, ""), value ?? 0);
       }
     };
 
@@ -1771,7 +1786,48 @@ export class RdFormHelperService {
         const expression = item.value.trim();
         const normalizedExpression = this.normalizeExpressionSyntax(expression);
 
-        if (!normalizedExpression.includes("#")) continue;
+        // Also handle bare RIDs stored without a leading '#'.
+        // e.g. item.value = "U001-63184abd-..." (no # prefix) — these are
+        // skipped by the '#' check below, so resolve them directly here.
+        if (!normalizedExpression.includes("#")) {
+          const bareRidMatch = expression.match(/^([A-Za-z]\d{3}-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/);
+          if (bareRidMatch && bareRidMatch[1]) {
+            const bareRid = bareRidMatch[1];
+            if (!seen.has(bareRid)) {
+              seen.add(bareRid);
+              const mapperObject =
+                await this.rdFormMapperSchemaService.getDataMapperObjectByRid(bareRid);
+              if (mapperObject?.ref_table && mapperObject?.field_name) {
+                const dynamicValue =
+                  await this.rdFormMapperSchemaService.fetchFieldValueFromRefTable(
+                    mapperObject.ref_table,
+                    mapperObject.field_name,
+                    mapperObject.is_json,
+                    caseRid,
+                    schemaName,
+                    accountRid,
+                    stateRid || "",
+                  );
+                if (dynamicValue !== null && dynamicValue !== undefined) {
+                  addToValueMap(bareRid, dynamicValue);
+                  // Also index by every label/id key so downstream #label refs
+                  // (e.g. #13 from field 15) resolve to the correct value.
+                  if (item.field_label) addToValueMap(String(item.field_label), dynamicValue);
+                  if (item.field_id)    addToValueMap(String(item.field_id),    dynamicValue);
+                  if (item.field_name)  addToValueMap(String(item.field_name),  dynamicValue);
+                  if (item.value_field_id) addToValueMap(String(item.value_field_id), dynamicValue);
+                  item.value = dynamicValue;
+                  logMessage(
+                    `Direct bare-RID resolution (no #) for field ${
+                      item.field_label || item.field_id
+                    }: ${bareRid} -> ${dynamicValue}`,
+                  );
+                }
+              }
+            }
+          }
+          continue;
+        }
 
         const matches = normalizedExpression.matchAll(/#([A-Za-z0-9-_]+)/g);
         for (const match of matches) {
@@ -1787,7 +1843,17 @@ export class RdFormHelperService {
             this.normalizeFieldRef(rawKey),
           ];
 
-          if (lookupKeys.some((key) => valueMap.has(key))) continue;
+          // Only skip DB resolution if the cached value is already a resolved
+          // (non-RID) value. If valueMap holds another raw RID string for this key
+          // (seeded from a not-yet-resolved config item), we must still fetch from DB.
+          const isRidPattern = /^[A-Za-z]\d{3}-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+          const alreadyResolved = lookupKeys.some((key) => {
+            if (!valueMap.has(key)) return false;
+            const existing = valueMap.get(key);
+            // Consider it resolved only when the stored value is NOT itself a raw RID
+            return typeof existing !== 'string' || !isRidPattern.test(existing.trim());
+          });
+          if (alreadyResolved) continue;
           if (seen.has(rawKey)) continue;
           seen.add(rawKey);
 
@@ -1815,6 +1881,7 @@ export class RdFormHelperService {
               mapperObject.is_json,
               caseRid,
               schemaName,
+              accountRid,
               stateRid || "",
             );
           logMessage(
@@ -1823,6 +1890,25 @@ export class RdFormHelperService {
 
           if (dynamicValue !== null && dynamicValue !== undefined) {
             addToValueMap(rawKey, dynamicValue);
+
+            // If this item's entire value IS the bare RID (not part of a larger expression),
+            // resolve it in-place now so the expression evaluation loop skips it entirely.
+            // Without this, the loop would see the RID string, call resolveRef → tryParseNumber
+            // on the DB value, get null for non-numeric strings (e.g. "Goldman Sachs"), and
+            // silently overwrite the correct value with 0.
+            const isBareRid =
+              expression === rawKey || expression === `#${rawKey}`;
+            if (isBareRid) {
+              // Also index by every label/id key so downstream #label refs resolve correctly.
+              if (item.field_label) addToValueMap(String(item.field_label), dynamicValue);
+              if (item.field_id)    addToValueMap(String(item.field_id),    dynamicValue);
+              if (item.field_name)  addToValueMap(String(item.field_name),  dynamicValue);
+              if (item.value_field_id) addToValueMap(String(item.value_field_id), dynamicValue);
+              item.value = dynamicValue;
+              logMessage(
+                `Direct RID resolution for field ${item.field_label || item.field_id}: ${rawKey} -> ${dynamicValue}`,
+              );
+            }
           }
         }
       }
@@ -1937,20 +2023,37 @@ export class RdFormHelperService {
           for (const key of lookupKeys) {
             if (key && valueMap.has(key)) {
               const rawValue = valueMap.get(key);
+
+              // If the cached value is itself an unresolved RID string, this field
+              // hasn't been resolved yet (e.g. field 13 seeded as "U001-..." before
+              // resolveExpressionReferences ran). Skip this hit so the expression loop
+              // defers field 15 to a later pass when field 13 will be resolved.
+              const valueIsUnresolvedRid =
+                typeof rawValue === 'string' &&
+                RID_VALUE_PATTERN.test(rawValue.trim());
+              if (valueIsUnresolvedRid) continue;
+
               const num = this.tryParseNumber(rawValue);
               evalCache.set(normalizedKey, rawValue);
               logMessage(
                 `Expression reference resolved for field ${item.field_label || item.field_id}: ${normalizedKey} -> ${JSON.stringify(rawValue)}`,
               );
-              return (num !== null ? String(num) : "0") + suffix;
+              // For non-numeric values (e.g. "Goldman Sachs" from DB), return a JSON-quoted
+              // string instead of "0" so string comparisons in compound expressions work correctly.
+              // tryParseNumber returns null only when the value is genuinely non-numeric.
+              return (num !== null ? String(num) : JSON.stringify(String(rawValue ?? ""))) + suffix;
             }
           }
 
+          // No resolved value found — this reference is not yet available.
+          // Return a sentinel NaN so the parent expression evaluates to NaN,
+          // safeEval returns null, and the multi-pass loop retries on the next pass
+          // once all dependencies have been resolved.
           logMessage(
             `Missing expression reference for field ${item.field_label || item.field_id}: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(lookupKeys)}`,
           );
           evalCache.set(normalizedKey, null);
-          return "0" + suffix;
+          return "NaN" + suffix;
         };
 
         // Pre-pass: resolve MIN/MAX(#label, #label) with a depth-aware scanner.
@@ -2078,9 +2181,11 @@ export class RdFormHelperService {
               const result = fn(Math);
               if (result === null || result === undefined) return null;
               if (typeof result === "boolean") return result ? 1 : 0;
-              if (typeof result === "number" && !Number.isFinite(result))
-                return 0;
-              if (Number.isNaN(result)) return 0;
+              // NaN means at least one #ref resolved to the "NaN" sentinel, meaning
+              // a dependency is not yet computed. Return null so the multi-pass loop
+              // leaves item.value unchanged and retries on the next pass.
+              if (typeof result === "number" && Number.isNaN(result)) return null;
+              if (typeof result === "number" && !Number.isFinite(result)) return 0;
               return result;
             } catch (err) {
               return null;
@@ -2116,6 +2221,12 @@ export class RdFormHelperService {
             }
             if (item.field_name) {
               addToValueMap(String(item.field_name), item.value);
+            }
+            // Also refresh field_label in valueMap so downstream #label references
+            // (e.g. #13 in field 15's expression) resolve to the freshly-computed
+            // numeric value instead of the stale raw RID stored during pre-loop seeding.
+            if (item.field_label) {
+              addToValueMap(String(item.field_label), item.value);
             }
 
             logMessage(
@@ -2316,6 +2427,7 @@ export class RdFormHelperService {
               mapperObject.is_json,
               context.caseRid,
               context.schemaName,
+              context.accountRid,
               context.stateRid || "",
             );
 

@@ -73,7 +73,7 @@ export class RdCreditCalculatorForIL {
         const total_prior_year_contract = priorYear1Contract.plus(priorYear2Contract).plus(priorYear3Contract);
         const average_prior_year_contract = total_prior_year_contract.div(3);
         const cost_of_supplies = 0.00
-        const lease_costs_of_computers = caseData.lease_costs_of_computers || 0.00
+        const lease_costs_of_computers = caseData.lease_costs_of_computers_il || 0.00
 
         const total_qres = average_prior_year_contract.plus(average_prior_year_wages).plus(cost_of_supplies).plus(lease_costs_of_computers);
 
@@ -98,7 +98,7 @@ export class RdCreditCalculatorForIL {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
         const cost_of_supplies = new Decimal(currentYearQREs.supplies || 0)
-        const lease_costs_of_computers = caseData.lease_costs_of_computers || 0.00
+        const lease_costs_of_computers = caseData.lease_costs_of_computers_il || 0.00
         const llinois_research_payments_corp_only = caseData.llinois_research_payments_corp_only || 0.00
 
         //---Line 28 : D16
@@ -231,10 +231,10 @@ export class RdCreditCalculatorForIL {
                     columnBCurrentYearExpenseInfo.llinois_research_payments_corp_only,
 
                 "[Line 28] Add lines 23 through 27 of each column. Total Illinois qualifying expenses":
-                    columnBCurrentYearExpenseInfo.total_qre,
+                    this.round2(columnBCurrentYearExpenseInfo.total_qre) || 0.00,
 
                 "[Line 29] Subtract Column A, Line 28 from Column B, Line 28. If negative, enter zero":
-                    columnBCurrentYearExpenseInfo.final_excess_qre,
+                    this.round2(columnBCurrentYearExpenseInfo.final_excess_qre) || 0.00,
 
                 [`[Line 30] Multiply Line 29 by ${config.fixed_base_percentage}%`]:
                     columnBCurrentYearExpenseInfo.final_credit,

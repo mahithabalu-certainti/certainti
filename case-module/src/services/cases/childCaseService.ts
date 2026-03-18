@@ -471,7 +471,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     size : '',
     created_datetime : now,
     dossier_metadata : jsonToString,
-    dossier_version : dossierVersion
+    dossier_version : dossierVersion,
+    is_initiated : true
   });
   await this.cloneTechnicalSummaryForDossierForm(accountNumber, caseRid, accountRid, userId, schemaName);
 }
@@ -1187,14 +1188,29 @@ async fetchDossierPackage (data : any) : Promise<any> {
   const fetchParentNumber : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize));
   let schemaName = rawQueries.fetchSchemaName(fetchParentNumber[0][0].r_number)
   const {DossierFormModel} = await this.getModels(schemaName);
-  let getZipPackage = await DossierFormModel.findOne({
-    where : {
-      case_rid : data.case_rid,
-      account_rid : data.account_rid
-    },
-    order : [['created_datetime', 'DESC']],
-    limit : 1
-  })
+  let getZipPackage : DossierForm | null
+  if(data.dossier_version === undefined) {
+    getZipPackage = await DossierFormModel.findOne({
+        where : {
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+        },
+        order : [['created_datetime', 'DESC']],
+        limit : 1
+      })
+  } 
+  else {
+    getZipPackage = await DossierFormModel.findOne({
+      where : {
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        dossier_version : data.dossier_version
+      },
+      order : [['created_datetime', 'DESC']],
+      limit : 1
+    })
+  }
+  
   if(getZipPackage) {
     let responsePackage : any[] = [];
     const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
@@ -1822,6 +1838,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         const [caseDetails] : any[] = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
         if(data.type === 'RD Forms') {
           await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
           await orgDbTransaction.commit();
           await mainDbTransaction.commit();
           dynamicEntityType = entityTypes.RD_FORM  
@@ -1845,6 +1862,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           await orgDb.query(rawQueries.revokeClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
           await orgDb.query(rawQueries.revokeClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
           await mainDb.query(rawQueries.revokeClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid), {transaction : mainDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
           let mapIdsForCaseProjectregions : any[] = []
           let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
           caseProjectIds.forEach((d) => {
