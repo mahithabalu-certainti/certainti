@@ -72,9 +72,17 @@ import ExcelJS from "exceljs";
 import axios from "axios";
 import { Kafka, Producer } from "kafkajs";
 import { SchedulerExecutions } from "../../models/schedulerExecution";
-import { errorLog, getFiscalEndYear, logMessage, parseFiscalDate } from "../../utils/helpers";
+import {
+  decryptClientSecret,
+  errorLog,
+  getFiscalEndYear,
+  logMessage,
+  parseFiscalDate,
+} from "../../utils/helpers";
 import "moment-timezone";
 import moment from "moment";
+import { ClientSecretCredential } from "@azure/identity";
+import { Client } from "@microsoft/microsoft-graph-client";
 
 type filterType = {
   [key: string]: {
@@ -4469,6 +4477,526 @@ export class InteractionService {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: STATUS_MESSAGE.noDataToUpdate
       }
+    }
+  }
+  private getMailboxGraphClient(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string
+  ) {
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientId,
+      clientSecret
+    );
+
+    return Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: async () => {
+          const token = await credential.getToken(
+            "https://graph.microsoft.com/.default"
+          );
+          return token?.token || "";
+        },
+      },
+    });
+  }
+
+  private async fetchMailboxFolderChildren(
+    graphClient: Client,
+    supportEmail: string,
+    parentFolderId?: string,
+    pathPrefix = ""
+  ): Promise<any[]> {
+    const basePath = parentFolderId
+      ? `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(parentFolderId)}/childFolders`
+      : `/users/${encodeURIComponent(supportEmail)}/mailFolders`;
+
+    const result: any = await graphClient
+      .api(basePath)
+      .select("id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount")
+      .top(100)
+      .get();
+
+    const folders = result?.value || [];
+
+    const normalizedFolders = await Promise.all(
+      folders.map(async (folder: any) => {
+        const folderPath = pathPrefix
+          ? `${pathPrefix}/${folder.displayName}`
+          : folder.displayName;
+
+        const children =
+          folder.childFolderCount > 0
+            ? await this.fetchMailboxFolderChildren(
+                graphClient,
+                supportEmail,
+                folder.id,
+                folderPath
+              )
+            : [];
+
+        return {
+          id: folder.id,
+          name: folder.displayName,
+          path: folderPath,
+          parent_folder_id: folder.parentFolderId || null,
+          child_folder_count: folder.childFolderCount || 0,
+          total_item_count: folder.totalItemCount || 0,
+          unread_item_count: folder.unreadItemCount || 0,
+          well_known_name:
+            typeof folder.displayName === "string" &&
+            folder.displayName.toLowerCase() === "inbox"
+              ? "inbox"
+              : null,
+          children,
+        };
+      })
+    );
+
+    normalizedFolders.sort((a, b) => {
+      const aInbox = a.well_known_name === "inbox" ? -1 : 0;
+      const bInbox = b.well_known_name === "inbox" ? -1 : 0;
+      if (aInbox !== bInbox) return aInbox - bInbox;
+      return a.name.localeCompare(b.name);
+    });
+
+    return normalizedFolders;
+  }
+
+  private findFolderInTree(folders: any[], folderId?: string, folderPath?: string): any | null {
+    for (const folder of folders) {
+      if (
+        (folderId && folder.id === folderId) ||
+        (folderPath && folder.path === folderPath)
+      ) {
+        return folder;
+      }
+
+      if (folder.children?.length) {
+        const found = this.findFolderInTree(folder.children, folderId, folderPath);
+        if (found) return found;
+      }
+    }
+
+    return null;
+  }
+
+  private async getMailboxSettings(accountRid: string) {
+    const { accountNumber, accountId, parentAccountId } =
+      await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(
+        accountRid
+      );
+
+    if (!accountNumber) {
+      throw new Error(STATUS_MESSAGE.accountNoFound);
+    }
+
+    const mailboxAccountId = parentAccountId || accountId;
+    const schemaName = rawQueries.fetchSchemaName(accountNumber);
+    const orgDb = await this.getOrgDb();
+
+    const accountDetails: any[] = await orgDb.query(
+      rawQueries.fetchAccountDetailsById(schemaName),
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          accountId: mailboxAccountId,
+        },
+      }
+    );
+
+    const settings = accountDetails?.[0];
+    if (
+      !settings?.support_email ||
+      !settings?.tenant_id ||
+      !settings?.client_id ||
+      !settings?.client_secret
+    ) {
+      throw new Error("Mailbox is not configured for this parent account");
+    }
+
+    const clientSecret = await decryptClientSecret(settings.client_secret);
+
+    return {
+      supportEmail: settings.support_email,
+      tenantId: settings.tenant_id,
+      clientId: settings.client_id,
+      clientSecret,
+    };
+  }
+
+  async listInboxMessages(data: { account_rid: string; limit?: number }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+      const limit = Math.min(Math.max(data.limit || 50, 1), 100);
+
+      const result: any = await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/mailFolders/inbox/messages`)
+        .select(
+          [
+            "id",
+            "subject",
+            "from",
+            "receivedDateTime",
+            "isRead",
+            "hasAttachments",
+            "bodyPreview",
+            "importance",
+          ].join(",")
+        )
+        .top(limit)
+        .orderby("receivedDateTime DESC")
+        .get();
+
+      const messages = (result?.value || []).map((message: any) => ({
+        id: message.id,
+        subject: message.subject || "(No Subject)",
+        sender:
+          message.from?.emailAddress?.name ||
+          message.from?.emailAddress?.address ||
+          "",
+        sender_email: message.from?.emailAddress?.address || "",
+        received_datetime: message.receivedDateTime,
+        is_read: Boolean(message.isRead),
+        has_attachments: Boolean(message.hasAttachments),
+        body_preview: message.bodyPreview || "",
+        importance: message.importance || "normal",
+      }));
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Inbox fetched successfully",
+        data: {
+          support_email: supportEmail,
+          messages,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listInboxMessages", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          support_email: "",
+          messages: [],
+        },
+      };
+    }
+  }
+
+  async listMailboxFolders(data: { account_rid: string }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const folders = await this.fetchMailboxFolderChildren(
+        graphClient,
+        supportEmail
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Mailbox folders fetched successfully",
+        data: {
+          support_email: supportEmail,
+          folders,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listMailboxFolders", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          support_email: "",
+          folders: [],
+        },
+      };
+    }
+  }
+
+  async listMailboxMessages(data: {
+    account_rid: string;
+    folderId?: string;
+    folderPath?: string;
+    limit?: number;
+    pageToken?: string;
+    search?: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+      const folders = await this.fetchMailboxFolderChildren(
+        graphClient,
+        supportEmail
+      );
+      const selectedFolder =
+        this.findFolderInTree(folders, data.folderId, data.folderPath) ||
+        this.findFolderInTree(folders, undefined, "Inbox") ||
+        folders[0];
+
+      if (!selectedFolder) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: "Mailbox messages fetched successfully",
+          data: {
+            support_email: supportEmail,
+            selected_folder: null,
+            next_page_token: null,
+            messages: [],
+          },
+        };
+      }
+
+      const limit = Math.min(Math.max(data.limit || 50, 1), 100);
+      let request;
+
+      if (data.pageToken) {
+        request = graphClient.api(decodeURIComponent(data.pageToken));
+      } else {
+        request = graphClient
+          .api(
+            `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(selectedFolder.id)}/messages`
+          )
+          .select(
+            [
+              "id",
+              "subject",
+              "from",
+              "receivedDateTime",
+              "isRead",
+              "hasAttachments",
+              "bodyPreview",
+              "importance",
+              "conversationId",
+              "webLink",
+            ].join(",")
+          )
+          .top(limit);
+
+        if (data.search) {
+          request = request
+            .header("ConsistencyLevel", "eventual")
+            .search(`"${data.search.replace(/"/g, '\\"')}"`);
+        } else {
+          request = request.orderby("receivedDateTime DESC");
+        }
+      }
+
+      const result: any = await request.get();
+      const nextLink = result?.["@odata.nextLink"] || null;
+
+      const messages = (result?.value || []).map((message: any) => ({
+        id: message.id,
+        subject: message.subject || "(No Subject)",
+        sender:
+          message.from?.emailAddress?.name ||
+          message.from?.emailAddress?.address ||
+          "",
+        sender_email: message.from?.emailAddress?.address || "",
+        received_datetime: message.receivedDateTime,
+        is_read: Boolean(message.isRead),
+        has_attachments: Boolean(message.hasAttachments),
+        body_preview: message.bodyPreview || "",
+        importance: message.importance || "normal",
+        conversation_id: message.conversationId || "",
+        web_link: message.webLink || "",
+      }));
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Mailbox messages fetched successfully",
+        data: {
+          support_email: supportEmail,
+          selected_folder: selectedFolder,
+          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          messages,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listMailboxMessages", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          support_email: "",
+          selected_folder: null,
+          next_page_token: null,
+          messages: [],
+        },
+      };
+    }
+  }
+
+  async getInboxMessageById(data: { account_rid: string; messageId: string }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const message: any = await graphClient
+        .api(
+          `/users/${encodeURIComponent(supportEmail)}/messages/${encodeURIComponent(
+            data.messageId
+          )}`
+        )
+        .select(
+          [
+            "id",
+            "subject",
+            "from",
+            "toRecipients",
+            "ccRecipients",
+            "receivedDateTime",
+            "createdDateTime",
+            "lastModifiedDateTime",
+            "body",
+            "bodyPreview",
+            "isRead",
+            "hasAttachments",
+            "importance",
+          ].join(",")
+        )
+        .get();
+
+      let attachments: any[] = [];
+      if (message?.hasAttachments) {
+        const attachmentResult: any = await graphClient
+          .api(
+            `/users/${encodeURIComponent(supportEmail)}/messages/${encodeURIComponent(
+              data.messageId
+            )}/attachments`
+          )
+          .select("id,name,contentType,size,isInline")
+          .get();
+
+        attachments = (attachmentResult?.value || []).map((attachment: any) => ({
+          id: attachment.id,
+          name: attachment.name,
+          content_type: attachment.contentType,
+          size: attachment.size,
+          is_inline: Boolean(attachment.isInline),
+        }));
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Inbox message fetched successfully",
+        data: {
+          id: message.id,
+          subject: message.subject || "(No Subject)",
+          sender:
+            message.from?.emailAddress?.name ||
+            message.from?.emailAddress?.address ||
+            "",
+          sender_email: message.from?.emailAddress?.address || "",
+          to_recipients: (message.toRecipients || []).map((recipient: any) => ({
+            name: recipient.emailAddress?.name || "",
+            email: recipient.emailAddress?.address || "",
+          })),
+          cc_recipients: (message.ccRecipients || []).map((recipient: any) => ({
+            name: recipient.emailAddress?.name || "",
+            email: recipient.emailAddress?.address || "",
+          })),
+          received_datetime: message.receivedDateTime,
+          created_datetime: message.createdDateTime,
+          modified_datetime: message.lastModifiedDateTime,
+          body: {
+            content_type: message.body?.contentType || "text",
+            content: message.body?.content || "",
+          },
+          body_preview: message.bodyPreview || "",
+          is_read: Boolean(message.isRead),
+          has_attachments: Boolean(message.hasAttachments),
+          importance: message.importance || "normal",
+          attachments,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getInboxMessageById", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  async getInboxAttachmentById(data: {
+    account_rid: string;
+    messageId: string;
+    attachmentId: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const attachment: any = await graphClient
+        .api(
+          `/users/${encodeURIComponent(supportEmail)}/messages/${encodeURIComponent(
+            data.messageId
+          )}/attachments/${encodeURIComponent(data.attachmentId)}`
+        )
+        .get();
+
+      if (!attachment?.contentBytes) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          statusMessage: "Attachment content is not available for this mailbox item",
+          data: null,
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Inbox attachment fetched successfully",
+        data: {
+          id: attachment.id,
+          name: attachment.name || "attachment",
+          content_type: attachment.contentType || "application/octet-stream",
+          size: attachment.size || 0,
+          is_inline: Boolean(attachment.isInline),
+          content_bytes: attachment.contentBytes,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getInboxAttachmentById", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
     }
   }
   async getInteractionAssessmentSource() {
