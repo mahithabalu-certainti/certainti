@@ -4,6 +4,7 @@ export * from './cases';
 export * from './checklist';
 export * from './details';
 export * from './financial-summary';
+export * from './inbox';
 export * from './imports';
 export * from './notes';
 export * from './projects';

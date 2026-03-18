@@ -11,6 +11,14 @@ import { showToast } from '../utils/toast';
 const msalSigninInstance = new PublicClientApplication(msalConfig);
 let msalInitialized = false;
 
+const resolveServiceBaseUrl = (servicePath: string) => {
+  if (/^https?:\/\//i.test(servicePath)) {
+    return servicePath;
+  }
+
+  return `${import.meta.env.VITE_BASE_URL}${servicePath}`;
+};
+
 (async () => {
   await msalSigninInstance.initialize();
   msalInitialized = true;
@@ -18,7 +26,7 @@ let msalInitialized = false;
 
 // Create User Service Axios instance
 const userServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_USER_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_USER_URL),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -26,41 +34,38 @@ const userServiceApi = axios.create({
 
 // Create Account Service Axios instance
 const accountServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_ACCOUNT_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_ACCOUNT_URL),
   // headers: { 'Content-Type': 'application/json' },
 });
 
 // Create Resource Service Axios instance
 const resourceServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_RESOURCE_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_RESOURCE_URL),
   headers: { 'Content-Type': 'application/json' },
 });
 
 const interactionServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_INTERACTION_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_INTERACTION_URL),
   headers: { 'Content-Type': 'application/json' },
 });
 
 const exInteractionServiceApi = axios.create({
-  baseURL:
-    import.meta.env.VITE_BASE_URL + import.meta.env.VITE_EXT_INTERACTION_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_EXT_INTERACTION_URL),
   headers: { 'Content-Type': 'application/json' },
 });
 
 const caseServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_CASE_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_CASE_URL),
   headers: { 'Content-Type': 'application/json' },
 });
 
 const ruleBuilderServiceApi = axios.create({
-  baseURL:
-    import.meta.env.VITE_BASE_URL + import.meta.env.VITE_RULE_BUILDER_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_RULE_BUILDER_URL),
   headers: { 'Content-Type': 'application/json' },
 });
 
 const reportServiceApi = axios.create({
-  baseURL:
-    import.meta.env.VITE_BASE_URL + import.meta.env.VITE_DASHBOARD_REPORT_URL,
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_DASHBOARD_REPORT_URL),
   headers: { 'Content-Type': 'application/json' },
 });
 
