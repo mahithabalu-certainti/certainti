@@ -22,7 +22,7 @@ export const getVersionControlColumns = (
     label: 'Version',
     sortable: true,
     sortId: 'dossier_version',
-    width: 250,
+    width: 150,
   },
   {
     id: 'created_by_name',
