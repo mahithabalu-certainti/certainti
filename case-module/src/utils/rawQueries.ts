@@ -64,7 +64,8 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments_ma, c.basic_research_payments_id, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,
     c.other_credits_total_sc, c.other_credits_total_ga,rcc.final_credit,
     CASE WHEN fcc.count > 0 THEN false ELSE true END AS all_task_completed,
-    CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' AND is_initiated = false ORDER BY dossier_version DESC LIMIT 1) THEN false ELSE true END AS is_initiated,
+    CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' AND is_initiated = false ORDER BY dossier_version DESC LIMIT 1) 
+    OR NOT EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' ORDER BY dossier_version DESC LIMIT 1) THEN false ELSE true END AS is_initiated,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
     ELSE FALSE END AS is_case_team_created,
     COALESCE(ROUND(eps.effective_progress, 2), 0) as effective_progress,
