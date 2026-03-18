@@ -46,7 +46,6 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   const projectid = searchParams.get('project_id') || '';
   const isFromDossier =
     searchParams.get('navigate_source') === 'dossier_technical_summary';
-  const projectFiscalId = searchParams.get('project_fiscal_id') || '';
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -122,7 +121,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     const payload = {
       account_rid: accountId ?? '',
       tech_summary_rid: technicalSummaryId ?? '',
-      project_fiscal_rid: projectFiscalId || '',
+      project_fiscal_rid: projectid || '',
       technical_summary: Array.isArray(isRefinePrompt)
         ? isRefinePrompt
         : data?.technical_summary || [],
@@ -150,7 +149,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     const payload = {
       account_rid: accountId,
       tech_summary_rid: technicalSummaryId,
-      project_fiscal_rid: projectFiscalId || '',
+      project_fiscal_rid: projectid || '',
       refinement_prompt: summaryContext.trim(),
       existing_summary: data?.technical_summary || [],
     };
