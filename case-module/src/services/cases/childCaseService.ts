@@ -458,6 +458,13 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
   let now = new Date();
   if(findData) {
     dossierVersion = (findData.dossier_version ?? 0) + 1
+    await DossierFormModel.update({
+      is_initiated : true
+    }, {
+      where : {
+        rid : findData.rid
+      }
+    })
   } else {
     dossierVersion = 1
   }
