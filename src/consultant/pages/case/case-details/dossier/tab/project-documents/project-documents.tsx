@@ -184,13 +184,13 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
   const handleViewRecord = (data: AttachmentList) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: data?.project_fiscal_rid ?? '',
+      projectid: data?.attach_to ?? '',
     });
     const queryParams = new URLSearchParams({
       list: 'attachments',
       accountID: data?.account_rid || accountId || '',
       source: 'account',
-      currency_rid: data?.project_currency_rid ?? '',
+      currency_rid: data?.currency_rid ?? '',
       navigateFrom: 'case',
     });
 
