@@ -244,7 +244,7 @@ const RDForm: React.FC<RDFormProps> = ({
       hide: false,
     },
     {
-      label: 'State',
+      label: 'States',
       value: 'state',
       hide: false,
     },

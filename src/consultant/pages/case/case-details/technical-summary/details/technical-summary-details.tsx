@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { TechSummaryIcon } from '../../../../../../assets';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useTechnicalSummaryDetails,
+  useUpdateRefinePrompt,
   useUpdateTechnicalSummaryText,
 } from '../../../../../services/technical-summary/technical-summary-service';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
@@ -20,6 +22,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import Markdown from 'react-markdown';
+import TextButton from '../../../../../../components/button/text-button';
+import { SummaryList } from '../../../../../types';
 
 interface TechnicalSummaryDetailsProps {
   accountInActive: boolean;
@@ -46,7 +50,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [summaryContext, setSummaryContext] = useState('');
-
+  const [isRefinePrompt, setIsRefinePrompt] = useState<SummaryList[]>([]);
+  const [savedSummaryRid, setSavedSummaryRid] = useState('');
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const {
@@ -55,11 +60,12 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     error,
     refetch: refetchDetails,
   } = useTechnicalSummaryDetails(
-    technicalSummaryId,
+    savedSummaryRid || technicalSummaryId,
     accountId,
     projectid || ''
   );
   const updateTechSummaryText = useUpdateTechnicalSummaryText();
+  const updateRefinePrompt = useUpdateRefinePrompt();
 
   useEffect(() => {
     if (data?.technical_summary_refinement_prompt !== undefined) {
@@ -108,27 +114,62 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    const payload = {
+      account_rid: accountId ?? '',
+      tech_summary_rid: technicalSummaryId ?? '',
+      project_fiscal_rid: projectid || '',
+      technical_summary: Array.isArray(isRefinePrompt)
+        ? isRefinePrompt
+        : data?.technical_summary || [],
+    };
+    updateTechSummaryText.mutate(payload, {
+      onSuccess: async (response) => {
+        const returnedRid = response?.data?.technicalSummary?.rid;
+        if (returnedRid) {
+          setSavedSummaryRid(returnedRid);
+        }
+        setIsRefinePrompt([]);
+        await refetchDetails();
+        setIsEditing(false);
+        successToast('Technical summary saved successfully');
+      },
+      onError: () => {
+        errorToast('Failed to save technical summary. Please try again.');
+      },
+    });
+  };
+  const handleRefinePrompt = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     const payload = {
       account_rid: accountId,
       tech_summary_rid: technicalSummaryId,
       project_fiscal_rid: projectid || '',
-      summary_context: summaryContext.trim(),
+      refinement_prompt: summaryContext.trim(),
+      existing_summary: data?.technical_summary || [],
     };
-    updateTechSummaryText.mutate(payload, {
-      onSuccess: async () => {
-        await refetchDetails();
-        setIsEditing(false);
-        successToast('Refinement prompt updated successfully');
+    updateRefinePrompt.mutate(payload, {
+      onSuccess: (response) => {
+        const updatedSummary = (response as any)?.data?.data?.updated_summary;
+        setIsRefinePrompt(updatedSummary);
+        successToast('Refinement applied successfully. Click Save to confirm.');
       },
       onError: () => {
-        errorToast('Failed to update refinement prompt. Please try again.');
+        errorToast('Failed to refine technical summary. Please try again.');
       },
     });
   };
-
-  const handleCancel = () => {
+  const handleCancel = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     setSummaryContext(data?.technical_summary_refinement_prompt || '');
+    setIsRefinePrompt([]);
     setIsEditing(false);
   };
 
@@ -218,14 +259,27 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   ];
 
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
-  const transformedData = data?.technical_summary.map((item) => ({
-    label: item.title,
-    value:
-      item.summary && item.summary.trim() !== ''
-        ? item.summary
-        : 'No data available',
-    hide: hideTechnicalSummary,
-  }));
+
+  const currentSummary = useMemo(
+    () =>
+      Array.isArray(isRefinePrompt) && isRefinePrompt.length > 0
+        ? isRefinePrompt
+        : data?.technical_summary,
+    [isRefinePrompt, data?.technical_summary]
+  );
+
+  const transformedData = useMemo(
+    () =>
+      currentSummary?.map((item) => ({
+        label: item.title,
+        value:
+          item.summary && item.summary.trim() !== ''
+            ? item.summary
+            : 'No data available',
+        hide: hideTechnicalSummary,
+      })),
+    [currentSummary, hideTechnicalSummary]
+  );
 
   return (
     <div className='border border-[#CBD6E2] mb-6'>
@@ -244,6 +298,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
         showBackArrow={true}
         isExpanded={isActionItemsExpanded}
         onToggleExpand={setIsActionItemsExpanded}
+        headerStatic={true}
       />
       {isLoading ? (
         <DetailsSectionSkeleton className='p-0 m-0' />
@@ -284,15 +339,20 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
           >
             <div className='flex justify-between items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
               <div>Refinement Prompt</div>
-              {/* <div>
-                <TextButton label='Refine Prompt' onClick={() => console.log('Trigger AI Prompt')}
+              <div>
+                <TextButton
+                  label='Generate Prompt'
+                  onClick={handleRefinePrompt}
+                  disabled={!isEditing}
+                  loading={updateRefinePrompt.isPending}
                   sx={{
                     width: '130px',
                     minWidth: '130px',
                     fontSize: '13px',
                     // fontWeight: 400,
-                  }} />
-              </div> */}
+                  }}
+                />
+              </div>
             </div>
             <div className='py-2 px-6'>
               <TextareaAutosize
