@@ -1,7 +1,7 @@
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { Sequelize, where } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 
 class RdFormMapperSchemaService {
@@ -293,14 +293,20 @@ class RdFormMapperSchemaService {
     is_json: boolean,
     case_rid: string,
     schemaName: string,
-    stateRid?: string,
+    account_rid: string,
+    stateRid?: string
   ): Promise<any> {
     const orgDb = await this.getOrgDb();
+    const mainDb = await this.getMainDb();
     logMessage(
       `Fetching field: ${fieldName} from ${refTable} (JSON: ${is_json})`,
     );
 
     let query: string;
+    // Use mainDb for account table, otherwise use orgDb
+    const db = refTable === "account" ? mainDb : orgDb;
+    // Use MAIN_SCHEMA_NAME for account, otherwise use provided schemaName
+    const effectiveSchemaName = refTable === "account" ? MAIN_SCHEMA_NAME : schemaName;
 
     if (is_json) {
       // Normalize leading path segments
@@ -373,15 +379,17 @@ class RdFormMapperSchemaService {
 
       // Execute the direct query first
       try {
-        const [directResults] = await orgDb.query(
+        const [directResults] = await db.query(
           rawQueries.fetchDynamicFieldValues(
-            schemaName,
+            effectiveSchemaName,
             refTable,
             quotedJsonPath,
             stateRid,
           ),
           {
-            replacements: { case_rid, state_rid: stateRid },
+            replacements: refTable === "account" 
+              ? { account_rid } 
+              : { case_rid, state_rid: stateRid },
             raw: true,
           },
         );
@@ -408,15 +416,17 @@ class RdFormMapperSchemaService {
           const fallbackPath = jsonPath.replace(/^\$\.computed_fields\./, "$." );
           if (fallbackPath !== jsonPath) {
             const quotedFallbackPath = quoteJsonPath(fallbackPath);
-            const [fallbackResults] = await orgDb.query(
+            const [fallbackResults] = await db.query(
               rawQueries.fetchDynamicFieldValues(
-                schemaName,
+                effectiveSchemaName,
                 refTable,
                 quotedFallbackPath,
                 stateRid,
               ),
               {
-                replacements: { case_rid, state_rid: stateRid },
+                replacements: refTable === "account" 
+                  ? { account_rid } 
+                  : { case_rid, state_rid: stateRid },
                 raw: true,
               },
             );
@@ -451,7 +461,7 @@ class RdFormMapperSchemaService {
 
       const quotedJsonPathFallback = quoteJsonPath(jsonPath);
       query = rawQueries.fetchJsonbFieldValue(
-        schemaName,
+        effectiveSchemaName,
         refTable,
         quotedJsonPathFallback,
         refTable === "rd_credit_state_calculations",
@@ -461,7 +471,7 @@ class RdFormMapperSchemaService {
       const whereColumn =
         refTable === "rd_credit_country_calculations" ? "case_rid" : "rid";
       query = rawQueries.fetchRegularFieldValue(
-        schemaName,
+        effectiveSchemaName,
         refTable,
         fieldName,
         whereColumn,
@@ -470,8 +480,10 @@ class RdFormMapperSchemaService {
     }
 
     try {
-      const [results] = await orgDb.query(query, {
-        replacements: { case_rid, state_rid: stateRid },
+      const [results] = await db.query(query, {
+        replacements: refTable === "account" 
+          ? { account_rid } 
+          : { case_rid, state_rid: stateRid },
         raw: true,
       });
       const resultsArray = results as any[];
@@ -568,6 +580,7 @@ async fetchTableValues(
   fiscalYear?: string,
 ): Promise<any[]> {
   const orgDb = await this.getOrgDb();
+  const mainDb = await this.getMainDb();
   logMessage(
     `Fetching table values for field: ${fieldName} from ${refTable} (JSON: ${is_json}, Fiscal Year: ${fiscalYear})`,
   );
@@ -610,18 +623,22 @@ async fetchTableValues(
 
   // Build JOIN clause for case_projects
   const buildFromClause = (refTable: string, schemaName: string) => {
+   const effectiveSchemaName = refTable === "account" ? MAIN_SCHEMA_NAME : schemaName;
     if (refTable === "case_projects") {
       return `
-        FROM ${schemaName}.case_projects t
-        INNER JOIN ${schemaName}.project_fiscal pf
+        FROM ${effectiveSchemaName}.case_projects t
+        INNER JOIN ${effectiveSchemaName}.project_fiscal pf
           ON pf.rid = t.project_fiscal_rid`;
     }
-    return `FROM ${schemaName}.${refTable} t`;
+    return `FROM ${effectiveSchemaName}.${refTable} t`;
   };
 
   try {
     const { whereClause, replacements } = buildWhereClause(refTable);
-    const fromClause = buildFromClause(refTable, schemaName);
+    // Use MAIN_SCHEMA_NAME for account table (mainDb), otherwise use provided schemaName
+    const effectiveSchemaName = refTable === "account" ? MAIN_SCHEMA_NAME : schemaName;
+    console.log("Effective schema name:", effectiveSchemaName, "for refTable:", refTable);
+    const fromClause = buildFromClause(refTable, effectiveSchemaName);
     const orderByField = data_order_by || "created_datetime";
 
     if (is_json) {
@@ -647,8 +664,16 @@ async fetchTableValues(
 
     logMessage(`Executing query: ${query}`);
     logMessage(`Replacements: ${JSON.stringify(replacements)}`);
+    
+    // Use mainDb for account table, otherwise use orgDb
+    const db = refTable === "account" ? mainDb : orgDb;
+    
+    // Ensure account_rid is included in replacements when refTable is "account"
+    if (refTable === "account") {
+      replacements.account_rid = account_rid;
+    }
 
-    const [queryResults] = await orgDb.query(query, {
+    const [queryResults] = await db.query(query, {
       replacements,
       raw: true,
     });
