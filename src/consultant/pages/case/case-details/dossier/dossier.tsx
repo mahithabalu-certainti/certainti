@@ -566,7 +566,7 @@ const Dossier: React.FC<DossierProps> = ({
           memoizedResourceType,
           memoizedResourceStatus
         );
-      case 'version_control':
+      case 'dossier_version':
         return getVersionControlFilterFields();
       default:
         return [];
@@ -629,8 +629,8 @@ const Dossier: React.FC<DossierProps> = ({
       hide: !isAuditTimelineView,
     },
     {
-      label: 'Version Control',
-      value: 'version_control',
+      label: 'Dossier Version',
+      value: 'dossier_version',
       // hide: !isAuditTimelineView,
     },
   ];
@@ -883,7 +883,7 @@ const Dossier: React.FC<DossierProps> = ({
                     searchValue={searchText}
                   />
                 )}
-                {tabParam === 'version_control' && (
+                {tabParam === 'dossier_version' && (
                   <VersionControl
                     refreshTrigger={refreshTrigger}
                     currentPage={currentPage}

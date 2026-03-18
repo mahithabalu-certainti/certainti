@@ -193,6 +193,7 @@ export const CaseDetails = () => {
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
   const isFinancialWorkingSignoff = caseData?.financial_working_signoff;
+  const isCaseClosed = caseData?.status_name?.toLowerCase() === 'closed';
   const isAmendmentView =
     caseData?.filing_type_name === 'Amendment' &&
     caseData?.parent_case_rid !== '';
@@ -1325,7 +1326,7 @@ export const CaseDetails = () => {
               </div>
             </div>
           )}
-          {isFinancialWorkingSignoff && !isLoading && (
+          {isFinancialWorkingSignoff && !isLoading && !isCaseClosed && (
             <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
               <div>
                 <React.Suspense fallback={null}>

@@ -101,7 +101,7 @@ const RDForm: React.FC<RDFormProps> = ({
   };
 
   const handleRDFormMapperPreview = async () => {
-    if (activeTab === 'state_wise' && !selectedRegion) {
+    if (activeTab === 'state' && !selectedRegion) {
       return;
     }
     setIsPreviewError(false);
@@ -204,7 +204,7 @@ const RDForm: React.FC<RDFormProps> = ({
   // Auto-select first region when switching to state-wise tab
   useEffect(() => {
     if (
-      activeTab === 'state_wise' &&
+      activeTab === 'state' &&
       regionListOptions.length > 0 &&
       !selectedRegion
     ) {
@@ -244,15 +244,15 @@ const RDForm: React.FC<RDFormProps> = ({
       hide: false,
     },
     {
-      label: 'State-wise',
-      value: 'state_wise',
+      label: 'State',
+      value: 'state',
       hide: false,
     },
   ];
   const selectedStateName =
     regionListOptions.find((r) => r.value === selectedRegion)?.label ?? '';
   const downloadName =
-    activeTab === 'state_wise' && selectedStateName
+    activeTab === 'state' && selectedStateName
       ? `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}-${selectedStateName}`
       : `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}`;
   const handleTabChange = (value: string) => {
@@ -364,7 +364,7 @@ const RDForm: React.FC<RDFormProps> = ({
             )}
           </div>
 
-          {activeTab === 'state_wise' && (
+          {activeTab === 'state' && (
             <div
               style={{
                 display:
