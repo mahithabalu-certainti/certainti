@@ -3184,11 +3184,13 @@ export const rawQueries = {
         is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
         is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
         data_ingestion BOOLEAN NOT NULL DEFAULT FALSE,
+        is_four_part_assessment_processed BOOLEAN NOT NULL DEFAULT FALSE,
         ai_assessment_api_status TEXT,
         interaction_question_error_message JSON,
         qre_error_message JSON,
         technical_summary_error_message JSON,
-        data_ingestion_error_message JSON
+        data_ingestion_error_message JSON,
+        four_part_assessment_error_message JSON
       );
     `;
   },

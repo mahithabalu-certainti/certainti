@@ -4456,6 +4456,25 @@ class InteractionSchemaService {
     }
   }
 
+  async updateFourPartAssessmentAuditStatus(accountNumber: string, response: any) {
+    try {
+      const { AiAssessmentAudit } =
+        await this.interactionModelService.getModels(accountNumber);
+      const updateData: any = {
+        is_four_part_assessment_processed: response.statusCode === 200,
+      };
+      if (response.statusCode !== 200) {
+        updateData.four_part_assessment_error_message = response.error_message;
+      }
+      await AiAssessmentAudit.update(updateData, {
+        where: { transaction_id: response.data.transaction_id },
+      });
+    } catch (err) {
+      logMessage(`Error updating interaction status: ${err}`);
+      throw new Error("Error updating interaction status: " + (err as Error).message);
+    }
+  }
+
   async fetchValidAccountNumberByNumber(accountNumber: string) {
     try {
       if (!this.mainDbSequelize) {

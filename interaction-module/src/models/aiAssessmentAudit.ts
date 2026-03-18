@@ -20,7 +20,8 @@ export interface AiAssessmentAuditAttributes {
   qre_error_message?: JSON;
   tech_summary_error_message?: JSON;
   data_ingestion_error_message?: JSON;
-
+  is_four_part_assessment_processed? : boolean
+  four_part_assessment_error_message? : JSON
 }
 
 export interface AiAssessmentAuditCreationAttributes extends Optional<AiAssessmentAuditAttributes, "rid" | "modified_by" | "modified_datetime"> {}
@@ -44,6 +45,8 @@ export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAsse
   public qre_error_message?: JSON;
   public tech_summary_error_message?: JSON;
   public data_ingestion_error_message?: JSON;
+  public is_four_part_assessment_processed? : boolean
+  public four_part_assessment_error_message? : JSON
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return AiAssessmentAudit.init(
@@ -79,6 +82,11 @@ export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAsse
           allowNull: true
         },
         data_ingestion_error_message:{
+          type: DataTypes.JSON,
+          allowNull: true
+        },
+        is_four_part_assessment_processed : { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        four_part_assessment_error_message:{
           type: DataTypes.JSON,
           allowNull: true
         }
