@@ -1296,8 +1296,9 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
 
   export const interactionFieldMappings = [
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-    { permissionField: 'interaction_assessment_source_rid', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
-    { permissionField: 'four_part_assessment_rid', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
+    { permissionField: 'interaction_assessment_source_name', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
+    { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
+    { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
     { permissionField: 'interaction_batch_id', exportField: 'Batch ID', dataField: 'interaction_batch_id' },
     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
     { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
@@ -1342,8 +1343,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
 
    export const accountinteractionFieldMappings = [
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-    { permissionField: 'interaction_assessment_source_rid', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
-    { permissionField: 'four_part_assessment_rid', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
+    { permissionField: 'interaction_assessment_source_name', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
+    { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
     { permissionField: 'interaction_batch_id', exportField: 'Batch ID', dataField: 'interaction_batch_id' },
     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
      { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
