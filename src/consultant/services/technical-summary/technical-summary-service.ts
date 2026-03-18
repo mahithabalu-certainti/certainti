@@ -6,6 +6,7 @@ import {
   TechnicalSummaryList,
   TechnicalSummaryListResponse,
   TechnicalSummaryListURLParams,
+  TechnicalSummaryRefinePromptRequest,
   TechnicalSummaryTextUpdateRequest,
   TechnicalSummaryTextUpdateResponse,
 } from '../../types';
@@ -95,8 +96,23 @@ export const updateTechnicalSummaryText = async (
 ): Promise<TechnicalSummaryTextUpdateResponse> => {
   try {
     const { data } =
-      await interactionServiceApi.put<TechnicalSummaryTextUpdateResponse>(
-        '/api/interactions/technicalSummary/update',
+      await interactionServiceApi.post<TechnicalSummaryTextUpdateResponse>(
+        '/api/interactions/refineSummary/save',
+        body
+      );
+    return data;
+  } catch (error) {
+    console.error('Error updating technical summary text:', error);
+    throw error;
+  }
+};
+export const updateRefinePrompt = async (
+  body: TechnicalSummaryRefinePromptRequest
+): Promise<TechnicalSummaryTextUpdateResponse> => {
+  try {
+    const { data } =
+      await interactionServiceApi.post<TechnicalSummaryTextUpdateResponse>(
+        '/api/interactions/refineSummary',
         body
       );
     return data;
@@ -113,6 +129,15 @@ export const useUpdateTechnicalSummaryText = () => {
     TechnicalSummaryTextUpdateRequest
   >({
     mutationFn: (body) => updateTechnicalSummaryText(body),
+  });
+};
+export const useUpdateRefinePrompt = () => {
+  return useMutation<
+    TechnicalSummaryTextUpdateResponse,
+    Error,
+    TechnicalSummaryRefinePromptRequest
+  >({
+    mutationFn: (body) => updateRefinePrompt(body),
   });
 };
 
