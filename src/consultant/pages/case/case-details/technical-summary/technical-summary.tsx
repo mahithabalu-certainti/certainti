@@ -183,7 +183,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   const handleViewTechnicalSummary = (row: TechnicalSummaryList) => {
     if (row) {
       searchParams.set('technical_summary_id', row.rid);
-      searchParams.set('project_id', row.project_rid);
+      searchParams.set('project_id', row.project_fiscal_rid);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };

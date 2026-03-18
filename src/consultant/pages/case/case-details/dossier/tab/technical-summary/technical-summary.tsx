@@ -161,7 +161,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
     if (row) {
       searchParams.set('list', 'technicalSummary');
       searchParams.set('technical_summary_id', row.rid);
-      searchParams.set('project_id', row.project_rid);
+      searchParams.set('project_id', row.project_fiscal_rid);
       searchParams.set('navigate_source', 'dossier_technical_summary');
       navigate(
         { search: searchParams.toString() },

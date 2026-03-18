@@ -113,6 +113,12 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Case Status',
           value: cases?.status_name || '-',
+          className: (() => {
+            const status = cases?.status_name;
+            if (!status) return '';
+            if (status === 'Closed') return 'text-[#3EA72F] font-semibold';
+            return '';
+          })(),
         },
 
         {
