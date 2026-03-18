@@ -2052,6 +2052,15 @@ WHERE dmf.country_rid = '${countryRid}'
     whereColumn: string,
     includeStateRid: boolean,
   ) {
+     if(refTable === 'account')
+    {
+      return `
+        SELECT ${fieldName} AS field_value
+        FROM ${schemaName}.${refTable}
+        WHERE ${whereColumn} = :account_rid
+        LIMIT 1`;
+
+    }
     if (includeStateRid) {
       return `
         SELECT ${fieldName} AS field_value
@@ -2059,6 +2068,7 @@ WHERE dmf.country_rid = '${countryRid}'
         WHERE case_rid = :case_rid AND state_rid = :state_rid
         LIMIT 1`;
     }
+    
     return `
         SELECT ${fieldName} AS field_value
         FROM ${schemaName}.${refTable}
