@@ -471,7 +471,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     size : '',
     created_datetime : now,
     dossier_metadata : jsonToString,
-    dossier_version : dossierVersion
+    dossier_version : dossierVersion,
+    is_initiated : true
   });
   await this.cloneTechnicalSummaryForDossierForm(accountNumber, caseRid, accountRid, userId, schemaName);
 }
@@ -1837,6 +1838,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         const [caseDetails] : any[] = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
         if(data.type === 'RD Forms') {
           await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
           await orgDbTransaction.commit();
           await mainDbTransaction.commit();
           dynamicEntityType = entityTypes.RD_FORM  
@@ -1860,6 +1862,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           await orgDb.query(rawQueries.revokeClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
           await orgDb.query(rawQueries.revokeClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
           await mainDb.query(rawQueries.revokeClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid), {transaction : mainDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
           let mapIdsForCaseProjectregions : any[] = []
           let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
           caseProjectIds.forEach((d) => {
