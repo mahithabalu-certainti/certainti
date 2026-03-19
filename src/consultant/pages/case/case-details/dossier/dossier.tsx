@@ -161,7 +161,7 @@ const Dossier: React.FC<DossierProps> = ({
     useState<boolean>(false);
   const closeCaseFormRef = React.useRef<{ handleSubmit: () => void }>(null);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
-
+  const isTaskCompleted = caseDetails?.all_task_completed;
   const DOWNLOAD_OPTIONS = [
     'Qualified Projects',
     'Technical Summary',
@@ -674,6 +674,7 @@ const Dossier: React.FC<DossierProps> = ({
       onClick: () => closeCaseFormRef.current?.handleSubmit(),
       disabled:
         !caseDetails?.rd_form_signoff ||
+        !isTaskCompleted ||
         caseDetails?.status_name.toLowerCase() === 'closed',
       sx: { width: '80px', minWidth: '80px' },
       hide: tabParam !== 'close_case',
@@ -708,7 +709,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={
           (tabParam !== 'rd_forms' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
@@ -785,7 +786,7 @@ const Dossier: React.FC<DossierProps> = ({
               defaultValue={tabParam}
             />
             {caseDetails?.case_total_qualified_projects === 0 ||
-            caseDetails?.case_total_qualified_projects === '0' ? (
+              caseDetails?.case_total_qualified_projects === '0' ? (
               <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
                 <div>
                   <React.Suspense fallback={null}>
