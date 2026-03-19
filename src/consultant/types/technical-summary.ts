@@ -38,6 +38,7 @@ export type TechnicalSummaryList = {
   modified_datetime: string | null;
   project_rid: string;
   project_fiscal_rid: string;
+  signoff: boolean;
 };
 
 export interface TechnicalSummaryListResponse {

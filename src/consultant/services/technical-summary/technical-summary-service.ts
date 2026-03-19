@@ -53,7 +53,8 @@ export const useTechnicalSummaryList = (
 const fetchTechnicalSummaryDetails = async (
   tech_summary_rid: string,
   account_rid: string,
-  project_fiscal_rid: string
+  project_fiscal_rid: string,
+  case_rid?: string
 ): Promise<TechnicalSummaryDetails> => {
   const response =
     await interactionServiceApi.get<TechnicalSummaryDetailsResponse>(
@@ -61,6 +62,7 @@ const fetchTechnicalSummaryDetails = async (
         tech_summary_rid,
         account_rid,
         project_fiscal_rid,
+        case_rid,
       })
     );
   return response.data.data;
@@ -69,7 +71,8 @@ const fetchTechnicalSummaryDetails = async (
 export const useTechnicalSummaryDetails = (
   tech_summary_rid: string,
   account_rid: string,
-  project_fiscal_rid: string
+  project_fiscal_rid: string,
+  case_rid?: string
 ): UseQueryResult<TechnicalSummaryDetails | undefined, Error> => {
   return useQuery<TechnicalSummaryDetails | undefined, Error>({
     queryKey: [
@@ -77,12 +80,14 @@ export const useTechnicalSummaryDetails = (
       tech_summary_rid,
       account_rid,
       project_fiscal_rid,
+      case_rid,
     ],
     queryFn: () =>
       fetchTechnicalSummaryDetails(
         tech_summary_rid,
         account_rid,
-        project_fiscal_rid
+        project_fiscal_rid,
+        case_rid
       ),
     retry: 0,
     gcTime: 0,

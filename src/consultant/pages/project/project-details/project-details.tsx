@@ -857,6 +857,7 @@ export const ProjectDetails = () => {
         return (
           <TechnicalSummary
             accountInActive={accountInActive || projectInActive}
+            isProjectSignedOff={isProjectSignedOff}
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
             activityMenuItems={activityMenuItems}

@@ -41,10 +41,12 @@ export const getTechnicalSummaryDetailsURL = ({
   tech_summary_rid,
   account_rid,
   project_fiscal_rid,
+  case_rid,
 }: {
   tech_summary_rid: string;
   account_rid: string;
   project_fiscal_rid: string;
+  case_rid?: string;
 }): string => {
   const baseUrl = '/api/interactions/technicalSummary/details';
   const searchParams = new URLSearchParams();
@@ -58,7 +60,9 @@ export const getTechnicalSummaryDetailsURL = ({
   if (project_fiscal_rid !== undefined) {
     searchParams.set('project_fiscal_rid', project_fiscal_rid.toString());
   }
-
+  if (case_rid !== undefined) {
+    searchParams.set('case_rid', case_rid.toString());
+  }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

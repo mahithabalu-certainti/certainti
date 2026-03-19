@@ -30,6 +30,7 @@ interface TechnicalSummaryDetailsProps {
   handleBackClick: () => void;
   isActionItemsExpanded: boolean;
   setIsActionItemsExpanded: (value: boolean) => void;
+  isProjectSignedOff: boolean;
 }
 
 const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
@@ -37,6 +38,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   handleBackClick,
   isActionItemsExpanded,
   setIsActionItemsExpanded,
+  isProjectSignedOff,
 }) => {
   const [searchParams] = useSearchParams();
   const { projectid } = useParams();
@@ -330,7 +332,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                 <TextButton
                   label='Generate Prompt'
                   onClick={handleRefinePrompt}
-                  disabled={!isEditing}
+                  disabled={!isEditing || isProjectSignedOff}
                   loading={updateRefinePrompt.isPending}
                   sx={{
                     width: '130px',
