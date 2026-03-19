@@ -391,8 +391,8 @@ export const getProjectColumns = (
     sortable: true,
     width: 120,
     hide:
-      !permissionMap?.['is_assesed']?.read &&
-      !permissionMap?.['is_assesed']?.edit,
+      !permissionMap?.['is_assessed']?.read &&
+      !permissionMap?.['is_assessed']?.edit,
     render: (row: Project) => {
       const isChild = row._level !== undefined && row._level === 1;
       if (!isChild) return '-';

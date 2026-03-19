@@ -238,12 +238,12 @@ export const getAllProjectListColumns = (
     label: 'Is Assessed?',
     sortable: true,
     editable:
-      permissionMap?.['is_assesed']?.read &&
-      permissionMap?.['is_assesed']?.edit,
+      permissionMap?.['is_assessed']?.read &&
+      permissionMap?.['is_assessed']?.edit,
     width: 120,
     hide:
-      !permissionMap?.['is_assesed']?.read &&
-      !permissionMap?.['is_assesed']?.edit,
+      !permissionMap?.['is_assessed']?.read &&
+      !permissionMap?.['is_assessed']?.edit,
     render: (row: Project) => {
       const isChild = row._level !== undefined && row._level === 1;
       if (!isChild) return '-';
@@ -256,10 +256,6 @@ export const getAllProjectListColumns = (
     },
     conditionallyEdit: [
       { key: 'account_status_name', matchValue: ['Active'] },
-      {
-        key: 'is_project_exists' as keyof Project,
-        matchValue: false,
-      },
       {
         key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,

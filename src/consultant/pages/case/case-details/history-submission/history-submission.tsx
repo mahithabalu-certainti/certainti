@@ -57,7 +57,6 @@ import {
   checkPermission,
   costDisplay,
   getFiscalYears,
-  valueDisplay,
 } from '../../../../../common-utils/common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { accountDetailsProps } from '../../../account-details/utils';
@@ -1478,6 +1477,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         size='small'
                                         fullWidth
                                         placeholder='Enter Total Project Cost'
+                                        inputProps={{
+                                          style: {
+                                            textAlign: !isNewRow
+                                              ? 'right'
+                                              : 'left',
+                                          },
+                                        }}
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1575,6 +1581,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         size='small'
                                         fullWidth
                                         placeholder='Enter Total FTE QRE Cost'
+                                        inputProps={{
+                                          style: {
+                                            textAlign: !isNewRow
+                                              ? 'right'
+                                              : 'left',
+                                          },
+                                        }}
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1673,6 +1686,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         size='small'
                                         fullWidth
                                         placeholder='Enter Total Subcon QRE Cost'
+                                        inputProps={{
+                                          style: {
+                                            textAlign: !isNewRow
+                                              ? 'right'
+                                              : 'left',
+                                          },
+                                        }}
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1771,6 +1791,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         size='small'
                                         fullWidth
                                         placeholder='Enter Total Non-Labor QRE Cost'
+                                        inputProps={{
+                                          style: {
+                                            textAlign: !isNewRow
+                                              ? 'right'
+                                              : 'left',
+                                          },
+                                        }}
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1868,6 +1895,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         size='small'
                                         fullWidth
                                         placeholder='Enter Total QRE'
+                                        inputProps={{
+                                          style: {
+                                            textAlign: !isNewRow
+                                              ? 'right'
+                                              : 'left',
+                                          },
+                                        }}
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -1940,9 +1974,10 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       <TextField
                                         value={
                                           submission.total_rd_credits
-                                            ? valueDisplay(
+                                            ? costDisplay(
                                                 submission.total_rd_credits ||
-                                                  ''
+                                                  '',
+                                                submission.currency_symbol
                                               )
                                             : ''
                                         }
@@ -1965,6 +2000,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         size='small'
                                         fullWidth
                                         placeholder='Enter Total RD Credits'
+                                        inputProps={{
+                                          style: {
+                                            textAlign: !isNewRow
+                                              ? 'right'
+                                              : 'left',
+                                          },
+                                        }}
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',
@@ -2037,9 +2079,10 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       <TextField
                                         value={
                                           submission.annual_gross_receipts
-                                            ? valueDisplay(
+                                            ? costDisplay(
                                                 submission.annual_gross_receipts ||
-                                                  ''
+                                                  '',
+                                                submission.currency_symbol
                                               )
                                             : ''
                                         }
@@ -2062,6 +2105,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                         size='small'
                                         fullWidth
                                         placeholder='Enter Annual Gross Receipts'
+                                        inputProps={{
+                                          style: {
+                                            textAlign: !isNewRow
+                                              ? 'right'
+                                              : 'left',
+                                          },
+                                        }}
                                         sx={{
                                           '& .MuiInputBase-root': {
                                             height: '28px',

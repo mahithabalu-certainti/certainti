@@ -57,7 +57,6 @@ import {
   CaseIcon,
   CaseTeamIcon,
   ChecklistIcon,
-  ComingSoon,
   ConfigRuleIcon,
   DetailsKeyContactErrorIcon,
   DossierIcon,
@@ -127,6 +126,7 @@ import { CircularProgress } from '@mui/material';
 import { Dossier } from './dossier';
 import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
 import { FourPartAssessment } from '../../four-part-assessment';
+import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -1051,8 +1051,8 @@ export const CaseDetails = () => {
         );
       default:
         return (
-          <div className='flex items-center justify-center h-full'>
-            <ComingSoon alt='comingSoon' />
+          <div className='w-full pr-4 pl-2 py-2'>
+            <DetailsSectionSkeleton />
           </div>
         );
     }
