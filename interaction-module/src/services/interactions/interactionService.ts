@@ -1447,7 +1447,8 @@ export class InteractionService {
 
   async getTechnicalSummaryDetailsById(
     techSummaryId: string,
-    accountRid: string
+    accountRid: string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1470,7 +1471,8 @@ export class InteractionService {
       const techSummaryDetails =
         await this.interactionSchemaService.fetchTechnicalSummaryDetailsById(
           accountNumber,
-          techSummaryId
+          techSummaryId,
+          caseRid
         );
 
       if (!techSummaryDetails) {

@@ -744,7 +744,8 @@ async function getTechnicalSummaryDetailsById(
     const interactionDetails =
       await interactionService.getTechnicalSummaryDetailsById(
         value.tech_summary_rid,
-        value.account_rid
+        value.account_rid,
+        value.case_rid
       );
 
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
