@@ -971,7 +971,7 @@ export class AttachmentService {
             : bType.localeCompare(aType);
         });
       }
-      if(attachmentLevel === 'project') {
+      if(attachmentLevel === 'project' && type === DOSSIER_NAME && attachments.length > 0) {
         const findFiscalRid : any = await orgDbSequelize.query(fetchProjectIds(schemaName, attachments))
         if(findFiscalRid[0].length > 0) {
           const mapCurrencyWithFiscal = new Map(findFiscalRid[0].map((d : any) => [d.rid, d.currency_rid]));
