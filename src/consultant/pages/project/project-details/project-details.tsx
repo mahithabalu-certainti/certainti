@@ -34,6 +34,7 @@ import {
   ManageGroupAccount,
   DetailsKeyContactErrorIcon,
   FourPartIcon,
+  RdStatusIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -59,6 +60,7 @@ import {
   MenuItem,
   NotesListURLParams,
   ProjectFinancialResourceExportParams,
+  RdAssessmentStatusExportURLParams,
   TechnicalSummaryExportListParams,
 } from '../../../types';
 import {
@@ -106,6 +108,8 @@ import ProjectActivities from './project-activities/project-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
 import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
 import { FourPartAssessment } from '../../four-part-assessment';
+import { ExportRdAssessmentStatusList } from '../../../services/rd-assessment/rd-assessment-service';
+import { RdAssessmentStatus } from '../../rd-assessment-status';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -192,6 +196,14 @@ export const ProjectDetails = () => {
       sort: 'r_number',
       sort_by: 'ASC',
       type: 'project',
+    });
+
+  const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
+    useState<RdAssessmentStatusExportURLParams>({
+      search: '',
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
     });
 
   const [activityModalId, setActivityModalId] = useState<string | null>(null);
@@ -434,6 +446,11 @@ export const ProjectDetails = () => {
     AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
   );
 
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -447,6 +464,8 @@ export const ProjectDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
       return !isFourPartExportEnable;
+    } else if (list === 'rd_assessment_status') {
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
@@ -502,7 +521,8 @@ export const ProjectDetails = () => {
       list !== 'projectsTask' &&
       list !== 'interactions' &&
       list !== 'technicalSummary' &&
-      list !== 'four_part_assessment'
+      list !== 'four_part_assessment' &&
+      list !== 'rd_assessment_status'
     ) {
       return;
     }
@@ -522,6 +542,11 @@ export const ProjectDetails = () => {
 
     if (exportType === 'four_part_assessment') {
       ExportFourPartAssessmentList(fourPartParams);
+      return;
+    }
+
+    if (exportType === 'rd_assessment_status') {
+      ExportRdAssessmentStatusList(rdAssessmentStatusParams);
       return;
     }
 
@@ -853,6 +878,15 @@ export const ProjectDetails = () => {
             moduleLevel='project'
           />
         );
+      case 'rd_assessment_status':
+        return (
+          <RdAssessmentStatus
+            setExportType={setExportType}
+            setRdAssessmentStatusParams={setRdAssessmentStatusParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='project'
+          />
+        );
       case 'technicalSummary':
         return (
           <TechnicalSummary
@@ -977,6 +1011,13 @@ export const ProjectDetails = () => {
         id: AllModules.FOUR_PART_ASSESSMENT,
         disabled: false,
         icon: FourPartIcon,
+      },
+      {
+        name: 'RD Assessment Status',
+        key: 'rd_assessment_status',
+        id: AllModules.RD_ASSESSMENT_STATUS,
+        disabled: false,
+        icon: RdStatusIcon,
       },
       {
         name: 'Technical Summary',
