@@ -317,12 +317,15 @@ export const rawQueries = {
     schemaName: string,
     whereString: string,
     dbSortBy: string,
-    dbSortOrder: string,
-    needsInMemoryProcessing: boolean
+    dbSortOrder: string
   ) {
     return `
       SELECT 
-        a.*,
+        a.rid,
+        a.account_rid,
+        a.project_fiscal_rid,
+        a.transaction_id,
+        a.created_datetime,
         p.project_code,
         p.currency_rid,
         ad.account_name,
@@ -350,8 +353,8 @@ export const rawQueries = {
       LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
       LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
       ${whereString}
-      ${!needsInMemoryProcessing ? `ORDER BY ${dbSortBy} ${dbSortOrder}` : ''}
-      ${!needsInMemoryProcessing ? `LIMIT :limit OFFSET :offset` : ''}
+      ORDER BY ${dbSortBy} ${dbSortOrder}
+      LIMIT :limit OFFSET :offset
     `;
   },
   fetchAiAssessmentAuditCount(schemaName: string, whereString: string) {

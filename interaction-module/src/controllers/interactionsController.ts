@@ -47,6 +47,7 @@ import {
 
 const services = configurations.getInstance().getServices();
 const interactionService = services.interactionService;
+const interactionChildService = services.interactionChildService;
 
 /**
  * Handles the creation of a new interaction based on the incoming HTTP request.
@@ -1450,7 +1451,7 @@ async function exportAllInteractions(req: Request, res: Response) {
         allowedFieldSet.add(field.field_name);
       }
     }
-    for(const f of fpaFields) {
+    for (const f of fpaFields) {
       if (f.read) {
         allowedFieldSet.add(f.field_name);
       }
@@ -1472,9 +1473,9 @@ async function exportAllInteractions(req: Request, res: Response) {
             let resultMap: { [key: string]: any } = {
               r_number: d.r_number,
               interaction_level_name: d.interaction_level_name,
-              interaction_assessment_source_name : d.interaction_assessment_source_name,
-              interaction_batch_id : d.interaction_batch_id,
-              four_part_r_number : d.four_part_r_number,
+              interaction_assessment_source_name: d.interaction_assessment_source_name,
+              interaction_batch_id: d.interaction_batch_id,
+              four_part_r_number: d.four_part_r_number,
               project_code: d.project_code,
               interaction_age: d.interaction_age,
               fiscal_year: d.fiscal_year,
@@ -3044,7 +3045,7 @@ async function listAiAssessmentAudit(req: Request, res: Response): Promise<void>
     const page: number = value.page || 1;
     const limit: number = value.limit || 10;
 
-    const result = await interactionService.listAiAssessmentAudit(
+    const result = await interactionChildService.listAiAssessmentAudit(
       value,
       page,
       limit,
@@ -3100,7 +3101,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
     const page: number = 1;
     const limit: number = Number.MAX_SAFE_INTEGER; // Fetch all for export
 
-    const result = await interactionService.listAiAssessmentAudit(
+    const result = await interactionChildService.listAiAssessmentAudit(
       value,
       page,
       limit,
@@ -3140,15 +3141,10 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
             account_name: d.account_name || "",
             project_code: d.project_code || "",
             created_datetime: formatDate(d.created_datetime) || "",
-            created_by_name: d.created_by_name || "",
-            modified_datetime: formatDate(d.modified_datetime) || "",
-            modified_by_name: d.modified_by_name || "",
-            ai_assessment_request_api_status: d.ai_assessment_request_api_status || "",
             four_part_assessment: d.four_part_assessment || "",
             project_summary: d.project_summary || "",
             qre_summary: d.qre_summary || "",
-            interaction_status: d.interaction_status || "",
-            data_ingestion: d.data_ingestion ? "Yes" : "No"
+            interaction_status: d.interaction_status || ""
           };
 
           const exportRecord: Record<string, any> = {};
