@@ -128,6 +128,7 @@ import { CircularProgress } from '@mui/material';
 import { Dossier } from './dossier';
 import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
 import { FourPartAssessment } from '../../four-part-assessment';
+import CloseCaseModal from './dossier/close-case-modal';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 import { ExportRdAssessmentStatusList } from '../../../services/rd-assessment/rd-assessment-service';
 import { RdAssessmentStatus } from '../../rd-assessment-status';
@@ -167,7 +168,7 @@ export const CaseDetails = () => {
   const { dossierFinancialStatus, financialData } = useSelector(
     (state: RootState) => state.account
   );
-
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const setDossierFinancialStatus = (status: boolean) => {
     dispatch(setDossierFinancialStatusAction(status));
   };
@@ -338,7 +339,7 @@ export const CaseDetails = () => {
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
-
+  const closeCaseTabView = searchParams.get('tab') === 'close_case';
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -425,6 +426,10 @@ export const CaseDetails = () => {
   const TriggerAIEnable = checkPermission(
     permission,
     AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+  const isCaseCloseEnable = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_CLOSE_CASE
   );
 
   const isActivityTaskExportEnable = checkPermission(
@@ -784,6 +789,9 @@ export const CaseDetails = () => {
     },
   ];
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
   const handleActionsClick = () => {
     console.log('Actions clicked');
   };
@@ -1292,6 +1300,15 @@ export const CaseDetails = () => {
           backBtnLabel='Back To Cases'
           headerButtons={[
             {
+              label: 'Close Case',
+              disabled:
+                !caseData?.rd_form_signoff ||
+                caseData?.status_name?.toLowerCase() === 'closed',
+              onClick: () => setIsModalOpen(true),
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !isCaseCloseEnable || closeCaseTabView,
+            },
+            {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
               disabled: accountInActive || isFinancialWorkingSignoff,
@@ -1406,6 +1423,19 @@ export const CaseDetails = () => {
         modalId={activityModalId}
         onCloseModal={() => setActivityModalId(null)}
         sourceDetails={sourceDetails}
+      />
+      <CloseCaseModal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        caseDetails={{
+          country_name: caseData?.country_name,
+          country_rid: caseData?.country_rid,
+          country_code: caseData?.country_code,
+          fiscal_year: caseData?.fiscal_year,
+          all_task_completed: caseData?.all_task_completed,
+          currency_symbol: caseData?.currency_symbol,
+        }}
+        refetchCaseDetails={refetchCaseDetails}
       />
     </div>
   );

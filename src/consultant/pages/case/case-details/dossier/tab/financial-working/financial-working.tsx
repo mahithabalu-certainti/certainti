@@ -142,10 +142,10 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
             />
           </div>
         ) as React.ReactNode as string,
-        width: 180,
-        // sx: (row?: FinancialWorkingRow) => ({
-        //   textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
-        // }),
+        // width: 180,
+        sx: (row?: FinancialWorkingRow) => ({
+          textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
+        }),
         sortId: projectId,
         render: (row: FinancialWorkingRow) => {
           const value = row[projectId];
@@ -173,11 +173,11 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
           className='font-bold'
         />
       ) as React.ReactNode as string,
-      width: 150,
+      // width: 150,
       sortId: 'Total',
-      // sx: (row?: FinancialWorkingRow) => ({
-      //   textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
-      // }),
+      sx: (row?: FinancialWorkingRow) => ({
+        textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
+      }),
       render: (row: FinancialWorkingRow) => {
         const isBold = boldRows.includes(row.row_label);
         const formattedValue = formatValue(row.Total, symbol);
