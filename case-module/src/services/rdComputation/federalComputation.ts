@@ -171,7 +171,7 @@ export class FederalComputationService {
                             return {
                                 "Project Name": d.project_client_group || d.project_name,
                                 "Total Projects" : JSON.stringify(d.total_projects_count) || '0',
-                                "Employees" : `${d.employees}`,
+                                "Employees" : d.employees,
                                 "EPW" : d.epw,
                                 [reductionValue] : d.reductions,
                                 "Net EPW" : d.net_epw,
