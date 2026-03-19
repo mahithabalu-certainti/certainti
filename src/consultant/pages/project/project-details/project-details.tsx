@@ -446,10 +446,10 @@ export const ProjectDetails = () => {
     AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
   );
 
-  // const isRdAssessmentStatusExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
-  // );
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
+  );
 
   const checkExport = () => {
     const list = searchParams.get('list');
@@ -465,7 +465,7 @@ export const ProjectDetails = () => {
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
       return !isFourPartExportEnable;
     } else if (list === 'rd_assessment_status') {
-      return false;
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {

@@ -7,9 +7,6 @@ import {
   RdAssessmentStatusExportURLParams,
   ExportRdAssessmentStatusListResponse,
 } from '../../types';
-import { rdAssessmentMockData } from '../../mockdata/rd-assessment-mock';
-
-const USER_MOCK = true;
 
 export const fetchRdAssessmentStatusList = async (
   params: RdAssessmentStatusListURLParams
@@ -17,13 +14,6 @@ export const fetchRdAssessmentStatusList = async (
   auditInfo: RdAssessmentStatusItem[];
   count: number;
 }> => {
-  if (USER_MOCK) {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return {
-      auditInfo: rdAssessmentMockData.data.auditInfo,
-      count: rdAssessmentMockData.data.count,
-    };
-  }
   const response =
     await interactionServiceApi.post<RdAssessmentStatusListApiResponse>(
       `/api/interactions/rdAssessmentAudit/list`,
@@ -59,7 +49,7 @@ export const ExportRdAssessmentStatusList = async (
   params: RdAssessmentStatusExportURLParams
 ): Promise<void> => {
   try {
-    const filename = 'rd_assessment_status_list.xlsx';
+    const filename = 'rd_assessment_status_records.xlsx';
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const response =

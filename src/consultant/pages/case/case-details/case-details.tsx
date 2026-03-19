@@ -513,10 +513,10 @@ export const CaseDetails = () => {
     AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
   );
 
-  // const isRdAssessmentStatusExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
-  // );
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
+  );
 
   const handleExport = (exportType: ExportType) => {
     if (
@@ -715,7 +715,7 @@ export const CaseDetails = () => {
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
       return !isFourPartExportEnable;
     } else if (list === 'rd_assessment_status') {
-      return false;
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
       const tab = searchParams.get('tab') || 'all';
       if (tab === 'all') {

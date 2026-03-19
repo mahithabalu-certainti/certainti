@@ -30,34 +30,17 @@ export interface ExportRdAssessmentStatusListResponse {
 
 export type RdAssessmentStatusItem = {
   rid: string;
-  created_by: string | null;
-  modified_by: string | null;
-  created_datetime: string | null;
-  modified_datetime: string | null;
-  transaction_id: string | null;
-  project_rid: string | null;
-  project_fiscal_rid: string | null;
-  account_rid: string | null;
-  is_qre_processed: boolean;
-  is_tech_summary_processed: boolean;
-  is_interaction_question_processed: boolean;
-  is_four_part_assessment_processed: boolean;
-  data_ingestion: boolean;
-  ai_assessment_api_status: string | null;
-  interaction_question_error_message: string | null;
-  qre_error_message: string | null;
-  technical_summary_error_message: string | null;
-  data_ingestion_error_message: string | null;
-  four_part_assessment_error_message: string | null;
-  project_code: string | null;
-  currency_rid: string | null;
-  account_name: string | null;
-  four_part_assessment: string | null;
-  project_summary: string | null;
-  qre_summary: string | null;
-  interaction_status: string | null;
-  created_by_name: string | null;
-  modified_by_name: string | null;
+  account_rid: string;
+  project_fiscal_rid: string;
+  transaction_id: string;
+  created_datetime: string;
+  project_code: string;
+  currency_rid: string;
+  account_name: string;
+  four_part_assessment: string;
+  project_summary: string;
+  qre_summary: string;
+  interaction_status: string;
 };
 
 export interface RdAssessmentStatusListApiResponse {

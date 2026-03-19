@@ -1,11 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   getRdAssessmentStatusFilterFields,
   getRdAssessmentStatusTableColumns,
 } from './helper';
 import {
+  AllModules,
   AllPermissions,
   FilterTypes,
   OverviewTabs,
@@ -26,6 +32,9 @@ import { ListTable, ManageColumnsPopover } from '../../../components/table';
 import Timeline from '../../../pages/timeline/timeline';
 import { moduleColorMap } from '../four-part-assessment/helper';
 import { RdStatusIcon } from '../../../assets';
+import { checkPermission } from '../../../common-utils';
+import { AccessRestricted } from '../../../components/account-restricted';
+import { PROJECT_DETAILS } from '../../../routes';
 
 const RdAssessmentStatusTabs: OverviewTabs[] = [
   {
@@ -57,6 +66,7 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
   activityMenuItems,
   moduleLevel,
 }) => {
+  const navigate = useNavigate();
   const { accountid, caseId, projectid } = useParams();
   const [searchParams] = useSearchParams();
   const accountID = searchParams.get('accountID') || '';
@@ -91,7 +101,9 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
 
   const { data, isLoading, isError } = useRdAssessmentStatusList(
     {
@@ -134,31 +146,31 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
   }, [appliedFilters, tableParams.sortOrder, tableParams.sortBy, searchText]);
 
   // Permissions
-  // const rdAssessmentStatusEnable = checkPermission(
-  //   modules,
-  //   AllModules.RD_ASSESSMENT_STATUS
-  // );
+  const rdAssessmentStatusEnable = checkPermission(
+    modules,
+    AllModules.RD_ASSESSMENT_STATUS
+  );
 
-  // const isRdAssessmentStatusViewEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.RD_ASSESSMENT_STATUS_VIEW_EDIT
-  // );
+  const isRdAssessmentStatusViewEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_VIEW_EDIT
+  );
 
-  // const rdAssessmentStatusEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.RD_ASSESSMENT_STATUS_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const rdAssessmentStatusEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.RD_ASSESSMENT_STATUS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const rdAssessmentPermissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   rdAssessmentStatusEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [rdAssessmentStatusEditFields]);
+  const rdAssessmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    rdAssessmentStatusEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [rdAssessmentStatusEditFields]);
 
   const projectViewEditFields = useMemo(
     () =>
@@ -211,16 +223,31 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
     }));
   };
 
+  const handleViewProject = (data: RdAssessmentStatusItem) => {
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: data?.project_fiscal_rid ?? '',
+    });
+    const queryParams = new URLSearchParams({
+      accountID: data?.account_rid || accountid || accountID || '',
+      source: 'account',
+      currency_rid: data?.currency_rid ?? '',
+      navigateFrom: 'case',
+    });
+
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const rdAssessmentStatusColumns = getRdAssessmentStatusTableColumns(
     moduleLevel,
-    projectPermissionMap
-    // rdAssessmentPermissionMap
+    projectPermissionMap,
+    rdAssessmentPermissionMap,
+    handleViewProject
   );
 
   const rdAssessmentStatusFilterFields = getRdAssessmentStatusFilterFields(
     moduleLevel,
-    projectPermissionMap
-    // rdAssessmentPermissionMap
+    projectPermissionMap,
+    rdAssessmentPermissionMap
   );
 
   const getRowId = (row: RdAssessmentStatusItem) => row.rid;
@@ -235,7 +262,7 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
 
   const restrictedColumns = [
     {
-      id: 'project_code',
+      id: moduleLevel === 'project' ? 'created_datetime' : 'project_code',
       canHide: false,
       canDrag: false,
     },
@@ -275,9 +302,9 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
 
   const currentModuleColors = moduleColorMap[moduleLevel];
 
-  // if (!rdAssessmentStatusEnable || !isRdAssessmentStatusViewEnable) {
-  //   return <AccessRestricted />;
-  // }
+  if (!rdAssessmentStatusEnable || !isRdAssessmentStatusViewEnable) {
+    return <AccessRestricted />;
+  }
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
