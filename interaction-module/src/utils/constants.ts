@@ -878,7 +878,7 @@ export const rawQueries = {
   },
   fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
     return `
-    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d: any) => `'${d}'`).join(',')})`;
+    SELECT rid, project_name, project_code, signoff, is_rd_claim_qualified FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d: any) => `'${d}'`).join(',')})`;
   },
   fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
     return `

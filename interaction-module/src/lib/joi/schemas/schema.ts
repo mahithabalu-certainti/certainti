@@ -221,6 +221,7 @@ const listTechnicalSummarySchema = Joi.object({
   tech_summary_rid: Joi.string().pattern(uuidRegex).optional(),
   account_rid: Joi.string().pattern(uuidRegex).optional(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  case_rid : Joi.string().pattern(uuidRegex).optional().allow('')
 });
 
 const updateTechSummaryContextSchema = Joi.object({

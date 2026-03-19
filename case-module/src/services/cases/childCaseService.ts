@@ -281,7 +281,7 @@ async getCaseClosureRemarks (data : any) {
                         signoff_type_name : mapSignOffTypesWithName.get(s.signoff_type_rid) || null,
                         signoff_at : s.created_datetime
                     }
-                }).sort((a, b) => a.signoff_at.localeCompare(b.signoff_at))
+                })
             }
         })
         if(isSortingRestricted) {
