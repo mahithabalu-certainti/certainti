@@ -144,7 +144,16 @@ const CellInput: React.FC<{
   disabled?: boolean;
   hasError?: boolean;
   errorMsg?: string;
-}> = ({ value, onChange, placeholder, disabled, hasError, errorMsg }) => (
+  textAlign?: 'left' | 'right';
+}> = ({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  hasError,
+  errorMsg,
+  textAlign = 'left',
+}) => (
   <div className={`relative flex h-full ${hasError ? 'bg-[#FEF2F2]' : ''}`}>
     <input
       type='text'
@@ -154,7 +163,7 @@ const CellInput: React.FC<{
       disabled={disabled}
       autoComplete='off'
       className={`outline-none w-full h-[36px] sm:text-[12px] px-2 placeholder:text-[12px] placeholder:text-[#7d98b6] ${disabled ? 'bg-gray-100 text-gray-500' : ''} ${hasError ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
-      style={{ fontFamily: 'inherit' }}
+      style={{ fontFamily: 'inherit', textAlign }}
     />
     {hasError && errorMsg && (
       <Tooltip
@@ -756,6 +765,7 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
                             computedDataQuery.isLoading ? 'Loading...' : '-'
                           }
                           disabled
+                          textAlign='right'
                         />
                       </TableCell>
                       <TableCell
@@ -900,6 +910,7 @@ const CloseCaseModal: React.FC<CloseCaseModalProps> = ({
                                     : '-'
                                 }
                                 disabled
+                                textAlign='right'
                               />
                             </TableCell>
                             <TableCell
