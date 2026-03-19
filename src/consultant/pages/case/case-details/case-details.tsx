@@ -57,7 +57,6 @@ import {
   CaseIcon,
   CaseTeamIcon,
   ChecklistIcon,
-  ComingSoon,
   ConfigRuleIcon,
   DetailsKeyContactErrorIcon,
   DossierIcon,
@@ -128,6 +127,7 @@ import { Dossier } from './dossier';
 import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
 import { FourPartAssessment } from '../../four-part-assessment';
 import CloseCaseModal from './dossier/close-case-modal';
+import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -1059,8 +1059,8 @@ export const CaseDetails = () => {
         );
       default:
         return (
-          <div className='flex items-center justify-center h-full'>
-            <ComingSoon alt='comingSoon' />
+          <div className='w-full pr-4 pl-2 py-2'>
+            <DetailsSectionSkeleton />
           </div>
         );
     }
@@ -1282,13 +1282,12 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${
-          isActionItemsExpanded
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
             ? 'max-h-0 opacity-0'
             : isError
               ? 'max-h-[60px] opacity-100'
               : 'max-h-[140px] opacity-100'
-        }`}
+          }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1300,11 +1299,10 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
+          className={`flex transition-all ease-in-out ${isCollapsed
               ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
               : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-          }`}
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
