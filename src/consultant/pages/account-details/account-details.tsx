@@ -1075,7 +1075,7 @@ export const AccountDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Inbox',
+        name: 'Mailbox',
         key: 'inbox',
         id: AllModules.ACCOUNTS,
         disabled: false,

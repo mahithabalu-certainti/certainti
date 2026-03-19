@@ -602,7 +602,7 @@ const Inbox = () => {
           <div className='flex min-w-0 items-center gap-2'>
             <DraftEmailIcon className='h-7 w-7 rounded-[2px] bg-[#0F6CBD] p-1 text-white' />
             <div className='min-w-0'>
-              <p className='truncate text-[14px] font-semibold text-[#253240]'>Inbox</p>
+              <p className='truncate text-[14px] font-semibold text-[#253240]'>Mailbox</p>
               <p className='truncate text-[11px] text-[#5E6B78]'>{messageItems.length} items</p>
             </div>
           </div>
