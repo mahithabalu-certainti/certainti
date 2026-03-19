@@ -305,18 +305,6 @@ export const ProjectTask = ({
   }, [searchParams, taskId]);
 
   const resourceData = resourceDetails?.data;
-  // const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-  //   accountID as string,
-  //   projectID as string
-  // );
-  // const memoizedProjectResourceCode: SelectOption[] = useMemo(
-  //   () =>
-  //     projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-  //       label: item.resource_code,
-  //       value: item.resource_code,
-  //     })) || [],
-  //   [projectResourceCodeOptions?.data?.resourceCodes]
-  // );
   const payload = {
     account_rid: accountID || undefined,
     search: '',
@@ -328,8 +316,8 @@ export const ProjectTask = ({
   const memoizedProjectResourceCode = useMemo(
     () =>
       projectResourceCodeOptions?.data?.map((item) => ({
-        label: item.resource_code,
-        value: item.resource_code,
+        label: `${item.resource_code}  ${item.resource_name ? `(${item.resource_name})` : ''}`,
+        value: item.rid,
       })) || [],
     [projectResourceCodeOptions?.data]
   );

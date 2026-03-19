@@ -629,6 +629,12 @@ export interface DossierPackageResponse {
     base64?: string;
   };
 }
+export interface DownloadDossierSheetPayload {
+  accountRid: string;
+  caseRid: string;
+  downloaded_list: string[];
+  dossier_version?: string;
+}
 
 // ComputedData
 

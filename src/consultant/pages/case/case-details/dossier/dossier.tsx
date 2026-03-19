@@ -21,6 +21,7 @@ import {
   CaseAssignedExportParams,
   CaseDetails,
   ColorCode,
+  DownloadDossierSheetPayload,
   ExportType,
   FinancialHighlightsResponse,
   SelectOption,
@@ -452,7 +453,7 @@ const Dossier: React.FC<DossierProps> = ({
       finalDownloadList.push('RD Form Federal', 'RD Form State');
     }
 
-    const payload: any = {
+    const payload: DownloadDossierSheetPayload = {
       accountRid: accountid,
       caseRid: caseId ?? '',
       downloaded_list: finalDownloadList,
@@ -466,11 +467,6 @@ const Dossier: React.FC<DossierProps> = ({
     setIsDownloadModalOpen(false);
   };
 
-  /**
-   * Called from the Version Control tab's per-row download button.
-   * Sends ALL items in downloaded_list (same as "Select All") plus the
-   * dossier_version from the clicked row — no popup is shown.
-   */
   const handleVersionDownload = (dossier_version: string) => {
     setSelectedVersion(dossier_version);
     setSelectedDownloadItems(DOWNLOAD_OPTIONS);
@@ -675,7 +671,7 @@ const Dossier: React.FC<DossierProps> = ({
       disabled:
         !caseDetails?.rd_form_signoff ||
         !isTaskCompleted ||
-        caseDetails?.status_name.toLowerCase() === 'closed',
+        caseDetails?.status_name?.toLowerCase() === 'closed',
       sx: { width: '80px', minWidth: '80px' },
       hide: tabParam !== 'close_case',
     },
@@ -709,7 +705,7 @@ const Dossier: React.FC<DossierProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={
           (tabParam !== 'rd_forms' && tabParam !== 'financial_workings') ||
           (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
@@ -786,7 +782,8 @@ const Dossier: React.FC<DossierProps> = ({
               defaultValue={tabParam}
             />
             {caseDetails?.case_total_qualified_projects === 0 ||
-              caseDetails?.case_total_qualified_projects === '0' ? (
+            caseDetails?.case_total_qualified_projects === '0' ||
+            caseDetails?.case_total_qualified_projects == null ? (
               <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
                 <div>
                   <React.Suspense fallback={null}>

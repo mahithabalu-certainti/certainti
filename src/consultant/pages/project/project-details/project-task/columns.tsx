@@ -68,6 +68,12 @@ export const getProjectTaskColumns = (
       type: 'select',
       options: memoizedProjectResourceCode,
       required: true,
+      getFieldData: (rowData: DependencyRowData) => {
+        const resourceId = rowData.project_resource_rid
+          ? rowData.project_resource_rid
+          : '';
+        return String(resourceId);
+      },
     },
     render: (row: ProjectTaskListType) => (
       <span
