@@ -67,7 +67,7 @@ export class InteractionModelService {
   async getModels(accountNumber: string) {
     const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
-    const sequelize = await initOrgSequelize();
+    const sequelize = await this.getSequelize();
     const mainDbSequelize = await this.getMainSequelize();
 
     const InteractionModel = Interaction.initialize(sequelize, schemaName);
