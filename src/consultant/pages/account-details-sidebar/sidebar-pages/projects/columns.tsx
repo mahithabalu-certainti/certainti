@@ -249,6 +249,12 @@ export const getProjectColumns = (
       required: true,
       options: IsAssessedOptions,
     },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'classification_name',

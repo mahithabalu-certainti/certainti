@@ -257,10 +257,6 @@ export const getAllProjectListColumns = (
     conditionallyEdit: [
       { key: 'account_status_name', matchValue: ['Active'] },
       {
-        key: 'is_project_exists' as keyof Project,
-        matchValue: false,
-      },
-      {
         key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,
       },
