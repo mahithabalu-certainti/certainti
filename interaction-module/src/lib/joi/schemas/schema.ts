@@ -304,8 +304,18 @@ const updateInteractionTemplateSchema = Joi.object({
 });
 
 
-
-
+const listAiAssessmentAuditSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).optional(),
+  case_rid: Joi.string().pattern(uuidRegex).optional(),
+  page: Joi.number().optional().default(1),
+  limit: Joi.number().optional(),
+  filters: Joi.object().optional().default({}),
+  sortBy: Joi.string().optional().default("created_datetime"),
+  sortOrder: Joi.string().valid("ASC", "DESC").optional().default("DESC"),
+  search: Joi.string().optional().allow(""),
+  timezone: Joi.string().optional()
+});
 
 export {
   createInteractionSchema,
@@ -325,5 +335,6 @@ export {
   listInteractionTemplatesSchema,
   updateInteractionTemplateSchema,
   saveRefineSummarySchema,
-  refineSummarySchema
+  refineSummarySchema,
+  listAiAssessmentAuditSchema
 };
