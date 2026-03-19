@@ -21,9 +21,9 @@ async function startServer() {
     const { app } = await initExpressServer();
 
     //const { graphqlPath } = await initGraphQLServer(app);
-    // scheduleSubscriptionRenewal();
-    // schedulerForTriggerAi()
-    // schdulerForSendEmailInfo()
+    scheduleSubscriptionRenewal();
+    schedulerForTriggerAi()
+    schdulerForSendEmailInfo()
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
@@ -69,4 +69,4 @@ async function startKafkaConsumer() {
 }
 
 startServer();
-// startKafkaConsumer();
+startKafkaConsumer();
