@@ -432,7 +432,7 @@ export class CaseService {
       await rawQueries.fetchParentAccount(accountRid, mainDb)
     );
     if (fetchParentAccountRnumber[0].length > 0) {
-      let schemaName = rawQueries.fetchSchemaName(
+      let schemaName : string = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number
       );
       const getActiveStatusId: any = await mainDb.query(rawQueries.getActiveStatusId());

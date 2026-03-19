@@ -3542,6 +3542,10 @@ export class InteractionService {
             company_id,
             transaction_id
           )
+          await this.interactionSchemaService.updateFourPartAssessmentAuditStatus(
+            accountNumber,
+            parsedMessage
+          );
         }
 
         if (type === "qre_percent") {

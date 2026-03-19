@@ -28,6 +28,26 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     task_status_rid != '${getCompletedTaskStatus}'
     AND
     case_rid = '${caseRid}'
+    ),
+    case_progress_summary AS (
+      SELECT 
+        rid,
+        CASE
+          WHEN case_startdate IS NULL OR planned_submission_date IS NULL OR planned_submission_date::date <= case_startdate::date THEN 100
+          ELSE LEAST(100, GREATEST(0, ((CURRENT_DATE - case_startdate::date)::NUMERIC / NULLIF((planned_submission_date::date - case_startdate::date), 0)::NUMERIC) * 100))
+        END as time_progress_percentage
+      FROM ${schemaName}.cases
+      WHERE rid = '${caseRid}'
+    ),
+    effective_progress_summary AS (
+      SELECT 
+        cps.rid,
+        CASE 
+          WHEN cps.time_progress_percentage = 0 THEN 100
+          ELSE (c.case_completion_percentage / cps.time_progress_percentage) * 100
+        END as effective_progress
+      FROM case_progress_summary cps
+      JOIN ${schemaName}.cases c ON c.rid = cps.rid
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,c.parent_case_rid,
@@ -35,22 +55,32 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, CAST(NULLIF(c.case_total_qre_cost, 0) AS DECIMAL(18,2)) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
-    c.employers_pension_contribution, c.other, c.material_software_cost, 
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability_sc, c.tax_liability_ct,
+    c.employers_pension_contribution, c.other_can, c.other_uk, c.other_on, c.material_software_cost, c.tax_liability_ga,
     c.sub_contracts, c.cloud_software,c.unpaid_amounts_paid, c.unpaid_amounts,
     c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,rd_form_signoff,
-    c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
-    rcc.final_credit,
+    c.lease_costs_of_computers_nj, c.lease_costs_of_computers_il, c.lease_costs_of_computers_ca,
+    c.lease_costs_of_computers_az, c.lease_costs_of_computers_id,
+    c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments_ma, c.basic_research_payments_id, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,
+    c.other_credits_total_sc, c.other_credits_total_ga,rcc.final_credit,
     CASE WHEN fcc.count > 0 THEN false ELSE true END AS all_task_completed,
-    CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}') THEN true ELSE false END AS is_initiated,
+    CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' AND is_initiated = false ORDER BY dossier_version DESC LIMIT 1) 
+    OR NOT EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' ORDER BY dossier_version DESC LIMIT 1) THEN false ELSE true END AS is_initiated,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
-    ELSE FALSE END AS is_case_team_created
+    ELSE FALSE END AS is_case_team_created,
+    COALESCE(ROUND(eps.effective_progress, 2), 0) as effective_progress,
+    CASE
+      WHEN eps.effective_progress >= 0 AND eps.effective_progress <= 40 THEN 'Critical'
+      WHEN eps.effective_progress > 40 AND eps.effective_progress <= 80 THEN 'At Risk'
+      WHEN eps.effective_progress > 80 THEN 'On Track'
+    END as case_progress
     FROM
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
     LEFT JOIN ${schemaName}.rd_credit_country_calculations rcc ON rcc.case_rid = c.rid
     LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
     LEFT JOIN fetch_completed_count fcc ON fcc.case_rid = c.rid
+    LEFT JOIN effective_progress_summary eps ON eps.rid = c.rid
     CROSS JOIN fetch_project_count_cost f
     WHERE
     c.rid = '${caseRid}'
@@ -2486,15 +2516,15 @@ export const fetchDossierForm = (page : number, limit : number, sort : string, s
               }
               case "date": {
                 if (cond === 'equals')
-                  filterQueryArray.push(`ct.${validKey} = '${values}'`)
+                  filterQueryArray.push(`DATE(${validKey}) = '${values}'`)
                 if (cond === 'before')
-                  filterQueryArray.push(`ct.${validKey} < '${values}'`)
+                  filterQueryArray.push(`DATE(${validKey}) < '${values}'`)
                 if (cond === 'after')
-                  filterQueryArray.push(`ct.${validKey} > '${values}'`)
+                  filterQueryArray.push(`DATE(${validKey}) > '${values}'`)
                 if (cond === 'is_empty')
-                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                  filterQueryArray.push(`DATE(${validKey}) IS NULL`)
                 if (cond === 'between')
-                  filterQueryArray.push(`ct.${validKey} BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
+                  filterQueryArray.push(`DATE(${validKey}) BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
                 break;
               }
               default:

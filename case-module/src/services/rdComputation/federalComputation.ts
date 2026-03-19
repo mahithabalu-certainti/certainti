@@ -108,7 +108,7 @@ export class FederalComputationService {
                         const qualifyingRdc = parseFloat(Number(totalSalaryAndExpenses + employersPensionContributions).toFixed(2)) || 0.00
                         const grossReduction = Number(((qualifyingRdc * extractConfig.gross_rdec)/100).toFixed(2)) || 0.00
                         const subContracts = Number(caseDetails?.sub_contracts) || 0.00
-                        const otherCost = Number(caseDetails?.other) || 0.00
+                        const otherCost = Number(caseDetails?.other_uk) || 0.00
                         let reductionValue = `Reductions (${extractConfig.reduction}%)`
                         let grossReductionValue = `GROSS RDEC @ ${extractConfig.gross_rdec}%`
                         const minProjectResult = this.selectMinimumProjectsCost(qualifyingRdc, 0.5, result.computedFields[0].projects);
@@ -171,7 +171,7 @@ export class FederalComputationService {
                             return {
                                 "Project Name": d.project_client_group || d.project_name,
                                 "Total Projects" : JSON.stringify(d.total_projects_count) || '0',
-                                "Employees" : `${d.employees}`,
+                                "Employees" : d.employees,
                                 "EPW" : d.epw,
                                 [reductionValue] : d.reductions,
                                 "Net EPW" : d.net_epw,
@@ -217,7 +217,7 @@ export class FederalComputationService {
                     let cloudSoftwareCost = Number(caseDetails?.cloud_software) || 0.00
                     let subContracts = Number(caseDetails?.sub_contracts) || 0.00
                     let heatLightPower = Number(caseDetails?.heat_light_power) || 0.00
-                    let otherCost = Number(caseDetails?.other) || 0.00
+                    let otherCost = Number(caseDetails?.other_irl) || 0.00
                     let calculatedPaidUnpaidAmount = paidAmount - unpaidAmountPaid
                     const computedResult = await federalComputation.computeForIRL(caseRid, accountRid, schemaName, extractConfig, caseClosed);
                     if(computedResult.computedFields[0].projects !== null) {

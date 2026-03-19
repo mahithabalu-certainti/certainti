@@ -73,19 +73,20 @@ export class RdCreditCalculatorForCA {
         logMessage(`Current Year QREs: ${JSON.stringify(currentYearQREs)}`);
 
         //---- Line 5: wages
-        const line5 = currentYearQREs.wages || 0;
+        const line5 = new Decimal(currentYearQREs.wages ?? 0.00);
 
         //---- Line 6: supplies
-        const line6 = currentYearQREs.supplies || 0;
+        const line6 = new Decimal(currentYearQREs.supplies ?? 0.00)
 
         //---- Line 7: cost to rent
-        const line7 = caseData.lease_costs_of_computers || 0;
+        const line7 = new Decimal(caseData.lease_costs_of_computers_ca ?? 0.00)
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00)
 
         //---- Line 8: contract
-        const line8 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+        const line8 = contract.mul(config.sub_con_percent/100) || 0;
 
         //---- Line 9: total QREs   
-        const line9 = new Decimal(line5).plus(new Decimal(line6)).plus(new Decimal(line7)).plus(new Decimal(line8));
+        const line9 = line5.plus(line6).plus(line7).plus(line8);
 
         //---- Line10: Fixed base percentage
         let line10 = new Decimal(config.fixed_base_percentage || 0).div(100);

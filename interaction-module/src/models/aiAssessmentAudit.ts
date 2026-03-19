@@ -20,11 +20,11 @@ export interface AiAssessmentAuditAttributes {
   qre_error_message?: JSON;
   technical_summary_error_message?: JSON;
   data_ingestion_error_message?: JSON;
-  is_four_part_assessment_processed?: boolean;
-  four_part_assessment_error_message?: JSON;
+  is_four_part_assessment_processed?: boolean
+  four_part_assessment_error_message?: JSON
 }
 
-export interface AiAssessmentAuditCreationAttributes extends Optional<AiAssessmentAuditAttributes, "rid" | "modified_by" | "modified_datetime"> {}
+export interface AiAssessmentAuditCreationAttributes extends Optional<AiAssessmentAuditAttributes, "rid" | "modified_by" | "modified_datetime"> { }
 
 export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAssessmentAuditCreationAttributes> implements AiAssessmentAuditAttributes {
   public rid!: string;
@@ -45,8 +45,8 @@ export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAsse
   public qre_error_message?: JSON;
   public technical_summary_error_message?: JSON;
   public data_ingestion_error_message?: JSON;
-  public is_four_part_assessment_processed?: boolean;
-  public four_part_assessment_error_message?: JSON;
+  public is_four_part_assessment_processed?: boolean
+  public four_part_assessment_error_message?: JSON
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return AiAssessmentAudit.init(
@@ -67,30 +67,26 @@ export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAsse
         is_qre_processed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         is_tech_summary_processed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         is_interaction_question_processed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-       data_ingestion: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
+        data_ingestion: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
         ai_assessment_request_api_status: { type: DataTypes.TEXT, allowNull: false },
-        interaction_question_error_message:{
+        interaction_question_error_message: {
           type: DataTypes.JSON,
           allowNull: true
         },
-        qre_error_message:{
+        qre_error_message: {
           type: DataTypes.JSON,
           allowNull: true
         },
-        technical_summary_error_message:{
+        technical_summary_error_message: {
           type: DataTypes.JSON,
           allowNull: true
         },
-        data_ingestion_error_message:{
+        data_ingestion_error_message: {
           type: DataTypes.JSON,
           allowNull: true
         },
-        is_four_part_assessment_processed: { 
-          type: DataTypes.BOOLEAN, 
-          allowNull: true, 
-          defaultValue: false 
-        },
-        four_part_assessment_error_message:{
+        is_four_part_assessment_processed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        four_part_assessment_error_message: {
           type: DataTypes.JSON,
           allowNull: true
         }

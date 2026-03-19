@@ -1440,10 +1440,19 @@ async function exportAllInteractions(req: Request, res: Response) {
       userId,
       "interactions_view_edit"
     );
+    const fpaFields = await interactionService.getAllowedExportFields(
+      userId,
+      "four_part_assessment_export"
+    );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
+      }
+    }
+    for(const f of fpaFields) {
+      if (f.read) {
+        allowedFieldSet.add(f.field_name);
       }
     }
     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
@@ -1463,6 +1472,9 @@ async function exportAllInteractions(req: Request, res: Response) {
             let resultMap: { [key: string]: any } = {
               r_number: d.r_number,
               interaction_level_name: d.interaction_level_name,
+              interaction_assessment_source_name : d.interaction_assessment_source_name,
+              interaction_batch_id : d.interaction_batch_id,
+              four_part_r_number : d.four_part_r_number,
               project_code: d.project_code,
               interaction_age: d.interaction_age,
               fiscal_year: d.fiscal_year,

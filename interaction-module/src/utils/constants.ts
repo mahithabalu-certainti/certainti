@@ -1346,8 +1346,9 @@ export const interactionTypes = [
 
 export const interactionFieldMappings = [
   { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-  { permissionField: 'interaction_assessment_source_rid', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
-  { permissionField: 'four_part_assessment_rid', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
+  { permissionField: 'interaction_assessment_source_name', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
+  { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
+  { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
   { permissionField: 'interaction_batch_id', exportField: 'Batch ID', dataField: 'interaction_batch_id' },
   { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
   { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
@@ -1392,8 +1393,8 @@ export const templateFieldMappings = [
 
 export const accountinteractionFieldMappings = [
   { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-  { permissionField: 'interaction_assessment_source_rid', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
-  { permissionField: 'four_part_assessment_rid', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
+  { permissionField: 'interaction_assessment_source_name', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
+  { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
   { permissionField: 'interaction_batch_id', exportField: 'Batch ID', dataField: 'interaction_batch_id' },
   { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
   { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
@@ -1429,14 +1430,6 @@ export const techSummaryFieldMappings = [
 
 ];
 
-export const rdAssessmentAuditFieldMappings = [
-  { permissionField: 'project_fiscal_rid', exportField: 'Project Code', dataField: 'project_code' },
-  { permissionField: 'created_datetime', exportField: 'Assessment Triggered At', dataField: 'created_datetime' },
-  { permissionField: 'four_part_assessment', exportField: 'Four-Part Assessment', dataField: 'four_part_assessment' },
-  { permissionField: 'project_summary', exportField: 'Project Summary', dataField: 'project_summary' },
-  { permissionField: 'qre_summary', exportField: 'QRE Summary', dataField: 'qre_summary' },
-  { permissionField: 'interaction_status', exportField: 'Interaction Status', dataField: 'interaction_status' }
-];
 
 export const schedulerStatus = {
   Success: "success",
@@ -1495,3 +1488,12 @@ export const MainTableFilter: Record<string, string> = {
   created_by_name: 'created_by_name',
   modified_by_name: 'modified_by_name'
 }
+
+export const rdAssessmentAuditFieldMappings = [
+  { permissionField: 'project_fiscal_rid', exportField: 'Project Code', dataField: 'project_code' },
+  { permissionField: 'created_datetime', exportField: 'Assessment Triggered At', dataField: 'created_datetime' },
+  { permissionField: 'four_part_assessment', exportField: 'Four-Part Assessment', dataField: 'four_part_assessment' },
+  { permissionField: 'project_summary', exportField: 'Project Summary', dataField: 'project_summary' },
+  { permissionField: 'qre_summary', exportField: 'QRE Summary', dataField: 'qre_summary' },
+  { permissionField: 'interaction_status', exportField: 'Interaction Status', dataField: 'interaction_status' }
+];
