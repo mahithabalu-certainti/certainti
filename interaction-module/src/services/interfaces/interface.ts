@@ -312,7 +312,8 @@ export interface IInteractionService {
   getFpaDetailsById(data: any): Promise<any>
   exportFpaList(data: any): Promise<any>
   updateInteractionStatus(data: any, userId: string): Promise<any>
-  getInteractionAssessmentSource(): Promise<any>
+  getInteractionAssessmentSource(): Promise<any>;
+  listAiAssessmentAudit(data: any, page: number, limit: number, filters: Record<string, any>, userId: string): Promise<any>;
 }
 
 export interface IWebHookService {

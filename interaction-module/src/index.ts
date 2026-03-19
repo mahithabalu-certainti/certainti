@@ -52,8 +52,7 @@ async function startKafkaConsumer() {
       eachMessage: async ({ topic, partition, message }) => {
         try {
           logMessage(
-            `Received message from ${topic}[${partition}] @ offset ${
-              message.offset
+            `Received message from ${topic}[${partition}] @ offset ${message.offset
             }: ${message.value?.toString()}`
           );
           interactionsController.processKafkaMessages(
