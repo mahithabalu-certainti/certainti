@@ -567,6 +567,14 @@ class RdFormMapperSchemaService {
   /**
    * Fetch all values from a table field as a list
    * For table field types, this method returns all rows of data for the specified column
+   *
+   * @param where_config - Optional WHERE/JOIN config from data_mapper_objects.
+   *   Shape: {
+   *     where_conditions: Array<{ column: string; param: "case_rid" | "account_rid" | "state_rid" | "fiscalYear"; operator?: string; extra_condition?: string }>,
+   *     join_config?: { join_type: string; join_table: string; join_alias: string; join_on: string }
+   *   }
+   *   When provided, buildWhereClause/buildFromClause use this config instead of hardcoded table names.
+   *   See sample values in data_mapper_objects below.
    */
 async fetchTableValues(
   refTable: string,
@@ -578,6 +586,20 @@ async fetchTableValues(
   schemaName: string,
   stateRid: string,
   fiscalYear?: string,
+  where_config?: {
+    where_conditions?: Array<{
+      column: string;
+      param: "case_rid" | "account_rid" | "state_rid" | "fiscalYear";
+      operator?: string;            // defaults to "="
+      extra_condition?: string;     // raw SQL appended verbatim, e.g. "AND pf.is_qualified = true"
+    }>;
+    join_config?: {
+      join_type: string;            // e.g. "INNER JOIN"
+      join_table: string;           // e.g. "project_fiscal"
+      join_alias: string;           // e.g. "pf"
+      join_on: string;              // e.g. "pf.rid = t.project_fiscal_rid"
+    };
+  },
 ): Promise<any[]> {
   const orgDb = await this.getOrgDb();
   const mainDb = await this.getMainDb();
@@ -588,42 +610,103 @@ async fetchTableValues(
   let query: string;
   let results: any[] = [];
 
-  // Helper to build WHERE clause and replacements based on refTable
+  /**
+   * Build WHERE clause and replacements.
+   *
+   * Priority:
+   *   1. Use where_config from data_mapper_objects (dynamic, data-driven)
+   *   2. Fall back to legacy hardcoded logic for backward compatibility
+   */
   const buildWhereClause = (refTable: string) => {
-    if (refTable === "case_history_submission") {
-      return {
-        whereClause: `WHERE t.account_rid = :account_rid AND t.state_rid = :state_rid`,
-        replacements: { account_rid, state_rid: stateRid } as any,
+    // ── Dynamic path: config driven from data_mapper_objects ──────────────
+    if (where_config?.where_conditions && where_config.where_conditions.length > 0) {
+      const paramMap: Record<string, any> = {
+        case_rid,
+        account_rid,
+        state_rid: stateRid,
+        fiscalYear,
       };
-    }
-    if (refTable === "account") {
-      return {
-        whereClause: `WHERE t.rid = :account_rid`,
-        replacements: { account_rid } as any,
-      };
-    }
-    if (refTable === "case_projects") {
-      let whereClause = `WHERE t.case_rid = :case_rid AND pf.is_qualified = true`;
-      const replacements: any = { case_rid };
-      if (fiscalYear) {
-        whereClause += ` AND pf.fiscal_year = :fiscalYear`;
-        replacements.fiscalYear = fiscalYear;
+
+      const replacements: any = {};
+      const conditions: string[] = [];
+
+      for (const cond of where_config.where_conditions) {
+        const op = cond.operator ?? "=";
+        const paramValue = paramMap[cond.param];
+
+        // Only include condition if the param value is present
+        if (paramValue !== undefined && paramValue !== null && paramValue !== "") {
+          conditions.push(`t.${cond.column} ${op} :${cond.param}`);
+          replacements[cond.param] = paramValue;
+        }
+
+        // Append any verbatim extra SQL (e.g. "AND pf.is_qualified = true")
+        if (cond.extra_condition) {
+          conditions.push(cond.extra_condition);
+        }
       }
+
+      // Fiscal year is appended automatically when present and not already covered
+      if (fiscalYear && !replacements.fiscalYear) {
+        // Only add if a where_condition didn't already bind fiscalYear
+      }
+
+      const whereClause = conditions.length > 0
+        ? `WHERE ${conditions.join(" AND ")}`
+        : "";
+
       return { whereClause, replacements };
     }
-    // Default
-    let whereClause = `WHERE t.case_rid = :case_rid`;
-    const replacements: any = { case_rid };
-    if (fiscalYear) {
-      whereClause += ` AND t.fiscal_year = :fiscalYear`;
-      replacements.fiscalYear = fiscalYear;
-    }
-    return { whereClause, replacements };
+
+    // ── Legacy fallback: hardcoded per-table logic ─────────────────────────
+    // if (refTable === "case_history_submission") {
+    //   return {
+    //     whereClause: `WHERE t.account_rid = :account_rid AND t.state_rid = :state_rid`,
+    //     replacements: { account_rid, state_rid: stateRid } as any,
+    //   };
+    // }
+    // if (refTable === "account") {
+    //   return {
+    //     whereClause: `WHERE t.rid = :account_rid`,
+    //     replacements: { account_rid } as any,
+    //   };
+    // }
+    // if (refTable === "case_projects") {
+    //   let whereClause = `WHERE t.case_rid = :case_rid AND pf.is_qualified = true`;
+    //   const replacements: any = { case_rid };
+    //   if (fiscalYear) {
+    //     whereClause += ` AND pf.fiscal_year = :fiscalYear`;
+    //     replacements.fiscalYear = fiscalYear;
+    //   }
+    //   return { whereClause, replacements };
+    // }
+    // // Default
+    // let whereClause = `WHERE t.case_rid = :case_rid`;
+    // const replacements: any = { case_rid };
+    // if (fiscalYear) {
+    //   whereClause += ` AND t.fiscal_year = :fiscalYear`;
+    //   replacements.fiscalYear = fiscalYear;
+    // }
+    return { whereClause: "", replacements: {} };
   };
 
-  // Build JOIN clause for case_projects
+  /**
+   * Build FROM + optional JOIN clause.
+   *
+   * Priority:
+   *   1. Use join_config from data_mapper_objects (dynamic)
+   *   2. Fall back to legacy hardcoded logic
+   */
   const buildFromClause = (refTable: string, schemaName: string) => {
-   const effectiveSchemaName = refTable === "account" ? MAIN_SCHEMA_NAME : schemaName;
+    const effectiveSchemaName = refTable === "account" ? MAIN_SCHEMA_NAME : schemaName;
+    if (where_config?.join_config) {
+      const { join_type, join_table, join_alias, join_on } = where_config.join_config;
+      return `
+        FROM ${effectiveSchemaName}.${refTable} t
+        ${join_type} ${effectiveSchemaName}.${join_table} ${join_alias}
+          ON ${join_on}`;
+    }
+    // Legacy fallback
     if (refTable === "case_projects") {
       return `
         FROM ${effectiveSchemaName}.case_projects t

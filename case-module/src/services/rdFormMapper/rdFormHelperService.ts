@@ -2547,6 +2547,7 @@ export class RdFormHelperService {
                   context.schemaName,
                   context.stateRid || "",
                   context.fiscalYear,
+                  mapperObject.where_config ?? undefined,
                 );
 
               tableValueCache[val] = tableValues || [];

@@ -262,6 +262,7 @@ export class RdFormMapperService {
           countryName,
           stateName,
           fiscalYear,
+           '',
           currencySymbol,
         );
       } else {
@@ -294,7 +295,8 @@ export class RdFormMapperService {
             countryName,
             stateName,
             fiscalYear,
-            currencySymbol,
+             '',
+            currencySymbol 
           );
         }
       }
@@ -493,6 +495,7 @@ export class RdFormMapperService {
             countryName,
             resolvedStateName,
             fiscalYear,
+            resolvedStateCode,
             currencySymbol,
           );
         } else {
@@ -525,7 +528,8 @@ export class RdFormMapperService {
               countryName,
               resolvedStateName,
               fiscalYear,
-              currencySymbol,
+               resolvedStateCode,
+              currencySymbol    
             );
           }
         }
@@ -578,6 +582,7 @@ export class RdFormMapperService {
     countryName: string,
     stateName: string,
     fiscalYear: string,
+    stateCode: string,
     currencySymbol?: string | null,
   ): Promise<string> {
     try {
@@ -646,7 +651,7 @@ export class RdFormMapperService {
 
 
       // Generate unique filename
-      const fileName = `rd_form_${countryCode}_${Date.now()}.pdf`;
+      const fileName = `rd_form_${countryCode}${stateCode ? `_${stateCode}` : ''}_${Date.now()}.pdf`;
 
       // Create PDF document in memory
       const doc = new PDFDocument({ margin: 50 });
@@ -1040,6 +1045,7 @@ export class RdFormMapperService {
                   context.schemaName,
                   context.stateRid || "",
                   context.fiscalYear,
+                  mapperObject.where_config ?? undefined,
                 );
 
               tableValueCache[val] = tableValues || [];
