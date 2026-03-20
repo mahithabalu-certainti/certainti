@@ -15,6 +15,7 @@ import {
   ADMIN_CREATE_USER,
   ADMIN_EDIT_USER,
   ADMIN_MANAGE_USER,
+  ADMIN_PROFILE,
   // MANAGE_USER_ACCESS,
   MANAGE_ACCOUNT_ACCESS,
   ADMIN_MANAGE_USER_DETAILS,
@@ -419,6 +420,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
               {/* Admin protected routes */}
               <Route element={<ProtectedRoute requireAdmin />}>
                 <Route element={<AppLayout />}>
+                  <Route path={ADMIN_PROFILE} element={<Profile />} />
                   <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
                   <Route
                     path={MANAGE_ACCOUNT_ACCESS}
