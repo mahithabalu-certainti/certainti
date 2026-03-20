@@ -66,7 +66,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     savedSummaryRid || technicalSummaryId,
     accountId,
     projectid || '',
-    caseId ?? ''
+    caseId || ''
   );
   const updateTechSummaryText = useUpdateTechnicalSummaryText();
   const updateRefinePrompt = useUpdateRefinePrompt();
@@ -111,6 +111,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       searchParams.delete('technical_summary_id');
       searchParams.delete('project_id');
       searchParams.delete('navigate_source');
+      searchParams.delete('is_project_signed_off');
 
       navigate({ search: searchParams.toString() }, { replace: true });
     } else {
