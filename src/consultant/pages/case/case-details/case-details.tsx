@@ -36,6 +36,7 @@ import {
   FinancialHighlightsResponse,
   AuditTimelineListExportParams,
   FourPartAssessmentListExportURLParams,
+  RdAssessmentStatusExportURLParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -57,7 +58,6 @@ import {
   CaseIcon,
   CaseTeamIcon,
   ChecklistIcon,
-  ComingSoon,
   ConfigRuleIcon,
   DetailsKeyContactErrorIcon,
   DossierIcon,
@@ -75,6 +75,7 @@ import {
   TaskCreateIcon,
   TechSummaryIcon,
   WorkBreakdownIcon,
+  RdStatusIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -127,6 +128,10 @@ import { CircularProgress } from '@mui/material';
 import { Dossier } from './dossier';
 import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
 import { FourPartAssessment } from '../../four-part-assessment';
+import CloseCaseModal from './dossier/close-case-modal';
+import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
+import { ExportRdAssessmentStatusList } from '../../../services/rd-assessment/rd-assessment-service';
+import { RdAssessmentStatus } from '../../rd-assessment-status';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -163,7 +168,7 @@ export const CaseDetails = () => {
   const { dossierFinancialStatus, financialData } = useSelector(
     (state: RootState) => state.account
   );
-
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const setDossierFinancialStatus = (status: boolean) => {
     dispatch(setDossierFinancialStatusAction(status));
   };
@@ -307,6 +312,14 @@ export const CaseDetails = () => {
       type: 'case',
     });
 
+  const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
+    useState<RdAssessmentStatusExportURLParams>({
+      search: '',
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
       sortBy: 'project_code',
@@ -326,7 +339,7 @@ export const CaseDetails = () => {
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
-
+  const closeCaseTabView = searchParams.get('tab') === 'close_case';
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -413,6 +426,10 @@ export const CaseDetails = () => {
   const TriggerAIEnable = checkPermission(
     permission,
     AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+  const isCaseCloseEnable = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_CLOSE_CASE
   );
 
   const isActivityTaskExportEnable = checkPermission(
@@ -501,6 +518,11 @@ export const CaseDetails = () => {
     AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
   );
 
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
+  );
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -516,7 +538,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'projectResource' &&
       searchParams.get('list') !== 'financialHighlights' &&
       searchParams.get('list') !== 'technicalSummary' &&
-      searchParams.get('list') !== 'four_part_assessment'
+      searchParams.get('list') !== 'four_part_assessment' &&
+      searchParams.get('list') !== 'rd_assessment_status'
     ) {
       return;
     }
@@ -576,6 +599,8 @@ export const CaseDetails = () => {
       );
     } else if (exportType === 'four_part_assessment') {
       ExportFourPartAssessmentList(fourPartParams);
+    } else if (exportType === 'rd_assessment_status') {
+      ExportRdAssessmentStatusList(rdAssessmentStatusParams);
     } else if (
       (list === 'caseProjects' && exportType === 'cases_projects') ||
       (list === 'dossier' && exportType === 'dossier-qualified-projects')
@@ -694,6 +719,8 @@ export const CaseDetails = () => {
       return !isChecklistsExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
       return !isFourPartExportEnable;
+    } else if (list === 'rd_assessment_status') {
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
       const tab = searchParams.get('tab') || 'all';
       if (tab === 'all') {
@@ -762,6 +789,9 @@ export const CaseDetails = () => {
     },
   ];
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
   const handleActionsClick = () => {
     console.log('Actions clicked');
   };
@@ -1008,6 +1038,15 @@ export const CaseDetails = () => {
             moduleLevel='case'
           />
         );
+      case 'rd_assessment_status':
+        return (
+          <RdAssessmentStatus
+            setExportType={setExportType}
+            setRdAssessmentStatusParams={setRdAssessmentStatusParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='case'
+          />
+        );
       case 'projectResource':
         return (
           <CaseProjectResource
@@ -1051,8 +1090,8 @@ export const CaseDetails = () => {
         );
       default:
         return (
-          <div className='flex items-center justify-center h-full'>
-            <ComingSoon alt='comingSoon' />
+          <div className='w-full pr-4 pl-2 py-2'>
+            <DetailsSectionSkeleton />
           </div>
         );
     }
@@ -1146,6 +1185,13 @@ export const CaseDetails = () => {
         id: AllModules.FOUR_PART_ASSESSMENT,
         disabled: false,
         icon: FourPartIcon,
+      },
+      {
+        name: 'RD Assessment Status',
+        key: 'rd_assessment_status',
+        id: AllModules.RD_ASSESSMENT_STATUS,
+        disabled: false,
+        icon: RdStatusIcon,
       },
       {
         name: 'Technical Summary',
@@ -1253,6 +1299,15 @@ export const CaseDetails = () => {
           goBack={goBack}
           backBtnLabel='Back To Cases'
           headerButtons={[
+            {
+              label: 'Close Case',
+              disabled:
+                !caseData?.rd_form_signoff ||
+                caseData?.status_name?.toLowerCase() === 'closed',
+              onClick: () => setIsModalOpen(true),
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !isCaseCloseEnable || closeCaseTabView,
+            },
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
@@ -1368,6 +1423,19 @@ export const CaseDetails = () => {
         modalId={activityModalId}
         onCloseModal={() => setActivityModalId(null)}
         sourceDetails={sourceDetails}
+      />
+      <CloseCaseModal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        caseDetails={{
+          country_name: caseData?.country_name,
+          country_rid: caseData?.country_rid,
+          country_code: caseData?.country_code,
+          fiscal_year: caseData?.fiscal_year,
+          all_task_completed: caseData?.all_task_completed,
+          currency_symbol: caseData?.currency_symbol,
+        }}
+        refetchCaseDetails={refetchCaseDetails}
       />
     </div>
   );

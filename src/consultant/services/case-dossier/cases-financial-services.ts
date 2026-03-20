@@ -10,6 +10,7 @@ import {
   DossierPackageResponse,
   RDFormRevokePayload,
   RDFormRevokeResponse,
+  DownloadDossierSheetPayload,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -262,12 +263,7 @@ export const useDownloadDossierSheet = () => {
   return useMutation<
     DossierPackageResponse | undefined,
     Error,
-    {
-      accountRid: string;
-      caseRid: string;
-      downloaded_list: string[];
-      dossier_version?: string;
-    }
+    DownloadDossierSheetPayload
   >({
     mutationFn: ({ accountRid, caseRid, downloaded_list, dossier_version }) =>
       ExportDossierPackage(

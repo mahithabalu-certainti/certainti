@@ -428,7 +428,7 @@ export const caseConfigDetailUrl = (
   caseId?: string,
   type?: string
 ) =>
-  `/api/jurisdictions/details/?accountRid=${accountId}&level=${level}${caseId ? `&caseRid=${caseId}` : ''}${type ? `&type=${type}` : 'type=All'}`;
+  `/api/jurisdictions/details/?accountRid=${accountId}&level=${level}${caseId ? `&caseRid=${caseId}` : ''}${type ? `&type=${type}` : '&type=All'}`;
 
 export const fetchConfigFields = async (
   accountId: string,

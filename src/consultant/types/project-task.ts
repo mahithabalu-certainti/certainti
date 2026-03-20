@@ -37,6 +37,7 @@ export type ProjectTaskListType = {
   project_code: string;
   project_resource_code: string;
   resource_rid: string;
+  project_resource_rid: string;
   resource_code: string;
   fiscal_year: number;
   start_date: string;
