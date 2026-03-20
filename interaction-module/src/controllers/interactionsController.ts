@@ -3113,13 +3113,21 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
 
-      const [auditFields] = await Promise.all([
+      const [auditFields, projectFields] = await Promise.all([
         interactionService.getAllowedExportFields(userId, "rd_assessment_status_view"),
+        interactionService.getAllowedExportFields(userId, "projects_view_edit"),
       ]);
       const allowedFieldSet = new Set<string>();
       if (auditFields && Array.isArray(auditFields)) {
         for (const field of auditFields) {
           if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+      }
+      if (projectFields && Array.isArray(projectFields)) {
+        for (const field of projectFields) {
+          if (field.field_name === "project_code" && field.read) {
             allowedFieldSet.add(field.field_name);
           }
         }
@@ -3159,6 +3167,12 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
 
       if (finalStructuredData.length === 0) {
         finalStructuredData.push({ "Message": "No data available" });
+      }
+
+      if (value.project_fiscal_rid) {
+        finalStructuredData.forEach((record: any) => {
+          delete record["Project Code"];
+        });
       }
 
       const generateBase64Response = await generateExcelBase64(finalStructuredData, "RDAssessmentAudit");

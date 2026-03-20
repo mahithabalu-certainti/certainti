@@ -334,12 +334,12 @@ export default class ProjectTaskGraphqlServies {
                             created_by: data.userId!,
                             account_rid: data.account_rid,
                             created_by_name: userEventInfo.full_name,
-                            entity_rid: checkForExistingData.rid,
+                            entity_rid: checkForExistingData[0][0].rid,
                             entity_name: entityTypes.PROJECT_TASK,
                             event_type_rid: userEventInfo.event_type_rid,
                             event_name: eventNames.UPDATE,
-                             descriptions:checkForExistingData.project_resource_code || '',
-                             project_rid : checkForExistingData.project_fiscal_rid
+                             descriptions:checkForExistingData[0][0].project_resource_code || '',
+                             project_rid : checkForExistingData[0][0].project_fiscal_rid
                           },["project"]);
 
             await this.projectTaskInjestionService.runAggregationAfterInlineUpdate(

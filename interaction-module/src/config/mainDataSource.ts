@@ -73,26 +73,27 @@ export async function initMainDbSequelize() {
       DB_PASSWORD,
       {
         host: DB_HOST,
-        dialect: "postgres",
+        dialect: "postgres", 
         port: 5432,
         logging: env !== "production",
         define: {
           freezeTableName: true,
           timestamps: false,
         },
-        dialectOptions: {
-          ssl: {
-            require: true,
-            rejectUnauthorized: false,
-          },
+        pool: {
+          max: 50,        // allow more concurrent connections
+          min: 5,
+          acquire: 60000, // wait up to 60s for a free connection
+          idle: 30000,    // release idle connections after 30s
         },
-      }
-    );
+        ...sslOptions,
+    });
+
     await sequelize.authenticate();
-   logMessage("Database connection established successfully.");
+    logMessage("MainOrg database connection established successfully.");
     return sequelize;
   } catch (error) {
-   logMessage(`Unable to connect to the database: ${error}`);
+    logMessage(`Unable to connect to the MainOrg database: ${error}`);
     process.exit(1);
   }
 }
