@@ -73,12 +73,12 @@ export class RdCreditCalculatorForAus {
           {
             name : `Tier 1 (Intensity: 0 to ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_1_rd_premium}%)`,
             "offset Amount" : parseFloat(Number(notionalDeductionApplied * ((taxRate/100) + (extractConfig.tier_1_rd_premium/100))).toFixed(2)) || 0.00,
-            "Notional deductions applied": notionalDeductionApplied,
+            "Notional deductions applied": parseFloat(Number(notionalDeductionApplied).toFixed(2)),
           },
           {
             name : `Tier 2 (Intensity: > ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_2_rd_premium}%)`,
             "offset Amount" : parseFloat(Number(notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100))).toFixed(2)) || 0.00,
-            "Notional deductions applied" : notionalDeductionAppliedForTier2,
+            "Notional deductions applied" : parseFloat(Number(notionalDeductionAppliedForTier2).toFixed(2)),
           }
         ]
         let nonRefundableRdTaxOffset = parseFloat(Number(calculateCredit[0]?.["offset Amount"]! + calculateCredit[1]?.["offset Amount"]!).toFixed(2));
