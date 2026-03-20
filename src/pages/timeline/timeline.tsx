@@ -535,6 +535,7 @@ const transformEntries = (entries: any[]): TimelineGroup[] => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entries.forEach((item: any) => {
+    if (!item.created_datetime) return;
     const dateLabel = formatTimelineDate(item.created_datetime);
     const time = formatTimelineTime(item.created_datetime);
 

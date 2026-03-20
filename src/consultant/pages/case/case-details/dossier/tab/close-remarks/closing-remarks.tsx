@@ -48,7 +48,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
   const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'signoff_type_name',
+    sortBy: 'signoff_at',
     sortOrder: 'ASC',
   });
 

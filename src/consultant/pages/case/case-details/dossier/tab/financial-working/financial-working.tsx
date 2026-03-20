@@ -144,7 +144,12 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
         ) as React.ReactNode as string,
         // width: 180,
         sx: (row?: FinancialWorkingRow) => ({
-          textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
+          textAlign:
+            typeof row?.[projectId] === 'number' ||
+            (typeof row?.[projectId] === 'string' &&
+              row?.[projectId].endsWith('%'))
+              ? 'right'
+              : 'left',
         }),
         sortId: projectId,
         render: (row: FinancialWorkingRow) => {
@@ -176,7 +181,11 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       // width: 150,
       sortId: 'Total',
       sx: (row?: FinancialWorkingRow) => ({
-        textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
+        textAlign:
+          typeof row?.Total === 'number' ||
+          (typeof row?.Total === 'string' && row?.Total.endsWith('%'))
+            ? 'right'
+            : 'left',
       }),
       render: (row: FinancialWorkingRow) => {
         const isBold = boldRows.includes(row.row_label);
