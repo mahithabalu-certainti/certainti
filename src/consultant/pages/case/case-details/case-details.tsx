@@ -216,8 +216,8 @@ export const CaseDetails = () => {
     });
   const [auditTimelineParams, setAuditTimelineParams] =
     useState<AuditTimelineListExportParams>({
-      sort: 'signoff_date',
-      sort_by: 'ASC' as 'ASC' | 'DESC',
+      sort: 'signoff_at',
+      sort_by: 'DESC' as 'ASC' | 'DESC',
       timezone: '',
       case_rid: caseId ?? '',
       account_rid: accountId ?? '',

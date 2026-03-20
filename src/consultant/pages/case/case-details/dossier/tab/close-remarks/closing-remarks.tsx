@@ -49,7 +49,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
     page: currentPage + 1,
     limit: 100,
     sortBy: 'signoff_at',
-    sortOrder: 'ASC',
+    sortOrder: 'DESC',
   });
 
   const { data, isLoading, isError } = useClosingRemarksList(
