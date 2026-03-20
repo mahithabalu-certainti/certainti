@@ -586,28 +586,36 @@ export class RdFormHelperService {
     const startDate = `${accountDetails.fiscal_start_date}/${fiscalYear - 1}`;
     const endDate = `${accountDetails.fiscal_end_date}/${fiscalYear}`;
     const accountingPeriodFormatted = `${this.formatDate(startDate)} to ${this.formatDate(endDate)}`;
+    const accountPeriodEnd = `Accounting period ending ${this.formatDate(endDate)} part of long period of account`
+    const roleInCompany = `Role in relation to ${accountInfo.account_name}`
 
     let ukFormData = {
       business_details: {
         business_name: accountInfo.account_name || "",
         corporation_tax_unique_taxpayer_reference: "",
-        correct_corporation_tax_reference: "-",
-        has_paye_reference: "-",
-        employer_paye_reference: "-",
-        has_vat_number: "-",
-        vat_number: "-",
+        correct_corporation_tax_reference_for_the_business: "-",
+        has_PAYE_reference: "-",
+        employer_PAYE_reference: "-",
+        has_VAT_number: "-",
+        VAT_number: "-",
         type_of_business: "-",
       },
       contact_and_agent_details: {
-        full_name: "-",
-        senior_officer_responsible: "-",
-        role_in_company: "-",
-        confirmation_email: "-",
+        your_full_name: "-",
+        you_are_the_senior_officer_responsible_for_this_claim: "-",
+        [roleInCompany]: "-",
+        email_address_to_send_confirmation_to: "-",
+        confirmation_email_address :"-",
         telephone_number: "-",
         has_tax_agent_for_rd_claim: "-",
       },
-      rd_scheme: {
-        scheme_type: "RDEC",
+      accounting_period: {
+        start_date_of_accounting_period : this.formatDate(startDate),
+        end_date_of_accounting : this.formatDate(endDate),
+        [accountPeriodEnd] : '-'
+      },
+      qualifying_expenditure_and_projectscheme: {
+        schemes: "RDEC",
       },
       rdec_qualifying_expenditure: {
         staffing_costs: currencySymbol
@@ -720,15 +728,15 @@ export class RdFormHelperService {
       doc.on("end", async () => {
         const pdfBuffer = Buffer.concat(buffers);
 
-        // const fs = require('fs');
-        // const path = require('path');
-        // const localDir = path.resolve(__dirname, '../../../output/pdfs');
-        // if (!fs.existsSync(localDir)) {
-        //   fs.mkdirSync(localDir, { recursive: true });
-        // }
-        // const localPath = path.join(localDir, `uk_credit_${caseRid}_${Date.now()}.pdf`);
-        // fs.writeFileSync(localPath, pdfBuffer);
-        // logMessage(`UK PDF stored locally for testing: ${localPath}`);
+        const fs = require('fs');
+        const path = require('path');
+        const localDir = path.resolve(__dirname, '../../../output/pdfs');
+        if (!fs.existsSync(localDir)) {
+          fs.mkdirSync(localDir, { recursive: true });
+        }
+        const localPath = path.join(localDir, `uk_credit_${caseRid}_${Date.now()}.pdf`);
+        fs.writeFileSync(localPath, pdfBuffer);
+        logMessage(`UK PDF stored locally for testing: ${localPath}`);
 
         const blobName = `cases/${caseRid}/rdForms/uk_credit_${caseRid}_${Date.now()}.pdf`;
         try {
