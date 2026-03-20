@@ -4613,7 +4613,7 @@ export class InteractionService {
       !settings?.client_id ||
       !settings?.client_secret
     ) {
-      throw new Error("Mailbox is not configured for this parent account");
+      throw new Error("Mailbox is not configured for this account");
     }
 
     const clientSecret = await decryptClientSecret(settings.client_secret);
@@ -4782,6 +4782,7 @@ export class InteractionService {
               "id",
               "subject",
               "from",
+              "toRecipients",
               "receivedDateTime",
               "isRead",
               "hasAttachments",
@@ -4813,6 +4814,10 @@ export class InteractionService {
           message.from?.emailAddress?.address ||
           "",
         sender_email: message.from?.emailAddress?.address || "",
+        to_recipients: (message.toRecipients || []).map((recipient: any) => ({
+          name: recipient?.emailAddress?.name || "",
+          email: recipient?.emailAddress?.address || "",
+        })),
         received_datetime: message.receivedDateTime,
         is_read: Boolean(message.isRead),
         has_attachments: Boolean(message.hasAttachments),
