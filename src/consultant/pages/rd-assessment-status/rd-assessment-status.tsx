@@ -79,8 +79,8 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
       page: 1,
       limit: 100,
       search: '',
-      sortBy: moduleLevel === 'project' ? 'created_datetime' : 'project_code',
-      sortOrder: 'ASC',
+      sortBy: 'created_datetime',
+      sortOrder: 'DESC',
     });
   const [refreshRdAssessmentStatus, setRefreshRdAssessmentStatus] =
     useState<number>(Date.now());
@@ -262,10 +262,19 @@ const RdAssessmentStatus: React.FC<RdAssessmentStatusProps> = ({
 
   const restrictedColumns = [
     {
-      id: moduleLevel === 'project' ? 'created_datetime' : 'project_code',
+      id: 'created_datetime',
       canHide: false,
       canDrag: false,
     },
+    ...(moduleLevel === 'case'
+      ? [
+          {
+            id: 'project_code',
+            canHide: false,
+            canDrag: false,
+          },
+        ]
+      : []),
   ];
 
   const [columnVisibility, setColumnVisibility] = useState<

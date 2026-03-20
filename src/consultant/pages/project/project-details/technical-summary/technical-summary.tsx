@@ -48,6 +48,7 @@ const TechnicalSummaryTabs: OverviewTabs[] = [
 
 interface TechnicalSummaryProps {
   accountInActive: boolean;
+  isProjectSignedOff: boolean;
   setExportType: (type: ExportType) => void;
   setTechnicalSummaryParams: (params: TechnicalSummaryExportListParams) => void;
   activityMenuItems: ActivityDropdownItem[];
@@ -57,6 +58,7 @@ interface TechnicalSummaryProps {
 
 const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   accountInActive,
+  isProjectSignedOff,
   setExportType,
   setTechnicalSummaryParams,
   activityMenuItems,
@@ -282,6 +284,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
           handleBackClick={handleBackClick}
           isActionItemsExpanded={isActionItemsExpanded}
           setIsActionItemsExpanded={setIsActionItemsExpanded}
+          isProjectSignedOff={isProjectSignedOff}
         />
       ) : isTimeLineView ? (
         <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
