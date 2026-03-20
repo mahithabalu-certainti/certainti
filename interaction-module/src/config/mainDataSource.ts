@@ -73,7 +73,7 @@ export async function initMainDbSequelize() {
       DB_PASSWORD,
       {
         host: DB_HOST,
-        dialect: "postgres",
+        dialect: "postgres", 
         port: 5432,
         logging: env !== "production",
         define: {
