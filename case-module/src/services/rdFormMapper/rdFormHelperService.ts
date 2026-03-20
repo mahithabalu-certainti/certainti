@@ -341,6 +341,7 @@ export class RdFormHelperService {
       { key: "business_details", title: "Business Details" },
       { key: "contact_and_agent_details", title: "Contact and Agent Details" },
       { key: "accounting_period", title: "Accounting Period" },
+      { key : "qualifying_expenditure_and_projects", title : "Qualifying expenditure and projects"},
       { key: "rd_scheme", title: "R&D Scheme" },
       {
         key: "rdec_qualifying_expenditure",
@@ -588,6 +589,8 @@ export class RdFormHelperService {
     const accountingPeriodFormatted = `${this.formatDate(startDate)} to ${this.formatDate(endDate)}`;
     const accountPeriodEnd = `Accounting period ending ${this.formatDate(endDate)} part of long period of account`
     const roleInCompany = `Role in relation to ${accountInfo.account_name}`
+    const noOfEpws = `Number of EPW's`
+    const externally_provided_workers = 'Externally provided workers (EPW)'
 
     let ukFormData = {
       business_details: {
@@ -614,17 +617,17 @@ export class RdFormHelperService {
         end_date_of_accounting : this.formatDate(endDate),
         [accountPeriodEnd] : '-'
       },
-      qualifying_expenditure_and_projectscheme: {
+      qualifying_expenditure_and_projects: {
         schemes: "RDEC",
       },
       rdec_qualifying_expenditure: {
         staffing_costs: currencySymbol
           ? `${currencySymbol}${this.formatNumber(computedFields.Total?.Employees)}`
           : this.formatNumber(computedFields.Total?.Employees),
-        externally_provided_workers: currencySymbol
+        [externally_provided_workers]: currencySymbol
           ? `${currencySymbol}${this.formatNumber(computedFields.Total?.["Net EPW"] || "-")}`
           : this.formatNumber(computedFields.Total?.["Net EPW"] || "-"),
-        number_of_epws: resoucesCount || "-",
+        [noOfEpws]: resoucesCount || "-",
         software: currencySymbol
           ? `${currencySymbol}${this.formatNumber(caseInfo.material_software_cost)}`
           : this.formatNumber(caseInfo.material_software_cost),
@@ -728,15 +731,15 @@ export class RdFormHelperService {
       doc.on("end", async () => {
         const pdfBuffer = Buffer.concat(buffers);
 
-        const fs = require('fs');
-        const path = require('path');
-        const localDir = path.resolve(__dirname, '../../../output/pdfs');
-        if (!fs.existsSync(localDir)) {
-          fs.mkdirSync(localDir, { recursive: true });
-        }
-        const localPath = path.join(localDir, `uk_credit_${caseRid}_${Date.now()}.pdf`);
-        fs.writeFileSync(localPath, pdfBuffer);
-        logMessage(`UK PDF stored locally for testing: ${localPath}`);
+        // const fs = require('fs');
+        // const path = require('path');
+        // const localDir = path.resolve(__dirname, '../../../output/pdfs');
+        // if (!fs.existsSync(localDir)) {
+        //   fs.mkdirSync(localDir, { recursive: true });
+        // }
+        // const localPath = path.join(localDir, `uk_credit_${caseRid}_${Date.now()}.pdf`);
+        // fs.writeFileSync(localPath, pdfBuffer);
+        // logMessage(`UK PDF stored locally for testing: ${localPath}`);
 
         const blobName = `cases/${caseRid}/rdForms/uk_credit_${caseRid}_${Date.now()}.pdf`;
         try {
