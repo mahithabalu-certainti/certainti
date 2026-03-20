@@ -591,6 +591,7 @@ export class RdFormHelperService {
     const roleInCompany = `Role in relation to ${accountInfo.account_name}`
     const noOfEpws = `Number of EPW's`
     const externally_provided_workers = 'Externally provided workers (EPW)'
+    const has_tax_agent_for_rd_claim = 'Has Tax Agent for R&D Claim'
 
     let ukFormData = {
       business_details: {
@@ -610,7 +611,7 @@ export class RdFormHelperService {
         email_address_to_send_confirmation_to: "-",
         confirmation_email_address :"-",
         telephone_number: "-",
-        has_tax_agent_for_rd_claim: "-",
+        [has_tax_agent_for_rd_claim]: "-",
       },
       accounting_period: {
         start_date_of_accounting_period : this.formatDate(startDate),
