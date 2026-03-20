@@ -226,6 +226,7 @@ export enum AllModules {
   MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule',
   RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
   FOUR_PART_ASSESSMENT = 'four_part_assessment',
+  RD_ASSESSMENT_STATUS = 'rd_assessment_status',
 }
 
 export enum AllPermissions {
@@ -420,6 +421,10 @@ export enum AllPermissions {
   FOUR_PART_ASSESSMENT_TIMELINE = 'four_part_assessment_timeline',
   FOUR_PART_ASSESSMENT_VIEW_EDIT = 'four_part_assessment_view_edit',
   FOUR_PART_ASSESSMENT_EXPORT = 'four_part_assessment_export',
+  RD_ASSESSMENT_STATUS_OVERVIEW = 'rd_assessment_status_overview',
+  RD_ASSESSMENT_STATUS_TIMELINE = 'rd_assessment_status_timeline',
+  RD_ASSESSMENT_STATUS_EXPORT = 'rd_assessment_status_export',
+  RD_ASSESSMENT_STATUS_VIEW_EDIT = 'rd_assessment_status_view',
 }
 
 export interface Country {

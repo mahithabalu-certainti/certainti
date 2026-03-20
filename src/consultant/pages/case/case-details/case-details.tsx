@@ -36,6 +36,7 @@ import {
   FinancialHighlightsResponse,
   AuditTimelineListExportParams,
   FourPartAssessmentListExportURLParams,
+  RdAssessmentStatusExportURLParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -74,6 +75,7 @@ import {
   TaskCreateIcon,
   TechSummaryIcon,
   WorkBreakdownIcon,
+  RdStatusIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -128,6 +130,8 @@ import { ExportFourPartAssessmentList } from '../../../services/four-part-assess
 import { FourPartAssessment } from '../../four-part-assessment';
 import CloseCaseModal from './dossier/close-case-modal';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
+import { ExportRdAssessmentStatusList } from '../../../services/rd-assessment/rd-assessment-service';
+import { RdAssessmentStatus } from '../../rd-assessment-status';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -306,6 +310,14 @@ export const CaseDetails = () => {
       sort: 'r_number',
       sort_by: 'ASC',
       type: 'case',
+    });
+
+  const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
+    useState<RdAssessmentStatusExportURLParams>({
+      search: '',
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
     });
 
   const [financialResCostParams, setFinancialResCostParams] =
@@ -506,6 +518,11 @@ export const CaseDetails = () => {
     AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
   );
 
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
+  );
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -521,7 +538,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'projectResource' &&
       searchParams.get('list') !== 'financialHighlights' &&
       searchParams.get('list') !== 'technicalSummary' &&
-      searchParams.get('list') !== 'four_part_assessment'
+      searchParams.get('list') !== 'four_part_assessment' &&
+      searchParams.get('list') !== 'rd_assessment_status'
     ) {
       return;
     }
@@ -581,6 +599,8 @@ export const CaseDetails = () => {
       );
     } else if (exportType === 'four_part_assessment') {
       ExportFourPartAssessmentList(fourPartParams);
+    } else if (exportType === 'rd_assessment_status') {
+      ExportRdAssessmentStatusList(rdAssessmentStatusParams);
     } else if (
       (list === 'caseProjects' && exportType === 'cases_projects') ||
       (list === 'dossier' && exportType === 'dossier-qualified-projects')
@@ -699,6 +719,8 @@ export const CaseDetails = () => {
       return !isChecklistsExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
       return !isFourPartExportEnable;
+    } else if (list === 'rd_assessment_status') {
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
       const tab = searchParams.get('tab') || 'all';
       if (tab === 'all') {
@@ -1016,6 +1038,15 @@ export const CaseDetails = () => {
             moduleLevel='case'
           />
         );
+      case 'rd_assessment_status':
+        return (
+          <RdAssessmentStatus
+            setExportType={setExportType}
+            setRdAssessmentStatusParams={setRdAssessmentStatusParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='case'
+          />
+        );
       case 'projectResource':
         return (
           <CaseProjectResource
@@ -1154,6 +1185,13 @@ export const CaseDetails = () => {
         id: AllModules.FOUR_PART_ASSESSMENT,
         disabled: false,
         icon: FourPartIcon,
+      },
+      {
+        name: 'RD Assessment Status',
+        key: 'rd_assessment_status',
+        id: AllModules.RD_ASSESSMENT_STATUS,
+        disabled: false,
+        icon: RdStatusIcon,
       },
       {
         name: 'Technical Summary',
