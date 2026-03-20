@@ -418,7 +418,7 @@ export const summaryHighlightsQuery = (
             AND
             a.fiscal_year = ${fiscal_year} 
             AND
-            pf.is_rd_claim_qualified = true
+            pf.is_qualified = true
         GROUP BY
         a.account_rid, p.rid
     ),
