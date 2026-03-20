@@ -1,6 +1,13 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CircularProgress, Dialog, DialogContent, DialogTitle } from '@mui/material';
+import {
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Popover,
+  Tooltip,
+} from '@mui/material';
 import type { AxiosError } from 'axios';
 import {
   DraftEmailIcon,
@@ -36,9 +43,35 @@ const findDefaultFolder = (folders: MailboxFolder[]) => {
 };
 
 const FAVORITE_WELL_KNOWN_NAMES = ['inbox', 'drafts', 'sentitems', 'deleteditems'];
+const HIDDEN_FOLDER_TOKENS = ['conversationhistory'];
+const STATUS_FILTER_OPTIONS = [
+  { key: 'all', label: 'All' },
+  { key: 'unread', label: 'Unread' },
+  { key: 'read', label: 'Read' },
+] as const;
+
+type MailboxStatusFilterKey = (typeof STATUS_FILTER_OPTIONS)[number]['key'];
+
+type MailboxFilters = {
+  status: MailboxStatusFilterKey;
+  hasAttachments: boolean;
+  highImportance: boolean;
+  from: string;
+  to: string;
+  receivedFrom: string;
+  receivedTo: string;
+};
 
 const normalizeFolderToken = (value?: string | null) =>
   (value || '').toLowerCase().replace(/\s+/g, '');
+
+const normalizeFilterText = (value: string) => value.trim().toLowerCase();
+
+const getEndOfDayTime = (dateValue: string) => {
+  const date = new Date(dateValue);
+  date.setHours(23, 59, 59, 999);
+  return date.getTime();
+};
 
 const getFolderCountDisplay = (folder: MailboxFolder) => {
   const token = normalizeFolderToken(folder.well_known_name || folder.name);
@@ -148,6 +181,16 @@ const Inbox = () => {
   const [messagePaneWidth, setMessagePaneWidth] = useState(390);
   const [activeDivider, setActiveDivider] = useState<'folders' | 'messages' | null>(null);
   const [isFolderPaneCollapsed, setIsFolderPaneCollapsed] = useState(false);
+  const [filters, setFilters] = useState<MailboxFilters>({
+    status: 'all',
+    hasAttachments: false,
+    highImportance: false,
+    from: '',
+    to: '',
+    receivedFrom: '',
+    receivedTo: '',
+  });
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(null);
   const [isDesktopLayout, setIsDesktopLayout] = useState(
     () => typeof window !== 'undefined' && window.innerWidth >= 1024
   );
@@ -190,6 +233,9 @@ const Inbox = () => {
     () =>
       flatFolders.filter(
         (folder) =>
+          !HIDDEN_FOLDER_TOKENS.includes(
+            normalizeFolderToken(folder.well_known_name || folder.name)
+          ) &&
           !FAVORITE_WELL_KNOWN_NAMES.includes(
             normalizeFolderToken(folder.well_known_name || folder.name)
           )
@@ -233,18 +279,64 @@ const Inbox = () => {
     );
   }, [mailboxMessages, pageToken]);
 
+  const filteredMessageItems = useMemo(() => {
+    const fromFilter = normalizeFilterText(filters.from);
+    const toFilter = normalizeFilterText(filters.to);
+
+    return messageItems.filter((message) => {
+      if (filters.status === 'unread' && message.is_read) return false;
+      if (filters.status === 'read' && !message.is_read) return false;
+      if (filters.hasAttachments && !message.has_attachments) return false;
+      if (
+        filters.highImportance &&
+        message.importance?.toLowerCase() !== 'high'
+      ) {
+        return false;
+      }
+
+      if (fromFilter) {
+        const senderText = `${message.sender || ''} ${message.sender_email || ''}`.toLowerCase();
+        if (!senderText.includes(fromFilter)) return false;
+      }
+
+      if (toFilter) {
+        const recipientsText = (message.to_recipients || [])
+          .map((recipient) => `${recipient.name || ''} ${recipient.email || ''}`.trim().toLowerCase())
+          .join(' ');
+        if (!recipientsText.includes(toFilter)) return false;
+      }
+
+      const receivedTime = new Date(message.received_datetime).getTime();
+      if (filters.receivedFrom) {
+        const startTime = new Date(filters.receivedFrom).getTime();
+        if (receivedTime < startTime) return false;
+      }
+      if (filters.receivedTo) {
+        const endTime = getEndOfDayTime(filters.receivedTo);
+        if (receivedTime > endTime) return false;
+      }
+
+      return true;
+    });
+  }, [filters, messageItems]);
+
   useEffect(() => {
     if (
-      messageItems.length > 0 &&
-      !messageItems.some((message) => message.id === selectedMessageId)
+      filteredMessageItems.length > 0 &&
+      !filteredMessageItems.some((message) => message.id === selectedMessageId)
     ) {
-      setSelectedMessageId(messageItems[0].id);
+      setSelectedMessageId(filteredMessageItems[0].id);
+      return;
     }
-  }, [messageItems, selectedMessageId]);
+
+    if (!filteredMessageItems.length) {
+      setSelectedMessageId('');
+    }
+  }, [filteredMessageItems, selectedMessageId]);
 
   const selectedListMessage = useMemo(
-    () => messageItems.find((message) => message.id === selectedMessageId),
-    [messageItems, selectedMessageId]
+    () => filteredMessageItems.find((message) => message.id === selectedMessageId),
+    [filteredMessageItems, selectedMessageId]
   );
 
   const {
@@ -451,30 +543,31 @@ const Inbox = () => {
 
     if (isFolderPaneCollapsed) {
       return (
-        <button
-          key={folder.id}
-          type='button'
-          onClick={() => setSelectedFolder(folder)}
-          className={`flex min-h-[36px] w-full items-center justify-center rounded-[10px] transition-colors ${
-            active
-              ? 'bg-[#D8E9FB] text-[#0B57A3]'
-              : 'text-[#3A4A5B] hover:bg-[#EDF3FA]'
-          }`}
-          style={{
-            marginLeft: '6px',
-            marginRight: '8px',
-          }}
-          title={folder.name}
-        >
-          <span className='relative flex h-8 w-8 items-center justify-center rounded-[8px]'>
-            {renderFolderIcon(folder, true)}
-            {countDisplay ? (
-              <span className='absolute -right-2 -top-1 min-w-[20px] rounded-full bg-[#0F6CBD] px-1.5 text-center text-[10px] font-semibold leading-4 text-white'>
-                {countDisplay}
-              </span>
-            ) : null}
-          </span>
-        </button>
+        <Tooltip key={folder.id} title={folder.name} placement='right' arrow>
+          <button
+            type='button'
+            onClick={() => setSelectedFolder(folder)}
+            className={`flex min-h-[36px] w-full items-center justify-center rounded-[10px] transition-colors ${
+              active
+                ? 'bg-[#D8E9FB] text-[#0B57A3]'
+                : 'text-[#3A4A5B] hover:bg-[#EDF3FA]'
+            }`}
+            style={{
+              marginLeft: '6px',
+              marginRight: '8px',
+            }}
+            aria-label={folder.name}
+          >
+            <span className='relative flex h-8 w-8 items-center justify-center rounded-[8px]'>
+              {renderFolderIcon(folder, true)}
+              {countDisplay ? (
+                <span className='absolute -right-2 -top-1 min-w-[20px] rounded-full bg-[#0F6CBD] px-1.5 text-center text-[10px] font-semibold leading-4 text-white'>
+                  {countDisplay}
+                </span>
+              ) : null}
+            </span>
+          </button>
+        </Tooltip>
       );
     }
 
@@ -587,13 +680,22 @@ const Inbox = () => {
   };
 
   const showInitialLoading = isFolderLoading || (!selectedFolder && isMessagesLoading);
+  const activeFilterCount = [
+    filters.status !== 'all',
+    filters.hasAttachments,
+    filters.highImportance,
+    Boolean(filters.from.trim()),
+    Boolean(filters.to.trim()),
+    Boolean(filters.receivedFrom),
+    Boolean(filters.receivedTo),
+  ].filter(Boolean).length;
   const mailboxErrorMessage =
     (
       (folderError as AxiosError<{ statusMessage?: string }>)?.response?.data
         ?.statusMessage ||
       (messagesError as AxiosError<{ statusMessage?: string }>)?.response?.data
         ?.statusMessage
-    )?.trim() || 'Unable to load the parent mailbox for this account.';
+    )?.trim() || 'Unable to load the mailbox for this account.';
 
   return (
     <div className='h-[calc(100vh-235px)] w-full overflow-hidden p-2 pr-4'>
@@ -603,19 +705,208 @@ const Inbox = () => {
             <DraftEmailIcon className='h-7 w-7 rounded-[2px] bg-[#0F6CBD] p-1 text-white' />
             <div className='min-w-0'>
               <p className='truncate text-[14px] font-semibold text-[#253240]'>Mailbox</p>
-              <p className='truncate text-[11px] text-[#5E6B78]'>{messageItems.length} items</p>
+              <p className='truncate text-[11px] text-[#5E6B78]'>{filteredMessageItems.length} items</p>
             </div>
           </div>
-          <div className='ml-4 flex h-[32px] w-full max-w-[300px] items-center rounded-[4px] border border-[#C3CFDB] bg-white pl-3 pr-2'>
-            <SearchIcon className='mr-2 h-4 w-4 shrink-0 text-[#5E6B78]' />
-            <input
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              placeholder='Search'
-              className='w-full border-0 bg-transparent text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
-            />
+          <div className='ml-4 flex items-center gap-2'>
+            <Tooltip title='Filter messages' placement='bottom' arrow>
+              <button
+                type='button'
+                onClick={(event) => setFilterAnchorEl(event.currentTarget)}
+                className='inline-flex h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[4px] border border-[#C3CFDB] bg-white px-3 text-[12px] font-medium text-[#344054] transition-colors hover:bg-[#F8FAFC]'
+                aria-label='Filter messages'
+              >
+                <svg viewBox='0 0 20 20' fill='none' className='h-4 w-4 text-[#5E6B78]' aria-hidden='true'>
+                  <path d='M4 5H16' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+                  <path d='M6.5 10H13.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+                  <path d='M8.75 15H11.25' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+                </svg>
+                <span className='hidden sm:inline'>Filter</span>
+                {activeFilterCount ? (
+                  <span className='hidden min-w-[18px] rounded-full bg-[#EAF3FF] px-1.5 text-center text-[11px] font-semibold leading-5 text-[#0F6CBD] sm:inline-block'>
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </button>
+            </Tooltip>
+            <div className='flex h-[32px] w-full max-w-[300px] items-center rounded-[4px] border border-[#C3CFDB] bg-white pl-3 pr-2'>
+              <SearchIcon className='mr-2 h-4 w-4 shrink-0 text-[#5E6B78]' />
+              <input
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder='Search'
+                className='w-full border-0 bg-transparent text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
+              />
+            </div>
           </div>
         </div>
+
+        <Popover
+          anchorEl={filterAnchorEl}
+          open={Boolean(filterAnchorEl)}
+          onClose={() => setFilterAnchorEl(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              borderRadius: '8px',
+              width: 320,
+              boxShadow: '0 10px 28px rgba(15, 23, 42, 0.14)',
+              border: '1px solid #E5EAF0',
+              overflow: 'hidden',
+            },
+          }}
+        >
+          <div className='border-b border-[#E5EAF0] px-4 py-3'>
+            <p className='text-[13px] font-semibold text-[#16202A]'>Filter mailbox</p>
+            <p className='mt-1 text-[11px] text-[#5E6B78]'>
+              Narrow the current folder like Outlook.
+            </p>
+          </div>
+          <div className='space-y-4 px-4 py-4'>
+            <div>
+              <p className='mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#5E6B78]'>
+                Status
+              </p>
+              <div className='flex flex-wrap gap-2'>
+                {STATUS_FILTER_OPTIONS.map((option) => (
+                  <button
+                    key={option.key}
+                    type='button'
+                    onClick={() =>
+                      setFilters((current) => ({ ...current, status: option.key }))
+                    }
+                    className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                      filters.status === option.key
+                        ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
+                        : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className='grid grid-cols-1 gap-3'>
+              <label className='text-[12px] text-[#344054]'>
+                <span className='mb-1 block font-medium'>From</span>
+                <input
+                  value={filters.from}
+                  onChange={(event) =>
+                    setFilters((current) => ({ ...current, from: event.target.value }))
+                  }
+                  placeholder='Sender name or email'
+                  className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
+                />
+              </label>
+              <label className='text-[12px] text-[#344054]'>
+                <span className='mb-1 block font-medium'>To</span>
+                <input
+                  value={filters.to}
+                  onChange={(event) =>
+                    setFilters((current) => ({ ...current, to: event.target.value }))
+                  }
+                  placeholder='Recipient name or email'
+                  className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
+                />
+              </label>
+            </div>
+
+            <div className='grid grid-cols-2 gap-3'>
+              <label className='text-[12px] text-[#344054]'>
+                <span className='mb-1 block font-medium'>Received from</span>
+                <input
+                  type='date'
+                  value={filters.receivedFrom}
+                  onChange={(event) =>
+                    setFilters((current) => ({
+                      ...current,
+                      receivedFrom: event.target.value,
+                    }))
+                  }
+                  className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none'
+                />
+              </label>
+              <label className='text-[12px] text-[#344054]'>
+                <span className='mb-1 block font-medium'>Received to</span>
+                <input
+                  type='date'
+                  value={filters.receivedTo}
+                  onChange={(event) =>
+                    setFilters((current) => ({
+                      ...current,
+                      receivedTo: event.target.value,
+                    }))
+                  }
+                  className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none'
+                />
+              </label>
+            </div>
+
+            <div className='flex flex-wrap gap-2'>
+              <button
+                type='button'
+                onClick={() =>
+                  setFilters((current) => ({
+                    ...current,
+                    hasAttachments: !current.hasAttachments,
+                  }))
+                }
+                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                  filters.hasAttachments
+                    ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
+                    : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
+                }`}
+              >
+                Has attachments
+              </button>
+              <button
+                type='button'
+                onClick={() =>
+                  setFilters((current) => ({
+                    ...current,
+                    highImportance: !current.highImportance,
+                  }))
+                }
+                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                  filters.highImportance
+                    ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
+                    : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
+                }`}
+              >
+                High importance
+              </button>
+            </div>
+          </div>
+          <div className='flex items-center justify-between border-t border-[#E5EAF0] bg-[#FBFCFE] px-4 py-3'>
+            <button
+              type='button'
+              onClick={() =>
+                setFilters({
+                  status: 'all',
+                  hasAttachments: false,
+                  highImportance: false,
+                  from: '',
+                  to: '',
+                  receivedFrom: '',
+                  receivedTo: '',
+                })
+              }
+              className='text-[12px] font-medium text-[#5E6B78] hover:text-[#16202A]'
+            >
+              Clear filters
+            </button>
+            <button
+              type='button'
+              onClick={() => setFilterAnchorEl(null)}
+              className='rounded-[6px] bg-[#0F6CBD] px-3 py-1.5 text-[12px] font-semibold text-white'
+            >
+              Apply
+            </button>
+          </div>
+        </Popover>
 
         <div className='border-t border-[#CBD6E2]' />
 
@@ -642,17 +933,22 @@ const Inbox = () => {
                     </div>
                   ) : null}
                   {isDesktopLayout ? (
-                    <button
-                      type='button'
-                      onClick={() => setIsFolderPaneCollapsed((current) => !current)}
-                      className={`inline-flex items-center justify-center rounded-[6px] text-[#5E6B78] transition-colors hover:bg-[#EEF3F8] hover:text-[#253240] ${isFolderPaneCollapsed ? 'h-8 w-8' : 'h-7 w-7'}`}
+                    <Tooltip
                       title={isFolderPaneCollapsed ? 'Expand folders' : 'Collapse folders'}
-                      aria-label={isFolderPaneCollapsed ? 'Expand folders' : 'Collapse folders'}
+                      placement='bottom'
+                      arrow
                     >
-                      <ChevronLeftIcon
-                        className={`h-4 w-4 transition-transform ${isFolderPaneCollapsed ? 'rotate-180' : ''}`}
-                      />
-                    </button>
+                      <button
+                        type='button'
+                        onClick={() => setIsFolderPaneCollapsed((current) => !current)}
+                        className={`inline-flex items-center justify-center rounded-[6px] text-[#5E6B78] transition-colors hover:bg-[#EEF3F8] hover:text-[#253240] ${isFolderPaneCollapsed ? 'h-8 w-8' : 'h-7 w-7'}`}
+                        aria-label={isFolderPaneCollapsed ? 'Expand folders' : 'Collapse folders'}
+                      >
+                        <ChevronLeftIcon
+                          className={`h-4 w-4 transition-transform ${isFolderPaneCollapsed ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                    </Tooltip>
                   ) : null}
                 </div>
               </div>
@@ -714,17 +1010,18 @@ const Inbox = () => {
                     {selectedFolder?.name || 'Messages'}
                   </p>
                   <p className='truncate text-[11px] text-[#5E6B78]'>
-                    {messageItems.length} loaded
+                    {filteredMessageItems.length}
+                    {activeFilterCount ? ' filtered' : ' loaded'}
                   </p>
                 </div>
               </div>
 
               <div className='min-h-0 flex-1 overflow-y-auto overflow-x-hidden'>
-                {messageItems.length ? (
-                  messageItems.map(renderMailCard)
+                {filteredMessageItems.length ? (
+                  filteredMessageItems.map(renderMailCard)
                 ) : (
                   <div className='p-4 text-sm text-[#5E6B78]'>
-                    No messages found in this folder.
+                    No messages found for the selected filter.
                   </div>
                 )}
               </div>

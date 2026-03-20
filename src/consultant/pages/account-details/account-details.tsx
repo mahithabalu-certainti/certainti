@@ -1079,7 +1079,7 @@ export const AccountDetails = () => {
         key: 'inbox',
         id: AllModules.ACCOUNTS,
         disabled: false,
-        hide: !disable,
+        hide: false,
         icon: DraftEmailIcon,
       },
       {

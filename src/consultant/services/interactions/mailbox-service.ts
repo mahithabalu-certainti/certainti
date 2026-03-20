@@ -19,6 +19,7 @@ export interface InboxMessageListItem {
   subject: string;
   sender: string;
   sender_email: string;
+  to_recipients: { name: string; email: string }[];
   received_datetime: string;
   is_read: boolean;
   has_attachments: boolean;
