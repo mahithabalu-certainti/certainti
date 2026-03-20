@@ -878,19 +878,19 @@ export const rawQueries = {
   insertTimeLine(schemaName: string, tableName: string) {
     return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name, created_datetime
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,NOW()
           )
           RETURNING *;
         `
   },
-  insertProjectTimeLine(schemaName: string, tableName: string) {
+  insertProjectTimeLine(schemaName: string, tableName: string) { 
     return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid,created_datetime
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid,NOW()
           )
           RETURNING *;
         `
@@ -898,9 +898,9 @@ export const rawQueries = {
   insertCaseTimeLine(schemaName: string, tableName: string) {
     return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid,created_datetime
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid,NOW()
           )
           RETURNING *;
         `
