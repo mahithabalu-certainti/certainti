@@ -19,6 +19,13 @@ interface ProjectTaskTimelineAttributes {
   entity_rid: string;
   modified_by?: string;
   created_by?: string;
+  document_rid?: string | null;
+  event_type_rid?: string | null;
+  project_rid?: string | null;
+  entity_name?: string | null;
+  created_by_name?: string | null;
+  descriptions?: string | null;
+  source_record_count?: number | null;
 }
 
 interface ProjectTaskTimelineCreationAttributes
@@ -43,6 +50,13 @@ export class ProjectTaskTimeline
   public entity_rid!: string;
   public modified_by?: string;
   public created_by?: string;
+  public document_rid?: string | null;
+  public event_type_rid?: string | null;
+  public project_rid?: string | null;
+  public entity_name?: string | null;
+  public created_by_name?: string | null;
+  public descriptions?: string | null;
+  public source_record_count?: number | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     const model = ProjectTaskTimeline.init(
@@ -102,11 +116,39 @@ export class ProjectTaskTimeline
           type: DataTypes.STRING(100),
           allowNull: false,
         },
+        document_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        event_type_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        entity_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        created_by_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        descriptions: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        source_record_count: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
       },
       {
         sequelize,
         schema: schemaName,
-        tableName: "project_task_timeline",
+        tableName: "project_timeline",
         timestamps: false,
         underscored: true,
         hooks: {
