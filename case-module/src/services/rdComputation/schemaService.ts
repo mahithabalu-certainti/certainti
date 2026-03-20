@@ -611,7 +611,7 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'Dossier Packages is Inprogress. Refresh the page to check the status' },
+            { status: 'The dossier package is in progress. Please refresh the page and wait a few seconds for the download to complete.' },
             { where: { rid, request_type: type } }
         );
     }
