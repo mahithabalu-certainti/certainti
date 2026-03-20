@@ -72,21 +72,21 @@ export async function initMainDbSequelize() {
       DB_USER,
       DB_PASSWORD,
       {
-      host: DB_HOST,
-      dialect: "postgres",
+        host: DB_HOST,
+        dialect: "postgres",
         port: 5432,
         logging: env !== "production",
-      define: {
-        freezeTableName: true,
-        timestamps: false,
-      },
-      pool: {
-        max: 50,        // allow more concurrent connections
-        min: 5,
-        acquire: 60000, // wait up to 60s for a free connection
-        idle: 30000,    // release idle connections after 30s
-      },
-      ...sslOptions,
+        define: {
+          freezeTableName: true,
+          timestamps: false,
+        },
+        pool: {
+          max: 50,        // allow more concurrent connections
+          min: 5,
+          acquire: 60000, // wait up to 60s for a free connection
+          idle: 30000,    // release idle connections after 30s
+        },
+        ...sslOptions,
     });
 
     await sequelize.authenticate();
