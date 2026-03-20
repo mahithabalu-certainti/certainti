@@ -123,9 +123,9 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : Pro
         ${alias}.project_name,
         COALESCE(${alias}.total_effort_prj,0.00) AS total_effort_prj,
         COALESCE(${alias}.total_cost_prj, 0.00) AS total_cost_prj,
-        CAST((COALESCE(${alias}.total_cost_fte_prj, 0.00) * ${alias}.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_fte_prj,
-        CAST((COALESCE(${alias}.total_cost_subcon_prj, 0.00) * ${alias}.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_subcon_prj,
-        CAST((COALESCE(${alias}.total_cost_nonlabor_prj, 0.00) * ${alias}.rd_percent_final)/100 AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
+        CAST((COALESCE(${alias}.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(${alias}.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(${alias}.total_cost_nonlabor_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(${alias}.rd_percent_final, 0.00) AS rd_percent_final
     FROM
         ${schemaName}.case_projects cp
@@ -136,6 +136,15 @@ export const fetchRequiredPrjDataForCanada = (schemaName : string, caseRid : Pro
         ${alias}.account_rid = '${accountRid}'
         AND
         pf.is_qualified = true
+    GROUP BY
+    ${alias}.project_code,
+    ${alias}.project_name,
+    ${alias}.total_effort_prj,
+    ${alias}.total_cost_prj,
+    ${alias}.total_cost_fte_prj,
+    ${alias}.total_cost_subcon_prj,
+    ${alias}.total_cost_nonlabor_prj,
+    ${alias}.rd_percent_final
     `
     return query;
 }
@@ -151,15 +160,15 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.project_name,
         COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
         COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_fte_prj,
-        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
-        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
+        CAST((COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
         FROM ${schemaName}.case_projects cp
         LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
         LEFT JOIN ${schemaName}.case_project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
         WHERE
-        cp.project_fiscal_rid IN (${caseRid.map((d : any) => `'${d.rid}'`).join(',')})
+        cp.project_fiscal_rid IN (${caseRid.length > 0 ? caseRid.map((d : any) => `'${d.rid}'`).join(',') : 'null'})
         AND
         cp.account_rid = '${accountRid}'
         AND
@@ -185,15 +194,15 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.project_name,
         COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
         COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        CAST((COALESCE(cp.total_cost_fte_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_fte_prj,
-        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
-        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00) * (COALESCE(cp.rd_percent_final, 0.00))/100) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
+        CAST((COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
         FROM
         ${schemaName}.project_fiscal cp
         LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = cp.rid
         WHERE
-        cp.rid IN (${caseRid.map((d : any) => `'${d.rid}'`).join(',')})
+        cp.rid IN (${caseRid.length > 0 ? caseRid.map((d : any) => `'${d.rid}'`).join(',') : 'null'})
         AND
         cp.account_rid = '${accountRid}'
         AND
@@ -201,9 +210,18 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         AND
         pfr.region_rid = '${regionRid}'
         GROUP BY
-        cp.rid
+        cp.rid,
+        cp.project_code,
+        cp.project_name,
+        cp.total_effort_prj,
+        cp.total_cost_prj,
+        cp.total_cost_subcon_prj,
+        cp.total_cost_fte_prj,
+        cp.total_cost_nonlabor_prj,
+        cp.rd_percent_final
         `
     }
+    console.log(dynamicQuery)
     return dynamicQuery;
 }
 export const countAssignedProjects = (caseRid : string, schemaName : string) => {
