@@ -109,7 +109,7 @@ const ICON_COLOR_MAP: Record<string, { bg: string; iconColor: string }> = {
   email: { bg: '#FCE4EC', iconColor: '#C2185B' },
   task: { bg: '#F7F1FF', iconColor: '#AF78FF' },
   notes: { bg: '#E0F7FA', iconColor: '#00838F' },
-  resource: { bg: '#CBD6E2', iconColor: '#0B5CAB' },
+  resource: { bg: '#8db8e65a', iconColor: '#0B5CAB' },
   financial: { bg: '#E8F5E9', iconColor: '#1B5E20' },
   interaction: { bg: '#FBE9E7', iconColor: '#BF360C' },
   historical_submission: { bg: '#EDE7F6', iconColor: '#4527A0' },
@@ -192,6 +192,24 @@ const getTimelineIcon = (
         >
           <path d='M9.61556 3.93384H2.38456C1.81405 3.93384 1.35156 4.52246 1.35156 5.24857V9.85011C1.35156 10.5762 1.81405 11.1648 2.38456 11.1648H9.61556C10.1861 11.1648 10.6486 10.5762 10.6486 9.85011V5.24857C10.6486 4.52246 10.1861 3.93384 9.61556 3.93384Z' />
           <path d='M3.41748 3.41746C3.41748 2.73254 3.68956 2.07567 4.17388 1.59136C4.65819 1.10704 5.31506 0.834961 5.99998 0.834961C6.6849 0.834961 7.34177 1.10704 7.82608 1.59136C8.3104 2.07567 8.58248 2.73254 8.58248 3.41746' />
+        </svg>
+      );
+    case 'resource':
+      return (
+        <svg
+          width={s}
+          height={s}
+          viewBox='0 0 12 10'
+          fill='none'
+          stroke={color}
+          strokeWidth='1.2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        >
+          <path d='M8.38636 9.29564V8.3411C8.38636 7.83478 8.18523 7.34919 7.8272 6.99117C7.46918 6.63314 6.98359 6.43201 6.47727 6.43201H2.65909C2.15277 6.43201 1.66718 6.63314 1.30916 6.99117C0.951136 7.34919 0.75 7.83478 0.75 8.3411V9.29564' />
+          <path d='M4.56827 4.52277C5.62263 4.52277 6.47736 3.66804 6.47736 2.61368C6.47736 1.55932 5.62263 0.70459 4.56827 0.70459C3.51391 0.70459 2.65918 1.55932 2.65918 2.61368C2.65918 3.66804 3.51391 4.52277 4.56827 4.52277Z' />
+          <path d='M11.2499 9.29537V8.34082C11.2496 7.91783 11.1088 7.50692 10.8497 7.17261C10.5905 6.8383 10.2277 6.59952 9.81812 6.49377' />
+          <path d='M7.90918 0.766724C8.31983 0.871867 8.68381 1.11069 8.94373 1.44555C9.20366 1.78041 9.34474 2.19226 9.34474 2.61616C9.34474 3.04006 9.20366 3.4519 8.94373 3.78676C8.68381 4.12162 8.3104 4.36044 7.90918 4.46559' />
         </svg>
       );
     case 'call_log':
@@ -535,6 +553,7 @@ const transformEntries = (entries: any[]): TimelineGroup[] => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entries.forEach((item: any) => {
+    if (!item.created_datetime) return;
     const dateLabel = formatTimelineDate(item.created_datetime);
     const time = formatTimelineTime(item.created_datetime);
 
