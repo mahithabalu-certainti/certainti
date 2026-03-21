@@ -62,7 +62,7 @@ export const projectTaskSchema = gql`
     total_cost_pro_task: String
     region_rid: String
     country_rid: String
-    resource_code: String
+    project_resource_rid: String
     start_date: String
     end_date: String
     comments: String

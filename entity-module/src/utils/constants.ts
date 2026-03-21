@@ -91,7 +91,7 @@ export const entityTypes = {
   TAG: "Tag",
   SETTINGS: "Settings",
   QRE_PERCENT: "QRE Percent",
-  AUTO_RD_ASSESSMENT:"Auto RD Assessment",
+  AUTO_RD_ASSESSMENT: "Auto RD Assessment",
 };
 
 export const eventNames = {
@@ -835,6 +835,15 @@ export const rawQueries = {
   },
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
+  },
+  findResourceByRid(schemaName: string, resource_rid: string) {
+    return `SELECT resource_code FROM ${schemaName}.resources WHERE rid = '${resource_rid}'`;
+  },
+  findProjectResourceByRid(schemaName: string, project_resource_rid: string) {
+    return `SELECT resource_rid FROM ${schemaName}.project_resource WHERE rid = '${project_resource_rid}'`;
+  },
+  findProjectFiscalByRid(schemaName: string, project_fiscal_rid: string) {
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${project_fiscal_rid}'`;
   },
   fetchAccountById: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   updateTemplate(url: string, templateId: string, userId: string) {

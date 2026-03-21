@@ -3134,7 +3134,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
       }
 
       const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-      const formatDate = (date?: Date | string | null, format: string = "YYYY-MM-DD hh:mm:ss A") => {
+      const formatDate = (date?: Date | string | null, format: string = "YYYY-MMM-DD, hh:mm:ss A") => {
         if (!date) return null;
         const dateObj = date instanceof Date ? date : new Date(date);
         if (isNaN(dateObj.getTime())) return null;
