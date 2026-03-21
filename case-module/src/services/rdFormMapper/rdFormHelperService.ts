@@ -1819,6 +1819,10 @@ export class RdFormHelperService {
                     schemaName,
                     accountRid,
                     stateRid || "",
+                    {
+                      db_source:       mapperObject.db_source       ?? null,
+                      where_filters:   mapperObject.where_filters   ?? null,
+                    },
                   );
                 if (dynamicValue !== null && dynamicValue !== undefined) {
                   addToValueMap(bareRid, dynamicValue);
@@ -1895,6 +1899,10 @@ export class RdFormHelperService {
               schemaName,
               accountRid,
               stateRid || "",
+              {
+                db_source:       mapperObject.db_source       ?? null,
+                where_filters:   mapperObject.where_filters   ?? null,
+              },
             );
           logMessage(
             `Resolved DB value for field ${item.field_label || item.field_id}: ${dynamicValue}`,
@@ -2441,6 +2449,10 @@ export class RdFormHelperService {
               context.schemaName,
               context.accountRid,
               context.stateRid || "",
+              {
+                db_source:       mapperObject.db_source       ?? null,
+                where_filters:   mapperObject.where_filters   ?? null,
+              },
             );
 
           if (dynamicValue !== null) {
@@ -2547,6 +2559,11 @@ export class RdFormHelperService {
                   context.schemaName,
                   context.stateRid || "",
                   context.fiscalYear,
+                  mapperObject.where_filters      ?? null,
+                  mapperObject.joins              ?? null,
+                  mapperObject.extra_filters      ?? null,
+                  mapperObject.fiscal_year_column ?? null,
+                  mapperObject.db_source          ?? null
                 );
 
               tableValueCache[val] = tableValues || [];

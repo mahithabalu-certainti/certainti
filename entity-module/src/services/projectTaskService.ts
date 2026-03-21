@@ -16,7 +16,7 @@ import { Resources } from "../models/resource";
 import { ProjectFiscal } from "../models/projectFiscal";
 import currency from "currency.js";
 import Decimal from "decimal.js";
-import { ProjectTaskTimeline } from "../models/projectTaskTimeline";
+import { ProjectTimeline } from "../models/projectTimeline";
 import { ProjectResource } from "../models/projectResource";
 import { errorLog, logMessage } from "../utils/helpers";
 
@@ -397,7 +397,7 @@ export class ProjectTaskService {
     const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
     const ResourceModel = Resources.initialize(sequelize, schemaName);
     const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
-    const ProjectTaskTimelineModel = ProjectTaskTimeline.initialize(sequelize, schemaName);
+    const ProjectTimelineModel = ProjectTimeline.initialize(sequelize, schemaName);
     const ProjectResourceModel = ProjectResource.initialize(sequelize, schemaName)
 
     // Define associations
@@ -425,6 +425,13 @@ export class ProjectTaskService {
       as: "project_resource"
     })
 
+    // Association between ProjectTask and ProjectTimeline
+    ProjectTaskModel.hasMany(ProjectTimelineModel, {
+      foreignKey: "entity_rid",
+      sourceKey: "rid",
+      as: "ProjectTimeline",
+    });
+
     return {
       sequelize,
       models: {
@@ -433,7 +440,7 @@ export class ProjectTaskService {
         ProjectFiscalModel,
         ResourceModel,
         ProjectTaskModel,
-        ProjectTaskTimelineModel,
+        ProjectTimelineModel,
         ProjectResourceModel
       },
     };
