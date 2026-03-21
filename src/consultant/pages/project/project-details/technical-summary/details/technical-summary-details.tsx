@@ -109,9 +109,10 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       account_rid: accountId ?? '',
       tech_summary_rid: technicalSummaryId ?? '',
       project_fiscal_rid: projectid || '',
-      technical_summary: Array.isArray(isRefinePrompt)
-        ? isRefinePrompt
-        : data?.technical_summary || [],
+      technical_summary:
+        Array.isArray(isRefinePrompt) && isRefinePrompt.length > 0
+          ? isRefinePrompt
+          : data?.technical_summary || [],
     };
     updateTechSummaryText.mutate(payload, {
       onSuccess: async (response) => {

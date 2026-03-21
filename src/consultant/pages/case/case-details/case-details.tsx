@@ -393,7 +393,13 @@ export const CaseDetails = () => {
 
   useEffect(() => {
     setIsActionItemsExpanded(false);
-  }, [activeKey, tabParam]);
+  }, [activeKey]);
+
+  useEffect(() => {
+    if (activeKey !== 'dossier') {
+      setIsActionItemsExpanded(false);
+    }
+  }, [tabParam]);
 
   const list = searchParams.get('list');
 
@@ -1086,6 +1092,8 @@ export const CaseDetails = () => {
             setResourceSummaryParams={setProjectResourceParams}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
             setAuditTimelineParams={setAuditTimelineParams}
+            isActionItemsExpanded={isActionItemsExpanded}
+            setIsActionItemsExpanded={handleToggleActionItems}
           />
         );
       default:

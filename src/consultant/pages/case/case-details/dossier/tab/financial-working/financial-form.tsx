@@ -250,14 +250,14 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   // Call appropriate API when federal tab changes
 
   useEffect(() => {
-    if (!dossierFinancialStatus) return; // Wait for initiate to complete first
-
-    if (activeTab === 0) {
-      // Federal Yes: Call handleViewFinancialHighlights
-      handleViewFinancialHighlights();
+    if (dossierFinancialStatus || isFinancialWorkingSignoff) {
+      if (activeTab === 0) {
+        // Federal Yes: Call handleViewFinancialHighlights
+        handleViewFinancialHighlights();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, dossierFinancialStatus]);
+  }, [activeTab, dossierFinancialStatus, isFinancialWorkingSignoff]);
 
   // Call region API when region changes in Federal No mode (activeTab === 1)
   useEffect(() => {
@@ -268,7 +268,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       handleViewFinancialHighlightsForRegion();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRegion, activeTab, dossierFinancialStatus]);
+  }, [
+    selectedRegion,
+    activeTab,
+    dossierFinancialStatus,
+    isFinancialWorkingSignoff,
+  ]);
 
   const isSignoffVisible = checkPermission(
     permission,
