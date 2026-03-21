@@ -353,7 +353,11 @@ class RdFormMapperSchemaService {
         for (const f of mapperMeta.where_filters) {
           const value = contextMap[f.context_key];
           if (value !== undefined && value !== null && value !== "") {
-            conditions.push(`${f.column} = :${f.context_key}`);
+            // where_filters columns are stored with "t." prefix for fetchTableValues
+            // (which aliases the table as "t"). Strip it here since this query
+            // selects directly from the table with no alias.
+            const col = f.column.replace(/^t\./, "");
+            conditions.push(`${col} = :${f.context_key}`);
             replacements[f.context_key] = value;
           }
         }
@@ -584,8 +588,7 @@ class RdFormMapperSchemaService {
     }> | null,
     extra_filters?: string[] | null,
     fiscal_year_column?: string | null,
-    db_source?: "org" | "main" | null,
-    schema_override?: string | null,
+    db_source?: "org" | "main" | null
   ): Promise<any[]> {
     const orgDb  = await this.getOrgDb();
     const mainDb = await this.getMainDb();
@@ -595,8 +598,8 @@ class RdFormMapperSchemaService {
 
     // ── DB and schema resolution (data-driven, legacy fallback retained) ──────
     const dbSource        = db_source        ?? (refTable === "account" ? "main" : "org");
-    const effectiveSchema = (schema_override != null)
-      ? schema_override
+    const effectiveSchema = (db_source != null)
+      ? db_source === "main" ? MAIN_SCHEMA_NAME : schemaName
       : (refTable === "account" ? MAIN_SCHEMA_NAME : schemaName);
     const db = dbSource === "main" ? mainDb : orgDb;
 
@@ -631,10 +634,12 @@ class RdFormMapperSchemaService {
         }
       }
 
-      // Fiscal year filter — uses fiscal_year_column when set, otherwise "t.fiscal_year"
-      if (fiscalYear) {
-        const fyCol = fiscal_year_column ?? "t.fiscal_year";
-        conditions.push(`${fyCol} = :fiscalYear`);
+      // Fiscal year filter — only applied when fiscal_year_column is explicitly
+      // set on the data_mapper_objects row. Tables like case_history_submission
+      // that filter by account_rid/state_rid must leave fiscal_year_column NULL
+      // so this block is skipped entirely for them.
+      if (fiscalYear && fiscal_year_column) {
+        conditions.push(`${fiscal_year_column} = :fiscalYear`);
         replacements.fiscalYear = fiscalYear;
       }
 
