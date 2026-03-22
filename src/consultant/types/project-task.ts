@@ -36,6 +36,7 @@ export type ProjectTaskListType = {
   project_name: string | null;
   project_code: string;
   project_resource_code: string;
+  project_resource_role: string;
   resource_rid: string;
   project_resource_rid: string;
   resource_code: string;
