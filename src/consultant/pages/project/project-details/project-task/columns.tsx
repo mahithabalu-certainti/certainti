@@ -44,9 +44,9 @@ export const getProjectTaskColumns = (
     id: 'resource_code',
     label: 'Resource Code',
     sortable: true,
-    editId: 'resource_code',
+    editId: 'project_resource_rid',
     sortId: 'resource_code',
-    width: 160,
+    width: 220,
     sticky: true,
     sx: {
       position: 'sticky',
@@ -80,7 +80,7 @@ export const getProjectTaskColumns = (
         className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         onClick={() => onClick(row)}
       >
-        {row.resource_code}
+        {`${row.resource_code}  ${row.project_resource_role ? `(${row.project_resource_role})` : ''}`}
       </span>
     ),
   },
