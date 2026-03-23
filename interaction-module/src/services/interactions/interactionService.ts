@@ -207,7 +207,8 @@ export class InteractionService {
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
       interactionData.interaction_assessment_source_rid = intResponseSource || ""
-
+      console.log("Interaction creation input data:", interactionData);
+      console.log("Interaction creation for account number:", accountNumber);
       const interaction =
         await this.interactionSchemaService.createInteractions(
           accountNumber,
