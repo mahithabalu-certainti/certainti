@@ -839,6 +839,7 @@ export const ProjectResources = ({
         onSearch={(text) => setSearchText(text)}
         showAddActivity={!viewDetails && !showUploads}
         activityMenuItems={activityMenuItems}
+        hideTabPanel={showUploads}
       />
       {isTimeLineView ? (
         <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>

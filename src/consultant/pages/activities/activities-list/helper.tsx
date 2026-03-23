@@ -113,6 +113,7 @@ export const getAllActivityFilterFields = (
     value: 'due_date',
     type: 'date',
     operatorOption: dateOptions,
+    isFutureDateEnabled: true,
     hide: !isFieldVisibleInAnyModule('effective_end_datetime', permissionMaps),
   },
 ];

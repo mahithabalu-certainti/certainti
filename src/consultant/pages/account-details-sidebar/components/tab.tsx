@@ -97,6 +97,7 @@ interface TabProps {
   onSearchReset?: () => void;
   showAddActivity?: boolean;
   activityMenuItems?: ActivityDropdownItem[];
+  hideTabPanel?: boolean;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -134,6 +135,7 @@ const TabPanel: React.FC<TabProps> = ({
   onSearchReset,
   showAddActivity = false,
   activityMenuItems = [],
+  hideTabPanel = false,
 }) => {
   const { accountid } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -678,7 +680,9 @@ const TabPanel: React.FC<TabProps> = ({
   const visibleActivityMenuItems = activityMenuItems.filter(
     (item) => !item.hide
   );
-
+  if (hideTabPanel) {
+    return null;
+  }
   return (
     <Box>
       <Box className='flex justify-between items-center mb-2'>

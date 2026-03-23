@@ -96,7 +96,9 @@ const FinancialWorkingUKTable = ({
                 </td>
                 <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                   {costDisplay(
-                    project['Total Project Value/Labor'] || 0,
+                    Number(project['Total Project Value/Labor'] || 0).toFixed(
+                      2
+                    ),
                     currencySymbol || '$'
                   )}
                 </td>
@@ -118,7 +120,10 @@ const FinancialWorkingUKTable = ({
                 Total Project to be shared with HMRC
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F]'>
-                {costDisplay(hmrcTotal || 0, currencySymbol || '$')}
+                {costDisplay(
+                  Number(hmrcTotal || 0).toFixed(2),
+                  currencySymbol || '$'
+                )}
               </td>
             </tr>
           )}
@@ -161,7 +166,7 @@ const FinancialWorkingUKPercentageTable = ({
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                 {typeof value === 'number' && key !== 'Total Customer Groups'
-                  ? costDisplay(value as number, currencySymbol || '$')
+                  ? costDisplay(Number(value).toFixed(2), currencySymbol || '$')
                   : (value as React.ReactNode)}
               </td>
             </tr>
