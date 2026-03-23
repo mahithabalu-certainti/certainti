@@ -45,14 +45,14 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
     if (typeof value === 'number') {
       return costDisplay(value.toFixed(2), currencySymbol as string);
     }
-    if (
-      typeof value === 'string' &&
-      !isNaN(Number(value)) &&
-      !value.includes('%') &&
-      value.trim() !== ''
-    ) {
-      return costDisplay(Number(value).toFixed(2), currencySymbol as string);
-    }
+    // if (
+    //   typeof value === 'string' &&
+    //   !isNaN(Number(value)) &&
+    //   !value.includes('%') &&
+    //   value.trim() !== ''
+    // ) {
+    //   return costDisplay(Number(value).toFixed(2), currencySymbol as string);
+    // }
     return value;
   };
   const formatLabel = (key: string) => {

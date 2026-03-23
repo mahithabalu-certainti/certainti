@@ -61,14 +61,14 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     if (typeof value === 'number') {
       return costDisplay(value.toFixed(2), currency || '$');
     }
-    if (
-      typeof value === 'string' &&
-      !isNaN(Number(value)) &&
-      !value.includes('%') &&
-      value.trim() !== ''
-    ) {
-      return costDisplay(Number(value).toFixed(2), currency || '$');
-    }
+    // if (
+    //   typeof value === 'string' &&
+    //   !isNaN(Number(value)) &&
+    //   !value.includes('%') &&
+    //   value.trim() !== ''
+    // ) {
+    //   return costDisplay(Number(value).toFixed(2), currency || '$');
+    // }
     return value;
   };
 
@@ -77,14 +77,14 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     if (typeof value === 'number') {
       return costDisplay(value.toFixed(2), symbol);
     }
-    if (
-      typeof value === 'string' &&
-      !isNaN(Number(value)) &&
-      !value.includes('%') &&
-      value.trim() !== ''
-    ) {
-      return costDisplay(Number(value).toFixed(2), symbol);
-    }
+    // if (
+    //   typeof value === 'string' &&
+    //   !isNaN(Number(value)) &&
+    //   !value.includes('%') &&
+    //   value.trim() !== ''
+    // ) {
+    //   return costDisplay(Number(value).toFixed(2), symbol);
+    // }
     return value;
   };
 

@@ -177,7 +177,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
         shouldUpdate = true;
         return {
           ...filter,
-          child: [...filter.child, ...newChildIds],
+          child: currentChildIds,
         };
       }
 
