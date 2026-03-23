@@ -6,8 +6,6 @@ const textOptions = [
   { option: 'Contains', value: 'contains' },
 ];
 
-
-
 const numberOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
@@ -71,6 +69,5 @@ export const getTechnicalSummaryFilterFields = (
         !permissionMap?.['created_datetime']?.edit &&
         !permissionMap?.['created_datetime']?.read,
     },
-
   ];
 };

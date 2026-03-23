@@ -954,16 +954,70 @@ export const CaseFormData = (
                 !permissionMap?.['current_year_gross_receipts']?.read),
           }),
           createTextField(
-            'credit_carry_forward_py',
-            'Credit Carry Forward from PY',
+            'credit_carry_forward_py_ga',
+            'Credit Carry Forward from PY - GA',
             {
               required: false,
-              placeholder: 'Enter Credit Carry Forward from PY',
+              placeholder: 'Enter Credit Carry Forward from PY - GA',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'R&D credit carried forward from the previous year.',
+                  'R&D credit carried forward from the previous year - Georgia',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  permissionMap?.['credit_carry_forward_py']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  !permissionMap?.['credit_carry_forward_py']?.read),
+            }
+          ),
+          createTextField(
+            'credit_carry_forward_py_sc',
+            'Credit Carry Forward from PY - SC',
+            {
+              required: false,
+              placeholder: 'Enter Credit Carry Forward from PY - SC',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'R&D credit carried forward from the previous year - South Carolina',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  permissionMap?.['credit_carry_forward_py']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.US ||
+                (isEditView &&
+                  !permissionMap?.['credit_carry_forward_py']?.edit &&
+                  !permissionMap?.['credit_carry_forward_py']?.read),
+            }
+          ),
+          createTextField(
+            'credit_carry_forward_py_tx',
+            'Credit Carry Forward from PY - TX',
+            {
+              required: false,
+              placeholder: 'Enter Credit Carry Forward from PY - TX',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'R&D credit carried forward from the previous year - Texas',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -990,7 +1044,7 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Total additional Georgia credits applied against tax liability.',
+                  'Total additional Georgia credits applied against tax liability - Georgia',
               },
               regexErrorMessage:
                 'Numbers allowed, up to 16 digits and 2 decimal places',
@@ -1017,7 +1071,7 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Total additional South Carolina credits applied against tax liability',
+                  'Total additional South Carolina credits applied against tax liability - South Carolina.',
               },
               regexErrorMessage:
                 'Numbers allowed, up to 16 digits and 2 decimal places',
