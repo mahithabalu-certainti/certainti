@@ -242,8 +242,13 @@ export const activityFieldMappings = [
     dataField: "status_name",
   },
   {
+    permissionField: "attachment_level",
+    exportField: "Related Entity",
+    dataField: "attachment_level",
+  },
+  {
     permissionField: "attached_to",
-    exportField: "Related To",
+    exportField: "Related To Name",
     dataField: "attached_to",
   },
   {
