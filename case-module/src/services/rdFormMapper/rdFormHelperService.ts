@@ -533,7 +533,14 @@ export class RdFormHelperService {
       rawQueries.fetchCountryCalculationForCase(schemaName),
       { replacements: { caseRid }, type: QueryTypes.SELECT },
     );
-    if (!calcRow) throw new Error("No calculation found for this case");
+    if (!calcRow) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "No calculation found for this case",
+        data: "",
+      };
+    }
     const computedFields =
       typeof calcRow.computed_fields === "string"
         ? JSON.parse(calcRow.computed_fields)
@@ -667,6 +674,7 @@ export class RdFormHelperService {
     return {
       statusCode: HttpStatus.SUCCESS,
       message: "Federal form processed successfully",
+      errorMessage: null,
       data: filledFormUrl,
     };
   }
