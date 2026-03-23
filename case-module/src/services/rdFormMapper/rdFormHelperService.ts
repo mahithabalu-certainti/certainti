@@ -533,7 +533,14 @@ export class RdFormHelperService {
       rawQueries.fetchCountryCalculationForCase(schemaName),
       { replacements: { caseRid }, type: QueryTypes.SELECT },
     );
-    if (!calcRow) throw new Error("No calculation found for this case");
+    if (!calcRow) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "No calculation found for this case",
+        data: "",
+      };
+    }
     const computedFields =
       typeof calcRow.computed_fields === "string"
         ? JSON.parse(calcRow.computed_fields)
@@ -667,6 +674,7 @@ export class RdFormHelperService {
     return {
       statusCode: HttpStatus.SUCCESS,
       message: "Federal form processed successfully",
+      errorMessage: null,
       data: filledFormUrl,
     };
   }
@@ -1819,6 +1827,10 @@ export class RdFormHelperService {
                     schemaName,
                     accountRid,
                     stateRid || "",
+                    {
+                      db_source:       mapperObject.db_source       ?? null,
+                      where_filters:   mapperObject.where_filters   ?? null,
+                    },
                   );
                 if (dynamicValue !== null && dynamicValue !== undefined) {
                   addToValueMap(bareRid, dynamicValue);
@@ -1895,6 +1907,10 @@ export class RdFormHelperService {
               schemaName,
               accountRid,
               stateRid || "",
+              {
+                db_source:       mapperObject.db_source       ?? null,
+                where_filters:   mapperObject.where_filters   ?? null,
+              },
             );
           logMessage(
             `Resolved DB value for field ${item.field_label || item.field_id}: ${dynamicValue}`,
@@ -2441,6 +2457,10 @@ export class RdFormHelperService {
               context.schemaName,
               context.accountRid,
               context.stateRid || "",
+              {
+                db_source:       mapperObject.db_source       ?? null,
+                where_filters:   mapperObject.where_filters   ?? null,
+              },
             );
 
           if (dynamicValue !== null) {
@@ -2547,6 +2567,11 @@ export class RdFormHelperService {
                   context.schemaName,
                   context.stateRid || "",
                   context.fiscalYear,
+                  mapperObject.where_filters      ?? null,
+                  mapperObject.joins              ?? null,
+                  mapperObject.extra_filters      ?? null,
+                  mapperObject.fiscal_year_column ?? null,
+                  mapperObject.db_source          ?? null
                 );
 
               tableValueCache[val] = tableValues || [];

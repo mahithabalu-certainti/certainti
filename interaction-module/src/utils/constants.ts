@@ -1493,8 +1493,8 @@ export const MainTableFilter: Record<string, string> = {
 }
 
 export const rdAssessmentAuditFieldMappings = [
-  { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
   { permissionField: 'created_datetime', exportField: 'Assessment Triggered At', dataField: 'created_datetime' },
+  { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
   { permissionField: 'four_part_assessment', exportField: 'Four-Part Assessment', dataField: 'four_part_assessment' },
   { permissionField: 'project_summary', exportField: 'Project Summary', dataField: 'project_summary' },
   { permissionField: 'qre_summary', exportField: 'QRE Summary', dataField: 'qre_summary' },

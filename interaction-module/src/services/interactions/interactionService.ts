@@ -147,7 +147,7 @@ export class InteractionService {
         interactionData.interaction_source_rid = intSource || "";
         interactionData.interaction_type_rid = intType || "";
 
-        this.interactionSchemaService.createBulkInteractions(
+        await this.interactionSchemaService.createBulkInteractions(
           accountNumber,
           interactionData,
           userId,
@@ -182,7 +182,7 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
+    let transaction: any;
     try {
       interactionData.created_by = userId;
       if (interactionData.interaction_assessment_source_rid == undefined) interactionData.interaction_assessment_source_rid = interactionAssessmentSourceType.RD
@@ -195,6 +195,11 @@ export class InteractionService {
         throw new Error("Invalid account ID");
       }
 
+      // Sync tables to ensure they exist in the database before transaction
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+
+      transaction = await dbInit.transaction();
+
       const { intSource, intType } = await this.getInteractionStatusAndSource(
         interactionSource
       );
@@ -202,7 +207,8 @@ export class InteractionService {
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
       interactionData.interaction_assessment_source_rid = intResponseSource || ""
-
+      logMessage(`Interaction creation input data: ${JSON.stringify(interactionData)}`);
+      logMessage(`Interaction creation for account number: ${accountNumber}`);
       const interaction =
         await this.interactionSchemaService.createInteractions(
           accountNumber,
@@ -295,7 +301,9 @@ export class InteractionService {
       };
     } catch (err) {
       logMessage(`Error creating interaction, ${err}`);
-      await transaction.rollback();
+      if (transaction) {
+        await transaction.rollback();
+      }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -544,7 +552,7 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
+    let transaction: any;
     try {
       const { accountNumber, parentAccountId, accountName } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -554,6 +562,11 @@ export class InteractionService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+
+      // Sync tables to ensure they exist in the database before transaction
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+
+      transaction = await dbInit.transaction();
 
       let interactionStatus;
       if (interactionData.status_rid) {
@@ -659,7 +672,9 @@ export class InteractionService {
       };
     } catch (err) {
       errorLog("Error updating resource", (err as Error).message);
-      await transaction.rollback();
+      if (transaction) {
+        await transaction.rollback();
+      }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -678,7 +693,7 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
+    let transaction: any;
     try {
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -689,6 +704,11 @@ export class InteractionService {
         logMessage(`Invalid account ID ${interactionData?.account_rid}`);
         throw new Error("Invalid account ID");
       }
+
+      // Sync tables to ensure they exist in the database before transaction
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+
+      transaction = await dbInit.transaction();
 
       let interactionStatus;
       if (interactionData.status_rid) {
@@ -725,7 +745,9 @@ export class InteractionService {
       };
     } catch (err) {
       errorLog("Error updating interaction", (err as Error).message);
-      await transaction.rollback();
+      if (transaction) {
+        await transaction.rollback();
+      }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -3881,7 +3903,7 @@ export class InteractionService {
         project_fiscal_rid,
         interactionLevel
       );
-      console.log(interactionInfo)
+      logMessage(`Fetched interaction info: ${JSON.stringify(interactionInfo)}`);
       const senderEmailInfo = await this.getSenderEmailInfo(
         interactionInfo.accountInfo.parent_account_rid,
         interactionInfo.accountInfo.account_rid

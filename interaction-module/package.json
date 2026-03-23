@@ -39,7 +39,7 @@
     "dotenv": "^17.2.1",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
-    "fast-xml-parser": "5.5.6",
+    "fast-xml-parser": "^5.5.8",
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
     "helmet": "^8.1.0",

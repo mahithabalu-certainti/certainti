@@ -73,7 +73,7 @@ class InteractionSchemaService {
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
-
+      logMessage(`Created interaction: ${interaction}`);
       return interaction;
     } catch (error) {
       logMessage(`Error creating interaction: ${error}`);
@@ -231,6 +231,10 @@ class InteractionSchemaService {
   ) {
     try {
       const { Interaction, InteractionItem, InteractionSummary } = await this.interactionModelService.getModels(accountNumber);
+      
+      // Sync tables to ensure they exist in the database before bulk operations
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+      
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
@@ -1098,7 +1102,7 @@ class InteractionSchemaService {
         );
         accountRnumber = accountData?.r_number;
       }
-
+      logMessage(`Fetched account number: ${accountRnumber}`);
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,

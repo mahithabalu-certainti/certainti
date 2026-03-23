@@ -420,6 +420,7 @@ export const rawQueries = {
       SELECT rid,r_number,event_name, descriptions, created_datetime,created_by_name, entity_name
       FROM "${schemaName}".account_timeline
       WHERE account_rid = :accountId
+      and document_rid is null
       ORDER BY created_datetime DESC
       LIMIT :limit OFFSET :offset
     `;

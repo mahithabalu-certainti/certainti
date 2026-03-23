@@ -19,6 +19,10 @@ import {
   setupResourceHistorySeq,
 } from "../models/resourceHistory";
 import {
+  AccountTimeline,
+  setupAccountTimelineSeq,
+} from "../models/accountTimeline";
+import {
   ResourcesTimeline,
   setupResourceTimelineSeq,
 } from "../models/resourceTimeline";
@@ -375,7 +379,7 @@ class SchemaService {
         schemaName
       );
 
-      const ResourceTimelineModel = ResourcesTimeline.initialize(sequelize, schemaName);
+      const AccountTimelineModel = AccountTimeline.initialize(sequelize, schemaName);
 
 
       Resource.belongsTo(AccountDetailsModel, {
@@ -390,10 +394,10 @@ class SchemaService {
         as: "ResourceFiscal",
       });
 
-      Resource.hasMany(ResourceTimelineModel, {
+      Resource.hasMany(AccountTimelineModel, {
         foreignKey: "entity_rid",
         sourceKey: "rid",
-        as: "ResourceTimelines",
+        as: "AccountTimelines",
       });
 
       // Build the include array dynamically
@@ -415,11 +419,12 @@ class SchemaService {
       // Add ResourceTimeline join if documentRid is provided
       if (documentRid) {
         include.push({
-          model: ResourceTimelineModel,
-          as: "ResourceTimelines",
+          model: AccountTimelineModel,
+          as: "AccountTimelines",
           required: true,
           where: {
-            document_rid: documentRid
+            document_rid: documentRid,
+            entity_name: "resource"
           },
           attributes: [] // Only join, don't select fields
         });

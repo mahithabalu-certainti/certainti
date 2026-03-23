@@ -77,12 +77,11 @@ interface CaseAttributes {
 }
 
 export interface CaseCreationAttributes
-  extends Optional<CaseAttributes, "rid"> {}
+  extends Optional<CaseAttributes, "rid"> { }
 
 export class Case
   extends Model<CaseAttributes, CaseCreationAttributes>
-  implements CaseAttributes
-{
+  implements CaseAttributes {
   public rid!: string;
   public r_number?: string;
   public created_by!: string;
@@ -168,9 +167,9 @@ export class Case
         },
         created_by: { type: DataTypes.STRING(50), allowNull: false },
         modified_by: { type: DataTypes.STRING(50), allowNull: true },
-        created_datetime: { 
-          type: DataTypes.DATE, 
-          allowNull: false, 
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
           defaultValue: DataTypes.NOW
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },

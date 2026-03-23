@@ -1995,17 +1995,22 @@ WHERE dmf.country_rid = '${countryRid}'
       ORDER BY dmo.field_label
     `;
   },
-  getDatamapperObjectById() {
-    return `
-      SELECT 
-        dmo.rid,
-        dmo.ref_table,
-        dmo.field_name,
-        dmo.is_json
-      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
-      WHERE dmo.rid = :rid
-      LIMIT 1`
-  },
+ getDatamapperObjectById() {
+  return `
+    SELECT
+      dmo.rid,
+      dmo.ref_table,
+      dmo.field_name,
+      dmo.is_json,
+      dmo.where_filters,
+      dmo.joins,
+      dmo.extra_filters,
+      dmo.fiscal_year_column,
+      dmo.db_source
+    FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+    WHERE dmo.rid = :rid
+    LIMIT 1`;
+},
   fetchConfiguration(schemaName: string, caseRid: string) {
     return `
       SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
@@ -2028,53 +2033,39 @@ WHERE dmf.country_rid = '${countryRid}'
           WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
   },
-  fetchJsonbFieldValue(
-    schemaName: string,
-    refTable: string,
-    quotedJsonPath: string,
-    includeStateRid: boolean,
-  ) {
-    const usesConfigJson = quotedJsonPath.startsWith("$.config_json");
-    const jsonPath = usesConfigJson
-      ? `$.${quotedJsonPath.replace(/^\$\.config_json\.?/, "")}`
-      : quotedJsonPath;
-    const jsonColumn = usesConfigJson ? "config_json" : "computed_fields";
-    return `
-          SELECT jsonb_path_query_first(${jsonColumn}, '${jsonPath}')::text AS field_value
-          FROM ${schemaName}.${refTable}
-          WHERE case_rid = :case_rid${includeStateRid ? " AND state_rid = :state_rid" : ""}
-          LIMIT 1`;
-  },
-  fetchRegularFieldValue(
-    schemaName: string,
-    refTable: string,
-    fieldName: string,
-    whereColumn: string,
-    includeStateRid: boolean,
-  ) {
-     if(refTable === 'account')
-    {
-      return `
-        SELECT ${fieldName} AS field_value
-        FROM ${schemaName}.${refTable}
-        WHERE ${whereColumn} = :account_rid
-        LIMIT 1`;
+ fetchJsonbFieldValue(
+  schemaName: string,
+  refTable: string,
+  quotedJsonPath: string,
+  // ← includeStateRid REMOVED — WHERE is driven by where_filters in schemaService
+) {
+  const usesConfigJson = quotedJsonPath.startsWith("$.config_json");
+  const jsonPath   = usesConfigJson
+    ? `$.${quotedJsonPath.replace(/^\$\.config_json\.?/, "")}`
+    : quotedJsonPath;
+  const jsonColumn = usesConfigJson ? "config_json" : "computed_fields";
 
-    }
-    if (includeStateRid) {
-      return `
-        SELECT ${fieldName} AS field_value
-        FROM ${schemaName}.${refTable}
-        WHERE case_rid = :case_rid AND state_rid = :state_rid
-        LIMIT 1`;
-    }
-    
-    return `
-        SELECT ${fieldName} AS field_value
-        FROM ${schemaName}.${refTable}
-        WHERE ${whereColumn} = :case_rid
-        LIMIT 1`;
-  },
+  return `
+    SELECT jsonb_path_query_first(${jsonColumn}, '${jsonPath}')::text AS field_value
+    FROM ${schemaName}.${refTable}
+    WHERE case_rid = :case_rid
+    LIMIT 1`;
+},
+
+fetchRegularFieldValue(
+  schemaName: string,
+  refTable: string,
+  fieldName: string,
+  whereColumn: string,
+  // ← includeStateRid REMOVED — WHERE is driven by where_filters in schemaService
+  // ← refTable === 'account' check REMOVED — whereColumn already carries "rid" from where_column
+) {
+  return `
+    SELECT ${fieldName} AS field_value
+    FROM ${schemaName}.${refTable}
+    WHERE ${whereColumn} = :case_rid
+    LIMIT 1`;
+},
   fetchAssignedProjectIds(caseRid: string, schemaName: string, type?: string) {
     if (type === DOSSIER_NAME) {
       return `SELECT pf.rid AS project_fiscal_rid 

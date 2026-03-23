@@ -2648,7 +2648,8 @@ class ProjectIngestionService {
                   required: true,
                   where: {
                     document_rid: documentRid,
-                    event_name: "insert"
+                    event_name: "created",
+                    entity_name: "project"
                   },
                   attributes: [
                     "rid",
