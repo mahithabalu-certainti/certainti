@@ -6,12 +6,7 @@ const textOptions = [
   { option: 'Contains', value: 'contains' },
 ];
 
-const nonReqTextOptions = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
+
 
 const numberOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -76,22 +71,6 @@ export const getTechnicalSummaryFilterFields = (
         !permissionMap?.['created_datetime']?.edit &&
         !permissionMap?.['created_datetime']?.read,
     },
-    // {
-    //   name: 'Updated By',
-    //   value: 'modified_by',
-    //   type: 'text',
-    //   operatorOption: nonReqTextOptions,
-    //   hide:
-    //     !permissionMap?.['modified_by']?.edit &&
-    //     !permissionMap?.['modified_by']?.read,
-    // },
-    // {
-    //   name: 'Updated On',
-    //   value: 'modified_datetime',
-    //   type: 'date',
-    //   hide:
-    //     !permissionMap?.['modified_datetime']?.edit &&
-    //     !permissionMap?.['modified_datetime']?.read,
-    // },
+
   ];
 };
