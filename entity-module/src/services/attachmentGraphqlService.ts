@@ -127,7 +127,7 @@ export default class AttachmentGraphqlServies {
                                 entity_name: entityTypes.ATTACHMENT,
                                 created_by_name: userEventInfo.full_name,
                                 event_type_rid: userEventInfo.event_type_rid,
-                                event_name: eventNames.CREATE,
+                                event_name: eventNames.UPDATE,
                                 descriptions: latestData.document_name,
                                 //  project_rid: attachmentData.attachment_level === "project" ? attachmentData.attach_to : '',
                                 project_rid: ['project', 'project_resource', 'project_task'].includes(latestData.attachment_level) ? projectFiscalId : '',
