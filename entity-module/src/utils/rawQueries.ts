@@ -1707,14 +1707,15 @@ export const fetchProjectQueryByPrjId = (
     ),
     calculate_rd_credits_statewise AS (
     SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(SUM(COALESCE(pf.qre_fte,0.00)) AS DECIMAL(18,2)) AS rd_credits_fte,
-            CAST(SUM(COALESCE(pf.qre_subcon,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
-            CAST(SUM(COALESCE(pf.qre_nonlabor,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor,
-            CAST(
-            SUM(COALESCE(pf.qre_fte, 0.00)) +
-            SUM(COALESCE(pf.qre_subcon, 0.00)) +
-            SUM(COALESCE(pf.qre_nonlabor, 0.00)) AS DECIMAL(18,2)) AS rd_credits_total
+          ad.account_rid,
+          CAST(SUM(COALESCE(pf.qre_fte,0.00)) AS DECIMAL(18,2)) AS qre_fte,
+          CAST(SUM(COALESCE(pf.qre_subcon,0.00)) AS DECIMAL(18,2)) AS qre_subcon,
+          CAST(SUM(COALESCE(pf.qre_nonlabor,0.00)) AS DECIMAL(18,2)) AS qre_nonlabor,
+          CAST(
+          SUM(COALESCE(pf.qre_fte, 0.00)) +
+          SUM(COALESCE(pf.qre_subcon, 0.00)) +
+          SUM(COALESCE(pf.qre_nonlabor, 0.00)) AS DECIMAL(18,2)) AS rd_credits_total,
+          CAST(SUM(COALESCE(pf.qre_final,0.00)) AS DECIMAL(18,2)) AS qre_final
         FROM
             ${schemaName}.account_details ad
 			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
@@ -2075,13 +2076,15 @@ export const summaryHighlightsQueryForCase = (
       FROM
       ${schemaName}.project_fiscal af
       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = af.rid
-      LEFT JOIN ${schemaName}.project_fiscal_region cr ON cr.project_fiscal_rid = cp.project_fiscal_rid AND cp.region_rid = cr.region_rid
+      LEFT JOIN ${schemaName}.project_fiscal_region cr ON cr.project_fiscal_rid = cp.project_fiscal_rid
       WHERE 
       af.account_rid = '${account_rid}'
       AND
       af.fiscal_year = ${fiscal_year}
       AND
       cp.case_rid = '${caseRid}'
+      AND 
+      cp.region_rid = cr.region_rid
       GROUP BY
       af.account_rid
     ),

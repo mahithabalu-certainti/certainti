@@ -1186,6 +1186,25 @@ export const rawQueries = {
       rid = '${data.rid}'
     `;
   },
+  updateProjectFiscalRegionQre(schemaName: string, data: any) {
+    return `
+    UPDATE ${schemaName}.project_fiscal_region
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
+    WHERE
+      project_fiscal_rid = '${data.rid}'
+      AND
+      region_rid = '${data.region_rid}'
+    `;
+  },
   updateProjectFiscalSummaryQre(data: any) {
     return `
     UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary

@@ -1,6 +1,7 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
 import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
+import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
     qret_credit_percentage_c1: number;
@@ -23,12 +24,12 @@ export class RdCreditCalculatorForTX {
      * @param config Configuration values used for the TX R&D credit calculation.
      * @param stateRdData State R&D data for TX, including currentYearQREs, prior3YearsQREs, and related fields.
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year : number, caseDetails : Case) {
 
         const qretInfo = this.creditCalculationQRET(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config)
         const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, config);
         const precedingWithNoQretInfo = this.precedingCalculationWithNoQRET(qretInfo, precedingWithQretInfo.average_prev_year_qre, config);
-        const qreActivitiesCreditInfo = this.qreActivitiesCredit(precedingWithQretInfo.credit_eq_zero, precedingWithQretInfo.credit_gt_zero, precedingWithNoQretInfo.credit_eq_zero, precedingWithNoQretInfo.credit_gt_zero);
+        const qreActivitiesCreditInfo = this.qreActivitiesCredit(precedingWithQretInfo.credit_eq_zero, precedingWithQretInfo.credit_gt_zero, precedingWithNoQretInfo.credit_eq_zero, precedingWithNoQretInfo.credit_gt_zero, caseDetails);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
@@ -163,7 +164,7 @@ export class RdCreditCalculatorForTX {
      * @param credit_eq_zero_no_qret 
      * @param credit_gt_zero_no_qret 
      */
-    qreActivitiesCredit(credit_eq_zero_qret: any, credit_gt_zero_qret: any, credit_eq_zero_no_qret: any, credit_gt_zero_no_qret: any) {
+    qreActivitiesCredit(credit_eq_zero_qret: any, credit_gt_zero_qret: any, credit_eq_zero_no_qret: any, credit_gt_zero_no_qret: any, caseDetails : Case) {
         const rd_credit_activities =
             [
                 credit_eq_zero_qret,
@@ -172,7 +173,7 @@ export class RdCreditCalculatorForTX {
                 credit_gt_zero_no_qret
             ].find(v => v !== "N/A") || "No Credit";
 
-        const rd_credit_activities_carry_forward = 0;
+        const rd_credit_activities_carry_forward = caseDetails.credit_carry_forward_py_tx ?? 0.00;
         const rd_credit_activities_avail =
             typeof rd_credit_activities === "number" && rd_credit_activities > 0
                 ? new Decimal(rd_credit_activities).plus(rd_credit_activities_carry_forward)
@@ -226,7 +227,7 @@ export class RdCreditCalculatorForTX {
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            contract: currentYearContract,
+            contract: this.round2(currentYearContract),
             sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract))
         })
         const qreSummary: Record<string, any> = {
@@ -309,8 +310,7 @@ export class RdCreditCalculatorForTX {
             this.round2(qreActivitiesCreditInfo.rd_credit_activities) || qreActivitiesCreditInfo.rd_credit_activities,
 
         "[13] R&D activities credit carried forward from prior years":
-            this.round2(qreActivitiesCreditInfo.rd_credit_activities_carry_forward) ||
-            qreActivitiesCreditInfo.rd_credit_activities_carry_forward,
+            this.round2(qreActivitiesCreditInfo.rd_credit_activities_carry_forward) || qreActivitiesCreditInfo.rd_credit_activities_carry_forward,
         "[14] R&D activities credit available to be claimed in the current year": this.round2(qreActivitiesCreditInfo.rd_credit_activities_avail) || qreActivitiesCreditInfo.rd_credit_activities_avail
     }
 

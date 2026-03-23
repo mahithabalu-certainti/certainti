@@ -306,8 +306,8 @@ export class RdCreditCalculatorForAZ {
     async buildComputedFields(creditASC: any, creditRRC: any, config : ConfigJson) {
 
         let rrc ={
-            "[11] Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)": creditRRC.wages,
-            "[12] Cost of supplies": creditRRC.supplies,
+            "[11] Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)": this.round2(creditRRC.wages),
+            "[12] Cost of supplies": this.round2(creditRRC.supplies),
             "[13] Cost to rent or lease computers": creditRRC.cost_to_rent,
             "[14] Contract research expenses: See instructions": creditRRC.contract,
             "[15] Total qualified research expenses. Add line 11 through line 14": creditRRC.total_current_year_qre,

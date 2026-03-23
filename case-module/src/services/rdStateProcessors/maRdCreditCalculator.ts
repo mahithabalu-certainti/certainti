@@ -220,7 +220,7 @@ export class RdCreditCalculatorForMA {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)),
-            contract: currentYearContract
+            contract: this.round2(currentYearContract)
 
         })
         annualGrossReceipts.forEach((item) => {
