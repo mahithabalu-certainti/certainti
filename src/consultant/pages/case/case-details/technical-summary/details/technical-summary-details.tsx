@@ -233,8 +233,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
 
   const auditInfo: DetailItem[] = [
     {
-      label: 'Sequence Number',
-      value: data?.r_number,
+      label: 'Record ID',
+      value: data?.rid,
       key: 'r_number',
     },
     {
@@ -252,16 +252,16 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       value: data?.version,
       key: 'version',
     },
-    {
-      label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
-      key: 'modified_datetime',
-    },
-    {
-      label: 'Updated By',
-      value: data?.modified_user_name,
-      key: 'modified_by',
-    },
+    // {
+    //   label: 'Updated On',
+    //   value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+    //   key: 'modified_datetime',
+    // },
+    // {
+    //   label: 'Updated By',
+    //   value: data?.modified_user_name,
+    //   key: 'modified_by',
+    // },
   ];
 
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
