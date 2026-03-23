@@ -231,6 +231,10 @@ class InteractionSchemaService {
   ) {
     try {
       const { Interaction, InteractionItem, InteractionSummary } = await this.interactionModelService.getModels(accountNumber);
+      
+      // Sync tables to ensure they exist in the database before bulk operations
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+      
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }

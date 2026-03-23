@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
+import { logMessage } from "../utils/helpers";
 import { Interaction } from "../models/interaction";
 import { InteractionItem } from "../models/interactionItem";
 import { InteractionHistory } from "../models/interactionHistory";
@@ -159,5 +160,29 @@ export class InteractionModelService {
 
     this.modelCache.set(schemaName, models);
     return models;
+  }
+
+  async syncOrgDbModels(accountNumber: string): Promise<void> {
+    try {
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+      const sequelize = await this.getSequelize();
+
+      // Get all models for this account
+      const models = await this.getModels(accountNumber);
+
+      // Sync all models to ensure tables exist
+      // Using force: false to not drop existing tables
+      await sequelize.sync({
+        force: false,
+        schema: schemaName,
+        alter: false, // Don't alter table structure
+        logging: false,
+      });
+
+      logMessage(`[syncOrgDbModels] Tables synced successfully for schema: ${schemaName}`);
+    } catch (error) {
+      logMessage(`[syncOrgDbModels] Error syncing tables for account ${accountNumber}: ${error}`);
+      throw error;
+    }
   }
 }
