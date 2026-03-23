@@ -43,7 +43,9 @@ export interface ICreateCases {
   basic_research_payments_ma?: number;
   basic_research_payments_id?: number;
   qualified_computer_rental_time_expenses?: number
-  credit_carry_forward_py?: number
+  credit_carry_forward_py_ga? : number
+  credit_carry_forward_py_sc? : number
+  credit_carry_forward_py_tx? : number
   current_year_gross_receipts?: number
   other_credits_total_sc?: number
   other_credits_total_ga? : number
@@ -1090,7 +1092,9 @@ export interface CaseData {
 
   qualified_computer_rental_time_expenses: number | null;
 
-  credit_carry_forward_py: number | null;
+  credit_carry_forward_py_ga? : number
+  credit_carry_forward_py_sc? : number
+  credit_carry_forward_py_tx? : number
   current_year_gross_receipts: number | null;
   other_credits_total_ga: number | null;
   other_credits_total_sc: number | null;

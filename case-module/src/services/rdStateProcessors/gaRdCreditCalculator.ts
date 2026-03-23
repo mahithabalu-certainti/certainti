@@ -79,7 +79,7 @@ export class RdCreditCalculatorForGA {
 
         //Enter any carry forward from prior years for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
-        const carryForwardPriorYear = new Decimal(caseDetails.credit_carry_forward_py || 0.00);
+        const carryForwardPriorYear = new Decimal(caseDetails.credit_carry_forward_py_ga || 0.00);
 
         const currentYearTaxLiability = tax_liability;
 
@@ -173,7 +173,7 @@ export class RdCreditCalculatorForGA {
         const remaining_tax_liability = current_year_tax_liability.minus(value_of_other_credit_claimed);
         const max_credits_allowed = remaining_tax_liability.mul(config.max_credit_allowed_percent / 100);
         const research_tax_credit = tax_credit.gt(0) ? tax_credit : 0;
-        const tax_carryover_py = new Decimal(caseDetails.credit_carry_forward_py || 0.00)
+        const tax_carryover_py = new Decimal(caseDetails.credit_carry_forward_py_ga || 0.00)
         const total_tax_credit = new Decimal(research_tax_credit).plus(tax_carryover_py);
         const credit_claimed_return = total_tax_credit.lte(max_credits_allowed) ? total_tax_credit : max_credits_allowed;
         const unused_credit = total_tax_credit.gte(credit_claimed_return) ? total_tax_credit.minus(credit_claimed_return) : 0;
