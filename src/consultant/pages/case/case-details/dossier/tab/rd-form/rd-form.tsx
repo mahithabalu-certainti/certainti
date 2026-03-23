@@ -286,7 +286,7 @@ const RDForm: React.FC<RDFormProps> = ({
     <div className='w-full'>
       <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
         <div>{caseDetails?.country_name} RD Form Information</div>
-        <div>
+        <div className='flex items-center gap-2'>
           <TextButton
             label={'Approve'}
             onClick={() => setIsSignOffModalOpen(true)}
