@@ -396,6 +396,7 @@ const RDForm: React.FC<RDFormProps> = ({
               >
                 <MenuItem
                   value=''
+                  disabled
                   sx={{
                     color: '#7D98B6',
                     fontSize: '13px',
