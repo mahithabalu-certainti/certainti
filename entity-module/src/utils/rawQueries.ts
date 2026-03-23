@@ -1707,14 +1707,15 @@ export const fetchProjectQueryByPrjId = (
     ),
     calculate_rd_credits_statewise AS (
     SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(SUM(COALESCE(pf.qre_fte,0.00)) AS DECIMAL(18,2)) AS rd_credits_fte,
-            CAST(SUM(COALESCE(pf.qre_subcon,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
-            CAST(SUM(COALESCE(pf.qre_nonlabor,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor,
-            CAST(
-            SUM(COALESCE(pf.qre_fte, 0.00)) +
-            SUM(COALESCE(pf.qre_subcon, 0.00)) +
-            SUM(COALESCE(pf.qre_nonlabor, 0.00)) AS DECIMAL(18,2)) AS rd_credits_total
+          ad.account_rid,
+          CAST(SUM(COALESCE(pf.qre_fte,0.00)) AS DECIMAL(18,2)) AS qre_fte,
+          CAST(SUM(COALESCE(pf.qre_subcon,0.00)) AS DECIMAL(18,2)) AS qre_subcon,
+          CAST(SUM(COALESCE(pf.qre_nonlabor,0.00)) AS DECIMAL(18,2)) AS qre_nonlabor,
+          CAST(
+          SUM(COALESCE(pf.qre_fte, 0.00)) +
+          SUM(COALESCE(pf.qre_subcon, 0.00)) +
+          SUM(COALESCE(pf.qre_nonlabor, 0.00)) AS DECIMAL(18,2)) AS rd_credits_total,
+          CAST(SUM(COALESCE(pf.qre_final,0.00)) AS DECIMAL(18,2)) AS qre_final
         FROM
             ${schemaName}.account_details ad
 			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
