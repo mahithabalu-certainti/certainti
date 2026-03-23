@@ -433,10 +433,11 @@ async exportresourceCostDetailsForFinancialHighlights(
     // Build project filter condition
     const projectFilter = project_rid ? ` AND prf.project_fiscal_rid = :project_rid` : '';
     let caseProjectQuery
-    
     if(caseProjectFiscalRids != undefined) {
       if(caseProjectFiscalRids.length > 0) {
         caseProjectQuery = ` AND prf.project_fiscal_rid IN (${caseProjectFiscalRids.map((d : any) => `'${d}'`).join(',')})`
+      } else {
+        caseProjectQuery = ` `
       }
     } else {
       caseProjectQuery = ` `

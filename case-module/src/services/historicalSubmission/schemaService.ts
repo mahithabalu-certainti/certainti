@@ -94,23 +94,6 @@ export class HistoricalSubmissionSchemaService {
             rid: submission.history_submission_rid,
           },
         });
-        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
-          userId: userId!,
-          eventType: eventTypes.UI_HANDLER
-        });
-
-        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-          created_by: userId!,
-          account_rid: historySubmissionRequest.account_rid,
-          entity_rid: historySubmissionRequest.account_rid,
-          entity_name: entityTypes.HISTORICAL_SUBMISSION,
-          created_by_name: userEventInfo.full_name,
-          event_type_rid: userEventInfo.event_type_rid,
-          event_name: eventNames.DELETE,
-          descriptions: submission.fiscal_year || '',
-
-        }, ["account"]);
-
         results.push({
           action: "deleted",
           affectedRows: deletedRowsCount,
@@ -192,22 +175,6 @@ export class HistoricalSubmissionSchemaService {
             },
           }
         );
-        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
-          userId: userId!,
-          eventType: eventTypes.UI_HANDLER
-        });
-
-        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-          created_by: userId!,
-          account_rid: historySubmissionRequest.account_rid,
-          entity_rid: historySubmissionRequest.account_rid,
-          entity_name: entityTypes.HISTORICAL_SUBMISSION,
-          created_by_name: userEventInfo.full_name,
-          event_type_rid: userEventInfo.event_type_rid,
-          event_name: eventNames.UPDATE,
-          descriptions: submission.fiscal_year || '',
-
-        }, ["account"]);
 
         results.push({
           action: "updated",
@@ -284,23 +251,6 @@ export class HistoricalSubmissionSchemaService {
           created_datetime: new Date(),
         });
 
-        const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
-          userId: userId!,
-          eventType: eventTypes.UI_HANDLER
-        });
-
-        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
-          created_by: userId!,
-          account_rid: historySubmissionRequest.account_rid,
-          entity_rid: historySubmissionRequest.account_rid,
-          entity_name: entityTypes.HISTORICAL_SUBMISSION,
-          created_by_name: userEventInfo.full_name,
-          event_type_rid: userEventInfo.event_type_rid,
-          event_name: eventNames.ADDED,
-          descriptions: submission.fiscal_year || '',
-
-        }, ["account"]);
-
         results.push({
           action: "inserted",
           data: newSubmission,
@@ -321,6 +271,22 @@ export class HistoricalSubmissionSchemaService {
         });
       }
     }
+    const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+      userId: userId!,
+      eventType: eventTypes.UI_HANDLER
+    });
+
+    await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+      created_by: userId!,
+      account_rid: historySubmissionRequest.account_rid,
+      entity_rid: historySubmissionRequest.account_rid,
+      entity_name: entityTypes.HISTORICAL_SUBMISSION,
+      created_by_name: userEventInfo.full_name,
+      event_type_rid: userEventInfo.event_type_rid,
+      event_name: eventNames.ADDED,
+      descriptions: '',
+
+    }, ["account"]);
   }
 
   /**
