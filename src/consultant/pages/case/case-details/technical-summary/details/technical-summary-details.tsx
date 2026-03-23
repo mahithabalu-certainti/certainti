@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { TechSummaryIcon } from '../../../../../../assets';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   useTechnicalSummaryDetails,
   useUpdateRefinePrompt,
@@ -38,12 +38,15 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   isActionItemsExpanded,
   setIsActionItemsExpanded,
 }) => {
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { successToast, errorToast } = useToast();
   const accountId = searchParams.get('accountID') || '';
   const technicalSummaryId = searchParams.get('technical_summary_id') || '';
   const projectid = searchParams.get('project_id') || '';
+  const isProjectSignedOff =
+    searchParams.get('is_project_signed_off') === 'true';
   const isFromDossier =
     searchParams.get('navigate_source') === 'dossier_technical_summary';
 
@@ -62,7 +65,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   } = useTechnicalSummaryDetails(
     savedSummaryRid || technicalSummaryId,
     accountId,
-    projectid || ''
+    projectid || '',
+    caseId || ''
   );
   const updateTechSummaryText = useUpdateTechnicalSummaryText();
   const updateRefinePrompt = useUpdateRefinePrompt();
@@ -107,6 +111,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       searchParams.delete('technical_summary_id');
       searchParams.delete('project_id');
       searchParams.delete('navigate_source');
+      searchParams.delete('is_project_signed_off');
 
       navigate({ search: searchParams.toString() }, { replace: true });
     } else {
@@ -122,9 +127,10 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       account_rid: accountId ?? '',
       tech_summary_rid: technicalSummaryId ?? '',
       project_fiscal_rid: projectid || '',
-      technical_summary: Array.isArray(isRefinePrompt)
-        ? isRefinePrompt
-        : data?.technical_summary || [],
+      technical_summary:
+        Array.isArray(isRefinePrompt) && isRefinePrompt.length > 0
+          ? isRefinePrompt
+          : data?.technical_summary || [],
     };
     updateTechSummaryText.mutate(payload, {
       onSuccess: async (response) => {
@@ -343,7 +349,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                 <TextButton
                   label='Generate Prompt'
                   onClick={handleRefinePrompt}
-                  disabled={!isEditing}
+                  disabled={!isEditing || isProjectSignedOff}
                   loading={updateRefinePrompt.isPending}
                   sx={{
                     width: '130px',

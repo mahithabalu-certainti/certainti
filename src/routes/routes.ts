@@ -10,6 +10,7 @@ export const SURVEY_TEMPLATES = '/survey-templates';
 
 /** ADMIN ROUTES */
 export const ADMIN = '/admin';
+export const ADMIN_PROFILE = `${ADMIN}/profile`;
 export const ADMIN_MANAGE_USER = `${ADMIN}/manage-user`;
 export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;

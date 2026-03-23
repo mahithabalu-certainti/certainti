@@ -184,6 +184,10 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
     if (row) {
       searchParams.set('technical_summary_id', row.rid);
       searchParams.set('project_id', row.project_fiscal_rid);
+      searchParams.set(
+        'is_project_signed_off',
+        row.is_rd_claim_qualified.toString()
+      );
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };

@@ -23,10 +23,10 @@ export const getRdAssessmentStatusTableColumns = (
   handleViewProject?: (data: RdAssessmentStatusItem) => void
 ): ListTableColumn<RdAssessmentStatusItem>[] => [
   {
-    id: 'project_code',
-    sortId: 'project_code',
-    label: 'Project Code',
-    width: 160,
+    id: 'created_datetime',
+    sortId: 'created_datetime',
+    label: 'Assessment Triggered At',
+    width: 200,
     sortable: true,
     sticky: true,
     sx: {
@@ -37,6 +37,17 @@ export const getRdAssessmentStatusTableColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
+    hide:
+      !rdAssessmentPermissionMap?.['created_datetime']?.edit &&
+      !rdAssessmentPermissionMap?.['created_datetime']?.read,
+  },
+  {
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    width: 160,
+    sortable: true,
     hide:
       moduleLevel === 'project' ||
       (!projectPermissionMap?.['project_code']?.edit &&
@@ -53,30 +64,6 @@ export const getRdAssessmentStatusTableColumns = (
         row.project_code
       );
     },
-  },
-  {
-    id: 'created_datetime',
-    sortId: 'created_datetime',
-    label: 'Assessment Triggered At',
-    width: 200,
-    sortable: true,
-    ...(moduleLevel === 'project'
-      ? {
-          sticky: true,
-          sx: {
-            position: 'sticky',
-            left: 0,
-            background: '#fff',
-            zIndex: 10,
-            borderRight: '1px solid #CBD6E2 !important',
-            borderBottom: '1px solid #CBD6E2 !important',
-          },
-        }
-      : {}),
-    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
-    hide:
-      !rdAssessmentPermissionMap?.['created_datetime']?.edit &&
-      !rdAssessmentPermissionMap?.['created_datetime']?.read,
   },
   {
     id: 'four_part_assessment',
@@ -127,6 +114,15 @@ export const getRdAssessmentStatusFilterFields = (
 ): FieldConfig[] => {
   return [
     {
+      name: 'Assessment Triggered At',
+      value: 'created_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+      hide:
+        !rdAssessmentPermissionMap?.['created_datetime']?.edit &&
+        !rdAssessmentPermissionMap?.['created_datetime']?.read,
+    },
+    {
       name: 'Project Code',
       value: 'project_code',
       type: 'text',
@@ -135,15 +131,6 @@ export const getRdAssessmentStatusFilterFields = (
         moduleLevel === 'project' ||
         (!projectPermissionMap?.['project_code']?.edit &&
           !projectPermissionMap?.['project_code']?.read),
-    },
-    {
-      name: 'Assessment Triggered At',
-      value: 'created_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-      hide:
-        !rdAssessmentPermissionMap?.['created_datetime']?.edit &&
-        !rdAssessmentPermissionMap?.['created_datetime']?.read,
     },
     {
       name: 'Four-Part Assessment',

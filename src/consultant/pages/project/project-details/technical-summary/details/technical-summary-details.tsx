@@ -30,6 +30,7 @@ interface TechnicalSummaryDetailsProps {
   handleBackClick: () => void;
   isActionItemsExpanded: boolean;
   setIsActionItemsExpanded: (value: boolean) => void;
+  isProjectSignedOff: boolean;
 }
 
 const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
@@ -37,6 +38,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   handleBackClick,
   isActionItemsExpanded,
   setIsActionItemsExpanded,
+  isProjectSignedOff,
 }) => {
   const [searchParams] = useSearchParams();
   const { projectid } = useParams();
@@ -107,9 +109,10 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       account_rid: accountId ?? '',
       tech_summary_rid: technicalSummaryId ?? '',
       project_fiscal_rid: projectid || '',
-      technical_summary: Array.isArray(isRefinePrompt)
-        ? isRefinePrompt
-        : data?.technical_summary || [],
+      technical_summary:
+        Array.isArray(isRefinePrompt) && isRefinePrompt.length > 0
+          ? isRefinePrompt
+          : data?.technical_summary || [],
     };
     updateTechSummaryText.mutate(payload, {
       onSuccess: async (response) => {
@@ -330,7 +333,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                 <TextButton
                   label='Generate Prompt'
                   onClick={handleRefinePrompt}
-                  disabled={!isEditing}
+                  disabled={!isEditing || isProjectSignedOff}
                   loading={updateRefinePrompt.isPending}
                   sx={{
                     width: '130px',

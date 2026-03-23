@@ -316,7 +316,7 @@ export const ProjectTask = ({
   const memoizedProjectResourceCode = useMemo(
     () =>
       projectResourceCodeOptions?.data?.map((item) => ({
-        label: `${item.resource_code}  ${item.resource_name ? `(${item.resource_name})` : ''}`,
+        label: `${item.resource_code}  ${item.project_resource_role ? `(${item.project_resource_role})` : ''}`,
         value: item.rid,
       })) || [],
     [projectResourceCodeOptions?.data]

@@ -120,6 +120,8 @@ interface DossierProps {
   setAuditTimelineParams?: React.Dispatch<
     React.SetStateAction<AuditTimelineListExportParams>
   >;
+  isActionItemsExpanded?: boolean;
+  setIsActionItemsExpanded?: (expanded: boolean) => void;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -140,6 +142,8 @@ const Dossier: React.FC<DossierProps> = ({
   setResourceSummaryParams,
   setTechnicalSummaryParams,
   setAuditTimelineParams,
+  isActionItemsExpanded,
+  setIsActionItemsExpanded,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -774,6 +778,8 @@ const Dossier: React.FC<DossierProps> = ({
               count={count}
               showItemCount={showTableControls}
               buttons={headerButtons}
+              isExpanded={isActionItemsExpanded}
+              onToggleExpand={setIsActionItemsExpanded}
             />
 
             <SectionHeaderTab

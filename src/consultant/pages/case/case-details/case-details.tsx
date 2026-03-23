@@ -216,8 +216,8 @@ export const CaseDetails = () => {
     });
   const [auditTimelineParams, setAuditTimelineParams] =
     useState<AuditTimelineListExportParams>({
-      sort: 'signoff_date',
-      sort_by: 'ASC' as 'ASC' | 'DESC',
+      sort: 'signoff_at',
+      sort_by: 'DESC' as 'ASC' | 'DESC',
       timezone: '',
       case_rid: caseId ?? '',
       account_rid: accountId ?? '',
@@ -315,8 +315,8 @@ export const CaseDetails = () => {
   const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
     useState<RdAssessmentStatusExportURLParams>({
       search: '',
-      sortBy: 'project_code',
-      sortOrder: 'ASC',
+      sortBy: 'created_datetime',
+      sortOrder: 'DESC',
       filters: {},
     });
 
@@ -393,7 +393,13 @@ export const CaseDetails = () => {
 
   useEffect(() => {
     setIsActionItemsExpanded(false);
-  }, [activeKey, tabParam]);
+  }, [activeKey]);
+
+  useEffect(() => {
+    if (activeKey !== 'dossier') {
+      setIsActionItemsExpanded(false);
+    }
+  }, [tabParam]);
 
   const list = searchParams.get('list');
 
@@ -1086,6 +1092,8 @@ export const CaseDetails = () => {
             setResourceSummaryParams={setProjectResourceParams}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
             setAuditTimelineParams={setAuditTimelineParams}
+            isActionItemsExpanded={isActionItemsExpanded}
+            setIsActionItemsExpanded={handleToggleActionItems}
           />
         );
       default:

@@ -201,8 +201,8 @@ export const ProjectDetails = () => {
   const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
     useState<RdAssessmentStatusExportURLParams>({
       search: '',
-      sortBy: 'project_code',
-      sortOrder: 'ASC',
+      sortBy: 'created_datetime',
+      sortOrder: 'DESC',
       filters: {},
     });
 
@@ -891,6 +891,7 @@ export const ProjectDetails = () => {
         return (
           <TechnicalSummary
             accountInActive={accountInActive || projectInActive}
+            isProjectSignedOff={isProjectSignedOff}
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
             activityMenuItems={activityMenuItems}
