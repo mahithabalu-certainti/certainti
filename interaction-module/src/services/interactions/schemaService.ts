@@ -73,7 +73,7 @@ class InteractionSchemaService {
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
-      console.log("Created interaction :", interaction);
+      logMessage(`Created interaction: ${interaction}`);
       return interaction;
     } catch (error) {
       logMessage(`Error creating interaction: ${error}`);
@@ -1102,7 +1102,7 @@ class InteractionSchemaService {
         );
         accountRnumber = accountData?.r_number;
       }
-      console.log("Fetched account number:", accountRnumber);
+      logMessage(`Fetched account number: ${accountRnumber}`);
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,

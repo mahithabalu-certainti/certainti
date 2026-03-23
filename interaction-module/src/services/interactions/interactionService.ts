@@ -207,8 +207,8 @@ export class InteractionService {
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
       interactionData.interaction_assessment_source_rid = intResponseSource || ""
-      console.log("Interaction creation input data:", interactionData);
-      console.log("Interaction creation for account number:", accountNumber);
+      logMessage(`Interaction creation input data: ${JSON.stringify(interactionData)}`);
+      logMessage(`Interaction creation for account number: ${accountNumber}`);
       const interaction =
         await this.interactionSchemaService.createInteractions(
           accountNumber,
@@ -3903,7 +3903,7 @@ export class InteractionService {
         project_fiscal_rid,
         interactionLevel
       );
-      console.log(interactionInfo)
+      logMessage(`Fetched interaction info: ${JSON.stringify(interactionInfo)}`);
       const senderEmailInfo = await this.getSenderEmailInfo(
         interactionInfo.accountInfo.parent_account_rid,
         interactionInfo.accountInfo.account_rid
