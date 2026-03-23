@@ -2076,13 +2076,15 @@ export const summaryHighlightsQueryForCase = (
       FROM
       ${schemaName}.project_fiscal af
       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = af.rid
-      LEFT JOIN ${schemaName}.project_fiscal_region cr ON cr.project_fiscal_rid = cp.project_fiscal_rid AND cp.region_rid = cr.region_rid
+      LEFT JOIN ${schemaName}.project_fiscal_region cr ON cr.project_fiscal_rid = cp.project_fiscal_rid
       WHERE 
       af.account_rid = '${account_rid}'
       AND
       af.fiscal_year = ${fiscal_year}
       AND
       cp.case_rid = '${caseRid}'
+      AND 
+      cp.region_rid = cr.region_rid
       GROUP BY
       af.account_rid
     ),

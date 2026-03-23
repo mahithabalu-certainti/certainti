@@ -4146,6 +4146,27 @@ class SchemaService {
         }
       );
 
+      await sequelize.query(
+        rawQueries.updateProjectFiscalRegionQre(schemaName,
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            rid: projectFiscalId,
+            is_qualified: isQualifiedFlag,
+            region_rid : projectFiscalDetails.region_rid
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+
       // update project summary
       await mainSequelize.query(
         rawQueries.updateProjectFiscalSummaryQre(
