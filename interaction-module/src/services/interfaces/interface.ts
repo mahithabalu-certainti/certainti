@@ -263,7 +263,7 @@ export interface IInteractionService {
       userId: string,
       permission_name: string
     ): Promise<any[]>;
-  sendEmailInBatch() : Promise<void>
+  sendEmailInBatch(schedulerRecord?: SchedulerExecutions) : Promise<void>
   fetchStatusIdsForReminder() : Promise<any>,
   getAccountNumberByRid(accountRid: string): Promise<{
     statusCode: number;
