@@ -419,7 +419,7 @@ class RDCreditSchemaService {
      * @returns 
      */
     async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any, finalCredit: number, result: any,config : JSON) {
-        const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
+        const { RdCreditCountryCalculations, Case } = await this.caseModelService.getModels(accountNumber);
         const [calculationEntry] = await RdCreditCountryCalculations.upsert(
             {
                 case_rid,
@@ -463,6 +463,13 @@ class RDCreditSchemaService {
                 final_credit: finalCredit
             });
         }
+        await Case.update({
+            case_total_rd_cost : finalCredit
+        }, {
+            where : {
+                rid : case_rid
+            }
+        })
         return calculationEntry;
     }
 
