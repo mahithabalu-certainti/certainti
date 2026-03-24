@@ -1374,11 +1374,12 @@ export const fpaFieldMappings = [
   { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
   { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
   { permissionField: 'rd_potential_category', exportField: 'Rd Potential Category', dataField: 'rd_potential_category' },
-  { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose', dataField: 'permitted_purpose_status' },
-  { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty', dataField: 'technological_uncertainty_status' },
-  { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature', dataField: 'technological_in_nature_status' },
-  { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation', dataField: 'process_of_experimentation_status' },
-  { permissionField: 'status', exportField: 'Status', dataField: 'status' },
+  { permissionField: 'summary_judgment', exportField: 'Summary', dataField: 'summary_judgment' },
+  { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose Status', dataField: 'permitted_purpose_status' },
+  { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty Status', dataField: 'technological_uncertainty_status' },
+  { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature Status', dataField: 'technological_in_nature_status' },
+  { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation Status', dataField: 'process_of_experimentation_status' },
+  { permissionField: 'status_rid', exportField: 'Status', dataField: 'status' },
   { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
   { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' }
 ];
