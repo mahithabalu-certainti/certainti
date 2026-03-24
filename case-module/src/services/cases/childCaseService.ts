@@ -1237,11 +1237,12 @@ async fetchDossierPackage (data : any) : Promise<any> {
             if(stringToJson[j].url !== '') {
               let splittedName = stringToJson[j].url.split('/').pop() as string
               finalizedName = splittedName.split('_').slice(2,3).join('_')
+
+              responsePackage.push({
+                name : `RD Form-${finalizedName}`,
+                url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
+              })
             }
-            responsePackage.push({
-              name : `RD Form-${finalizedName}`,
-              url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
-            })
           } else {
             responsePackage.push({
               name : '',

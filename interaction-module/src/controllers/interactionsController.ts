@@ -2886,7 +2886,11 @@ async function exportFetchFourPartAssessmentList(req: Request, res: Response) {
     if (result.statusCode == HttpStatus.SUCCESS) {
       const fields = await interactionService.getAllowedExportFields(
         userId,
-        "four_part_assessment_export"
+        "four_part_assessment_view_edit"
+      );
+      const projectFields = await interactionService.getAllowedExportFields(
+        userId,
+        "projects_view_edit"
       );
       const allowedFieldSet = new Set<string>();
       for (const field of fields) {
@@ -2894,13 +2898,12 @@ async function exportFetchFourPartAssessmentList(req: Request, res: Response) {
           allowedFieldSet.add(field.field_name);
         }
       }
-      const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-      const formatDate = (date?: Date) =>
-        date
-          ? moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .format("YYYY-MM-DD, hh:mm:ss A")
-          : null;
+      for (const field of projectFields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
       if (result.statusCode == HttpStatus.SUCCESS) {
         let structuredData =
           result.data.data.length < 1
@@ -2916,7 +2919,7 @@ async function exportFetchFourPartAssessmentList(req: Request, res: Response) {
                 process_of_experimentation_status: d.process_of_experimentation_status,
                 status: d.status,
                 summary_judgment: d.summary_judgment,
-                created_datetime: d.created_datetime === null ? "" : formatDate(d.created_datetime),
+                created_datetime: d.created_datetime ? data.timezone && isValidTimezone(data.timezone) ? moment.tz(d.created_datetime.toISOString(), data.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.created_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
                 created_by: d.created_by_name
               };
 
