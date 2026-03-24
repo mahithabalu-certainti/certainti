@@ -1578,10 +1578,8 @@ export class CaseService {
               fiscal.currency_symbol
             ) || "-",
           "Assessment Status": fiscal.assessment_status || "-",
-          "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
-          "QRE Final":
-            fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
-            "-",
+          "QRE Percent Final": fiscal.rd_percent_final || "-",
+          "QRE Final": formatNumberForExport(fiscal.qre_final, fiscal.currency_symbol) || "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Technical Point of Contact":
             fiscal.project_technical_point_of_contact || "-",
