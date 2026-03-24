@@ -855,16 +855,18 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             showAddActivity={true}
             activityMenuItems={activityMenuItems}
           />
-          <SectionHeader
-            title={'Action Items'}
-            titleIcon={getTitleIcon()}
-            buttons={headerButtons}
-            count={count}
-            showItemCount={tabParam === 'case_task'}
-            hideSection={false}
-            iconBg={ColorCode.caseBgColor}
-            bgType='circle'
-          />
+          {!isTimeLineView && (
+            <SectionHeader
+              title={'Action Items'}
+              titleIcon={getTitleIcon()}
+              buttons={headerButtons}
+              count={count}
+              showItemCount={tabParam === 'case_task'}
+              hideSection={false}
+              iconBg={ColorCode.caseBgColor}
+              bgType='circle'
+            />
+          )}
         </>
       )}
       {isTimeLineView ? (

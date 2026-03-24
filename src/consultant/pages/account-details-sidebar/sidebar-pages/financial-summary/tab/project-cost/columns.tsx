@@ -128,8 +128,8 @@ export const getFinancialProjectCostColumns = (
     {
       id: 'rd_percent_final',
       sortId: 'rd_percent_final',
-      label: 'RD %',
-      width: 130,
+      label: 'QRE Percent Final',
+      width: 160,
       sortable: true,
       sx: {
         textAlign: 'right',
@@ -141,7 +141,7 @@ export const getFinancialProjectCostColumns = (
     {
       id: 'qre_final',
       sortId: 'qre_final',
-      label: 'Project QRE',
+      label: 'QRE Final',
       width: 130,
       sortable: true,
       sx: {
@@ -150,19 +150,6 @@ export const getFinancialProjectCostColumns = (
       hide:
         !permissionMap?.['qre_final']?.edit &&
         !permissionMap?.['qre_final']?.read,
-    },
-    {
-      id: 'rd_credits_total',
-      sortId: 'rd_credits_total',
-      label: 'RD Credit',
-      width: 130,
-      sortable: true,
-      sx: {
-        textAlign: 'right',
-      },
-      hide:
-        !permissionMap?.['rd_credits_total']?.edit &&
-        !permissionMap?.['rd_credits_total']?.read,
     },
   ];
 };

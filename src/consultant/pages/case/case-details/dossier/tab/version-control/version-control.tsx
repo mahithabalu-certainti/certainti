@@ -45,7 +45,7 @@ const VersionControl: React.FC<VersionControlProps> = ({
   const [tableParams, setTableParams] = useState<VersionControlURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'document_name',
+    sortBy: 'created_datetime',
     sortOrder: 'ASC',
   });
 
