@@ -3224,8 +3224,7 @@ class ProjectIngestionService {
           "Assessment Status": fiscal.assessment_status || "-",
           "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
           "QRE Final":
-            fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
-            "-",
+            formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Project Point of Contact Email": fiscal.project_point_of_contact_email || "-",
           "Technical Point of Contact":
