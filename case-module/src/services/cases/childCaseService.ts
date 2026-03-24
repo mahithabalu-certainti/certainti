@@ -1720,7 +1720,10 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       if(JSON.stringify(data.user_preference) !== '') {
         const getCaseCloseStatus = await mainDb.query<{rid : string, status_name : string, status_type : string}>(rawQueries.getCaseCloseStatus(), {type : QueryTypes.SELECT, plain : true})
         await Case.update({
-          status_rid : getCaseCloseStatus?.rid
+          status_rid : getCaseCloseStatus?.rid,
+          submitted_datetime : new Date(),
+          approved_datetime : new Date(),
+          case_total_rd_cost : data.country_credits.rd_credits_computed,
         }, {
           where : {
             rid : data.case_rid
