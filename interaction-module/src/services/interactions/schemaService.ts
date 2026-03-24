@@ -4635,8 +4635,27 @@ class InteractionSchemaService {
     }
   }
 
-  async createSchedulerTaskRecords(executionRid: string, taskName: string) {
-    const { SchedulerTaskExecution, SchedulerExecution } = await this.interactionModelService.getModels("")
+  async createSchedulerRecordsForSendEmail () {
+    const { SchedulerExecution } = await this.interactionModelService.getModels("");
+    const findSchedulerExists = await SchedulerExecution.findOne({
+      where : {
+        scheduler_name : 'SendEmail',
+        status : schedulerStatus.Running
+      }
+    })
+    if(!findSchedulerExists) {
+      const createSchedulerExecution = await SchedulerExecution.create({
+        created_datetime : new Date(),
+        started_at : new Date(),
+        status : schedulerStatus.Running,
+        scheduler_name : 'SendEmail'
+      })
+      return createSchedulerExecution
+    }
+  }
+
+  async createSchedulerTaskRecords (executionRid : string, taskName : string) {
+    const {SchedulerTaskExecution, SchedulerExecution} = await this.interactionModelService.getModels("")
     const findTaskAlreadyRunning = await SchedulerExecution.findOne({
       where: {
         rid: executionRid,
@@ -4658,7 +4677,8 @@ class InteractionSchemaService {
   async updateSchedulerRecords(executionRid: string, status: string) {
     const { SchedulerExecution } = await this.interactionModelService.getModels("")
     await SchedulerExecution.update({
-      status: status
+      completed_at: new Date(),
+      status : status
     }, {
       where: {
         rid: executionRid
