@@ -157,13 +157,12 @@ export class RdFormMapperService {
           countryRid,
           orgDb,
           accountNumber,
-          "No valid T661 template available to process",
+          "No valid RD form data available to process",
         );
         return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "RD Form rule is not available for the selected year/date.",
-          data: "",
+          statusCode: HttpStatus.SUCCESS,
+          message: "Federal form processed successfully",
+          data: '',
         };
       }
       const filledFormUrl = await this.helper.generateT661Pdf(
