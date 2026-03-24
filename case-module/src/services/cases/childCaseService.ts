@@ -457,7 +457,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
   let dossierVersion;
   let now = new Date();
   if(findData) {
-    dossierVersion = (findData.dossier_version ?? 0) + 1
+    dossierVersion = Number(findData.dossier_version ?? 0) + 1
     await DossierFormModel.update({
       is_initiated : true
     }, {
