@@ -82,24 +82,6 @@ export const getAccountFinancialResCostFields = (
     type: 'number',
     operatorOption: numberOptions,
   },
-  {
-    name: 'RD %',
-    value: 'rd_percent_final',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
-  {
-    name: 'Project QRE',
-    value: 'qre_final',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
-  {
-    name: 'RD Credit',
-    value: 'rd_credits_total',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
 ];
 
 export const getAccountFinancialProjectCostFields = (
@@ -154,20 +136,14 @@ export const getAccountFinancialProjectCostFields = (
     operatorOption: numberOptions,
   },
   {
-    name: 'RD %',
+    name: 'QRE Percent Final',
     value: 'rd_percent_final',
     type: 'number',
     operatorOption: numberOptions,
   },
   {
-    name: 'Project QRE',
+    name: 'QRE Final',
     value: 'qre_final',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
-  {
-    name: 'RD Credit',
-    value: 'rd_credits_total',
     type: 'number',
     operatorOption: numberOptions,
   },

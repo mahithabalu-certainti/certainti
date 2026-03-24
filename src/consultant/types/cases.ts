@@ -215,7 +215,9 @@ export interface CaseFormFields {
   qualified_computer_rental_time_expenses: string | null;
   basic_research_payments?: string | null;
   illinois_rd_credit_partnership_corp: string | null;
-  credit_carry_forward_py: string | null;
+  credit_carry_forward_py_ga: string | null;
+  credit_carry_forward_py_sc: string | null;
+  credit_carry_forward_py_tx: string | null;
   current_year_gross_receipts: string | null;
 }
 
@@ -268,7 +270,9 @@ export interface CaseFormPayload {
   illinois_research_payments_corp_only: string | null;
   qualified_computer_rental_time_expenses: string | null;
   illinois_rd_credit_partnership_corp: string | null;
-  credit_carry_forward_py: string | null;
+  credit_carry_forward_py_ga: string | null;
+  credit_carry_forward_py_sc: string | null;
+  credit_carry_forward_py_tx: string | null;
   current_year_gross_receipts: string | null;
   // Nested amendment info (only sent on amendment create)
   amendment_case_info?: {

@@ -142,7 +142,7 @@ export const getRdCreditsColumns = (
 ): ListTableColumn<SummaryRdCredits>[] => [
   {
     id: 'rd_credits_fte',
-    label: 'RD Credits FTE',
+    label: 'QRE FTE',
     sortable: false,
     sortId: 'rd_credits_fte',
     width: '25%',
@@ -164,7 +164,7 @@ export const getRdCreditsColumns = (
   },
   {
     id: 'rd_credits_subcon',
-    label: 'RD Credits Sub Con',
+    label: 'QRE Sub Con',
     sortable: false,
     sortId: 'rd_credits_subcon',
     width: '25%',
@@ -179,7 +179,7 @@ export const getRdCreditsColumns = (
   },
   {
     id: 'rd_credits_nonlabor',
-    label: 'RD Credits Non Labor',
+    label: 'QRE Non Labor',
     sortable: false,
     sortId: 'rd_credits_nonlabor',
     width: '25%',

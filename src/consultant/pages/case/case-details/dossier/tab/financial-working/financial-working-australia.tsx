@@ -43,7 +43,7 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
       return '';
     }
     if (typeof value === 'number') {
-      return costDisplay(value, currencySymbol as string);
+      return costDisplay(value.toFixed(2), currencySymbol as string);
     }
     return value;
   };
@@ -66,8 +66,16 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
     value: number | string | null | undefined,
     isBold?: boolean
   ) => {
+    const isNumeric =
+      typeof value === 'number' ||
+      (typeof value === 'string' &&
+        value.trim() !== '' &&
+        (!isNaN(Number(value)) || value.endsWith('%')));
+
     return (
-      <div className='min-w-[150px] px-3 py-1 rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] text-right inline-block'>
+      <div
+        className={`min-w-[150px] px-3 py-1 flex items-center rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] ${isNumeric ? 'justify-end text-right' : 'justify-start text-left'} inline-block`}
+      >
         <span
           className={`text-[13px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
         >
