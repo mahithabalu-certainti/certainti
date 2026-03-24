@@ -3878,6 +3878,7 @@ export class InteractionService {
         let project_fiscal_rid = data.project_fiscal_rid;
         let accountRid = data.account_rid;
         let interactionLevel = data.interaction_level;
+        let createdBy = data.user_rid;
 
         // If emailInfo.email is empty, fetch POC email
         let sendEmailInfo = email_info;
@@ -3945,7 +3946,11 @@ export class InteractionService {
           interaction_rid,
           is_interaction_followup,
           interactionLevel,
-          false
+          false,
+          createdBy,
+          accountNumber,
+          data,
+          interactionInfo.interactionInfo
         );
         if (emailResponse) {
           logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
