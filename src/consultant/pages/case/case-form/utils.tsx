@@ -68,7 +68,6 @@ export const transformCaseFormPayload = (
     basic_research_payments_id: formData.basic_research_payments_id || null,
     illinois_rd_credit_partnership_corp:
       formData.illinois_rd_credit_partnership_corp || null,
-    credit_carry_forward_py: formData.credit_carry_forward_py || null,
     credit_carry_forward_py_ga: formData.credit_carry_forward_py_ga || null,
     credit_carry_forward_py_sc: formData.credit_carry_forward_py_sc || null,
     credit_carry_forward_py_tx: formData.credit_carry_forward_py_tx || null,

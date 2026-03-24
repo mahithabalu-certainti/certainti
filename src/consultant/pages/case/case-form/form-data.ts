@@ -1044,7 +1044,7 @@ export const CaseFormData = (
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Total additional Georgia credits applied against tax liability - Georgia',
+                  'Total additional Georgia credits applied against tax liability - Georgia.',
               },
               regexErrorMessage:
                 'Numbers allowed, up to 16 digits and 2 decimal places',
