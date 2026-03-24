@@ -420,7 +420,8 @@ export const rawQueries = {
       SELECT rid,r_number,event_name, descriptions, created_datetime,created_by_name, entity_name
       FROM "${schemaName}".account_timeline
       WHERE account_rid = :accountId
-      ORDER BY created_datetime DESC
+      and document_rid is null
+      ORDER BY created_datetime DESC NULLS LAST
       LIMIT :limit OFFSET :offset
     `;
   },
@@ -429,7 +430,7 @@ export const rawQueries = {
       SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
       FROM "${schemaName}".case_timeline
       WHERE case_rid = :caseId
-      ORDER BY created_datetime DESC
+      ORDER BY created_datetime DESC NULLS LAST
       LIMIT :limit OFFSET :offset
     `;
   },
@@ -439,7 +440,7 @@ export const rawQueries = {
       FROM "${schemaName}".project_timeline
       WHERE project_rid = :projectId
       and document_rid is null
-      ORDER BY created_datetime DESC
+      ORDER BY created_datetime DESC NULLS LAST
       LIMIT :limit OFFSET :offset
     `;
   },
@@ -1974,13 +1975,13 @@ export const rawQueries = {
         bi_weekly_cost NUMERIC(18, 2),
         daily_cost NUMERIC(18, 2),
         hourly_cost NUMERIC(18, 2),
-        total_cost_for_year_project NUMERIC(14, 2),
-        total_cost_for_year_project_resource_level NUMERIC(14, 2),
-        total_cost_for_year_project_task_level NUMERIC(14, 2),
-        total_effort_for_year_project NUMERIC(14, 2),
-        total_effort_for_year_project_resource_level NUMERIC(14, 2),
-        total_effort_for_year_project_task_level NUMERIC(14, 2),
-        estimated_rd_hours NUMERIC(14, 2),
+        total_cost_for_year_project NUMERIC(18, 2),
+        total_cost_for_year_project_resource_level NUMERIC(18, 2),
+        total_cost_for_year_project_task_level NUMERIC(18, 2),
+        total_effort_for_year_project NUMERIC(18, 2),
+        total_effort_for_year_project_resource_level NUMERIC(18, 2),
+        total_effort_for_year_project_task_level NUMERIC(18, 2),
+        estimated_rd_hours NUMERIC(18, 2),
         effective_date TIMESTAMPTZ,
         end_date TIMESTAMPTZ,
         CONSTRAINT resource_fiscal_region_r_number_key UNIQUE (r_number)

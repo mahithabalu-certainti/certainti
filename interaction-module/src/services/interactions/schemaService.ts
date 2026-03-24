@@ -73,7 +73,7 @@ class InteractionSchemaService {
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
-
+      logMessage(`Created interaction: ${interaction}`);
       return interaction;
     } catch (error) {
       logMessage(`Error creating interaction: ${error}`);
@@ -231,6 +231,10 @@ class InteractionSchemaService {
   ) {
     try {
       const { Interaction, InteractionItem, InteractionSummary } = await this.interactionModelService.getModels(accountNumber);
+      
+      // Sync tables to ensure they exist in the database before bulk operations
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+      
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
@@ -1098,7 +1102,7 @@ class InteractionSchemaService {
         );
         accountRnumber = accountData?.r_number;
       }
-
+      logMessage(`Fetched account number: ${accountRnumber}`);
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
@@ -1397,43 +1401,43 @@ class InteractionSchemaService {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
       let schemaName = rawQueries.fetchSchemaName(accountNumber)
-      
+
       // Check if case is closed if caseRid is provided
       let isCaseClosed = false;
       let TechnicalSummaryModel = AiTechnicalSummary;
-      
-      if(caseRid !== undefined && caseRid !== '') {
+
+      if (caseRid !== undefined && caseRid !== '') {
         const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(this.orgDbSequelize, schemaName);
-        
-        
+
+
         const [caseDetails]: any = await this.orgDbSequelize.query(rawQueries.fetchCaseInfo(schemaName, caseRid), {
           replacements: { caseId: caseRid },
           type: 'SELECT'
         });
-        
+
         // Fetch closed case status
         const [closedStatus]: any[] = await this.mainDbSequelize.query(
           rawQueries.fetchCaseStatusByType('Closed'),
           { type: 'SELECT' }
         );
-        
+
         // Check if case status matches closed status
         if (caseDetails && closedStatus && caseDetails.status_rid === closedStatus.rid) {
           isCaseClosed = true;
-  
+
           TechnicalSummaryModel = CaseTechnicalSummaryModel;
         }
       }
-      
+
       // Fetch technical summaries and count
       let whereCondition;
-      if(caseRid !== undefined && caseRid !== '') {
-        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
-        
+      if (caseRid !== undefined && caseRid !== '') {
+        const projectFiscalIds: any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
+
         // Determine the correct table name and model reference based on case status
         const technicalSummaryTable = isCaseClosed ? 'case_technical_summary' : 'ai_technical_summary';
         const technicalSummaryModelName = isCaseClosed ? 'CaseTechnicalSummary' : 'AiTechnicalSummary';
-        
+
         // Build where condition for case-specific queries with dynamic table reference
         whereCondition = {
           account_rid: accountRid,
@@ -1486,7 +1490,7 @@ class InteractionSchemaService {
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
-      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff }]))
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff, is_rd_claim_qualified : d.is_rd_claim_qualified }]))
       let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
         return {
           rid: d.rid,
@@ -1495,6 +1499,7 @@ class InteractionSchemaService {
           project_fiscal_rid: d.project_fiscal_rid,
           project_code: projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
           project_name: projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
+          is_rd_claim_qualified : projectDetailsMap.get(d.project_fiscal_rid)?.is_rd_claim_qualified,
           signoff: projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
@@ -1797,16 +1802,45 @@ class InteractionSchemaService {
   }
   async fetchTechnicalSummaryDetailsById(
     accountNumber: string,
-    techSummaryId: string
+    techSummaryId: string,
+    caseRid? : string
   ) {
     if (!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     const { AiTechnicalSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
+    let schemaName = rawQueries.fetchSchemaName(accountNumber)
 
-    let techSummaryDetails = await AiTechnicalSummary.findOne({
+    let isCaseClosed = false;
+    let TechnicalSummaryModel = AiTechnicalSummary;
+    
+    if(caseRid !== undefined && caseRid !== '') {
+      const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(this.orgDbSequelize, schemaName);
+      const [caseDetails]: any = await this.orgDbSequelize.query(rawQueries.fetchCaseInfo(schemaName, caseRid), {
+        replacements: { caseId: caseRid },
+        type: 'SELECT'
+      });
+      
+      // Fetch closed case status
+      const [closedStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCaseStatusByType('Closed'),
+        { type: 'SELECT' }
+      );
+      
+      // Check if case status matches closed status
+      if (caseDetails && closedStatus && caseDetails.status_rid === closedStatus.rid) {
+        isCaseClosed = true;
+
+        TechnicalSummaryModel = CaseTechnicalSummaryModel;
+      }
+    }
+
+    let techSummaryDetails = await TechnicalSummaryModel.findOne({
       where: {
         rid: techSummaryId,
       },
@@ -1821,7 +1855,6 @@ class InteractionSchemaService {
       );
       const fetchProjectDetails: string[] = []
       fetchProjectDetails.push(techSummaryDetails.project_fiscal_rid!)
-      let schemaName = rawQueries.fetchSchemaName(accountNumber)
       let projectFiscalDetails = await this.orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
       let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff }]))
 
@@ -4082,7 +4115,7 @@ class InteractionSchemaService {
         is_tech_summary_processed: response.statusCode === 200,
       };
       if (response.statusCode !== 200) {
-        updateData.tech_summary_error_message = response.error_message;
+        updateData.technical_summary_error_message = response.error_message;
       }
       const [aiResponse] = await Promise.all([
         AiTechnicalSummary.create(techSummaryPayload),
@@ -4190,7 +4223,7 @@ class InteractionSchemaService {
     }
   }
 
-  async fetchInteractionBatch(accountNumber: string, accountId : string) {
+  async fetchInteractionBatch(accountNumber: string, accountId: string) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4200,7 +4233,7 @@ class InteractionSchemaService {
         ""
       )}`;
 
-      const interactionBatchInfo : any = await this.orgDbSequelize.query(
+      const interactionBatchInfo: any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteraction(schemaName, accountId),
         { type: "SELECT" }
       );

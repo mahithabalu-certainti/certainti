@@ -119,9 +119,9 @@ export class RdCreditCalculatorForCA {
         const reducedCreditAmountPercentage = line17a.mul(config.corporation/100)
 
         return {
-            wages: line5,
-            supplies: line6,
-            cost_to_rent: line7,
+            wages: this.round2(line5),
+            supplies: this.round2(line6),
+            cost_to_rent: this.round2(line7),
             contract: this.round2(line8),
             total_qre: this.round2(line9),
             fixed_base_percentage: config.fixed_base_percentage,

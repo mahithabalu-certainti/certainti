@@ -242,8 +242,13 @@ export const activityFieldMappings = [
     dataField: "status_name",
   },
   {
+    permissionField: "attachment_level",
+    exportField: "Related Entity",
+    dataField: "attachment_level",
+  },
+  {
     permissionField: "attached_to",
-    exportField: "Related To",
+    exportField: "Related To Name",
     dataField: "attached_to",
   },
   {
@@ -779,12 +784,12 @@ export const jurisdictionRuleMapping = [
   },
   {
     permissionField: "effective_start_date",
-    exportField: "Effective Start Date",
+    exportField: "Start Date",
     dataField: "effective_start_date",
   },
   {
     permissionField: "effective_end_date",
-    exportField: "Effective End Date",
+    exportField: "End Date",
     dataField: "effective_end_date",
   },
 

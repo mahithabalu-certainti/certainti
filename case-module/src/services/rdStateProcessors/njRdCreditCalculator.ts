@@ -181,7 +181,7 @@ export class RdCreditCalculatorForNJ {
         storeData.push({
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
-            contract: currentYearContract,
+            contract: this.round2(currentYearContract),
             sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract))
         })
 

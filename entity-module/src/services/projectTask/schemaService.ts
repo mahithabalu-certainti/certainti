@@ -2765,7 +2765,7 @@ export class ProjectTaskSchemaService {
         created_datetime: new Date(),
         project_rid: existingProjectTask.project_rid
       }, { transaction });
-      if(!existingCaseProjectTask) {
+      if(existingCaseProjectTask) {
         await CaseProjectResourceFiscal.create({
         ...newGroupKey,
         total_cost_from_tasks: projectTaskData.total_cost_pro_task,

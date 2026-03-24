@@ -61,7 +61,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,rd_form_signoff,
     c.lease_costs_of_computers_nj, c.lease_costs_of_computers_il, c.lease_costs_of_computers_ca,
     c.lease_costs_of_computers_az, c.lease_costs_of_computers_id,
-    c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments_ma, c.basic_research_payments_id, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,
+    c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments_ma, c.basic_research_payments_id, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py_ga, c.credit_carry_forward_py_sc, c.credit_carry_forward_py_tx,c.current_year_gross_receipts,
     c.other_credits_total_sc, c.other_credits_total_ga,rcc.final_credit,
     CASE WHEN fcc.count > 0 THEN false ELSE true END AS all_task_completed,
     CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' AND is_initiated = false ORDER BY dossier_version DESC LIMIT 1) 

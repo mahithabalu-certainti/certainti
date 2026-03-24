@@ -64,7 +64,9 @@ interface CaseAttributes {
   basic_research_payments_id? : number
 
   qualified_computer_rental_time_expenses? : number
-  credit_carry_forward_py?: number
+  credit_carry_forward_py_ga? : number
+  credit_carry_forward_py_sc? : number
+  credit_carry_forward_py_tx? : number
   current_year_gross_receipts?: number
   other_credits_total_ga?: number,
   other_credits_total_sc?: number,
@@ -137,13 +139,15 @@ export class Case
   public basic_research_payments_ma? : number
   public basic_research_payments_id? : number
   public qualified_computer_rental_time_expenses? : number;
-  public credit_carry_forward_py?: number
   public current_year_gross_receipts?: number
   public other_credits_total_ga?: number
   public other_credits_total_sc?: number
   public rrc_credit_280_c? : string
   public asc_credit_280_c? : string
   public parent_case_rid?: string;
+  public credit_carry_forward_py_ga? : number
+  public credit_carry_forward_py_sc? : number
+  public credit_carry_forward_py_tx? : number
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -222,13 +226,15 @@ export class Case
         basic_research_payments_ma : {type : DataTypes.DECIMAL, allowNull : true},
         basic_research_payments_id : {type : DataTypes.DECIMAL, allowNull : true},
         qualified_computer_rental_time_expenses : {type : DataTypes.DECIMAL, allowNull : true},
-        credit_carry_forward_py : {type : DataTypes.DECIMAL, allowNull : true},
         current_year_gross_receipts: {type : DataTypes.DECIMAL, allowNull : true},
         other_credits_total_ga: {type : DataTypes.DECIMAL, allowNull : true},
         other_credits_total_sc: {type : DataTypes.DECIMAL, allowNull : true},
         rrc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
         asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
-        parent_case_rid : {type : DataTypes.STRING(50), allowNull : true   }
+        parent_case_rid : {type : DataTypes.STRING(50), allowNull : true   },
+        credit_carry_forward_py_ga : {type : DataTypes.DECIMAL, allowNull : true},
+        credit_carry_forward_py_sc : {type : DataTypes.DECIMAL, allowNull : true},
+        credit_carry_forward_py_tx : {type : DataTypes.DECIMAL, allowNull : true},
       },
       {
         sequelize,

@@ -157,12 +157,12 @@ export class RdFormMapperService {
           countryRid,
           orgDb,
           accountNumber,
-          "No valid T661 template available to process",
+          "No valid RD form data available to process",
         );
         return {
-          statusCode: HttpStatus.FAILED,
-          message: "No T661 template found",
-          data: "",
+          statusCode: HttpStatus.SUCCESS,
+          message: "Federal form processed successfully",
+          data: '',
         };
       }
       const filledFormUrl = await this.helper.generateT661Pdf(
@@ -230,6 +230,12 @@ export class RdFormMapperService {
           accountNumber,
           `No valid RD form data available to process`,
         );
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "No valid RD form data available to process",
+          data: "",
+        };
       }
 
       const enhancedMapperConfig =
@@ -262,6 +268,7 @@ export class RdFormMapperService {
           countryName,
           stateName,
           fiscalYear,
+          '',
           currencySymbol,
         );
       } else {
@@ -294,7 +301,8 @@ export class RdFormMapperService {
             countryName,
             stateName,
             fiscalYear,
-            currencySymbol,
+            '',
+            currencySymbol
           );
         }
       }
@@ -418,7 +426,7 @@ export class RdFormMapperService {
           accountNumber,
           "No project resources assigned for this state,",
         );
-          continue;
+        continue;
       }
 
       const stateInfo = stateInfoMap.get(state) || {};
@@ -493,6 +501,7 @@ export class RdFormMapperService {
             countryName,
             resolvedStateName,
             fiscalYear,
+            resolvedStateCode,
             currencySymbol,
           );
         } else {
@@ -525,7 +534,8 @@ export class RdFormMapperService {
               countryName,
               resolvedStateName,
               fiscalYear,
-              currencySymbol,
+              resolvedStateCode,
+              currencySymbol
             );
           }
         }
@@ -578,6 +588,7 @@ export class RdFormMapperService {
     countryName: string,
     stateName: string,
     fiscalYear: string,
+    stateCode: string,
     currencySymbol?: string | null,
   ): Promise<string> {
     try {
@@ -646,7 +657,7 @@ export class RdFormMapperService {
 
 
       // Generate unique filename
-      const fileName = `rd_form_${countryCode}_${Date.now()}.pdf`;
+      const fileName = `rd_form_${countryCode}${stateCode ? `_${stateCode}` : ''}_${Date.now()}.pdf`;
 
       // Create PDF document in memory
       const doc = new PDFDocument({ margin: 50 });
@@ -677,7 +688,7 @@ export class RdFormMapperService {
           normalizedCountryName?.toLowerCase() === "australia";
         const headerTitle = normalizedCountryName
           ? RD_FORM_HEADER_BY_COUNTRY[normalizedCountryName] ||
-            `R&D Tax Credit Form - ${normalizedCountryName}`
+          `R&D Tax Credit Form - ${normalizedCountryName}`
           : "R&D Tax Credit Form";
         doc
           .fontSize(16)
@@ -809,8 +820,8 @@ export class RdFormMapperService {
               String(
                 applyCurrency
                   ? formatValue(
-                      cell !== undefined && cell !== null ? cell : "N/A",
-                    )
+                    cell !== undefined && cell !== null ? cell : "N/A",
+                  )
                   : cell !== undefined && cell !== null
                     ? cell
                     : "N/A",
@@ -1040,6 +1051,7 @@ export class RdFormMapperService {
                   context.schemaName,
                   context.stateRid || "",
                   context.fiscalYear,
+                  mapperObject.where_config ?? undefined,
                 );
 
               tableValueCache[val] = tableValues || [];
@@ -1164,8 +1176,8 @@ export class RdFormMapperService {
 
                     const v =
                       rowSpecific.value !== undefined &&
-                      rowSpecific.value !== null &&
-                      rowSpecific.value !== ""
+                        rowSpecific.value !== null &&
+                        rowSpecific.value !== ""
                         ? String(rowSpecific.value)
                         : null;
                     if (v === null) return "null";
@@ -1454,9 +1466,9 @@ export class RdFormMapperService {
 
       const result = await executeComputation();
       return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : err;
-      this.logger.error(`Error processing RD Mapper requests: ${errorMessage}`);
+    } catch (err: any) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Error processing RD Mapper requests: ${errorMsg}`);
       await this.rdFormMapperSchemaService.updateFederalFormError(
         caseRid,
         fetchAccountCountryId[0].country_rid,
@@ -1465,8 +1477,9 @@ export class RdFormMapperService {
         "No valid RD form data available to process",
       );
       return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: errorMsg || "Failed to process RD form mapper requests",
         data: { task: null },
       };
       // return {
@@ -1605,13 +1618,13 @@ export class RdFormMapperService {
         filled_form_url?: string | null;
         form_error_message?: string | null;
       } | null = value.is_federal
-        ? await this.rdFormMapperSchemaService.getFederalFormUrl(
+          ? await this.rdFormMapperSchemaService.getFederalFormUrl(
             value.case_rid,
             value.country_rid,
             orgDb,
             accountNumber,
           )
-        : await this.rdFormMapperSchemaService.getStateFormUrl(
+          : await this.rdFormMapperSchemaService.getStateFormUrl(
             value.case_rid,
             value.state_rid!,
             orgDb,

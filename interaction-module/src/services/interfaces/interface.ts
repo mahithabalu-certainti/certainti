@@ -214,7 +214,8 @@ export interface IInteractionService {
   }>;
   getTechnicalSummaryDetailsById(
     techSummaryId: string,
-    accountId: string
+    accountId: string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;

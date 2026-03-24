@@ -42,6 +42,7 @@ export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",
   ACCOUNT_FISCAL: "ACF",
+  ACCOUNT_TIMELINE: "ACT",
   PROJECT: "PRJ",
   PROJECT_FISCAL: "PFI",
   PROJECT_FISCAL_REGION: "PFIR",
@@ -91,7 +92,7 @@ export const entityTypes = {
   TAG: "Tag",
   SETTINGS: "Settings",
   QRE_PERCENT: "QRE Percent",
-  AUTO_RD_ASSESSMENT:"Auto RD Assessment",
+  AUTO_RD_ASSESSMENT: "Auto RD Assessment",
 };
 
 export const eventNames = {
@@ -836,6 +837,15 @@ export const rawQueries = {
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
+  findResourceByRid(schemaName: string, resource_rid: string) {
+    return `SELECT resource_code FROM ${schemaName}.resources WHERE rid = '${resource_rid}'`;
+  },
+  findProjectResourceByRid(schemaName: string, project_resource_rid: string) {
+    return `SELECT resource_rid FROM ${schemaName}.project_resource WHERE rid = '${project_resource_rid}'`;
+  },
+  findProjectFiscalByRid(schemaName: string, project_fiscal_rid: string) {
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${project_fiscal_rid}'`;
+  },
   fetchAccountById: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   updateTemplate(url: string, templateId: string, userId: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.templates
@@ -1174,6 +1184,25 @@ export const rawQueries = {
       is_qualified = ${data.is_qualified}
     WHERE
       rid = '${data.rid}'
+    `;
+  },
+  updateProjectFiscalRegionQre(schemaName: string, data: any) {
+    return `
+    UPDATE ${schemaName}.project_fiscal_region
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}',
+      is_qualified = ${data.is_qualified}
+    WHERE
+      project_fiscal_rid = '${data.rid}'
+      AND
+      region_rid = '${data.region_rid}'
     `;
   },
   updateProjectFiscalSummaryQre(data: any) {

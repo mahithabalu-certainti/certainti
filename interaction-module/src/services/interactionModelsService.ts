@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
+import { logMessage } from "../utils/helpers";
 import { Interaction } from "../models/interaction";
 import { InteractionItem } from "../models/interactionItem";
 import { InteractionHistory } from "../models/interactionHistory";
@@ -159,5 +160,56 @@ export class InteractionModelService {
 
     this.modelCache.set(schemaName, models);
     return models;
+  }
+
+  async syncOrgDbModels(accountNumber: string): Promise<void> {
+    try {
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+      const sequelize = await this.getSequelize();
+
+      // Get all models for this account to initialize them
+      await this.getModels(accountNumber);
+
+      // Check if schema exists
+      const schemaExists = await sequelize.query(
+        `SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = '${schemaName}');`,
+        { type: "SELECT", raw: true }
+      );
+
+      if (!schemaExists || !schemaExists[0] || !Object.values(schemaExists[0])[0]) {
+        logMessage(`[syncOrgDbModels] Schema ${schemaName} does not exist, creating it...`);
+        try {
+          await sequelize.createSchema(schemaName, {});
+          logMessage(`[syncOrgDbModels] Schema ${schemaName} created successfully`);
+        } catch (schemaErr: any) {
+          // Schema might already exist (race condition), continue
+          if (!schemaErr.message.includes('already exists')) {
+            throw schemaErr;
+          }
+        }
+      }
+
+      // Try to sync only if needed, with error handling
+      try {
+        await sequelize.sync({
+          force: false,
+          schema: schemaName,
+          alter: false,
+          logging: false,
+        });
+        logMessage(`[syncOrgDbModels] Tables synced successfully for schema: ${schemaName}`);
+      } catch (syncErr: any) {
+        // If tables already exist, this is not an error we need to propagate
+        if (syncErr.message.includes('already exists') || syncErr.name === 'SequelizeUniqueConstraintError') {
+          logMessage(`[syncOrgDbModels] Tables already exist in schema: ${schemaName}, skipping sync`);
+        } else {
+          logMessage(`[syncOrgDbModels] Sync warning for schema ${schemaName}: ${syncErr.message}`);
+          // Don't throw - tables likely already exist from account creation
+        }
+      }
+    } catch (error) {
+      logMessage(`[syncOrgDbModels] Warning syncing tables for account ${accountNumber}: ${error}`);
+      // Don't throw - assume tables exist from account creation, just log the warning
+    }
   }
 }

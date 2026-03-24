@@ -341,6 +341,7 @@ export class RdFormHelperService {
       { key: "business_details", title: "Business Details" },
       { key: "contact_and_agent_details", title: "Contact and Agent Details" },
       { key: "accounting_period", title: "Accounting Period" },
+      { key : "qualifying_expenditure_and_projects", title : "Qualifying expenditure and projects"},
       { key: "rd_scheme", title: "R&D Scheme" },
       {
         key: "rdec_qualifying_expenditure",
@@ -532,7 +533,14 @@ export class RdFormHelperService {
       rawQueries.fetchCountryCalculationForCase(schemaName),
       { replacements: { caseRid }, type: QueryTypes.SELECT },
     );
-    if (!calcRow) throw new Error("No calculation found for this case");
+    if (!calcRow) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "No calculation found for this case",
+        data: "",
+      };
+    }
     const computedFields =
       typeof calcRow.computed_fields === "string"
         ? JSON.parse(calcRow.computed_fields)
@@ -586,37 +594,48 @@ export class RdFormHelperService {
     const startDate = `${accountDetails.fiscal_start_date}/${fiscalYear - 1}`;
     const endDate = `${accountDetails.fiscal_end_date}/${fiscalYear}`;
     const accountingPeriodFormatted = `${this.formatDate(startDate)} to ${this.formatDate(endDate)}`;
+    const accountPeriodEnd = `Accounting period ending ${this.formatDate(endDate)} part of long period of account`
+    const roleInCompany = `Role in relation to ${accountInfo.account_name}`
+    const noOfEpws = `Number of EPW's`
+    const externally_provided_workers = 'Externally provided workers (EPW)'
+    const has_tax_agent_for_rd_claim = 'Has Tax Agent for R&D Claim'
 
     let ukFormData = {
       business_details: {
         business_name: accountInfo.account_name || "",
         corporation_tax_unique_taxpayer_reference: "",
-        correct_corporation_tax_reference: "-",
-        has_paye_reference: "-",
-        employer_paye_reference: "-",
-        has_vat_number: "-",
-        vat_number: "-",
+        correct_corporation_tax_reference_for_the_business: "-",
+        has_PAYE_reference: "-",
+        employer_PAYE_reference: "-",
+        has_VAT_number: "-",
+        VAT_number: "-",
         type_of_business: "-",
       },
       contact_and_agent_details: {
-        full_name: "-",
-        senior_officer_responsible: "-",
-        role_in_company: "-",
-        confirmation_email: "-",
+        your_full_name: "-",
+        you_are_the_senior_officer_responsible_for_this_claim: "-",
+        [roleInCompany]: "-",
+        email_address_to_send_confirmation_to: "-",
+        confirmation_email_address :"-",
         telephone_number: "-",
-        has_tax_agent_for_rd_claim: "-",
+        [has_tax_agent_for_rd_claim]: "-",
       },
-      rd_scheme: {
-        scheme_type: "RDEC",
+      accounting_period: {
+        start_date_of_accounting_period : this.formatDate(startDate),
+        end_date_of_accounting : this.formatDate(endDate),
+        [accountPeriodEnd] : '-'
+      },
+      qualifying_expenditure_and_projects: {
+        schemes: "RDEC",
       },
       rdec_qualifying_expenditure: {
         staffing_costs: currencySymbol
           ? `${currencySymbol}${this.formatNumber(computedFields.Total?.Employees)}`
           : this.formatNumber(computedFields.Total?.Employees),
-        externally_provided_workers: currencySymbol
+        [externally_provided_workers]: currencySymbol
           ? `${currencySymbol}${this.formatNumber(computedFields.Total?.["Net EPW"] || "-")}`
           : this.formatNumber(computedFields.Total?.["Net EPW"] || "-"),
-        number_of_epws: resoucesCount || "-",
+        [noOfEpws]: resoucesCount || "-",
         software: currencySymbol
           ? `${currencySymbol}${this.formatNumber(caseInfo.material_software_cost)}`
           : this.formatNumber(caseInfo.material_software_cost),
@@ -655,6 +674,7 @@ export class RdFormHelperService {
     return {
       statusCode: HttpStatus.SUCCESS,
       message: "Federal form processed successfully",
+      errorMessage: null,
       data: filledFormUrl,
     };
   }
@@ -1807,6 +1827,10 @@ export class RdFormHelperService {
                     schemaName,
                     accountRid,
                     stateRid || "",
+                    {
+                      db_source:       mapperObject.db_source       ?? null,
+                      where_filters:   mapperObject.where_filters   ?? null,
+                    },
                   );
                 if (dynamicValue !== null && dynamicValue !== undefined) {
                   addToValueMap(bareRid, dynamicValue);
@@ -1883,6 +1907,10 @@ export class RdFormHelperService {
               schemaName,
               accountRid,
               stateRid || "",
+              {
+                db_source:       mapperObject.db_source       ?? null,
+                where_filters:   mapperObject.where_filters   ?? null,
+              },
             );
           logMessage(
             `Resolved DB value for field ${item.field_label || item.field_id}: ${dynamicValue}`,
@@ -2429,6 +2457,10 @@ export class RdFormHelperService {
               context.schemaName,
               context.accountRid,
               context.stateRid || "",
+              {
+                db_source:       mapperObject.db_source       ?? null,
+                where_filters:   mapperObject.where_filters   ?? null,
+              },
             );
 
           if (dynamicValue !== null) {
@@ -2535,6 +2567,11 @@ export class RdFormHelperService {
                   context.schemaName,
                   context.stateRid || "",
                   context.fiscalYear,
+                  mapperObject.where_filters      ?? null,
+                  mapperObject.joins              ?? null,
+                  mapperObject.extra_filters      ?? null,
+                  mapperObject.fiscal_year_column ?? null,
+                  mapperObject.db_source          ?? null
                 );
 
               tableValueCache[val] = tableValues || [];

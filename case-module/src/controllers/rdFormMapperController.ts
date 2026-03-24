@@ -22,12 +22,12 @@ async function processRdFormMapperRequests(req: Request, res: Response) {
     //  logMessage(`[${methodName}] Processing Kafka messages data: ${JSON.stringify(req)}`);
     const value = await validateRequest(req, rdFormGenerationSchema, res);
     const result = await rdFormService.initiateRDFormFillerProcess(value.account_rid, value.case_rid, value.fiscal_year);
-    if(result.statusCode !== HttpStatus.SUCCESS){
-      return res.status(result.statusCode).json({
-        statusCode: result.statusCode,
+    if (result.statusCode !== HttpStatus.SUCCESS) {
+      return res.status(result.statusCode || HttpStatus.FAILED).json({
+        statusCode: result.statusCode || HttpStatus.FAILED,
         statusCodeValue: HttpStatus.FAILED_MESSAGE,
-        statusMessage: result.errorMessage,
-        data: {}
+        statusMessage: result.errorMessage || result.message || STATUS_MESSAGE.rdCreditProcessInitiationFailed,
+        data: {},
       });
     }
     return res.status(HttpStatus.SUCCESS).json({
@@ -42,39 +42,39 @@ async function processRdFormMapperRequests(req: Request, res: Response) {
   }
 }
 
-async function signOffRdForms(req : Request, res : Response) {
-    const methodName = "signOffRdForms";
-    try {
-       const value = await validateRequest(req, rdFormSignOffSchema, res);
-       const userId = req.headers["x-user-id"] as string;
-        if (!userId) {
-            errorLog(methodName, "User ID is required in headers");
-            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
-            return;
-        }
-        const data = value;
-        data.userId = userId;
-        const result = await rdFormService.signOffRdForms(data, req.file);
-        if(result.statusCode === HttpStatus.SUCCESS) {
-            return res.status(HttpStatus.SUCCESS).json({
-                statusCode : HttpStatus.SUCCESS,
-                statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-                statusMessage : result.statusMessage
-            })
-        } else if (result.statusCode === HttpStatus.FAILED) {
-            return res.status(HttpStatus.FAILED).json({
-                statusCode : HttpStatus.FAILED,
-                statusCodeValue : HttpStatus.FAILED_MESSAGE,
-                statusMessage : result.statusMessage
-            })
-        } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
-            return res.status(HttpStatus.BAD_REQUEST).json({
-                statusCode : HttpStatus.BAD_REQUEST,
-                statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
-                statusMessage : result.statusMessage
-            })
-        }
-    } catch (err) {
+async function signOffRdForms(req: Request, res: Response) {
+  const methodName = "signOffRdForms";
+  try {
+    const value = await validateRequest(req, rdFormSignOffSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+      return;
+    }
+    const data = value;
+    data.userId = userId;
+    const result = await rdFormService.signOffRdForms(data, req.file);
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage
+      })
+    } else if (result.statusCode === HttpStatus.FAILED) {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage
+      })
+    } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage: result.statusMessage
+      })
+    }
+  } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
     handleErrorResponse(
@@ -100,7 +100,7 @@ async function getRdFormMapperResults(
         req.params,
       )}, userId: ${req.headers["x-user-id"]}`,
     );
-   
+
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID missing in headers");
@@ -118,7 +118,7 @@ async function getRdFormMapperResults(
       errorLog(methodName, "Invalid request parameters");
       return;
     }
-    
+
     const resultState = await rdFormService.getRdFormUrl(
       value
     );

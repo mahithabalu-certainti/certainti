@@ -744,7 +744,8 @@ async function getTechnicalSummaryDetailsById(
     const interactionDetails =
       await interactionService.getTechnicalSummaryDetailsById(
         value.tech_summary_rid,
-        value.account_rid
+        value.account_rid,
+        value.case_rid
       );
 
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
@@ -3112,8 +3113,9 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
 
-      const [auditFields] = await Promise.all([
+      const [auditFields, projectFields] = await Promise.all([
         interactionService.getAllowedExportFields(userId, "rd_assessment_status_view"),
+        interactionService.getAllowedExportFields(userId, "projects_view_edit"),
       ]);
       const allowedFieldSet = new Set<string>();
       if (auditFields && Array.isArray(auditFields)) {
@@ -3123,9 +3125,16 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
           }
         }
       }
+      if (projectFields && Array.isArray(projectFields)) {
+        for (const field of projectFields) {
+          if (field.field_name === "project_code" && field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+      }
 
       const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-      const formatDate = (date?: Date | string | null, format: string = "YYYY-MM-DD hh:mm:ss A") => {
+      const formatDate = (date?: Date | string | null, format: string = "YYYY-MMM-DD, hh:mm:ss A") => {
         if (!date) return null;
         const dateObj = date instanceof Date ? date : new Date(date);
         if (isNaN(dateObj.getTime())) return null;
@@ -3158,6 +3167,12 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
 
       if (finalStructuredData.length === 0) {
         finalStructuredData.push({ "Message": "No data available" });
+      }
+
+      if (value.project_fiscal_rid) {
+        finalStructuredData.forEach((record: any) => {
+          delete record["Project Code"];
+        });
       }
 
       const generateBase64Response = await generateExcelBase64(finalStructuredData, "RDAssessmentAudit");

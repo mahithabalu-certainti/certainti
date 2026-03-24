@@ -152,7 +152,7 @@ export class FederalComputationService {
                         ],
                         Total : {
                             "LABOUR" : 0,
-                            "Employees" : `${totalEmployees}`,
+                            "Employees" : totalEmployees,
                             "EPW" : totalEpw,
                             [reductionValue] : totalReduction,
                             "Net EPW" : totalNetEpw,

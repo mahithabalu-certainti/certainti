@@ -31,7 +31,7 @@ export class RdCreditCalculatorForSC {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
-        const carry_forward_py = new Decimal(caseDetails.credit_carry_forward_py || 0);
+        const carry_forward_py = new Decimal(caseDetails.credit_carry_forward_py_sc || 0);
 
         const current_year_credit = total_current_year_qre.mul(config.qre_credit_percentage_c1).div(100);
         const tot_qre_credit = current_year_credit.plus(carry_forward_py);
@@ -165,7 +165,7 @@ export class RdCreditCalculatorForSC {
         let finalData = {
         "[1] Qualified research expenses made in South Carolina.": this.round2(computeFieldsResp.total_current_year_qre),
         [`[2] Enter ${config.qre_credit_percentage_c1}% of line 1. This is your current year credit.`]: this.round2(computeFieldsResp.current_year_credit),
-        "[3] Research Expenses Credit Carried forward from previous years (attach schedule).": this.round2(caseDetails.credit_carry_forward_py),
+        "[3] Research Expenses Credit Carried forward from previous years (attach schedule).": this.round2(caseDetails.credit_carry_forward_py_sc),
         "[4] Line 2 plus line 3 (Total Research Expenses Credit before limitations).": this.round2(computeFieldsResp.tot_qre_credit),
         "[5] Tax Liability (income tax and license fees) before claiming credits.": this.round2(computeFieldsResp.total_tax_liability),
         "[6] Total of all credits other than the Research Expenses Credit": this.round2(computeFieldsResp.tot_all_credits_other_than_qre),
