@@ -43,6 +43,11 @@ export const interactionType = {
   RD: "RD",
   GREENENERGY: "Green Energy",
 };
+export const interactionAssessmentSourceType = {
+  RD: "RD Assessment",
+  FPA: "Four Part Assessment",
+};
+
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
 export const SCHEMANAME_PREFIX = "trd365_";
@@ -62,90 +67,133 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+  ATTACHMENT: "Attachment",
+  PROJECT_RESOURCE: "Project Resource",
+  ACTIVITY_CALL: "Call",
+  ACTIVITY_MEETING: "Meeting",
+  ACTIVITY_EMAIL: "Email",
+  ACTIVITY_TASK: "Task",
+  CHECKLIST: "Checklist",
+  CASE: "Case",
+  INTERACTION: "Interaction",
+  AUTO_RD_ASSESSMENT: "Auto RD Assessment",
+  MANUAL_RD_ASSESSMENT: "Manual RD Assessment",
+  SCHEDULER_RD_ASSESSMENT: "Scheduler RD Assessment",
+  TECHNICAL_SUMMARY: "Technical Summary",
+  QRE_PERCENT: "QRE Percent"
+
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+  CANCEL: "cancelled",
+  SENT: "sent",
+  REMAINDER: "remainder sent",
+  REINITIATED: "reinitiated",
+  TRIGGERED: "triggered",
+  GENERATED: "generated",
+}
+
+export const eventTypes = {
+  UI_HANDLER: "web",
+}
 export const sendEmailCount = 25
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
 
-export const filtersColumns : Record<string, string> =
-  {
-    r_number : "r_number",
-    iteration : "interaction_iteration",
-    interaction_age : "interaction_age",
-    recipient_name : "recipient_name",
-    recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
-    sent_on_datetime : "sent_on_datetime",
-    last_reminder_on : "last_reminder_on",
-    response_submitted_on : "response_submitted_on",
-    response_updated_on : "response_updated_on",
-    attachment_count : "attachment_count",
-    response_source : "response_source",
-    created_datetime : "created_datetime",
-    modified_datetime : "modified_datetime",
-    status_rid : "status_rid",
-    interaction_type_rid : "interaction_type_rid",
-    interaction_iteration : "interaction_iteration",
-    project_code : "project_code",
-    project_name : "project_name",
-    fiscal_year : "fiscal_year",
-    response_source_rid : "response_source_rid",
-    interaction_level_rid:"interaction_level_rid",
-    parent_interaction_rid : "parent_interaction_rid",
-    createdAt : "createdAt",
-    template_name : "template_name"
-  }
+export const filtersColumns: Record<string, string> =
+{
+  r_number: "r_number",
+  iteration: "interaction_iteration",
+  interaction_age: "interaction_age",
+  recipient_name: "recipient_name",
+  recipient_email: "recipient_email",
+  last_resent_on: "last_resent_on",
+  sent_on_datetime: "sent_on_datetime",
+  last_reminder_on: "last_reminder_on",
+  response_submitted_on: "response_submitted_on",
+  response_updated_on: "response_updated_on",
+  attachment_count: "attachment_count",
+  response_source: "response_source",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  status_rid: "status_rid",
+  interaction_type_rid: "interaction_type_rid",
+  interaction_iteration: "interaction_iteration",
+  project_code: "project_code",
+  project_name: "project_name",
+  fiscal_year: "fiscal_year",
+  response_source_rid: "response_source_rid",
+  interaction_level_rid: "interaction_level_rid",
+  parent_interaction_rid: "parent_interaction_rid",
+  createdAt: "createdAt",
+  template_name: "template_name",
+  interaction_assessment_source_rid: "interaction_assessment_source_rid",
+  interaction_batch_id: "interaction_batch_id",
+  four_part_r_number: "four_part_r_number"
+}
 
-  export const templatefiltersColumns : Record<string, string> =
-  {
-    r_number : "r_number",
-    created_user_name:"created_user_name",
-    modified_user_name:"modified_user_name",
-    created_datetime : "created_datetime",
-    modified_datetime : "modified_datetime",
-    status_rid : "status_rid",
-    interaction_type_rid : "interaction_type_rid",
-    interaction_level_rid:"interaction_level_rid",
-    parent_interaction_rid : "parent_interaction_rid",
-    createdAt : "createdAt",
-    template_name : "template_name"
-  }
+export const templatefiltersColumns: Record<string, string> =
+{
+  r_number: "r_number",
+  created_user_name: "created_user_name",
+  modified_user_name: "modified_user_name",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  status_rid: "status_rid",
+  interaction_type_rid: "interaction_type_rid",
+  interaction_level_rid: "interaction_level_rid",
+  parent_interaction_rid: "parent_interaction_rid",
+  createdAt: "createdAt",
+  template_name: "template_name"
+}
 
-  export const filterTypes : Record<string, any> = 
-  {
-    r_number : "string",
-    interaction_iteration : "number",
-    interaction_age : "number",
-    recipient_name : "string",
-    recipient_email : "string",
-    last_resent_on : "datetime",
-    last_reminder_on : "datetime",
-    response_submitted_on : "datetime",
-    response_updated_on : "datetime",
-    attachment_count : "number",
-    response_source : "string",
-    created_datetime : "datetime",
-    modified_datetime : "datetime",
-    sent_on_datetime : "datetime",
-    status_rid : "string",
-    interaction_type_rid : "string",
-    project_code : "string",
-    project_name : "string",
-    fiscal_year : "number",
-    response_source_rid : "string",
-    parent_interaction_rid:"string",
-    interaction_level_rid:"string",
-    createdAt:"datetime",
-    template_name : "string",
-    created_user_name : "string",
-    modified_user_name : "string"
-  }
+export const filterTypes: Record<string, any> =
+{
+  r_number: "string",
+  interaction_iteration: "number",
+  interaction_age: "number",
+  recipient_name: "string",
+  recipient_email: "string",
+  last_resent_on: "datetime",
+  last_reminder_on: "datetime",
+  response_submitted_on: "datetime",
+  response_updated_on: "datetime",
+  attachment_count: "number",
+  response_source: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  sent_on_datetime: "datetime",
+  status_rid: "string",
+  interaction_type_rid: "string",
+  project_code: "string",
+  project_name: "string",
+  fiscal_year: "number",
+  response_source_rid: "string",
+  parent_interaction_rid: "string",
+  interaction_level_rid: "string",
+  createdAt: "datetime",
+  template_name: "string",
+  created_user_name: "string",
+  modified_user_name: "string",
+  interaction_assessment_source_rid: "string",
+  interaction_batch_id: "string",
+  four_part_r_number: "string"
+}
 
-  export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
+export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {
   equals: "equals",
   notEquals: "not_equals",
   contains: "contains",
-  isEmpty: "is_empty",
-  IN: "in",
+  is_empty: "is_empty",
+  in: "in",
   less_than: "less_than",
   greater_than: "greater_than",
   between: "between",
@@ -154,23 +202,24 @@ export const filtersColumns : Record<string, string> =
 };
 
 export const interactionFlag = {
-  account : "account",
-  project : "project",
-  case : "case"
+  account: "account",
+  project: "project",
+  case: "case"
 }
 
-export const mainTableFilters : Record<any, any> = {
-  created_user_name : "created_user_name",
-  updated_user_name : "updated_user_name",
-  interaction_type_name : "interaction_type_name",
-  interaction_source_name : "interaction_source_name",
-  status_name : "status_name",
-  response_source_name : "response_source_name",
-  interaction_level_name:"interaction_level_name",
+export const mainTableFilters: Record<any, any> = {
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+  interaction_type_name: "interaction_type_name",
+  interaction_source_name: "interaction_source_name",
+  status_name: "status_name",
+  response_source_name: "response_source_name",
+  interaction_level_name: "interaction_level_name",
   modified_by: "modified_by",
-  modified_user_name:"modified_user_name",
-  project_name : "project_name",
-  project_code : "project_code"
+  modified_user_name: "modified_user_name",
+  project_name: "project_name",
+  project_code: "project_code",
+  interaction_assessment_source_name: "interaction_assessment_source_name"
 }
 
 export const STATUS_MESSAGE = {
@@ -243,25 +292,83 @@ export const STATUS_MESSAGE = {
   accountSummaryHighlightsSuccess: "Financial Summary fetched successfully",
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
-  interactionFetchedSuccess : "Interactions fetched successfully",
-  dataNotFound : "Data not found",
-  historyResponseFetched : "Interaction Response history fetched successfully",
-  interactionHistoryFetched : "Interaction history fetched successfully",
-  interactionAttachmentFetched : "Interaction attachments fetched successfully",
-  nodDataToExport : "No Data available for download",
-  technicalIssue:"Technical Issue",
-  interactionFailed:"Interaction Creation Failed",
-  interactionUpdateFailed:"Interaction Update Failed",
-  responseUpdateFailed:"Interaction Response Update Failed",
-  assessmentInitiated : "RD Assessment Initiated",
-  interactionCreatedButNoEmailRecipient:"Auto send skipped as no email recipient found",
-  interactionCreated:"Interaction created successfully",
-  interactionUpdated:"Interaction updated successfully",
-  techSummarycontextUpdated:"Technical summary context updated successfully",
-  projectRequired:"Atleast one project is required to create interaction",
+  interactionFetchedSuccess: "Interactions fetched successfully",
+  dataNotFound: "Data not found",
+  historyResponseFetched: "Interaction Response history fetched successfully",
+  interactionHistoryFetched: "Interaction history fetched successfully",
+  interactionAttachmentFetched: "Interaction attachments fetched successfully",
+  nodDataToExport: "No Data available for download",
+  technicalIssue: "Technical Issue",
+  interactionFailed: "Interaction Creation Failed",
+  interactionUpdateFailed: "Interaction Update Failed",
+  responseUpdateFailed: "Interaction Response Update Failed",
+  assessmentInitiated: "RD Assessment Initiated",
+  interactionCreatedButNoEmailRecipient: "Auto send skipped as no email recipient found",
+  interactionCreated: "Interaction created successfully",
+  interactionUpdated: "Interaction updated successfully",
+  techSummarycontextUpdated: "Technical summary context updated successfully",
+  projectRequired: "Atleast one project is required to create interaction",
+  fourPartListSuccess: "FourPart Assessment fetched successfully",
+  assessmentFetchedSuccess: "Interaction Assessment Fetched successfully"
 };
 
 export const rawQueries = {
+  fetchAiAssessmentAuditList(
+    schemaName: string,
+    whereString: string,
+    dbSortBy: string,
+    dbSortOrder: string
+  ) {
+    return `
+      SELECT 
+        a.rid,
+        a.account_rid,
+        a.project_fiscal_rid,
+        a.transaction_id,
+        a.created_datetime,
+        p.project_code,
+        p.currency_rid,
+        ad.account_name,
+        CASE 
+          WHEN a.four_part_assessment_error_message IS NOT NULL AND a.four_part_assessment_error_message::text != 'null' THEN 'Failed'
+          WHEN a.is_four_part_assessment_processed = true THEN 'Completed'
+          ELSE 'Pending'
+        END as four_part_assessment,
+        CASE 
+          WHEN a.technical_summary_error_message IS NOT NULL AND a.technical_summary_error_message::text != 'null' THEN 'Failed'
+          WHEN a.is_tech_summary_processed = true THEN 'Completed'
+          ELSE 'Pending'
+        END as project_summary,
+        CASE 
+          WHEN a.qre_error_message IS NOT NULL AND a.qre_error_message::text != 'null' THEN 'Failed'
+          WHEN a.is_qre_processed = true THEN 'Completed'
+          ELSE 'Pending'
+        END as qre_summary,
+        CASE 
+          WHEN a.interaction_question_error_message IS NOT NULL AND a.interaction_question_error_message::text != 'null' THEN 'Failed'
+          WHEN a.is_interaction_question_processed = true THEN 'Completed'
+          ELSE 'Pending'
+        END as interaction_status
+      FROM ${schemaName}.ai_assessment_audit a
+      LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
+      LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
+      ${whereString}
+      ORDER BY ${dbSortBy} ${dbSortOrder}
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchAiAssessmentAuditCount(schemaName: string, whereString: string) {
+    return `
+      SELECT COUNT(*) as "totalCount"
+      FROM ${schemaName}.ai_assessment_audit a
+      LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
+      LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
+      ${whereString}
+    `;
+  },
+  fetchProjectFiscalRidsByCaseRidForWhere(schemaName: string) {
+    return `a.project_fiscal_rid IN (SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = :caseRid)`;
+  },
   async fetchParentAccount(
     accountRid: any,
     mainSequelize: Sequelize
@@ -328,10 +435,38 @@ export const rawQueries = {
     return `
     SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
+  fetchStatusNameForInteractions(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
+
+  fetchInteractionAssessmentSource(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
+    return `
+    SELECT rid, interaction_assessment_source_name  FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source WHERE rid IN (${ids})`;
+  },
+  fetchInteractionAllAssessmentSource() {
+    return `SELECT rid, interaction_assessment_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source`;
+  },
 
   fetchActiveStatus() {
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
+    SELECT rid, status_name, status FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%Active%' limit 1`;
   },
   fetchInteractionStatusByType(type: string) {
     return `
@@ -347,10 +482,10 @@ export const rawQueries = {
   },
   fetchProjectTypeNames(ids: string[]) {
     console.log(ids);
-      return `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${ids})`;
-    },
+    return `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${ids})`;
+  },
   fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
-  return `
+    return `
     SELECT 
       a.project_fiscal_rid, 
       b.project_code, 
@@ -368,15 +503,15 @@ export const rawQueries = {
     c.include_in_communication = TRUE
   `;
   },
- fetchProjectsByAccount(
-  accountRid: string,
-  schemaName: string,
-  status_rid: string,
-  fiscalStart: string,
-  fiscalEnd: string,
-  groupedProjectTypes?: Record<string, string[]>
-) {
-  let query = `
+  fetchProjectsByAccount(
+    accountRid: string,
+    schemaName: string,
+    status_rid: string,
+    fiscalStart: string,
+    fiscalEnd: string,
+    groupedProjectTypes?: Record<string, string[]>
+  ) {
+    let query = `
     SELECT DISTINCT
       pf.rid,
       pf.project_rid,
@@ -384,21 +519,21 @@ export const rawQueries = {
       pf.fiscal_year
     FROM ${schemaName}.project_fiscal pf
   `;
-  // Parse MM/DD for fiscalStart and fiscalEnd
-  const [startMM, startDD] = fiscalStart.split('/').map(Number);
-  const [endMM, endDD] = fiscalEnd.split('/').map(Number);
+    // Parse MM/DD for fiscalStart and fiscalEnd
+    const [startMM, startDD] = fiscalStart.split('/').map(Number);
+    const [endMM, endDD] = fiscalEnd.split('/').map(Number);
 
-  if (groupedProjectTypes && Object.keys(groupedProjectTypes).length > 0) {
-    const values = Object.entries(groupedProjectTypes)
-      .flatMap(([key, typeRids]) => {
-        const [start, end] = key.split('_');
-        return typeRids.map(pt => 
-          `(DATE '${start}', DATE '${end}', '${pt}')`
-        );
-      })
-      .join(',\n');
+    if (groupedProjectTypes && Object.keys(groupedProjectTypes).length > 0) {
+      const values = Object.entries(groupedProjectTypes)
+        .flatMap(([key, typeRids]) => {
+          const [start, end] = key.split('_');
+          return typeRids.map(pt =>
+            `(DATE '${start}', DATE '${end}', '${pt}')`
+          );
+        })
+        .join(',\n');
 
-    query += `
+      query += `
       JOIN (
         VALUES
           ${values}
@@ -407,22 +542,22 @@ export const rawQueries = {
        AND ir.range_start <= make_date(pf.fiscal_year, ${endMM}, ${endDD})
        AND ir.range_end   >= make_date(pf.fiscal_year - 1, ${startMM}, ${startDD})
     `;
-  }
+    }
 
-  query += `
+    query += `
     WHERE pf.account_rid = '${accountRid}'
       AND pf.status_rid  = '${status_rid}'
       AND (pf.is_rd_claim_qualified = false or pf.is_rd_claim_qualified is null)
   `;
 
-  return query;
-}
-,
+    return query;
+  }
+  ,
   fetchProjectsByCase(caseRid: string, schemaName: string) {
     return `
     SELECT a.project_fiscal_rid FROM ${schemaName}.case_projects as a WHERE a.case_rid = '${caseRid}'
     `
-    },
+  },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number, data: any) {
     return `
       UPDATE ${schemaName}.project_fiscal
@@ -449,7 +584,7 @@ export const rawQueries = {
     rid: string,
     schemaName: string,
     isAiProcessed: boolean,
-    statusRid:string
+    statusRid: string
   ) {
     return `
     UPDATE ${schemaName}.interactions SET is_ai_processed = ${isAiProcessed} WHERE project_fiscal_rid = '${rid}' and status_rid='${statusRid}' `;
@@ -485,7 +620,7 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
-  fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
+  fetchPlatformConfig(rid: string, formattedStartDate: string, formattedEndDate: string) {
     return `
     SELECT config_json,,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
     join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
@@ -498,7 +633,7 @@ export const rawQueries = {
   ORDER BY rv.effective_start_date DESC
   LIMIT 1`;
   },
-   fetchAllPlatformConfig(rid: string) {
+  fetchAllPlatformConfig(rid: string) {
     return `
     SELECT config_json,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
     join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
@@ -520,11 +655,37 @@ export const rawQueries = {
     return `
       select rid from trd365.project_type where ${condition}`;
   },
-   fetchAccountDetailsInfo(rid: string,schemaName: string) {
+  fetchAccountDetailsInfo(rid: string, schemaName: string) {
     return `
     SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,max_ai_interactions FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
   },
-  
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
+    `;
+  },
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        `
+  },
+  insertProjectTimeLine(schemaName: string, tableName: string) {
+    return `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
+          )
+          RETURNING *;
+        `
+  },
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
     return `
     SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`;
@@ -587,11 +748,11 @@ export const rawQueries = {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
   },
-  fetchInteractionRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
+  fetchInteractionRecipientAccount(accountRid: string, statusRid: string, schemaName: string) {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
-  fetchInteractionCCRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
+  fetchInteractionCCRecipientAccount(accountRid: string, statusRid: string, schemaName: string) {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and (interaction_cc_recipient is true or include_in_communication is true) and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
@@ -620,7 +781,7 @@ export const rawQueries = {
     return `
     SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`;
   },
-   fetchInteractionLevelRidByName(type: string) {
+  fetchInteractionLevelRidByName(type: string) {
     return `
     SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
   },
@@ -700,8 +861,7 @@ export const rawQueries = {
       SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = '${type}' AND status = 'active' LIMIT 1
     `;
   },
-  generate_rid()
-  {
+  generate_rid() {
     return `SELECT '${ENV_PREFIX}' || gen_random_uuid() as rid`;
   },
 
@@ -718,7 +878,7 @@ export const rawQueries = {
   },
   fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
     return `
-    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
+    SELECT rid, project_name, project_code, signoff, is_rd_claim_qualified FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d: any) => `'${d}'`).join(',')})`;
   },
   fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
     return `
@@ -730,8 +890,8 @@ export const rawQueries = {
       WHERE rid = '${interactionId}'
     `;
   },
-  fetchParentAccountforEmail : `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
-  fetchInteractionTemplates :  `
+  fetchParentAccountforEmail: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  fetchInteractionTemplates: `
     SELECT 
         it.rid,
         it.r_number,
@@ -872,20 +1032,20 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
-  updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_sent = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
+  updateInteractionStatus(schemaName: string, statusRid: string, interactionRid: string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
-  updateInteractionStatusAndResEmailName(schemaName : string, statusRid : string, interactionRid : string, email : string, name : string) {
+  updateInteractionStatusAndResEmailName(schemaName: string, statusRid: string, interactionRid: string, email: string, name: string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE rid = '${interactionRid}'`
   },
   fetchInteractionQueueStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%In-Queue%'`
   },
-  updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
+  updateInteractionSummaryStatus(statusRid: string, interactionRid: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
   },
-  updateInteractionSummaryStatusAndResEmailName(statusRid : string, interactionRid : string, name : string, email : string) {
+  updateInteractionSummaryStatusAndResEmailName(statusRid: string, interactionRid: string, name: string, email: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE interaction_rid = '${interactionRid}'`
   },
   fetchOrganizationSettings(): string {
@@ -893,10 +1053,10 @@ export const rawQueries = {
       SELECT * from ${MAIN_SCHEMA_NAME}.organization_licenses
     `;
   },
-  fetchAccountRnumber (account_rid : string) {
+  fetchAccountRnumber(account_rid: string) {
     return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
   },
-  fetchKeyContactForInteraction(schemaName : string, id : string) {
+  fetchKeyContactForInteraction(schemaName: string, id: string) {
     return `SELECT key_contact_name, key_contact_email FROM ${schemaName}.key_contact_details where entity_rid = '${id}' AND include_in_communication = TRUE`
   },
   fetchProjectsWithoutKeyContacts(schemaName: string, projectFiscalRids: string[]) {
@@ -904,17 +1064,17 @@ export const rawQueries = {
            WHERE entity_rid IN (${projectFiscalRids.map(rid => `'${rid}'`).join(',')}) 
            AND include_in_communication = TRUE`;
   },
-  fetchProfServConsultantDetails (schemaName : string, accountRid : string, keyContactRoleId : string) {
+  fetchProfServConsultantDetails(schemaName: string, accountRid: string, keyContactRoleId: string) {
     return `SELECT * FROM ${schemaName}.key_contact_details WHERE entity_rid = '${accountRid}' AND key_contact_role = '${keyContactRoleId}'`
   },
-  fetchProfServConsultantRid () {
+  fetchProfServConsultantRid() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRoleName.professionalServiceConsultant}'`
   },
-  fetchProjectDetails (schemaName : string, projectFiscalRid : string) {
+  fetchProjectDetails(schemaName: string, projectFiscalRid: string) {
     return `SELECT project_name, project_code, fiscal_year FROM ${schemaName}.project_fiscal
     WHERE rid = '${projectFiscalRid}'`
   },
-  fetchInteractionLevelById (interactionLevelRid : string) {
+  fetchInteractionLevelById(interactionLevelRid: string) {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = '${interactionLevelRid}'`
   },
   getAccountDetailsQuery(schemaName: string) {
@@ -964,6 +1124,14 @@ export const rawQueries = {
       SELECT rid, interaction_source_name 
       FROM ${MAIN_SCHEMA_NAME}.interaction_source 
       WHERE interaction_source_name = :type 
+      LIMIT 1
+    `;
+  },
+  getInteractionAssessmentSourceByNameQuery() {
+    return `
+      SELECT rid, interaction_assessment_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_assessment_source 
+      WHERE interaction_assessment_source_name = :type 
       LIMIT 1
     `;
   },
@@ -1048,179 +1216,288 @@ export const rawQueries = {
       LIMIT 1;
     `;
   },
-  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
-    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  getCaseProjectsIds(caseRid: string, accountRid: string, schemaName: string, summaryType?: string) {
+    if (summaryType === 'qualifiedProjects') {
+      return `SELECT pf.rid AS project_fiscal_rid 
+       FROM ${schemaName}.project_fiscal pf
+       LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+       WHERE cp.case_rid = '${caseRid}' AND cp.account_rid = '${accountRid}' AND pf.is_qualified = true`
+    } else {
+      return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+    }
   },
-  fetchEmailTemplateByCategory (categoryName : string) {
+  fetchEmailTemplateByCategory(categoryName: string) {
     return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
   },
-  fetchInteractionEmailSubject(){
+  fetchInteractionEmailSubject() {
     return `SELECT interaction_email_subject,interaction_remainder_email_subject FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`
-   }
+  },
+  fetchFpaRid(schemaName: string, transactionId: string) {
+    return `SELECT rid FROM ${schemaName}.four_part_assessment WHERE transaction_id = '${transactionId}'`
+  },
+  fetchBatchInInteraction(schemaName: string, accountId: string) {
+    return `
+    SELECT interaction_batch_id 
+    FROM 
+    (
+    SELECT interaction_batch_id, 
+    ROW_NUMBER() OVER(ORDER BY interaction_batch_id DESC) AS rn
+    FROM
+    ${schemaName}.interactions
+    where
+    account_rid = '${accountId}'
+    AND
+	  four_part_assessment_rid IS NOT NULL
+    )
+    WHERE
+    rn = 1
+    `
+  },
+  fetchBatchInInteractionByTransId(schemaName: string, transactionId: string) {
+    return `
+    SELECT interaction_batch_id 
+    FROM
+    ${schemaName}.interactions
+    WHERE
+    transaction_id = '${transactionId}'
+    ORDER BY interaction_batch_id DESC
+    `
+  },
+  fetchCaseStatusByType(type: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = '${type}'`;
+  },
+  fetchCaseInfo(schemaName: string, caseRid: string) {
+    return `SELECT rid, r_number, case_name, account_rid, fiscal_year, status_rid FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
+  },
 };
 
-export const filterTypesForSummaryInteractions : Record<string, any> = 
-  {
-    r_number : "string",
-    iteration : "number",
-    interaction_age : "number",
-    recipient_name : "string",
-    recipient_email : "string",
-    last_resent_on : "datetime",
-    last_reminder_on : "datetime",
-    response_submitted_on : "datetime",
-    response_updated_on : "datetime",
-    attachment_count : "number",
-    response_source : "string",
-    created_datetime : "datetime",
-    modified_datetime : "datetime",
-    interaction_source_name : "string",
-    created_user_name : "string",
-    updated_user_name : "string",
-    status_rid : "string",
-    interaction_type_rid : "string",
-    interaction_iteration : "number",
-    account_name : "string",
-    project_code : "string",
-    fiscal_year : "number",
-    response_source_rid : "string",
-    parent_interaction_rid:"string",
-    createdAt:"datetime",
-  }
+export const filterTypesForSummaryInteractions: Record<string, any> =
+{
+  r_number: "string",
+  iteration: "number",
+  interaction_age: "number",
+  recipient_name: "string",
+  recipient_email: "string",
+  last_resent_on: "datetime",
+  last_reminder_on: "datetime",
+  response_submitted_on: "datetime",
+  response_updated_on: "datetime",
+  attachment_count: "number",
+  response_source: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  interaction_source_name: "string",
+  created_user_name: "string",
+  updated_user_name: "string",
+  status_rid: "string",
+  interaction_type_rid: "string",
+  interaction_iteration: "number",
+  account_name: "string",
+  project_code: "string",
+  fiscal_year: "number",
+  response_source_rid: "string",
+  parent_interaction_rid: "string",
+  createdAt: "datetime",
+}
 
-  export const filtersColumnsForInteractionSummary : Record<string, string> =
-  {
-    r_number : "r_number",
-    iteration : "interaction_iteration",
-    interaction_age : "interaction_age",
-    recipient_name : "recipient_name",
-    recipient_email : "recipient_email",
-    last_resent_on : "sent_on_datetime",
-    last_reminder_on : "last_reminder_on",
-    response_submitted_on : "response_submitted_on",
-    response_updated_on : "response_updated_on",
-    attachment_count : "attachment_count",
-    response_source : "response_source",
-    created_datetime : "created_datetime",
-    modified_datetime : "modified_datetime",
-    interaction_source_name : "interaction_source_name",
-    interaction_type_name : "interaction_type_name",
-    created_user_name : "created_user_name",
-    updated_user_name : "updated_user_name",
-    status_rid : "status_rid",
-    interaction_type_rid : "interaction_type_rid",
-    status_name : "status_name",
-    interaction_iteration : "interaction_iteration",
-    account_name : "account_name",
-    project_code : "project_code",
-    fiscal_year : "fiscal_year",
-    response_source_rid : "response_source_rid",
-    response_source_name : "response_source_name",
-    parent_interaction_rid:"parent_interaction_rid",
-    createdAt:"createdAt"
-  }
+export const filtersColumnsForInteractionSummary: Record<string, string> =
+{
+  r_number: "r_number",
+  iteration: "interaction_iteration",
+  interaction_age: "interaction_age",
+  recipient_name: "recipient_name",
+  recipient_email: "recipient_email",
+  last_resent_on: "sent_on_datetime",
+  last_reminder_on: "last_reminder_on",
+  response_submitted_on: "response_submitted_on",
+  response_updated_on: "response_updated_on",
+  attachment_count: "attachment_count",
+  response_source: "response_source",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  interaction_source_name: "interaction_source_name",
+  interaction_type_name: "interaction_type_name",
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+  status_rid: "status_rid",
+  interaction_type_rid: "interaction_type_rid",
+  status_name: "status_name",
+  interaction_iteration: "interaction_iteration",
+  account_name: "account_name",
+  project_code: "project_code",
+  fiscal_year: "fiscal_year",
+  response_source_rid: "response_source_rid",
+  response_source_name: "response_source_name",
+  parent_interaction_rid: "parent_interaction_rid",
+  createdAt: "createdAt"
+}
 
-  export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
-  export const blobUrlExpiration = 60
+export const responseSortKeys = ["r_number", "response_by", "response_on", "response_email", "interaction_response", "interaction_version"]
+export const blobUrlExpiration = 60
 
-  export const filterTypesForIntHistory : Record<string, string> = {
-    status_rid : "string",
-    date : "datetime"
-  }
+export const filterTypesForIntHistory: Record<string, string> = {
+  status_rid: "string",
+  date: "datetime"
+}
 
-  export const interactionTypes = [
-    "qre",
-    "interaction",
-    "tech_summary"
-  ]
+export const interactionTypes = [
+  "qre",
+  "interaction",
+  "tech_summary"
+]
 
-  export const interactionFieldMappings = [
-    { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
-    { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
-    { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
-    { permissionField: 'recipient_email', exportField: 'Recipient Email', dataField: 'recipient_email' },
-    { permissionField: 'last_resent_on', exportField: 'Last Sent Date', dataField: 'last_resent_on' },
-    { permissionField: 'last_reminder_on', exportField: 'Last Reminder Date', dataField: 'last_reminder_on' },
-    { permissionField: 'response_submitted_on', exportField: 'Response Date', dataField: 'response_submitted_on' },
-    { permissionField: 'response_updated_on', exportField: 'Last Response Update', dataField: 'response_updated_on' },
-    { permissionField: 'attachment_count', exportField: 'Attachments', dataField: 'attachment_count' },
-    { permissionField: 'interaction_url', exportField: 'Interaction Link', dataField: 'interaction_url' },
-    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
-    { permissionField: 'response_source_name', exportField: 'Response Source', dataField: 'response_source_name' },
-    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
-    { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
-    { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
-  ];
-    export const templateFieldMappings = [
-    { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },
-    { permissionField: 'template_name', exportField: 'Template Name', dataField: 'template_name' },
-    { permissionField: 'interaction_level_rid', exportField: 'Interaction Level', dataField: 'interaction_level_rid' },
-    { permissionField: 'interaction_type_rid', exportField: 'Type', dataField: 'interaction_type_rid' },
-    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
-    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
-    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' },
-    { permissionField: 'status_rid', exportField: 'Status', dataField: 'status_rid' },
-  ];
+export const interactionFieldMappings = [
+  { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
+  { permissionField: 'interaction_assessment_source_name', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
+  { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
+  { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
+  { permissionField: 'interaction_batch_id', exportField: 'Batch ID', dataField: 'interaction_batch_id' },
+  { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
+  { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+  { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
+  { permissionField: 'recipient_email', exportField: 'Recipient Email', dataField: 'recipient_email' },
+  { permissionField: 'last_resent_on', exportField: 'Last Sent Date', dataField: 'last_resent_on' },
+  { permissionField: 'last_reminder_on', exportField: 'Last Reminder Date', dataField: 'last_reminder_on' },
+  { permissionField: 'response_submitted_on', exportField: 'Response Date', dataField: 'response_submitted_on' },
+  { permissionField: 'response_updated_on', exportField: 'Last Response Update', dataField: 'response_updated_on' },
+  { permissionField: 'attachment_count', exportField: 'Attachments', dataField: 'attachment_count' },
+  { permissionField: 'interaction_url', exportField: 'Interaction Link', dataField: 'interaction_url' },
+  { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+  { permissionField: 'response_source_name', exportField: 'Response Source', dataField: 'response_source_name' },
+  { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+  { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
+  { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
+  { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
+];
+export const fpaFieldMappings = [
+  { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'r_number' },
+  { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+  { permissionField: 'rd_potential_category', exportField: 'Rd Potential Category', dataField: 'rd_potential_category' },
+  { permissionField: 'summary_judgment', exportField: 'Summary', dataField: 'summary_judgment' },
+  { permissionField: 'permitted_purpose_status', exportField: 'Permitted Purpose Status', dataField: 'permitted_purpose_status' },
+  { permissionField: 'technological_uncertainty_status', exportField: 'Technological Uncertainty Status', dataField: 'technological_uncertainty_status' },
+  { permissionField: 'technological_in_nature_status', exportField: 'Technological In Nature Status', dataField: 'technological_in_nature_status' },
+  { permissionField: 'process_of_experimentation_status', exportField: 'Process Of Experimentation Status', dataField: 'process_of_experimentation_status' },
+  { permissionField: 'status_rid', exportField: 'Status', dataField: 'status' },
+  { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+  { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' }
+];
+export const templateFieldMappings = [
+  { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },
+  { permissionField: 'template_name', exportField: 'Template Name', dataField: 'template_name' },
+  { permissionField: 'interaction_level_rid', exportField: 'Interaction Level', dataField: 'interaction_level_rid' },
+  { permissionField: 'interaction_type_rid', exportField: 'Type', dataField: 'interaction_type_rid' },
+  { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+  { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+  { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+  { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' },
+  { permissionField: 'status_rid', exportField: 'Status', dataField: 'status_rid' },
+];
 
-   export const accountinteractionFieldMappings = [
-    { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
-     { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
-       { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
-     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
-    { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
-    { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
-    { permissionField: 'recipient_email', exportField: 'Recipient Email', dataField: 'recipient_email' },
-    { permissionField: 'last_resent_on', exportField: 'Last Sent Date', dataField: 'last_resent_on' },
-    { permissionField: 'last_reminder_on', exportField: 'Last Reminder Date', dataField: 'last_reminder_on' },
-    { permissionField: 'response_submitted_on', exportField: 'Response Date', dataField: 'response_submitted_on' },
-    { permissionField: 'response_updated_on', exportField: 'Last Response Update', dataField: 'response_updated_on' },
-    { permissionField: 'attachment_count', exportField: 'Attachments', dataField: 'attachment_count' },
-    { permissionField: 'interaction_url', exportField: 'Interaction Link', dataField: 'interaction_url' },
-    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
-    { permissionField: 'response_source_name', exportField: 'Response Source', dataField: 'response_source_name' },
-    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
-    { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
-    { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
-  ];
+export const accountinteractionFieldMappings = [
+  { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
+  { permissionField: 'interaction_assessment_source_name', exportField: 'Assessment Type', dataField: 'interaction_assessment_source_name' },
+  { permissionField: 'r_number', exportField: 'Four Part Assessment ID', dataField: 'four_part_r_number' },
+  { permissionField: 'interaction_batch_id', exportField: 'Batch ID', dataField: 'interaction_batch_id' },
+  { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+  { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
+  { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+  { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
+  { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+  { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
+  { permissionField: 'recipient_email', exportField: 'Recipient Email', dataField: 'recipient_email' },
+  { permissionField: 'last_resent_on', exportField: 'Last Sent Date', dataField: 'last_resent_on' },
+  { permissionField: 'last_reminder_on', exportField: 'Last Reminder Date', dataField: 'last_reminder_on' },
+  { permissionField: 'response_submitted_on', exportField: 'Response Date', dataField: 'response_submitted_on' },
+  { permissionField: 'response_updated_on', exportField: 'Last Response Update', dataField: 'response_updated_on' },
+  { permissionField: 'attachment_count', exportField: 'Attachments', dataField: 'attachment_count' },
+  { permissionField: 'interaction_url', exportField: 'Interaction Link', dataField: 'interaction_url' },
+  { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+  { permissionField: 'response_source_name', exportField: 'Response Source', dataField: 'response_source_name' },
+  { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+  { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
+  { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
+  { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
+];
 
-   export const techSummaryFieldMappings = [
-     
-    { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
-    { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
-    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
-    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
-    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
-   
-  ];
+export const techSummaryFieldMappings = [
+
+  { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+  { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+  { permissionField: 'project_name', exportField: 'Project Name', dataField: 'project_name' },
+  { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
+  { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+  { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+  { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+  { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+
+];
 
 
-  export const schedulerStatus = {
-    Success : "success",
-    Failed : "failed",
-    Running : "running"
-  }
+export const schedulerStatus = {
+  Success: "success",
+  Failed: "failed",
+  Running: "running"
+}
 
-  export const interactionTaskName = {
-    interactionAge : "interaction_age",
-    interaction : "interactions",
-    attachments : "attachments"
-  }
+export const interactionTaskName = {
+  interactionAge: "interaction_age",
+  interaction: "interactions",
+  attachments: "attachments"
+}
 
-   export const interactionTemplateName = {
-    interactionProject : "interaction project",
-    interactionProjectReminder : "interaction project reminder",
-    interactionAccount : "interaction account",
-    interactionAccountReminder : "interaction account reminder",
-    interactionProjectUpdate : "interaction project update",
-    interactionAccountUpdate : "interaction account update"
-  }
+export const interactionTemplateName = {
+  interactionProject: "interaction project",
+  interactionProjectReminder: "interaction project reminder",
+  interactionAccount: "interaction account",
+  interactionAccountReminder: "interaction account reminder",
+  interactionProjectUpdate: "interaction project update",
+  interactionAccountUpdate: "interaction account update"
+}
 
-  export const keyContactRoleName = {
-    professionalServiceConsultant : "Professional Services Consultant"
-  }
+export const keyContactRoleName = {
+  professionalServiceConsultant: "Professional Services Consultant"
+}
+
+export const FourPartColumns: Record<string, string> = {
+  r_number: 'f.r_number',
+  project_code: 'p.project_code',
+  rd_potential_category: 'f.rd_potential_category',
+  status: 'f.status',
+  created_datetime: 'f.created_datetime',
+  modified_datetime: 'f.modified_datetime',
+  permitted_purpose_status: 'f.permitted_purpose_status',
+  technological_uncertainty_status: 'f.technological_uncertainty_status',
+  technological_in_nature_status: 'f.technological_in_nature_status',
+  process_of_experimentation_status: 'f.process_of_experimentation_status',
+  summary_judgment: 'f.summary_judgment'
+}
+
+export const FourPartColumnsTypes: Record<string, string> = {
+  r_number: 'string',
+  project_code: 'string',
+  rd_potential_category: 'string',
+  status: 'string',
+  created_datetime: 'date',
+  modified_datetime: 'date',
+  permitted_purpose_status: 'string',
+  technological_uncertainty_status: 'string',
+  technological_in_nature_status: 'string',
+  process_of_experimentation_status: 'string',
+  summary_judgment: 'string'
+}
+
+export const MainTableFilter: Record<string, string> = {
+  created_by_name: 'created_by_name',
+  modified_by_name: 'modified_by_name'
+}
+
+export const rdAssessmentAuditFieldMappings = [
+  { permissionField: 'created_datetime', exportField: 'Assessment Triggered At', dataField: 'created_datetime' },
+  { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+  { permissionField: 'four_part_assessment', exportField: 'Four-Part Assessment', dataField: 'four_part_assessment' },
+  { permissionField: 'project_summary', exportField: 'Project Summary', dataField: 'project_summary' },
+  { permissionField: 'qre_summary', exportField: 'QRE Summary', dataField: 'qre_summary' },
+  { permissionField: 'interaction_status', exportField: 'Interaction Status', dataField: 'interaction_status' }
+];

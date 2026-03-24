@@ -2,9 +2,9 @@ import moment, { Moment } from "moment";
 import "moment-timezone";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Attachment, setupAttachmentSeq } from "../models/attachments";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { DOSSIER_NAME, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import { ICreateAttachment } from "../utils/types";
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import SchemaService from "./schemaService";
 import { Logger } from "winston";
@@ -18,6 +18,9 @@ import { DocumentType } from "../models/documentType";
 import { AttachmentSummary } from "../models/attachmentSummary";
 import { generateSasUrl } from "../utils/blob";
 import { isValidTimezone } from "../utils/valideTimeChecker";
+import { ProjectFiscal } from "../models/projectFiscal";
+import { Project } from "../models/project";
+import { fetchProjectIds } from "../utils/rawQueries";
 
 
 export class AttachmentService {
@@ -141,6 +144,60 @@ export class AttachmentService {
         comments: attachmentData.comments || null,
         created_by: userId,
       });
+      if(attachment_level === 'project')
+      {
+        const projectData = await this.projectIngestionService.fetchProjectInfoById(accountNumber, attachmentData.attach_to)
+        //trigger ai event for project attachments
+         const isTriggerEnabled = await this.projectIngestionService.isAutoTriggerRDAssessment(accountNumber, {
+          account_rid: account_rid,
+          project_fiscal_rid: attachmentData.attach_to,
+    });
+          if (isTriggerEnabled) {
+            const req = {
+              data: [
+                {
+                  account_rid: account_rid,
+                  project_fiscal_rid: [attachmentData.attach_to],
+                },
+              ],
+              type: "project",
+            };
+            logMessage(`Triggering AI for project fiscal rid: ${req}`);
+            await this.projectIngestionService.triggerAI(req,userId,projectData?.project_code || '',accountNumber, entityTypes.AUTO_RD_ASSESSMENT);
+          }
+      }
+      let projectFiscalId = attachmentData.attach_to;
+        if(attachment_level === 'project_resource' || attachment_level === 'project_task') {
+          if(attachment_level === 'project_resource') {
+            const projectResource = await this.projectIngestionService.fetchProjectResourceById(accountNumber, attachmentData.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(attachment_level === 'project_task') {
+            const projectTask = await this.projectIngestionService.fetchProjectTaskById(accountNumber, attachmentData.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
+
+      const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                                      userId: userId!,
+                                                      eventType: eventTypes.UI_HANDLER
+                                                    });
+              // Use SchemaService to determine timeline entity type(s)
+      const timelineTypes = this.schemaService.getTimelineTypesForAttachmentLevel(attachmentData.attachment_level);
+      
+      await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+                created_by: userId!,
+                account_rid: account_rid,
+                entity_rid: attachmentModel.rid,
+                entity_name: entityTypes.ATTACHMENT,
+                created_by_name: userEventInfo.full_name,
+                event_type_rid: userEventInfo.event_type_rid,
+                event_name: eventNames.CREATE,
+                descriptions: name,
+              //  project_rid: attachmentData.attachment_level === "project" ? attachmentData.attach_to : '',
+                project_rid: ['project', 'project_resource', 'project_task'].includes(attachmentData.attachment_level) ? projectFiscalId : '',
+                 case_rid:attachmentData.attachment_level === 'case' ? attachmentData.attach_to : '', 
+              }, timelineTypes);
 
       await AttachmentTimeline.create({
         document_rid: attachmentModel.rid,
@@ -286,7 +343,8 @@ export class AttachmentService {
     sortBy: string = "created_datetime",
     sortOrder: string = "DESC",
     fiscalYear: number = 0,
-    graphqlData?: any
+    graphqlData?: any,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -321,6 +379,8 @@ export class AttachmentService {
       // Handle attached_to and uploaded_by filters separately
       let attachedToFilter;
       let uploadedByFilter;
+      let projectNameFilter;
+      let projectCodeFilter;
       if (filters.attached_to) {
         attachedToFilter = filters.attached_to;
         delete filters.attached_to;
@@ -328,6 +388,14 @@ export class AttachmentService {
       if (filters.uploaded_by) {
         uploadedByFilter = filters.uploaded_by;
         delete filters.uploaded_by;
+      }
+      if (filters.project_name) {
+        projectNameFilter = filters.project_name;
+        delete filters.project_name;
+      }
+      if (filters.project_code) {
+        projectCodeFilter = filters.project_code;
+        delete filters.project_code;
       }
 
       const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -356,9 +424,18 @@ export class AttachmentService {
         arrayData.push(await model.findOne({ where }))
         return arrayData
       } else {
+        let attachmentLevel;
+
+        if(level === "case") {
+          attachmentLevel = ["case", "close case"]
+        } else {
+          attachmentLevel = [level]
+        }
         where = {
           [Op.and]: [
-            { attachment_level: level },
+            { attachment_level: {
+              [Op.in] : attachmentLevel
+            } },
             { attach_to: { [Op.in]: attachToIds } },
             ...(whereClause[Op.and] || [])
           ]
@@ -510,18 +587,25 @@ export class AttachmentService {
 
       // 🔷 Project logic
       else if (attachmentLevel === "project" && entityId) {
+        let entityIds : string[]
+        if(type === DOSSIER_NAME) {
+          let orgSchemaName = rawQueries.fetchSchemaName(schemaNumber)
+          const caseProjectIds = await orgDbSequelize.query<string[]>(rawQueries.fetchAssignedProjectIds(entityId, orgSchemaName), {type : QueryTypes.SELECT})
+          entityIds = caseProjectIds.map((d : any) => d.project_fiscal_rid)
+        } else entityIds = [entityId]
         const projectAttachments = await fetchAttachments(
           AttachmentModel,
           "project",
-          [entityId]
+          entityIds
         );
         allAttachments.push(...projectAttachments);
-
-        const projectChildAttachments =
-          await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
-            entityId,
-          ]);
-        allAttachments.push(...projectChildAttachments);
+        if(type !== DOSSIER_NAME) {
+           const projectChildAttachments =
+            await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
+              entityId,
+            ]);
+          allAttachments.push(...projectChildAttachments);
+        }
       }
 
       // 🔷 Project_resource logic
@@ -607,31 +691,9 @@ export class AttachmentService {
       }
       const attachmentDisplayNames = await this.getAttachmentDisplayNames(
         allAttachments,
-        schemaNumber
+        schemaNumber,
+        type
       );
-
-      // 🔷 Apply attached_to filter if present
-      if (attachedToFilter) {
-        allAttachments = allAttachments.filter((attachment) => {
-          let displayName =
-            attachmentDisplayNames[attachment.rid] ||
-            String(attachment.attach_to) ||
-            "";
-          const displayValue = displayName.toLowerCase();
-          const operator = Object.keys(attachedToFilter)[0];
-          const filterValue = (attachedToFilter[operator] || "").toLowerCase();
-          switch (operator) {
-            case "contains":
-              return displayValue.includes(filterValue);
-            case "equals":
-              return displayValue === filterValue;
-            case "not_equals":
-              return displayValue !== filterValue || displayValue === null;
-            default:
-              return false;
-          }
-        });
-      }
 
       // 🔷 Sort
       const validSortFields = [
@@ -647,6 +709,8 @@ export class AttachmentService {
         "comments",
         "uploaded_by",
         "fiscal_year",
+        "project_name",
+        "project_code"
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -695,24 +759,17 @@ export class AttachmentService {
           : bVal.localeCompare(aVal);
       });
 
-      // 🔷 Pagination
-      const totalCount = allAttachments.length;
-      const paginatedAttachments = allAttachments.slice(
-        (page - 1) * limit,
-        page * limit
-      );
-
       // 🔷 Map document types and users
       const documentTypeIds = [
-        ...new Set(paginatedAttachments.map((att) => att.document_type_rid)),
+        ...new Set(allAttachments.map((att) => att.document_type_rid)),
       ];
       const documentCategoryIds = [
         ...new Set(
-          paginatedAttachments.map((att) => att.document_category_rid)
+          allAttachments.map((att) => att.document_category_rid)
         ),
       ];
       const userIds = [
-        ...new Set(paginatedAttachments.map((att) => att.created_by)),
+        ...new Set(allAttachments.map((att) => att.created_by)),
       ];
 
       const mainSequelize = await initMainDbSequelize();
@@ -746,7 +803,7 @@ export class AttachmentService {
       const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
     // 🔷 Map final results
-    let attachments = await Promise.all(paginatedAttachments.map(async attachment => ({
+    let attachments = await Promise.all(allAttachments.map(async attachment => ({
       ...attachment.get({ plain: true }),
       document_type: documentTypeMap.get(attachment.document_type_rid) || null,
       document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
@@ -754,6 +811,80 @@ export class AttachmentService {
       attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
       browse_file : await generateSasUrl(attachment.browse_file)
     })));
+
+     if (attachedToFilter) {
+        attachments = attachments.filter((attachment) => {
+          let displayName =
+            attachmentDisplayNames[attachment.rid] ||
+            String(attachment.attach_to) ||
+            "";
+          const displayValue = displayName.toLowerCase();
+          const operator = Object.keys(attachedToFilter)[0];
+          const filterValue = (attachedToFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return displayValue.includes(filterValue);
+            case "equals":
+              return displayValue === filterValue;
+            case "not_equals":
+              return displayValue !== filterValue || displayValue === null;
+            default:
+              return false;
+          }
+        });
+      }
+
+      if (uploadedByFilter) {
+        attachments = attachments.filter((attachment) => {
+          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
+          const operator = Object.keys(uploadedByFilter)[0];
+          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return uploadedBy.includes(filterValue);
+            case "equals":
+              return uploadedBy === filterValue;
+            case "not_equals":
+              return uploadedBy !== filterValue || uploadedBy === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectCodeFilter) {
+        attachments = attachments.filter((attachment) => {
+          const projectCode = attachment.project_code?.toLowerCase() || "";
+          const operator = Object.keys(projectCodeFilter)[0];
+          const filterValue = (projectCodeFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectCode.includes(filterValue);
+            case "equals":
+              return projectCode === filterValue;
+            case "not_equals":
+              return projectCode !== filterValue || projectCode === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectNameFilter) {
+        attachments = attachments.filter((attachment) => {
+          const projectName = attachment.project_name?.toLowerCase() || "";
+          const operator = Object.keys(projectNameFilter)[0];
+          const filterValue = (projectNameFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectName.includes(filterValue);
+            case "equals":
+              return projectName === filterValue;
+            case "not_equals":
+              return projectName !== filterValue || projectName === null;
+            default:
+              return false;
+          }
+        });
+      }
 
       // Handle uploaded_by sorting
       if (sortBy === "uploaded_by") {
@@ -808,24 +939,49 @@ export class AttachmentService {
             : bType.localeCompare(aType);
         });
       }
+      if (sortBy === "project_code") {
+        attachments.sort((a, b) => {
+          const aType = a.project_code || "";
+          const bType = b.project_code || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
 
-      // Apply uploaded_by filter if present
-      if (uploadedByFilter) {
-        attachments = attachments.filter((attachment) => {
-          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
-          const operator = Object.keys(uploadedByFilter)[0];
-          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
-          switch (operator) {
-            case "contains":
-              return uploadedBy.includes(filterValue);
-            case "equals":
-              return uploadedBy === filterValue;
-            case "not_equals":
-              return uploadedBy !== filterValue || uploadedBy === null;
-            default:
-              return false;
-          }
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
         });
+      }
+      if (sortBy === "project_name") {
+        attachments.sort((a, b) => {
+          const aType = a.project_name || "";
+          const bType = b.project_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+      if(attachmentLevel === 'project' && type === DOSSIER_NAME && attachments.length > 0) {
+        const findFiscalRid : any = await orgDbSequelize.query(fetchProjectIds(schemaName, attachments))
+        if(findFiscalRid[0].length > 0) {
+          const mapCurrencyWithFiscal = new Map(findFiscalRid[0].map((d : any) => [d.rid, d.currency_rid]));
+          attachments = attachments.map((d) => {
+            return {
+              ...d,
+              currency_rid : mapCurrencyWithFiscal.get(d.attach_to) ?? null
+            }
+          })
+        }
       }
 
       // Add "mb" suffix to size values for attachments
@@ -835,6 +991,12 @@ export class AttachmentService {
           ? `${attachment.size_in_mb} mb`
           : null,
       }));
+       // 🔷 Pagination
+      let totalCount = attachments.length;
+      attachments = attachments.slice(
+        (page - 1) * limit,
+        page * limit
+      );
 
     return {
       statusCode: HttpStatus.SUCCESS,
@@ -843,6 +1005,7 @@ export class AttachmentService {
     };
 
   } catch (error) {
+    console.log(error)
     errorLog("getAttachments error:", (error as Error).message);
     return {
       statusCode: 500,
@@ -891,7 +1054,6 @@ export class AttachmentService {
  *   "ASC",
  *   2024
  * );
- * console.log(result.data.attachments);
  */
   async exportAttachments(
     userId: string,
@@ -904,7 +1066,8 @@ export class AttachmentService {
     sortOrder: string = "DESC",
     fiscalYear: number = 0,
     graphqlData?: any,
-    timezone : string = ``
+    timezone : string = ``,
+    type? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -939,6 +1102,8 @@ export class AttachmentService {
       // Handle attached_to and uploaded_by filters separately
       let attachedToFilter;
       let uploadedByFilter;
+      let projectCodeFilter;
+      let projectNameFilter;
       if (filters.attached_to) {
         attachedToFilter = filters.attached_to;
         delete filters.attached_to;
@@ -946,6 +1111,14 @@ export class AttachmentService {
       if (filters.uploaded_by) {
         uploadedByFilter = filters.uploaded_by;
         delete filters.uploaded_by;
+      }
+      if (filters.project_code) {
+        projectCodeFilter = filters.project_code;
+        delete filters.project_code;
+      }
+      if (filters.project_name) {
+        projectNameFilter = filters.project_name;
+        delete filters.project_name;
       }
 
       const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1127,18 +1300,34 @@ export class AttachmentService {
 
       // 🔷 Project logic
       else if (attachmentLevel === "project" && entityId) {
+        let entityIds : string[]
+        if(type === DOSSIER_NAME) {
+          let orgSchemaName = rawQueries.fetchSchemaName(schemaNumber)
+          const caseProjectIds = await orgDbSequelize.query<string[]>(rawQueries.fetchAssignedProjectIds(entityId, orgSchemaName), {type : QueryTypes.SELECT})
+          entityIds = caseProjectIds.map((d : any) => d.project_fiscal_rid)
+        } else entityIds = [entityId]
         const projectAttachments = await fetchAttachments(
           AttachmentModel,
           "project",
-          [entityId]
+          entityIds
         );
+        if(type === DOSSIER_NAME) {
+          let fetchProjectDetails : any[] = [...new Set(projectAttachments.map((project : any) => project.dataValues.attach_to))];
+          let projectFiscalDetails = await orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+          let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+          projectAttachments.forEach((d: any) => {
+            d.dataValues.project_code = projectDetailsMap.get(d.dataValues.attach_to)?.project_code || null;
+            d.dataValues.project_name = projectDetailsMap.get(d.dataValues.attach_to)?.project_name || null;
+          });
+        }  
         allAttachments.push(...projectAttachments);
-
-        const projectChildAttachments =
-          await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
-            entityId,
-          ]);
-        allAttachments.push(...projectChildAttachments);
+        if(type !== DOSSIER_NAME) {
+           const projectChildAttachments =
+            await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [
+              entityId,
+            ]);
+          allAttachments.push(...projectChildAttachments);
+        }
       }
 
       // 🔷 Project_resource logic
@@ -1215,29 +1404,6 @@ export class AttachmentService {
         allAttachments,
         schemaNumber
       );
-
-      // 🔷 Apply attached_to filter if present
-      if (attachedToFilter) {
-        allAttachments = allAttachments.filter((attachment) => {
-          let displayName =
-            attachmentDisplayNames[attachment.rid] ||
-            String(attachment.attach_to) ||
-            "";
-          const displayValue = displayName.toLowerCase();
-          const operator = Object.keys(attachedToFilter)[0];
-          const filterValue = (attachedToFilter[operator] || "").toLowerCase();
-          switch (operator) {
-            case "contains":
-              return displayValue.includes(filterValue);
-            case "equals":
-              return displayValue === filterValue;
-            case "not_equals":
-              return displayValue !== filterValue || displayValue === null;
-            default:
-              return false;
-          }
-        });
-      }
 
       // 🔷 Sort
       const validSortFields = [
@@ -1350,11 +1516,118 @@ export class AttachmentService {
       browse_file : await generateSasUrl(attachment.browse_file)
     })))
 
+          // 🔷 Apply attached_to filter if present
+      if (attachedToFilter) {
+        attachments = attachments.filter((attachment) => {
+          let displayName =
+            attachmentDisplayNames[attachment.rid] ||
+            String(attachment.attach_to) ||
+            "";
+          const displayValue = displayName.toLowerCase();
+          const operator = Object.keys(attachedToFilter)[0];
+          const filterValue = (attachedToFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return displayValue.includes(filterValue);
+            case "equals":
+              return displayValue === filterValue;
+            case "not_equals":
+              return displayValue !== filterValue || displayValue === null;
+            default:
+              return false;
+          }
+        });
+      }
+
+      if (uploadedByFilter) {
+        attachments = attachments.filter((attachment) => {
+          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
+          const operator = Object.keys(uploadedByFilter)[0];
+          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return uploadedBy.includes(filterValue);
+            case "equals":
+              return uploadedBy === filterValue;
+            case "not_equals":
+              return uploadedBy !== filterValue || uploadedBy === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectCodeFilter) {
+        attachments = attachments.filter((attachment) => {
+          const projectCode = attachment.project_code?.toLowerCase() || "";
+          const operator = Object.keys(projectCodeFilter)[0];
+          const filterValue = (projectCodeFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectCode.includes(filterValue);
+            case "equals":
+              return projectCode === filterValue;
+            case "not_equals":
+              return projectCode !== filterValue || projectCode === null;
+            default:
+              return false;
+          }
+        });
+      }
+      if (projectNameFilter) {
+        attachments = attachments.filter((attachment) => {
+          const projectName = attachment.project_name?.toLowerCase() || "";
+          const operator = Object.keys(projectNameFilter)[0];
+          const filterValue = (projectNameFilter[operator] || "").toLowerCase();
+          switch (operator) {
+            case "contains":
+              return projectName.includes(filterValue);
+            case "equals":
+              return projectName === filterValue;
+            case "not_equals":
+              return projectName !== filterValue || projectName === null;
+            default:
+              return false;
+          }
+        });
+      }
+
       // Handle uploaded_by sorting
       if (sortBy === "uploaded_by") {
         attachments.sort((a, b) => {
           const aType = a.uploaded_by || "";
           const bType = b.uploaded_by || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+      if (sortBy === "project_code") {
+        attachments.sort((a, b) => {
+          const aType = a.project_code || "";
+          const bType = b.project_code || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+      if (sortBy === "project_name") {
+        attachments.sort((a, b) => {
+          const aType = a.project_name || "";
+          const bType = b.project_name || "";
           const aEmpty = !aType || aType.trim() === "";
           const bEmpty = !bType || bType.trim() === "";
 
@@ -1409,13 +1682,26 @@ export class AttachmentService {
           userId,
           "attachments_view_edit"
         );
+      const allowedProjectFieldsForExport =
+        await this.schemaService.getAllowedExportFields(
+          userId,
+          "projects_view_edit"
+        );
       const allowedFieldSet = new Set<string>();
+      const allowedFieldSetForProjects = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
           allowedFieldSet.add(field.field_desc);
         }
       }
+       for (const field of allowedProjectFieldsForExport) {
+        if (field.read) {
+          allowedFieldSetForProjects.add(field.field_desc);
+        }
+      }
       const labelMap: Record<string, string> = {
+        "Project Code": "Project Code",
+        "Project Name": "Name",
         "Document Name": "Document Name",
         Format: "Format",
         Size: "Size",
@@ -1429,25 +1715,6 @@ export class AttachmentService {
         "Attached On": "Attached On",
         "Attachment ID": "Attachment ID",
       };
-      // Apply uploaded_by filter if present
-      if (uploadedByFilter) {
-        attachments = attachments.filter((attachment) => {
-          const uploadedBy = attachment.uploaded_by?.toLowerCase() || "";
-          const operator = Object.keys(uploadedByFilter)[0];
-          const filterValue = (uploadedByFilter[operator] || "").toLowerCase();
-          switch (operator) {
-            case "contains":
-              return uploadedBy.includes(filterValue);
-            case "equals":
-              return uploadedBy === filterValue;
-            case "not_equals":
-              return uploadedBy !== filterValue || uploadedBy === null;
-            default:
-              return false;
-          }
-        });
-      }
-
       // Add "mb" suffix to size values for attachments
       attachments = attachments.map((attachment) => ({
         ...attachment,
@@ -1459,10 +1726,16 @@ export class AttachmentService {
       attachments = attachments.map((at) => {
         const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
+        let dynamicLabel : string;
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey]; // field_desc
           if (allowedFieldSet.has(label)) {
             filtered[label] = value; // export with label name
+          }
+          if (allowedFieldSetForProjects.has(label!)) {
+            if(label === 'Name') dynamicLabel = "Project Name"
+            else dynamicLabel = label!
+            filtered[dynamicLabel] = value
           }
         }
         return filtered;
@@ -1488,6 +1761,8 @@ export class AttachmentService {
   // Helper function to map attachment data to common format
   private mapAttachmentToCommonFormat(at: any, timezone : string) {
     return {
+      "Project Code": at.project_code || "-",
+      "Project Name": at.project_name || "-",
       "Document Name": at.document_name || "-",
       Format: at.format || "-",
       Size: at.size_in_mb || "-",
@@ -2309,6 +2584,8 @@ export class AttachmentService {
         "Attached By": "Attached By",
         "Attached On": "Attached On",
         "Attachment ID": "Attachment ID",
+        "Project ID" : "Project ID",
+        "Project Name": "Project Name"
       };
 
       attachments = attachments.map((at) => {
@@ -2345,7 +2622,7 @@ export class AttachmentService {
 
 
 // Helper method to get display names for attachments
-private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<Record<string, string>> {
+private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string, type? : string): Promise<Record<string, string>> {
   const displayNames: Record<string, string> = {};
   for (const attachment of attachments) {
     try {
@@ -2357,6 +2634,10 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
         case 'project':
           const project = await this.projectIngestionService.fetchProjectInfoById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = project?.project_code || attachment.attach_to;
+          if(type === DOSSIER_NAME) {
+            attachment.dataValues.project_code = project?.project_code || ''
+            attachment.dataValues.project_name = project?.project_name || ''
+          }
           break;
         case 'project_resource':
           const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, attachment.attach_to);

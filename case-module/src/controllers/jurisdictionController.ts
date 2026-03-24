@@ -114,7 +114,7 @@ async function getJurisdictionConfiguration(req: Request, res: Response): Promis
     );
 
     // Step 2: Extract parameters
-    const { accountRid, caseRid, level } = req.query;
+    const { accountRid, caseRid, level,type } = req.query;
     const userId = req.headers["x-user-id"] as string;
 
     // Validate required parameters
@@ -165,7 +165,7 @@ async function getJurisdictionConfiguration(req: Request, res: Response): Promis
     const entity_rid = level === "case" ? caseRid : accountRid;
 
     // Step 3: Call service
-    const result = await jurisdictionService.getJurisdictionConfiguration(accountRid as string, entity_rid as string);
+    const result = await jurisdictionService.getJurisdictionConfiguration(accountRid as string, entity_rid as string,level as string,type as string);
 
     // Step 4: Handle service response
     if (result.statusCode === HttpStatus.SUCCESS) {
@@ -200,7 +200,7 @@ async function getJurisdictionConfigDetailsById(
   const methodName = "Get jurisdiction config details";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, jurisdictionRDConfigSchema, res,"GET");
+    const value = await validateRequest(req, jurisdictionRDConfigSchema, res, "GET");
     if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -213,9 +213,9 @@ async function getJurisdictionConfigDetailsById(
       return;
     }
     let jurisdictionConfigResponse =
-        await jurisdictionService.getJurisdictionConfigDetailsById(
-          value
-        );
+      await jurisdictionService.getJurisdictionConfigDetailsById(
+        value
+      );
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -251,7 +251,7 @@ async function getJurisdictionConfigDataForCreate(
   const methodName = "Get jurisdiction config details for create";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, jurisdictionRDConfigSchemaForNew, res,"GET");
+    const value = await validateRequest(req, jurisdictionRDConfigSchemaForNew, res, "GET");
     if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -264,9 +264,9 @@ async function getJurisdictionConfigDataForCreate(
       return;
     }
     let jurisdictionConfigResponse =
-        await jurisdictionService.getJurisdictionConfigDetailsForNew(
-          value
-        );
+      await jurisdictionService.getJurisdictionConfigDetailsForNew(
+        value
+      );
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -316,9 +316,9 @@ async function updateJurisdictionConfig(
     }
     value.modified_by = userId;
     let jurisdictionConfigResponse =
-        await jurisdictionService.updateJurisdictionConfig(
-          value
-        );
+      await jurisdictionService.updateJurisdictionConfig(
+        value
+      );
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -355,8 +355,7 @@ async function createJurisdictionConfig(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, createJurisdictionRDConfigSchema, res);
-    if(!value)
-    {
+    if (!value) {
       return;
     }
     if (!userId) {
@@ -371,9 +370,9 @@ async function createJurisdictionConfig(
     }
     value.created_by = userId;
     let jurisdictionConfigResponse =
-        await jurisdictionService.createJurisdictionConfig(
-          value
-        );
+      await jurisdictionService.createJurisdictionConfig(
+        value
+      );
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -409,7 +408,7 @@ async function listJurisdictionsConfigurations(
   const methodName = "Get jurisdiction config details";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listJurisdictionConfigSchema, res,'GET');
+    const value = await validateRequest(req, listJurisdictionConfigSchema, res, 'GET');
     if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -421,23 +420,23 @@ async function listJurisdictionsConfigurations(
       );
       return;
     }
-     let parsedFilters: Record<string, any> = {};
-    
-        try {
-          parsedFilters = JSON.parse(value.filters);
-        } catch (error) {
-          errorLog(
-            methodName,
-            "Invalid filters format. Must be a valid JSON object."
-          );
-        }
-    let jurisdictionConfigResponse =
-        await jurisdictionService.listJurisdictionConfig(
-          value,
-          "list",
-          parsedFilters
+    let parsedFilters: Record<string, any> = {};
 
-        );
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    let jurisdictionConfigResponse =
+      await jurisdictionService.listJurisdictionConfig(
+        value,
+        "list",
+        parsedFilters
+
+      );
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -473,7 +472,7 @@ async function exportJurisdictionsConfigurations(
   const methodName = "Get jurisdiction config details";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, exportJurisdictionConfigSchema, res,'GET');
+    const value = await validateRequest(req, exportJurisdictionConfigSchema, res, 'GET');
     if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -485,88 +484,88 @@ async function exportJurisdictionsConfigurations(
       );
       return;
     }
-     let parsedFilters: Record<string, any> = {};
-    
-        try {
-          parsedFilters = JSON.parse(value.filters);
-        } catch (error) {
-          errorLog(
-            methodName,
-            "Invalid filters format. Must be a valid JSON object."
-          );
-        }
-      let result =
-        await jurisdictionService.listJurisdictionConfig(
-          value,
-          "download",
-          parsedFilters
+    let parsedFilters: Record<string, any> = {};
 
-        );
-       const fields = await caseService.getAllowedExportFields(
-             userId,
-             "manage_jurisdiction_rule_view_edit"
-           );
-           const allowedFieldSet = new Set<string>();
-           for (const field of fields) {
-             if (field.read) {
-               allowedFieldSet.add(field.field_name);
-             }
-           }
-            const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-            const formatDate = (date?: Date) => {
-                 if (!date) return null;
-                 
-                 return moment(date)
-                   .tz(isValidTZ ? value.timezone : "UTC")
-                   .format("YYYY-MMM-DD, hh:mm:ss A");
-               };
-          // Helper for just date
-            const formatDateOnly = (date?: Date) => {
-              if (!date) return null;
-              return moment(date).format("YYYY-MMM-DD");
-            };
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    let result =
+      await jurisdictionService.listJurisdictionConfig(
+        value,
+        "download",
+        parsedFilters
+
+      );
+    const fields = await caseService.getAllowedExportFields(
+      userId,
+      "manage_jurisdiction_rule_view_edit"
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of fields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+    const formatDate = (date?: Date) => {
+      if (!date) return null;
+
+      return moment(date)
+        .tz(isValidTZ ? value.timezone : "UTC")
+        .format("YYYY-MMM-DD, hh:mm:ss A");
+    };
+    // Helper for just date
+    const formatDateOnly = (date?: Date) => {
+      if (!date) return null;
+      return moment(date).format("YYYY-MMM-DD");
+    };
     if (result.statusCode === HttpStatus.SUCCESS) {
-            const finalStructuredData =
-              result?.data?.configs.length < 1
-                ? []
-                : result?.data?.configs.map((d: any) => {
-                    let resultMap: { [key: string]: any } = {
-                      r_number: d.r_number,
-                      status_name: d.status_name,
-                      config_name: d.is_federal
-                        ? `C-${d.country_code}${d.config_name ? '-' + d.config_name : ''}`
-                        : `C-${d.country_code}-${d.state_name || ""}${d.config_name ? '-' + d.config_name : ''}`,
-                      effective_start_date: formatDateOnly(d?.effective_start_date),
-                      effective_end_date: formatDateOnly(d?.effective_end_date),
-                      country_name: d.country_name,
-                      state_name: d.state_name,
-                      is_federal: d.is_federal ? "Yes" : "No",
-                      created_by: d.created_user_name,
-                      created_datetime: formatDate(d?.created_datetime),
-                      modified_by: d.modified_user_name,
-                      modified_datetime:
-                        d?.modified_datetime == null
-                          ? ""
-                          : formatDate(d.modified_datetime) 
-                    };
-      
-                    // Build exportRecord using allowed fields and resultMap
-                    const exportRecord: Record<string, any> = {};
-                    jurisdictionRuleMapping.forEach((mapping) => {
-                      if (allowedFieldSet.has(mapping.permissionField)) {
-                        exportRecord[mapping.exportField] =
-                          resultMap[mapping.dataField];
-                      }
-                    });
-      
-                    return exportRecord;
-                  });
-            const generateBase64Response = await generateExcelBase64(
-              finalStructuredData,
-              "Jurisdiction_Configurations",
-            );
-            handleSuccessResponse(res, generateBase64Response);
-          }  else {
+      const finalStructuredData =
+        result?.data?.configs.length < 1
+          ? []
+          : result?.data?.configs.map((d: any) => {
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              status_name: d.status_name,
+              config_name: d.is_federal
+                ? `C-${d.country_code}${d.config_name ? '-' + d.config_name : ''}`
+                : `C-${d.country_code}-${d.state_name || ""}${d.config_name ? '-' + d.config_name : ''}`,
+              effective_start_date: formatDateOnly(d?.effective_start_date),
+              effective_end_date: formatDateOnly(d?.effective_end_date),
+              country_name: d.country_name,
+              state_name: d.state_name,
+              is_federal: d.is_federal ? "Yes" : "No",
+              created_by: d.created_user_name,
+              created_datetime: formatDate(d?.created_datetime),
+              modified_by: d.modified_user_name,
+              modified_datetime:
+                d?.modified_datetime == null
+                  ? ""
+                  : formatDate(d.modified_datetime)
+            };
+
+            // Build exportRecord using allowed fields and resultMap
+            const exportRecord: Record<string, any> = {};
+            jurisdictionRuleMapping.forEach((mapping) => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
+              }
+            });
+
+            return exportRecord;
+          });
+      const generateBase64Response = await generateExcelBase64(
+        finalStructuredData,
+        "Jurisdiction_Configurations",
+      );
+      handleSuccessResponse(res, generateBase64Response);
+    } else {
       errorLog(methodName, result.errorMessage);
       handleErrorResponse(
         res,

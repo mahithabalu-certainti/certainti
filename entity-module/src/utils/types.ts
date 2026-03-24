@@ -109,31 +109,31 @@ export interface IUpdateResourceCost {
   modified_datetime?: string | null;
   modified_by?: string | null;
   status_rid?: string;
- // status_id?: "Active" | "Inactive"| "Duplicate" | "Anomaly";
+  // status_id?: "Active" | "Inactive"| "Duplicate" | "Anomaly";
   accountNumber: string;
   user_preference?: string | null;
 }
 
 export interface IResourceSkill {
-   eid?: string;
-   account_rid: string;
-   resource_type_rid: string;
-   resource_rid: string;
-   resource_code: string,
-   effective_from?: string | null;
-   skill_description?: string;
-   skill_level_rid?: string;
-   skill_type_rid: string;
-   skill_subtype_rid: string;
-   skill_type_others: string;
-   skill_subtype_others: string;
-   skill_details?: string;
-   comments?: string;
-   status_rid?: string;
-   created_by?: string | null;
-   modified_by?: string | null;
-   accountNumber: string;
-   resource_number: string;
+  eid?: string;
+  account_rid: string;
+  resource_type_rid: string;
+  resource_rid: string;
+  resource_code: string,
+  effective_from?: string | null;
+  skill_description?: string;
+  skill_level_rid?: string;
+  skill_type_rid: string;
+  skill_subtype_rid: string;
+  skill_type_others: string;
+  skill_subtype_others: string;
+  skill_details?: string;
+  comments?: string;
+  status_rid?: string;
+  created_by?: string | null;
+  modified_by?: string | null;
+  accountNumber: string;
+  resource_number: string;
 }
 
 export interface IUpdateResourceSkill {
@@ -209,6 +209,7 @@ export interface ICreateProject {
   assessment_status?: string;
   is_rd_qualified?: boolean;
   qre?: number;
+  is_assesed?: boolean;
 }
 
 export interface IUpdateProject {
@@ -263,9 +264,10 @@ export interface IUpdateProject {
   project_description?: string | null;
   modified_by?: string;
   created_by: string;
-  key_contacts:any;
+  key_contacts: any;
   comments?: string;
   project_fiscal_id: string;
+  is_assesed?: boolean;
 }
 
 export interface IKeyContactDetail {
@@ -275,7 +277,7 @@ export interface IKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  interaction_cc_recipient:boolean;
+  interaction_cc_recipient: boolean;
   status_rid: string;
 }
 
@@ -286,7 +288,7 @@ export interface IUpdateKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  interaction_cc_recipient:boolean;
+  interaction_cc_recipient: boolean;
   status_rid: string;
 }
 
@@ -339,8 +341,8 @@ export interface ICreateProjectResource {
   description?: string | null;
   created_by: string;
   modified_by?: string;
-  total_hours_from_tasks? : number | null,
-  total_cost_from_tasks? : number | null,
+  total_hours_from_tasks?: number | null,
+  total_cost_from_tasks?: number | null,
 }
 export interface IUpdateProjectResource {
   project_resource_rid: string;
@@ -373,8 +375,8 @@ export interface IUpdateProjectResource {
   description?: string | null;
   modified_by?: string;
   user_preference?: string | null;
-  total_hours_from_tasks? : number | null,
-  total_cost_from_tasks? : number | null,
+  total_hours_from_tasks?: number | null,
+  total_cost_from_tasks?: number | null,
 }
 
 export interface IUpdateInlineProjectResource {
@@ -393,7 +395,7 @@ export interface IUpdateInlineProjectResource {
   modified_by?: string;
   resource_rid?: string;
   country_rid?: string | null;
-  project_resource_role? : string | null
+  project_resource_role?: string | null
 }
 
 export interface ICreateProjectTask {
@@ -412,8 +414,8 @@ export interface ICreateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
-  status_rid : string;
-  project_resource_rid : string;
+  status_rid: string;
+  project_resource_rid: string;
   task_name?: string;
   task_description?: string;
   task_type_rid?: string;
@@ -437,8 +439,8 @@ export interface IUpdateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
-  status_rid : string
-  project_resource_rid : string;
+  status_rid: string
+  project_resource_rid: string;
   task_name?: string;
   task_description?: string;
   task_type_rid?: string;
@@ -460,141 +462,141 @@ export interface IUpdateQrePecentAdjustment {
 }
 
 export interface IFetchNotesDetailsInput {
-  rid : string;
-  account_rid : string;
-  user_rid : string
+  rid: string;
+  account_rid: string;
+  user_rid: string
 }
 
 export interface IFetchTaskDetailsInput {
-  task_rid : string;
-  account_rid : string;
-  user_rid : string;
+  task_rid: string;
+  account_rid: string;
+  user_rid: string;
   attachment_level: string;
   attach_to: string;
   task_type_name: string;
 }
 
 export type ChecklistItems = {
-  rid : string
-  checklist_item_name : string
-  checklist_item_description : string
-  status_rid : string
-  checklist_item_status_name : string
+  rid: string
+  checklist_item_name: string
+  checklist_item_description: string
+  status_rid: string
+  checklist_item_status_name: string
 }
 
 export type checklistType = {
-  rid : string
-  checklist_name : string
-  checklist_description : string
-  task_rid : string,
-  checklist_items_count : string
-  completed_items_count : string
-  checklist_items : ChecklistItems[]
+  rid: string
+  checklist_name: string
+  checklist_description: string
+  task_rid: string,
+  checklist_items_count: string
+  completed_items_count: string
+  checklist_items: ChecklistItems[]
 }
 
 export type taskTags = {
-  tag_rid : string
+  tag_rid: string
 }
 
 export type taskWorkFlowConnector = {
-  rid : string
-  source_rid : string
-  target_rid : string
-  relationship_connector_rid : string
+  rid: string
+  source_rid: string
+  target_rid: string
+  relationship_connector_rid: string
 }
 
 export type TaskCardDetailsType = {
-  rid : string
-  r_number  : string
-  created_by : string
-  modified_by : string
-  created_datetime : Date
-  task_name  : string
-  effective_start_datetime : Date
-  effective_end_datetime : Date
-  assigned_to : string
-  priority_rid : string
-  task_description : string
-  task_status_rid : string
-  priority_name : string
-  task_status_name : string
-  assigned_to_name : string
-  checklists : checklistType,
-  checklist_rid : string
-  checklist_name : string
-  case_team_member_role_rid : string
-  tags : taskTags[]
-  workflow_connector :  taskWorkFlowConnector[],
-  weightage_rid : string
-  task_category_rid : string
+  rid: string
+  r_number: string
+  created_by: string
+  modified_by: string
+  created_datetime: Date
+  task_name: string
+  effective_start_datetime: Date
+  effective_end_datetime: Date
+  assigned_to: string
+  priority_rid: string
+  task_description: string
+  task_status_rid: string
+  priority_name: string
+  task_status_name: string
+  assigned_to_name: string
+  checklists: checklistType,
+  checklist_rid: string
+  checklist_name: string
+  case_team_member_role_rid: string
+  tags: taskTags[]
+  workflow_connector: taskWorkFlowConnector[],
+  weightage_rid: string
+  task_category_rid: string
 }
 
-export type TaskCardResponse ={
-  task_details :TaskCardDetailsType
+export type TaskCardResponse = {
+  task_details: TaskCardDetailsType
 }
 
 export type TagsTypes = {
-  rid : string
-  tag_name : string
+  rid: string
+  tag_name: string
 }
 
 type tagTypes = {
-  tag_rid : string
-  is_new_tag : boolean
+  tag_rid: string
+  is_new_tag: boolean
 }
 
 type WorkflowConnectorItemsAccountLevel = {
-  case_rid : string
-  account_rid : string
-  task_rid : string
-  source_rid : string
-  delete_target_rids : string[]
-  relationship_connector_rid : string
-  target_rid : string[]
-  created_by : string
-  created_datetime : Date
+  case_rid: string
+  account_rid: string
+  task_rid: string
+  source_rid: string
+  delete_target_rids: string[]
+  relationship_connector_rid: string
+  target_rid: string[]
+  created_by: string
+  created_datetime: Date
 }
 
 export type UpdateCaseTaskType = {
-  rid : string
-  modified_by : string,
-  modified_datetime : Date,
-  task_name : string,
-  sequence_no : number,
-  effective_start_datetime : Date,
-  effective_end_datetime : Date,
-  case_team_member_role_rid : string,
-  assigned_to : string,
-  task_status_rid : string,
-  priority_rid : string,
-  milestone_template_rid : string,
-  checklist_template_rid : string,
-  account_rid : string,
+  rid: string
+  modified_by: string,
+  modified_datetime: Date,
+  task_name: string,
+  sequence_no: number,
+  effective_start_datetime: Date,
+  effective_end_datetime: Date,
+  case_team_member_role_rid: string,
+  assigned_to: string,
+  task_status_rid: string,
+  priority_rid: string,
+  milestone_template_rid: string,
+  checklist_template_rid: string,
+  account_rid: string,
   case_rid: string,
-  task_type_rid : string,
-  task_description : string
-  tags : tagTypes[],
-  workflow_connector : WorkflowConnectorItemsAccountLevel,
-  weightage_rid : string
-  task_category_rid : string
+  task_type_rid: string,
+  task_description: string
+  tags: tagTypes[],
+  workflow_connector: WorkflowConnectorItemsAccountLevel,
+  weightage_rid: string
+  task_category_rid: string
 }
 
 export type CaseTaskWorkFlowCreate = {
-  case_rid : string,
-  account_rid : string,
-  source_rid : string,
-  target_rid : string[],
-  delete_target_rids : string[]
-  relationship_connector_rid : string
-  created_by : string
-  created_datetime : Date
+  case_rid: string,
+  account_rid: string,
+  source_rid: string,
+  target_rid: string[],
+  delete_target_rids: string[]
+  relationship_connector_rid: string
+  created_by: string
+  created_datetime: Date
 }
 export interface CaseStatusResult {
   status_name: string;
 }
 
 export interface ICreateChecklist {
-  
+
   account_rid: string;
   checklist_rid: string;
   attach_to: string;
@@ -609,14 +611,15 @@ export interface ICreateChecklist {
   modified_datetime?: Date;
   fiscal_year: number;
   checklist_items: ICreateChecklistItem[];
-  case_rid? : string
+  case_rid?: string
 }
 
-export interface ICreateChecklistItem{
+export interface ICreateChecklistItem {
   checklist_item_name: string;
   checklist_item_rid: string;
   action_type: "add" | "edit" | "delete";
   status_rid: string;
+  checklist_item_status_name: string
   checklist_item_description?: string;
   created_by: string;
   modified_by?: string;
@@ -627,7 +630,7 @@ export interface ICreateChecklistItem{
 export interface IActivityTask {
   task_template_rid?: string;
   task_rid: string;
-  activity_type:string
+  activity_type: string
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -644,30 +647,16 @@ export interface IActivityTask {
   assigned_to?: string | null;
   status_rid?: string;
   remainder_interval?: number;
-  account_rid?: string; 
+  account_rid?: string;
   checklist_rid?: string;
-  tags : tagTypes[]
-}
-
-export interface ICreateChecklist {
-  
-  account_rid: string;
-  checklist_rid: string;
-  attach_to: string;
-  attachment_level: string;
-  checklist_template_rid?: string | null;
-  checklist_name: string;
-  checklist_description?: string;
-  status_rid?: string;
-  created_by: string;
-  modified_by?: string;
-  created_datetime: Date;
-  modified_datetime?: Date;
-  fiscal_year: number;
-  checklist_items: ICreateChecklistItem[];
-  case_rid? : string
+  tags: tagTypes[]
 }
 
 export type ProjectFiscalIds = {
-  project_fiscal_rid : string
+  project_fiscal_rid: string
+}
+
+export type WeightageType = {
+  rid: string
+  weightage_value: number
 }

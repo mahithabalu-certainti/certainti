@@ -4,7 +4,7 @@ import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
-    max_credit_cap_percent: number;
+    max_credit_allowed_percent: number;
     tax_base_cap_percent: number;
     tax_credit_rate_percent: number;
 }
@@ -46,7 +46,10 @@ export class RdCreditCalculatorForGA {
             inputFields,
             computedFields,
             finalCredit: this.round2(creditAndCarryForwardInfo.research_tax_credit),
-            totalQRE: this.round2(inputInfo.current_year_qre)
+            totalQRE: this.round2(inputInfo.current_year_qre),
+              totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0
         }
     }
 
@@ -57,14 +60,14 @@ export class RdCreditCalculatorForGA {
      * @returns 
      */
     computeInputInformation(currentYearQREs: QRE, annualGrossReceipts: AnnualGrossReceipt[], caseDetails : Case) {
-        const wages = currentYearQREs.wages || 0;
-        const supplies = currentYearQREs.supplies || 0;
-        const contract = currentYearQREs.contract || 0;
-        const tax_liability = currentYearQREs.business_tax_liability || 0;
+        const wages = new Decimal(currentYearQREs.wages ?? 0.00);
+        const supplies = new Decimal(currentYearQREs.supplies ?? 0.00);
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00);
+        const tax_liability = new Decimal(currentYearQREs.business_tax_liability_ga ?? 0.00);
         const currentYearGrossReceipts = new Decimal(caseDetails.current_year_gross_receipts || 0.00)
 
         //Total current year QREs
-        const totalCurrentYearQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
+        const totalCurrentYearQREs = wages.plus(supplies).plus(contract);
 
         // const currentYearGrossReceipts = annualGrossReceipts.find(
         //     (item) => item.fiscalYear === this.getCurrentFiscalYear()
@@ -72,11 +75,11 @@ export class RdCreditCalculatorForGA {
 
         //Enter current year - any other credit for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
-        const totalOfAllOtherCredits = new Decimal(caseDetails.other_credits_total || 0) 
+        const totalOfAllOtherCredits = new Decimal(caseDetails.other_credits_total_ga || 0) 
 
         //Enter any carry forward from prior years for GA State
         //TODO: Placeholder as the actual calculation depends on additional data not provided.
-        const carryForwardPriorYear = new Decimal(caseDetails.credit_carry_forward_py || 0.00);
+        const carryForwardPriorYear = new Decimal(caseDetails.credit_carry_forward_py_ga || 0.00);
 
         const currentYearTaxLiability = tax_liability;
 
@@ -107,7 +110,7 @@ export class RdCreditCalculatorForGA {
             const prior_receipts = Number(grossReceiptsItem?.grossReceipts || 0);
 
             const ratio = prior_receipts > 0 ? new Decimal(this.round2((prior_qre / prior_receipts) * 100)) : new Decimal(0);
-
+            console.log("raton"+ratio)
             return {
                 fiscal_year: qreItem.fiscalYear,
                 prior_qre,
@@ -117,10 +120,9 @@ export class RdCreditCalculatorForGA {
         });
         // sum of ratios
         const sum_ratio = details.reduce((sum, item) => sum + Number(item.ratio), 0);
-
         return {
             previous_years: details,
-            sum_ratio,
+            sum_ratio: this.round2(sum_ratio),
             average_ratio: this.round2(sum_ratio / 3)
         };
     }
@@ -164,14 +166,14 @@ export class RdCreditCalculatorForGA {
      * @param config 
      * @returns 
      */
-    creditAndCreditForwardCalculation(current_year_tax_liability: number, tax_credit: Decimal, config: ConfigJson,caseDetails : Case) {
+    creditAndCreditForwardCalculation(current_year_tax_liability: Decimal, tax_credit: Decimal, config: ConfigJson,caseDetails : Case) {
         //TODO:2) Value of all Other Credits Claimed - C
-        const value_of_other_credit_claimed = new Decimal(caseDetails.other_credits_total || 0.00)
+        const value_of_other_credit_claimed = new Decimal(caseDetails.other_credits_total_ga || 0.00)
 
-        const remaining_tax_liability = new Decimal(current_year_tax_liability).minus(value_of_other_credit_claimed);
-        const max_credits_allowed = remaining_tax_liability.mul(config.max_credit_cap_percent / 100);
+        const remaining_tax_liability = current_year_tax_liability.minus(value_of_other_credit_claimed);
+        const max_credits_allowed = remaining_tax_liability.mul(config.max_credit_allowed_percent / 100);
         const research_tax_credit = tax_credit.gt(0) ? tax_credit : 0;
-        const tax_carryover_py = new Decimal(caseDetails.credit_carry_forward_py || 0.00)
+        const tax_carryover_py = new Decimal(caseDetails.credit_carry_forward_py_ga || 0.00)
         const total_tax_credit = new Decimal(research_tax_credit).plus(tax_carryover_py);
         const credit_claimed_return = total_tax_credit.lte(max_credits_allowed) ? total_tax_credit : max_credits_allowed;
         const unused_credit = total_tax_credit.gte(credit_claimed_return) ? total_tax_credit.minus(credit_claimed_return) : 0;
@@ -314,7 +316,7 @@ export class RdCreditCalculatorForGA {
                 "[1] Current Tax Liability w/o applied credits - E" : this.round2(creditAndCarryForwardInfo.current_year_tax_liability)  || 0,
                 "[2] Value of all Other Credits Claimed - C" : this.round2(creditAndCarryForwardInfo.value_of_other_credit_claimed) || 0,
                 "[3] Remaining Tax Liability (C-E)" : this.round2(creditAndCarryForwardInfo.remaining_tax_liability) || 0,
-                [`[4] Maximum Credit Allowed (Line 3 * ${config.max_credit_cap_percent}%)`] : this.round2(creditAndCarryForwardInfo.max_credits_allowed) || 0,
+                [`[4] Maximum Credit Allowed (Line 3 * ${config.max_credit_allowed_percent}%)`] : this.round2(creditAndCarryForwardInfo.max_credits_allowed) || 0,
                 "[5] Research Tax Credit - J" : this.round2(creditAndCarryForwardInfo.research_tax_credit) || 0,
                 "[5a] Tax Carryover from PY - D": this.round2(creditAndCarryForwardInfo.tax_carryover_py) || 0    ,
                 "[6] Total available Research Tax Credit (J+D)" : this.round2(creditAndCarryForwardInfo.total_tax_credit) || 0,

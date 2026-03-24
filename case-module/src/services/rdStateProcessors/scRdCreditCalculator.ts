@@ -4,8 +4,8 @@ import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
-    credit_rate: number;
-    carry_forward_credit_rate: number;
+    qre_credit_percentage_c1: number;
+    qre_credit_percentage_c2: number;
     sub_con_percent: number;
 }
 
@@ -31,16 +31,16 @@ export class RdCreditCalculatorForSC {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
-        const carry_forward_py = new Decimal(caseDetails.credit_carry_forward_py || 0);
+        const carry_forward_py = new Decimal(caseDetails.credit_carry_forward_py_sc || 0);
 
-        const current_year_credit = total_current_year_qre.mul(config.credit_rate).div(100);
+        const current_year_credit = total_current_year_qre.mul(config.qre_credit_percentage_c1).div(100);
         const tot_qre_credit = current_year_credit.plus(carry_forward_py);
-        const total_tax_liability = new Decimal(stateRdData.currentYearQREs.business_tax_liability || 0);
+        const total_tax_liability = new Decimal(stateRdData.currentYearQREs.business_tax_liability_sc || 0);
 
-        const tot_all_credits_other_than_qre = new Decimal(caseDetails.other_credits_total || 0);
+        const tot_all_credits_other_than_qre = new Decimal(caseDetails.other_credits_total_sc || 0);
         const net_base_amount = total_tax_liability.minus(tot_all_credits_other_than_qre);
 
-        const fifty_percent_credit = net_base_amount.mul(config.carry_forward_credit_rate).div(100);
+        const fifty_percent_credit = net_base_amount.mul(config.qre_credit_percentage_c2).div(100);
         const final_credit = Decimal.min(tot_qre_credit, fifty_percent_credit);
         const unused_credit = tot_qre_credit.minus(final_credit);
 
@@ -71,7 +71,11 @@ export class RdCreditCalculatorForSC {
             inputFields,
             computedFields,
             finalCredit: this.round2(final_credit),
-            totalQRE: this.round2(total_current_year_qre)
+            totalQRE: this.round2(total_current_year_qre),
+            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+
         }
 
     }
@@ -110,8 +114,8 @@ export class RdCreditCalculatorForSC {
          let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100) || 0;       
         storeData.push({
             year : metadata.currentYear,
-            wages: currentYearQREs.wages,
-            contract: currentYearContract,
+            wages: this.round2(currentYearQREs.wages),
+            contract: this.round2(currentYearContract),
             sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract))
         })
  
@@ -160,13 +164,13 @@ export class RdCreditCalculatorForSC {
 
         let finalData = {
         "[1] Qualified research expenses made in South Carolina.": this.round2(computeFieldsResp.total_current_year_qre),
-        [`[2] Enter ${config.credit_rate}% of line 1. This is your current year credit.`]: this.round2(computeFieldsResp.current_year_credit),
-        "[3] Research Expenses Credit Carried forward from previous years (attach schedule).": this.round2(caseDetails.credit_carry_forward_py),
+        [`[2] Enter ${config.qre_credit_percentage_c1}% of line 1. This is your current year credit.`]: this.round2(computeFieldsResp.current_year_credit),
+        "[3] Research Expenses Credit Carried forward from previous years (attach schedule).": this.round2(caseDetails.credit_carry_forward_py_sc),
         "[4] Line 2 plus line 3 (Total Research Expenses Credit before limitations).": this.round2(computeFieldsResp.tot_qre_credit),
         "[5] Tax Liability (income tax and license fees) before claiming credits.": this.round2(computeFieldsResp.total_tax_liability),
         "[6] Total of all credits other than the Research Expenses Credit": this.round2(computeFieldsResp.tot_all_credits_other_than_qre),
         "[7] Line 5 minus line 6 (If less than zero enter zero).": this.round2(computeFieldsResp.net_base_amount),
-        [`[8] Multiply line 7 by ${computeFieldsResp.config.carry_forward_credit_rate} % (${computeFieldsResp.config.carry_forward_credit_rate / 100}).`]: this.round2(computeFieldsResp.fifty_percent_credit),
+        [`[8] Multiply line 7 by ${computeFieldsResp.config.qre_credit_percentage_c2} % (${computeFieldsResp.config.qre_credit_percentage_c2 / 100}).`]: this.round2(computeFieldsResp.fifty_percent_credit),
         "[9] Enter the lesser of line 4 or line 8. (This is the amount of Research Expenses Credit you may use this year.)": this.round2(computeFieldsResp.final_credit),
         "[10] Line 4 minus line 9. (Unused Research Expenses Credit can be carried forward for up to 10 years.)": this.round2(computeFieldsResp.unused_credit)
     };

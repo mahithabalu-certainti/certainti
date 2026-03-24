@@ -454,7 +454,7 @@ const updateResourceSchema = Joi.object({
       "string.max": "Name must not exceed 64 characters"
     }),
   first_name: Joi.string()
-   .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
+    .pattern(/^[A-Za-z][A-Za-z\s\-,.']{0,62}[A-Za-z]$/)
     .min(2)
     .max(64)
     .optional()
@@ -1285,7 +1285,7 @@ const createProjectSchema = Joi.object({
       try {
         const num = new Decimal(value);
         if (!value || value === "0" || value === "0.00" || value === "0.0") {
-        return value;
+          return value;
         }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
@@ -1324,9 +1324,9 @@ const createProjectSchema = Joi.object({
     })
     .custom((value, helpers) => {
       try {
-         if (!value || value === "0" || value === "0.00" || value === "0.0") {
-        return value;
-      }
+        if (!value || value === "0" || value === "0.00" || value === "0.0") {
+          return value;
+        }
         const num = new Decimal(value);
         if (num.lte(0)) {
           return helpers.error("any.invalid");
@@ -1349,9 +1349,9 @@ const createProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
-         if (!value || value === "0" || value === "0.00" || value === "0.0") {
-        return value;
-      }
+        if (!value || value === "0" || value === "0.00" || value === "0.0") {
+          return value;
+        }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1476,9 +1476,9 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
-         if (!value || value === "0" || value === "0.00" || value === "0.0") {
-        return value;
-      }
+        if (!value || value === "0" || value === "0.00" || value === "0.0") {
+          return value;
+        }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1512,9 +1512,9 @@ const updateProjectSchema = Joi.object({
     .custom((value, helpers) => {
       try {
         const num = new Decimal(value);
-         if (!value || value === "0" || value === "0.00" || value === "0.0") {
-        return value;
-      }
+        if (!value || value === "0" || value === "0.00" || value === "0.0") {
+          return value;
+        }
         if (num.lte(0)) {
           return helpers.error("any.invalid");
         }
@@ -1821,6 +1821,7 @@ const listAttachmentsSchema = Joi.object({
     }),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+  type: Joi.string().optional().allow(null),
 })
 
 const exportListAttachmentsSchema = Joi.object({
@@ -1870,7 +1871,8 @@ const exportListAttachmentsSchema = Joi.object({
     }),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
-  timezone: Joi.string().optional()
+  timezone: Joi.string().optional(),
+  type: Joi.string().optional().allow(null),
 })
 
 const listAttachmentSummarySchema = Joi.object({
@@ -2395,7 +2397,7 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
-    caseRid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  caseRid: Joi.string().pattern(uuidRegex).max(255).optional(),
 });
 
 const exportResourceCostSchemaForFinancialHighlights = Joi.object({
@@ -2418,7 +2420,7 @@ const exportResourceCostSchemaForFinancialHighlights = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
-    caseRid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  caseRid: Joi.string().pattern(uuidRegex).max(255).optional(),
 });
 
 const listAccountLevelProjectCostsSchema = Joi.object({
@@ -2461,7 +2463,7 @@ const listAccountLevelProjectCostsSchema = Joi.object({
       'number.min': 'Limit must be greater than or equal to 1',
       'number.max': 'Limit cannot exceed 100'
     }),
-    caseRid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  caseRid: Joi.string().pattern(uuidRegex).max(255).optional(),
 });
 
 const exportListAccountLevelProjectCostsSchema = Joi.object({

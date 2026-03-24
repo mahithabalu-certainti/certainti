@@ -10,11 +10,8 @@ interface OrganizationLicensesAttributes {
   created_by?: string;
   modified_by?: string;
   auto_send_interaction?: boolean;
-  auto_access_rd?: boolean;
-  email?: string;
-  tenant_id?: string;
-  client_id?: string;
-  client_secret?: string;
+  auto_access_rd?: boolean
+  auto_send_four_part_assessment? : boolean
 }
 
 interface OrganizationLicensesCreationAttributes
@@ -38,11 +35,8 @@ export class OrganizationLicenses
   public created_by?: string;
   public modified_by?: string;
   public auto_send_interaction?: boolean;
-  public auto_access_rd?: boolean;
-  public email?: string;
-  public tenant_id?: string;
-  public client_id?: string;
-  public client_secret?: string;
+  public auto_access_rd?: boolean
+  public auto_send_four_part_assessment? : boolean
 
   static initialize(sequelize: Sequelize) {
     OrganizationLicenses.init(
@@ -92,21 +86,9 @@ export class OrganizationLicenses
           type: DataTypes.BOOLEAN,
           allowNull: true,
         },
-        email: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        tenant_id: {
-          type: DataTypes.STRING(50),
-          allowNull: true,
-        },
-        client_id: {
-          type: DataTypes.STRING(50),
-          allowNull: true,
-        },
-        client_secret: {
-          type: DataTypes.STRING(50),
-          allowNull: true,
+        auto_send_four_part_assessment : {
+          type : DataTypes.BOOLEAN,
+          defaultValue : false
         }
       },
       {

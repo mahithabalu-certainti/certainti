@@ -5,7 +5,7 @@ import multer from "multer";
 import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
 
 const routes: Router = Router();
-const upload = multer({storage : multer.memoryStorage()})
+const upload = multer({ storage: multer.memoryStorage() })
 routes.post(
   "/task/create",
   checkUserStatusMiddleware("activity_task_view_edit"),
@@ -49,6 +49,18 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   upload.array('files'),
   controller.activitiesController.createActivityMeeting
+)
+
+routes.post(
+  "/meeting/cancel",
+  checkUserStatusMiddleware("activity_meeting_view_edit"),
+  controller.activitiesController.cancelActivityMeeting
+)
+
+routes.post(
+  "/meeting/complete",
+  checkUserStatusMiddleware("activity_meeting_view_edit"),
+  controller.activitiesController.completeActivityMeeting
 )
 
 routes.post(

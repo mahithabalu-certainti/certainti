@@ -4,10 +4,11 @@ import { Case } from "../../models/caseModel";
 
 
 export interface ConfigJson {
-    credit_rate: number;
+    asc_c2_credit_no_prior_qre: number;
+    asc_c2_credit_with_prior_qre: number;
     sub_con_percent: number;
-    qre_cap_rate: number;
-    fixed_base_ratio: number;
+    asc_qre_credit_percentage: number;
+    fixed_base_percentage: number;
     total_group_qre_percent : number;
 }
 
@@ -49,7 +50,12 @@ export class RdCreditCalculatorForMA {
             inputFields,
             computedFields,
             finalCredit: this.round2(part2ASCCreditCalculationInfo.amount_group_credit),
-            totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre)
+            totalQRE: this.round2(part1QualifiedResearchExpenseInfo.total_qre),
+            totalContract: this.round2(part1QualifiedResearchExpenseInfo.current_year_contract),
+            totalWages: this.round2(part1QualifiedResearchExpenseInfo.current_year_wages),
+            prev1yearQRE: this.round2(stateRdData.prior3YearsQREs[0]?.qre || 0),
+            prev2yearQRE: this.round2(stateRdData.prior3YearsQREs[1]?.qre || 0),
+            prev3yearQRE: this.round2(stateRdData.prior3YearsQREs[2]?.qre || 0), averageAnnualGrossReceipts: this.round2(part3CreditCalInfo.avg_total_previous_receipts)
         }
 
     }
@@ -92,13 +98,13 @@ export class RdCreditCalculatorForMA {
         const total_qre = new Decimal(prior3YearsQREs.reduce((sum, item) => sum + Number(item.qre), 0));
         const average_qre = total_qre.div(3);
 
-        const fifty_percent_qre = average_qre.mul(config.qre_cap_rate/100);
+        const fifty_percent_qre = average_qre.mul(config.asc_qre_credit_percentage/100);
         const excess_qre = part1TotalQre.minus(fifty_percent_qre)
 
         const final_excess_qre = new Decimal(excess_qre.lt(0) ? 0 : excess_qre);
-        const applicable_credit_rate = config.credit_rate;
+        const applicable_credit_rate = config.asc_c2_credit_no_prior_qre;
 
-        const total_credit_group = final_excess_qre.mul(config.credit_rate/100);
+        const total_credit_group = final_excess_qre.mul(config.asc_c2_credit_no_prior_qre/100);
 
         const aggregate_group_credit_percent = part1TotalQre.div(part1TotalQreAgg).mul(100);
 
@@ -111,7 +117,8 @@ export class RdCreditCalculatorForMA {
             applicable_credit_rate,
             total_credit_group: this.round2(total_credit_group),
             aggregate_group_credit_percent,
-            amount_group_credit: this.round2(amount_group_credit)
+            amount_group_credit: this.round2(amount_group_credit),
+            
         }
 
     }
@@ -136,13 +143,13 @@ export class RdCreditCalculatorForMA {
             (sum, item) => sum + Number(item.grossReceipts || 0), 0));
         const avg_total_previous_receipts = totalPreviousGrossReceipts.div(previousYearsGrossReceipts.length);
 
-        const fixed_base_ratio = config.fixed_base_ratio;
+        const fixed_base_ratio = config.fixed_base_percentage;
 
-        const base_amount = avg_total_previous_receipts.mul(config.fixed_base_ratio/100);
+        const base_amount = avg_total_previous_receipts.mul(config.fixed_base_percentage/100);
         const calculateDifference = part1TotalAggregate.minus(base_amount)
         const line17 = new Decimal(calculateDifference.lessThan(0) ? 0.00 : calculateDifference);
         const line18 = line17.mul(config.total_group_qre_percent/100)
-        const line19 = caseDetails.basic_research_payments || 0.00
+        const line19 = caseDetails.basic_research_payments_ma || 0.00
         const line20 = new Decimal(line18.add(line19))
         const line21 = part1TotalQre.div(part1TotalAggregate)
         const line21Final = line21.mul(100)
@@ -213,7 +220,7 @@ export class RdCreditCalculatorForMA {
             year : metadata.currentYear,
             wages: currentYearQREs.wages,
             sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)),
-            contract: currentYearContract
+            contract: this.round2(currentYearContract)
 
         })
         annualGrossReceipts.forEach((item) => {
@@ -283,7 +290,7 @@ export class RdCreditCalculatorForMA {
         "[7] Average qualified research expenses for the 3 most recent prior years":
             part2ASCCreditCalculationInfo.average_qre,
 
-        [`[8] Enter ${extractConfig.qre_cap_rate}% of line 7`]:
+        [`[8] Enter ${extractConfig.asc_qre_credit_percentage}% of line 7`]:
             part2ASCCreditCalculationInfo.fifty_percent_qre,
 
         "[9] Subtract the amount on line 8 from current year expenses on line 6. Not less than 0":
@@ -309,7 +316,7 @@ export class RdCreditCalculatorForMA {
         "[15] Average annual gross receipts from the 4 most recent taxable years":
             part3CreditCalInfo.avg_total_previous_receipts,
 
-        [`[16] Base amount. Multiply line 14 by line 15. Not less than ${extractConfig.fixed_base_ratio}% of line 6`]:
+        [`[16] Base amount. Multiply line 14 by line 15. Not less than ${extractConfig.fixed_base_percentage}% of line 6`]:
             part3CreditCalInfo.base_amount,
 
         "[17] Subtract line 16 from current year expenses on line 6. Not less than 0":

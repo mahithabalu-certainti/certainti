@@ -2,7 +2,6 @@ import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import { Decimal } from "decimal.js";
 import { AnnualGrossReceipt, QRE, FederalRDData } from "../rdComputation/rdCreditTypes";
-import { FederalMockDataLoadMap } from "../rdComputation/rdDataLoadMockService";
 import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
@@ -11,7 +10,10 @@ export interface ConfigJson {
     elect_280c_yes: number;
     sub_con_percent: number;
     fixed_base_percentage: number;
-    qre_cap_rate: number;
+    rrc_qre_credit_percentage: number;
+    credit_rate_c1: number;
+    credit_rate_c2: number;
+    qre_credit_percentage: number;
 }
 
 export interface Splitconfig {
@@ -76,7 +78,13 @@ export class RdCreditCalculatorForUSA {
             return {
                 inputFields,
                 computedFields,
-                finalCredit:taxCredit
+                finalCredit:taxCredit,
+                totalQRE:totalCurrentYearQRE,
+                averageAnnualGrossReceipts:totalGrossReceipts.div(annualGrossReceiptsCount),
+                prev1yearQRE: federalRdData.prior3YearsQREs[0]?.qre || 0,
+                prev2yearQRE: federalRdData.prior3YearsQREs[1]?.qre || 0,
+                prev3yearQRE: federalRdData.prior3YearsQREs[2]?.qre || 0,
+
             }
         } catch (error) {
             logMessage(`Error fetching RD Credit : ${error}`);
@@ -110,15 +118,17 @@ export class RdCreditCalculatorForUSA {
         // ---- Line (14% or 6%) if any prior year QRE = zero ----
         const hadZeroYear = prior3YearsQREs.some(y => y.qre === 0);
 
-        // IRS rule: If any year has zero → use 6%, else → 14%
-        const percentage = hadZeroYear ? configAsc.fixed_base_percentage : configAsc.credit_rate;
+
+         // IRS rule: If any year has zero → use 6%, else → 14%
+        const percentage = hadZeroYear ? configAsc.credit_rate_c2 : configAsc.credit_rate_c1;
+
 
         // ---- Line 24: Multiply line 23 by percentage ----
         const line24 = line23.mul(percentage/100);
 
         // ---- Line 25: (ASC Base Credit) ----
         const line25 = line24; // because you don’t have line19 in ASC
-        let dynamicPercentageKey = `Enter ${configAsc.credit_rate}%. If QREs in any of the 3 years is zero, enter ${configAsc.fixed_base_percentage}%`
+        let dynamicPercentageKey = `Enter ${configAsc.credit_rate_c1}%. If QREs in any of the 3 years is zero, enter ${configAsc.credit_rate_c2}%`;
 
         return {
             "[20] Total Qualified Research Expenses": Number(await this.round2(totalQRE)),
@@ -148,21 +158,25 @@ export class RdCreditCalculatorForUSA {
         //---- Line 6: fixedBasePercentage
 
         //---- Line 7: Average Gross Receipts
-        const line7 = prior4YearsGrossReceiptsTotal.div(priorYearsCount); // usually 4
-
+        // Ensure valid inputs to prevent NaN
+        const validYearsCount = priorYearsCount > 0 ? priorYearsCount : 1;
+        const validGrossReceipts = Decimal.isDecimal(prior4YearsGrossReceiptsTotal) ? prior4YearsGrossReceiptsTotal : new Decimal(0);
+        const line7 = validGrossReceipts.div(validYearsCount); // usually 4
+        logMessage(`RRC Line 7 (Average Annual Gross Receipts): ${line7}`);
         //---- Line 8: Multiply line 7 by percentage on line 6 (configRRC.fixedBasePercentage)
-        const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage/100));
+        const line8 = line7.mul(new Decimal((configRRC.fixed_base_percentage ?? 0.16)/100));
 
         //---- Line 9: Subtract line 8 from line 5
-        const line9 = currentYearQRE.minus(line8)
-        const maxLine9 = Decimal.max(line9, 0)
+        const line9 = currentYearQRE.minus(line8);
+        const maxLine9 = Decimal.max(line9, 0);
+        logMessage(`RRC Line 9 (QRE - Base): ${maxLine9}`);
 
         //---- Line 10: Multiply line 5 by 50%
-        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate/100 || 0.5);
+        const line10 = currentYearQRE.mul(configRRC.rrc_qre_credit_percentage/100 || 0.5);
 
         //---- Line 11: Enter smaller of line 9 or line 10
         const line11 = Decimal.min(line10, maxLine9);
-        let dynamicLine5 = `[10] Multiply line 5 by ${configRRC.qre_cap_rate}`
+        let dynamicLine5 = `[10] Multiply line 5 by ${configRRC.qre_credit_percentage}`
 
         return {
             "[5] Total Qualified Research Expenses": await this.round2(currentYearQRE),
@@ -307,9 +321,9 @@ export class RdCreditCalculatorForUSA {
             "Average Annual Gross Receipts" : priorYearGross,
             "Total Qualified Research Expenses" : priorYearsQre,
             "qreSummary" : {
-                "Wages" : currentYearQREs.wages,
-                "Supplies" : currentYearQREs.supplies,
-                [`${metadata.subConPercent}% Contract Expenses`] : currentYearQREs.contract
+                "Wages" : this.round2(currentYearQREs.wages ?? 0.00),
+                "Supplies" : this.round2(currentYearQREs.supplies ?? 0.00),
+                [`${metadata.subConPercent}% Contract Expenses`] : this.round2(currentYearQREs.contract ?? 0.00)
             }
         };
 

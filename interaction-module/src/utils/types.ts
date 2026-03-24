@@ -1,3 +1,5 @@
+import { filterType } from "./rawQueries";
+
 export interface ICreateInteraction {
   project_fiscal_rid: string;
   account_rid: string;
@@ -32,6 +34,8 @@ export interface ICreateInteraction {
   }
   recipient_name? : any,
   recipient_email? : any
+  interaction_assessment_source_rid? : string
+  interaction_status_rid? : string
 }
 
 export interface IProject {
@@ -176,4 +180,112 @@ export interface ICreateTemplateInteraction {
     question_seq_num?: string;
   }[];
 
+}
+export interface ProjectMetadata {
+  projectId : string
+  companyId : string
+  jurisdiction : string
+}
+
+export interface FourPartAssessment {
+  permitted_purpose: {
+    status : string
+    rationale : string
+  }
+  technological_uncertainty: {
+    status : string
+    rationale : string
+  }
+  process_of_experimentation: {
+    status : string
+    rationale : string
+  }
+  technological_in_nature: {
+    status : string
+    rationale : string
+  }
+  status: string
+  rationale: string
+  summary_judgment: string
+  rd_potential_category: string
+}
+
+export interface Assessment {
+  tracker_one_liner : string
+  project_metadata : ProjectMetadata
+  four_part_assessment : FourPartAssessment
+}
+
+export interface FourPartAssessmentResponse {
+  assessment : Assessment
+  summary_judgment : string
+  rd_potential_category : string
+  follow_up_questions : string[]
+}
+
+export interface FourPartAssessmentRequestPayload {
+  account_rid : string
+  project_fiscal_rid : string
+  case_rid : string
+  page : number
+  limit : number
+  search : string
+  filter : filterType,
+  sort : string
+  sort_by : string
+  type : string
+  isExport : boolean
+}
+
+export interface ListResponseType<T> {
+  statusCode : number
+  statusCodeValue : string
+  statusMessage : string
+  data : T
+}
+
+export interface ParentAccountType {
+  rid : string
+  account_name : string
+  r_number : string
+  storage_type : string
+  is_parent : boolean
+  currency_rid : string
+}
+
+interface FourPartRes {
+  
+}
+
+export interface FourPartAssessmentListResponse {
+  rid : string
+  r_number : string
+  project_code : string
+  status : string
+  rd_potential_category : string
+  created_datetime : string
+  modified_datetime : string
+  created_by : string
+  modified_by : string
+  created_by_name : string
+  modified_by_name : string | null
+  total_results : string
+}
+
+export interface UserReturnType {
+  rid : string
+  first_name : string
+  last_name : string
+}
+
+export interface InteractionStatusUpdateRequest {
+  rid : string
+  account_rid : string
+  status_name : string
+}
+
+export interface AllStatusType {
+  rid : string
+  status_name : string
+  status : string
 }

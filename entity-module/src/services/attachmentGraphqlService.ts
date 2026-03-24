@@ -1,11 +1,16 @@
 import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource"
 import { initOrgSequelize } from "../config/orgDataSource"
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants"
+import { entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants"
 import { logMessage, setInlineForAttachments } from "../utils/helpers"
+import SchemaService from "./schemaService";
 
 export default class AttachmentGraphqlServies {
     private attachmentService = Configurations.getInstance().getServices().attachmentServices;
+    private schemaService : SchemaService
+    constructor() {
+        this.schemaService = new SchemaService();
+      }
     
     async updateInlineGraphqlDetails(data : any) {
         logMessage(`Updating inline GraphQL details for account: ${JSON.stringify(data)}`);
@@ -102,6 +107,32 @@ export default class AttachmentGraphqlServies {
                                 
                         }
                         await orgSequelize.query(rawQueries.insertAttachementTimeline(schemaName, data, latestData))
+                        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({userId: data.userId!, eventType: eventTypes.UI_HANDLER});
+                        let projectFiscalId = latestData.attach_to;
+                        if(latestData.attachment_level === 'project_resource' || latestData.attachment_level === 'project_task') {
+                        if(latestData.attachment_level === 'project_resource') {
+                            const projectResource = await this.fetchProjectResourceById(checkAccountExists[0][0].r_number, latestData.attach_to);
+                        projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+                        }
+                        if(latestData.attachment_level === 'project_task') {
+                            const projectTask = await this.fetchProjectTaskById(checkAccountExists[0][0].r_number, latestData.attach_to);
+                            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+                        }
+                        }
+                        const timelineTypes = this.schemaService.getTimelineTypesForAttachmentLevel(latestData.attachment_level);
+                        await this.schemaService.createAccountTimelineEntry(checkAccountExists[0][0].r_number, {
+                                created_by: data.userId!,
+                                account_rid: data.account_rid,
+                                entity_rid: latestData.rid,
+                                entity_name: entityTypes.ATTACHMENT,
+                                created_by_name: userEventInfo.full_name,
+                                event_type_rid: userEventInfo.event_type_rid,
+                                event_name: eventNames.UPDATE,
+                                descriptions: latestData.document_name,
+                                //  project_rid: attachmentData.attachment_level === "project" ? attachmentData.attach_to : '',
+                                project_rid: ['project', 'project_resource', 'project_task'].includes(latestData.attachment_level) ? projectFiscalId : '',
+                                    case_rid:latestData.attachment_level === 'case' ? latestData.attach_to : '', 
+                                }, timelineTypes);
                         return {
                             statusCode : HttpStatus.SUCCESS,
                             statusMessage : STATUS_MESSAGE.attachmentUpdatedSuccess,
@@ -112,4 +143,40 @@ export default class AttachmentGraphqlServies {
             }
         }
     }
+     async fetchProjectResourceById(
+        accountNumber: string,
+        projectResourceId: string
+      ) {
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+    
+        const query = rawQueries.fetchProjectResourceById(schemaName);
+    
+        const sequelize = await initOrgSequelize()
+        const result = await sequelize.query(query, {
+          replacements: { projectResourceId },
+          type: "SELECT",
+          raw: true,
+        });
+        return result[0];
+      }
+    
+      async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+    
+        const query = rawQueries.fetchProjectTaskById(schemaName);
+    
+        const sequelize = await initOrgSequelize()
+        const result = await sequelize.query(query, {
+          replacements: { projectTaskId },
+          type: "SELECT",
+          raw: true,
+        });
+        return result[0];
+      }
 }

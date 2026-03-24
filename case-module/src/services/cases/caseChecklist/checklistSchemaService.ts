@@ -8,7 +8,10 @@ import {
 import { CaseModelService } from "../../../services/caseModelsService";
 import { v4 as uuidv4 } from "uuid";
 import {
+  entityTypes,
   ENV_PREFIX,
+  eventNames,
+  eventTypes,
   HttpStatus,
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -562,24 +565,24 @@ export class ChecklistSchemaService {
           [entityId]
         );
         allChecklists.push(...accountAttachments);
-         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
         const tableExists = await this.helperMethod.checkTableExists(schemaName, "cases");
-      if (tableExists) {
-        const cases = await this.helperMethod.getCasesByAccountId(
-          accountNumber,
-          entityId
-        );
-        const caseIds = cases.map((c: { rid: any }) => c.rid);
-        const caseAttachments = await fetchAttachments(
-          CheckList,
-          "case",
-          caseIds
-        );
-        allChecklists.push(...caseAttachments);
-      }
+        if (tableExists) {
+          const cases = await this.helperMethod.getCasesByAccountId(
+            accountNumber,
+            entityId
+          );
+          const caseIds = cases.map((c: { rid: any }) => c.rid);
+          const caseAttachments = await fetchAttachments(
+            CheckList,
+            "case",
+            caseIds
+          );
+          allChecklists.push(...caseAttachments);
+        }
         const projects = await this.helperMethod.getProjectsByAccountId(
           accountNumber,
           entityId,
@@ -795,9 +798,9 @@ export class ChecklistSchemaService {
       const [users] = await Promise.all([
         userIds.length > 0
           ? mainSequelize.query(rawQueries.listUsersByIds(userIds), {
-              replacements: { userIds },
-              type: "SELECT",
-            })
+            replacements: { userIds },
+            type: "SELECT",
+          })
           : Promise.resolve([]),
       ]);
       const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
@@ -1022,10 +1025,39 @@ export class ChecklistSchemaService {
         },
         { transaction }
       );
+      let projectFiscalId = caseRequest.attach_to;
+        if(caseRequest.attachment_level === 'project_resource' || caseRequest.attachment_level === 'project_task') {
+          if(caseRequest.attachment_level === 'project_resource') {
+            const projectResource = await this.helperMethod.fetchProjectResourceById(accountNumber, caseRequest.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(caseRequest.attachment_level === 'project_task') {
+            const projectTask = await this.helperMethod.fetchProjectTaskById(accountNumber, caseRequest.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
+      const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+        userId: caseRequest.created_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(caseRequest.attachment_level);
+
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+        created_by: caseRequest.created_by!,
+        account_rid: caseRequest.account_rid,
+        entity_rid: createdChecklist.rid!,
+        entity_name: entityTypes.CHECKLIST,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.CREATE,
+        descriptions: caseRequest.checklist_name,
+        project_rid: ['project', 'project_resource', 'project_task'].includes(caseRequest.attachment_level) ? projectFiscalId : '',
+        case_rid: caseRequest.attachment_level === 'case' ? caseRequest.attach_to : '',
+      }, timelineTypes);
       return createdChecklist;
     } catch (error) {
-       console.log(error)
-       const errorMessage = error instanceof Error ? error.message : error;
+      console.log(error)
+      const errorMessage = error instanceof Error ? error.message : error;
       logMessage(`Error creating checklist: ${errorMessage}`);
       throw new Error("Error creating checklist: " + errorMessage);
     }
@@ -1114,6 +1146,25 @@ export class ChecklistSchemaService {
         { where: { rid: caseRequest.checklist_rid }, transaction }
       );
 
+      const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+        userId: caseRequest.modified_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(caseRequest.attachment_level);
+
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+        created_by: caseRequest.modified_by!,
+        account_rid: caseRequest.account_rid,
+        entity_rid: caseRequest.checklist_rid!,
+        entity_name: entityTypes.CHECKLIST,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.UPDATE,
+        descriptions: caseRequest.checklist_name,
+        project_rid: caseRequest.attachment_level === 'project' ? caseRequest.attach_to : '',
+        case_rid: caseRequest.attachment_level === 'case' ? caseRequest.attach_to : '',
+      }, timelineTypes);
+
       return createdChecklist;
     } catch (error) {
       logMessage(`Error updating checklist: ${error}`);
@@ -1183,27 +1234,27 @@ export class ChecklistSchemaService {
     }
   }
 
-    async updateChecklistItems(data: any, accountNumber: string, transaction: Transaction) {
-      if (!this.mainDbSequelize) {
-        this.mainDbSequelize = await initMainDbSequelize()
-      }
-      const { CheckListItem } = await this.caseModelService.getModels(accountNumber);
-      const fetchChecklistStatusId: any = await this.mainDbSequelize.query(rawQueries.getChecklistStatusByName(data.status_rid));
-  
-      const [result] = await CheckListItem.update({
-        status_rid: fetchChecklistStatusId[0][0].rid
-      }, {
-        where: {
-          rid: data.rid
-        },
-        transaction
-      });
-      if (result === 1) {
-        transaction.commit();
-        return result;
-      } else {
-        transaction.rollback()
-        return result;
-      }
+  async updateChecklistItems(data: any, accountNumber: string, transaction: Transaction) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
     }
+    const { CheckListItem } = await this.caseModelService.getModels(accountNumber);
+    const fetchChecklistStatusId: any = await this.mainDbSequelize.query(rawQueries.getChecklistStatusByName(data.status_rid));
+
+    const [result] = await CheckListItem.update({
+      status_rid: fetchChecklistStatusId[0][0].rid
+    }, {
+      where: {
+        rid: data.rid
+      },
+      transaction
+    });
+    if (result === 1) {
+      transaction.commit();
+      return result;
+    } else {
+      transaction.rollback()
+      return result;
+    }
+  }
 }

@@ -20,6 +20,8 @@ import {
 } from "@azure/storage-blob";
 import { parse } from "url";
 import { CaseProjectTask } from "../models/caseProjectTaskModel";
+import { Op, Sequelize } from "sequelize";
+
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -434,8 +436,8 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.case_team_member_role_rid) {
-    if(reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
+  if (reqData.case_team_member_role_rid) {
+    if (reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
       validUpdateConditions = `case_team_member_role_rid = '${reqData.case_team_member_role_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
@@ -458,31 +460,31 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.task_description != undefined) {
-    if(reqData.task_description !== dbData.task_description) {
+  if (reqData.task_description != undefined) {
+    if (reqData.task_description !== dbData.task_description) {
       validUpdateConditions = `task_description = '${reqData.task_description.replace(/'/g, "''")}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.task_category_rid) {
-    if(reqData.task_category_rid !== dbData.task_category_rid) {
+  if (reqData.task_category_rid) {
+    if (reqData.task_category_rid !== dbData.task_category_rid) {
       validUpdateConditions = `task_category_rid = '${reqData.task_category_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.weightage_rid) {
-    if(reqData.weightage_rid !== dbData.weightage_rid) {
+  if (reqData.weightage_rid) {
+    if (reqData.weightage_rid !== dbData.weightage_rid) {
       validUpdateConditions = `weightage_rid = '${reqData.weightage_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.status_rid) {
-    if(reqData.status_rid !== dbData.status_rid) {
+  if (reqData.status_rid) {
+    if (reqData.status_rid !== dbData.status_rid) {
       validUpdateConditions = `status_rid = '${reqData.status_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(validUpdateQuery.length > 0) {
+  if (validUpdateQuery.length > 0) {
     validUpdateConditions = `modified_by = '${userId}'`
     validUpdateQuery.push(validUpdateConditions)
     validUpdateConditions = `modified_datetime = NOW()`
@@ -490,10 +492,10 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
   }
   return validUpdateQuery
 }
-export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
-  let columns : string[] = [];
-  if(data.checklist_template_rid !== '') {
-    if(data.checklist_template_rid !== dbData.checklist_template_rid) {
+export const getColumnsNamesForTaskUpdate = (data: UpdateCaseTaskType, dbData: CaseTask) => {
+  let columns: string[] = [];
+  if (data.checklist_template_rid !== '') {
+    if (data.checklist_template_rid !== dbData.checklist_template_rid) {
       columns.push(`checklist_template_rid`)
     }
   }
@@ -591,7 +593,14 @@ export async function uploadToAzureBlob(
     let blobName;
     if (flag === "cases") {
       blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
-    } else {
+    }
+    else if (flag === "data-mapper") {
+      blobName = `${account_id}/data-mapper/${task_number ? task_number + '/' : ''}${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    }
+    else if (flag === "signoff") {
+      blobName = `${account_id}/cases/dossier/${timestamp}-${sanitizedBaseName}${originalExtension}`
+    }
+    else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
 
@@ -626,6 +635,54 @@ export async function uploadToAzureBlob(
     );
   }
 }
+
+/**
+ * Upload a Buffer to Azure Blob Storage
+ * @param buffer - Buffer containing file data
+ * @param containerName - Azure Blob container name
+ * @param blobName - Name for the blob in Azure
+ * @param connectionString - Azure Storage connection string
+ * @returns URL of the uploaded blob
+ */
+export async function uploadBufferToAzureBlob(buffer: Buffer, blobName: string, accountNumber: string): Promise<string> {
+  // Get connection string from secrets manager
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  const containerName = accountNumber.toLowerCase();
+
+  if (!connectionString) {
+    throw new Error("Azure storage connection string is required");
+  }
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  await containerClient.createIfNotExists();
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  await blockBlobClient.uploadData(buffer, { blobHTTPHeaders: { blobContentType: 'application/pdf' } });
+  return blockBlobClient.url;
+}
+
+/**
+ * Download a blob from Azure Blob Storage and return its contents as a Buffer
+ * @param containerName - Azure Blob container name
+ * @param blobName - Name of the blob in Azure
+ * @param connectionString - Azure Storage connection string
+ * @returns Buffer containing the blob's data
+ */
+export async function downloadBufferFromAzureBlob(containerName: string, blobName: string): Promise<Buffer> {
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  if (!connectionString) {
+    throw new Error("Azure storage connection string is required");
+  }
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  const downloadResponse = await blockBlobClient.download();
+  const chunks: Buffer[] = [];
+  for await (const chunk of downloadResponse.readableStreamBody!) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 
@@ -663,7 +720,7 @@ export const getColumnsNamesForTaskCommentsUpdate = (data: UpdateCommentsType, d
   return columns;
 }
 
-export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promise<string> {
+export async function generateSasUrl(blobUrl: string, expiryMinutes = 1440): Promise<string> {
   try {
     const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     // const connectionString = "storage-account-connection-string";
@@ -674,7 +731,9 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       throw new Error("Azure storage connection string is required");
     }
 
-    const parsedUrl = parse(blobUrl);
+    // ✅ Remove existing SAS token if present
+    const cleanUrl = blobUrl.split("?")[0] as string;
+    const parsedUrl = parse(cleanUrl);
     const hostnameParts = parsedUrl.hostname?.split(".") || [];
     const accountName = hostnameParts[0];
     const pathParts = parsedUrl.pathname?.replace(/^\/+/, "").split("/") || [];
@@ -707,7 +766,7 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       credential
     ).toString();
 
-    const sasUrl = `${blobUrl}?${sasToken}`;
+    const sasUrl = `${cleanUrl}?${sasToken}`;
     return sasUrl;
   } catch (error) {
     logMessage(`Error generating SAS URL: ${error}`);
@@ -744,4 +803,163 @@ export function getFiscalEndYear(fiscalStart: string, fiscalEnd: string, fiscalY
   const endMonth = parseInt(endMonthStr || '0', 10);
   if (isNaN(startMonth) || isNaN(endMonth)) return fiscalYear;
   return endMonth < startMonth ? fiscalYear + 1 : fiscalYear;
+}
+
+
+export const applyFilters = (filters: Record<string, any>, whereClause: any) => {
+  if (filters) {
+    Object.entries(filters).forEach(([field, filter]) => {
+      if (!filter || typeof filter !== 'object') {
+        console.log(`Skipping filter for field ${field} due to invalid structure`);
+        return;
+      }
+
+      const operator = Object.keys(filter)[0];
+      const value = filter[operator as string];
+
+      if (!operator || value === undefined) {
+        console.log(`Skipping filter for field ${field} due to missing operator or value`);
+        return;
+      }
+
+      const condition: any = {};
+
+      switch (field) {
+        case 'r_number':
+        case 'form_name':
+        case 'browse_file':
+        case 'document_name':
+        case 'country_rid':
+        case 'state_rid':
+        case 'format':
+        case 'status_rid':
+        case 'error_message':
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.iLike]: value }; break;
+            case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;
+            case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
+            case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+            case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+          }
+          break;
+
+        case 'is_active':
+          if (operator.toLowerCase() === 'equals') {
+            condition[field] = { [Op.eq]: value };
+          }
+          break;
+
+        case 'is_federal':
+          const parsedValue = (value === 'true' || value === true) ? true : (value === 'false' || value === false) ? false : value;
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.eq]: parsedValue }; break;
+            case 'not_equals': condition[field] = { [Op.ne]: parsedValue }; break;
+            case 'in':
+              const valueArray = Array.isArray(value) ? value : [value];
+              const parsedArray = valueArray.map(v => (v === 'true' || v === true) ? true : (v === 'false' || v === false) ? false : v);
+              condition[field] = { [Op.in]: parsedArray };
+              break;
+            case 'is_empty': condition[field] = { [Op.is]: null }; break;
+          }
+          break;
+
+        case 'size_in_mb':
+          switch (operator.toLowerCase()) {
+            case 'equals': condition[field] = { [Op.eq]: value }; break;
+            case 'greater_than': condition[field] = { [Op.gt]: value }; break;
+            case 'less_than': condition[field] = { [Op.lt]: value }; break;
+            case 'not_equals': condition[field] = { [Op.ne]: value }; break;
+            case 'between': condition[field] = { [Op.between]: [value.from, value.to] }; break;
+          }
+          break;
+
+        case 'created_datetime':
+        case 'modified_datetime':
+        case 'effective_from_date':
+        case 'effective_to_date':
+          switch (operator.toLowerCase()) {
+            case 'equals': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'before': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'after': {
+              const date = new Date(value);
+              condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
+              break;
+            }
+            case 'between': {
+              if (value) {
+                const startDate = new Date(value.from);
+                const endDate = new Date(value.to);
+                condition[field] = Sequelize.literal(
+                  `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                );
+              }
+              break;
+            }
+            case 'is_empty': condition[field] = { [Op.is]: null }; break;
+          }
+          break;
+
+        default:
+          console.log(`Unhandled filter field: ${field}`);
+      }
+
+      if (Object.keys(condition).length > 0) {
+        if (!whereClause[Op.and]) {
+          whereClause[Op.and] = [];
+        }
+        whereClause[Op.and].push(condition);
+      }
+    });
+  }
+  return whereClause;
+};
+
+export const uploadMultipleFilesToAzureBlob = async (accountRid: string, accountNumber: string, files: Express.Multer.File[]) => {
+  if (files.length < 1) throw new Error("File is required");
+  if (!accountRid) throw new Error("Account RID is required");
+
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  if (!connectionString) throw new Error("Connection string is invalid");
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerName = accountNumber.toLowerCase();
+  const container = blobServiceClient.getContainerClient(containerName);
+  await container.createIfNotExists();
+  const uploadedResult = await Promise.all(
+    files.map(async (file: Express.Multer.File) => {
+      const extension = file.originalname.includes(".") ? file.originalname.substring(file.originalname.lastIndexOf(".")) : "";
+      const baseName = file.originalname.replace(/\.[^/.]+$/, "");
+      const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, "");
+      const timestamp = Date.now()
+      const blobName = `${accountRid}/cases/dossier/${timestamp}-${sanitizedBaseName}${extension}`
+      const blockBlobClient = container.getBlockBlobClient(blobName);
+      const uploadOptions = {
+        blobHTTPHeaders: {
+          blobContentType: file.mimetype || "application/octet-stream"
+        }
+      }
+      await blockBlobClient.uploadData(file.buffer, uploadOptions);
+      const sizeInMb = parseFloat((file.size / (1024 * 1024)).toFixed(2))
+      return {
+        url: blockBlobClient.url,
+        name: sanitizedBaseName,
+        extension: extension,
+        size: sizeInMb,
+        fieldName: file.fieldname
+      }
+    })
+  )
+  return uploadedResult;
+}
+
+export const addLog = (methodName: string, timestamp: string, message: string) => {
+  const logger = getLogger();
+  return logger.info(`MethodName : ${methodName}, Timestamp : ${timestamp}, Error : ${message}`)
 }

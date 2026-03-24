@@ -11,6 +11,7 @@ export interface WorkflowConnectorMapAttributes {
   source_rid: string;
   target_rid: string;
   relationship_connector_rid: string;
+  status_rid : string
 }
 
 export interface WorkflowConnectorMapCreationAttributes
@@ -31,6 +32,7 @@ export class WorkflowConnectorMapping
   public source_rid!: string;
   public target_rid!: string;
   public relationship_connector_rid!: string;
+  public status_rid! : string
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return WorkflowConnectorMapping.init(
@@ -77,6 +79,10 @@ export class WorkflowConnectorMapping
         relationship_connector_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+        },
+        status_rid : {
+          type : DataTypes.STRING(50),
+          allowNull : true
         }
       },
       {

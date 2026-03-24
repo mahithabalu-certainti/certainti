@@ -1,3 +1,5 @@
+import { Sequelize } from "sequelize/types/sequelize";
+
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -60,7 +62,25 @@ export const STATUS_MESSAGE = {
   invalidStatus: "Invalid Status. Status should either Active/In-Active.",
   noDataToUpdate: "Data is requried to update",
   storeInParent: "store_in_parent",
+  separateDb: "separate_db",
 };
+
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+}
+
+export const eventTypes = {
+  UI_HANDLER: "web",
+}
 
 export const rawQueries = {
   fetchAccountDetails(schemaName: string, accountRid: string) {
@@ -374,6 +394,96 @@ export const rawQueries = {
         AND entity_type = 'Account'
     `;
   },
+  fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  async fetchParentAccount(
+    accountRid: any,
+    mainSequelize: Sequelize
+  ): Promise<any> {
+    let checkIsSeparateDb: any = await mainSequelize.query(
+      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    );
+    if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
+      return `SELECT rid, r_number, account_name, storage_type, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+    } else {
+      return `
+      with fetch_account_details AS (
+      SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      )
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
+      WHERE a.rid = ad.parent_account_rid`;
+    }
+  },
+  fetchAccountTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid,r_number,event_name, descriptions, created_datetime,created_by_name, entity_name
+      FROM "${schemaName}".account_timeline
+      WHERE account_rid = :accountId
+      and document_rid is null
+      ORDER BY created_datetime DESC NULLS LAST
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchCaseTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
+      FROM "${schemaName}".case_timeline
+      WHERE case_rid = :caseId
+      ORDER BY created_datetime DESC NULLS LAST
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchProjectTimelineEntries(schemaName: string) {
+    return `
+      SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
+      FROM "${schemaName}".project_timeline
+      WHERE project_rid = :projectId
+      and document_rid is null
+      ORDER BY created_datetime DESC NULLS LAST
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchAccountTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".account_timeline
+      WHERE account_rid = :accountId
+       and document_rid is null
+    `;
+  },
+  fetchProjectTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".project_timeline
+      WHERE project_rid = :projectId
+       and document_rid is null
+    `;
+  },
+  fetchCaseTimelineEntriesCount(schemaName: string) {
+    return `
+      SELECT count(*) as count
+      FROM "${schemaName}".case_timeline
+      WHERE case_rid = :caseId
+    `;
+  },
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+          )
+          RETURNING *;
+        `
+  },
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
+    `;
+  },
   getAccountFiscalSummaryByAccountRidsQuery(schemaName: string) {
     return `
       SELECT  
@@ -390,7 +500,7 @@ export const rawQueries = {
       WHERE account_rid IN (:accountRids)
       GROUP BY account_rid, fiscal_year
     `;
-  }, 
+  },
   getAccountFiscalSummaryQuery(schemaName: string) {
     return `
       SELECT 
@@ -549,7 +659,7 @@ export const rawQueries = {
       "total_projects_qre",
       "total_projects_rd_credits",
     ];
-  
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_account_fiscal_${field}_idx`;
       return `
@@ -634,7 +744,7 @@ export const rawQueries = {
       REFERENCES "${schemaName}".account_details(account_rid)
       ON UPDATE CASCADE;
     `;
-  },                            
+  },
   getCreateProjectSequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_seq START 1;
@@ -691,7 +801,7 @@ export const rawQueries = {
         qre_detailed_breakdown JSON
       );
     `;
-  },  
+  },
   getAddProjectAccountForeignKeyQuery(schemaName: string): string {
     return `
       ALTER TABLE "${schemaName}".project
@@ -838,7 +948,8 @@ export const rawQueries = {
         comments VARCHAR(2000),
         project_description VARCHAR(2000),
         is_qualified BOOLEAN DEFAULT false,
-        signoff BOOLEAN DEFAULT false
+        signoff BOOLEAN DEFAULT false,
+        is_assesed BOOLEAN DEFAULT false
       );
     `;
   },
@@ -868,7 +979,7 @@ export const rawQueries = {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_history_seq START 1;
     `;
-  },        
+  },
   getCreateProjectHistoryTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".project_history (
@@ -1051,15 +1162,21 @@ export const rawQueries = {
         r_number VARCHAR(20) DEFAULT ('PRT-' || LPAD(nextval('"${schemaName}".project_timeline_seq')::TEXT, 10, '0')) NULL,
         created_by VARCHAR(50) NOT NULL,
         modified_by VARCHAR(50),
-        created_datetime TIMESTAMP DEFAULT NOW(),
-        modified_datetime TIMESTAMP,
+        created_datetime TIMESTAMPTZ DEFAULT NOW(),
+        modified_datetime TIMESTAMPTZ,
         account_rid VARCHAR(50) NOT NULL,
         document_rid VARCHAR(50),
         entity_rid VARCHAR(50) NOT NULL,
         event_name VARCHAR(100) NOT NULL,
-        event_type VARCHAR(100) NOT NULL,
-        event_status VARCHAR(100) NOT NULL,
-        event_datetime TIMESTAMPTZ NOT NULL,
+        event_type VARCHAR(100) NULL,
+        event_type_rid VARCHAR(50) NULL,
+        event_status VARCHAR(100) NULL,
+        event_datetime TIMESTAMPTZ  NULL,
+        project_rid VARCHAR(50) NULL,
+        entity_name VARCHAR(255) NULL,
+        created_by_name VARCHAR(255) NULL,
+         source_record_count integer,
+        descriptions VARCHAR(2000) NULL,
         CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
       );
     `;
@@ -1070,11 +1187,7 @@ export const rawQueries = {
       ADD CONSTRAINT project_timeline_account_rid_fkey
         FOREIGN KEY (account_rid)
         REFERENCES "${schemaName}".account_details(account_rid)
-        ON UPDATE CASCADE,
-      ADD CONSTRAINT project_timeline_entity_rid_fkey
-        FOREIGN KEY (entity_rid)
-        REFERENCES "${schemaName}".project_fiscal(rid)
-        ON UPDATE CASCADE;
+        ON UPDATE CASCADE
     `;
   },
   getCreateDocumentSequenceQuery(schemaName: string): string {
@@ -1298,7 +1411,7 @@ export const rawQueries = {
       "region_rid",
       "status_rid",
     ];
-  
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resources_${field}_idx"
       ON "${schemaName}".resources (${field});
@@ -1431,7 +1544,7 @@ export const rawQueries = {
   },
   getCreateResourceCostIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = ["resource_code"];
-  
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_cost_${field}_idx"
       ON "${schemaName}".resource_cost (${field});
@@ -1561,7 +1674,7 @@ export const rawQueries = {
   },
   getCreateResourceSkillIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = ["resource_code"];
-  
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_skill_${field}_idx"
       ON "${schemaName}".resource_skill (${field});
@@ -1710,7 +1823,7 @@ export const rawQueries = {
       "total_cost_for_year_project",
       "estimated_rd_hours",
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_fiscal_${field}_idx"
       ON "${schemaName}".resource_fiscal (${field});
@@ -1721,11 +1834,11 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_seq START 1;
     `;
   },
-  getCreateCaseHistorySubmissionSequenceQuery (schemaName : string) : string {
+  getCreateCaseHistorySubmissionSequenceQuery(schemaName: string): string {
     return `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_history_submission_seq START 1`
   },
   getCreateCaseHistorySubmissionTableQuery(schemaName: string): string {
-  return `
+    return `
     CREATE TABLE IF NOT EXISTS "${schemaName}"."case_history_submission" (
       rid VARCHAR(50) NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
       r_number VARCHAR(20) UNIQUE,
@@ -1752,7 +1865,7 @@ export const rawQueries = {
       CONSTRAINT case_history_submission_r_number_key UNIQUE (r_number)
     );
     `;
-  },                                                            
+  },
   getCreateAttachmentsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}"."attachments" (
@@ -1798,7 +1911,7 @@ export const rawQueries = {
       "document_type_rid",
       "comments",
     ];
-  
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_attachments_${field}_idx`;
       return `
@@ -1862,13 +1975,13 @@ export const rawQueries = {
         bi_weekly_cost NUMERIC(18, 2),
         daily_cost NUMERIC(18, 2),
         hourly_cost NUMERIC(18, 2),
-        total_cost_for_year_project NUMERIC(14, 2),
-        total_cost_for_year_project_resource_level NUMERIC(14, 2),
-        total_cost_for_year_project_task_level NUMERIC(14, 2),
-        total_effort_for_year_project NUMERIC(14, 2),
-        total_effort_for_year_project_resource_level NUMERIC(14, 2),
-        total_effort_for_year_project_task_level NUMERIC(14, 2),
-        estimated_rd_hours NUMERIC(14, 2),
+        total_cost_for_year_project NUMERIC(18, 2),
+        total_cost_for_year_project_resource_level NUMERIC(18, 2),
+        total_cost_for_year_project_task_level NUMERIC(18, 2),
+        total_effort_for_year_project NUMERIC(18, 2),
+        total_effort_for_year_project_resource_level NUMERIC(18, 2),
+        total_effort_for_year_project_task_level NUMERIC(18, 2),
+        estimated_rd_hours NUMERIC(18, 2),
         effective_date TIMESTAMPTZ,
         end_date TIMESTAMPTZ,
         CONSTRAINT resource_fiscal_region_r_number_key UNIQUE (r_number)
@@ -2010,7 +2123,7 @@ export const rawQueries = {
         REFERENCES "${schemaName}".project_resource(rid)
         ON UPDATE CASCADE;
     `;
-  },                
+  },
   getCreateProjectResourceHistorySequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resource_history_seq START 1;
@@ -2304,7 +2417,7 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_attachments_seq START 1;
     `;
   },
-   getCreateInteractionsTableQuery(schemaName: string): string {
+  getCreateInteractionsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2344,6 +2457,11 @@ export const rawQueries = {
         is_ai_processed boolean default false,
         interaction_version integer,
         interaction_level_rid varchar(50),
+        interaction_assessment_source_rid varchar(50),
+        interaction_batch_id varchar(50),
+        transaction_id varchar(50),
+        four_part_assessment_rid varchar(50),
+        interaction_status_rid varchar(50),
         CONSTRAINT interactions_rid_unique UNIQUE (rid)
       );
     `;
@@ -2353,12 +2471,12 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_history_seq START 1;
     `;
   },
-   getCreateTaskHistorySequenceQuery(schemaName: string): string {
+  getCreateTaskHistorySequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_history_seq START 1;
     `;
   },
-   getCreateTaskTagsSequenceQuery(schemaName: string): string {
+  getCreateTaskTagsSequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_tags_seq START 1;
     `;
@@ -2403,7 +2521,7 @@ export const rawQueries = {
       );
     `;
   },
-   getCreateTaskHistoryTableQuery(schemaName: string): string {
+  getCreateTaskHistoryTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".task_history (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2627,7 +2745,7 @@ export const rawQueries = {
       );
     `;
   },
-   getCreateChecklistIndexesQueries(schemaName: string): string[] {
+  getCreateChecklistIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "rid",
@@ -2635,7 +2753,7 @@ export const rawQueries = {
       "attach_to",
       "attachment_level"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_checklists_${field}_idx`;
       return `
@@ -2644,7 +2762,7 @@ export const rawQueries = {
       `;
     });
   },
-   getCreateActivitiesIndexesQueries(schemaName: string): string[] {
+  getCreateActivitiesIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "rid",
@@ -2652,7 +2770,7 @@ export const rawQueries = {
       "attach_to",
       "attachment_level"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_checklists_${field}_idx`;
       return `
@@ -2661,13 +2779,13 @@ export const rawQueries = {
       `;
     });
   },
-   getCreateActivityAttachmentsIndexesQueries(schemaName: string): string[] {
+  getCreateActivityAttachmentsIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "rid",
       "activity_rid"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_activity_attachments_${field}_idx`;
       return `
@@ -2676,7 +2794,7 @@ export const rawQueries = {
       `;
     });
   },
-   getCreateCheckListItemTableQuery(schemaName: string): string {
+  getCreateCheckListItemTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".checklist_items (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2701,13 +2819,13 @@ export const rawQueries = {
       );
     `;
   },
-   getCreateCheckListItemIndexesQueries(schemaName: string): string[] {
+  getCreateCheckListItemIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
       "account_rid",
       "checklist_rid",
       "rid"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_checklist_items_${field}_idx`;
       return `
@@ -2724,7 +2842,7 @@ export const rawQueries = {
       "project_fiscal_rid",
       "interaction_level_rid"
     ];
-    
+
     return fieldsToIndex.map(field => {
       const indexName = `${schemaName}_interactions_${field}_idx`;
       return `
@@ -2846,7 +2964,7 @@ export const rawQueries = {
       "interaction_rid",
       "project_fiscal_rid"
     ];
-    
+
     return fields.map(field => {
       const indexName = `${schemaName}_interaction_items_${field}_idx`;
       return `
@@ -2962,7 +3080,7 @@ export const rawQueries = {
       "interaction_item_rid",
       "interaction_response_rid"
     ];
-    
+
     return fieldsToIndex.map((field) => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_interaction_attachments_${field}_idx"
       ON "${schemaName}"."interaction_attachments"("${field}");
@@ -3013,7 +3131,7 @@ export const rawQueries = {
       "project_fiscal_rid",
       "status_rid"
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_ai_technical_summary_${field}_idx"
       ON "${schemaName}"."ai_technical_summary"("${field}");
@@ -3067,11 +3185,13 @@ export const rawQueries = {
         is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
         is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
         data_ingestion BOOLEAN NOT NULL DEFAULT FALSE,
+        is_four_part_assessment_processed BOOLEAN NOT NULL DEFAULT FALSE,
         ai_assessment_api_status TEXT,
         interaction_question_error_message JSON,
         qre_error_message JSON,
         technical_summary_error_message JSON,
-        data_ingestion_error_message JSON
+        data_ingestion_error_message JSON,
+        four_part_assessment_error_message JSON
       );
     `;
   },
@@ -3137,7 +3257,7 @@ export const rawQueries = {
   },
   getCreateAutosendInteractionAuditIndexes(schemaName: string): string[] {
     const fieldsToIndex = ["project_fiscal_rid"];
-    
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_autosend_interaction_audit_${field}_idx"
       ON "${schemaName}".autosend_interaction_audit("${field}");
@@ -3275,7 +3395,7 @@ export const rawQueries = {
     const fieldsToIndex = [
       "entity_rid",
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "idx_jurisdictions_${field}"
       ON "${schemaName}"."jurisdictions"("${field}");
@@ -3298,13 +3418,13 @@ export const rawQueries = {
       "notes_owner",
       "descriptions",
     ];
-  
+
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "${schemaName}_notes_${field}_idx"
       ON "${schemaName}"."notes"("${field}");
     `);
   },
-   getCreateAccountTimelineSequenceQuery(schemaName: string): string {
+  getCreateAccountTimelineSequenceQuery(schemaName: string): string {
     return `
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_timeline_seq START 1;
     `;
@@ -3315,15 +3435,15 @@ export const rawQueries = {
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) UNIQUE DEFAULT ('ACT-' || LPAD(nextval('"${schemaName}".account_timeline_seq')::TEXT, 10, '0')),
         created_by VARCHAR(50) NOT NULL,
-        modified_by VARCHAR(50),
-        document_name VARCHAR(255) NULL,
-        title VARCHAR(64) NOT NULL,
-        attach_to VARCHAR(50) NOT NULL,
-        attachment_level VARCHAR(50) NOT NULL,
-        event_type VARCHAR(50) NOT NULL,
-        event_status VARCHAR(50) NOT NULL,
+        created_datetime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        account_rid VARCHAR(50) NOT NULL,
+        document_rid VARCHAR(50),
+        event_type_rid VARCHAR(50)  NULL,
         event_name VARCHAR(255),
-        event_datetime TIMESTAMPTZ NOT NULL,
+        entity_rid VARCHAR(50) NOT NULL,  
+        entity_name VARCHAR(255) NOT NULL,
+        created_by_name VARCHAR(255) NULL,
+        source_record_count integer,
         descriptions VARCHAR(2000)
       );
     `;
@@ -3375,7 +3495,7 @@ export const rawQueries = {
       ON "${schemaName}"."project_history"("${field}");
     `;
   },
-   getActivityHistoryIndexQuery(schemaName: string, field: string): string {
+  getActivityHistoryIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_activity_history_${field}_idx`;
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
@@ -3515,21 +3635,21 @@ export const rawQueries = {
       ON "${schemaName}"."task_history"("${field}");
     `;
   },
-  
+
   getAiTechnicalSummaryIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_ai_technical_summary_${field}_idx`;
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."ai_technical_summary"("${field}");
     `;
-  },                                                                                      
+  },
   getInteractionTimelineIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_interaction_timeline_${field}_idx`;
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."interaction_timeline"("${field}");
     `;
-  },  
+  },
   getAiAssessmentAuditIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_ai_assessment_audit_${field}_idx`;
     return `
@@ -3571,21 +3691,60 @@ export const rawQueries = {
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."notes_timeline"("${field}");
     `;
-  }, 
-  checkCaseExistsForAccount (schemaName : string, accountRid : string) {
+  },
+  getAccountTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_account_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."account_timeline"("${field}");
+    `;
+  },
+  checkCaseExistsForAccount(schemaName: string, accountRid: string) {
     return `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`
   },
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
-  },    
-  checkCaseTableExists(schemaName : string) {
+  },
+  checkCaseTableExists(schemaName: string) {
     return `SELECT EXISTS (
     SELECT 1
     FROM information_schema.tables
     WHERE table_schema = '${schemaName}'
     AND table_name = 'cases'
     )`
-  }     
+  },
+  getCreateFourPartAssessmentTableQuery(schemaName: string) {
+    return `
+    CREATE TABLE IF NOT EXISTS ${schemaName}.four_part_assessment(
+    rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number VARCHAR(20) UNIQUE DEFAULT ('FPA-' || LPAD(nextval('"${schemaName}".four_part_assessment_sequence')::text, 10, '0')),
+    created_by VARCHAR(50),
+    modified_by VARCHAR(50),
+    created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+    modified_datetime TIMESTAMP,
+    account_rid VARCHAR(50),
+    project_rid VARCHAR(50),
+    project_fiscal_rid VARCHAR(50),
+    tracker_one_liner VARCHAR,
+    project_metadata VARCHAR,
+    permitted_purpose_status VARCHAR,
+    permitted_purpose_rationale VARCHAR,
+    technological_uncertainty_status VARCHAR,
+    technological_uncertainty_rationale VARCHAR,
+    technological_in_nature_status VARCHAR,
+    technological_in_nature_rationale VARCHAR,
+    process_of_experimentation_status VARCHAR,
+    process_of_experimentation_rationale VARCHAR,
+    rationale VARCHAR,
+    status VARCHAR,
+    summary_judgment VARCHAR,
+    rd_potential_category VARCHAR,
+    transaction_id VARCHAR);
+    `
+  },
+  getFourPartAssessmentSequenceQuery(schemaName: string) {
+    return `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".four_part_assessment_sequence START 1`
+  }
 };
 
 export const DEFAULT_ACCOUNT_DETAILS = {

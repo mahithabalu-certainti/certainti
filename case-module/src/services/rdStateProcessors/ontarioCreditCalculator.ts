@@ -39,13 +39,13 @@ export class RdCreditCalculatorForON {
         return this.mainDbSequelize;
     }
 
-    async compute(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case) {
+    async compute(caseRid : string, accountRid : string, schemaName : string, extractConfig : extractConfig, caseDetails : Case, caseClosed : boolean) {
         const orgDb = await this.getOrgDb();
         const mainDb = await this.getMainDb();
         const findOnatarioRegionId : any = await mainDb.query(rawQueries.fetchCanadaOntRegion());
         const fetchIds = await orgDb.query<ProjectFiscalIds>(fetchAssignedProjectIdsForOntRegions(caseRid, schemaName, findOnatarioRegionId[0][0].rid), {type : QueryTypes.SELECT})
         
-        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanadaOntRegion(schemaName, fetchIds, accountRid, findOnatarioRegionId[0][0].rid), {type : QueryTypes.SELECT})
+        const calculateComputedValues = await orgDb.query<ProjectCalculatedDataCanada>(fetchRequiredPrjDataForCanadaOntRegion(schemaName, fetchIds, accountRid, findOnatarioRegionId[0][0].rid, caseClosed), {type : QueryTypes.SELECT})
         let fteQreAdjustment = extractConfig.fte_qre_adjustment;
         let subconQreAdjustment = extractConfig.subcon_qre_adjustment;
         let fteProxyPercent = `FTE Proxy (${extractConfig.fte_proxy}%)`
@@ -58,8 +58,8 @@ export class RdCreditCalculatorForON {
                 "Project Total Cost": parseFloat(Number(new Decimal(projectData.total_cost_fte_prj || 0).add(projectData.total_cost_subcon_prj || 0).add(projectData.total_cost_nonlabor_prj || 0)).toFixed(1)) || 0.00,
                 "FTE Cost": parseFloat(Number(projectData.total_cost_fte_prj).toFixed(1)) || 0.00,
                 "SubCon Cost": parseFloat(Number(projectData.total_cost_subcon_prj).toFixed(1)) || 0.00,
-                "Other Cost": parseFloat(Number(caseDetails.other).toFixed(1)) || 0.00,
-                "Total Cost": parseFloat(Number(new Decimal(projectData.total_cost_fte_prj || 0).add(projectData.total_cost_subcon_prj || 0).add(caseDetails.other || 0)).toFixed(1)) || 0.00,
+                "Other Cost": parseFloat(Number(caseDetails.other_on).toFixed(1)) || 0.00,
+                "Total Cost": parseFloat(Number(new Decimal(projectData.total_cost_fte_prj || 0).add(projectData.total_cost_subcon_prj || 0).add(caseDetails.other_on || 0)).toFixed(1)) || 0.00,
                 "Net QRE %": `${projectData.rd_percent_final}%`,
                 "FTE QRE Adjustment": `${fteQreAdjustment}%`,
                 "Subcon QRE Adjustment": `${subconQreAdjustment}%`,

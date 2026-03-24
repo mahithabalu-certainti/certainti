@@ -5,7 +5,7 @@ import { logMessage } from "../utils/helpers";
 interface CaseHistorySubmissionAttributes {
   rid: string;
   r_number: string;
-  eid: string;
+  eid?: string;
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -14,10 +14,10 @@ interface CaseHistorySubmissionAttributes {
   state_rid?: string;
   account_rid: string;
   fiscal_year: string;
-  total_project: number;
-  total_qualified_project: number;
+  total_project?: number;
+  total_qualified_project?: number;
   total_project_cost: number;
-  total_qualified_project_cost: number;
+  total_qualified_project_cost?: number;
   total_qre: number;
   total_rd_credits: number;
   annual_gross_receipts?: number;

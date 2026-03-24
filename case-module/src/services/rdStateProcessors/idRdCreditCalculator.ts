@@ -47,7 +47,13 @@ export class RdCreditCalculatorForID {
             inputFields,
             computedFields,
             finalCredit: this.round2(qreCalInfo.final_credit),
-            totalQRE: this.round2(qreCalInfo.total_current_year_qre)
+            totalQRE: this.round2(qreCalInfo.total_current_year_qre),
+            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+            averageAnnualGrossReceipts: this.round2(qreCalInfo.average_annual_gross_receipts),
+          
+            
         }
     }
 
@@ -58,17 +64,17 @@ export class RdCreditCalculatorForID {
      */
     qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson, totalGrossReceipts: Decimal, priorYearsCount: number,caseDetails: Case | undefined,) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
-        const basic_research_payments = new Decimal(caseDetails?.basic_research_payments || 0);
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+        const basic_research_payments = new Decimal(caseDetails?.basic_research_payments_id || 0);
         const qualified_organization_base_period_amount = new Decimal(0);
         const line_3 = Decimal.max(0, basic_research_payments.minus(qualified_organization_base_period_amount));
         const supplies = new Decimal(currentYearQREs.supplies || 0);
-        const cost_to_rent = new Decimal(caseDetails?.lease_costs_of_computers || 0.00);
+        const cost_to_rent = new Decimal(caseDetails?.lease_costs_of_computers_id || 0.00);
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(cost_to_rent).plus(supplies);
         const fixed_base_percentage = config.fixed_base_percentage;
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);
         const base_amount = average_annual_gross_receipts.mul(config.fixed_base_percentage /100);
-        const difference = Decimal.max(0, base_amount.minus(total_current_year_qre));
+        const difference = Decimal.max(0, total_current_year_qre.minus(base_amount));
         const credit_rate_percent = total_current_year_qre.mul(config.credit_rate).div(100);
         const min_credit_rate = Decimal.min(difference, credit_rate_percent);
         const tot_base_amount = min_credit_rate.plus(line_3);
@@ -185,7 +191,7 @@ export class RdCreditCalculatorForID {
         [`[13] Multiply line 8 by ${config.credit_rate || 0}%`]: this.round2(qretInfo.credit_rate_percent),
         "[14] Enter the smaller amount from line 12 or line 13": this.round2(qretInfo.min_credit_rate),
         "[15] Add lines 3 and 14": this.round2(qretInfo.tot_base_amount),
-        [`[16] Credit earned. Multiply line 15 by ${config.credit_earned}%`]: this.round2(qretInfo.credit_earned),
+        [`[16] Credit earned. Multiply line 15 by ${config.credit_earned || 0}%`]: this.round2(qretInfo.credit_earned),
 
         "[17] Pass-through share of credit from an S corporation, partnership, trust, or estate": "",
         "[18] Credit received through unitary sharing. Include a schedule": "",

@@ -2,7 +2,7 @@ import { Op, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { ICreateNotesSchema, IUpdateNotesSchema } from "./notesSchemas";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { Notes, setupNotesSeq } from "../../models/notes";
 import { NotesTimeline, setupNotesTimelineSequence } from "../../models/notesTimeline";
 import { NotesSummary } from "../../models/notesSummary";
@@ -116,6 +116,37 @@ export class NotesService {
             descriptions: notesData.descriptions || null,
             created_by: userId,
         });
+
+        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                                userId: userId!,
+                                                eventType: eventTypes.UI_HANDLER
+                                              });
+        let projectFiscalId = notesData.attach_to;
+        if(attachment_level === 'project_resource' || attachment_level === 'project_task') {
+          if(attachment_level === 'project_resource') {
+            const projectResource = await this.projectIngestionService.fetchProjectResourceById(accountNumber, notesData.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(attachment_level === 'project_task') {
+            const projectTask = await this.projectIngestionService.fetchProjectTaskById(accountNumber, notesData.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
+        // Use SchemaService to determine timeline entity type(s)
+        const timelineTypes = this.schemaService.getTimelineTypesForAttachmentLevel(notesData.attachment_level);
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: account_rid,
+          entity_rid: notesModel.rid,
+          entity_name: entityTypes.NOTES,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.CREATE,
+          descriptions: notesData.title,
+          project_rid: ['project', 'project_resource', 'project_task'].includes(notesData.attachment_level) ? projectFiscalId : '',
+          case_rid:notesData.attachment_level === 'case' ? notesData.attach_to : '',  
+        }, timelineTypes);
+
 
         await NotesTimeline.create({
             notes_rid : notesModel.rid,
@@ -1666,17 +1697,24 @@ export class NotesService {
           "Size": "Size",
           "Created By": "Created By",
           "Created On": "Created On",
-          "Modified By": "Modified By",
-          "Modified On": "Modified On",
+          "Modified By": "Updated By",
+          "Modified On": "Updated On",
           "Download": "Download"
         };
         attachments = attachments.map((at) => {
         const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
-          const label = labelMap[fieldKey]; // field_desc
+          let label = labelMap[fieldKey]; // field_desc
+
           if (allowedFieldSet.has(label)) {
-            filtered[label] = value; // export with label name
+            if(label === 'Updated By') {
+             filtered['Modified By'] = value
+            }
+            else if(label === 'Updated On') {
+              filtered['Modified On'] = value
+            }
+            else filtered[label] = value; // export with label name
           }
         }
         return filtered;
@@ -2137,21 +2175,51 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
         }
         });
         if(affectedCount > 0) {
-          await NotesTimelineModel.create({
-              notes_rid : notesData.rid,
-              document_name: name,
-              title : notesData.title,
-              descriptions: notesData.descriptions || null,
-              notes_owner : notesData.notes_owner,
-              created_by: userId,
-              modified_by: userId,
-              attach_to: notesData.attach_to,
-              attachment_level: notesData.attachment_level,
-              event_type: 'ui handler',
-              event_status: 'success',
-              event_name: 'update',
-              event_datetime: new Date(),
-          })
+          // await NotesTimelineModel.create({
+          //     notes_rid : notesData.rid,
+          //     document_name: name,
+          //     title : notesData.title,
+          //     descriptions: notesData.descriptions || null,
+          //     notes_owner : notesData.notes_owner,
+          //     created_by: userId,
+          //     modified_by: userId,
+          //     attach_to: notesData.attach_to,
+          //     attachment_level: notesData.attachment_level,
+          //     event_type: 'ui handler',
+          //     event_status: 'success',
+          //     event_name: 'update',
+          //     event_datetime: new Date(),
+          // })
+         const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                                userId: userId!,
+                                                eventType: eventTypes.UI_HANDLER
+                                              });
+        let projectFiscalId = notesData.attach_to;
+        if(attachment_level === 'project_resource' || attachment_level === 'project_task') {
+          if(attachment_level === 'project_resource') {
+            const projectResource = await this.projectIngestionService.fetchProjectResourceById(accountNumber, notesData.attach_to);
+          projectFiscalId = (projectResource as any)?.project_fiscal_rid || '';
+          }
+          if(attachment_level === 'project_task') {
+            const projectTask = await this.projectIngestionService.fetchProjectTaskById(accountNumber, notesData.attach_to);
+            projectFiscalId = (projectTask as any)?.project_fiscal_rid || '';
+          }
+        }
+        // Use SchemaService to determine timeline entity type(s)
+        const timelineTypes = this.schemaService.getTimelineTypesForAttachmentLevel(notesData.attachment_level);
+
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: account_rid,
+          entity_rid: notesData.rid,
+          entity_name: entityTypes.NOTES,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.UPDATE,
+          descriptions: notesData.title,
+          project_rid: ['project', 'project_resource', 'project_task'].includes(notesData.attachment_level) ? projectFiscalId : '',
+          case_rid:notesData.attachment_level === 'case' ? notesData.attach_to : '',
+        }, timelineTypes);
 
           await NotesSummaryModel.update({
               browse_file: url,

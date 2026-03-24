@@ -19,6 +19,10 @@ import {
   setupResourceHistorySeq,
 } from "../models/resourceHistory";
 import {
+  AccountTimeline,
+  setupAccountTimelineSeq,
+} from "../models/accountTimeline";
+import {
   ResourcesTimeline,
   setupResourceTimelineSeq,
 } from "../models/resourceTimeline";
@@ -42,20 +46,21 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
-import { SCHEMANAME_PREFIX, primaryKeyContacts, rawQueries } from "../utils/constants";
+import { SCHEMANAME_PREFIX, entityTypes, eventNames, eventTypes, primaryKeyContacts, rawQueries } from "../utils/constants";
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
 } from "../models/resourceFiscalRegion"
 import { errorLog } from "../utils/helpers";
 import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
-import  ProjectIngestionService  from "./projectIngestionService";
+import ProjectIngestionService from "./projectIngestionService";
+import { raw } from "express";
 
 
 
 // import { Skill } from "../models/skill";
 class SchemaService {
-  constructor() {}
+  constructor() { }
 
   /**
    * Checks if the schema for a given account number exists.
@@ -374,7 +379,7 @@ class SchemaService {
         schemaName
       );
 
-      const ResourceTimelineModel = ResourcesTimeline.initialize(sequelize, schemaName);
+      const AccountTimelineModel = AccountTimeline.initialize(sequelize, schemaName);
 
 
       Resource.belongsTo(AccountDetailsModel, {
@@ -389,10 +394,10 @@ class SchemaService {
         as: "ResourceFiscal",
       });
 
-      Resource.hasMany(ResourceTimelineModel, {
+      Resource.hasMany(AccountTimelineModel, {
         foreignKey: "entity_rid",
         sourceKey: "rid",
-        as: "ResourceTimelines",
+        as: "AccountTimelines",
       });
 
       // Build the include array dynamically
@@ -414,11 +419,12 @@ class SchemaService {
       // Add ResourceTimeline join if documentRid is provided
       if (documentRid) {
         include.push({
-          model: ResourceTimelineModel,
-          as: "ResourceTimelines",
+          model: AccountTimelineModel,
+          as: "AccountTimelines",
           required: true,
           where: {
-            document_rid: documentRid
+            document_rid: documentRid,
+            entity_name: "resource"
           },
           attributes: [] // Only join, don't select fields
         });
@@ -622,12 +628,112 @@ class SchemaService {
           resource.account_rid
         );
       }
+      const userEventInfo: any = await this.fetchUserAndEventInfo({
+        userId: resourceData.created_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
+
+      await this.createAccountTimelineEntry(accountNumber!, {
+        created_by: resourceData.created_by!,
+        account_rid: resourceData.account_id,
+        entity_rid: resource?.rid!,
+        entity_name: entityTypes.RESOURCE,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.CREATE,
+        descriptions: resourceData.resource_code
+      }, ["account"]);
 
       return resource;
     } catch (err) {
       throw new Error((err as Error).message);
     }
   }
+
+  /**
+   * Fetches user full name, event type, and event name in a single query.
+   * @param params Object with userId, eventType, eventName
+   * @returns Object with fullName, eventType, eventName
+   */
+  async fetchUserAndEventInfo(params: { userId: string; eventType: string; }) {
+    const sequelize = await initMainDbSequelize();
+    // Assumes the rawQueries have the correct SQL for each subquery
+    // This query returns a single row with all three values
+    const query = rawQueries.fetchUserAndEventInfo();
+    const [result] = await sequelize.query(query, {
+      replacements: {
+        userId: params.userId,
+        eventType: params.eventType
+      },
+      type: "SELECT",
+    });
+    return result;
+  }
+  /**
+ * Returns timeline entity types for a given attachment_level.
+ * Used for timeline entry creation in NotesService and elsewhere.
+ */
+  getTimelineTypesForAttachmentLevel(attachmentLevel: string): string[] {
+    const accountLevels = ["account", "resource", "resource_cost", "resource_skill"];
+    const projectLevels = ["project_task", "project_resource"];
+    const caseLevels = ["case"];
+    if (attachmentLevel === "project") {
+      return ["project"];
+    } else if (accountLevels.includes(attachmentLevel)) {
+      return ["account"];
+    } else if (projectLevels.includes(attachmentLevel)) {
+      return ["project"];
+    } else if (caseLevels.includes(attachmentLevel)) {
+      return ["case"];
+    }
+    return [];
+  }
+  /**
+   * Create an entry in the account_timeline table for the given schema.
+   * @param sequelize Sequelize instance connected to the main DB
+   * @param schemaName The schema name where the account_timeline table exists
+   * @param entryData Object containing the timeline entry fields
+   */
+  async createAccountTimelineEntry(accountNumber: string,
+    entryData: {
+      created_by: string;
+      account_rid: string;
+      entity_rid: string;
+      entity_name: string;
+      created_by_name: string;
+      event_type_rid: string;
+      event_name?: string;
+      descriptions?: string;
+      project_rid?: string;
+      case_rid?: string;
+    },
+    entityTypes: string[]
+  ) {
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+    const sequelize = await initOrgSequelize();
+    for (const entityType of entityTypes) {
+      if (entityType === "account") {
+        const [result] = await sequelize.query(rawQueries.insertTimeLine(schemaName, "account_timeline"), {
+          replacements: entryData,
+          type: QueryTypes.INSERT,
+        });
+      }
+      else if (entityType === "project") {
+        const [result] = await sequelize.query(rawQueries.insertProjectTimeLine(schemaName, "project_timeline"), {
+          replacements: entryData,
+          type: QueryTypes.INSERT,
+        });
+      }
+      else if (entityType === "case") {
+        const [result] = await sequelize.query(rawQueries.insertCaseTimeLine(schemaName, "case_timeline"), {
+          replacements: entryData,
+          type: QueryTypes.INSERT,
+        });
+      }
+
+    }
+  }
+
 
   /**
    * Fetches paginated and filtered list of resources for excel download.
@@ -902,7 +1008,7 @@ class SchemaService {
     } catch (err) {
       throw new Error(
         "Error inserting records into resources fiscal :" +
-          (err as Error).message
+        (err as Error).message
       );
     }
   }
@@ -939,7 +1045,7 @@ class SchemaService {
     } catch (err) {
       throw new Error(
         "Error inserting records into resources fiscal region :" +
-          (err as Error).message
+        (err as Error).message
       );
     }
   }
@@ -1084,6 +1190,21 @@ class SchemaService {
           },
         }
       );
+
+      const userEventInfo: any = await this.fetchUserAndEventInfo({
+        userId: resourceData.modified_by!,
+        eventType: eventTypes.UI_HANDLER
+      });
+      await this.createAccountTimelineEntry(accountNumber!, {
+        created_by: resourceData.modified_by!,
+        account_rid: accountId,
+        created_by_name: userEventInfo.full_name,
+        entity_rid: resourceData.resource_id,
+        entity_name: entityTypes.RESOURCE,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.UPDATE,
+        descriptions: resourceData.resource_code
+      }, ["account"]);
 
       // await this.updateResourceFiscal(
       //   resourceData,
@@ -1400,7 +1521,7 @@ class SchemaService {
           attribute_name: key,
           old_value:
             existingResourceData[key] !== null &&
-            existingResourceData[key] !== undefined
+              existingResourceData[key] !== undefined
               ? String(existingResourceData[key])
               : "",
           new_value:
@@ -1824,41 +1945,41 @@ class SchemaService {
     }
   }
 
-    async fetchValidAccountNumberById(accountId: string) {
-      try {
+  async fetchValidAccountNumberById(accountId: string) {
+    try {
 
-        const mainDbSequelize = await initMainDbSequelize();
+      const mainDbSequelize = await initMainDbSequelize();
 
-        const [account]: any[] = await mainDbSequelize.query(
+      const [account]: any[] = await mainDbSequelize.query(
+        rawQueries.fetchAccountById,
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+
+      let accountRnumber = account?.r_number;
+
+      if (account?.storage_type === "store_in_parent") {
+        const [accountData]: any[] = await mainDbSequelize.query(
           rawQueries.fetchAccountById,
           {
-            replacements: { rid: accountId },
+            replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
           }
         );
-  
-        let accountRnumber = account?.r_number;
-  
-        if (account?.storage_type === "store_in_parent") {
-          const [accountData]: any[] = await mainDbSequelize.query(
-            rawQueries.fetchAccountById,
-            {
-              replacements: { rid: account?.parent_account_rid },
-              type: "SELECT",
-            }
-          );
-          accountRnumber = accountData?.r_number;
-        }
-  
-        return {
-          accountNumber: accountRnumber,
-          accountId: account?.rid,
-          accountName: account?.account_name,
-        };
-      } catch (err) {
-        throw new Error("Error fetching account : " + (err as Error).message);
+        accountRnumber = accountData?.r_number;
       }
+
+      return {
+        accountNumber: accountRnumber,
+        accountId: account?.rid,
+        accountName: account?.account_name,
+      };
+    } catch (err) {
+      throw new Error("Error fetching account : " + (err as Error).message);
     }
+  }
 
   async addProjectResourceExistsFlags(projects: any[]): Promise<any[]> {
     const orgDb = await initOrgSequelize();
@@ -1886,7 +2007,7 @@ class SchemaService {
 
             if (tableExists) {
               const query = checkProjectMappedToProjectRes(schemaName, fiscal.project_fiscal_rid);
-              
+
               const promise = orgDb
                 .query(query)
                 .then((result: any) => {
@@ -2008,11 +2129,12 @@ class SchemaService {
         fiscal_year: { parent: "", child: "fiscal_year" },
         qre_final: { parent: "", child: "qre_final" },
         qre: { parent: "qre", child: "qre" },
-        rd_percent_final : {parent : "", child  : "rd_percent_final"},
+        rd_percent_final: { parent: "", child: "rd_percent_final" },
         assessment_status: {
           parent: "assessment_status",
           child: "assessment_status",
         },
+        is_assesed: { parent: "", child: "is_assesed" },
         comments: { parent: "comments", child: "comments" },
       };
 
@@ -2021,16 +2143,27 @@ class SchemaService {
         child: sort.sortCol,
       };
       const isChildOnlySort =
-        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final" || sort.sortCol === "rd_percent_final";
+        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final" || sort.sortCol === "rd_percent_final" || sort.sortCol === "is_assesed";
 
-      const parentSortClause =
-        bothParentAndChild && sortConfig.parent
-          ? `ORDER BY ${sortConfig.parent} ${sort.sortOrder}`
-          : "";
+      let parentSortClause = "";
+      if (isChildOnlySort) {
+        // Child-only fields exist only in project_fiscal_summary, not project_summary.
+        // Sort the outer query by extracting from the ProjectFiscal JSON array.
+        const childSortCastMap: Record<string, string> = {
+          fiscal_year: "::int",
+          qre_final: "::numeric",
+          rd_percent_final: "::numeric",
+          is_assesed: "::boolean",
+        };
+        const cast = childSortCastMap[sort.sortCol] || "";
+        parentSortClause = `ORDER BY ("ProjectFiscal"->0->>'${sort.sortCol}')${cast} ${sort.sortOrder} NULLS LAST`;
+      } else if (bothParentAndChild && sortConfig.parent) {
+        parentSortClause = `ORDER BY ${sortConfig.parent} ${sort.sortOrder}`;
+      }
 
       const childSortClause =
         (!bothParentAndChild || isChildOnlySort || bothParentAndChild) &&
-        sortConfig.child
+          sortConfig.child
           ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}`
           : "";
 
@@ -2039,8 +2172,8 @@ class SchemaService {
         whereSQL: filterWhereSQLParent,
         replacements: whereReplacementsParent,
       } = bothParentAndChild
-        ? this.buildRawWhereClause(whereClause, search, true)
-        : { whereSQL: "", replacements: [] };
+          ? this.buildRawWhereClause(whereClause, search, true)
+          : { whereSQL: "", replacements: [] };
 
       const {
         whereSQL: filterWhereSQLChild,
@@ -2096,17 +2229,17 @@ class SchemaService {
 
       const projectIdsReplacements = bothParentAndChild
         ? [
-            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-            ...whereReplacementsParent,
-            ...(accountMeta.length > 0 ? [accountMeta] : []),
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-          ]
+          ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+          ...whereReplacementsParent,
+          ...(accountMeta.length > 0 ? [accountMeta] : []),
+          ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+        ]
         : [
-            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-            ...whereReplacementsChild,
-            ...(accountMeta.length > 0 ? [accountMeta] : []),
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-          ];
+          ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+          ...whereReplacementsChild,
+          ...(accountMeta.length > 0 ? [accountMeta] : []),
+          ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+        ];
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
         type: "SELECT",
@@ -2128,11 +2261,10 @@ class SchemaService {
           ${childAggSQL}
           ${commonJoins}
           WHERE ps.project_rid IN (${projectIds.map(() => "?").join(",")})
-          ${
-            accountMeta.length > 0
-              ? `AND acc.rid IN (${accountMeta.map(() => "?").join(",")})`
-              : ""
-          }
+          ${accountMeta.length > 0
+          ? `AND acc.rid IN (${accountMeta.map(() => "?").join(",")})`
+          : ""
+        }
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -2253,6 +2385,7 @@ class SchemaService {
         fiscal_year: { parent: "", child: "fiscal_year" },
         qre_final: { parent: "", child: "qre_final" },
         qre: { parent: "qre", child: "qre" },
+        is_assesed: { parent: "", child: "is_assesed" },
         assessment_status: {
           parent: "assessment_status",
           child: "assessment_status",
@@ -2265,7 +2398,7 @@ class SchemaService {
         child: sort.sortCol,
       };
       const isChildOnlySort =
-        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final";
+        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final" || sort.sortCol === "is_assesed";
 
       const parentSortClause =
         bothParentAndChild && sortConfig.parent
@@ -2274,7 +2407,7 @@ class SchemaService {
 
       const childSortClause =
         (!bothParentAndChild || isChildOnlySort || bothParentAndChild) &&
-        sortConfig.child
+          sortConfig.child
           ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}`
           : "";
 
@@ -2283,8 +2416,8 @@ class SchemaService {
         whereSQL: filterWhereSQLParent,
         replacements: whereReplacementsParent,
       } = bothParentAndChild
-        ? this.buildRawWhereClause(whereClause, search, true)
-        : { whereSQL: "", replacements: [] };
+          ? this.buildRawWhereClause(whereClause, search, true)
+          : { whereSQL: "", replacements: [] };
 
       const {
         whereSQL: filterWhereSQLChild,
@@ -2341,17 +2474,17 @@ class SchemaService {
 
       const projectIdsReplacements = bothParentAndChild
         ? [
-            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-            ...whereReplacementsParent,
-            ...(accountMeta.length > 0 ? [accountMeta] : []),
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-          ]
+          ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+          ...whereReplacementsParent,
+          ...(accountMeta.length > 0 ? [accountMeta] : []),
+          ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+        ]
         : [
-            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-            ...whereReplacementsChild,
-            ...(accountMeta.length > 0 ? [accountMeta] : []),
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-          ];
+          ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+          ...whereReplacementsChild,
+          ...(accountMeta.length > 0 ? [accountMeta] : []),
+          ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+        ];
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
@@ -2378,11 +2511,10 @@ class SchemaService {
           ${childAggSQL}
           ${commonJoins}
           WHERE ps.project_rid IN (${projectIds.map(() => "?").join(",")})
-          ${
-            accountMeta.length > 0
-              ? `AND acc.rid IN (${accountMeta.map(() => "?").join(",")})`
-              : ""
-          }
+          ${accountMeta.length > 0
+          ? `AND acc.rid IN (${accountMeta.map(() => "?").join(",")})`
+          : ""
+        }
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -2419,7 +2551,7 @@ class SchemaService {
       const result = [];
 
       for (const key of Object.keys(globalFilters)) {
-        const values = globalFilters[key] ?? []; 
+        const values = globalFilters[key] ?? [];
         result.push(key, ...values);
       }
 
@@ -2542,7 +2674,7 @@ class SchemaService {
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
         status_rid: keyContactDetails.status_rid || null,
-        interaction_cc_recipient:keyContactDetails.interaction_cc_recipient || null,
+        interaction_cc_recipient: keyContactDetails.interaction_cc_recipient || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
           keyContactDetails.include_in_communication || null,
@@ -2669,7 +2801,8 @@ class SchemaService {
       technical_point_of_contact: `${tablePrefix}.technical_point_of_contact`,
       technical_point_of_contact_email: `${tablePrefix}.technical_point_of_contact_email`,
       rd_percent_final: `pfs.rd_percent_final`,
-      qre_final : `pfs.qre_final`
+      qre_final: `pfs.qre_final`,
+      is_assesed: `pfs.is_assesed`,
       // financial_consultant: `${tablePrefix}.financial_consultant`,
     };
 
@@ -2698,7 +2831,7 @@ class SchemaService {
       "curr.rid",
       "cou.rid",
     ];
-    const booleanFields = ["is_rd_qualified"];
+    const booleanFields = ["is_rd_qualified", `pfs.is_assesed`];
 
     const { conditions, replacements } = this.buildWhereCondition(
       where,
@@ -2919,6 +3052,16 @@ class SchemaService {
 
         // BOOLEAN fields
         if (isBooleanField) {
+          if (condition.equals !== undefined) {
+            const boolVal = condition.equals === "true" || condition.equals === true;
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(boolVal);
+          }
+          if (condition.not_equals !== undefined) {
+            const boolVal = condition.not_equals === "true" || condition.not_equals === true;
+            conditions.push(`(${qualifiedField} != ? OR ${qualifiedField} IS NULL)`);
+            replacements.push(boolVal);
+          }
           if (condition.isTrue === true) {
             conditions.push(`${qualifiedField} = ?`);
             replacements.push(true);
@@ -2926,6 +3069,12 @@ class SchemaService {
           if (condition.isFalse === true) {
             conditions.push(`${qualifiedField} = ?`);
             replacements.push(false);
+          }
+          if (condition.in && Array.isArray(condition.in)) {
+            const boolValues = condition.in.map((v: any) => v === "true" || v === true);
+            const placeholders = boolValues.map(() => "?").join(", ");
+            conditions.push(`${qualifiedField} IN (${placeholders})`);
+            replacements.push(...boolValues);
           }
           if (condition.is_empty === true) {
             conditions.push(`${qualifiedField} IS NULL`);
@@ -3180,7 +3329,7 @@ class SchemaService {
           ...kc,
           role_name: keyContactMap[kc.key_contact_role] || null
         }));
-       
+
         const technicalConsultant = enrichedKeyContacts.find(
           (e: any) =>
             e.role_name === keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
@@ -3238,7 +3387,7 @@ class SchemaService {
     }
   }
 
-  async insertProjectTypeAndStatus(project: any, mainDdSequilze: Sequelize,projectTypesFromConfig:string[]) {
+  async insertProjectTypeAndStatus(project: any, mainDdSequilze: Sequelize, projectTypesFromConfig: string[]) {
     try {
       if (project.status_rid) {
         const statusResult: any = await mainDdSequilze.query(
@@ -3263,7 +3412,7 @@ class SchemaService {
         const projectType = projectTypeResult[0];
         project.project_type_name = projectType?.project_type_name;
         project.is_rd_trigger_qualified = false;
-        if(projectTypesFromConfig && projectTypesFromConfig.length >0){
+        if (projectTypesFromConfig && projectTypesFromConfig.length > 0) {
           if (project.project_type_rid) {
             const normalizedProjectTypeName = project.project_type_rid.trim().toLowerCase();
             const normalizedProjectTypes = projectTypesFromConfig.map((pt: string) => pt.trim().toLowerCase());
@@ -3399,7 +3548,7 @@ class SchemaService {
           classification_name: res.project_classification_other
             ? res.project_classification_other
             : classificationMap[res.project_classification_rid]
-                ?.classification_name || null,
+              ?.classification_name || null,
           is_other_classification: res.project_classification_other !== null,
         }));
       }
@@ -3729,7 +3878,7 @@ class SchemaService {
 
     try {
       const results = await mainDbSequelize.query<{ group_type: string }>(
-       rawQueries.getUserGroupTypeByUserRidQuery(), // Important if user can only have one group type
+        rawQueries.getUserGroupTypeByUserRidQuery(), // Important if user can only have one group type
         {
           replacements: { userRid },
           type: QueryTypes.SELECT,
@@ -3773,7 +3922,7 @@ class SchemaService {
       return {
         profileName: results[0]?.profile_name ?? "",
         email: results[0]?.email ?? "",
-      };      
+      };
     } catch (error) {
       console.error("Error fetching user profile info:", error);
       throw new Error("Failed to get user profile information");
@@ -3941,48 +4090,49 @@ class SchemaService {
     accountNumber: string,
     projectFiscalId: string,
     qreAdjustment: number,
-    userId: string
+    userId: string,
+    accountRid: string
   ) {
     const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
     const mainSequelize = await initMainDbSequelize();
-  
+
     const projectFiscalData: any = await sequelize.query(
-      rawQueries.fetchProjectFiscalById(schemaName,projectFiscalId ),
+      rawQueries.fetchProjectFiscalById(schemaName, projectFiscalId),
       {
         type: QueryTypes.SELECT,
       }
     );
-  
+
     if (!projectFiscalData && projectFiscalData.length === 0) {
       throw new Error("Invalid Project Id");
     };
 
     const projectFiscalDetails = projectFiscalData[0];
-  
+
     const existingPercent = projectFiscalDetails.rd_percent_potential_ai ?? 0;
 
     const parsedPercent = parseFloat(existingPercent);
 
-    if(!isNaN(parsedPercent) && parsedPercent > 0) {
+    if (!isNaN(parsedPercent) && parsedPercent > 0) {
       const netQre = qreAdjustment + parseFloat(existingPercent);
-  
+
       const totalCost = projectFiscalDetails.total_cost_prj ?? 0;
       const totalFteCost = projectFiscalDetails.total_cost_fte_prj ?? 0;
       const totalSubconCost = projectFiscalDetails.total_cost_subcon_prj ?? 0;
       const totalNonlaborCost = projectFiscalDetails.total_cost_nonlabor_prj ?? 0;
-    
+
       const qreFinalCost = totalCost * (netQre / 100);
       const qreFteCost = totalFteCost * (netQre / 100);
       const qreSubconCost = totalSubconCost * (netQre / 100);
       const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
 
-      let isQualifiedFlag : boolean = false;
-      if(qreAdjustment !== 0) isQualifiedFlag = true
+      let isQualifiedFlag: boolean = false;
+      if (qreAdjustment !== 0) isQualifiedFlag = true
       else isQualifiedFlag = false;
 
       await sequelize.query(
-        rawQueries.updateProjectFiscalQre(schemaName, 
+        rawQueries.updateProjectFiscalQre(schemaName,
           {
             rd_percent_adjustment: qreAdjustment,
             rd_percent_final: netQre,
@@ -3993,7 +4143,28 @@ class SchemaService {
             modified_by: userId,
             modified_datetime: new Date(),
             rid: projectFiscalId,
-            is_qualified : isQualifiedFlag
+            is_qualified: isQualifiedFlag
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      await sequelize.query(
+        rawQueries.updateProjectFiscalRegionQre(schemaName,
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            rid: projectFiscalId,
+            is_qualified: isQualifiedFlag,
+            region_rid : projectFiscalDetails.region_rid
           }
         ),
         {
@@ -4003,7 +4174,7 @@ class SchemaService {
 
       // update project summary
       await mainSequelize.query(
-        rawQueries.updateProjectFiscalSummaryQre( 
+        rawQueries.updateProjectFiscalSummaryQre(
           {
             rd_percent_adjustment: qreAdjustment,
             rd_percent_final: netQre,
@@ -4014,39 +4185,54 @@ class SchemaService {
             modified_by: userId,
             modified_datetime: new Date(),
             rid: projectFiscalId,
-            is_qualified : isQualifiedFlag
+            is_qualified: isQualifiedFlag
           }
         ),
         {
           type: QueryTypes.UPDATE,
         }
       );
+      const userEventInfo: any = await this.fetchUserAndEventInfo({
+        userId: userId!,
+        eventType: eventTypes.UI_HANDLER
+      });
+
+      await this.createAccountTimelineEntry(accountNumber!, {
+        created_by: userId!,
+        account_rid: accountRid,
+        entity_rid: projectFiscalId!,
+        entity_name: entityTypes.QRE_PERCENT,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.ADJUST,
+        descriptions: 'for ' + projectFiscalDetails.project_code,
+        project_rid: projectFiscalId
+      }, ["project"]);
     }
-  }  
-  async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {
+  }
+  async getSubscriptionDetailsByProjectId(parentaccountId: string, schemaName: string, accountId: string) {
     try {
-     let schemaNameParent = `trd365_${schemaName.replace(/\D/g, "")}`;
-     const query = rawQueries.fetchAccountInfo(schemaNameParent,accountId);
-     const sequelize = await initOrgSequelize();
-     const users: any = await sequelize.query(query, {
-       replacements: { account_rid: accountId },
-       type: "SELECT",
-     });
-     const parentquery = rawQueries.fetchAccountInfo(schemaNameParent, parentaccountId);
-     const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
-       replacements: { accountId: parentaccountId },
-       type: "SELECT",
-     });
-      if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
-      {
+      let schemaNameParent = `trd365_${schemaName.replace(/\D/g, "")}`;
+      const query = rawQueries.fetchAccountInfo(schemaNameParent, accountId);
+      const sequelize = await initOrgSequelize();
+      const users: any = await sequelize.query(query, {
+        replacements: { account_rid: accountId },
+        type: "SELECT",
+      });
+      const parentquery = rawQueries.fetchAccountInfo(schemaNameParent, parentaccountId);
+      const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
+        replacements: { accountId: parentaccountId },
+        type: "SELECT",
+      });
+      if (parentSubscriptioninfo && parentSubscriptioninfo.length > 0) {
         const parentDetails = parentSubscriptioninfo[0];
         const isSubscriptionCreated = Boolean(
-        parentDetails.subscription_created &&
-        parentDetails.tenant_id &&
-        parentDetails.client_id &&
-        parentDetails.client_secret);
-        return  isSubscriptionCreated;
-      }else{
+          parentDetails.subscription_created &&
+          parentDetails.tenant_id &&
+          parentDetails.client_id &&
+          parentDetails.client_secret);
+        return isSubscriptionCreated;
+      } else {
         return false;
       }
     } catch (err) {

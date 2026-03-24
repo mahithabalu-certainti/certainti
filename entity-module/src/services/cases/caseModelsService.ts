@@ -3,7 +3,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX } from "../../utils/constants";
 import { Case } from "../../models/caseModel";
-// import { CaseSummary } from "../models/caseSummaryModel";
+import { CaseSummary } from "../../models/caseSummaryModel";
 // import { CaseProject } from "../models/caseProjectsModel";
 import { CaseTimeline } from "../../models/caseTimeline";
 import { CaseHistory } from "../../models/caseHistory";
@@ -40,22 +40,22 @@ export class CaseModelService {
     string,
     {
       Case: ReturnType<typeof Case.initialize>;
-      // CaseSummary: ReturnType<typeof CaseSummary.initialize>;
+      CaseSummary: ReturnType<typeof CaseSummary.initialize>;
       // CaseProject: ReturnType<typeof CaseProject.initialize>;
       CaseTimeline: ReturnType<typeof CaseTimeline.initialize>;
       // TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
       // CaseMilestone: ReturnType<typeof CaseMilestone.initialise>
-      CaseTask : ReturnType<typeof CaseTask.initialise>
-      TaskCollaborators : ReturnType<typeof TaskCollaborators.initialise>
-      TaskTag : ReturnType<typeof TaskTag.initialise>
-      Tags : ReturnType<typeof Tags.initialise>
+      CaseTask: ReturnType<typeof CaseTask.initialise>
+      TaskCollaborators: ReturnType<typeof TaskCollaborators.initialise>
+      TaskTag: ReturnType<typeof TaskTag.initialise>
+      Tags: ReturnType<typeof Tags.initialise>
       // EmailTemplate?: ReturnType<typeof EmailTemplate.initialize>
       // TaskComments : ReturnType<typeof TaskComments.initialise>
       // CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
       // TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
       // CaseHistorySubmission: ReturnType<typeof CaseHistorySubmission.initialize>;
       CaseTaskWorkflowConnector: ReturnType<typeof CaseTaskWorkflowConnector.initialize>
-      WorkflowConnector : ReturnType<typeof WorkflowConnector.initialize>
+      WorkflowConnector: ReturnType<typeof WorkflowConnector.initialize>
       // WorkflowConnectorMapping: ReturnType<typeof WorkflowConnectorMapping.initialize>
       // TaskHistory : ReturnType<typeof TaskHistory.initialize>;
       // ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
@@ -64,7 +64,7 @@ export class CaseModelService {
     }
   > = new Map();
 
-  constructor() {}
+  constructor() { }
 
   async getSequelize(): Promise<Sequelize> {
     if (!this.orgDbSequelize) {
@@ -117,11 +117,12 @@ export class CaseModelService {
     // const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     // const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
-    const TaskSummaryModel = TaskSummary.initialize(sequelize, "");
+    const TaskSummaryModel = TaskSummary.initialize(mainDbSequelize, "");
+    const CaseSummaryModel = CaseSummary.initialize(mainDbSequelize, "");
 
     const models = {
       Case: CaseModel,
-      // CaseSummary: CaseSummaryModel,
+      CaseSummary: CaseSummaryModel,
       // CaseProject: CaseProjectModel,
       CaseTimeline: CaseTimelineModel,
       CaseHistory: CaseHistoryModel,
@@ -133,10 +134,10 @@ export class CaseModelService {
       CheckListItem: CheckListItemModel,
       // Jurisdiction: JurisdictionModel,
       // CaseMilestone: CaseMilestoneModel,
-      CaseTask : CaseTaskModel,
-      TaskCollaborators : TaskCollaboratorsModel,
-      TaskTag : TaskTagModel,
-      Tags : TagsModel,
+      CaseTask: CaseTaskModel,
+      TaskCollaborators: TaskCollaboratorsModel,
+      TaskTag: TaskTagModel,
+      Tags: TagsModel,
       // EmailTemplate: EmailTemplateModel,
       // TaskComments : TaskCommentsModel,
       // CommentsAttachments : CommentsAttachmentsModel,
@@ -144,11 +145,11 @@ export class CaseModelService {
       // CaseHistorySubmission: CaseHistorySubmissionModel,
       Activities: ActivitiesModel,
       // TaskHistory: TaskHistoryModel,
-      CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
-      WorkflowConnector : WorkflowConnectorModel,
+      CaseTaskWorkflowConnector: CaseTaskWorkflowConnectorModel,
+      WorkflowConnector: WorkflowConnectorModel,
       // WorkflowConnectorMapping : WorkflowConnectorMappingModel,
       // ActivityAttachments : ActivityAttachmentsModel,
-      ActivityHistory : ActivityHistoryModel,
+      ActivityHistory: ActivityHistoryModel,
       TaskSummary: TaskSummaryModel
     };
 

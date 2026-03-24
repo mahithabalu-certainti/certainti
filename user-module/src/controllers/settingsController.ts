@@ -32,18 +32,6 @@ async function updateSettings(req: Request, res: Response): Promise<void> {
   const methodName = "Update Admin settings";
   try {
     const value = req.body;
-
-    // const validatedData = await validateRequest(
-    //   req,
-    //   createUserGroupSchema,
-    //   "",
-    //   res,
-    //   "POST"
-    // );
-
-    // If validation fails, validateRequest will handle the response
-    //if (!validatedData) return;
-
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       handleErrorResponse(

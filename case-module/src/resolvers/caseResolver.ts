@@ -23,7 +23,7 @@ export const caseResolver: IResolvers = {
     getCasesList: async (_, { account_rid, filters, page, limit, sortBy, sortOrder }, ctx) => {
       try {
         const userId = ctx.req.headers["x-user-id"];
-        
+
         if (!userId) {
           return {
             statusCode: HttpStatus.UNAUTHORIZED,
@@ -105,7 +105,7 @@ export const caseResolver: IResolvers = {
         }
 
         const userId = ctx.req.headers["x-user-id"];
-        
+
         if (!userId) {
           return {
             statusCode: HttpStatus.UNAUTHORIZED,
@@ -131,11 +131,11 @@ export const caseResolver: IResolvers = {
           // Fetch the updated case information with all joined fields
           try {
             const caseListResult = await ctx.services.caseService.listAllCasesSummary(
-              { 
+              {
                 account_rid: data.account_rid,
                 page: 1,
-                limit: 1 ,
-                fiscal_year: 0,
+                limit: 1,
+                fiscalYear: 0,
                 case_rid: data.case_rid
               },
               { rid: data.case_rid }, // Filter by rid (the primary key of the case)
@@ -143,9 +143,9 @@ export const caseResolver: IResolvers = {
               "graphql"
             );
 
-            if (caseListResult.statusCode === HttpStatus.SUCCESS && 
-                caseListResult.data?.caseInfo && 
-                caseListResult.data.caseInfo.length > 0) {
+            if (caseListResult.statusCode === HttpStatus.SUCCESS &&
+              caseListResult.data?.caseInfo &&
+              caseListResult.data.caseInfo.length > 0) {
               return {
                 statusCode: HttpStatus.SUCCESS,
                 statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
