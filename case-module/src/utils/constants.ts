@@ -1937,14 +1937,14 @@ WHERE dmf.country_rid = '${countryRid}'
   saveFederalFilledFormUrl(schemaName: string) {
     return `
           UPDATE ${schemaName}.rd_credit_country_calculations
-          SET rd_form_url = :filledFormUrl
+          SET rd_form_url = :filledFormUrl, form_error_message = NULL
           WHERE case_rid = :caseRid
           and country_rid  =:countryRid`
   },
   saveStateFilledFormUrl(schemaName: string) {
     return `
            UPDATE ${schemaName}.rd_credit_state_calculations
-      SET rd_form_url = :filledFormUrl
+      SET rd_form_url = :filledFormUrl, form_error_message = NULL
       WHERE case_rid = :caseRid
       and state_rid  =:stateRid`
   },
