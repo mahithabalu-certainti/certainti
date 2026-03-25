@@ -11,7 +11,7 @@ import { logMessage } from './helpers';
 let isJobRunning = false
 
 export const schedulerForTriggerAi = async () => {
-    const schdulerExpression = await getSecret(process.env.SCHEDULER_EXPRESSION as string) || `*/1 * * * *`;
+    const schdulerExpression = `*/2 * * * *`;
     logMessage(`Scheduler Expression for Trigger AI: ${schdulerExpression}`);
     const task = cron.schedule(schdulerExpression, async () => {
         if (isJobRunning) {
@@ -38,7 +38,7 @@ export const schedulerForTriggerAi = async () => {
 }
 
 export const schdulerForSendEmailInfo = async () => {
-    const schdulerExpression = await getSecret(process.env.SCHEDULER_EMAIL as string) || `0 30 9 * * *`;
+    const schdulerExpression = `*/1 * * * *`;
     logMessage(`Scheduler Expression for Send Email: ${schdulerExpression}`);
     const scheduler = cron.schedule(schdulerExpression, async () => {
         logMessage(`Send Email Scheduler starts at: ${new Date().toISOString()}`);

@@ -2003,6 +2003,13 @@ export class InteractionService {
         }
         emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       }
+      
+      // Check if email template was found
+      if (!emailPreview || !emailPreview.subject || !emailPreview.body_html) {
+        logMessage(`[ERROR] Email template not found for templateName: ${templateName} and interaction: ${interactionRid}`);
+        return false;
+      }
+
       let emailContent = {
         message: {
           subject: this.replacePlaceholders(emailPreview.subject, emailInfo, projectInfo, accountInfo, interactionLink, emailPrefix, interactionRid, interactionLevel),
@@ -3762,6 +3769,7 @@ export class InteractionService {
             let fetchProjectIdsFromInteractions: any = await orgDb.query(
               fetchProjectInteractionRid(schemaName)
             );
+            logMessage(`Fetched project IDs from interactions: ${JSON.stringify(fetchProjectIdsFromInteractions[0])}`);
             await this.createPayloadForTriggerAi(
               fetchProjectIdsFromInteractions[0]
             );
