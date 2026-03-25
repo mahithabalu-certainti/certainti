@@ -321,7 +321,7 @@ export interface VersionControlResponse {
   statusMessage: string;
   data: {
     data: VersionControlItem[];
-    count: number;
+    total_result: number;
   };
 }
 
