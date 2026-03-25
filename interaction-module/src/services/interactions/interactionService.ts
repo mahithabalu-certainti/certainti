@@ -2003,12 +2003,6 @@ export class InteractionService {
         }
         emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       }
-      
-      // Check if email template was found
-      if (!emailPreview || !emailPreview.subject || !emailPreview.body_html) {
-        logMessage(`[ERROR] Email template not found for templateName: ${templateName} and interaction: ${interactionRid}`);
-        return false;
-      }
 
       let emailContent = {
         message: {
