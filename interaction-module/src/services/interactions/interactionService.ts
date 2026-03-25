@@ -3723,31 +3723,31 @@ export class InteractionService {
         let verifyTableExistsForInteractions: any = await orgDb.query(checkTableExists(schemaName, "interactions"));
         if (verifyTableExistsForInteractions[0][0].exists === true) {
           logMessage(`verifyTableExistsForInteractions: ${true}`);
-          // try {
-          //   const isRecordExists =
-          //     await this.interactionSchemaService.findTaskRecordExists(
-          //       schedulerRecord.rid,
-          //       interactionTaskName.interactionAge
-          //     );
-          //   if (isRecordExists == null) {
-          //     await this.interactionSchemaService.createSchedulerTaskRecords(
-          //       schedulerRecord.rid,
-          //       interactionTaskName.interactionAge
-          //     );
-          //   }
-          //   await fetchInteractionForSentResentStatus(
-          //     schemaName,
-          //     mainDb,
-          //     orgDb
-          //   );
-          // } catch (error: any) {
-          //   await this.interactionSchemaService.updateSchedulerTaskRecords(
-          //     schedulerRecord.rid,
-          //     interactionTaskName.interactionAge,
-          //     schedulerStatus.Failed,
-          //     error.message
-          //   );
-          // }
+          try {
+            const isRecordExists =
+              await this.interactionSchemaService.findTaskRecordExists(
+                schedulerRecord.rid,
+                interactionTaskName.interactionAge
+              );
+            if (isRecordExists == null) {
+              await this.interactionSchemaService.createSchedulerTaskRecords(
+                schedulerRecord.rid,
+                interactionTaskName.interactionAge
+              );
+            }
+            await fetchInteractionForSentResentStatus(
+              schemaName,
+              mainDb,
+              orgDb
+            );
+          } catch (error: any) {
+            await this.interactionSchemaService.updateSchedulerTaskRecords(
+              schedulerRecord.rid,
+              interactionTaskName.interactionAge,
+              schedulerStatus.Failed,
+              error.message
+            );
+          }
           try {
             logMessage(`Checking or creating scheduler task record for 'interaction'`);
             const isRecordExists =
