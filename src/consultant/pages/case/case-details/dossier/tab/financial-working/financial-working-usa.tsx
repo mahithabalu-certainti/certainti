@@ -408,10 +408,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                               ? 'rrc_credit_280_c'
                               : title;
                         return (
-                          <td
-                            key={colKey}
-                            className={`px-2 py-0 ${cellValue && (typeof cellValue === 'number' || !isNaN(Number(cellValue)) || cellValue.endsWith('%')) ? 'text-right' : 'text-left'}`}
-                          >
+                          <td key={colKey} className={`px-2 py-0 text-right`}>
                             <div className='w-[180px] h-[24px] inline-flex items-center justify-end'>
                               <Selection280C
                                 value={cellValue}
