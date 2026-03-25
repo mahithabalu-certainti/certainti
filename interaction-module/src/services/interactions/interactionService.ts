@@ -3749,6 +3749,7 @@ export class InteractionService {
             );
           }
           try {
+            logMessage(`Checking or creating scheduler task record for 'interaction'`);
             const isRecordExists =
               await this.interactionSchemaService.findTaskRecordExists(
                 schedulerRecord.rid,
@@ -3760,8 +3761,18 @@ export class InteractionService {
                 interactionTaskName.interaction
               );
             }
+            logMessage(`Fetching status_rid for 'Response Received'`);
+            let statusResult: any = await mainDb.query(
+              rawQueries.fetchInteractionStatusByType(STATUS_MESSAGE.responseReceivedStatus)
+            );
+
+            // Depending on your DB driver, this might be [rows, metadata]
+            let status_rid = statusResult[0][0].rid;
+
+            logMessage(`Fetched status_rid for 'response_received': ${status_rid}`);
+
             let fetchProjectIdsFromInteractions: any = await orgDb.query(
-              fetchProjectInteractionRid(schemaName)
+              fetchProjectInteractionRid(schemaName, status_rid)
             );
             logMessage(`Fetched project IDs from interactions: ${JSON.stringify(fetchProjectIdsFromInteractions[0])}`);
             await this.createPayloadForTriggerAi(

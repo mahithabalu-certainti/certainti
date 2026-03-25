@@ -1190,17 +1190,16 @@ export const fetchProjectAttachmentsRids = (schemaName: string) => {
   return query;
 };
 
-export const fetchProjectInteractionRid = (schemaName: string) => {
+export const fetchProjectInteractionRid = (schemaName: string, statusRid?: string) => {
   let query = `
-              SELECT i.account_rid,
-                i.project_fiscal_rid,
-                i.is_ai_processed,
-                s.status_name
-          FROM ${schemaName}.interactions i
-          LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_status s
-                ON i.interation_status_rid = s.rid
-          WHERE i.is_ai_processed = false
-    `;
+              SELECT account_rid,
+                project_fiscal_rid,
+                is_ai_processed
+          FROM ${schemaName}.interactions
+          WHERE is_ai_processed = false`;
+  if (statusRid) {
+    query += ` AND status_rid = '${statusRid}'`;
+  }
   return query;
 };
 
