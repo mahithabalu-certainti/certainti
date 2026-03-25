@@ -39,6 +39,7 @@ interface ResourceSummaryProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  isActionItemsExpanded?: boolean;
 }
 
 const ResourceSummary: React.FC<ResourceSummaryProps> = ({
@@ -51,6 +52,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  isActionItemsExpanded,
 }) => {
   const { caseId } = useParams();
   const navigate = useNavigate();
@@ -250,7 +252,9 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

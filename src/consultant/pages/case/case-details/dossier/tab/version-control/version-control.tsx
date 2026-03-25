@@ -26,6 +26,7 @@ interface VersionControlProps {
   searchValue: string;
   /** Called when the user clicks the download icon on a row. Receives the row's dossier_version. */
   onVersionDownload: (dossier_version: string) => void;
+  isActionItemsExpanded?: boolean;
 }
 
 const VersionControl: React.FC<VersionControlProps> = ({
@@ -37,6 +38,7 @@ const VersionControl: React.FC<VersionControlProps> = ({
   setColumnAnchorEl,
   searchValue,
   onVersionDownload,
+  isActionItemsExpanded,
 }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
@@ -102,7 +104,9 @@ const VersionControl: React.FC<VersionControlProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

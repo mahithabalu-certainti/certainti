@@ -40,6 +40,7 @@ interface ProjectDocumentsProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  isActionItemsExpanded?: boolean;
 }
 
 const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
@@ -52,6 +53,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  isActionItemsExpanded,
 }) => {
   const { caseId } = useParams();
   const navigate = useNavigate();
@@ -247,7 +249,9 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}
