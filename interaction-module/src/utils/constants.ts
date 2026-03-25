@@ -237,6 +237,7 @@ export const STATUS_MESSAGE = {
   fiscalIdMissing: "Project-Fiscal RID is missing",
   projectCodeMissing: "Project-Code missing",
   resourceNotFound: "Resource not found",
+  responseReceivedStatus: "Response Received",
   active: "Active",
   inactive: "In-Active",
   resourceInactive: "Resource you are trying to update is currently In-Active",
