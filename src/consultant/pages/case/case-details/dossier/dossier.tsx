@@ -637,11 +637,11 @@ const Dossier: React.FC<DossierProps> = ({
       value: 'dossier_version',
       hide: !isPackagesDownload,
     },
-    {
-      label: 'Close Case',
-      value: 'close_case',
-      hide: !isCaseCloseEnable,
-    },
+    // {
+    //   label: 'Close Case',
+    //   value: 'close_case',
+    //   hide: !isCaseCloseEnable,
+    // },
   ];
 
   const showTableControls =
