@@ -150,22 +150,6 @@ async function listFinancialHighlightsAccounts(req: Request, res: Response) {
           result.data.state_wise.rd_credits_total
         ).toFixed(2),
       });
-       claimJurisdictionArray.push({
-        rid: uuid(),
-        name: result.data.grand_total.name,
-        rd_credits_fte: Number(result.data.grand_total.rd_credits_fte).toFixed(
-          2
-        ),
-        rd_credits_subcon: Number(
-          result.data.grand_total.rd_credits_subcon
-        ).toFixed(2),
-        rd_credits_nonlabor: Number(
-          result.data.grand_total.rd_credits_nonlabor
-        ).toFixed(2),
-        rd_credits_total: Number(
-          result.data.grand_total.rd_credits_total
-        ).toFixed(2),
-      });
       } else {
         claimJurisdictionArray.push({
         rid: uuid(),
