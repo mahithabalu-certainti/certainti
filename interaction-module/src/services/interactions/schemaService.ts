@@ -4651,6 +4651,26 @@ class InteractionSchemaService {
         scheduler_name : 'SendEmail'
       })
       return createSchedulerExecution
+    } else {
+      // Mark existing running record as failed (server crash/deployment detected)
+      await SchedulerExecution.update({
+        status: schedulerStatus.Failed,
+        completed_at: new Date()
+      }, {
+        where: {
+          rid: findSchedulerExists.rid
+        }
+      })
+      logMessage(`Marked stale SendEmail scheduler (rid: ${findSchedulerExists.rid}) as Failed due to server restart/deployment`)
+      
+      // Create new scheduler record
+      const createSchedulerExecution = await SchedulerExecution.create({
+        created_datetime : new Date(),
+        started_at : new Date(),
+        status : schedulerStatus.Running,
+        scheduler_name : 'SendEmail'
+      })
+      return createSchedulerExecution
     }
   }
 
