@@ -189,7 +189,16 @@ export class RdCreditCalculatorForON {
                 "TOTAL Credit with ORDTC": Math.round(totalCreditWithORDTC),
                 "TOTAL Credit with No ORDTC": Math.round(totalCreditWithNoORDTC)
             },
-            "Projects" : calculatedNewComputedValues,
+            "Projects" : calculatedNewComputedValues.map((d) => {
+                return Object.fromEntries(
+                    Object.entries(d).map(([key, value]) => {
+                        if(key === 'Total Hours') {
+                            return [key, JSON.stringify(value)];
+                        } 
+                        return [key, value]
+                    })
+                )
+            }),
             BOLD : ["TOTAL Credit with ORDTC", "TOTAL Credit with No ORDTC", "Total Cost"]
         }
         return {
