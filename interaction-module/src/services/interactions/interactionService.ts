@@ -3532,6 +3532,9 @@ export class InteractionService {
       } else {
         parsedMessage = message;
       }
+
+      logMessage(`Parsed message structure: ${JSON.stringify(parsedMessage)}`);
+
       const {
         company_id,
         project_id,
@@ -3543,37 +3546,55 @@ export class InteractionService {
         detailed_breakdown,
         four_part_assessment
       } = parsedMessage.data;
+
+      logMessage(`Extracted fields — company_id: ${company_id}, project_id: ${project_id}, type: ${type}, transaction_id: ${transaction_id}`);
+      logMessage(`interaction_questions count: ${Array.isArray(interaction_questions) ? interaction_questions.length : 'N/A (not array)'}, value: ${JSON.stringify(interaction_questions)}`);
+      logMessage(`four_part_assessment present: ${!!four_part_assessment}, value: ${JSON.stringify(four_part_assessment)}`);
+
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           company_id
         );
+
+      logMessage(`Fetched accountNumber: ${accountNumber} for company_id: ${company_id}`);
+
       if (!accountNumber) {
-        logMessage(`Invalid account ID in Kafka message: ${company_id}`);
+        logMessage(`SKIPPING — Invalid account ID in Kafka message: ${company_id}`);
         return;
       }
+
+      logMessage(`statusCode present: ${!!parsedMessage.statusCode}, value: ${parsedMessage.statusCode}`);
+
       if (parsedMessage.statusCode) {
         if (!company_id || !project_id || !type) {
-          logMessage(`Kafka message missing required fields: ${JSON.stringify(parsedMessage)}`);
+          logMessage(`SKIPPING — Kafka message missing required fields. company_id: ${company_id}, project_id: ${project_id}, type: ${type}`);
           return;
         }
 
+        logMessage(`Routing message by type: "${type}"`);
+
         if (type === "four_part_assessment") {
+          logMessage(`Handling four_part_assessment block (standalone save + audit update)`);
           let fourPartPayload: FourPartAssessmentResponse;
-          fourPartPayload = four_part_assessment
+          fourPartPayload = four_part_assessment;
+          logMessage(`four_part_assessment payload: ${JSON.stringify(fourPartPayload)}`);
           await this.interactionSchemaService.createFourPartAssessment(
             four_part_assessment,
             accountNumber,
             project_id,
             company_id,
             transaction_id
-          )
+          );
+          logMessage(`createFourPartAssessment done for transaction_id: ${transaction_id}`);
           await this.interactionSchemaService.updateFourPartAssessmentAuditStatus(
             accountNumber,
             parsedMessage
           );
+          logMessage(`updateFourPartAssessmentAuditStatus done`);
         }
 
         if (type === "qre_percent") {
+          logMessage(`Handling qre_percent for project_id: ${project_id}`);
           await this.interactionSchemaService.updateQrePercent(
             qre_percent,
             accountNumber,
@@ -3583,8 +3604,11 @@ export class InteractionService {
             transaction_id,
             parsedMessage
           );
+          logMessage(`updateQrePercent done`);
         }
+
         if (type === "project_summary") {
+          logMessage(`Handling project_summary for project_id: ${project_id}`);
           await this.interactionSchemaService.updateTechSummary(
             project_summary,
             accountNumber,
@@ -3593,62 +3617,90 @@ export class InteractionService {
             transaction_id,
             parsedMessage
           );
+          logMessage(`updateTechSummary done`);
         }
+
         if (type === "interaction_questions" || type === 'four_part_assessment') {
+          logMessage(`Entering interaction creation block for type: "${type}"`);
+
           let interactionAssessmentSource: string;
           let fourPartAssessmentRid: string | null;
           let fourPartPayload: FourPartAssessmentResponse;
           let batchId: string;
-          fourPartPayload = four_part_assessment
+          fourPartPayload = four_part_assessment;
           let dynamicQuestions: any[];
-          let intStatusRid: string = ''
+          let intStatusRid: string = '';
+
           const findStatus = await this.interactionSchemaService.getStatus();
+          logMessage(`getStatus result count: ${findStatus?.length}, values: ${JSON.stringify(findStatus)}`);
+
           if (type === 'four_part_assessment') {
-            interactionAssessmentSource = interactionAssessmentSourceType.FPA
+            logMessage(`Branch: four_part_assessment — fetching FPA RID for transaction_id: ${transaction_id}`);
+            interactionAssessmentSource = interactionAssessmentSourceType.FPA;
+
             const findFpaRid = await this.interactionSchemaService.fetchAccountFpaInfo(transaction_id, accountNumber);
+            logMessage(`fetchAccountFpaInfo result: ${JSON.stringify(findFpaRid)}`);
             fourPartAssessmentRid = findFpaRid.rid;
-            dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => {
-              return {
-                question: d
-              }
-            })
+            logMessage(`fourPartAssessmentRid: ${fourPartAssessmentRid}`);
+
+            logMessage(`four_part_assessment follow_up_questions: ${JSON.stringify(fourPartPayload?.follow_up_questions)}`);
+            dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => ({ question: d }));
+            logMessage(`dynamicQuestions mapped (count: ${dynamicQuestions.length}): ${JSON.stringify(dynamicQuestions)}`);
+
             const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber, company_id);
+            logMessage(`fetchInteractionBatch result: ${findBatchAndIncrement}`);
+
             if (findBatchAndIncrement) {
-              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1])
-              const incrementedBatchNumber = splitBatchNumber + 1
-              batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`
+              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1]);
+              const incrementedBatchNumber = splitBatchNumber + 1;
+              batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`;
             } else {
-              batchId = `${process.env.BATCH_PREFIX}000001`
+              batchId = `${process.env.BATCH_PREFIX}000001`;
             }
-          }
-          else {
-            interactionAssessmentSource = interactionAssessmentSourceType.RD
+            logMessage(`batchId resolved: ${batchId}`);
+          } else {
+            logMessage(`Branch: interaction_questions (RD) — transaction_id: ${transaction_id}`);
+            interactionAssessmentSource = interactionAssessmentSourceType.RD;
             fourPartAssessmentRid = null;
-            dynamicQuestions = interaction_questions
+            dynamicQuestions = interaction_questions;
+            logMessage(`dynamicQuestions from interaction_questions (count: ${Array.isArray(dynamicQuestions) ? dynamicQuestions.length : 'NOT AN ARRAY'}): ${JSON.stringify(dynamicQuestions)}`);
+
             const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id);
-            batchId = findBatchAndIncrement
+            logMessage(`fetchInteractionBatchByTransactionId result: ${findBatchAndIncrement}`);
+            batchId = findBatchAndIncrement;
+            logMessage(`batchId resolved: ${batchId}`);
           }
 
-          const projectInfo =
-            await this.interactionSchemaService.fetchProjectInfo(
-              accountNumber,
-              project_id
-            );
-          const statusRid =
-            await this.interactionSchemaService.getInteractionStatusByType(
-              statusAction.DRAFT
-            );
+          const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
+          logMessage(`fetchProjectInfo result: ${JSON.stringify(projectInfo)}`);
+
+          const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.DRAFT);
+          logMessage(`getInteractionStatusByType (DRAFT) result: ${statusRid}`);
+
           const questionsWithActionType = Array.isArray(dynamicQuestions)
-            ? dynamicQuestions.map((q: any) => ({
-              ...q,
-              action_type: "add",
-            }))
+            ? dynamicQuestions.map((q: any) => ({ ...q, action_type: "add" }))
             : [];
+          logMessage(`questionsWithActionType count: ${questionsWithActionType.length}`);
+
+          if (!Array.isArray(dynamicQuestions) || dynamicQuestions.length === 0) {
+            logMessage(`WARNING — dynamicQuestions is empty or not an array. No questions will be attached to interaction. type: ${type}, transaction_id: ${transaction_id}`);
+          }
 
           if (findStatus.length > 0) {
             const mapStatus = new Map(findStatus.map((d) => [d.status_name, d.rid]));
-            intStatusRid = interactionAssessmentSource == interactionAssessmentSourceType.RD ? mapStatus.get('In-Active')! : mapStatus.get('Active')!
+            logMessage(`Status map keys: ${JSON.stringify([...mapStatus.keys()])}`);
+            intStatusRid = interactionAssessmentSource === interactionAssessmentSourceType.RD
+              ? mapStatus.get('In-Active')!
+              : mapStatus.get('Active')!;
+            logMessage(`intStatusRid resolved: ${intStatusRid} for source: ${interactionAssessmentSource}`);
+
+            if (!intStatusRid) {
+              logMessage(`WARNING — intStatusRid is undefined/null. Expected status key "${interactionAssessmentSource === interactionAssessmentSourceType.RD ? 'In-Active' : 'Active'}" not found in map.`);
+            }
+          } else {
+            logMessage(`WARNING — findStatus is empty; intStatusRid will remain empty string`);
           }
+
           let interactionData = {
             account_rid: company_id,
             project_fiscal_rid: project_id,
@@ -3666,28 +3718,34 @@ export class InteractionService {
             interaction_batch_id: batchId,
             interaction_status_rid: intStatusRid
           };
+
+          logMessage(`interactionData to be created: ${JSON.stringify(interactionData)}`);
+
           await this.createInteraction(
             interactionData,
             interactionSource.AUTO,
             process.env.SYSTEM_USER_ID!
           );
-          await this.interactionSchemaService.updateInteractionStatus(
-            accountNumber,
-            parsedMessage
-          );
+          logMessage(`createInteraction SUCCESS for transaction_id: ${transaction_id}, type: ${type}`);
+
+          await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage);
+          logMessage(`updateInteractionStatus done for transaction_id: ${transaction_id}`);
         }
+
         if (type === 'data_ingestion') {
-          logMessage(`Processing data_ingestion type for account: ${company_id}  ${accountNumber}`);
+          logMessage(`Processing data_ingestion type for account: ${company_id} ${accountNumber}`);
           await this.interactionSchemaService.updateAIProcessed(accountNumber, project_id, parsedMessage);
+          logMessage(`updateAIProcessed done for project_id: ${project_id}`);
         }
-      }
-      else {
-        logMessage(`Kafka message indicates failure status: ${JSON.stringify(message)}`);
+
+      } else {
+        logMessage(`SKIPPING — Kafka message indicates failure/missing statusCode: ${JSON.stringify(message)}`);
       }
 
-      logMessage(`Processed Kafka message for account: ${company_id}`);
+      logMessage(`Finished processing Kafka message for account: ${company_id}, transaction_id: ${parsedMessage?.data?.transaction_id}`);
     } catch (err) {
       logMessage(`Error processing Kafka message: ${JSON.stringify(err)}`);
+      logMessage(`Error stack: ${err instanceof Error ? err.stack : 'No stack available'}`);
     }
   }
 
