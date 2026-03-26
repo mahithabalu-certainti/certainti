@@ -45,6 +45,7 @@ export const schdulerForSendEmailInfo = async () => {
         try {
             const schedulerRecord = await interactionSchemaService.createSchedulerRecordsForSendEmail()
             if (schedulerRecord) {
+                logMessage(`Found scheduler record for Send Email: ${schedulerRecord.rid}`);
                 await interactionService.sendEmailInBatch(schedulerRecord)
                 await interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, 'success')
             } else {

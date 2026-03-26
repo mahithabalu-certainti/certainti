@@ -1450,9 +1450,9 @@ export const interactionTaskName = {
 
 export const interactionTemplateName = {
   interactionProject: "interaction project",
-  interactionProjectReminder: "interaction project reminder",
+  interactionProjectReminder: "interaction project remainder",
   interactionAccount: "interaction account",
-  interactionAccountReminder: "interaction account reminder",
+  interactionAccountReminder: "interaction account remainder",
   interactionProjectUpdate: "interaction project update",
   interactionAccountUpdate: "interaction account update"
 }
