@@ -194,7 +194,7 @@ export const getRdCreditsColumns = (
   },
   {
     id: 'rd_credits_total',
-    label: 'RD Credits Total',
+    label: 'Total QRE',
     sortable: false,
     sortId: 'rd_credits_total',
     width: '25%',

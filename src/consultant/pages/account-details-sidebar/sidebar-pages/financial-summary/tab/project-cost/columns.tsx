@@ -150,6 +150,10 @@ export const getFinancialProjectCostColumns = (
       hide:
         !permissionMap?.['qre_final']?.edit &&
         !permissionMap?.['qre_final']?.read,
+      render: (row: FinancialProjectCostList) =>
+        row.qre_final !== null && row.qre_final !== undefined
+          ? costDisplay(row.qre_final, row.currency_symbol)
+          : '-',
     },
   ];
 };
