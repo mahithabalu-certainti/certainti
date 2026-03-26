@@ -1202,143 +1202,138 @@ export const fetchIsRdQualifiedProjectQueryRegion = (
 ) => {
   let query = `
     WITH calculate_rd_credits_projects AS (
-        SELECT DISTINCT COUNT(*) OVER() AS total_projects_rd_credits, afr.account_rid
+        SELECT DISTINCT COUNT(*) OVER() AS total_projects_rd_credits, pf.account_rid
         FROM 
-       ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf 
-        ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid 
-        AND pf.fiscal_year = ${fiscal_year}
+       ${schemaName}.project_fiscal pf
+        LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
         WHERE 
         pf.is_qualified = true
         and
-        afr.account_rid = '${account_rid}'
+        pf.account_rid = '${account_rid}'
         AND
-        afr.fiscal_year = ${fiscal_year}
+        pf.fiscal_year = ${fiscal_year}
         AND
-		afr.region_rid = '${region_rid}'
+		    pfr.region_rid = '${region_rid}'
     ),
     calculate_resource_metrics AS (
         SELECT 
-        DISTINCT ON (afr.account_rid)  
+        DISTINCT ON (pf.account_rid)  
         SUM(COALESCE(pf.total_fte_prj, 0)) AS total_fte, 
         SUM(COALESCE(pf.total_subcon_prj, 0)) AS total_subcon,
         SUM(COALESCE(pf.total_nonlabor_prj, 0)) AS total_nonlabor, 
-        afr.account_rid
+        pf.account_rid
         FROM
-		${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf 
-        ON pf.region_rid = afr.region_rid 
-        AND pf.account_rid = afr.account_rid
-        AND pf.fiscal_year = ${fiscal_year}
+		    ${schemaName}.project_fiscal pf 
+        LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
         WHERE 
-        afr.account_rid = '${account_rid}'
+        pf.account_rid = '${account_rid}'
         AND
-        afr.fiscal_year = ${fiscal_year}
+        pf.fiscal_year = ${fiscal_year}
         AND
         pf.is_qualified = true
         AND
-		afr.region_rid = '${region_rid}'
-		GROUP BY
-		afr.account_rid
+		    pfr.region_rid = '${region_rid}'
+        GROUP BY
+        pf.account_rid
     ),
     calculate_hours_fte AS (
-        SELECT DISTINCT ON (afr.account_rid)
-                afr.account_rid,
-                CAST(SUM(COALESCE(pf.total_effort_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
-                CAST(SUM(COALESCE(pf.total_effort_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
-                CAST(SUM(COALESCE(pf.total_effort_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
+        SELECT DISTINCT ON (pf.account_rid)
+            pf.account_rid,
+            CAST(SUM(COALESCE(pf.total_effort_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
+            CAST(SUM(COALESCE(pf.total_effort_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
+            CAST(SUM(COALESCE(pf.total_effort_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
             FROM
-            ${schemaName}.account_fiscal_region afr
-            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
             WHERE 
-            afr.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
             pf.is_qualified = true
             AND
-		    afr.region_rid = '${region_rid}'
+		        pfr.region_rid = '${region_rid}'
             GROUP BY
-            afr.account_rid
+            pf.account_rid
     ),
     calculate_hours_subcon AS (
-        SELECT DISTINCT ON (afr.account_rid)
-            afr.account_rid,
+        SELECT DISTINCT ON (pf.account_rid)
+            pf.account_rid,
             CAST(SUM(COALESCE(pf.total_effort_subcon_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
             CAST(SUM(COALESCE(pf.total_effort_subcon_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
             CAST(SUM(COALESCE(pf.total_effort_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
             FROM
-            ${schemaName}.account_fiscal_region afr
-            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
             WHERE 
-            afr.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
             pf.is_qualified = true
             AND
-		    afr.region_rid = '${region_rid}'
+		        pfr.region_rid = '${region_rid}'
             GROUP BY
-            afr.account_rid
+            pf.account_rid
             ),
     calculate_cost_fte AS (
-        SELECT DISTINCT ON (afr.account_rid)
-            afr.account_rid,
+        SELECT DISTINCT ON (pf.account_rid)
+            pf.account_rid,
             CAST(SUM(COALESCE(pf.total_cost_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
             CAST(SUM(COALESCE(pf.total_cost_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
             CAST(SUM(COALESCE(pf.total_cost_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
         FROM
-            ${schemaName}.account_fiscal_region afr
-            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
             WHERE 
-            afr.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
             pf.is_qualified = true
             AND
-		    afr.region_rid = '${region_rid}'
+		        pfr.region_rid = '${region_rid}'
             GROUP BY
-            afr.account_rid
+            pf.account_rid
     ),
     calculate_cost_subcon AS (
-        SELECT DISTINCT ON (afr.account_rid)
-            afr.account_rid,
+        SELECT DISTINCT ON (pf.account_rid)
+            pf.account_rid,
             CAST(SUM(COALESCE(pf.total_cost_subcon_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
             CAST(SUM(COALESCE(pf.total_cost_subcon_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
             CAST(SUM(COALESCE(pf.total_cost_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
         FROM
-            ${schemaName}.account_fiscal_region afr
-            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
             WHERE 
-            afr.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
             pf.is_qualified = true
             AND
-		    afr.region_rid = '${region_rid}'
+		        pfr.region_rid = '${region_rid}'
             GROUP BY
-            afr.account_rid
+            pf.account_rid
     ),
     calculate_cost_nonlabor AS (
-    SELECT DISTINCT ON (afr.account_rid)
-            afr.account_rid,
+    SELECT DISTINCT ON (pf.account_rid)
+            pf.account_rid,
             CAST(SUM(COALESCE(pf.total_cost_nonlabor_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
             CAST(SUM(COALESCE(pf.total_cost_nonlabor_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level
         FROM
-            ${schemaName}.account_fiscal_region afr
-            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
             WHERE 
-            afr.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
             pf.is_qualified = true
             AND
-		    afr.region_rid = '${region_rid}'
+		        pfr.region_rid = '${region_rid}'
             GROUP BY
-            afr.account_rid
+            pf.account_rid
     ),
     calculate_rd_credits_federal AS (
         SELECT
