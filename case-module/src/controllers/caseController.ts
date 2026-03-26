@@ -599,15 +599,7 @@ async function exportAllCasesAccount(req: Request, res: Response) {
               modified_datetime:
                 d.modified_datetime == null
                   ? ""
-                  : formatDate(d.modified_datetime),
-              submitted_datetime:
-                d.submitted_datetime == null
-                  ? ""
-                  : formatDate(d.submitted_datetime),
-              approved_datetime:
-                d.approved_datetime == null
-                  ? ""
-                  : formatDate(d.approved_datetime),
+                  : formatDate(d.modified_datetime)
             };
 
             // Build exportRecord using allowed fields and resultMap

@@ -421,7 +421,7 @@ export const rawQueries = {
       FROM "${schemaName}".account_timeline
       WHERE account_rid = :accountId
       and document_rid is null
-      ORDER BY created_datetime DESC
+      ORDER BY created_datetime DESC NULLS LAST
       LIMIT :limit OFFSET :offset
     `;
   },
@@ -430,7 +430,7 @@ export const rawQueries = {
       SELECT rid, r_number, event_name, descriptions, created_datetime, created_by_name, entity_name
       FROM "${schemaName}".case_timeline
       WHERE case_rid = :caseId
-      ORDER BY created_datetime DESC
+      ORDER BY created_datetime DESC NULLS LAST
       LIMIT :limit OFFSET :offset
     `;
   },

@@ -457,7 +457,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
   let dossierVersion;
   let now = new Date();
   if(findData) {
-    dossierVersion = (findData.dossier_version ?? 0) + 1
+    dossierVersion = Number(findData.dossier_version ?? 0) + 1
     await DossierFormModel.update({
       is_initiated : true
     }, {
@@ -1237,11 +1237,12 @@ async fetchDossierPackage (data : any) : Promise<any> {
             if(stringToJson[j].url !== '') {
               let splittedName = stringToJson[j].url.split('/').pop() as string
               finalizedName = splittedName.split('_').slice(2,3).join('_')
+
+              responsePackage.push({
+                name : `RD Form-${finalizedName}`,
+                url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
+              })
             }
-            responsePackage.push({
-              name : `RD Form-${finalizedName}`,
-              url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
-            })
           } else {
             responsePackage.push({
               name : '',
@@ -1719,7 +1720,8 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       if(JSON.stringify(data.user_preference) !== '') {
         const getCaseCloseStatus = await mainDb.query<{rid : string, status_name : string, status_type : string}>(rawQueries.getCaseCloseStatus(), {type : QueryTypes.SELECT, plain : true})
         await Case.update({
-          status_rid : getCaseCloseStatus?.rid
+          status_rid : getCaseCloseStatus?.rid,
+          case_total_rd_cost : data.country_credits.rd_credits_computed,
         }, {
           where : {
             rid : data.case_rid

@@ -158,11 +158,11 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.project_fiscal_rid,
         cp.project_code,
         cp.project_name,
-        COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
-        COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        CAST((COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_fte_prj,
-        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
-        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
+        COALESCE(cp.total_effort_from_prj_res,0.00) AS total_effort_prj,
+        COALESCE(cp.total_cost_from_prj_res, 0.00) AS total_cost_prj,
+        CAST((COALESCE(cp.total_cost_fte_from_prj_res, 0.00)) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_from_prj_res, 0.00)) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_from_prj_res, 0.00)) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
         FROM ${schemaName}.case_projects cp
         LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
@@ -179,11 +179,11 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.project_fiscal_rid,
         cp.project_code,
         cp.project_name,
-        cp.total_effort_prj,
-        cp.total_cost_prj,
-        cp.total_cost_fte_prj,
-        cp.total_cost_subcon_prj,
-        cp.total_cost_nonlabor_prj,
+        cp.total_effort_from_prj_res,
+        cp.total_cost_from_prj_res,
+        cp.total_cost_fte_from_prj_res,
+        cp.total_cost_subcon_from_prj_res,
+        cp.total_cost_nonlabor_from_prj_res,
         cp.rd_percent_final
         `
     } else {
@@ -192,11 +192,11 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.rid,
         cp.project_code,
         cp.project_name,
-        COALESCE(cp.total_effort_prj,0.00) AS total_effort_prj,
-        COALESCE(cp.total_cost_prj, 0.00) AS total_cost_prj,
-        CAST((COALESCE(cp.total_cost_fte_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_fte_prj,
-        CAST((COALESCE(cp.total_cost_subcon_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
-        CAST((COALESCE(cp.total_cost_nonlabor_prj, 0.00)) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
+        COALESCE(cp.total_effort_from_prj_res,0.00) AS total_effort_prj,
+        COALESCE(cp.total_cost_from_prj_res, 0.00) AS total_cost_prj,
+        CAST((COALESCE(cp.total_cost_fte_from_prj_res, 0.00)) AS DECIMAL(18,2)) AS total_cost_fte_prj,
+        CAST((COALESCE(cp.total_cost_subcon_from_prj_res, 0.00)) AS DECIMAL(18,2)) AS total_cost_subcon_prj,
+        CAST((COALESCE(cp.total_cost_nonlabor_from_prj_res, 0.00)) AS DECIMAL(18,2)) AS total_cost_nonlabor_prj,
         COALESCE(cp.rd_percent_final, 0.00) AS rd_percent_final
         FROM
         ${schemaName}.project_fiscal cp
@@ -213,11 +213,11 @@ export const fetchRequiredPrjDataForCanadaOntRegion = (schemaName : string, case
         cp.rid,
         cp.project_code,
         cp.project_name,
-        cp.total_effort_prj,
-        cp.total_cost_prj,
-        cp.total_cost_subcon_prj,
-        cp.total_cost_fte_prj,
-        cp.total_cost_nonlabor_prj,
+        cp.total_effort_from_prj_res,
+        cp.total_cost_from_prj_res,
+        cp.total_cost_fte_from_prj_res,
+        cp.total_cost_subcon_from_prj_res,
+        cp.total_cost_nonlabor_from_prj_res,
         cp.rd_percent_final
         `
     }
@@ -239,7 +239,15 @@ export const fetchAssignedProjectIds = (caseRid : string, schemaName : string) =
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}'`
 }
 export const fetchAssignedProjectIdsForOntRegions = (caseRid : string, schemaName : string, regionId : string) => {
-    let query = `SELECT pf.rid FROM ${schemaName}.project_fiscal pf LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid WHERE cp.case_rid = '${caseRid}' AND pf.region_rid = '${regionId}' AND pf.is_qualified = true`
+    let query = `
+    SELECT pf.rid
+    FROM ${schemaName}.project_fiscal pf 
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid 
+    LEFT JOIN ${schemaName}.project_resource prf ON prf.project_fiscal_rid = cp.project_fiscal_rid
+    WHERE 
+    cp.case_rid = '${caseRid}' 
+    AND prf.region_rid = '${regionId}' 
+    AND pf.is_qualified = true`
     return query
 }
 
