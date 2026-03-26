@@ -703,7 +703,7 @@ class ActivitySchemaService {
           accessActivity.push('Meeting');
         }
         if (callAccess) {
-          accessActivity.push('Call');
+          accessActivity.push('Call Log');
         }
         if (accessActivity.length > 0) {
           if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
