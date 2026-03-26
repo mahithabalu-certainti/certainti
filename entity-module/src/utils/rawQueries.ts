@@ -2284,7 +2284,7 @@ export const summaryHighlightsQueryRegionForCase = (
         SUM(COALESCE(cprf.qre_subcon, 0.00)) +
         SUM(COALESCE(cprf.qre_nonlabor, 0.00)) AS DECIMAL(18,2)) AS rd_credits_total
       FROM ${schemaName}.project_fiscal pf
-      LEFT JOIN ${schemaName}.project_resource_fiscal prf ON prf.project_fiscal_rid = pr.rid
+      LEFT JOIN ${schemaName}.project_resource_fiscal prf ON prf.project_fiscal_rid = pf.rid
       LEFT JOIN ${schemaName}.case_project_resource_fiscal cprf ON cprf.project_resource_fiscal_rid = prf.rid
       WHERE 
       pf.account_rid = '${account_rid}'
