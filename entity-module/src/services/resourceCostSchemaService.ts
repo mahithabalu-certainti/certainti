@@ -816,8 +816,8 @@ async exportresourceCostDetailsForFinancialHighlights(
       country_name: resource.country_name,
       total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, currencyDetailMap[currencyId!]?.currency_symbol || '$'),
       rd_percent_final: resource.rd_percent_final,
-      qre_final: resource.qre_final,
-      rd_credits_total: resource.rd_credits_total,
+      qre_final: formatNumberForExport(resource.qre_final,currencyDetailMap[currencyId!]?.currency_symbol || '$'),
+      rd_credits_total: formatNumberForExport(resource.rd_credits_total,currencyDetailMap[currencyId!]?.currency_symbol || '$')
       };
     } else {
       resultMap = {
