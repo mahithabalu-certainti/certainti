@@ -151,7 +151,9 @@ export const getFinancialProjectCostColumns = (
         !permissionMap?.['qre_final']?.edit &&
         !permissionMap?.['qre_final']?.read,
       render: (row: FinancialProjectCostList) =>
-        row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
+        row.qre_final !== null && row.qre_final !== undefined
+          ? costDisplay(row.qre_final, row.currency_symbol)
+          : '-',
     },
   ];
 };
