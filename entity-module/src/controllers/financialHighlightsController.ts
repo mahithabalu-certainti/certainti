@@ -119,7 +119,7 @@ async function listFinancialHighlightsAccounts(req: Request, res: Response) {
           result.data.nonlabor_cost.project_resource_level
         ).toFixed(2),
       });
-      if(data.summaryType !== 'state') {
+      if(data.summaryType !== 'state' && req.url !== '/state') {
         claimJurisdictionArray.push({
         rid: uuid(),
         name: result.data.federal.name,
