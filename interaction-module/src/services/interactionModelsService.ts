@@ -66,7 +66,14 @@ export class InteractionModelService {
   }
 
   async getModels(accountNumber: string) {
-    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+    logMessage(`Fetching the schema name for Models with AccountNumber : ${accountNumber}`)
+    const numericPart = accountNumber.replace(/\D/g, "");
+    if(!numericPart) {
+      logMessage(`Error SchemaName with AccountNumber  : ${numericPart}`)
+    }
+    const schemaName = `${SCHEMANAME_PREFIX}${numericPart}`;
+
+    logMessage(`SchemaName After fetching AccountNumber  : ${schemaName}`)
 
     const sequelize = await this.getSequelize();
     const mainDbSequelize = await this.getMainSequelize();
