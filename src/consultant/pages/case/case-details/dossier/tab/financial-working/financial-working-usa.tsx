@@ -10,7 +10,7 @@ import {
 import { MenuItem, Select } from '@mui/material';
 import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { costDisplay } from '../../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../../common-utils';
 import { useUserPreference } from '../../../../../../services/case-dossier/cases-financial-services';
 import {
   formatLabel,
@@ -227,6 +227,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     if (typeof value === 'number') {
       return costDisplay(value.toFixed(2), currencySymbol as string);
     }
+    if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '' && !/[a-zA-Z]/.test(value)) {
+      return valueDisplay(value)
+    }
     return value;
   };
 
@@ -408,10 +411,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                               ? 'rrc_credit_280_c'
                               : title;
                         return (
-                          <td
-                            key={colKey}
-                            className={`px-2 py-0 ${cellValue && (typeof cellValue === 'number' || !isNaN(Number(cellValue)) || cellValue.endsWith('%')) ? 'text-right' : 'text-left'}`}
-                          >
+                          <td key={colKey} className={`px-2 py-0 text-right`}>
                             <div className='w-[180px] h-[24px] inline-flex items-center justify-end'>
                               <Selection280C
                                 value={cellValue}

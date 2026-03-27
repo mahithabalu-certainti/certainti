@@ -40,6 +40,7 @@ interface QualifiedProjectsProps {
   >;
   searchValue: string;
   fiscalYear: number;
+  isActionItemsExpanded?: boolean;
 }
 
 const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
@@ -53,6 +54,7 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
   setColumnAnchorEl,
   searchValue,
   fiscalYear,
+  isActionItemsExpanded,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -230,7 +232,9 @@ const QualifiedProjects: React.FC<QualifiedProjectsProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

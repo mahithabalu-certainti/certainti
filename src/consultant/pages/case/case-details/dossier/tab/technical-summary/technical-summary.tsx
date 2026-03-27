@@ -30,6 +30,7 @@ interface TechnicalSummaryProps {
   >;
   searchValue: string;
   fiscalYear: number;
+  isActionItemsExpanded?: boolean;
 }
 
 const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
@@ -41,6 +42,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   setExportType,
   columnAnchorEl,
   setColumnAnchorEl,
+  isActionItemsExpanded,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -218,7 +220,9 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

@@ -145,7 +145,7 @@ export const fetchDossierVersionList = async (
   );
   return {
     versionList: response.data.data.data,
-    count: response.data.data.count,
+    count: response.data.data.total_result,
   };
 };
 

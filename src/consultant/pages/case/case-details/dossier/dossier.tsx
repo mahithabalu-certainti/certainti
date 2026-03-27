@@ -637,11 +637,11 @@ const Dossier: React.FC<DossierProps> = ({
       value: 'dossier_version',
       hide: !isPackagesDownload,
     },
-    {
-      label: 'Close Case',
-      value: 'close_case',
-      hide: !isCaseCloseEnable,
-    },
+    // {
+    //   label: 'Close Case',
+    //   value: 'close_case',
+    //   hide: !isCaseCloseEnable,
+    // },
   ];
 
   const showTableControls =
@@ -837,6 +837,7 @@ const Dossier: React.FC<DossierProps> = ({
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
                     fiscalYear={caseDetails?.fiscal_year ?? 0}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
                 {tabParam === 'rd_forms' && (
@@ -859,6 +860,7 @@ const Dossier: React.FC<DossierProps> = ({
                     columnAnchorEl={columnAnchorEl}
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
 
@@ -874,6 +876,7 @@ const Dossier: React.FC<DossierProps> = ({
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
                     fiscalYear={caseDetails?.fiscal_year ?? 0}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
 
@@ -888,6 +891,7 @@ const Dossier: React.FC<DossierProps> = ({
                     columnAnchorEl={columnAnchorEl}
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
 
@@ -902,6 +906,7 @@ const Dossier: React.FC<DossierProps> = ({
                     columnAnchorEl={columnAnchorEl}
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
                 {tabParam === 'dossier_version' && (
@@ -914,6 +919,7 @@ const Dossier: React.FC<DossierProps> = ({
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
                     onVersionDownload={handleVersionDownload}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
                 {tabParam === 'close_case' && (

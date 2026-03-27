@@ -4,7 +4,7 @@ import {
   FinancialHighlightsResponse,
   AustraliaComputedFields,
 } from '../../../../../../types/dossier';
-import { costDisplay } from '../../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../../common-utils';
 
 interface FinancialWorkingAustraliaProps {
   data: FinancialHighlightsResponse | null;
@@ -44,6 +44,14 @@ const FinancialWorkingAustralia: React.FC<FinancialWorkingAustraliaProps> = ({
     }
     if (typeof value === 'number') {
       return costDisplay(value.toFixed(2), currencySymbol as string);
+    }
+    if (
+      typeof value === 'string' &&
+      !isNaN(Number(value)) &&
+      value.trim() !== '' &&
+      !/[a-zA-Z]/.test(value)
+    ) {
+      return valueDisplay(value);
     }
     return value;
   };

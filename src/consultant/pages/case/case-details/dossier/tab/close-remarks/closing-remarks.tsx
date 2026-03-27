@@ -26,6 +26,7 @@ interface ClosingRemarksProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  isActionItemsExpanded?: boolean;
 }
 
 const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
@@ -38,6 +39,7 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  isActionItemsExpanded,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -152,7 +154,9 @@ const ClosingRemarks: React.FC<ClosingRemarksProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}
