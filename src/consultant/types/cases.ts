@@ -324,6 +324,7 @@ export interface CaseListExportParams {
   timezone?: string;
   isGlobal?: boolean;
   search?: string;
+  currency_symbol?: string;
 }
 export interface CaseTaskExportParams {
   page: number;
