@@ -904,7 +904,7 @@ class SchemaService {
                     prf.resource_type_name = null;
                 }
                 if (prf.country_rid && countryMap.get(prf.country_rid)) {
-                    prf.country_name = countryMap.get(prf.country_rid).country_name;
+                    prf.country_name = countryMap.get(prf.country_rid);
                 } else {
                     prf.country_name = null;
                 }
