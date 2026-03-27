@@ -340,15 +340,15 @@ async function listFinancialHighlightsProjects(req: Request, res: Response) {
         rid: uuid(),
         name: result.data.federal.name,
         claim_rd_credits_fte: Number(
-          result.data.federal.rd_credits_fte
+          result.data.rd_credits.rd_credits_fte
         ).toFixed(2),
         claim_rd_credits_subcon: Number(
-          result.data.federal.rd_credits_subcon
+          result.data.rd_credits.rd_credits_subcon
         ).toFixed(2),
         claim_rd_credits_nonlabor: Number(
-          result.data.federal.rd_credits_nonlabor
+          result.data.rd_credits.rd_credits_nonlabor
         ).toFixed(2),
-        claim_rd_credits_total: result.data.federal.rd_credits_total,
+        claim_rd_credits_total: result.data.rd_credits.rd_credits_total,
       });
       claimJurisdictionArray.push({
         rid: uuid(),
