@@ -7,7 +7,7 @@ import {
   FinancialHighlightsResponse,
   FinancialHighlightsComputedFields,
 } from '../../../../../../types/dossier';
-import { costDisplay } from '../../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../../common-utils';
 import { renderFederalTable, renderCard } from './financial-working-helper';
 
 interface FinancialWorkingProps {
@@ -61,14 +61,14 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
     if (typeof value === 'number') {
       return costDisplay(value.toFixed(2), currency || '$');
     }
-    // if (
-    //   typeof value === 'string' &&
-    //   !isNaN(Number(value)) &&
-    //   !value.includes('%') &&
-    //   value.trim() !== ''
-    // ) {
-    //   return costDisplay(Number(value).toFixed(2), currency || '$');
-    // }
+    if (
+      typeof value === 'string' &&
+      !isNaN(Number(value)) &&
+      value.trim() !== '' &&
+      !/[a-zA-Z]/.test(value)
+    ) {
+      return valueDisplay(value);
+    }
     return value;
   };
 

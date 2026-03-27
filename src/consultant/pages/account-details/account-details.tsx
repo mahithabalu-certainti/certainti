@@ -596,7 +596,14 @@ export const AccountDetails = () => {
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
     } else if (exportType === 'cases') {
-      ExportCaseList(casesParams, accountid);
+      ExportCaseList(
+        {
+          ...casesParams,
+          currency_symbol:
+            accountDetailsForEdit?.accountById?.currency?.currency_symbol || '',
+        },
+        accountid
+      );
     } else if (exportType === 'timesheet' && !tab) {
       exportTimesheetData({
         ...importsParams,

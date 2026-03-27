@@ -933,7 +933,15 @@ export const valueDisplay = (
 ): string => {
   if (value === null || value === undefined) return '-';
 
-  const valueStr = String(value);
+  const numValue = Number(value);
+  const valueStr =
+    !isNaN(numValue) &&
+    value !== '' &&
+    String(value).trim() !== '' &&
+    !/[a-zA-Z]/.test(String(value))
+      ? numValue.toFixed(2)
+      : String(value);
+
   const [whole, decimal] = valueStr.split('.');
   const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   const formattedValue =
