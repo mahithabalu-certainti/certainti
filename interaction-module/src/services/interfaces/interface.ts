@@ -287,13 +287,13 @@ export interface IInteractionService {
     status: any,
     data: any
   }>
-  triggerAiFromScheduler(schedulerRecord: SchedulerExecutions): Promise<void>
-  getAllowedExportFields(
-    userId: string,
-    permission_name: string
-  ): Promise<any[]>;
-  sendEmailInBatch(): Promise<void>
-  fetchStatusIdsForReminder(): Promise<any>,
+  triggerAiFromScheduler(schedulerRecord : SchedulerExecutions) : Promise<void>
+   getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]>;
+  sendEmailInBatch(schedulerRecord?: SchedulerExecutions) : Promise<void>
+  fetchStatusIdsForReminder() : Promise<any>,
   getAccountNumberByRid(accountRid: string): Promise<{
     statusCode: number;
     message: string;
