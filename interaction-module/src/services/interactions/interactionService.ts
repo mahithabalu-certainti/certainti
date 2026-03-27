@@ -181,22 +181,24 @@ export class InteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }> {
-    const dbInit = await this.interactionModelService.getSequelize();
+    const dbInit = await this.getOrgDb()
+    const mainDb = await this.getMainDb()
     let transaction: any;
     try {
       interactionData.created_by = userId;
       if (interactionData.interaction_assessment_source_rid == undefined) interactionData.interaction_assessment_source_rid = interactionAssessmentSourceType.RD
-      const { accountNumber, parentAccountId } =
-        await this.interactionSchemaService.fetchValidAccountNumberById(
-          interactionData.account_rid
-        );
+      // const { accountNumber, parentAccountId } =
+      //   await this.interactionSchemaService.fetchValidAccountNumberById(
+      //     interactionData.account_rid
+      //   );
+      const parentData : any = await mainDb.query(await rawQueries.fetchParentAccount(interactionData.account_rid, mainDb))
 
-      if (!accountNumber) {
+      if (!parentData[0][0].r_number) {
         throw new Error("Invalid account ID");
       }
 
       // Sync tables to ensure they exist in the database before transaction
-      await this.interactionModelService.syncOrgDbModels(accountNumber);
+      await this.interactionModelService.syncOrgDbModels(parentData[0][0].r_number);
 
       transaction = await dbInit.transaction();
 
@@ -208,17 +210,17 @@ export class InteractionService {
       interactionData.interaction_type_rid = intType || "";
       interactionData.interaction_assessment_source_rid = intResponseSource || ""
       logMessage(`Interaction creation input data: ${JSON.stringify(interactionData)}`);
-      logMessage(`Interaction creation for account number: ${accountNumber}`);
+      logMessage(`Interaction creation for account number: ${parentData[0][0].r_number}`);
       const interaction =
         await this.interactionSchemaService.createInteractions(
-          accountNumber,
+          parentData[0][0].r_number,
           interactionData,
           transaction,
           intLevel
         );
       if (interaction) {
         await this.interactionSchemaService.addInteractionItems(
-          accountNumber,
+          parentData[0][0].r_number,
           interactionData,
           interaction.rid,
           transaction,
@@ -226,7 +228,7 @@ export class InteractionService {
         );
         logMessage(`Interaction created successfully, ${interaction.rid}`);
         await this.interactionSchemaService.addInteractionSummary(
-          accountNumber,
+          parentData[0][0].r_number,
           interactionData,
           interaction.rid,
           interaction.get("r_number") || "",
@@ -242,7 +244,7 @@ export class InteractionService {
           timelineTypes = ["project"]
         }
 
-        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+        await this.interactionSchemaService.createAccountTimelineEntry(parentData[0][0].r_number!, {
           created_by: userId!,
           account_rid: interactionData.account_rid,
           entity_rid: interaction.rid!,
@@ -254,7 +256,7 @@ export class InteractionService {
           project_rid: intLevel === 'Project' ? interactionData.project_fiscal_rid : '',
         }, timelineTypes);
         await this.interactionSchemaService.addInteractionTimeline(
-          accountNumber,
+          parentData[0][0].r_number,
           "create",
           interactionData,
           interaction.dataValues.rid,
@@ -273,15 +275,15 @@ export class InteractionService {
       }
       let isEmailRecipientAvailable = false;
       if (intLevel === 'Account') {
-        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailableForAccount(accountNumber, interactionData.account_rid);
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailableForAccount(parentData[0][0].r_number, interactionData.account_rid);
       }
       else {
-        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(parentData[0][0].r_number, interactionData.project_fiscal_rid);
       }
 
       logMessage(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if ((interactionStatus === statusAction.DRAFT && (isEmailRecipientAvailable || interactionData.email_info?.email)) || interactionData.trigger_send)
-        await this.checkAutoSendEnabled(accountNumber, interactionData, interaction.rid, userId, interactionData?.account_rid, intLevel, parentAccountId);
+        await this.checkAutoSendEnabled(parentData[0][0].r_number, interactionData, interaction.rid, userId, interactionData?.account_rid, intLevel, parentData[0][0].rid);
       else {
         if (!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
           return {
