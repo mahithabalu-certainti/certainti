@@ -227,8 +227,13 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     if (typeof value === 'number') {
       return costDisplay(value.toFixed(2), currencySymbol as string);
     }
-    if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '' && !/[a-zA-Z]/.test(value)) {
-      return valueDisplay(value)
+    if (
+      typeof value === 'string' &&
+      !isNaN(Number(value)) &&
+      value.trim() !== '' &&
+      !/[a-zA-Z]/.test(value)
+    ) {
+      return valueDisplay(value);
     }
     return value;
   };
