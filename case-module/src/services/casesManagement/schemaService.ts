@@ -1472,7 +1472,8 @@ async getWorkFlowConnector () {
         source_rid : data.source_rid,
         target_rid : {
           [Op.in] : data.target_rid.map((d : any) => d)
-        }
+        },
+        status_rid : data.status_rid
       }, raw : true
     });
     if(findExistingData.length > 0) {
@@ -1511,7 +1512,8 @@ async getWorkFlowConnector () {
           where : {
             source_rid : data.source_rid,
             target_rid : d,
-            relationship_connector_rid : data.relationship_connector_rid
+            relationship_connector_rid : data.relationship_connector_rid,
+            status_rid : data.status_rid
           }, raw : true
         });
         if(!checkIsAlreadyMapped) {
