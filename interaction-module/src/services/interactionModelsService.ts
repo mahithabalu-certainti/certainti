@@ -7,7 +7,7 @@ import { InteractionItem } from "../models/interactionItem";
 import { InteractionHistory } from "../models/interactionHistory";
 import { InteractionTimeline } from "../models/interactionTimeline";
 import { InteractionType } from "../models/interactionType";
-import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries, SCHEMANAME_PREFIX } from "../utils/constants";
 import { InteractionSummary } from "../models/interactionSummary";
 import { InteractionResponseHistory } from "../models/interactionResponseHistory";
 import { InteractionAttachment } from "../models/interactionAttachment";
@@ -66,7 +66,14 @@ export class InteractionModelService {
   }
 
   async getModels(accountNumber: string) {
-    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+    logMessage(`Fetching the schema name for Models with AccountNumber : ${accountNumber}`)
+    const numericPart = accountNumber.replace(/\D/g, "");
+    if(!numericPart) {
+      logMessage(`Error SchemaName with AccountNumber  : ${numericPart}`)
+    }
+    const schemaName = rawQueries.fetchSchemaName(accountNumber)
+
+    logMessage(`SchemaName After fetching AccountNumber  : ${schemaName}`)
 
     const sequelize = await this.getSequelize();
     const mainDbSequelize = await this.getMainSequelize();
@@ -164,7 +171,7 @@ export class InteractionModelService {
 
   async syncOrgDbModels(accountNumber: string): Promise<void> {
     try {
-      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
       const sequelize = await this.getSequelize();
 
       // Get all models for this account to initialize them

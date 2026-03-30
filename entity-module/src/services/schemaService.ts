@@ -4152,7 +4152,7 @@ class SchemaService {
       );
 
       await sequelize.query(
-        rawQueries.updateProjectFiscalRegionQre(schemaName,
+        rawQueries.updateProjectResourceFiscalQre(schemaName,
           {
             rd_percent_adjustment: qreAdjustment,
             rd_percent_final: netQre,
@@ -4162,16 +4162,35 @@ class SchemaService {
             qre_nonlabor: qreNonlaborCost,
             modified_by: userId,
             modified_datetime: new Date(),
-            rid: projectFiscalId,
-            is_qualified: isQualifiedFlag,
-            region_rid : projectFiscalDetails.region_rid
+            project_fiscal_rid: projectFiscalId,
           }
         ),
         {
           type: QueryTypes.SELECT,
         }
       );
-
+      const closedCaseId : any = await mainSequelize.query(rawQueries.fetchCaseClosedStatus())
+      const checkIfProjectExistsInCase : any = await sequelize.query(rawQueries.checkIsProjectMapped(projectFiscalId, closedCaseId[0][0].rid, schemaName))
+      if(checkIfProjectExistsInCase[0].length === 0) {
+        await sequelize.query(
+        rawQueries.updateCaseProjectResourceFiscalQre(schemaName,
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            project_fiscal_rid: projectFiscalId,
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      }
       // update project summary
       await mainSequelize.query(
         rawQueries.updateProjectFiscalSummaryQre(

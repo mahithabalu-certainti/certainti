@@ -176,6 +176,7 @@ const exportCasesAccountSchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   timezone: Joi.string().optional(),
+  currency_symbol : Joi.string().optional()
 });
 
 const listCasesAccountSchema = Joi.object({

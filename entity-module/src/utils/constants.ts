@@ -1186,9 +1186,9 @@ export const rawQueries = {
       rid = '${data.rid}'
     `;
   },
-  updateProjectFiscalRegionQre(schemaName: string, data: any) {
+  updateProjectResourceFiscalQre(schemaName: string, data: any) {
     return `
-    UPDATE ${schemaName}.project_fiscal_region
+    UPDATE ${schemaName}.project_resource_fiscal
     SET 
       rd_percent_adjustment = ${data.rd_percent_adjustment},
       rd_percent_final = ${data.rd_percent_final},
@@ -1197,12 +1197,25 @@ export const rawQueries = {
       qre_subcon = ${data.qre_subcon},
       qre_nonlabor = ${data.qre_nonlabor},
       modified_by = '${data.modified_by}',
-      modified_datetime = '${new Date().toISOString()}',
-      is_qualified = ${data.is_qualified}
+      modified_datetime = '${new Date().toISOString()}'
     WHERE
-      project_fiscal_rid = '${data.rid}'
-      AND
-      region_rid = '${data.region_rid}'
+      project_fiscal_rid = '${data.project_fiscal_rid}'
+    `;
+  },
+  updateCaseProjectResourceFiscalQre(schemaName: string, data: any) {
+    return `
+    UPDATE ${schemaName}.case_project_resource_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      project_fiscal_rid = '${data.project_fiscal_rid}'
     `;
   },
   updateProjectFiscalSummaryQre(data: any) {
@@ -1221,6 +1234,23 @@ export const rawQueries = {
     WHERE
       project_fiscal_rid = '${data.rid}'
     `;
+  },
+  checkIsProjectMapped (projectFiscalRid : string, closedCaseStatusId : string, schemaName : string) {
+    return `
+    SELECT c.rid, cp.project_fiscal_rid 
+    FROM 
+    ${schemaName}.cases c
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
+    WHERE
+    cp.project_fiscal_rid = '${projectFiscalRid}'
+    AND
+    c.status_rid = '${closedCaseStatusId}'
+    GROUP BY
+    c.rid, cp.project_fiscal_rid
+    `
+  },
+  fetchCaseClosedStatus() {
+    return `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.case_status where status_name ILIKE '%closed%'`;
   },
   fetchProjecTaskType() {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_type`;
