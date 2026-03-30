@@ -528,7 +528,7 @@ export const rawQueries = {
         .flatMap(([key, typeRids]) => {
           const [start, end] = key.split('_');
           return typeRids.map(pt =>
-            `(DATE '${start}', ${end ? `DATE '${end}'` : 'NULL'}, '${pt}')`
+            `(CAST('${start}' AS DATE), ${end ? `CAST('${end}' AS DATE)` : 'NULL::DATE'}, '${pt}')`
           );
         })
         .join(',\n');
