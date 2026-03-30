@@ -809,7 +809,7 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
       permissionName = "activity_meeting_view_edit";
     } else if (
       value.activityType &&
-      value.activityType.toLowerCase() === "call"
+      value.activityType.toLowerCase() === "call log"
     ) {
       permissionName = "activity_call_view_edit";
     } else {
@@ -896,7 +896,7 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                     resultMap[mapping.dataField];
                 }
               });
-            } else if (value.activityType && value.activityType.toLowerCase() === "call") {
+            } else if (value.activityType && value.activityType.toLowerCase() === "call log") {
               callactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
