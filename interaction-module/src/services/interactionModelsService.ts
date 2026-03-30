@@ -94,16 +94,16 @@ export class InteractionModelService {
   }
 
   async getModels(accountNumber: string) : Promise<OrgModels> {
-    if (!accountNumber || accountNumber === 'undefined') {
-      throw new Error(`getModels called with invalid accountNumber: ${accountNumber}`);
-    }
+    if (accountNumber === undefined || accountNumber === null || accountNumber === 'undefined') {
+    throw new Error(`getModels called with invalid accountNumber: ${accountNumber}`);
+  }
 
     logMessage(`Fetching the schema name for Models with AccountNumber : ${accountNumber}`)
     const numericPart = accountNumber.replace(/\D/g, "");
     if(!numericPart) {
       logMessage(`Error SchemaName with AccountNumber  : ${numericPart}`)
     }
-    const schemaName = rawQueries.fetchSchemaName(accountNumber)
+    const schemaName = accountNumber === ''  ? MAIN_SCHEMA_NAME : rawQueries.fetchSchemaName(accountNumber);
     if (this.modelCache.has(schemaName)) {
       return this.modelCache.get(schemaName) as OrgModels; // ← skip re-initialization entirely
     }
