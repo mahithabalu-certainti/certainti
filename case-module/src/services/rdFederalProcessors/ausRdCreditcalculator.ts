@@ -65,7 +65,10 @@ export class RdCreditCalculatorForAus {
           notionalDeductionApplied = rdTotalExpenses * conditionDeduction
         }
         if(rdIntensity > conditionDeduction) {
-          notionalDeductionAppliedForTier2 = totalAccountExpenditure - notionalDeductionApplied
+          if(totalAccountExpenditure > notionalDeductionApplied)
+            notionalDeductionAppliedForTier2 = totalAccountExpenditure - notionalDeductionApplied
+          else 
+            notionalDeductionAppliedForTier2 = notionalDeductionApplied - totalAccountExpenditure
         } else {
           notionalDeductionAppliedForTier2 = 0.00
         }
