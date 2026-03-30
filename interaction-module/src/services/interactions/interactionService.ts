@@ -207,13 +207,46 @@ export class InteractionService {
 
       transaction = await dbInit.transaction();
 
+      // Atomically handle interaction_batch_id if not provided
+      if (!interactionData.interaction_batch_id) {
+        logMessage(`Generating interaction_batch_id atomically for account: ${interactionData.account_rid}`);
+        // 1. Lock the account to serialize batch generation
+        await this.interactionSchemaService.lockAccount(transaction, interactionData.account_rid);
+
+        const accountNumber = parentData[0][0].r_number;
+        const company_id = interactionData.account_rid;
+        const transaction_id = interactionData.transaction_id;
+
+        // 2. Identify the type of assessment to determine batch generation strategy
+        // interactionData.interaction_assessment_source_rid contains the source NAME (e.g., "Four Part Assessment")
+        const inputSourceName = interactionData.interaction_assessment_source_rid;
+        
+        if (inputSourceName === interactionAssessmentSourceType.FPA) {
+          // For FPA, fetch latest and increment
+          const findBatch = await this.interactionSchemaService.fetchInteractionBatch(accountNumber, company_id, transaction);
+          if (findBatch) {
+            const splitBatchNumber = Number(findBatch.split('_')[1]);
+            const incrementedBatchNumber = splitBatchNumber + 1;
+            interactionData.interaction_batch_id = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`;
+          } else {
+            interactionData.interaction_batch_id = `${process.env.BATCH_PREFIX}000001`;
+          }
+        } else if (transaction_id) {
+          // For RD Assessment, fetch by transaction_id
+          const findBatch = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id, transaction);
+          interactionData.interaction_batch_id = findBatch;
+        }
+        logMessage(`Resolved interaction_batch_id: ${interactionData.interaction_batch_id}`);
+      }
+
       const { intSource, intType } = await this.getInteractionStatusAndSource(
         interactionSource
       );
-      const intResponseSource = await this.getInteractionAssessmentStatus(interactionData.interaction_assessment_source_rid!)
+      // Fetch the actual RID for the source name
+      const intResponseSourceRid = await this.getInteractionAssessmentStatus(interactionData.interaction_assessment_source_rid!)
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
-      interactionData.interaction_assessment_source_rid = intResponseSource || ""
+      interactionData.interaction_assessment_source_rid = intResponseSourceRid || ""
       logMessage(`Interaction creation input data: ${JSON.stringify(interactionData)}`);
       logMessage(`Interaction creation for account number: ${parentData[0][0].r_number}`);
       const interaction =
@@ -3654,17 +3687,7 @@ export class InteractionService {
             dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => ({ question: d }));
             logMessage(`dynamicQuestions mapped (count: ${dynamicQuestions.length}): ${JSON.stringify(dynamicQuestions)}`);
 
-            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber, company_id);
-            logMessage(`fetchInteractionBatch result: ${findBatchAndIncrement}`);
-
-            if (findBatchAndIncrement) {
-              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1]);
-              const incrementedBatchNumber = splitBatchNumber + 1;
-              batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`;
-            } else {
-              batchId = `${process.env.BATCH_PREFIX}000001`;
-            }
-            logMessage(`batchId resolved: ${batchId}`);
+            batchId = ""; // Will be generated atomically in createInteraction
           } else {
             logMessage(`Branch: interaction_questions (RD) — transaction_id: ${transaction_id}`);
             interactionAssessmentSource = interactionAssessmentSourceType.RD;
@@ -3672,10 +3695,7 @@ export class InteractionService {
             dynamicQuestions = interaction_questions;
             logMessage(`dynamicQuestions from interaction_questions (count: ${Array.isArray(dynamicQuestions) ? dynamicQuestions.length : 'NOT AN ARRAY'}): ${JSON.stringify(dynamicQuestions)}`);
 
-            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id);
-            logMessage(`fetchInteractionBatchByTransactionId result: ${findBatchAndIncrement}`);
-            batchId = findBatchAndIncrement;
-            logMessage(`batchId resolved: ${batchId}`);
+            batchId = ""; // Will be fetched atomically in createInteraction
           }
 
           const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
@@ -3685,7 +3705,12 @@ export class InteractionService {
           logMessage(`getInteractionStatusByType (DRAFT) result: ${statusRid}`);
 
           const questionsWithActionType = Array.isArray(dynamicQuestions)
-            ? dynamicQuestions.map((q: any) => ({ ...q, action_type: "add" }))
+            ? dynamicQuestions.map((q: any) => ({
+                question: q.question || q,
+                notes: q.notes || "",
+                response: q.response || "",
+                action_type: "add"
+              }))
             : [];
           logMessage(`questionsWithActionType count: ${questionsWithActionType.length}`);
 
@@ -3708,7 +3733,7 @@ export class InteractionService {
             logMessage(`WARNING — findStatus is empty; intStatusRid will remain empty string`);
           }
 
-          let interactionData = {
+          let interactionData: ICreateInteraction = {
             account_rid: company_id,
             project_fiscal_rid: project_id,
             fiscal_year: projectInfo.fiscal_year,

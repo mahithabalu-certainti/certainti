@@ -36,6 +36,9 @@ export interface ICreateInteraction {
   recipient_email? : any
   interaction_assessment_source_rid? : string
   interaction_status_rid? : string
+  transaction_id?: string
+  four_part_assessment_rid?: string | null
+  interaction_batch_id?: string
 }
 
 export interface IProject {
@@ -99,6 +102,9 @@ export interface IUpdateInteraction {
   }
   recipient_name? : any,
   recipient_email? : any
+  transaction_id?: string
+  four_part_assessment_rid?: string | null
+  interaction_batch_id?: string
 }
 
 export interface InteractionDetailsResponse {
