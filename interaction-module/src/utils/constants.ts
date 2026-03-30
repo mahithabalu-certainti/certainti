@@ -529,7 +529,7 @@ export const rawQueries = {
         .flatMap(([key, typeRids]) => {
           const [start, end] = key.split('_');
           return typeRids.map(pt =>
-            `(DATE '${start}', DATE '${end}', '${pt}')`
+            `(CAST('${start}' AS DATE), ${end ? `CAST('${end}' AS DATE)` : 'NULL::DATE'}, '${pt}')`
           );
         })
         .join(',\n');
@@ -541,7 +541,10 @@ export const rawQueries = {
       ) AS ir(range_start, range_end, project_type_rid)
         ON pf.project_type_rid = ir.project_type_rid
        AND ir.range_start <= make_date(pf.fiscal_year, ${endMM}, ${endDD})
-       AND ir.range_end   >= make_date(pf.fiscal_year - 1, ${startMM}, ${startDD})
+       AND (
+        ir.range_end IS NULL
+        OR ir.range_end >= make_date(pf.fiscal_year - 1, ${startMM}, ${startDD})
+    )
     `;
     }
 
