@@ -1138,8 +1138,8 @@ export class ProjectResourceService {
           projectResource: updateProjectResource,
         },
       };
-    } catch (err) {
-      errorLog("Error updating project resource", (err as Error).message);
+    } catch (err : any) {
+      errorLog("Error updating project resource", err)
       await transaction.rollback();
       throw this.throwServiceError(err as Error);
     }
