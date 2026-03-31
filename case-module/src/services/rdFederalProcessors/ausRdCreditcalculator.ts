@@ -59,12 +59,12 @@ export class RdCreditCalculatorForAus {
         let conditionDeduction = extractConfig.intensity/100
         let notionalDeductionApplied = 0.00;
         let notionalDeductionAppliedForTier2 = 0.00;
-        if(rdIntensity < conditionDeduction) {
+        if(ratio < conditionDeduction) {
           notionalDeductionApplied = totalAccountExpenditure
         } else {
           notionalDeductionApplied = rdTotalExpenses * conditionDeduction
         }
-        if(rdIntensity > conditionDeduction) {
+        if(ratio > conditionDeduction) {
           if(totalAccountExpenditure > notionalDeductionApplied)
             notionalDeductionAppliedForTier2 = totalAccountExpenditure - notionalDeductionApplied
           else 
