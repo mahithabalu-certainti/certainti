@@ -101,9 +101,9 @@ export class InteractionModelService {
     logMessage(`Fetching the schema name for Models with AccountNumber : ${accountNumber}`)
     const schemaName = accountNumber === ''  ? MAIN_SCHEMA_NAME : rawQueries.fetchSchemaName(accountNumber);
     console.log(`accountNumber: ${accountNumber} → schemaName: ${schemaName}`);
-    if (this.modelCache.has(schemaName)) {
-      return this.modelCache.get(schemaName) as OrgModels; // ← skip re-initialization entirely
-    }
+    // if (this.modelCache.has(schemaName)) {
+    //   return this.modelCache.get(schemaName) as OrgModels; // ← skip re-initialization entirely
+    // }
 
     logMessage(`SchemaName After fetching AccountNumber  : ${schemaName}`)
 
