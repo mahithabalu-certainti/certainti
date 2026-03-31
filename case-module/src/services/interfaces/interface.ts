@@ -575,6 +575,10 @@ export interface IChildCaseService extends ICaseService {
     statusMessage: string;
 }>
 getDossierFormDetails(data : any) : Promise<any>
+updateCaseSettings(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;

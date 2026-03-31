@@ -199,7 +199,8 @@ export class CaseService {
         }
           }
         }
-
+      const getPlatformLevelConfig : any = await mainDb.query(rawQueries.getPlatformCaseSetting())
+      caseRequest.assessment_methodology = getPlatformLevelConfig[0][0].assessment_methodology
       const response = await this.caseSchemaService.createCases(
         accountNumber,
         caseRequest,

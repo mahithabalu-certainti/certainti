@@ -326,4 +326,5 @@ routes.post('/close', checkUserStatusMiddleware("NA"),upload.any() ,controller.c
 routes.post('/computedValues', checkUserStatusMiddleware("NA"),controller.childCaseController.getComputedValue)
 routes.post("/approvals/revoke", checkUserStatusMiddleware("NA"), controller.childCaseController.revokeApprovals)
 routes.post("/dossier/version", checkUserStatusMiddleware("NA"), controller.childCaseController.getDossierFormVersion)
+routes.put("/settings", checkUserStatusMiddleware("NA"), controller.childCaseController.updateCaseSettings)
 export default routes;

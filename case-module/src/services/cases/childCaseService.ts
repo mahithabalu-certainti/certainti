@@ -2018,6 +2018,31 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         }
     }
   }
+  async updateCaseSettings (data : any) {
+    const mainDb = await this.getMainDb();
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      const {Case} = await this.caseModelService.getModels(fetchParentAccount.r_number);
+      await Case.update({
+        assessment_methodology : data.assessment_methodology,
+        modified_by : data.userId,
+        modified_datetime : new Date()
+      }, {
+        where : {
+          rid : data.rid
+        }
+      });
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.settingsUpdatedSuccess
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNotFound
+      }
+    }
+  }
 }
 
 export const mainTableFilters : Record<any, any> = {
