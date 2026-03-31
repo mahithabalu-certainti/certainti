@@ -672,6 +672,183 @@ CA: {
         },
 
         BOLD: []
+    },
+    KS: {
+        sectionOrder: [
+            "PART A – COMPUTATION OF MAXIMUM ALLOWABLE CREDIT FOR THIS YEAR'S EXPENDITURES",
+            "PART B – COMPUTATION OF ALLOWED CREDIT FOR THIS YEAR'S EXPENDITURES"
+        ],
+        sectionFieldOrders: {
+            "PART A – COMPUTATION OF MAXIMUM ALLOWABLE CREDIT FOR THIS YEAR'S EXPENDITURES": [
+                { pattern: "[1] Research and development expenditures for current year", order: 1 },
+                { pattern: "[1a] Machinery and Equipment", order: 2 },
+                { pattern: "[1b] Payroll", order: 3 },
+                { pattern: "[1c] Other (contract research expenses)", order: 4 },
+                { pattern: "[2a] First preceding taxable year expenditures", order: 5 },
+                { pattern: "[2b] Second preceding taxable year expenditures", order: 6 },
+                { pattern: "[3] Total (add lines 1, 2a, and 2b)", order: 7 },
+                { pattern: "[4] Average (divide line 3 by 3)", order: 8 },
+                { pattern: "[5] Expenditure amount for credit (line 1 minus line 4, not less than zero)", order: 9 },
+                { pattern: /^\[6\] Total research and development credit \(line 5 × \d+(\.\d+)?%\)$/, order: 10 },
+                { pattern: /^\[7\] Maximum allowable credit in any one year \(line 6 × \d+(\.\d+)?%\)$/, order: 11 }
+            ],
+            "PART B – COMPUTATION OF ALLOWED CREDIT FOR THIS YEAR'S EXPENDITURES": [
+                { pattern: "[8] Tax liability for this tax year after all other credits", order: 1 },
+                { pattern: "[9] Amount of credit allowable (lesser of line 7 or line 8)", order: 2 }
+            ]
+        },
+        BOLD: []
+    },
+    LA: {
+        sectionOrder: [
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION"
+        ],
+        sectionFieldOrders: {
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION": [
+                { pattern: "[1] Prior year LA R&D expenditures (oldest)", order: 1 },
+                { pattern: "[2] Prior year LA R&D expenditures (middle)", order: 2 },
+                { pattern: "[3] Prior year LA R&D expenditures (most recent)", order: 3 },
+                { pattern: "[4] 3 previous years average", order: 4 },
+                { pattern: /^\[5\] Base calculation \(\d+(\.\d+)?% × Line 4\)$/, order: 5 },
+                { pattern: "[6] Current year LA R&D expenditures", order: 6 },
+                { pattern: "[7] Increase in LA R&D expenditures (Line 6 minus Line 5, not less than 0)", order: 7 },
+                { pattern: /^\[8\] Credit percentage \(\d+(\.\d+)?%\)$/, order: 8 },
+                { pattern: "[9] Louisiana Research Credit (Line 7 × Line 8)", order: 9 }
+            ]
+        },
+        BOLD: [
+            "[4] 3 previous years average",
+            "[9] Louisiana Research Credit (Line 7 × Line 8)"
+        ]
+    },
+    NE: {
+        sectionOrder: [
+            "Method 1 — Property and Payroll Factor Apportionment (Lines 2–9)",
+            "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)",
+            "Final Credit and Usage Allocation (Lines 21–25)"
+        ],
+        sectionFieldOrders: {
+            "Method 1 — Property and Payroll Factor Apportionment (Lines 2–9)": [
+                { pattern: "[2] Federal research credit (Form 6765, line 38 or 40)", order: 1 },
+                { pattern: "[3a] Nebraska property factor — off-campus (%)", order: 2 },
+                { pattern: "[3b] Nebraska property factor — on-campus (%)", order: 3 },
+                { pattern: "[4a] Nebraska payroll factor — off-campus (%)", order: 4 },
+                { pattern: "[4b] Nebraska payroll factor — on-campus (%)", order: 5 },
+                { pattern: "[5a] Add lines 3a and 4a (off-campus)", order: 6 },
+                { pattern: "[5b] Add lines 3b and 4b (on-campus)", order: 7 },
+                { pattern: "[6a] Average off-campus factor (line 5a ÷ 2)", order: 8 },
+                { pattern: "[6b] Average on-campus factor (line 5b ÷ 2)", order: 9 },
+                { pattern: "[7a] Federal credit apportioned off-campus (line 2 × line 6a)", order: 10 },
+                { pattern: "[7b] Federal credit apportioned on-campus (line 2 × line 6b)", order: 11 },
+                { pattern: /^\[8a\] Regular research tax credit \(line 7a × \d+(\.\d+)?%\) — off-campus$/, order: 12 },
+                { pattern: /^\[8b\] Enhanced research tax credit \(line 7b × \d+(\.\d+)?%\) — on-campus$/, order: 13 },
+                { pattern: "[9] Method 1 total (line 8a + line 8b)", order: 14 }
+            ],
+            "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)": [
+                { pattern: "[10] Total NE qualified R&D expenses", order: 1 },
+                { pattern: "[11] NE expenses — off-campus portion", order: 2 },
+                { pattern: "[12] NE expenses — on-campus portion (line 10 minus line 11)", order: 3 },
+                { pattern: "[13] Total US QREs from Federal Form 6765 (line 9 or line 28)", order: 4 },
+                { pattern: "[14] Off-campus NE ratio (line 11 ÷ line 13)", order: 5 },
+                { pattern: "[15] On-campus NE ratio (line 12 ÷ line 13)", order: 6 },
+                { pattern: "[16] Federal credit × off-campus ratio (line 2 × line 14)", order: 7 },
+                { pattern: "[17] Federal credit × on-campus ratio (line 2 × line 15)", order: 8 },
+                { pattern: /^\[18\] Regular research tax credit \(line 16 × \d+(\.\d+)?%\) — off-campus$/, order: 9 },
+                { pattern: /^\[19\] Enhanced research tax credit \(line 17 × \d+(\.\d+)?%\) — on-campus$/, order: 10 },
+                { pattern: "[20] Method 2 total (line 18 + line 19)", order: 11 }
+            ],
+            "Final Credit and Usage Allocation (Lines 21–25)": [
+                { pattern: "[21] Nebraska R&D credit — larger of line 9 or line 20", order: 1 },
+                { pattern: /^\[21\] Winning method:/, order: 2 },
+                { pattern: "[22] Credit used on Nebraska income tax return (refundable — Form 3800N line 18)", order: 3 },
+                { pattern: "[23] Credit used for refund of state sales/use taxes", order: 4 },
+                { pattern: "[24] Credit distributed to partners, shareholders, or beneficiaries (nonrefundable)", order: 5 },
+                { pattern: "[25] Total credit usage (lines 22 + 23 + 24, must not exceed line 21)", order: 6 }
+            ]
+        },
+        BOLD: [
+            "[9] Method 1 total (line 8a + line 8b)",
+            "[20] Method 2 total (line 18 + line 19)",
+            "[21] Nebraska R&D credit — larger of line 9 or line 20"
+        ]
+    },
+    MN: {
+        sectionOrder: [
+            "Qualified Research Expenses in Minnesota (Lines 1–7)",
+            "Prior 4 Years Gross Income (Lines 15–20)",
+            "Base Amount Computation (Lines 21–23)",
+            "Credit Computation (Lines 24–29)",
+            "Final Credit (Lines 30–34)"
+        ],
+        sectionFieldOrders: {
+            "Qualified Research Expenses in Minnesota (Lines 1–7)": [
+                { pattern: "[1] Wages for qualified services", order: 1 },
+                { pattern: "[2] Cost of supplies", order: 2 },
+                { pattern: "[3] Rental or lease costs of computers", order: 3 },
+                { pattern: "[4] Applicable percentage of contract expenses", order: 4 },
+                { pattern: "[5] Basic research payments to qualified organizations", order: 5 },
+                { pattern: "[6] Development contributions to a nonprofit organization", order: 6 },
+                { pattern: "[7] Total qualified research expenses in Minnesota (add lines 1–6)", order: 7 }
+            ],
+            "Prior 4 Years Gross Income (Lines 15–20)": [
+                { pattern: "[15] Tax year gross income (most recent prior year)", order: 1 },
+                { pattern: "[16] Tax year gross income (2nd prior year)", order: 2 },
+                { pattern: "[17] Tax year gross income (3rd prior year)", order: 3 },
+                { pattern: "[18] Tax year gross income (4th prior year / oldest)", order: 4 },
+                { pattern: "[19] Add lines 15 through 18", order: 5 },
+                { pattern: "[20] Average annual gross income (line 19 × 25%)", order: 6 }
+            ],
+            "Base Amount Computation (Lines 21–23)": [
+                { pattern: /^\[14\] Fixed-base percentage:/, order: 1 },
+                { pattern: "[21] Line 20 × fixed-base percentage (or line 20 directly if not established)", order: 2 },
+                { pattern: "[22] Line 7 × 50% (floor)", order: 3 },
+                { pattern: "[23] Base amount (greater of line 21 or line 22)", order: 4 }
+            ],
+            "Credit Computation (Lines 24–29)": [
+                { pattern: "[24] Subtract line 23 from line 7 (excess QRE, not less than zero)", order: 1 },
+                { pattern: /^\[25\] Enter line 24 or \$[\d,]+, whichever is less \(tier 1\)$/, order: 2 },
+                { pattern: "[26] Subtract line 25 from line 24 (tier 2 portion above threshold)", order: 3 },
+                { pattern: /^\[27\] Multiply line 25 by \d+(\.\d+)?% \(tier 1 credit\)$/, order: 4 },
+                { pattern: /^\[28\] Multiply line 26 by \d+(\.\d+)?% \(tier 2 credit\)$/, order: 5 },
+                { pattern: "[29] Current year credit (add lines 27 and 28)", order: 6 }
+            ],
+            "Final Credit (Lines 30–34)": [
+                { pattern: "[30] Credit carryover from prior year", order: 1 },
+                { pattern: "[31] Tentative credit (add lines 29 and 30)", order: 2 },
+                { pattern: "[32] Occupation tax limitation (Form M30-I, line 28)", order: 3 },
+                { pattern: "[33] Credit for increasing research activities (lesser of line 31 or line 32)", order: 4 },
+                { pattern: "[34] Credit carryover to next year (line 31 minus line 33)", order: 5 }
+            ]
+        },
+        BOLD: [
+            "[7] Total qualified research expenses in Minnesota (add lines 1–6)",
+            "[23] Base amount (greater of line 21 or line 22)",
+            "[29] Current year credit (add lines 27 and 28)",
+            "[33] Credit for increasing research activities (lesser of line 31 or line 32)"
+        ]
+    },
+    RI: {
+        sectionOrder: [
+            "RI Schedule RC — R&D Expense Credit"
+        ],
+        sectionFieldOrders: {
+            "RI Schedule RC — R&D Expense Credit": [
+                { pattern: "[1] Federal Qualified Research Expenses (Form 6765, line 9 or line 28)", order: 1 },
+                { pattern: "[2] Federal Base Amount (Form 6765, line 12 or 14, or line 30)", order: 2 },
+                { pattern: "[3] Federal Excess Expenses (line 1 minus line 2)", order: 3 },
+                { pattern: "[4] Amount of Federal Excess Expenses from line 3 incurred in Rhode Island", order: 4 },
+                { pattern: /^\[5\] Credit —.*tier/, order: 5 },
+                { pattern: "[6] Unused R&D Expense Credit from preceding year(s)", order: 6 },
+                { pattern: "[7] Total R&D Expense Credit Available (line 5 + line 6)", order: 7 },
+                { pattern: "[8] Tax amount (Form RI-1120C, line 11 or Form T-71, line 7)", order: 8 },
+                { pattern: "[9] Maximum R&D Expense Credit (line 8 × 50%) — current-year usage cap", order: 9 },
+                { pattern: "[10] Credit carryover (line 7 minus line 9)", order: 10 }
+            ]
+        },
+        BOLD: [
+            "[4] Amount of Federal Excess Expenses from line 3 incurred in Rhode Island",
+            "[7] Total R&D Expense Credit Available (line 5 + line 6)"
+        ]
     }
  
     // TODO: Add configurations for other states (GA, etc.)

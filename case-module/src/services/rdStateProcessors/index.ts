@@ -11,6 +11,9 @@ import { RdCreditCalculatorForSC } from "./scRdCreditCalculator";
 import { RdCreditCalculatorForTX } from "./txRdCreditCalculator";
 import { RdCreditCalculatorForID } from "./idRdCreditCalculator";
 import { RdCreditCalculatorForON } from "./ontarioCreditCalculator";
+import { RdCreditCalculatorForKS } from "./ksRdCreditCalculator";
+import { RdCreditCalculatorForLA } from "./laRdCreditCalculator";
+import { RdCreditCalculatorForKY } from "./kyRdCreditCalculator";
 
 export const stateCalculators: any = {
     "AZ": new RdCreditCalculatorForAZ(),
@@ -25,5 +28,8 @@ export const stateCalculators: any = {
     "SC": new RdCreditCalculatorForSC(),
     "TX": new RdCreditCalculatorForTX(),
     "ID": new RdCreditCalculatorForID(),
-    "ON": new RdCreditCalculatorForON()
+    "ON": new RdCreditCalculatorForON(),
+    "KS": new RdCreditCalculatorForKS(),
+    "KY": new RdCreditCalculatorForKY(),
+    "LA": new RdCreditCalculatorForLA()
 };
