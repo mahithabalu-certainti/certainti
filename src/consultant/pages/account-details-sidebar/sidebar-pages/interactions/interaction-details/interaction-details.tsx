@@ -145,6 +145,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
       project_fiscal_rid: data?.project_fiscal_rid || '',
+      level: data?.interaction_level_name || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
