@@ -99,14 +99,11 @@ export class InteractionModelService {
   }
 
     logMessage(`Fetching the schema name for Models with AccountNumber : ${accountNumber}`)
-    const numericPart = accountNumber.replace(/\D/g, "");
-    if(!numericPart) {
-      logMessage(`Error SchemaName with AccountNumber  : ${numericPart}`)
-    }
     const schemaName = accountNumber === ''  ? MAIN_SCHEMA_NAME : rawQueries.fetchSchemaName(accountNumber);
-    if (this.modelCache.has(schemaName)) {
-      return this.modelCache.get(schemaName) as OrgModels; // ← skip re-initialization entirely
-    }
+    console.log(`accountNumber: ${accountNumber} → schemaName: ${schemaName}`);
+    // if (this.modelCache.has(schemaName)) {
+    //   return this.modelCache.get(schemaName) as OrgModels; // ← skip re-initialization entirely
+    // }
 
     logMessage(`SchemaName After fetching AccountNumber  : ${schemaName}`)
 

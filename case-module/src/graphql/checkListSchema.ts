@@ -36,7 +36,7 @@ input checkListInlineInput {
 	fiscal_year: Int
 	checklist_name: String
 	attachment_level: String
-	entity_id: String
+	attach_to: String
 }
 
 type Mutation {
