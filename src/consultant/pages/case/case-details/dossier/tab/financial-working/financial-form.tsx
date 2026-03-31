@@ -4,7 +4,18 @@ import FinancialWorking from './financial-working';
 import FinancialWorkingAustralia from './financial-working-australia';
 import FinancialWorkingUSA from './financial-working-usa';
 import { useSelector } from 'react-redux';
-import { Box, MenuItem, Select, Tab, Tabs } from '@mui/material';
+import {
+  Box,
+  MenuItem,
+  Select,
+  Tab,
+  Tabs,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+} from '@mui/material';
 import { useParams, useSearchParams } from 'react-router-dom';
 // import { useQueryClient } from '@tanstack/react-query';
 import { RootState } from '../../../../../../../store/store';
@@ -26,6 +37,7 @@ import {
   useFinancialHighlights,
   useInitiateRDCreditProcess,
   useRDCreditPreviewMutation,
+  useRdFormRevoke,
 } from '../../../../../../services/case-dossier/cases-financial-services';
 import SignOffModal from './sign-off-modal';
 import { useFetchCasesConfigFields } from '../../../../../../services/case-team';
@@ -84,7 +96,9 @@ const FinancialWorkingUKTable = ({
                 </td>
                 <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                   {costDisplay(
-                    project['Total Project Value/Labor'] || 0,
+                    Number(project['Total Project Value/Labor'] || 0).toFixed(
+                      2
+                    ),
                     currencySymbol || '$'
                   )}
                 </td>
@@ -106,7 +120,10 @@ const FinancialWorkingUKTable = ({
                 Total Project to be shared with HMRC
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F]'>
-                {costDisplay(hmrcTotal || 0, currencySymbol || '$')}
+                {costDisplay(
+                  Number(hmrcTotal || 0).toFixed(2),
+                  currencySymbol || '$'
+                )}
               </td>
             </tr>
           )}
@@ -149,7 +166,7 @@ const FinancialWorkingUKPercentageTable = ({
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                 {typeof value === 'number' && key !== 'Total Customer Groups'
-                  ? costDisplay(value as number, currencySymbol || '$')
+                  ? costDisplay(Number(value).toFixed(2), currencySymbol || '$')
                   : (value as React.ReactNode)}
               </td>
             </tr>
@@ -175,15 +192,18 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const [showFinancialValue, setShowFinancialValues] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
-  const accountid = searchParams.get('accountID') ?? '';
+  const accountId = searchParams.get('accountID') ?? '';
   const { permission } = useSelector((state: RootState) => state.permission);
-  const { errorToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState<boolean>(false);
+  const [isRevokeConfirmOpen, setIsRevokeConfirmOpen] =
+    useState<boolean>(false);
 
   const { data, isLoading } = useFetchCasesConfigFields(
-    accountid as string,
+    accountId as string,
     'case',
-    caseId as string
+    caseId as string,
+    'Dossier'
   );
   const configDetails = data?.data.states;
   const configFedral = data?.data;
@@ -213,17 +233,21 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   }, [financialData]);
 
   const isFinancialWorkingSignoff = caseDetails?.financial_working_signoff;
-
+  const isRDFormSignOff = caseDetails?.rd_form_signoff;
   // Auto-initiate on component mount (only once)
   useEffect(() => {
     if (
       !dossierFinancialStatus &&
       caseDetails?.case_total_projects &&
       caseDetails?.case_total_projects !== 0 &&
-      caseDetails?.case_total_projects !== '0' &&
-      !caseDetails?.financial_working_signoff
+      caseDetails?.case_total_projects !== '0'
     ) {
-      handleInitiateFinancialHighlights();
+      if (isFinancialWorkingSignoff) {
+        // Already signed off — skip initiate and go straight to view
+        handleViewFinancialHighlights();
+      } else {
+        handleInitiateFinancialHighlights();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseDetails, dossierFinancialStatus]);
@@ -231,22 +255,30 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   // Call appropriate API when federal tab changes
 
   useEffect(() => {
-    if (!dossierFinancialStatus) return; // Wait for initiate to complete first
-
-    if (activeTab === 0) {
-      // Federal Yes: Call handleViewFinancialHighlights
-      handleViewFinancialHighlights();
+    if (dossierFinancialStatus || isFinancialWorkingSignoff) {
+      if (activeTab === 0) {
+        // Federal Yes: Call handleViewFinancialHighlights
+        handleViewFinancialHighlights();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, dossierFinancialStatus]);
+  }, [activeTab, dossierFinancialStatus, isFinancialWorkingSignoff]);
 
   // Call region API when region changes in Federal No mode (activeTab === 1)
   useEffect(() => {
-    if (activeTab === 1 && dossierFinancialStatus) {
+    if (
+      activeTab === 1 &&
+      (dossierFinancialStatus || isFinancialWorkingSignoff)
+    ) {
       handleViewFinancialHighlightsForRegion();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRegion, activeTab, dossierFinancialStatus]);
+  }, [
+    selectedRegion,
+    activeTab,
+    dossierFinancialStatus,
+    isFinancialWorkingSignoff,
+  ]);
 
   const isSignoffVisible = checkPermission(
     permission,
@@ -259,6 +291,28 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
     useFinancialHighlights();
   const { mutate: previewRDCredit, isPending: isPreviewLoading } =
     useRDCreditPreviewMutation();
+  const { mutate: rdRevoke, isPending: isRevoking } = useRdFormRevoke();
+  const handleRevoke = () => {
+    rdRevoke(
+      {
+        case_rid: caseId ?? '',
+        account_rid: accountId ?? '',
+        type: 'Financial Working',
+      },
+      {
+        onSuccess: (data) => {
+          if (data.statusCode === 200) {
+            refetchCaseDetails();
+            successToast(data.statusMessage);
+          }
+        },
+        onError: (error) => {
+          console.error('Error revoking RD form', error);
+          errorToast('Failed to revoke RD form');
+        },
+      }
+    );
+  };
 
   const caseCountryDetails = {
     country_name: caseDetails?.country_name || '',
@@ -326,7 +380,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleViewFinancialHighlightsForRegion = async () => {
     previewRDCredit(
       {
-        accountrid: accountid,
+        accountrid: accountId,
         caseId: caseId ?? '',
         type: selectedRegion ? 'state' : 'summary',
         ...(selectedRegion && { stateRid: selectedRegion }),
@@ -353,7 +407,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
 
   const handleViewFinancialHighlights = async () => {
     const payload = {
-      account_rid: accountid,
+      account_rid: accountId,
       case_rid: caseId ?? '',
     };
 
@@ -373,7 +427,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   const handleInitiateFinancialHighlights = async () => {
     setShowFinancialValues(false);
     const payload = {
-      account_rid: accountid,
+      account_rid: accountId,
       case_rid: caseId ?? '',
       fiscal_year: Number(caseDetails?.fiscal_year || 0),
     };
@@ -451,11 +505,33 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       <div className='pb-2'>
         <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
           <div>{caseDetails?.country_name} Financial Information</div>
-          <div>
+          <div className='flex items-center gap-2'>
             <TextButton
               label={'Approve'}
               onClick={() => setIsSignOffModalOpen(true)}
               disabled={!financialData || isFinancialWorkingSignoff}
+              hide={!isSignoffVisible}
+              sx={{
+                width: 'auto',
+                minWidth: '65px',
+                fontSize: '13px',
+                fontWeight: 400,
+              }}
+            />
+            <TextButton
+              label={'Revoke'}
+              onClick={() => {
+                if (isRDFormSignOff) {
+                  setIsRevokeConfirmOpen(true);
+                } else {
+                  handleRevoke();
+                }
+              }}
+              loading={isRevoking && !isRevokeConfirmOpen}
+              disabled={
+                !isFinancialWorkingSignoff ||
+                caseDetails?.status_name?.toLowerCase() === 'closed'
+              }
               hide={!isSignoffVisible}
               sx={{
                 width: 'auto',
@@ -638,6 +714,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
                 data={financialData}
                 onSuccess={handleInitiateFinancialHighlights}
                 currencySymbol={responseCurrencySymbol}
+                isSignOff={isFinancialWorkingSignoff || false}
               />
             ) : (
               <FinancialWorking
@@ -669,9 +746,54 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         isOpen={isSignOffModalOpen}
         onClose={() => setIsSignOffModalOpen(false)}
         caseId={caseId ?? ''}
-        accountId={accountid}
+        accountId={accountId}
         refetchCaseDetails={refetchCaseDetails}
       />
+
+      <Dialog
+        open={isRevokeConfirmOpen}
+        onClose={() => setIsRevokeConfirmOpen(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle className='flex justify-between items-center'>
+          <span className='text-[#2D3E4F] text-[16px] font-semibold leading-[20px]'>
+            Confirmation
+          </span>
+        </DialogTitle>
+        <DialogContent>
+          <Typography className='text-[14px] text-[#425A76]'>
+            The revoke action will be applied to the RD form as well. Kindly
+            confirm if you would like the revoke to be applied to both
+          </Typography>
+        </DialogContent>
+        <DialogActions className='pr-4 mb-2'>
+          <TextButton
+            label='Cancel'
+            onClick={() => setIsRevokeConfirmOpen(false)}
+            sx={{
+              width: 'auto',
+              minWidth: '55px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Revoke'
+            onClick={() => {
+              setIsRevokeConfirmOpen(false);
+              handleRevoke();
+            }}
+            loading={isRevoking}
+            sx={{
+              width: 'auto',
+              minWidth: '65px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

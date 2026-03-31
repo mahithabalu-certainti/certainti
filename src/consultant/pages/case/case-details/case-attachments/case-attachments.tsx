@@ -6,10 +6,10 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllModules,
   AllPermissions,
+  OverviewTabs,
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../../common-service';
@@ -54,12 +54,20 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
+import Timeline from '../../../../../pages/timeline/timeline';
 
-const AttachmentTabs: ResourceTabs[] = [
+const AttachmentTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
+  },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
   },
 ];
 
@@ -162,7 +170,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   const fiscalYears = getFiscalYears(currentYear - minYear + 1);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
       categoryTypes.data?.data.documentTypes.map((type) => ({
@@ -472,72 +480,81 @@ export const Attachments: React.FC<AttachmentsProps> = ({
         onSearch={(text) => setSearchText(text)}
         showAddActivity={showUploads ? false : true}
         activityMenuItems={activityMenuItems}
+        hideTabPanel={showUploads}
       />
-      {showUploads ? (
-        <Uploads
-          accountId={accountId}
-          attachID={caseId}
-          onUploadSuccess={onRefreshClick}
-          projectFiscalYear={caseFiscalYear}
-        />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='case' />
+        </div>
       ) : (
         <>
-          <ResourceTableHeader
-            value={'attachments'}
-            title='Attachments'
-            count={totalItems}
-            titleIcon={
-              <AttachmentsSideIcon
-                alt='attachment-header-icon'
-                className={`[&>path]:stroke-[${ColorCode.attachmentBgColor}] w-[14px] h-[14px]`}
+          {showUploads ? (
+            <Uploads
+              accountId={accountId}
+              attachID={caseId}
+              onUploadSuccess={onRefreshClick}
+              projectFiscalYear={caseFiscalYear}
+            />
+          ) : (
+            <>
+              <ResourceTableHeader
+                value={'attachments'}
+                title='Attachments'
+                count={totalItems}
+                titleIcon={
+                  <AttachmentsSideIcon
+                    alt='attachment-header-icon'
+                    className={`[&>path]:stroke-[${ColorCode.attachmentBgColor}] w-[14px] h-[14px]`}
+                  />
+                }
+                headerButtons={headerButtons}
+                iconBg={ColorCode.caseBgColor}
+                bgType='circle'
               />
-            }
-            headerButtons={headerButtons}
-            iconBg={ColorCode.caseBgColor}
-            bgType='circle'
-          />
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={attachmentColumns}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
-            />
-            <ListTable
-              data={attachmentList}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 380px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={false}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={[]}
-              loading={isLoading}
-              error={isError ? 'Failed to load Attachment data' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSortRequest}
-              onFieldChange={handleFieldChange}
-              onCellEdit={handleCellEdit}
-            />
-          </div>
+              <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={attachmentColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={attachmentList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 380px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={[]}
+                  loading={isLoading}
+                  error={isError ? 'Failed to load Attachment data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSortRequest}
+                  onFieldChange={handleFieldChange}
+                  onCellEdit={handleCellEdit}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

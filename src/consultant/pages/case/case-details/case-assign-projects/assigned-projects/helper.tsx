@@ -167,17 +167,17 @@ export const assignedProjectFilterFields = (
     type: 'text',
     operatorOption: nonMadatoryOptions,
     hide:
-      !projectPermissionMap?.['project_point_of_contact']?.read &&
-      !projectPermissionMap?.['project_point_of_contact']?.edit,
+      !projectPermissionMap?.['key_contacts']?.read &&
+      !projectPermissionMap?.['key_contacts']?.edit,
   },
   {
     name: 'Technical Point of Contact',
-    value: 'technical_point_of_contact',
+    value: 'project_technical_point_of_contact',
     type: 'text',
     operatorOption: nonMadatoryOptions,
     hide:
-      !projectPermissionMap?.['technical_point_of_contact']?.read &&
-      !projectPermissionMap?.['technical_point_of_contact']?.edit,
+      !projectPermissionMap?.['key_contacts']?.read &&
+      !projectPermissionMap?.['key_contacts']?.edit,
   },
   {
     name: 'Comments',

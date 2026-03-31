@@ -120,6 +120,7 @@ export const caseProjectResourceFilterFields = (
     value: 'country_rid',
     type: 'enum',
     options: memoizedCountry,
+    onChange: true,
     filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !permissionMap?.['country_rid']?.read &&
@@ -172,15 +173,6 @@ export const caseProjectResourceFilterFields = (
     hide:
       !permissionMap?.['net_total_cost_pro_res']?.read &&
       !permissionMap?.['net_total_cost_pro_res']?.edit,
-  },
-  {
-    name: 'QRE Final',
-    value: 'qre_final',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
   },
   {
     name: 'Status',

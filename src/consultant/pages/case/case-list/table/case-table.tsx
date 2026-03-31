@@ -223,6 +223,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       account_number: caseItem?.account_r_number || '',
       country_rid: caseItem?.country_rid || '',
       country_code: caseItem?.country_code || '',
+      country_name: caseItem?.country_name || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };

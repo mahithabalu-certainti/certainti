@@ -10,7 +10,12 @@ import {
   useGetProjectType,
 } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
-import { generatePath, useNavigate, useParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   Project,
   ProjectFiscalSummary,
@@ -43,6 +48,7 @@ import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
 import { ProjectsSideIcon } from '../../../../../assets';
+import Timeline from '../../../../../pages/timeline/timeline';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -67,13 +73,14 @@ const projectTabs: ResourceTabs[] = [
     id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllMenus.TIMESHEETS,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.PROJECTS_VIEW_EDIT,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 
 const Projects: React.FC<ProjectsProps> = ({
@@ -149,7 +156,8 @@ const Projects: React.FC<ProjectsProps> = ({
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
-
+  const [searchParams] = useSearchParams();
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const projectViewEditFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
@@ -206,7 +214,7 @@ const Projects: React.FC<ProjectsProps> = ({
     isTriggerQualifiedDisabled?: boolean
   ): string => {
     if (isRdClaimQualified) {
-      return 'Project is signed off';
+      return 'Project is approved';
     }
     if (isTriggerQualifiedDisabled) {
       return 'Project type not allowed due to Configuration setting';
@@ -345,7 +353,14 @@ const Projects: React.FC<ProjectsProps> = ({
   );
 
   const handleselectedList = (id: string[]) => {
-    const childIds = id.filter((_, index) => index % 2 === 0);
+    const allChildIds = new Set(
+      projectList.flatMap(
+        (project) =>
+          project.ProjectFiscal?.map((fiscal) => fiscal.project_fiscal_rid) ||
+          []
+      )
+    );
+    const childIds = id.filter((selectedId) => allChildIds.has(selectedId));
     setSelectedTableIds(childIds);
   };
   const triggerAIMutation = ProjectTriggerAI();
@@ -559,7 +574,12 @@ const Projects: React.FC<ProjectsProps> = ({
     // Prepare update data
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
-        acc[item.editId || item.columnId] = item.value;
+        const key = item.editId || item.columnId;
+        if (key === 'is_assesed') {
+          acc[key] = item.value === 'true';
+        } else {
+          acc[key] = item.value;
+        }
         return acc;
       },
       {
@@ -717,70 +737,78 @@ const Projects: React.FC<ProjectsProps> = ({
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>
-          <ResourceTableHeader
-            value={'projects'}
-            title='Projects'
-            count={totalItems}
-            titleIcon={
-              <ProjectsSideIcon
-                alt='project-header-icon'
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          {isTimeLineView ? (
+            <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+              <Timeline entitytype='account' />
+            </div>
+          ) : (
+            <div>
+              <ResourceTableHeader
+                value={'projects'}
+                title='Projects'
+                count={totalItems}
+                titleIcon={
+                  <ProjectsSideIcon
+                    alt='project-header-icon'
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  />
+                }
+                headerButtons={headerButtons}
+                iconBg={ColorCode.accountBgColor}
+                bgType='circle'
               />
-            }
-            headerButtons={headerButtons}
-            iconBg={ColorCode.accountBgColor}
-            bgType='circle'
-          />
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={projectColumns}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
-            />
-            <ListTable
-              data={projectList as Project[]}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              expandAllParent={true}
-              expandable={true}
-              childrenKey='ProjectFiscal'
-              maxNestingLevel={2}
-              editDisableLevel={[0]}
-              stickyColumnsCount={1}
-              actionWidth={60}
-              actionDisplayMode='dropdown'
-              actionMenuItems={actionMenuItems}
-              loading={isLoading}
-              error={error ? 'Failed to load projects' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage ?? 1}
-              totalItems={totalItems}
-              onPageChange={setCurrentPage}
-              onRowsPerPageChange={setRowsPerPage}
-              sortBy={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-              selectable={true}
-              onSelectionChange={(selectedIds) =>
-                handleselectedList(selectedIds)
-              }
-              component='project'
-              onCellEdit={handleCellEdit}
-              clearSelectedRows={clearTrigger}
-            />
-          </div>
+              <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={projectColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={projectList as Project[]}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 320px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  expandAllParent={true}
+                  expandable={true}
+                  childrenKey='ProjectFiscal'
+                  maxNestingLevel={2}
+                  editDisableLevel={[0]}
+                  stickyColumnsCount={1}
+                  actionWidth={60}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionMenuItems}
+                  loading={isLoading}
+                  error={error ? 'Failed to load projects' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage ?? 1}
+                  totalItems={totalItems}
+                  onPageChange={setCurrentPage}
+                  onRowsPerPageChange={setRowsPerPage}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                  selectable={true}
+                  onSelectionChange={(selectedIds) =>
+                    handleselectedList(selectedIds)
+                  }
+                  component='project'
+                  onCellEdit={handleCellEdit}
+                  clearSelectedRows={clearTrigger}
+                />
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <AccessRestricted />

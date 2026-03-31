@@ -560,6 +560,10 @@ const AccountInteractionForm = () => {
         status_rid: interactionStatus.data?.data.interactionStatus.find(
           (option) => option.status_name.toLowerCase() === 'draft'
         )?.rid,
+        interaction_assessment_source_rid: 'Manual',
+        interaction_status_rid: accountStatusOptions?.data?.data?.status.find(
+          (option) => option.status_name.toLowerCase() === 'active'
+        )?.rid,
         trigger_send: !!trigger_send,
         interaction_level_rid: interactionLevel,
         projects: selectedTableId.map((it) => {

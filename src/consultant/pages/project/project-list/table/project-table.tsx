@@ -152,7 +152,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
                     account_status_name: project.account_status_name,
                     disableCheckBox: !!fiscal.is_rd_claim_qualified,
                     checkBoxMessage: fiscal.is_rd_claim_qualified
-                      ? 'Project is signed off'
+                      ? 'Project is approved'
                       : '',
                   })) || [],
               }))
@@ -324,7 +324,12 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
-        acc[item.editId || item.columnId] = item.value;
+        const key = item.editId || item.columnId;
+        if (key === 'is_assesed') {
+          acc[key] = item.value === 'true';
+        } else {
+          acc[key] = item.value;
+        }
         return acc;
       },
       {

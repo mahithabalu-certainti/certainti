@@ -54,6 +54,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
   const projectFiscalRid = searchParams.get('project_fiscal_rid');
+  const isFromFourPart = searchParams.get('navigate_source') === 'four_part';
 
   const { permission } = useSelector((state: RootState) => state.permission);
   const sendInteraction = useSendInteraction();
@@ -81,7 +82,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
-  const disableRemainderBtn = [
+  const disableReminderBtn = [
     StatusTypeEnum.sent,
     StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
@@ -125,6 +126,20 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     return map;
   }, [interactionsViewEditFields]);
 
+  const handleBack = () => {
+    if (isFromFourPart) {
+      searchParams.set('list', 'four_part_assessment');
+      searchParams.delete('interaction_id');
+      searchParams.delete('interaction_number');
+      searchParams.delete('navigate_source');
+      searchParams.delete('project_fiscal_rid');
+
+      navigate({ search: searchParams.toString() }, { replace: true });
+    } else {
+      handleBackClick();
+    }
+  };
+
   const handleEdit = () => {
     const projectData = {
       project_code: projectDetails?.project_code || '',
@@ -152,7 +167,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
-  const handleRemainder = () => {
+  const handleReminder = () => {
     const interactions = [
       {
         interaction_rid: data?.interaction_rid || interactionId || '',
@@ -199,7 +214,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled:
         isProjectSignedOff ||
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !isSendInteraction,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
@@ -210,18 +225,20 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled:
         isProjectSignedOff ||
         accountInActive ||
-        !disableRemainderBtn ||
+        !disableReminderBtn ||
         !isSendInteraction,
-      onClick: () => handleRemainder(),
+      onClick: () => handleReminder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
       isLoading: sendInteraction.isPending,
     },
     {
-      label: 'Back To Interactions',
+      label: isFromFourPart
+        ? 'Back To Four Part Assessment'
+        : 'Back To Interactions',
       variant: 'contained' as const,
-      onClick: () => handleBackClick(),
-      sx: { width: '140px', minWidth: '140px' },
+      onClick: () => handleBack(),
+      sx: { width: 'auto', padding: '0 9px' },
     },
   ];
 
@@ -416,6 +433,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
             : []
         }
         onSuccessRefetch={refetch}
+        isReinitiated={true}
       />
     </>
   );

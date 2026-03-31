@@ -7,6 +7,10 @@ import {
   RDCreditInitiateResponse,
   SignOffFinancialHighlightsPayload,
   UserPreferencePayload,
+  DossierPackageResponse,
+  RDFormRevokePayload,
+  RDFormRevokeResponse,
+  DownloadDossierSheetPayload,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -15,6 +19,10 @@ import {
   getRDCreditInitiateURL,
   getSignOffFinancialHighlightsURL,
   getUserPreferenceURL,
+  getRDFormMapperURL,
+  getDossierInitiateURL,
+  getDossierSheetStatusURL,
+  getRdFormRevokeURL,
 } from '../urls/dossier-url';
 
 // 1. GET Preview - Fetch RD credit calculation results
@@ -118,7 +126,7 @@ export const useFinancialHighlights = () => {
 export const signOffFinancialHighlights = async (
   payload: SignOffFinancialHighlightsPayload
 ): Promise<RDCreditInitiateResponse> => {
-  const url = getSignOffFinancialHighlightsURL();
+  const url = getSignOffFinancialHighlightsURL(payload.isRdform);
   const formData = new FormData();
   formData.append('case_rid', payload.case_rid);
   formData.append('account_rid', payload.account_rid);
@@ -143,6 +151,20 @@ export const useSignOffFinancialHighlights = () => {
   });
 };
 
+export const rdFormMapper = async (
+  payload: RDCreditInitiatePayload
+): Promise<RDCreditInitiateResponse> => {
+  const url = getRDFormMapperURL();
+  const response = await caseServiceApi.post(url, payload);
+  return response.data;
+};
+
+export const useRDFormMapper = () => {
+  return useMutation<RDCreditInitiateResponse, Error, RDCreditInitiatePayload>({
+    mutationFn: (payload: RDCreditInitiatePayload) => rdFormMapper(payload),
+  });
+};
+
 // 3. POST Initiate - Initiate RD credit calculation process
 export const getUserPreference = async (
   payload: UserPreferencePayload
@@ -155,5 +177,113 @@ export const getUserPreference = async (
 export const useUserPreference = () => {
   return useMutation<RDCreditInitiateResponse, Error, UserPreferencePayload>({
     mutationFn: (payload: UserPreferencePayload) => getUserPreference(payload),
+  });
+};
+
+export const fetchDossierInitiate = async (
+  accountRid: string,
+  caseRid: string,
+  timezone: string
+): Promise<RDCreditStatusResponse> => {
+  const url = getDossierInitiateURL();
+  const response = await caseServiceApi.post(url, {
+    account_rid: accountRid,
+    case_rid: caseRid,
+    timezone: timezone,
+  });
+  return response.data;
+};
+
+export const useDossierInitiate = () => {
+  return useMutation<
+    RDCreditStatusResponse,
+    Error,
+    { account_rid: string; case_rid: string; timezone: string }
+  >({
+    mutationFn: ({ account_rid, case_rid, timezone }) =>
+      fetchDossierInitiate(account_rid, case_rid, timezone),
+  });
+};
+export const ExportDossierPackage = async (
+  accountRid: string,
+  caseRid: string,
+  downloaded_list: string[],
+  dossier_version?: string
+): Promise<DossierPackageResponse> => {
+  try {
+    const url = getDossierSheetStatusURL();
+
+    const payload: Record<string, unknown> = {
+      case_rid: caseRid,
+      account_rid: accountRid,
+      downloaded_list,
+    };
+
+    // Include dossier_version only when provided (version-control row download)
+    if (dossier_version !== undefined && dossier_version !== '') {
+      payload.dossier_version = dossier_version;
+    }
+
+    const response = await caseServiceApi.post<DossierPackageResponse>(
+      url,
+      payload
+    );
+
+    const status = response.data;
+
+    const base64Data = status?.data?.base64;
+
+    const filename = `${status?.data?.document_name ?? 'dossier-sheet'}.zip`;
+
+    if (base64Data) {
+      // Decode base64 and create a Blob
+      const binary = atob(base64Data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/zip' });
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    return status;
+  } catch (error) {
+    console.error('Export failed:', error);
+    throw error;
+  }
+};
+
+export const useDownloadDossierSheet = () => {
+  return useMutation<
+    DossierPackageResponse | undefined,
+    Error,
+    DownloadDossierSheetPayload
+  >({
+    mutationFn: ({ accountRid, caseRid, downloaded_list, dossier_version }) =>
+      ExportDossierPackage(
+        accountRid,
+        caseRid,
+        downloaded_list,
+        dossier_version
+      ),
+  });
+};
+
+export const rdformRevoke = async (
+  payload: RDFormRevokePayload
+): Promise<RDFormRevokeResponse> => {
+  const url = getRdFormRevokeURL();
+  const response = await caseServiceApi.post(url, payload);
+  return response.data;
+};
+export const useRdFormRevoke = () => {
+  return useMutation<RDFormRevokeResponse, Error, RDFormRevokePayload>({
+    mutationFn: (payload: RDFormRevokePayload) => rdformRevoke(payload),
   });
 };

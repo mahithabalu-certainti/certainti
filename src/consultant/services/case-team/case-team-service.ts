@@ -425,17 +425,19 @@ export const useUpdateCaseTeam = () => {
 export const caseConfigDetailUrl = (
   accountId: string,
   level: string,
-  caseId?: string
+  caseId?: string,
+  type?: string
 ) =>
-  `/api/jurisdictions/details/?accountRid=${accountId}&level=${level}${caseId ? `&caseRid=${caseId}` : ''}`;
+  `/api/jurisdictions/details/?accountRid=${accountId}&level=${level}${caseId ? `&caseRid=${caseId}` : ''}${type ? `&type=${type}` : '&type=All'}`;
 
 export const fetchConfigFields = async (
   accountId: string,
   level: string,
-  caseId?: string
+  caseId?: string,
+  type?: string
 ): Promise<CaseConfigDetailsResponse> => {
   const { data } = await caseServiceApi.get<CaseConfigDetailsResponse>(
-    caseConfigDetailUrl(accountId, level, caseId)
+    caseConfigDetailUrl(accountId, level, caseId, type)
   );
   return data;
 };
@@ -443,11 +445,12 @@ export const fetchConfigFields = async (
 export const useFetchCasesConfigFields = (
   accountId: string,
   level: string,
-  caseId?: string
+  caseId?: string,
+  type?: string
 ) => {
   return useQuery<CaseConfigDetailsResponse, Error>({
-    queryKey: ['configFields', accountId, level, caseId],
-    queryFn: () => fetchConfigFields(accountId, level, caseId),
+    queryKey: ['configFields', accountId, level, caseId, type],
+    queryFn: () => fetchConfigFields(accountId, level, caseId, type),
     enabled: !!accountId, // Only fetch if accountId exists
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache

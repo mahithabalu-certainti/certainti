@@ -25,6 +25,9 @@ export type AttachmentList = {
   attached_to: string;
   status_name?: string;
   status_rid?: string;
+  project_name?: string;
+  project_code?: string;
+  currency_rid?: string;
 };
 
 export interface globalFilters {
@@ -44,6 +47,7 @@ export interface AttachmentsListURLParams {
   accountRid?: string;
   isGlobal?: boolean;
   search?: string;
+  type?: string;
 }
 
 export type AttachmentListResponse = {
@@ -70,6 +74,8 @@ export interface AttachmentsListExportParams {
   page?: number;
   limit?: number;
   search?: string;
+  type?: string;
+  assessment_type?: 'all' | 'fpa';
 }
 
 export interface AttachmentUploadPayload {

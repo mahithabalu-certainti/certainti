@@ -269,7 +269,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         </div>
       </div>
       <div
-        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto pb-2 scrollbar-transparent' : ''}`}
+        className={`${isFrom === 'modal' ? 'min-h-[70vh] max-h-[75vh] overflow-y-auto pb-2 scrollbar-transparent' : ''}`}
       >
         <FormBuilder
           loading={false}

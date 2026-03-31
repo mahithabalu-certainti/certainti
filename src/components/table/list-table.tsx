@@ -74,6 +74,7 @@ const ListTable = <T extends RowData>({
   // Actions
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
+  actionAlignHorizontal = 'center',
   actionMenuItems = [],
   conditionMenuItems,
   // State
@@ -715,7 +716,21 @@ const ListTable = <T extends RowData>({
 
     fieldsToEdit.forEach((fieldId) => {
       const targetColumn = visibleColumns.find((col) => col.id === fieldId);
+
+      // For dependent fields (not the clicked column), also check conditionallyEdit
       if (targetColumn?.editable) {
+        if (fieldId !== column.id && targetColumn.conditionallyEdit?.length) {
+          const canEditDependent = targetColumn.conditionallyEdit.every(
+            (cond) => {
+              const cellValue = row[cond.key];
+              if (Array.isArray(cond.matchValue)) {
+                return cond.matchValue.includes(cellValue as never);
+              }
+              return cellValue === cond.matchValue;
+            }
+          );
+          if (!canEditDependent) return;
+        }
         let editingValue: string | number;
 
         if (targetColumn.field?.getFieldData) {
@@ -1386,6 +1401,7 @@ const ListTable = <T extends RowData>({
                                             : item.disabled,
                                       onClick: () => item.onClick(row),
                                     }))}
+                                    alignHorizontal={actionAlignHorizontal}
                                   />
                                 )}
                               </>
@@ -1598,10 +1614,12 @@ const ListTable = <T extends RowData>({
                                     <span
                                       className={`h-[26px] w-6 flex items-center justify-center absolute ${column?.field?.type === 'textarea' ? 'top-0.5 bg-[#FEF2F2] right-[2px] z-40' : 'top-[3px] right-0 bg-[#FEF2F2]'} cursor-pointer`}
                                     >
-                                      <ErrorInfoIcon
-                                        alt='error'
-                                        className='w-5 h-3.5'
-                                      />
+                                      <React.Suspense fallback={null}>
+                                        <ErrorInfoIcon
+                                          alt='error'
+                                          className='w-5 h-3.5'
+                                        />
+                                      </React.Suspense>
                                     </span>
                                   </Tooltip>
                                 )}

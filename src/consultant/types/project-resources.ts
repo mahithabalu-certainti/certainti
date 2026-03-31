@@ -16,6 +16,7 @@ export interface ProjectResourcesListParams {
   id?: string;
   projectid?: string;
   search?: string;
+  type?: string;
 }
 
 export type ProjectResourcesListType = {

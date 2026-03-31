@@ -30,6 +30,12 @@ export const formatDateToYMD = (dateString: string): string => {
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+const IsAssessedOptions: { label: string; value: string }[] = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' },
+];
+
 export const getProjectColumns = (
   onClick: (row: Project) => void,
   memoizedProjectTypes: ListOption[],
@@ -213,6 +219,37 @@ export const getProjectColumns = (
         key: 'is_project_exists' as keyof Project,
         matchValue: false,
       },
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
+  },
+  {
+    id: 'is_assesed',
+    sortId: 'is_assesed',
+    editId: 'is_assesed',
+    label: 'Is Assessed?',
+    sortable: true,
+    editable:
+      permissionMap?.['is_assessed']?.read &&
+      permissionMap?.['is_assessed']?.edit &&
+      !accountInActive,
+    width: 120,
+    hide:
+      !permissionMap?.['is_assessed']?.read &&
+      !permissionMap?.['is_assessed']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return <span>{row.is_assesed ? 'Yes' : 'No'}</span>;
+    },
+    field: {
+      type: 'select',
+      required: true,
+      options: IsAssessedOptions,
+    },
+    conditionallyEdit: [
       {
         key: 'is_rd_claim_qualified' as keyof Project,
         matchValue: false,

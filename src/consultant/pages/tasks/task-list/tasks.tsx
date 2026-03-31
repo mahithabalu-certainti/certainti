@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -21,12 +21,20 @@ import {
   useGetStatus,
 } from '../../../../common-service';
 import {
+  buildApiFilters,
+  buildFilterStates,
   checkPermission,
   getFiscalYears,
+  NavFilter,
+  NavFilterState,
   reshapeGlobalFilter,
 } from '../../../../common-utils';
 import { ColorCode, FilterState, SelectOption } from '../../../types';
 import { exportTasksData } from '../../../services/tasks/tasks-service';
+import {
+  clearFilters,
+  storeFilters,
+} from '../../account-details-sidebar/components/filter/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
@@ -60,12 +68,23 @@ export const Tasks: React.FC = () => {
     isGlobal: true,
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [urlFilterApplied, setUrlFilterApplied] = useState<boolean>(false);
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') || 'milestone';
+
+  const openTaskIdRef = useRef(
+    (location.state as { openTaskId?: string } | null)?.openTaskId
+  );
+
+  // Stores the original nav filters from the dashboard so they can be
+  // re-applied (with the correct tab's status options) on every tab switch.
+  const navFiltersRef = useRef<NavFilter[]>([]);
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -281,6 +300,84 @@ export const Tasks: React.FC = () => {
     }
   }, [tabParam, statusesQuery.data, activityStatusesQuery.data]);
 
+  useEffect(() => {
+    const navState = location.state as NavFilterState | null;
+    const incomingFilters: NavFilter[] = navState?.filters ?? [];
+
+    // On first load: use filters from location.state and cache them in the ref.
+    // On tab switch re-application: location.state is already cleared, so fall
+    // back to the cached ref so the same filters apply for the new tab.
+    const filtersToApply =
+      incomingFilters.length > 0 ? incomingFilters : navFiltersRef.current;
+
+    if (filtersToApply.length === 0 || urlFilterApplied) return;
+
+    // Wait for the current tab's statusOptions to load before resolving enum labels
+    if (statusOptions.length === 0) return;
+
+    // Cache filters from location.state on first load (before clearing state).
+    // Only do this for Report Card navigations (reapplyFiltersOnTabSwitch flag),
+    // NOT for task item clicks — those should just clear on tab switch.
+    const shouldReapply = !!(
+      navState as { reapplyFiltersOnTabSwitch?: boolean } | null
+    )?.reapplyFiltersOnTabSwitch;
+    if (
+      shouldReapply &&
+      incomingFilters.length > 0 &&
+      navFiltersRef.current.length === 0
+    ) {
+      navFiltersRef.current = incomingFilters;
+    }
+
+    // Resolve enum filter values: label string → current tab's RID
+    const resolvedFilters: NavFilter[] = filtersToApply.map((f) => {
+      if (f.type !== 'enum') return f;
+
+      const resolveValue = (val: string): string => {
+        const match = statusOptions.find(
+          (opt) => opt.label.toLowerCase() === val.toLowerCase()
+        );
+        return match ? match.value : val;
+      };
+
+      const rawValue = f.value;
+      let resolvedValue: any = rawValue;
+
+      if (typeof rawValue === 'string') {
+        resolvedValue = resolveValue(rawValue);
+      } else if (Array.isArray(rawValue)) {
+        resolvedValue = rawValue.map((v) =>
+          typeof v === 'string' ? resolveValue(v) : v
+        );
+      }
+
+      return { ...f, value: resolvedValue };
+    });
+
+    // Build the internal FilterState format and store in localStorage
+    const filterStates = buildFilterStates(resolvedFilters);
+    storeFilters(filterStates, 'global-tasks');
+
+    // Build and apply the API filter format
+    const apiFilters = buildApiFilters(resolvedFilters);
+    setAppliedFilters(apiFilters);
+    setUrlFilterApplied(true);
+
+    // Clear navigation state so refreshing doesn't re-apply.
+    // Preserve ?tab= and other query params in the URL.
+    if (incomingFilters.length > 0) {
+      navigate(location.pathname + location.search, { replace: true });
+    }
+  }, [
+    location.state,
+    location.search,
+    tabParam,
+    statusOptions,
+    urlFilterApplied,
+    navigate,
+    location.pathname,
+  ]);
+
   const accountStatusOptions = useMemo(
     () =>
       accountStatusQuery?.data?.data?.status.map((status) => ({
@@ -343,6 +440,12 @@ export const Tasks: React.FC = () => {
       search: undefined,
     }));
     setAppliedFilters({});
+    clearFilters('global-tasks');
+    // If the user originally navigated from a Report Card, re-apply those
+    // filters for the new tab (with its own statusOptions for enum resolution)
+    if (navFiltersRef.current.length > 0) {
+      setUrlFilterApplied(false);
+    }
     searchParams.set('tab', value);
     setSearchParams(searchParams, { replace: true });
   };
@@ -439,6 +542,7 @@ export const Tasks: React.FC = () => {
           </button>
           <Suspense fallback={null}>
             <Filter
+              key={String(urlFilterApplied)}
               value='global-tasks'
               isOpen={isFilterOpen}
               filterAnchorEl={anchorEl}
@@ -480,6 +584,7 @@ export const Tasks: React.FC = () => {
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             taskType='milestone'
+            openTaskId={openTaskIdRef.current}
           />
         )}
         {tabParam === 'activity' && isActivityTaskEnable && (
@@ -495,6 +600,7 @@ export const Tasks: React.FC = () => {
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             taskType='activity'
+            openTaskId={openTaskIdRef.current}
           />
         )}
       </div>

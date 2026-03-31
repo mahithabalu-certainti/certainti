@@ -112,7 +112,7 @@ export const GeoBasedRuleFormFieldsData = (
         sectionName: 'Jurisdiction Rules Information',
         fillType: 'half',
         fields: [
-          createDateField('effective_start_date', 'Effective Start Date', {
+          createDateField('effective_start_date', 'Start Date', {
             required: true,
             allowFutureDates: true,
             disabled:
@@ -124,9 +124,9 @@ export const GeoBasedRuleFormFieldsData = (
               !permissionMap?.['effective_start_date']?.edit &&
               !permissionMap?.['effective_start_date']?.read,
           }),
-          createDateField('effective_end_date', 'Effective End Date', {
+          createDateField('effective_end_date', 'End Date', {
             required: false,
-            greaterThan: { effective_start_date: 'Effective Start Date' },
+            greaterThan: { effective_start_date: 'Start Date' },
             allowFutureDates: true,
             disabled:
               isEditView &&
@@ -249,7 +249,7 @@ export const GeoBasedRuleFormFieldsData = (
               !permissionMap?.['created_by']?.edit &&
               !permissionMap?.['created_by']?.read,
           }),
-          createTextField('r_number', 'Geo Based ID', {
+          createTextField('r_number', 'Jurisdiction Rule ID', {
             required: false,
             disabled: true,
             hide:

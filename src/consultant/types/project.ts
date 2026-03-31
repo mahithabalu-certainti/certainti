@@ -222,6 +222,7 @@ export type Project = {
   is_project_exists: boolean;
   is_rd_trigger_qualified?: boolean;
   is_rd_claim_qualified?: boolean;
+  is_assesed?: boolean;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;

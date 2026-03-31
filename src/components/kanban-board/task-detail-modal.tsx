@@ -78,6 +78,7 @@ interface TaskDetailModalPropsExtended
   isCaseTeamCreated?: boolean;
   entityLevel?: 'account' | 'case' | 'project';
   attachTo?: string;
+  refetchCaseDetails?: () => void;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -109,6 +110,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   isCaseTeamCreated,
   entityLevel,
   attachTo,
+  refetchCaseDetails,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -1327,6 +1329,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
 
         successToast('Task updated successfully');
+        const isCompleteStatus =
+          selectedStatus?.name?.toLowerCase() === 'completed';
+        if (isCompleteStatus && refetchCaseDetails) {
+          refetchCaseDetails();
+        }
         setOriginalTask(editedTask);
         queryClient.invalidateQueries({
           queryKey: ['taskActivities', accountId, caseId, taskId],

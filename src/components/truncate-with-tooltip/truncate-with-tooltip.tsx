@@ -3,14 +3,40 @@ import React, { ReactNode, Suspense, useEffect, useRef, useState } from 'react';
 import { CopyIcon, TickIcon } from '../../assets';
 
 function extractTextFromReactNode(node: React.ReactNode): string {
+  if (node === null || node === undefined) {
+    return '';
+  }
   if (typeof node === 'string' || typeof node === 'number') {
     return String(node);
   }
-  if (React.isValidElement(node) && node.props.children) {
-    return extractTextFromReactNode(node.props.children);
-  }
   if (Array.isArray(node)) {
     return node.map(extractTextFromReactNode).join('');
+  }
+  if (React.isValidElement(node)) {
+    const props = node.props as {
+      children?: React.ReactNode;
+      dangerouslySetInnerHTML?: { __html: string };
+    };
+
+    if (props.children !== undefined) {
+      return extractTextFromReactNode(props.children);
+    }
+
+    if (props.dangerouslySetInnerHTML?.__html) {
+      const html = props.dangerouslySetInnerHTML.__html;
+      return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<[^>]*>?/gm, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .trim();
+    }
   }
   return '';
 }
@@ -18,6 +44,7 @@ function extractTextFromReactNode(node: React.ReactNode): string {
 interface TruncateWithTooltipProps {
   text?: string;
   maxWidth?: number | string;
+  maxHeight?: number | string;
   className?: string;
   children?: ReactNode;
   style?: React.CSSProperties;
@@ -25,11 +52,13 @@ interface TruncateWithTooltipProps {
   enableCopy?: boolean;
   alwaysShowTooltip?: boolean;
   tooltipMaxWidth?: number | string;
+  whiteSpace?: 'nowrap' | 'normal' | 'pre-wrap' | 'pre-line' | 'break-spaces';
 }
 
 const TruncateWithTooltip = ({
   text,
   maxWidth,
+  maxHeight,
   className = '',
   children,
   style = {},
@@ -37,15 +66,18 @@ const TruncateWithTooltip = ({
   enableCopy = true,
   alwaysShowTooltip = false,
   tooltipMaxWidth = '50vw',
+  whiteSpace = 'nowrap',
 }: TruncateWithTooltipProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState<boolean>(false);
 
   const contentToRender = children ?? text;
-  const textForTooltipAndCopy = contentToRender
+  const extractedText = contentToRender
     ? extractTextFromReactNode(contentToRender)
-    : text || '';
+    : '';
+
+  const textForTooltipAndCopy = extractedText || (text ?? '');
 
   const handleCopy = (valueToCopy: string) => {
     navigator.clipboard.writeText(valueToCopy);
@@ -59,7 +91,7 @@ const TruncateWithTooltip = ({
       if (element) {
         setIsOverflowing(
           element.scrollWidth > element.clientWidth ||
-          element.scrollHeight > element.clientHeight
+            element.scrollHeight > element.clientHeight
         );
       }
     };
@@ -74,9 +106,12 @@ const TruncateWithTooltip = ({
   const contentStyle = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap' as const,
+    whiteSpace: whiteSpace,
     maxWidth:
       typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth || '100%',
+    ...(maxHeight && {
+      maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+    }),
     ...style,
   };
 

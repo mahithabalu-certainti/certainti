@@ -85,6 +85,12 @@ export const getCaseListColumns = (
         permissionMap?.['case_name']?.edit &&
         permissionMap?.['case_name']?.read &&
         !accountInActive,
+      conditionallyEdit: [
+        {
+          key: 'status_name',
+          matchValue: ['Submitted', 'On Hold', 'In Progress', 'Audit Review'],
+        },
+      ],
       hide:
         !permissionMap?.['case_name']?.edit &&
         !permissionMap?.['case_name']?.read,
@@ -134,6 +140,12 @@ export const getCaseListColumns = (
         permissionMap?.['case_owner_rid']?.edit &&
         permissionMap?.['case_owner_rid']?.read &&
         !accountInActive,
+      conditionallyEdit: [
+        {
+          key: 'status_name',
+          matchValue: ['Submitted', 'On Hold', 'In Progress', 'Audit Review'],
+        },
+      ],
       hide:
         !permissionMap?.['case_owner_rid']?.edit &&
         !permissionMap?.['case_owner_rid']?.read,
@@ -254,34 +266,6 @@ export const getCaseListColumns = (
       render: (row) =>
         row.created_datetime
           ? formatDateToYYYYMMDDWithTime(row.created_datetime)
-          : '-',
-    },
-    {
-      id: 'submitted_datetime',
-      label: 'Submitted On',
-      width: 190,
-      sortable: true,
-      sortId: 'submitted_datetime',
-      hide:
-        !permissionMap?.['submitted_datetime']?.edit &&
-        !permissionMap?.['submitted_datetime']?.read,
-      render: (row) =>
-        row.submitted_datetime
-          ? formatDateToYYYYMMDDWithTime(row.submitted_datetime)
-          : '-',
-    },
-    {
-      id: 'approved_datetime',
-      label: 'Approved On',
-      width: 190,
-      sortable: true,
-      sortId: 'approved_datetime',
-      hide:
-        !permissionMap?.['approved_datetime']?.edit &&
-        !permissionMap?.['approved_datetime']?.read,
-      render: (row) =>
-        row.approved_datetime
-          ? formatDateToYYYYMMDDWithTime(row.approved_datetime)
           : '-',
     },
     {

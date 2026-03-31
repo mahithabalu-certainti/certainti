@@ -7,7 +7,7 @@ import {
   FinancialHighlightsResponse,
   FinancialHighlightsComputedFields,
 } from '../../../../../../types/dossier';
-import { costDisplay } from '../../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../../common-utils';
 import { renderFederalTable, renderCard } from './financial-working-helper';
 
 interface FinancialWorkingProps {
@@ -59,7 +59,15 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
       return '';
     }
     if (typeof value === 'number') {
-      return costDisplay(value, currency || '$');
+      return costDisplay(value.toFixed(2), currency || '$');
+    }
+    if (
+      typeof value === 'string' &&
+      !isNaN(Number(value)) &&
+      value.trim() !== '' &&
+      !/[a-zA-Z]/.test(value)
+    ) {
+      return valueDisplay(value);
     }
     return value;
   };
@@ -67,8 +75,16 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
   const formatCurrencyLocal = (value: number | string | null | undefined) => {
     if (value === null || value === undefined) return '';
     if (typeof value === 'number') {
-      return costDisplay(value, symbol);
+      return costDisplay(value.toFixed(2), symbol);
     }
+    // if (
+    //   typeof value === 'string' &&
+    //   !isNaN(Number(value)) &&
+    //   !value.includes('%') &&
+    //   value.trim() !== ''
+    // ) {
+    //   return costDisplay(Number(value).toFixed(2), symbol);
+    // }
     return value;
   };
 
@@ -142,10 +158,18 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
             />
           </div>
         ) as React.ReactNode as string,
-        width: 180,
-        // sx: (row?: FinancialWorkingRow) => ({
-        //   textAlign: typeof row?.[projectId] === 'number' ? 'right' : 'left',
-        // }),
+        // width: 180,
+        sx: (row?: FinancialWorkingRow) => {
+          const value = row?.[projectId];
+          const isNumeric =
+            typeof value === 'number' ||
+            (typeof value === 'string' &&
+              value.trim() !== '' &&
+              (!isNaN(Number(value)) || value.endsWith('%')));
+          return {
+            textAlign: isNumeric ? 'right' : 'left',
+          };
+        },
         sortId: projectId,
         render: (row: FinancialWorkingRow) => {
           const value = row[projectId];
@@ -173,11 +197,19 @@ const FinancialWorking: React.FC<FinancialWorkingProps> = ({
           className='font-bold'
         />
       ) as React.ReactNode as string,
-      width: 150,
+      // width: 150,
       sortId: 'Total',
-      // sx: (row?: FinancialWorkingRow) => ({
-      //   textAlign: typeof row?.Total === 'number' ? 'right' : 'left',
-      // }),
+      sx: (row?: FinancialWorkingRow) => {
+        const value = row?.Total;
+        const isNumeric =
+          typeof value === 'number' ||
+          (typeof value === 'string' &&
+            value.trim() !== '' &&
+            (!isNaN(Number(value)) || value.endsWith('%')));
+        return {
+          textAlign: isNumeric ? 'right' : 'left',
+        };
+      },
       render: (row: FinancialWorkingRow) => {
         const isBold = boldRows.includes(row.row_label);
         const formattedValue = formatValue(row.Total, symbol);

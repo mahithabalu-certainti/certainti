@@ -29,6 +29,7 @@ export type AssignProject = {
   project_point_of_contact: string | null;
   project_technical_point_of_contact: string | null;
   currency_symbol: string | undefined;
+  currency_rid: string | null;
 };
 export type ReviewProject = {
   rid: string;
@@ -80,6 +81,7 @@ export interface AssignProjectListURLParams {
   case_rid?: string;
   fiscal_year?: number;
   search?: string;
+  type?: string;
 }
 
 export interface assignProjectsListResponse {
@@ -114,6 +116,7 @@ export interface ReviewProjectListURLParams {
   searchTerm?: string;
   search?: string;
   timezone?: string;
+  type?: string;
 }
 export type ReviewListProject = {
   rid: string;

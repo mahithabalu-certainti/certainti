@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import ReactQuill, { Quill } from 'react-quill';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { CallLogIcon, UploadIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
@@ -29,6 +30,47 @@ import { AllPermissions } from '../../../../common-service';
 import { shouldDisableField, shouldHideField } from './helper';
 import { ActivitySourceDetails } from '../../../types';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { normalizeQuillValue } from './helper';
+
+// Quill rich-text setup (mirrors email-form.tsx)
+const Parchment = Quill.import('parchment');
+const FontStyle = Quill.import('attributors/style/font');
+
+const sizeMap: { [key: string]: string } = {
+  small: '0.75em',
+  large: '1.5em',
+  huge: '2.5em',
+};
+
+const sizeValueToName: { [key: string]: string } = {
+  '0.75em': 'small',
+  '1.5em': 'large',
+  '2.5em': 'huge',
+};
+
+class CallSizeAttributor extends Parchment.Attributor.Style {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(attrName: string, styleName: string, options: any) {
+    super(attrName, styleName, options);
+  }
+  add(node: HTMLElement, value: string): boolean {
+    const emValue = sizeMap[value] || value;
+    return super.add(node, emValue);
+  }
+  value(node: HTMLElement): string | null {
+    const emValue = super.value(node);
+    if (!emValue) return null;
+    return sizeValueToName[emValue] || emValue;
+  }
+}
+
+const CallSizeStyle = new CallSizeAttributor('size', 'font-size', {
+  scope: Parchment.Scope.INLINE,
+  whitelist: [...Object.values(sizeMap), ...Object.keys(sizeMap)],
+});
+
+Quill.register(CallSizeStyle, true);
+Quill.register(FontStyle, true);
 
 // Types
 interface SuggestionState {
@@ -155,6 +197,28 @@ const CallForm: React.FC<CallFormProps> = ({
 
   // File input ref
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Quill ref for minutes of meeting
+  const quillRef = useRef<ReactQuill>(null);
+
+  // ReactQuill modules config
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      [{ font: [] }],
+      [{ size: ['small', false, 'large', 'huge'] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ color: [] }, { background: [] }],
+      [{ script: 'sub' }, { script: 'super' }],
+      ['blockquote', 'code-block'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ indent: '-1' }, { indent: '+1' }],
+      [{ direction: 'rtl' }],
+      [{ align: [] }],
+      ['link'],
+      ['clean'],
+    ],
+  };
 
   // Permission
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -613,11 +677,9 @@ const CallForm: React.FC<CallFormProps> = ({
     handleInputChange('subject', value);
   };
 
-  const handleMinutesOfMeetingChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    const value = e.target.value;
-    handleInputChange('minutes_of_meeting', value);
+  const handleMinutesOfMeetingChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, minutes_of_meeting: value }));
+    setErrors((prev) => ({ ...prev, minutes_of_meeting: '' }));
   };
 
   const handleCallPlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -662,7 +724,7 @@ const CallForm: React.FC<CallFormProps> = ({
       newErrors.caller_id = 'Field is required';
     }
 
-    if (!formData.minutes_of_meeting.trim()) {
+    if (!normalizeQuillValue(formData.minutes_of_meeting)) {
       newErrors.minutes_of_meeting = 'Field is required';
     }
 
@@ -884,7 +946,7 @@ const CallForm: React.FC<CallFormProps> = ({
         </div>
       </div>
       <div
-        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
+        className={`${isFrom === 'modal' ? 'min-h-[70vh] max-h-[75vh] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
       >
         {formLoading ? (
           <SkeletonForm />
@@ -1109,7 +1171,7 @@ const CallForm: React.FC<CallFormProps> = ({
 
             {/* Minutes of Meeting Field */}
             <div
-              className={`grid md:grid-cols-1 gap-x-4 gap-y-[2px] ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
+              className={`email-template-editor grid grid-cols-1 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
               style={{
                 display: shouldHideField(
                   'minutes_of_meeting',
@@ -1126,28 +1188,66 @@ const CallForm: React.FC<CallFormProps> = ({
               >
                 Minutes of Meeting<span className='text-red-500'> *</span>
               </label>
-              <textarea
-                name='minutes_of_meeting'
-                placeholder='Enter Minutes of Meeting'
-                value={formData.minutes_of_meeting}
-                onChange={handleMinutesOfMeetingChange}
-                autoComplete='off'
-                disabled={shouldDisableField(
-                  'minutes_of_meeting',
-                  isEditView,
-                  permissionMap
+              <div className='email-body-editor w-full relative'>
+                <ReactQuill
+                  ref={quillRef}
+                  value={formData.minutes_of_meeting}
+                  onChange={handleMinutesOfMeetingChange}
+                  theme='snow'
+                  readOnly={shouldDisableField(
+                    'minutes_of_meeting',
+                    isEditView,
+                    permissionMap
+                  )}
+                  placeholder='Enter Minutes of Meeting'
+                  className={`rounded-[2px] ${
+                    errors?.minutes_of_meeting
+                      ? 'border border-red-500 bg-[#FEF2F2]'
+                      : shouldDisableField(
+                            'minutes_of_meeting',
+                            isEditView,
+                            permissionMap
+                          )
+                        ? 'bg-gray-100 cursor-default'
+                        : 'bg-white'
+                  }`}
+                  modules={
+                    shouldDisableField(
+                      'minutes_of_meeting',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? { toolbar: false }
+                      : quillModules
+                  }
+                  formats={[
+                    'header',
+                    'font',
+                    'size',
+                    'bold',
+                    'italic',
+                    'underline',
+                    'strike',
+                    'color',
+                    'background',
+                    'script',
+                    'blockquote',
+                    'code-block',
+                    'list',
+                    'bullet',
+                    'indent',
+                    'direction',
+                    'align',
+                    'link',
+                    'clean',
+                  ]}
+                />
+                {errors?.minutes_of_meeting && (
+                  <span className='text-[12px] text-red-400'>
+                    {errors.minutes_of_meeting}
+                  </span>
                 )}
-                className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
-                  errors?.minutes_of_meeting
-                    ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
-                    : ''
-                }`}
-              />
-              {errors?.minutes_of_meeting && (
-                <span className='text-[12px] text-red-400'>
-                  {errors.minutes_of_meeting}
-                </span>
-              )}
+              </div>
             </div>
 
             {/* File Attachments Section */}

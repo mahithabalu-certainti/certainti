@@ -82,49 +82,4 @@ export const getFinancialResourceCostColumns = (
         ? costDisplay(row.total_cost_pro_res, currencySymbol)
         : '-',
   },
-  {
-    id: 'rd_percent_final',
-    label: 'RD %',
-    sortable: true,
-    sortId: 'rd_percent_final',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['rd_percent_final']?.edit &&
-      !permissionMap?.['rd_percent_final']?.read,
-  },
-  {
-    id: 'qre_final',
-    label: 'Project QRE',
-    sortable: true,
-    sortId: 'qre_final',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['qre_final']?.edit &&
-      !permissionMap?.['qre_final']?.read,
-    render: (row: ProjectFinancialResourceCostList) =>
-      row.qre_final ? costDisplay(row.qre_final, currencySymbol) : '-',
-  },
-  {
-    id: 'rd_credits_total',
-    label: 'RD Credit',
-    sortable: true,
-    sortId: 'rd_credits_total',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['rd_credits_total']?.edit &&
-      !permissionMap?.['rd_credits_total']?.read,
-    render: (row: ProjectFinancialResourceCostList) =>
-      row.rd_credits_total
-        ? costDisplay(row.rd_credits_total, currencySymbol)
-        : '-',
-  },
 ];

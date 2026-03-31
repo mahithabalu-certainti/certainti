@@ -10,6 +10,7 @@ export const SURVEY_TEMPLATES = '/survey-templates';
 
 /** ADMIN ROUTES */
 export const ADMIN = '/admin';
+export const ADMIN_PROFILE = `${ADMIN}/profile`;
 export const ADMIN_MANAGE_USER = `${ADMIN}/manage-user`;
 export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
@@ -60,6 +61,12 @@ export const MANAGE_GEO_BASED_RULE_EDIT = `${MANAGE_GEO_BASED_RULE}/edit/:ruleId
 export const WORKFLOW_BUILDER = `${ADMIN}/workflow-builder`;
 export const WORKFLOW_BUILDER_CREATE = `${WORKFLOW_BUILDER}/create`;
 export const WORKFLOW_BUILDER_EDIT = `${WORKFLOW_BUILDER}/edit/:ruleId`;
+
+/** ADMIN DATA MAPPER ROUTES */
+export const DATA_MAPPER = `${ADMIN}/data-mapper`;
+export const DATA_MAPPER_CREATE = `${DATA_MAPPER}/create`;
+export const DATA_MAPPER_EDIT = `${DATA_MAPPER}/edit/:mapperId`;
+export const DATA_MAPPER_CONFIG = `${DATA_MAPPER}/config/:mapperId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

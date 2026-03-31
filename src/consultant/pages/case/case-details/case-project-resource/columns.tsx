@@ -142,17 +142,6 @@ export const getCaseProjectResourceColumns = (
       ),
   },
   {
-    id: 'qre_final',
-    sortId: 'qre_final',
-    label: 'QRE Final',
-    width: 140,
-    sortable: true,
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-    render: (row) => `${costDisplay(row.qre_final, row.currency_symbol)}`,
-  },
-  {
     id: 'status_name',
     sortId: 'status_name',
     label: 'Status',

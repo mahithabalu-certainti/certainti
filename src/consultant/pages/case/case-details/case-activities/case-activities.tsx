@@ -11,7 +11,11 @@ import {
   ActivitiesIcon,
   DetailsKeyContactErrorIcon,
 } from '../../../../../assets';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import {
   ActivityDropdownItem,
   ActivityListExportURLParams,
@@ -41,24 +45,31 @@ import { ActivityListTable } from '../../../activities';
 import { ACTIVITY_CREATE } from '../../../../../routes';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
-import { useGetActivityStatus } from '../../../../services/activities/activities-service';
+import {
+  useCancelledActivityMeeting,
+  useCompletedActivityMeeting,
+  useGetActivityStatus,
+} from '../../../../services/activities/activities-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { capitalize } from '@mui/material';
+import Timeline from '../../../../../pages/timeline/timeline';
+import { useToast } from '../../../../../hooks';
 
-const ActivityTabs = [
+const ActivityTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACTIVITIES_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
   {
     id: AllPermissions.ACTIVITIES_TIMELINE,
     name: 'Timeline',
-    hide: true,
-    disable: true,
+    hide: false,
+    key: 'timeline',
   },
 ];
 
@@ -215,6 +226,12 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     [permission]
   );
 
+  const completeMeeting = useCompletedActivityMeeting();
+  const cancelMeeting = useCancelledActivityMeeting();
+  const { successToast } = useToast();
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
   const initialTab = useMemo(() => {
     if (allActivitiesEnabled) return 'all';
     if (activitiesTaskEnable) return 'task';
@@ -242,7 +259,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   const userListOptions = useGetUserOptions(accountId, true);
   const currentType = capitalize(tabParam);
   const activityStatus = useGetActivityStatus(currentType);
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const handleRefresh = () => setRefreshTrigger(Date.now());
   const handleFilter = () => setShowFilter(!showFilter);
 
@@ -399,6 +416,44 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     },
   ];
 
+  const handleCompleteMeeting = async (activityId: string) => {
+    setCompletingId(activityId);
+    completeMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+        onSettled: () => {
+          setCompletingId(null);
+        },
+      }
+    );
+  };
+
+  const handleCancelMeeting = async (activityId: string) => {
+    setCancellingId(activityId);
+    cancelMeeting.mutate(
+      {
+        account_rid: accountId || '',
+        activity_rid: activityId,
+      },
+      {
+        onSuccess: async () => {
+          successToast('Meeting Status Updated Successfully');
+          handleRefresh();
+        },
+        onSettled: () => {
+          setCancellingId(null);
+        },
+      }
+    );
+  };
+
   const handleViewActivity = (rowId: string, activityType: ActivityType) => {
     const type = activityType?.toLowerCase();
     if (rowId) {
@@ -424,7 +479,11 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
       case 'meeting':
         return getActivityMeetingListColumns(
           handleViewActivity,
-          meetingPermissionMap
+          meetingPermissionMap,
+          handleCancelMeeting,
+          handleCompleteMeeting,
+          cancellingId,
+          completingId
         );
       case 'call':
         return getActivityCallLogListColumns(
@@ -445,6 +504,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     tabParam,
     taskPermissionMap,
     allActivityPermissionMaps,
+    cancellingId,
+    completingId,
   ]);
 
   const activityEditPermissionByType: Record<ActivityModuleType, boolean> = {
@@ -507,145 +568,153 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
           activityMenuItems={activityMenuItems}
         />
 
-        <SectionHeader
-          title='Activities'
-          titleIcon={
-            <ActivitiesIcon
-              alt='activity-header-icon'
-              className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-            />
-          }
-          count={count}
-          showItemCount={!viewDetails}
-          iconBg={ColorCode.caseBgColor}
-          bgType='circle'
-          buttons={headerButtons}
-        />
-
-        <SectionHeaderTab
-          tabs={tabs}
-          onTabChange={handleTabChange}
-          defaultValue={tabParam}
-        />
-
-        {viewDetails && activityType === 'task' && (
-          <TaskDetails
-            accountInActive={accountInActive}
-            tabValue={tabParam as ActivityType}
-            entityLevel={'case'}
-            caseId={caseId}
-          />
-        )}
-
-        {viewDetails && activityType !== 'task' ? (
-          <ActivityDetails
-            accountInActive={accountInActive}
-            tabValue={tabParam as ActivityType}
-            entityDetails={entityDetails}
-            entityLevel='case'
-          />
-        ) : (
-          <div className='border border-t-0 border-[#CBD6E2]'>
-            {tabParam === 'all' && allActivitiesEnabled && (
-              <ActivityListTable
-                activityType='all'
-                columns={tableColumns}
-                refreshTrigger={refreshTrigger}
-                currentPage={currentPage}
-                appliedFilters={appliedFilters}
-                setCount={setCount}
-                columnAnchorEl={columnAnchorEl}
-                setColumnAnchorEl={setColumnAnchorEl}
-                searchValue={searchText}
-                accountInActive={accountInActive}
-                entityDetails={entityDetails}
-                entityLevel='case'
-                setExportType={setExportType}
-                setActivityParams={setActivityParams}
-                activityEditPermissionByType={activityEditPermissionByType}
-              />
-            )}
-
-            {tabParam === 'task' && activitiesTaskEnable && (
-              <ActivityListTable
-                activityType='task'
-                columns={tableColumns}
-                refreshTrigger={refreshTrigger}
-                currentPage={currentPage}
-                appliedFilters={appliedFilters}
-                setCount={setCount}
-                columnAnchorEl={columnAnchorEl}
-                setColumnAnchorEl={setColumnAnchorEl}
-                searchValue={searchText}
-                accountInActive={accountInActive}
-                entityDetails={entityDetails}
-                entityLevel='case'
-                setExportType={setExportType}
-                setActivityParams={setActivityParams}
-                editButtonEnable={taskActivityFieldsEditable}
-              />
-            )}
-
-            {tabParam === 'email' && activitiesEmailEnable && (
-              <ActivityListTable
-                activityType='email'
-                columns={tableColumns}
-                refreshTrigger={refreshTrigger}
-                currentPage={currentPage}
-                appliedFilters={appliedFilters}
-                setCount={setCount}
-                columnAnchorEl={columnAnchorEl}
-                setColumnAnchorEl={setColumnAnchorEl}
-                searchValue={searchText}
-                accountInActive={accountInActive}
-                entityDetails={entityDetails}
-                entityLevel='case'
-                setExportType={setExportType}
-                setActivityParams={setActivityParams}
-                editButtonEnable={emailActivityFieldsEditable}
-              />
-            )}
-
-            {tabParam === 'meeting' && activitiesMeetingEnable && (
-              <ActivityListTable
-                activityType='meeting'
-                columns={tableColumns}
-                refreshTrigger={refreshTrigger}
-                currentPage={currentPage}
-                appliedFilters={appliedFilters}
-                setCount={setCount}
-                columnAnchorEl={columnAnchorEl}
-                setColumnAnchorEl={setColumnAnchorEl}
-                searchValue={searchText}
-                accountInActive={accountInActive}
-                entityDetails={entityDetails}
-                entityLevel='case'
-                setExportType={setExportType}
-                setActivityParams={setActivityParams}
-                editButtonEnable={meetingActivityFieldsEditable}
-              />
-            )}
-
-            {tabParam === 'call' && activitiesCallEnable && (
-              <ActivityListTable
-                activityType='call'
-                columns={tableColumns}
-                refreshTrigger={refreshTrigger}
-                currentPage={currentPage}
-                appliedFilters={appliedFilters}
-                setCount={setCount}
-                columnAnchorEl={columnAnchorEl}
-                setColumnAnchorEl={setColumnAnchorEl}
-                searchValue={searchText}
-                accountInActive={accountInActive}
-                entityDetails={entityDetails}
-                entityLevel='case'
-                setExportType={setExportType}
-                setActivityParams={setActivityParams}
-                editButtonEnable={callActivityFieldsEditable}
-              />
-            )}
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline entitytype='case' />
           </div>
+        ) : (
+          <>
+            <SectionHeader
+              title='Activities'
+              titleIcon={
+                <ActivitiesIcon
+                  alt='activity-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              }
+              count={count}
+              showItemCount={!viewDetails}
+              iconBg={ColorCode.caseBgColor}
+              bgType='circle'
+              buttons={headerButtons}
+            />
+
+            <SectionHeaderTab
+              tabs={tabs}
+              onTabChange={handleTabChange}
+              defaultValue={tabParam}
+            />
+
+            {viewDetails && activityType === 'task' && (
+              <TaskDetails
+                accountInActive={accountInActive}
+                tabValue={tabParam as ActivityType}
+                entityLevel={'case'}
+                caseId={caseId}
+              />
+            )}
+
+            {viewDetails && activityType !== 'task' ? (
+              <ActivityDetails
+                accountInActive={accountInActive}
+                tabValue={tabParam as ActivityType}
+                entityDetails={entityDetails}
+                entityLevel='case'
+              />
+            ) : (
+              <div className='border border-t-0 border-[#CBD6E2]'>
+                {tabParam === 'all' && allActivitiesEnabled && (
+                  <ActivityListTable
+                    activityType='all'
+                    columns={tableColumns}
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    accountInActive={accountInActive}
+                    entityDetails={entityDetails}
+                    entityLevel='case'
+                    setExportType={setExportType}
+                    setActivityParams={setActivityParams}
+                    activityEditPermissionByType={activityEditPermissionByType}
+                  />
+                )}
+
+                {tabParam === 'task' && activitiesTaskEnable && (
+                  <ActivityListTable
+                    activityType='task'
+                    columns={tableColumns}
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    accountInActive={accountInActive}
+                    entityDetails={entityDetails}
+                    entityLevel='case'
+                    setExportType={setExportType}
+                    setActivityParams={setActivityParams}
+                    editButtonEnable={taskActivityFieldsEditable}
+                  />
+                )}
+
+                {tabParam === 'email' && activitiesEmailEnable && (
+                  <ActivityListTable
+                    activityType='email'
+                    columns={tableColumns}
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    accountInActive={accountInActive}
+                    entityDetails={entityDetails}
+                    entityLevel='case'
+                    setExportType={setExportType}
+                    setActivityParams={setActivityParams}
+                    editButtonEnable={emailActivityFieldsEditable}
+                  />
+                )}
+
+                {tabParam === 'meeting' && activitiesMeetingEnable && (
+                  <ActivityListTable
+                    activityType='meeting'
+                    columns={tableColumns}
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    accountInActive={accountInActive}
+                    entityDetails={entityDetails}
+                    entityLevel='case'
+                    setExportType={setExportType}
+                    setActivityParams={setActivityParams}
+                    editButtonEnable={meetingActivityFieldsEditable}
+                  />
+                )}
+
+                {tabParam === 'call' && activitiesCallEnable && (
+                  <ActivityListTable
+                    activityType='call'
+                    columns={tableColumns}
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    accountInActive={accountInActive}
+                    entityDetails={entityDetails}
+                    entityLevel='case'
+                    setExportType={setExportType}
+                    setActivityParams={setActivityParams}
+                    editButtonEnable={callActivityFieldsEditable}
+                  />
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -111,6 +111,7 @@ export interface CaseDetails {
   case_name: string;
   filing_type_rid: string;
   case_owner_rid: string;
+  parent_case_rid?: string;
   fiscal_year: number;
   status_rid: string;
   case_total_projects: string | number | null;
@@ -129,6 +130,7 @@ export interface CaseDetails {
   account_rnumber: string;
   filing_type_name: string;
   country_name: string;
+  is_initiated: boolean;
   country_rid: string;
   case_owner_name: string;
   created_by_name: string;
@@ -148,7 +150,10 @@ export interface CaseDetails {
   is_state_available?: boolean;
   state_rid?: string;
   financial_working_signoff?: boolean;
+  rd_form_signoff?: boolean;
   final_credit?: string | number | null;
+  all_task_completed?: boolean;
+  case_progress?: string;
 }
 
 export interface CaseDetailsResponse {
@@ -164,6 +169,7 @@ export interface CaseFormFields {
   account_rid?: string;
   account_name?: string;
   case_owner?: string;
+  parent_case_rid?: string;
   case_name?: string;
   description?: string;
   fiscal_year?: number;
@@ -175,6 +181,22 @@ export interface CaseFormFields {
   heat_light_power?: string;
   total_nonlabor_cost?: string;
   tax_liability?: string;
+  tax_liability_ga?: string | null;
+  tax_liability_ct?: string | null;
+  tax_liability_sc?: string | null;
+  other_can?: string | null;
+  other_on?: string | null;
+  other_uk?: string | null;
+  other_irl?: string | null;
+  lease_costs_of_computers_az?: string | null;
+  lease_costs_of_computers_ca?: string | null;
+  lease_costs_of_computers_il?: string | null;
+  lease_costs_of_computers_nj?: string | null;
+  lease_costs_of_computers_id?: string | null;
+  other_credits_total_ga?: string | null;
+  other_credits_total_sc?: string | null;
+  basic_research_payments_ma?: string | null;
+  basic_research_payments_id?: string | null;
   status_rid?: string;
   total_expenses?: string | null;
   aggregated_turnover: string | null;
@@ -191,9 +213,11 @@ export interface CaseFormFields {
   illinois_research_payments_corp_only: string | null;
   lease_costs_of_computers: string | null;
   qualified_computer_rental_time_expenses: string | null;
-  basic_research_payments: string | null;
+  basic_research_payments?: string | null;
   illinois_rd_credit_partnership_corp: string | null;
-  credit_carry_forward_py: string | null;
+  credit_carry_forward_py_ga: string | null;
+  credit_carry_forward_py_sc: string | null;
+  credit_carry_forward_py_tx: string | null;
   current_year_gross_receipts: string | null;
 }
 
@@ -201,6 +225,7 @@ export interface CaseFormPayload {
   case_rid?: string;
   account_rid: string;
   case_owner_rid: string;
+  parent_case_rid?: string;
   case_name: string;
   description: string;
   fiscal_year: number;
@@ -212,6 +237,24 @@ export interface CaseFormPayload {
   heat_light_power?: string | null;
   total_nonlabor_cost?: string | null;
   tax_liability?: string | null;
+  tax_liability_ga?: string | null;
+  tax_liability_ct?: string | null;
+  tax_liability_sc?: string | null;
+  other_can?: string | null;
+  other_on?: string | null;
+  other_uk?: string | null;
+  other_irl?: string | null;
+  lease_costs_of_computers_az?: string | null;
+  lease_costs_of_computers_ca?: string | null;
+  lease_costs_of_computers_il?: string | null;
+  lease_costs_of_computers_nj?: string | null;
+  lease_costs_of_computers_id?: string | null;
+  other_credits_total_ga?: string | null;
+  other_credits_total_sc?: string | null;
+  basic_research_payments_ma?: string | null;
+  basic_research_payments_id?: string | null;
+  basic_research_payments?: string | null;
+  lease_costs_of_computers?: string | null;
   status_rid?: string;
   total_expenses?: string | null;
   aggregated_turnover: string | null;
@@ -224,14 +267,32 @@ export interface CaseFormPayload {
   employers_pension_contribution: string | null;
   taxable_income: string | null;
   export_sales_revenue: string | null;
-  other: string | null;
   illinois_research_payments_corp_only: string | null;
-  lease_costs_of_computers: string | null;
   qualified_computer_rental_time_expenses: string | null;
-  basic_research_payments: string | null;
   illinois_rd_credit_partnership_corp: string | null;
-  credit_carry_forward_py: string | null;
+  credit_carry_forward_py_ga: string | null;
+  credit_carry_forward_py_sc: string | null;
+  credit_carry_forward_py_tx: string | null;
   current_year_gross_receipts: string | null;
+  // Nested amendment info (only sent on amendment create)
+  amendment_case_info?: {
+    fiscal_year: number;
+    country_rid?: string;
+    state_rid?: string;
+    state_name?: string;
+    is_federal?: boolean;
+    total_project?: number;
+    total_qualified_project?: number;
+    total_qualified_project_cost?: number;
+    total_fte_cost: number;
+    total_subcon_cost: number;
+    total_nonlabor_cost: number;
+    total_project_cost: number;
+    total_qre: number;
+    total_rd_credits: number;
+    annual_gross_receipts: number;
+    action_type: 'add' | 'edit' | 'delete';
+  }[];
 }
 
 export interface updateCaseJurisdictionPayload {
@@ -263,6 +324,7 @@ export interface CaseListExportParams {
   timezone?: string;
   isGlobal?: boolean;
   search?: string;
+  currency_symbol?: string;
 }
 export interface CaseTaskExportParams {
   page: number;
@@ -290,6 +352,7 @@ export interface CaseAssignedExportParams {
   search?: string;
   timezone?: string;
   account_id?: string;
+  type?: string;
 }
 export interface ExportCaseListResponse {
   statusCode: number;
@@ -360,4 +423,20 @@ export interface CaseSubmissionDateResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: CaseSubmissionDate;
+}
+
+// Closed case list
+export interface ClosedCaseList {
+  rid: string;
+  case_full_name: string;
+  fiscal_year: string;
+}
+
+export interface ClosedCaseListResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    cases: ClosedCaseList[];
+  };
 }

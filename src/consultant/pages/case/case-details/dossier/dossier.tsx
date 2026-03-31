@@ -1,11 +1,31 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AllPermissions } from '../../../../../common-service';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  FormControlLabel,
+} from '@mui/material';
+import {
+  AllPermissions,
+  OverviewTabs,
+  useGetAllCountries,
+  useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
+  useGetStatus,
+} from '../../../../../common-service';
 import {
   ActivityDropdownItem,
+  AuditTimelineListExportParams,
+  CaseAssignedExportParams,
   CaseDetails,
   ColorCode,
+  DownloadDossierSheetPayload,
+  ExportType,
   FinancialHighlightsResponse,
-  RDCreditStatusResponse,
+  SelectOption,
+  TechnicalSummaryExportListParams,
 } from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
@@ -16,31 +36,60 @@ import {
   DossierIcon,
 } from '../../../../../assets';
 import {
+  FinancialWorkingForm,
+  ProjectDocuments,
+  TechnicalSummary,
+  QualifiedProjects,
+  RDForm,
+  ResourceSummary,
+  CloseCaseForm,
+} from './tab';
+import {
   getProjectDocumentsFilterFields,
-  getProjectSummaryFilterFields,
-  getResourceSummaryFilterFields,
+  getQualifiedProjectsFilterFields,
 } from './helper';
-import { ProjectDocuments } from './tab';
-import FinancialWorkingForm from './tab/financial-working/financial-form';
+import { getVersionControlFilterFields } from './tab/version-control/helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { useToast } from '../../../../../hooks';
-import { useRDCreditStatus } from '../../../../services/case-dossier/cases-financial-services';
+import {
+  useDossierInitiate,
+  useDownloadDossierSheet,
+  useRDCreditStatus,
+} from '../../../../services/case-dossier/cases-financial-services';
+import { caseProjectResourceFilterFields } from '../case-project-resource/utils';
+import {
+  useFetchClassification,
+  useFetchState,
+} from '../../../../services/account';
+import {
+  useGetResourceStatus,
+  useGetResourceType,
+} from '../../../../services/resource-list';
+import { FilterValue } from '../../../../types/account-filter';
+import ClosingRemarks from './tab/close-remarks/closing-remarks';
+import { AttachmentsListExportParams } from '../../../../types/attachment';
+import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
+import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
+import { useGetProjectType } from '../../../../services/project';
+import Timeline from '../../../../../pages/timeline/timeline';
+import TextButton from '../../../../../components/button/text-button';
+import VersionControl from './tab/version-control/version-control';
 
-const DossierTabs = [
+const DossierTabs: OverviewTabs[] = [
   {
     id: AllPermissions.DOSSIER_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.DOSSIER_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.DOSSIER_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 
 interface DossierProps {
@@ -52,6 +101,27 @@ interface DossierProps {
   setFinancialData: (data: FinancialHighlightsResponse | null) => void;
   refetchCaseDetails: () => void;
   isDetailLoading?: boolean;
+  isFinancialWorkingSignoff?: boolean;
+  dossierCreditStatus: string;
+  setDossierCreditStatus: (status: string) => void;
+  setExportType: (type: ExportType) => void;
+  setQualifiedProjectsParams?: React.Dispatch<
+    React.SetStateAction<CaseAssignedExportParams>
+  >;
+  setProjectDocumentsParams?: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
+  setResourceSummaryParams?: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
+  >;
+  setTechnicalSummaryParams?: (
+    params: TechnicalSummaryExportListParams
+  ) => void;
+  setAuditTimelineParams?: React.Dispatch<
+    React.SetStateAction<AuditTimelineListExportParams>
+  >;
+  isActionItemsExpanded?: boolean;
+  setIsActionItemsExpanded?: (expanded: boolean) => void;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -63,12 +133,22 @@ const Dossier: React.FC<DossierProps> = ({
   setFinancialData,
   refetchCaseDetails,
   isDetailLoading,
+  isFinancialWorkingSignoff,
+  dossierCreditStatus,
+  setDossierCreditStatus,
+  setExportType,
+  setQualifiedProjectsParams,
+  setProjectDocumentsParams,
+  setResourceSummaryParams,
+  setTechnicalSummaryParams,
+  setAuditTimelineParams,
+  isActionItemsExpanded,
+  setIsActionItemsExpanded,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID') ?? '';
-  const { successToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
@@ -80,14 +160,142 @@ const Dossier: React.FC<DossierProps> = ({
   const [searchText, setSearchText] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
+  const [currentCategory, setCurrentCategory] = useState<string>('');
+  const [isDownloadModalOpen, setIsDownloadModalOpen] =
+    useState<boolean>(false);
+  const closeCaseFormRef = React.useRef<{ handleSubmit: () => void }>(null);
+  const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
+  const isTaskCompleted = caseDetails?.all_task_completed;
+  const DOWNLOAD_OPTIONS = [
+    'Qualified Projects',
+    'Technical Summary',
+    'Resource Summary',
+    'Project Documents',
+    'Approval Status',
+    'RD Forms',
+  ];
+
+  const [selectedDownloadItems, setSelectedDownloadItems] =
+    useState<string[]>(DOWNLOAD_OPTIONS);
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const initialTab = 'financial_workings';
+  const isFinancialView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
+  );
+  const isQualifiedProjectsView = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
+  const isTechnicalSummaryView = checkPermission(
+    permission,
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+  );
+  const isProjectDocumentsView = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+  const isResourceSummaryView = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+  );
+  const isRdFormsView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_RD_FORMS_VIEW
+  );
+  const isAuditTimelineView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_AUDIT_TIMELINE_VIEW
+  );
+  const isSummaryView = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_SUMMARY_VIEW
+  );
+  const isPackagesDownload = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_PACKAGES
+  );
+  const isCaseCloseEnable = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_CLOSE_CASE
+  );
+
+  // Permission Management
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMapAttachment = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
+
+  const initialTab = useMemo(() => {
+    if (isQualifiedProjectsView) return 'qualified_projects';
+    if (isTechnicalSummaryView) return 'technical_summary';
+    if (isProjectDocumentsView) return 'project_documents';
+    if (isResourceSummaryView) return 'resource_summary';
+    if (isRdFormsView) return 'rd_forms';
+    if (isAuditTimelineView) return 'approval_status';
+    if (isSummaryView) return 'summary';
+    if (isCaseCloseEnable) return 'close_case';
+    if (isPackagesDownload) return 'dossier_version';
+    return 'summary';
+  }, [
+    isQualifiedProjectsView,
+    isTechnicalSummaryView,
+    isProjectDocumentsView,
+    isResourceSummaryView,
+    isRdFormsView,
+    isAuditTimelineView,
+    isSummaryView,
+    isCaseCloseEnable,
+    isPackagesDownload,
+  ]);
 
   useEffect(() => {
     if (searchParams.get('list') === 'dossier' && !searchParams.get('tab')) {
@@ -112,91 +320,334 @@ const Dossier: React.FC<DossierProps> = ({
   const handleSearchReset = () => {
     setResetSearch(false);
   };
-  const { refetch: refetchRDCreditStatus } = useRDCreditStatus(
-    accountid,
-    caseId ?? '',
-    false
-  );
-
-  const handleStatusUpdate = (
-    statusData: RDCreditStatusResponse,
-    actionType?: 'initiate' | 'regenerate' | 'refresh'
-  ) => {
-    setRefreshTrigger(Date.now());
-    if (statusData?.data === 'COMPLETED') {
-      if (actionType === 'initiate' || actionType === 'refresh') {
-        successToast('Initiated successfully');
-      } else if (actionType === 'regenerate') {
-        successToast('Re-Generated successfully');
-      }
-    }
-  };
-
+  const {
+    refetch: refetchRDCreditStatus,
+    isFetching: isRDCreditStatusLoading,
+  } = useRDCreditStatus(accountid, caseId ?? '', false);
+  const { mutate: refetchDossierInitiate } = useDossierInitiate();
+  const {
+    mutate: refetchDossierSheetStatus,
+    isPending: isDossierSheetStatusLoading,
+  } = useDownloadDossierSheet();
   const handleRefresh = async () => {
+    // Skip API call for COMPLETED or any empty/undefined value
+    if (
+      dossierCreditStatus === 'COMPLETED' ||
+      dossierCreditStatus === null ||
+      dossierCreditStatus === undefined ||
+      dossierCreditStatus === ''
+    ) {
+      setRefreshTrigger(Date.now());
+      return;
+    }
+
+    // Call API only for valid status values (e.g., 'PENDING', 'PROCESSING', etc.')
     const result = await refetchRDCreditStatus();
     if (result.data) {
-      handleStatusUpdate(result.data, 'refresh');
+      if (result.data?.data === 'COMPLETED') {
+        refetchCaseDetails();
+      }
+      setDossierCreditStatus(result.data?.data);
     }
   };
   const handleFilter = () => setShowFilter(!showFilter);
-  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const isFinancialView = checkPermission(
-    permission,
-    AllPermissions.DOSSIER_FINANCIAL_VIEW_EDIT
+  const handleFilterChange = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'country_rid' && value) {
+      setCurrentCountry(String(value));
+    }
+    if (fieldName === 'document_category_rid' && value) {
+      setCurrentCategory(String(value));
+    }
+  };
+
+  const allCountries = useGetAllCountries();
+  const regions = useFetchState(currentCountry?.toString() || '');
+  const resourceTypeOptions = useGetResourceType();
+  const resourceStatusOptions = useGetResourceStatus();
+  const Classification = useFetchClassification();
+  const statusOptions = useGetStatus();
+  const projectTypeOptions = useGetProjectType();
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
+
+  const countryOptions = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        option: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
   );
+
+  const regionOptions = useMemo(
+    () =>
+      regions.data?.data.states.map((state) => ({
+        option: state.state_name,
+        value: state.rid,
+      })) || [],
+    [regions.data?.data.states]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedResourceStatus = useMemo(
+    () =>
+      resourceStatusOptions?.data?.data?.resourceStatus.map((item) => ({
+        option: item.resource_status_name,
+        value: item.rid,
+      })) || [],
+    [resourceStatusOptions?.data?.data?.resourceStatus]
+  );
+
+  const handleGenerateDossierSheet = () => {
+    if (caseDetails?.is_initiated) {
+      // Open the download options modal
+      setSelectedVersion(null);
+      setSelectedDownloadItems(DOWNLOAD_OPTIONS);
+      setIsDownloadModalOpen(true);
+    } else {
+      const payload = {
+        account_rid: accountid,
+        case_rid: caseId ?? '',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
+      refetchDossierInitiate(payload, {
+        onSuccess: () => {
+          setDossierCreditStatus(
+            'Dossier Packages is In-Progress. Refresh the page to check the status'
+          );
+        },
+        onError: (error) => {
+          console.error('Error initiating', error);
+        },
+      });
+    }
+  };
+
+  const handleDownloadToggle = (option: string) => {
+    setSelectedDownloadItems((prev) =>
+      prev.includes(option)
+        ? prev.filter((item) => item !== option)
+        : [...prev, option]
+    );
+  };
+
+  const handleSelectAllDownload = () => {
+    setSelectedDownloadItems(
+      selectedDownloadItems.length === DOWNLOAD_OPTIONS.length
+        ? []
+        : [...DOWNLOAD_OPTIONS]
+    );
+  };
+
+  const handleConfirmDownload = () => {
+    let finalDownloadList = [...selectedDownloadItems];
+    if (finalDownloadList.includes('RD Forms')) {
+      finalDownloadList = finalDownloadList.filter(
+        (item) => item !== 'RD Forms'
+      );
+      finalDownloadList.push('RD Form Federal', 'RD Form State');
+    }
+
+    const payload: DownloadDossierSheetPayload = {
+      accountRid: accountid,
+      caseRid: caseId ?? '',
+      downloaded_list: finalDownloadList,
+    };
+
+    if (selectedVersion) {
+      payload.dossier_version = selectedVersion;
+    }
+
+    refetchDossierSheetStatus(payload);
+    setIsDownloadModalOpen(false);
+  };
+
+  const handleVersionDownload = (dossier_version: string) => {
+    setSelectedVersion(dossier_version);
+    setSelectedDownloadItems(DOWNLOAD_OPTIONS);
+    setIsDownloadModalOpen(true);
+  };
+
+  const technicalSummaryViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) =>
+          item.name === AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const technicalSummarypermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    technicalSummaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [technicalSummaryViewEditFields]);
+
+  const memoizedClassification = useMemo(
+    () =>
+      Classification.data?.data.projectClassifications.map((data) => ({
+        option: data.classification_name,
+        value: data.rid,
+      })) || [],
+    [Classification.data?.data.projectClassifications]
+  );
+  const memoizedProjectTypes = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        option: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
+  );
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      categoryTypes.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [categoryTypes.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fieldOptions = {
+    fiscalYears: [],
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
 
   const filterFields = useMemo(() => {
     switch (tabParam) {
+      case 'qualified_projects':
+        return getQualifiedProjectsFilterFields(
+          memoizedClassification,
+          memoizedProjectTypes,
+          memoizedStatus,
+          projectPermissionMap
+        );
       case 'project_documents':
-        return getProjectDocumentsFilterFields();
-      case 'project_summary':
-        return getProjectSummaryFilterFields();
+        return getProjectDocumentsFilterFields(
+          fieldOptions,
+          permissionMapAttachment,
+          projectPermissionMap
+        );
+      case 'technical_summary':
+        return getTechnicalSummaryFilterFields(technicalSummarypermissionMap);
       case 'resource_summary':
-        return getResourceSummaryFilterFields();
+        return caseProjectResourceFilterFields(
+          permissionMap,
+          projectPermissionMap,
+          countryOptions,
+          regionOptions,
+          memoizedResourceType,
+          memoizedResourceStatus
+        );
+      case 'dossier_version':
+        return getVersionControlFilterFields();
       default:
         return [];
     }
-  }, [tabParam]);
+  }, [
+    countryOptions,
+    memoizedResourceStatus,
+    memoizedResourceType,
+    permissionMap,
+    projectPermissionMap,
+    regionOptions,
+    tabParam,
+    technicalSummarypermissionMap,
+    fieldOptions,
+    memoizedClassification,
+    memoizedProjectTypes,
+    memoizedStatus,
+    permissionMapAttachment,
+  ]);
 
   const tabs = [
     {
-      label: 'Financial Workings',
-      value: 'financial_workings',
-      hide: false,
+      label: 'Qualified Projects',
+      value: 'qualified_projects',
+      hide: !isQualifiedProjectsView,
     },
     {
       label: 'Summary',
       value: 'summary',
-      hide: false,
+      hide: !isSummaryView,
     },
     {
-      label: 'Qualified Projects',
-      value: 'qualified_projects',
-      hide: false,
-    },
-    {
-      label: 'RD Forms',
-      value: 'rd_form',
-      hide: false,
-    },
-    {
-      label: 'Project Documents',
-      value: 'project_documents',
-      hide: false,
-    },
-    {
-      label: 'Project Summary',
-      value: 'project_summary',
-      hide: false,
+      label: 'Technical Summary',
+      value: 'technical_summary',
+      hide: !isTechnicalSummaryView,
     },
     {
       label: 'Resource Summary',
       value: 'resource_summary',
-      hide: false,
+      hide: !isResourceSummaryView,
     },
+    {
+      label: 'Project Documents',
+      value: 'project_documents',
+      hide: !isProjectDocumentsView,
+    },
+    {
+      label: 'Financial Workings',
+      value: 'financial_workings',
+      hide: !isFinancialView,
+    },
+    {
+      label: 'RD Forms',
+      value: 'rd_forms',
+      hide: !isRdFormsView,
+    },
+    {
+      label: 'Approval Status',
+      value: 'approval_status',
+      hide: !isAuditTimelineView,
+    },
+    {
+      label: 'Dossier Version',
+      value: 'dossier_version',
+      hide: !isPackagesDownload,
+    },
+    // {
+    //   label: 'Close Case',
+    //   value: 'close_case',
+    //   hide: !isCaseCloseEnable,
+    // },
   ];
 
+  const showTableControls =
+    tabParam !== 'summary' &&
+    tabParam !== 'rd_forms' &&
+    tabParam !== 'financial_workings';
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
@@ -204,18 +655,53 @@ const Dossier: React.FC<DossierProps> = ({
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
-      hide: tabParam === 'financial_workings',
+      hide: !showTableControls,
+    },
+    {
+      label: caseDetails?.is_initiated ? 'Download Dossier' : 'Create Dossier',
+      variant: 'outlined' as const,
+      isLoading: isDossierSheetStatusLoading,
+      disabled:
+        !caseDetails?.rd_form_signoff ||
+        (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== ''), // need to change rd form sign after rd form complete
+      onClick: handleGenerateDossierSheet,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: !isPackagesDownload,
+    },
+    {
+      label: 'Save',
+      variant: 'outlined' as const,
+      onClick: () => closeCaseFormRef.current?.handleSubmit(),
+      disabled:
+        !caseDetails?.rd_form_signoff ||
+        !isTaskCompleted ||
+        caseDetails?.status_name?.toLowerCase() === 'closed',
+      sx: { width: '80px', minWidth: '80px' },
+      hide: tabParam !== 'close_case',
     },
   ];
+
+  if (
+    !isPackagesDownload &&
+    !isCaseCloseEnable &&
+    !isRdFormsView &&
+    !isFinancialView &&
+    !isAuditTimelineView &&
+    !isProjectDocumentsView &&
+    !isResourceSummaryView &&
+    !isTechnicalSummaryView &&
+    !isQualifiedProjectsView &&
+    !isSummaryView
+  ) {
+    return <AccessRestricted />;
+  }
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
       <SectionTabPanel
         tabs={DossierTabs}
         filterMenu={filterFields}
-        filterVisibility={
-          tabParam !== 'financial_workings' && tabParam !== 'rd_form'
-        }
+        filterVisibility={showTableControls && tabParam !== 'approval_status'}
         showFilter={showFilter}
         contextKey='case-dossier'
         appliedFilters={appliedFilters}
@@ -225,92 +711,371 @@ const Dossier: React.FC<DossierProps> = ({
         sortFilterCount={0}
         setSortFilterCount={() => {}}
         showRefresh={
-          tabParam !== 'rd_form' && tabParam !== 'financial_workings'
+          (tabParam !== 'rd_forms' && tabParam !== 'financial_workings') ||
+          (dossierCreditStatus !== 'COMPLETED' && dossierCreditStatus !== '')
         }
         onRefreshClick={handleRefresh}
-        showSearch={tabParam !== 'financial_workings' && tabParam !== 'rd_form'}
+        showSearch={
+          showTableControls &&
+          tabParam !== 'technical_summary' &&
+          tabParam !== 'approval_status'
+        }
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
-        showAddActivity={true}
+        showAddActivity={tabParam !== 'technical_summary'}
         activityMenuItems={activityMenuItems}
+        onFilterChange={handleFilterChange}
       />
-
-      <SectionHeader
-        title='Dossier'
-        titleIcon={
-          <DossierIcon
-            alt='dossier-header-icon'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-          />
-        }
-        iconBg={ColorCode.caseBgColor}
-        bgType='circle'
-        count={count}
-        showItemCount={tabParam !== 'financial_workings'}
-        buttons={headerButtons}
-      />
-
-      <SectionHeaderTab
-        tabs={tabs}
-        onTabChange={handleTabChange}
-        defaultValue={tabParam}
-      />
-      {caseDetails?.case_total_qualified_projects === 0 ||
-      caseDetails?.case_total_qualified_projects === '0' ? (
-        <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
-          <div>
-            <React.Suspense fallback={null}>
-              <DetailsKeyContactErrorIcon alt='key-contact' />
-            </React.Suspense>
-          </div>
-          <div>
-            <span className='font-bold mr-1 capitalize'>
-              Qualified Projects
-            </span>
-            -
-            <span className='ml-1 font-medium'>
-              No Qualified Projects assigned to this case
-            </span>
-          </div>
-        </div>
-      ) : (
-        <div className='border border-t-0 border-[#CBD6E2]'>
-          {tabParam === 'financial_workings' &&
-            (!isFinancialView ? (
-              <AccessRestricted />
-            ) : (
-              <FinancialWorkingForm
-                caseDetails={caseDetails}
-                setDossierFinancialStatus={setDossierFinancialStatus}
-                dossierFinancialStatus={dossierFinancialStatus}
-                financialData={financialData}
-                setFinancialData={setFinancialData}
-                refetchCaseDetails={refetchCaseDetails}
-                isDetailLoading={isDetailLoading}
-              />
-            ))}
-
-          {tabParam === 'project-assigned-documents' && (
-            <ProjectDocuments
-              refreshTrigger={refreshTrigger}
-              currentPage={currentPage}
-              appliedFilters={appliedFilters}
-              setCount={setCount}
-              setExportParams={() => {}}
-              setExportType={() => {}}
-              columnAnchorEl={columnAnchorEl}
-              setColumnAnchorEl={setColumnAnchorEl}
-              searchValue={searchText}
+      {/* ── Content area with RD Credit Status loading overlay ── */}
+      <div style={{ position: 'relative' }}>
+        {isRDCreditStatusLoading && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(255, 255, 255, 0.65)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 50,
+              borderRadius: '2px',
+            }}
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                border: '3px solid #CBD6E2',
+                borderTopColor: '#425A76',
+                borderRadius: '50%',
+                animation: 'dossier-spin 0.75s linear infinite',
+              }}
             />
-          )}
-          {tabParam !== 'financial_workings' && (
-            <div className='flex items-center justify-center w-full h-full'>
-              <ComingSoon alt='comingSoon' />
+            <style>{`
+              @keyframes dossier-spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        )}
+        {isTimeLineView ? (
+          <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+            <Timeline entitytype='case' />
+          </div>
+        ) : (
+          <>
+            <SectionHeader
+              title='Dossier'
+              titleIcon={
+                <DossierIcon
+                  alt='dossier-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              }
+              iconBg={ColorCode.caseBgColor}
+              bgType='circle'
+              count={count}
+              showItemCount={showTableControls}
+              buttons={headerButtons}
+              isExpanded={isActionItemsExpanded}
+              onToggleExpand={setIsActionItemsExpanded}
+            />
+
+            <SectionHeaderTab
+              tabs={tabs}
+              onTabChange={handleTabChange}
+              defaultValue={tabParam}
+            />
+            {caseDetails?.case_total_qualified_projects === 0 ||
+            caseDetails?.case_total_qualified_projects === '0' ||
+            caseDetails?.case_total_qualified_projects == null ? (
+              <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+                <div>
+                  <React.Suspense fallback={null}>
+                    <DetailsKeyContactErrorIcon alt='key-contact' />
+                  </React.Suspense>
+                </div>
+                <div>
+                  <span className='font-bold mr-1 capitalize'>
+                    Qualified Projects
+                  </span>
+                  -
+                  <span className='ml-1 font-medium'>
+                    No Qualified Projects assigned to this case
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className='border border-t-0 border-[#CBD6E2]'>
+                {tabParam === 'financial_workings' && (
+                  <FinancialWorkingForm
+                    caseDetails={caseDetails}
+                    setDossierFinancialStatus={setDossierFinancialStatus}
+                    dossierFinancialStatus={dossierFinancialStatus}
+                    financialData={financialData}
+                    setFinancialData={setFinancialData}
+                    refetchCaseDetails={refetchCaseDetails}
+                    isDetailLoading={isDetailLoading}
+                  />
+                )}
+                {tabParam === 'summary' && (
+                  <div className='flex items-center justify-center h-full'>
+                    <ComingSoon alt='comingSoon' />
+                  </div>
+                )}
+
+                {tabParam === 'qualified_projects' && (
+                  <QualifiedProjects
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setQualifiedProjectsParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    fiscalYear={caseDetails?.fiscal_year ?? 0}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+                {tabParam === 'rd_forms' && (
+                  <RDForm
+                    caseDetails={caseDetails}
+                    isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+                    isDetailLoading={isDetailLoading}
+                    refetchCaseDetails={refetchCaseDetails}
+                  />
+                )}
+
+                {tabParam === 'project_documents' && (
+                  <ProjectDocuments
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setProjectDocumentsParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+
+                {tabParam === 'technical_summary' && (
+                  <TechnicalSummary
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setTechnicalSummaryParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    fiscalYear={caseDetails?.fiscal_year ?? 0}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+
+                {tabParam === 'resource_summary' && (
+                  <ResourceSummary
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setResourceSummaryParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+
+                {tabParam === 'approval_status' && (
+                  <ClosingRemarks
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    setExportParams={setAuditTimelineParams}
+                    setExportType={setExportType}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+                {tabParam === 'dossier_version' && (
+                  <VersionControl
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    onVersionDownload={handleVersionDownload}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+                {tabParam === 'close_case' && (
+                  <CloseCaseForm
+                    ref={closeCaseFormRef}
+                    caseDetails={{
+                      country_name: caseDetails?.country_name,
+                      country_rid: caseDetails?.country_rid,
+                      country_code: caseDetails?.country_code,
+                      fiscal_year: caseDetails?.fiscal_year,
+                      all_task_completed: caseDetails?.all_task_completed,
+                      currency_symbol: caseDetails?.currency_symbol,
+                    }}
+                    refetchCaseDetails={refetchCaseDetails}
+                    showTitle={false}
+                    showCloseIcon={false}
+                    hideFooter={true}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Download Dossier Selection Modal */}
+      <Dialog
+        open={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '8px',
+            minWidth: '380px',
+            maxWidth: '440px',
+            p: 0,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: '15px',
+            fontWeight: 600,
+            color: '#2D3E4F',
+            borderBottom: '1px solid #CBD6E2',
+            pb: '12px',
+            pt: '16px',
+            px: '20px',
+          }}
+        >
+          Select Dossier Tab List
+        </DialogTitle>
+        <DialogContent sx={{ px: '20px', pt: '16px !important', pb: '8px' }}>
+          <p
+            style={{
+              fontSize: '12px',
+              color: '#637589',
+              marginBottom: '12px',
+              marginTop: 0,
+            }}
+          >
+            Choose which tab list to include in your dossier download.
+          </p>
+
+          {/* Select All */}
+          <div
+            style={{
+              borderBottom: '1px solid #E8EEF4',
+              paddingBottom: '8px',
+              marginBottom: '4px',
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={
+                    selectedDownloadItems.length === DOWNLOAD_OPTIONS.length
+                  }
+                  indeterminate={
+                    selectedDownloadItems.length > 0 &&
+                    selectedDownloadItems.length < DOWNLOAD_OPTIONS.length
+                  }
+                  onChange={handleSelectAllDownload}
+                  size='small'
+                  sx={{
+                    color: '#1755E7',
+                    '&.Mui-checked': { color: '#1755E7' },
+                    '&.MuiCheckbox-indeterminate': { color: '#1755E7' },
+                  }}
+                />
+              }
+              label={
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#2D3E4F',
+                  }}
+                >
+                  Select All
+                </span>
+              }
+            />
+          </div>
+
+          {/* Individual options */}
+          {DOWNLOAD_OPTIONS.map((option) => (
+            <div key={option}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedDownloadItems.includes(option)}
+                    onChange={() => handleDownloadToggle(option)}
+                    size='small'
+                    sx={{
+                      color: '#1755E7',
+                      '&.Mui-checked': { color: '#1755E7' },
+                    }}
+                  />
+                }
+                label={
+                  <span style={{ fontSize: '13px', color: '#2D3E4F' }}>
+                    {option}
+                  </span>
+                }
+              />
             </div>
-          )}
-        </div>
-      )}
+          ))}
+        </DialogContent>
+        <DialogActions
+          sx={{
+            px: '20px',
+            pb: '16px',
+            pt: '12px',
+            borderTop: '1px solid #CBD6E2',
+            gap: '8px',
+          }}
+        >
+          <TextButton
+            onClick={() => setIsDownloadModalOpen(false)}
+            sx={{
+              px: '16px',
+            }}
+          >
+            Cancel
+          </TextButton>
+          <TextButton
+            disabled={selectedDownloadItems.length === 0}
+            onClick={handleConfirmDownload}
+            sx={{
+              px: '16px',
+            }}
+          >
+            Download
+          </TextButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

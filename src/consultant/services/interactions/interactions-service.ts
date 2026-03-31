@@ -21,9 +21,10 @@ import {
   getInteractionListUrl,
   getGlobalInteractionListUrl,
   getGlobalInteractionExportUrl,
-  getInteractionListRemainderUrl,
+  getInteractionListReminderUrl,
 } from '../urls/interactions-url';
 import {
+  AssessmentSourceResponse,
   InteractionKeyContactResponse,
   InteractionKeyContacts,
   InteractionProjectKeyContacts,
@@ -175,11 +176,11 @@ export const fetchInteractionList = async (
     keyContact: data.data.keyContact,
   };
 };
-export const fetchInteractionListRemainder = async (
+export const fetchInteractionListReminder = async (
   params: InteractionListURLParams
 ): Promise<{ interactions: InteractionList[]; count: number }> => {
   const { data } = await interactionServiceApi.post<InteractionListResponse>(
-    getInteractionListRemainderUrl(),
+    getInteractionListReminderUrl(),
     params
   );
   return {
@@ -229,7 +230,7 @@ export const useInteractionListModel = (
 > => {
   return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
     queryKey: ['interaction-list', params, refreshInteractions],
-    queryFn: () => fetchInteractionListRemainder(params),
+    queryFn: () => fetchInteractionListReminder(params),
     retry: 0,
     gcTime: 0,
     enabled:
@@ -595,5 +596,59 @@ export const useGetInteractionTemplate = () => {
     InteractionTemplatePayload
   >({
     mutationFn: (body) => getInteractionTemplate({ ...body }),
+  });
+};
+
+// Interaction Status Update
+export interface InteractionStatusUpdatePayload {
+  rid: string;
+  status_name: string;
+  account_rid: string;
+}
+
+export const updateInteractionStatus = async (
+  body: InteractionStatusUpdatePayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      '/api/interactions/fourPartAssessment/update',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating interaction status:', error);
+    throw error;
+  }
+};
+
+export const useUpdateInteractionStatus = () => {
+  return useMutation<CommonApiResponse, Error, InteractionStatusUpdatePayload>({
+    mutationFn: (body) => updateInteractionStatus(body),
+  });
+};
+
+export const fetchAssessmentSource =
+  async (): Promise<AssessmentSourceResponse> => {
+    try {
+      const { data } =
+        await interactionServiceApi.get<AssessmentSourceResponse>(
+          '/api/interactions/assessmentSource'
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching assessment source:', error);
+      throw error;
+    }
+  };
+
+export const useGetAssessmentSource = () => {
+  return useQuery<AssessmentSourceResponse, Error>({
+    queryKey: ['interaction-assessment-source'],
+    queryFn: () => fetchAssessmentSource(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };

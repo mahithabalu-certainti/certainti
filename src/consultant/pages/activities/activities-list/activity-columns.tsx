@@ -4,6 +4,7 @@ import {
   formatTimeToAMPM,
   getCapitalizeWords,
 } from '../../../../common-utils';
+import TextButton from '../../../../components/button/text-button';
 import { ListTableColumn } from '../../../../components/table/types';
 import { ActivityList, ActivityType } from '../../../types';
 
@@ -341,7 +342,11 @@ export const getActivityEmailListColumns = (
 
 export const getActivityMeetingListColumns = (
   handleViewActivity: (rowId: string, activityType: ActivityType) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  handleCancelMeeting?: (activityId: string) => void,
+  handleCompleteMeeting?: (activityId: string) => void,
+  cancellingId?: string | null,
+  completingId?: string | null
 ): ListTableColumn<ActivityList>[] => [
   {
     id: 'r_number',
@@ -445,6 +450,60 @@ export const getActivityMeetingListColumns = (
     hide:
       !permissionMap?.['attached_to']?.edit &&
       !permissionMap?.['attached_to']?.read,
+  },
+  {
+    id: 'status_action',
+    sortId: 'action',
+    label: 'Status Action',
+    width: 150,
+    sortable: false,
+    // hide: !attachmentCreateEnable,
+    render: (row) => {
+      if (row.status_name !== 'Scheduled') {
+        return <div className='text-center w-full'>-</div>;
+      }
+      const isCancelling = cancellingId === row.rid;
+      const isCompleting = completingId === row.rid;
+      const isAnyLoading = isCancelling || isCompleting;
+      return (
+        <div className='flex gap-2'>
+          <TextButton
+            label='Cancel'
+            sx={{
+              width: '55px',
+              minWidth: '55px',
+              maxWidth: '55px',
+              cursor: isCancelling ? 'not-allowed' : 'pointer',
+            }}
+            loading={isCancelling}
+            disabled={isAnyLoading && !isCancelling}
+            onClick={() =>
+              !isAnyLoading &&
+              handleCancelMeeting &&
+              handleCancelMeeting(row.rid)
+            }
+            hide={row.status_name !== 'Scheduled'}
+          />
+          <TextButton
+            label='Complete'
+            sx={{
+              width: '70px',
+              minWidth: '70px',
+              maxWidth: '70px',
+              cursor: isCompleting ? 'not-allowed' : 'pointer',
+            }}
+            loading={isCompleting}
+            disabled={isAnyLoading && !isCompleting}
+            onClick={() =>
+              !isAnyLoading &&
+              handleCompleteMeeting &&
+              handleCompleteMeeting(row.rid)
+            }
+            hide={row.status_name !== 'Scheduled'}
+          />
+        </div>
+      );
+    },
   },
 ];
 

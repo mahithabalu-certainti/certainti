@@ -33,7 +33,10 @@ export const ActivityListURL = ({
     searchParams.set('accountRid', accountRid);
   }
   if (activity_type !== undefined) {
-    searchParams.set('activityType', capitalize(activity_type));
+    searchParams.set(
+      'activityType',
+      activity_type === 'call' ? 'Call Log' : capitalize(activity_type)
+    );
   }
 
   // Only add filters if the object has properties
@@ -52,6 +55,9 @@ export const updateActivityEmailURL = () => `/api/activities/email/update`;
 
 export const createActivityMeetingURL = () => `/api/activities/meeting/create`;
 export const updateActivityMeetingURL = () => `/api/activities/meeting/update`;
+export const cancelActivityMeetingURL = () => `/api/activities/meeting/cancel`;
+export const completeActivityMeetingURL = () =>
+  `/api/activities/meeting/complete`;
 
 export const createActivityCallURL = () => `/api/activities/call/create`;
 export const updateActivityCallURL = () => `/api/activities/call/update`;
@@ -86,7 +92,10 @@ export const getActivityExportListURL = ({
     searchParams.set('entityId', entityId.toString());
   }
   if (activity_type !== undefined) {
-    searchParams.set('activityType', capitalize(activity_type));
+    searchParams.set(
+      'activityType',
+      activity_type === 'call' ? 'Call Log' : capitalize(activity_type)
+    );
   }
   if (accountRid !== undefined) {
     searchParams.set('accountRid', accountRid.toString());

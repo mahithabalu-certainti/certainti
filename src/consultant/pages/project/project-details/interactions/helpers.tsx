@@ -23,7 +23,9 @@ export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
   interactionResponseSources: { option: string; value: string }[],
   interactionStatus: { option: string; value: string }[],
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  fourPartPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  assessmentSourceOptions: { option: string; value: string }[]
 ): FieldConfig[] => {
   return [
     {
@@ -43,6 +45,34 @@ export const getInteractionFilterFields = (
     //     !permissionMap?.['interaction_iteration']?.edit &&
     //     !permissionMap?.['interaction_iteration']?.read,
     // },
+    {
+      name: 'Assessment Type',
+      value: 'interaction_assessment_source_rid',
+      type: 'enum',
+      options: assessmentSourceOptions,
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['interaction_assessment_source_name']?.edit &&
+        !permissionMap?.['interaction_assessment_source_name']?.read,
+    },
+    {
+      name: 'Four Part Assessment ID',
+      value: 'four_part_r_number',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !fourPartPermissionMap?.['r_number']?.edit &&
+        !fourPartPermissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Batch ID',
+      value: 'interaction_batch_id',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['interaction_batch_id']?.edit &&
+        !permissionMap?.['interaction_batch_id']?.read,
+    },
     {
       name: 'Age (Days)',
       value: 'interaction_age',
@@ -183,7 +213,9 @@ export const getInteractionFilterFields = (
 };
 export const getProjectInteractionFilterFields = (
   interactionStatus: { option: string; value: string }[],
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  fourPartPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  assessmentSourceOptions: { option: string; value: string }[]
 ): FieldConfig[] => {
   return [
     {
@@ -195,14 +227,34 @@ export const getProjectInteractionFilterFields = (
         !permissionMap?.['r_number']?.edit &&
         !permissionMap?.['r_number']?.read,
     },
-    // {
-    //   name: 'Iteration',
-    //   value: 'interaction_iteration',
-    //   type: 'number',
-    //   hide:
-    //     !permissionMap?.['interaction_iteration']?.edit &&
-    //     !permissionMap?.['interaction_iteration']?.read,
-    // },
+    {
+      name: 'Assessment Type',
+      value: 'interaction_assessment_source_rid',
+      type: 'enum',
+      options: assessmentSourceOptions,
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['interaction_assessment_source_name']?.edit &&
+        !permissionMap?.['interaction_assessment_source_name']?.read,
+    },
+    {
+      name: 'Four Part Assessment ID',
+      value: 'four_part_r_number',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !fourPartPermissionMap?.['r_number']?.edit &&
+        !fourPartPermissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Batch ID',
+      value: 'interaction_batch_id',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['interaction_batch_id']?.edit &&
+        !permissionMap?.['interaction_batch_id']?.read,
+    },
     {
       name: 'Age (Days)',
       value: 'interaction_age',

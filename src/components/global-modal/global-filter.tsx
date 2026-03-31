@@ -162,14 +162,16 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
       const prevChildIds =
         prevParent.child_accounts?.map((child) => child.rid) || [];
 
-      const hadAllChildrenSelected =
-        filter.child.length > 0 &&
-        prevChildIds.every((id) => filter.child.includes(id)) &&
-        filter.child.length === prevChildIds.length;
-
       const newChildIds = currentChildIds.filter(
         (id) => !prevChildIds.includes(id)
       );
+
+      const hadAllChildrenSelected =
+        prevChildIds.length === 0
+          ? true // parent had no children → treat as "all selected"
+          : filter.child.length > 0 &&
+            prevChildIds.every((id) => filter.child.includes(id)) &&
+            filter.child.length === prevChildIds.length;
 
       if (hadAllChildrenSelected && newChildIds.length > 0) {
         shouldUpdate = true;

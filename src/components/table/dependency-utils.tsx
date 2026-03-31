@@ -220,20 +220,28 @@ export const validateDependentFields = <T extends RowData>(
         editingCells
       );
 
-      // If either has a value, both must be present
-      if (
-        (startDateValue && !endDateValue) ||
-        (!startDateValue && endDateValue)
-      ) {
-        if (column.id === relatedStartField && endDateValue && !cellValue) {
-          errors[cellKey] =
-            `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
-          continue;
-        }
-        if (column.id === relatedEndField && startDateValue && !cellValue) {
-          errors[cellKey] =
-            `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
-          continue;
+      // Check if both start and end dates must be provided together
+      // Default to true if not specified
+      const bothStartEndRequireValidate =
+        dateConfig.bothStartEndRequireValidate !== false;
+
+      // Only enforce "both must be provided" validation if bothStartEndRequireValidate is true
+      if (bothStartEndRequireValidate) {
+        // If either has a value, both must be present
+        if (
+          (startDateValue && !endDateValue) ||
+          (!startDateValue && endDateValue)
+        ) {
+          if (column.id === relatedStartField && endDateValue && !cellValue) {
+            errors[cellKey] =
+              `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
+            continue;
+          }
+          if (column.id === relatedEndField && startDateValue && !cellValue) {
+            errors[cellKey] =
+              `Both ${startFieldLabel} and ${endFieldLabel} must be provided`;
+            continue;
+          }
         }
       }
 

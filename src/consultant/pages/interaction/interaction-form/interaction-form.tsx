@@ -65,6 +65,7 @@ import {
   ExpandCollapseSelectOptions,
   useGetInteractionLevel,
   useGetInteractionStatus,
+  useGetStatus,
   // useGetInteractionStatusById,
 } from '../../../../common-service';
 import { RootState } from '../../../../store/store';
@@ -165,6 +166,7 @@ const InteractionForm = () => {
   const isProjectFields = source !== 'account';
   const isGlobalInteraction = source === 'global';
   const isAccountFields = source === 'account';
+  const interactionLevel = searchParams.get('level');
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data: globalAccountList, isLoading: isGlobalLoading } =
@@ -190,6 +192,7 @@ const InteractionForm = () => {
   const interactionStatus = useGetInteractionStatus();
   const getInteractionLevel = useGetInteractionLevel();
   const interactionTemplates = useGetInteractionTemplate();
+  const accountStatusOptions = useGetStatus();
   const interactionTemplateDetails = useGetInteractionTemplateDetails(
     currentTemplate.value as string
   );
@@ -286,7 +289,7 @@ const InteractionForm = () => {
         setRecipiants(JSON.parse(currentRecipients));
       }
     }
-  }, [isEditView, accountInteraction.data]);
+  }, [isEditView, interactionData]);
 
   const accountsData: ExpandCollapseSelectOptions[] = useMemo(() => {
     if (!globalAccountList?.accounts) return [];
@@ -667,8 +670,7 @@ const InteractionForm = () => {
           interaction_rid: payload.interaction_rid,
           interaction_level_rid:
             getInteractionLevel.data?.data.interactionLevel.find(
-              (it) =>
-                it.interaction_level_name.toLocaleLowerCase() === 'account'
+              (it) => it.interaction_level_name === interactionLevel
             )?.rid,
           fiscal_year: formData.fiscalYear,
           trigger_send: !!trigger_send,
@@ -731,6 +733,10 @@ const InteractionForm = () => {
         ...payload,
         trigger_send: !!trigger_send,
         ...(recipiants?.email && { email_info: recipiants }),
+        interaction_assessment_source_rid: 'Manual',
+        interaction_status_rid: accountStatusOptions?.data?.data?.status.find(
+          (option) => option.status_name.toLowerCase() === 'active'
+        )?.rid,
       },
       {
         onError: () => {

@@ -113,6 +113,12 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Case Status',
           value: cases?.status_name || '-',
+          className: (() => {
+            const status = cases?.status_name;
+            if (!status) return '';
+            if (status === 'Closed') return 'text-[#3EA72F] font-semibold';
+            return '';
+          })(),
         },
 
         {
@@ -128,6 +134,26 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Filing Type',
           value: cases?.filing_type_name || '-',
+        },
+        {
+          label: '',
+          value: '',
+        },
+        {
+          label: 'Submission Date',
+          value: cases?.planned_submission_date || '-',
+        },
+        {
+          label: 'Case Progress',
+          value: cases?.case_progress || '-',
+          className: (() => {
+            const progress = cases?.case_progress;
+            if (!progress) return '';
+            if (progress === 'On Track') return 'text-[#3EA72F] font-semibold';
+            if (progress === 'At Risk') return 'text-[#FF9800] font-semibold';
+            if (progress === 'Critical') return 'text-[#FF3C03] font-semibold';
+            return '';
+          })(),
         },
       ],
     },
