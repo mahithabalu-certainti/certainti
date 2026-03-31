@@ -597,9 +597,8 @@ export default class FinancialHighlightsService {
         total_cost_subcon_prj: "Sub Con Cost",
         total_cost_nonlabor_prj: "Non Labor Cost",
         total_cost_prj: "Project Cost",
-        rd_percent_final: "RD %",
-        qre_final: "Project QRE",
-        rd_credits_total: "RD Credit",
+        rd_percent_final: "QRE Percent Final",
+        qre_final: "QRE Final"
       };
 
       let formattedResult = formattedSummary.map((summary) => ({
